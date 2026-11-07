@@ -1133,12 +1133,12 @@
               "group": 6
             },
             {
-              "kind": "heading",
+              "kind": "option",
               "text": "C 关古威方若绮剧情中开启",
               "group": 6
             },
             {
-              "kind": "heading",
+              "kind": "option",
               "text": "D 第2年美丽之星剧情中开启",
               "group": 6
             },
@@ -1163,12 +1163,12 @@
               "group": 8
             },
             {
-              "kind": "paragraph",
+              "kind": "option",
               "text": "A 训练项目中声音表情达到专业、肢体动作达到专业、说话技巧达到高级，混小子来公司后开启",
               "group": 8
             },
             {
-              "kind": "heading",
+              "kind": "option",
               "text": "B 第3年美丽之星剧情中开启",
               "group": 8
             },
@@ -1178,17 +1178,17 @@
               "group": 9
             },
             {
-              "kind": "paragraph",
+              "kind": "option",
               "text": "A 训练项目中有氧舞蹈达到专业、舞台表演达到专业、摄影技巧达到高级，混小子来公司后开启",
               "group": 9
             },
             {
-              "kind": "heading",
+              "kind": "option",
               "text": "B 姚子奇姚子莹度假事件中开启",
               "group": 9
             },
             {
-              "kind": "heading",
+              "kind": "option",
               "text": "C 第1年美丽之星剧情中开启",
               "group": 9
             },
