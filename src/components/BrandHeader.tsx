@@ -25,7 +25,7 @@ export default function BrandHeader({
         </button>
         <button className="flex min-w-0 items-center gap-[11px]" type="button" onClick={() => onSelect('')}>
           <span
-            className="h-[26px] w-[26px] shrink-0 rotate-45 rounded-[7px] bg-[linear-gradient(135deg,#8e4a7e,#5c2c50)] shadow-[0_3px_8px_rgba(92,44,80,0.28)]"
+            className="h-[26px] w-[26px] shrink-0 rotate-45 rounded-[7px] bg-[linear-gradient(135deg,#0f6b5c,#0a4b41)] shadow-[0_3px_8px_rgba(10,75,65,0.3)]"
             aria-hidden="true"
           />
           <span className="flex flex-col whitespace-nowrap leading-[1.25]">

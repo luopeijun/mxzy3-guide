@@ -6,31 +6,31 @@
   --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
   --font-serif: "Songti SC", "SimSun", Georgia, serif;
 
-  /* Surfaces & lines */
-  --color-canvas: #f6f4f0;
+  /* Surfaces & lines — cool neutral, keeps long reading sessions calm */
+  --color-canvas: #f4f6f9;
   --color-surface: #ffffff;
-  --color-surface-soft: #fbf9f5;
-  --color-sidebar: #f2eee8;
-  --color-line: #e8e1d7;
-  --color-line-strong: #d9cec0;
+  --color-surface-soft: #f7f9fb;
+  --color-sidebar: #eef2f6;
+  --color-line: #e2e7ee;
+  --color-line-strong: #cbd4df;
 
-  /* Text */
-  --color-ink: #302a26;
-  --color-ink-muted: #7a7067;
-  --color-ink-faint: #a99e92;
+  /* Text — every role clears WCAG AA on its own background */
+  --color-ink: #12171f;
+  --color-ink-muted: #3f4a59;
+  --color-ink-faint: #5f6b7d;
 
   /* Brand & accents */
-  --color-brand: #7b3f6b;
-  --color-brand-strong: #5c2c50;
-  --color-brand-soft: #f3e9f1;
-  --color-brand-line: #e2cfe0;
-  --color-gold: #b9873c;
-  --color-gold-soft: #faf1de;
-  --color-gold-line: #efdcb9;
-  --color-note: #8a5a2b;
-  --color-note-soft: #fdf4e6;
-  --color-missing: #8d857c;
-  --color-missing-soft: #f1ede8;
+  --color-brand: #0f6b5c;
+  --color-brand-strong: #0a4b41;
+  --color-brand-soft: #d3ebe4;
+  --color-brand-line: #b9dcd3;
+  --color-gold: #8a6114;
+  --color-gold-soft: #fdf4dd;
+  --color-gold-line: #f0dfb4;
+  --color-note: #7a5619;
+  --color-note-soft: #fdf6e7;
+  --color-missing: #5f6b7d;
+  --color-missing-soft: #edf1f5;
 
   /* Type scale (custom names avoid clashing with Tailwind defaults) */
   --text-ui-2xs: 11px;

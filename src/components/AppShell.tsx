@@ -26,7 +26,7 @@ export default function AppShell({
         {sidebar}
         {sidebarOpen && (
           <div
-            className="hidden bg-[rgba(48,42,38,0.32)] nav:absolute nav:inset-0 nav:z-[25] nav:block"
+            className="hidden bg-[rgba(18,23,31,0.35)] nav:absolute nav:inset-0 nav:z-[25] nav:block"
             onClick={onCloseSidebar}
             role="presentation"
             aria-hidden="true"
