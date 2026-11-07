@@ -22,10 +22,16 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DOCX = Path("E:/Downloads/明星志愿3攻略.docx")
 SOURCES = ROOT / "sources"
 DEFAULT_QUESTIONS = SOURCES / "game-initial-questions.txt"
+DEFAULT_EVENTS = SOURCES / "initial-events.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
 OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ][\.．、]\s*")
+# Plain-text sources: `#` and `*` are the same heading level by design.
+SECTION_RE = re.compile(r"^[#*]\s*(.+)$")
+# `1.（自动）` / `3－1 （跟随）` / `6 （手动）` — keep the trailing marker in the body.
+EVENT_LINE_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s*[（(]")
+CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
 QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
 QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
 QUESTION_LINK_RE = re.compile(r"^接问题([0-9０-９]+)$")
@@ -234,6 +240,54 @@ def build_question_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+def build_event_blocks(path: Path) -> tuple[str, list[dict]]:
+    """Turn the 初始事件 txt into (description, blocks).
+
+    `#` and `*` mark the same heading level, so both become `heading` blocks.
+    Numbered lines become `event` blocks (the number survives as `label`),
+    A./B. lines become options, `提醒：` lines become notes, and per-character
+    alternatives (`旗下艺人为…`) are indented like options.
+    """
+    blocks: list[dict] = []
+    description = ""
+    group = 0
+    for raw_line in _read_text(path).splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        if not blocks and not description and line.endswith(("：", ":")):
+            description = line.rstrip("：:")
+            continue
+
+        section = SECTION_RE.match(line)
+        if section:
+            group += 1
+            blocks.append({"kind": "section", "text": section.group(1).strip(), "group": group})
+            continue
+
+        event = EVENT_LINE_RE.match(line)
+        if event:
+            group += 1
+            blocks.append({
+                "kind": "event",
+                "text": line[event.end() - 1:].strip(),
+                "label": event.group(1),
+                "group": group,
+            })
+            continue
+
+        if line.startswith("提醒"):
+            blocks.append({"kind": "note", "text": line, "group": group})
+            continue
+        if OPTION_RE.match(line) or CHARACTER_OPTION_RE.match(line):
+            blocks.append({"kind": "option", "text": line, "group": group})
+            continue
+        blocks.append({"kind": "paragraph", "text": line, "group": group})
+
+    return description, blocks
+
+
 def make_node(
     node_id: str,
     title: str,
@@ -322,9 +376,10 @@ class Sections:
         return nodes
 
 
-def build(docx: Path, questions: Path) -> dict:
+def build(docx: Path, questions: Path, events: Path) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
+    events_description, event_blocks = build_event_blocks(events)
 
     required = [
         "角色攻略", "初始问题选项", "场景开启方法", "★制作人选择", "打工相关",
@@ -362,7 +417,8 @@ def build(docx: Path, questions: Path) -> dict:
         make_node(
             "game-guide/initial-events", "初始事件",
             source_title="接手第一周细节",
-            blocks=build_blocks(sections.intro("接手第一周细节")),
+            description=events_description or None,
+            blocks=event_blocks,
         ),
         make_node("game-guide/initial-stats", "所有人物初始属性", status="missing"),
         make_node(
@@ -524,11 +580,14 @@ def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     docx = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DOCX
     questions = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_QUESTIONS
+    events = Path(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_EVENTS
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
         raise SystemExit(f"questions txt not found: {questions}")
-    data = build(docx, questions)
+    if not events.exists():
+        raise SystemExit(f"events txt not found: {events}")
+    data = build(docx, questions, events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
