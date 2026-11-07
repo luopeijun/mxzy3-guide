@@ -67,6 +67,11 @@ export default function QuestionCard({ heading, options, onJump }: Props) {
               </span>
             )}
             <TargetChip block={option} onJump={onJump} />
+            {option.hint && (
+              <span className="w-full pl-[29px] text-ui-2xs leading-[1.8] text-ink-faint">
+                {option.hint}
+              </span>
+            )}
           </li>
         ))}
       </ul>

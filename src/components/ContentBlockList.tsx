@@ -97,7 +97,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
       return <p className="mb-[3px] pl-10 text-ui-sm leading-[1.85] text-ink-muted phone:pl-[22px]">{block.text}</p>;
     case 'note':
       return (
-        <p className="mb-[5px] rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-3 py-2 text-ui-sm leading-[1.8] text-note">
+        <p className="mb-[5px] whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-3 py-2 text-ui-sm leading-[1.8] text-note">
           {block.text}
         </p>
       );

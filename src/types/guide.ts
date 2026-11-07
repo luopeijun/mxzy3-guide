@@ -18,6 +18,8 @@ export interface ContentBlock {
   target?: string;
   /** Text on the jump chip, e.g. 接问题３ or 问题结束. */
   targetLabel?: string;
+  /** Footnote under an option, e.g. the bracket note after 问题结束. */
+  hint?: string;
 }
 
 export interface GuideNode {

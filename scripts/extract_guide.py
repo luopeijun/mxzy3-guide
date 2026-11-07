@@ -160,12 +160,17 @@ def _read_text(path: Path) -> str:
 
 
 def _parse_question_option(number: str, body: str) -> dict:
-    """`１．爱的教育→林芬芬的友好度＋20，获得道具→接问题３` -> option block."""
+    """`１．爱的教育→林芬芬的友好度＋20，获得道具→接问题３` -> option block.
+
+    The trailing `问题结束（补充说明）` keeps `问题结束` as the chip label and
+    moves the bracket text into `hint`, so the option still reads as terminal.
+    """
     parts = [part.strip() for part in body.split("→") if part.strip()]
     action = parts[0] if parts else ""
     effects: list[str] = []
     target = ""
     target_label = ""
+    hint = ""
 
     for part in parts[1:]:
         link = QUESTION_LINK_RE.match(part)
@@ -178,9 +183,9 @@ def _parse_question_option(number: str, body: str) -> dict:
             target_label = "问题结束"
             extra = part[len("问题结束"):].strip().strip("（）()")
             if extra:
-                effects.append(extra)
+                hint = extra
             continue
-        effects.append(part)
+        effects.append(part.replace("＋", "+"))
 
     text = "，".join(effects)
     block: dict = {
@@ -197,6 +202,8 @@ def _parse_question_option(number: str, body: str) -> dict:
         block["target"] = target
     if target_label:
         block["targetLabel"] = target_label
+    if hint:
+        block["hint"] = hint
     return block
 
 
@@ -207,33 +214,45 @@ def build_question_blocks(path: Path, page_title: str = "") -> list[dict]:
     and every option records the question it flows into as `target`, so the
     front-end can render "接问题３" as an in-page jump link.
 
-    The opening `标题（补充说明）` line is split: the bracket part becomes a
-    `note` (yellow hint) and the title becomes a `section` heading — unless it
-    repeats the page title, which the article header already shows.
+    The opening line is the page heading: `★标题`, or `标题（补充说明）` where
+    the bracket part becomes a `note` (yellow hint). A title that repeats
+    `page_title` is dropped, since the article header already shows it.
+    Lines before the first question are the opening premises and collapse into
+    one `note` block (one line per row).
     """
+    lines = [line.strip() for line in _read_text(path).splitlines() if line.strip()]
+    if not lines:
+        return []
+
     blocks: list[dict] = []
     group = 0
+
+    heading = re.sub(r"^[★☆]\s*", "", lines[0])
+    preamble = PREAMBLE_RE.match(heading)
+    title = preamble.group("title").strip() if preamble else heading
+    title_note = preamble.group("note").strip() if preamble else ""
+    if title == page_title or title.endswith(page_title):
+        lines = lines[1:]
+        if title_note:
+            group += 1
+            blocks.append({"kind": "note", "text": f"（{title_note}）", "group": group})
+    elif preamble:
+        lines = lines[1:]
+        group += 1
+        blocks.append({"kind": "section", "text": title, "group": group})
+        group += 1
+        blocks.append({"kind": "note", "text": f"（{title_note}）", "group": group})
+
+    pending: list[str] = []
     in_question = False
-    first_line = True
-    for raw_line in _read_text(path).splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-
-        if first_line:
-            first_line = False
-            preamble = PREAMBLE_RE.match(line)
-            if preamble:
-                title = preamble.group("title").strip()
-                if title and title != page_title:
-                    group += 1
-                    blocks.append({"kind": "section", "text": title, "group": group})
-                group += 1
-                blocks.append({"kind": "note", "text": f"（{preamble.group('note').strip()}）", "group": group})
-                continue
-
+    for line in lines:
         question = QUESTION_RE.match(line)
         if question:
+            if pending:
+                group += 1
+                blocks.append({"kind": "note", "text": "\n".join(pending), "group": group})
+                pending = []
+
             group += 1
             in_question = True
             number = question.group(1).translate(HALFWIDTH_DIGITS)
@@ -251,10 +270,16 @@ def build_question_blocks(path: Path, page_title: str = "") -> list[dict]:
             blocks.append({**_parse_question_option(option.group(1), option.group(2)), "group": group})
             continue
 
+        if not in_question:
+            pending.append(line)
+            continue
+
         group += 1
-        in_question = False
-        kind = "note" if not blocks else "paragraph"
-        blocks.append({"kind": kind, "text": line, "group": group})
+        blocks.append({"kind": "paragraph", "text": line, "group": group})
+
+    if pending:
+        group += 1
+        blocks.append({"kind": "note", "text": "\n".join(pending), "group": group})
 
     return blocks
 
