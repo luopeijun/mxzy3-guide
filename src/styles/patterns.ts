@@ -7,6 +7,11 @@ export const ui = {
   /* Layout */
   content:
     'mx-auto max-w-[880px] px-9 pt-7 pb-[88px] nav:px-[18px] nav:pt-[22px] nav:pb-16',
+  /* Article pages carry a side rail. The rail keeps its own column instead of
+     floating over the text, so it can never cover what you are reading. */
+  reader:
+    'mx-auto flex w-full items-start justify-center gap-6 px-9 pt-7 pb-[88px] nav:px-[18px] nav:pt-[22px] nav:pb-16',
+  article: 'max-w-[880px] min-w-0 flex-1',
   sectionTitle: 'mb-[14px] mt-8 text-ui-lg font-bold',
 
   /* Cards — reused by Overview and ChildLinks */
