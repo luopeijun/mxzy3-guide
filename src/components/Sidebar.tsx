@@ -1,5 +1,6 @@
 import type { GuideNode, GuideSummary } from '../types/guide';
 import type { SearchHit } from '../lib/guide';
+import type { ReorderRequest } from '../lib/treeOrder';
 import { formatCount } from '../lib/guide';
 import GuideTree from './GuideTree';
 import SearchBox from './SearchBox';
@@ -14,14 +15,18 @@ interface Props {
   hits: SearchHit[];
   open: boolean;
   summary: GuideSummary;
+  /** True once the reader has dragged any level into a different order. */
+  customized: boolean;
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onQueryChange: (value: string) => void;
+  onReorder: (request: ReorderRequest) => void;
+  onResetOrder: () => void;
 }
 
 export default function Sidebar({
-  categories, selectedId, expandedIds, query, hits, open, summary,
-  onToggle, onSelect, onQueryChange,
+  categories, selectedId, expandedIds, query, hits, open, summary, customized,
+  onToggle, onSelect, onQueryChange, onReorder, onResetOrder,
 }: Props) {
   return (
     <aside
@@ -36,9 +41,26 @@ export default function Sidebar({
       <div className="border-b border-line px-4 pt-[18px] pb-3">
         <div className="mb-3 flex items-baseline justify-between">
           <span className="text-ui-xs font-bold tracking-[0.08em] text-ink-muted">攻略目录</span>
-          <span className="text-ui-2xs text-ink-faint">4 大类</span>
+          {customized ? (
+            <button
+              className="p-0 text-ui-2xs font-semibold text-brand hover:text-brand-strong hover:underline"
+              type="button"
+              onClick={onResetOrder}
+              title="恢复脚本生成时的默认顺序"
+            >
+              恢复默认
+            </button>
+          ) : (
+            <span className="text-ui-2xs text-ink-faint">4 大类</span>
+          )}
         </div>
         <SearchBox value={query} onChange={onQueryChange} />
+        {!query.trim() && (
+          <p className="mt-2 text-ui-2xs leading-[1.5] text-ink-faint">
+            <span className="touch:hidden">拖拽标题可调整同级顺序，Alt+↑↓ 也行</span>
+            <span className="hidden touch:inline">点标题右侧的 ↑↓ 可调整同级顺序</span>
+          </p>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-[10px] pt-3 pb-6" aria-label="攻略分级目录">
@@ -51,6 +73,7 @@ export default function Sidebar({
             expandedIds={expandedIds}
             onToggle={onToggle}
             onSelect={onSelect}
+            onReorder={onReorder}
           />
         )}
       </nav>

@@ -1,21 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GuideData } from './types/guide';
+import type { ReorderRequest } from './lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
 import { useHashSelection } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
+import { useTreeOrder } from './hooks/useTreeOrder';
 import AppShell from './components/AppShell';
 import BrandHeader from './components/BrandHeader';
 import ContentPanel from './components/ContentPanel';
 import LoadingScreen from './components/LoadingScreen';
 import Sidebar from './components/Sidebar';
 
-function GuideApp({ data }: { data: GuideData }) {
+function GuideApp({ data: source }: { data: GuideData }) {
+  // The reader may drag levels of the tree around; everything below reads the
+  // ordered copy so the header tabs, search and prev/next follow the new order.
+  const { categories, move, reset, customized } = useTreeOrder(source.categories);
+  const data = useMemo<GuideData>(() => ({ ...source, categories }), [source, categories]);
+
   const allNodes = useMemo(() => flattenNodes(data), [data]);
   const validIds = useMemo(() => new Set(allNodes.map((node) => node.id)), [allNodes]);
   const { selectedId, select } = useHashSelection(validIds);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(data.categories.map((category) => category.id)),
+    () => new Set(categories.map((category) => category.id)),
   );
   const [query, setQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,6 +64,10 @@ function GuideApp({ data }: { data: GuideData }) {
     setSidebarOpen(false);
   }, [select]);
 
+  const handleReorder = useCallback((request: ReorderRequest) => {
+    move(request.parentKey, request.dragId, request.targetId, request.place);
+  }, [move]);
+
   const position = allNodes.findIndex((node) => node.id === selectedId);
   const previousNode = position > 0 ? allNodes[position - 1] : null;
   const nextNode = position >= 0 && position < allNodes.length - 1 ? allNodes[position + 1] : null;
@@ -84,9 +95,12 @@ function GuideApp({ data }: { data: GuideData }) {
           hits={hits}
           open={sidebarOpen}
           summary={summary}
+          customized={customized}
           onToggle={toggle}
           onSelect={handleSelect}
           onQueryChange={setQuery}
+          onReorder={handleReorder}
+          onResetOrder={reset}
         />
       )}
     >
