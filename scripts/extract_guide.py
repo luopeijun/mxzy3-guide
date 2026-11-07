@@ -44,9 +44,6 @@ CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
 QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
 QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
 QUESTION_LINK_RE = re.compile(r"^接问题([0-9０-９]+)$")
-# `姓名：林芬芬` / `年龄：16` / `生日：11/12` and `演技：182` in the stats sheet.
-STATS_FIELD_RE = re.compile(r"^(姓名|年龄|生日)[：:]\s*(.+)$")
-STATS_VALUE_RE = re.compile(r"^(.+?)[：:]\s*([0-9０-９]+)\s*$")
 # Leading line of a plain-text source: `标题（补充说明）`.
 PREAMBLE_RE = re.compile(r"^(?P<title>[^（(]+?)\s*[（(](?P<note>.+?)[）)]\s*$")
 FULLWIDTH_DIGITS = str.maketrans("0123456789", "０１２３４５６７８９")
@@ -388,71 +385,119 @@ def build_event_blocks(path: Path) -> list[dict]:
 # Attribute columns of the stats sheet, in source order: (label, key).
 STATS_ATTRS = [
     ("演技", "acting"),
-    ("口才", "eloquence"),
     ("歌艺", "singing"),
-    ("名气", "fame"),
+    ("口才", "eloquence"),
+    ("才智", "wit"),
     ("仪态", "etiquette"),
+    ("自信", "confidence"),
     ("动感", "dynamism"),
     ("体能", "stamina"),
-    ("才智", "wit"),
-    ("自信", "confidence"),
+    ("名气", "fame"),
+    ("叛逆", "rebellion"),
+    ("性感", "sexiness"),
+    ("亲和", "affinity"),
 ]
 STATS_ATTR_KEYS = {label: key for label, key in STATS_ATTRS}
+STATS_GROWTH_LABEL = "成长"
+STATS_NUMBER_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
+
+
+def _stats_cells(line: str) -> list[str]:
+    return [cell.strip() for cell in re.split(r"\t+", line) if cell.strip()]
 
 
 def build_stats_blocks(path: Path) -> list[dict]:
-    """Turn the 所有人物初始属性 sheet into one `table` block.
+    """Turn the 初始属性 screenshots into one `table` block.
 
-    The TXT holds one character per blank-line separated stanza: `姓名` /
-    `年龄` / `生日` followed by the nine attributes. That maps straight onto a
-    table — one row per character, one column per attribute — which reads far
-    better than repeating `演技：182` as prose.
+    The source keeps the shape of the game screen: a block starts with a row of
+    character names, then one row per attribute and a `成长` row right after it
+    (the growth multiplier of that attribute). 女 and 男 are two such blocks;
+    they are merged into a single table — one row per character, one column per
+    attribute, each cell carrying the value and its growth on a second line.
     """
-    rows: list[dict] = []
+    blocks: list[dict] = []
     current: dict | None = None
+    last_attr = ""
     for raw_line in _read_text(path).splitlines():
         line = raw_line.strip()
-        if not line:
+        if not line or line.startswith(("★", "☆", "【", "（")):
+            continue
+        cells = _stats_cells(line)
+        if not cells:
             continue
 
-        field = STATS_FIELD_RE.match(line)
-        if field:
-            label, value = field.group(1), field.group(2).strip()
-            if label == "姓名":
-                current = {"name": value}
-                rows.append(current)
-            elif current is not None:
-                current["age" if label == "年龄" else "birthday"] = value
+        if all(not STATS_NUMBER_RE.match(cell) for cell in cells[1:]):
+            current = {"names": cells, "attrs": {}, "order": []}
+            blocks.append(current)
+            last_attr = ""
             continue
+        if current is None:
+            raise ValueError(f"stats row before any character header: {line!r}")
 
-        value = STATS_VALUE_RE.match(line)
-        if value and current is not None:
-            key = STATS_ATTR_KEYS.get(value.group(1).strip())
-            if key:
-                current[key] = value.group(2).translate(HALFWIDTH_DIGITS)
+        label, body = cells[0], cells[1:]
+        if len(body) != len(current["names"]):
+            raise ValueError(
+                f"{label} has {len(body)} values for {len(current['names'])} characters"
+            )
+        if label == STATS_GROWTH_LABEL:
+            if not last_attr:
+                raise ValueError("growth row without a preceding attribute")
+            current["attrs"][last_attr]["growth"] = body
+            continue
+        if label not in STATS_ATTR_KEYS:
+            continue
+        current["attrs"][label] = {"value": body, "growth": []}
+        current["order"].append(label)
+        last_attr = label
 
-    expected = ["name", "age", "birthday", *(key for _, key in STATS_ATTRS)]
+    if not blocks:
+        raise ValueError("stats sheet is empty")
+
+    labels: list[str] = []
+    has_growth: set[str] = set()
+    for block in blocks:
+        for label in block["order"]:
+            if label not in labels:
+                labels.append(label)
+            if block["attrs"][label]["growth"]:
+                has_growth.add(label)
+    missing = [label for label, _ in STATS_ATTRS if label not in labels]
+    if missing:
+        raise ValueError(f"stats sheet misses attributes: {missing}")
+
+    rows: list[dict] = [{"name": name} for block in blocks for name in block["names"]]
+    cursor = 0
+    for block in blocks:
+        for index, name in enumerate(block["names"]):
+            row = rows[cursor + index]
+            row["name"] = name
+            for label, data in block["attrs"].items():
+                key = STATS_ATTR_KEYS[label]
+                row[key] = data["value"][index]
+                if data["growth"]:
+                    row[f"{key}G"] = data["growth"][index]
+        cursor += len(block["names"])
+
+    columns: list[dict] = [{"key": "name", "label": "姓名"}]
+    for label, key in STATS_ATTRS:
+        column: dict = {"key": key, "label": label, "numeric": True, "highlight": True}
+        if label in has_growth:
+            column["growthKey"] = f"{key}G"
+        columns.append(column)
+
     broken = [
-        (row.get("name", "?"), key)
+        (row.get("name", "?"), column["key"])
         for row in rows
-        for key in expected
-        if key not in row
+        for column in columns
+        if column["key"] not in row
+        or ("growthKey" in column and column["growthKey"] not in row)
     ]
     if broken:
         raise ValueError(f"stats sheet is incomplete: {broken}")
 
-    columns: list[dict] = [
-        {"key": "name", "label": "姓名"},
-        {"key": "age", "label": "年龄", "numeric": True},
-        {"key": "birthday", "label": "生日"},
-        *(
-            {"key": key, "label": label, "numeric": True, "highlight": True}
-            for label, key in STATS_ATTRS
-        ),
-    ]
     return [{
         "kind": "table",
-        "text": f"{len(rows)} 位可签约艺人的初始属性",
+        "text": f"{len(rows)} 位可签约艺人的初始属性与成长加成",
         "table": {"columns": columns, "rows": rows},
         "group": 1,
     }]
@@ -591,7 +636,7 @@ def build(docx: Path, questions: Path, events: Path, stats: Path) -> dict:
         ),
         make_node(
             "game-guide/initial-stats", "所有人物初始属性",
-            description="12 位可签约艺人在游戏开始时的属性值；每列加粗的是该项最高的人。",
+            description="18 位可签约艺人（含资料片新增）在游戏开始时的属性与成长加成，女、男两组已合并。",
             blocks=stats_blocks,
         ),
         make_node(

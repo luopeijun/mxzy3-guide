@@ -14,6 +14,8 @@ export interface TableColumn {
   numeric?: boolean;
   /** Marks the highest value of this column on every row. */
   highlight?: boolean;
+  /** Second line under the value, e.g. the growth bonus of that attribute. */
+  growthKey?: string;
 }
 
 export interface TableData {
