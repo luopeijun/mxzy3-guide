@@ -580,6 +580,20 @@
   line-height: 1.8;
 }
 
+/* ---------------- LoadingScreen ---------------- */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.loadingCard {
+  width: 100%;
+  max-width: 520px;
+}
+
 /* ---------------- EmptyState ---------------- */
 .empty {
   padding: 48px 28px;

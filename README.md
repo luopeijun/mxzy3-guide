@@ -9,7 +9,7 @@
 | 构建 | Vite 6 | 启动快、配置少，纯静态产物便于 GitHub Pages 托管 |
 | 框架 | React 19 + TypeScript | 组件化 + 类型约束，后续功能扩展成本低 |
 | 样式 | CSS Modules + 全局 design tokens | 统一视觉语言，组件样式隔离，零运行时依赖 |
-| 内容数据 | Python 标准库脚本解析 docx → `src/data/guide.json` | 内容与 UI 解耦；攻略更新后重跑脚本即可，过程可复现 |
+| 内容数据 | Python 标准库脚本解析 docx → `public/data/guide.json`，运行时加载 | 内容与 UI 解耦；攻略更新只需替换 JSON，无需重新打包前端 |
 | 导航状态 | React hooks + URL Hash | 第一步纯浏览，Hash 即可支持刷新保留、深链分享，暂不引入路由库 |
 | 包管理 | npm | 环境自带，无额外工具链 |
 | 进度持久化 | localStorage（第二步接入） | 数据条目使用稳定 id，勾选状态不随内容顺序变化 |
@@ -27,7 +27,7 @@
 
 ```
 scripts/extract_guide.py    # docx → guide.json 抽取脚本（零第三方依赖）
-src/data/guide.json         # 生成的结构化攻略数据
+public/data/guide.json      # 生成的结构化攻略数据（运行时加载）
 src/types/guide.ts          # 数据类型
 src/components/             # 可复用 UI 组件
 src/hooks/                  # 数据、选中态、搜索逻辑

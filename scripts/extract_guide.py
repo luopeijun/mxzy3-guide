@@ -4,7 +4,8 @@ Usage:
     python scripts/extract_guide.py [path/to/明星志愿3攻略.docx]
 
 Only the Python standard library is required. The generated data is committed to
-src/data/guide.json so the front-end has no build-time dependency on the docx.
+public/data/guide.json and loaded at runtime, so updating the guide does not
+require rebuilding the front-end bundle.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ from pathlib import Path
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DOCX = Path("E:/Downloads/明星志愿3攻略.docx")
-OUTPUT = ROOT / "src" / "data" / "guide.json"
+OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
 OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ][\.．、]\s*")

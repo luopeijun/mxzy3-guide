@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import rawData from './data/guide.json';
 import type { GuideData } from './types/guide';
 import { findNodePath, flattenNodes, searchGuide } from './lib/guide';
 import { useHashSelection } from './hooks/useHashSelection';
+import { useGuideData } from './hooks/useGuideData';
 import AppShell from './components/AppShell';
 import BrandHeader from './components/BrandHeader';
 import ContentPanel from './components/ContentPanel';
+import LoadingScreen from './components/LoadingScreen';
 import Sidebar from './components/Sidebar';
 
-const data = rawData as unknown as GuideData;
-
-export default function App() {
-  const allNodes = useMemo(() => flattenNodes(data), []);
+function GuideApp({ data }: { data: GuideData }) {
+  const allNodes = useMemo(() => flattenNodes(data), [data]);
   const validIds = useMemo(() => new Set(allNodes.map((node) => node.id)), [allNodes]);
   const { selectedId, select } = useHashSelection(validIds);
 
@@ -21,8 +20,8 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const path = useMemo(() => findNodePath(data, selectedId), [selectedId]);
-  const hits = useMemo(() => searchGuide(data, query), [query]);
+  const path = useMemo(() => findNodePath(data, selectedId), [data, selectedId]);
+  const hits = useMemo(() => searchGuide(data, query), [data, query]);
   const currentNode = path[path.length - 1];
   const activeCategoryId = path[0]?.id ?? '';
 
@@ -94,4 +93,23 @@ export default function App() {
       />
     </AppShell>
   );
+}
+
+export default function App() {
+  const { data, error } = useGuideData();
+
+  if (error) {
+    return (
+      <LoadingScreen
+        title="攻略数据加载失败"
+        text={`无法读取 public/data/guide.json（${error}）。请确认已运行 python scripts/extract_guide.py 生成数据。`}
+      />
+    );
+  }
+
+  if (!data) {
+    return <LoadingScreen title="正在载入攻略" text="正在读取分级目录与正文内容…" />;
+  }
+
+  return <GuideApp data={data} />;
 }
