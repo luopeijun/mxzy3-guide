@@ -32,7 +32,7 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
   return (
     <div className={ui.content}>
       <Breadcrumbs path={path} onSelect={onSelect} />
-      <ArticleHeader node={node} blockCount={node.blocks.length} />
+      <ArticleHeader node={node} />
       <ArticleOutline items={outlineOf(node)} onJump={jump} />
       <ContentBlockList blocks={node.blocks} onJump={jump} />
       {node.children.length > 0 && (

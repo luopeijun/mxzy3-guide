@@ -36,8 +36,21 @@ export function flattenNodes(data: GuideData): GuideNode[] {
   return result;
 }
 
-export function countBlocks(node: GuideNode): number {
-  return node.blocks.length + node.children.reduce((sum, child) => sum + countBlocks(child), 0);
+/** Characters in a node's own body text; whitespace is ignored, punctuation kept. */
+export function countChars(node: GuideNode): number {
+  return node.blocks.reduce((sum, block) => sum + block.text.replace(/\s/g, '').length, 0);
+}
+
+/** Characters including every descendant, used for category-level sizes. */
+export function countCharsDeep(node: GuideNode): number {
+  return countChars(node) + node.children.reduce((sum, child) => sum + countCharsDeep(child), 0);
+}
+
+/** 860 → "860", 12467 → "1.2 万". */
+export function formatCount(value: number): string {
+  if (value < 10000) return value.toLocaleString('zh-CN');
+  const wan = value / 10000;
+  return `${wan >= 100 ? Math.round(wan) : Number(wan.toFixed(1))} 万`;
 }
 
 export function countItems(node: GuideNode): number {

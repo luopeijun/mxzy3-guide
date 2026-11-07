@@ -1,5 +1,5 @@
 import type { GuideNode } from '../types/guide';
-import { countBlocks } from '../lib/guide';
+import { countCharsDeep, formatCount } from '../lib/guide';
 import StatusBadge from './StatusBadge';
 import { ui } from '../styles/patterns';
 
@@ -28,7 +28,7 @@ export default function ChildLinks({ nodes, onSelect, title = '下级条目' }: 
             <div className={ui.cardFoot}>
               {node.status === 'missing'
                 ? '攻略文档中暂未收录'
-                : `${countBlocks(node)} 段内容${node.children.length ? ` · ${node.children.length} 个子条目` : ''}`}
+                : `约 ${formatCount(countCharsDeep(node))} 字${node.children.length ? ` · ${node.children.length} 个子条目` : ''}`}
             </div>
           </button>
         ))}

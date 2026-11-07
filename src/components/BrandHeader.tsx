@@ -1,16 +1,17 @@
-import type { GuideNode, GuideStats } from '../types/guide';
+import type { GuideNode, GuideSummary } from '../types/guide';
+import { formatCount } from '../lib/guide';
 import { cn } from '../lib/cn';
 
 interface Props {
   categories: GuideNode[];
   activeCategoryId: string;
-  stats: GuideStats;
+  summary: GuideSummary;
   onSelect: (id: string) => void;
   onMenuClick: () => void;
 }
 
 export default function BrandHeader({
-  categories, activeCategoryId, stats, onSelect, onMenuClick,
+  categories, activeCategoryId, summary, onSelect, onMenuClick,
 }: Props) {
   return (
     <header className="relative z-20 h-16 shrink-0 border-b border-line bg-surface shadow-soft">
@@ -53,7 +54,7 @@ export default function BrandHeader({
         </nav>
 
         <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
-          {stats.items} 条目 · {stats.blocks} 段内容
+          {summary.items} 条目 · {formatCount(summary.chars)} 字
         </div>
       </div>
     </header>

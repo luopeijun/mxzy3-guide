@@ -29,6 +29,12 @@ export interface GuideNode {
   children: GuideNode[];
 }
 
+/** Header / sidebar summary, derived at runtime so new content shows up immediately. */
+export interface GuideSummary {
+  items: number;
+  chars: number;
+}
+
 export interface GuideStats {
   categories: number;
   items: number;

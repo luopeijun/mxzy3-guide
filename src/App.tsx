@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GuideData } from './types/guide';
-import { findNodePath, flattenNodes, searchGuide } from './lib/guide';
+import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
 import { useHashSelection } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
 import AppShell from './components/AppShell';
@@ -22,6 +22,13 @@ function GuideApp({ data }: { data: GuideData }) {
 
   const path = useMemo(() => findNodePath(data, selectedId), [data, selectedId]);
   const hits = useMemo(() => searchGuide(data, query), [data, query]);
+  const summary = useMemo(
+    () => ({
+      items: data.meta.stats.items,
+      chars: data.categories.reduce((sum, category) => sum + countCharsDeep(category), 0),
+    }),
+    [data],
+  );
   const currentNode = path[path.length - 1];
   const activeCategoryId = path[0]?.id ?? '';
 
@@ -63,7 +70,7 @@ function GuideApp({ data }: { data: GuideData }) {
         <BrandHeader
           categories={data.categories}
           activeCategoryId={activeCategoryId}
-          stats={data.meta.stats}
+          summary={summary}
           onSelect={handleSelect}
           onMenuClick={() => setSidebarOpen(true)}
         />
@@ -76,7 +83,7 @@ function GuideApp({ data }: { data: GuideData }) {
           query={query}
           hits={hits}
           open={sidebarOpen}
-          stats={data.meta.stats}
+          summary={summary}
           onToggle={toggle}
           onSelect={handleSelect}
           onQueryChange={setQuery}

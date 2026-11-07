@@ -1,5 +1,5 @@
 import type { GuideData } from '../types/guide';
-import { countItems } from '../lib/guide';
+import { countCharsDeep, countItems, formatCount } from '../lib/guide';
 import StatusBadge from './StatusBadge';
 import { ui } from '../styles/patterns';
 
@@ -10,6 +10,7 @@ interface Props {
 
 export default function Overview({ data, onSelect }: Props) {
   const { stats } = data.meta;
+  const totalChars = data.categories.reduce((sum, category) => sum + countCharsDeep(category), 0);
 
   return (
     <div className={ui.content}>
@@ -34,12 +35,12 @@ export default function Overview({ data, onSelect }: Props) {
             <div className="text-ui-2xs text-white/90">条目 / 子条目</div>
           </div>
           <div>
-            <div className="text-ui-xl font-bold tabular-nums">{stats.blocks}</div>
-            <div className="text-ui-2xs text-white/90">正文段落</div>
+            <div className="text-ui-xl font-bold tabular-nums">{formatCount(totalChars)}</div>
+            <div className="text-ui-2xs text-white/90">内容字数</div>
           </div>
           <div>
-            <div className="text-ui-xl font-bold tabular-nums">{stats.sourceParagraphs}</div>
-            <div className="text-ui-2xs text-white/90">原文段落</div>
+            <div className="text-ui-xl font-bold tabular-nums">{stats.readyItems}</div>
+            <div className="text-ui-2xs text-white/90">已收录条目</div>
           </div>
         </div>
       </section>

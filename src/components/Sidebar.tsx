@@ -1,5 +1,6 @@
-import type { GuideNode } from '../types/guide';
+import type { GuideNode, GuideSummary } from '../types/guide';
 import type { SearchHit } from '../lib/guide';
+import { formatCount } from '../lib/guide';
 import GuideTree from './GuideTree';
 import SearchBox from './SearchBox';
 import SearchResults from './SearchResults';
@@ -12,14 +13,14 @@ interface Props {
   query: string;
   hits: SearchHit[];
   open: boolean;
-  stats: { items: number; blocks: number };
+  summary: GuideSummary;
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onQueryChange: (value: string) => void;
 }
 
 export default function Sidebar({
-  categories, selectedId, expandedIds, query, hits, open, stats,
+  categories, selectedId, expandedIds, query, hits, open, summary,
   onToggle, onSelect, onQueryChange,
 }: Props) {
   return (
@@ -55,7 +56,7 @@ export default function Sidebar({
       </nav>
 
       <div className="border-t border-line px-4 pt-[10px] pb-[14px] text-ui-2xs leading-[1.6] text-ink-faint">
-        共 {stats.items} 个条目 · {stats.blocks} 段正文
+        共 {summary.items} 个条目 · 约 {formatCount(summary.chars)} 字
         <br />
         纯浏览模式 · 进度追踪即将上线
       </div>
