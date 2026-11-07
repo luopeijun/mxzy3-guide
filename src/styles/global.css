@@ -1,86 +1,109 @@
-@import './tokens.css';
+@import "tailwindcss";
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Design tokens: the single source of truth for the visual language.
+   Components consume them through utilities like `text-ink`, `bg-brand-soft`. */
+@theme {
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Songti SC", "SimSun", Georgia, serif;
+
+  /* Surfaces & lines */
+  --color-canvas: #f6f4f0;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fbf9f5;
+  --color-sidebar: #f2eee8;
+  --color-line: #e8e1d7;
+  --color-line-strong: #d9cec0;
+
+  /* Text */
+  --color-ink: #302a26;
+  --color-ink-muted: #7a7067;
+  --color-ink-faint: #a99e92;
+
+  /* Brand & accents */
+  --color-brand: #7b3f6b;
+  --color-brand-strong: #5c2c50;
+  --color-brand-soft: #f3e9f1;
+  --color-brand-line: #e2cfe0;
+  --color-gold: #b9873c;
+  --color-gold-soft: #faf1de;
+  --color-gold-line: #efdcb9;
+  --color-note: #8a5a2b;
+  --color-note-soft: #fdf4e6;
+  --color-missing: #8d857c;
+  --color-missing-soft: #f1ede8;
+
+  /* Type scale (custom names avoid clashing with Tailwind defaults) */
+  --text-ui-2xs: 11px;
+  --text-ui-xs: 12px;
+  --text-ui-sm: 14px;
+  --text-ui-md: 15px;
+  --text-ui-lg: 18px;
+  --text-ui-xl: 22px;
+  --text-ui-2xl: 28px;
+
+  /* Radii */
+  --radius-ui-xs: 5px;
+  --radius-ui-sm: 8px;
+  --radius-ui-md: 12px;
+  --radius-ui-lg: 18px;
+
+  /* Elevation */
+  --shadow-soft: 0 1px 2px rgba(48, 42, 38, 0.05);
+  --shadow-card: 0 6px 20px rgba(48, 42, 38, 0.07);
+  --shadow-float: 0 14px 36px rgba(48, 42, 38, 0.12);
+
+  /* Breakpoints (matching the original layout thresholds) */
+  --breakpoint-tab: 980px;
+  --breakpoint-nav: 860px;
+  --breakpoint-phone: 520px;
 }
 
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
 
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-ui-sm);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
 
-h1,
-h2,
-h3,
-h4,
-p,
-ul,
-ol {
-  margin: 0;
-}
+  button {
+    cursor: pointer;
+  }
 
-ul,
-ol {
-  padding: 0;
-  list-style: none;
-}
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
 
-button,
-input {
-  font: inherit;
-  color: inherit;
-}
+  ::selection {
+    background: var(--color-brand-soft);
+    color: var(--color-brand-strong);
+  }
 
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-}
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+  }
 
-::selection {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-strong);
-}
-
-/* Shared scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border-strong) transparent;
-}
-
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border-radius: var(--radius-pill);
-}
-
-*::-webkit-scrollbar-track {
-  background: transparent;
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
