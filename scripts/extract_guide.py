@@ -410,13 +410,11 @@ def build(docx: Path, questions: Path, events: Path) -> dict:
     game_items = [
         make_node(
             "game-guide/initial-questions", "游戏初始问题",
-            source_title="初始问题选项",
             description="开局访谈的 14 道问题：选项影响艺人初始友好度与道具，点「接问题Ｎ」可跳到下一题。",
             blocks=build_question_blocks(questions),
         ),
         make_node(
             "game-guide/initial-events", "初始事件",
-            source_title="接手第一周细节",
             description=events_description or None,
             blocks=event_blocks,
         ),

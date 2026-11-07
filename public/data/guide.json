@@ -6,7 +6,7 @@
     "stats": {
       "categories": 4,
       "items": 59,
-      "blocks": 2926,
+      "blocks": 2923,
       "readyItems": 39,
       "missingItems": 7,
       "sourceParagraphs": 3706
@@ -25,7 +25,6 @@
           "id": "game-guide/initial-questions",
           "title": "游戏初始问题",
           "status": "ready",
-          "sourceTitle": "初始问题选项",
           "description": "开局访谈的 14 道问题：选项影响艺人初始友好度与道具，点「接问题Ｎ」可跳到下一题。",
           "blocks": [
             {
@@ -517,7 +516,6 @@
           "id": "game-guide/initial-events",
           "title": "初始事件",
           "status": "ready",
-          "sourceTitle": "接手第一周细节",
           "description": "初始事件（指林芬芬、苏嫚君、萧依莉或姚子莹）",
           "blocks": [
             {
@@ -752,21 +750,6 @@
               "kind": "note",
               "text": "提醒：如果把女艺人要的东西送给其他艺人的话，该艺人友好度下降，强制生病约半个月。",
               "group": 16
-            },
-            {
-              "kind": "section",
-              "text": "其他场景补充",
-              "group": 17
-            },
-            {
-              "kind": "paragraph",
-              "text": "医院选项：探望父亲，增加代入感，没有实质效果。",
-              "group": 17
-            },
-            {
-              "kind": "paragraph",
-              "text": "以上场景同时有触发遇见艺人的可能，所以各位第一周的行程可好好安排。",
-              "group": 17
             }
           ],
           "children": []
