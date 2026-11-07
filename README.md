@@ -41,6 +41,15 @@ src/styles/                 # design tokens 与全局样式
 - [ ] 第三步：按条件/事件筛选、全局搜索增强
 - [ ] 第四步：GitHub Pages 部署
 
+## 推送到 GitHub
+
+本地仓库按小步提交管理（提交信息为英文 `type: description`），主分支为 `main`。在 GitHub 新建空仓库后：
+
+```bash
+git remote add origin git@github.com:<your-name>/stardom3-guide.git
+git push -u origin main
+```
+
 ## 本地运行
 
 ```bash
