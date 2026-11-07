@@ -317,6 +317,7 @@ def build_event_blocks(path: Path) -> list[dict]:
     blocks: list[dict] = []
     group = 0
     in_section = False
+    has_section = False
     for raw_line in _read_text(path).splitlines():
         line = raw_line.strip()
         if not line:
@@ -328,11 +329,22 @@ def build_event_blocks(path: Path) -> list[dict]:
         if section:
             group += 1
             in_section = True
-            blocks.append({"kind": "section", "text": _tidy(section.group(1).strip()), "group": group})
+            has_section = True
+            blocks.append({
+                "kind": "section", "text": _tidy(section.group(1).strip()),
+                "depth": 0, "group": group,
+            })
             continue
 
         event = EVENT_LINE_RE.match(line)
         if event:
+            # The txt drops the old `#初始剧情` label, so the opening events would
+            # hang directly under the page. Give them their own section instead.
+            if not has_section:
+                group += 1
+                in_section = True
+                has_section = True
+                blocks.append({"kind": "section", "text": "初始剧情", "depth": 0, "group": group})
             group += 1
             blocks.append({
                 "kind": "event",
@@ -352,7 +364,11 @@ def build_event_blocks(path: Path) -> list[dict]:
         if SECTION_END_RE.match(line):
             group += 1
             in_section = True
-            blocks.append({"kind": "section", "text": _tidy(line.rstrip("：:")), "group": group})
+            has_section = True
+            blocks.append({
+                "kind": "section", "text": _tidy(line.rstrip("：:")),
+                "depth": 0, "group": group,
+            })
             continue
         if (
             in_section
@@ -360,7 +376,7 @@ def build_event_blocks(path: Path) -> list[dict]:
             and not line.startswith(SUBTITLE_BLOCKERS)
         ):
             group += 1
-            blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+            blocks.append({"kind": "heading", "text": _tidy(line), "depth": 1, "group": group})
             continue
         blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
 
