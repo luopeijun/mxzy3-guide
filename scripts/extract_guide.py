@@ -35,6 +35,8 @@ CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
 QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
 QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
 QUESTION_LINK_RE = re.compile(r"^接问题([0-9０-９]+)$")
+# Leading line of a plain-text source: `标题（补充说明）`.
+PREAMBLE_RE = re.compile(r"^(?P<title>[^（(]+?)\s*[（(](?P<note>.+?)[）)]\s*$")
 FULLWIDTH_DIGITS = str.maketrans("0123456789", "０１２３４５６７８９")
 HALFWIDTH_DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
 NOTE_PREFIXES = (
@@ -198,20 +200,37 @@ def _parse_question_option(number: str, body: str) -> dict:
     return block
 
 
-def build_question_blocks(path: Path) -> list[dict]:
+def build_question_blocks(path: Path, page_title: str = "") -> list[dict]:
     """Turn the 游戏初始问题 txt into anchor-linked question cards.
 
     Each question becomes a `heading` block carrying a stable `id` (q1, q2 …),
     and every option records the question it flows into as `target`, so the
     front-end can render "接问题３" as an in-page jump link.
+
+    The opening `标题（补充说明）` line is split: the bracket part becomes a
+    `note` (yellow hint) and the title becomes a `section` heading — unless it
+    repeats the page title, which the article header already shows.
     """
     blocks: list[dict] = []
     group = 0
     in_question = False
+    first_line = True
     for raw_line in _read_text(path).splitlines():
         line = raw_line.strip()
         if not line:
             continue
+
+        if first_line:
+            first_line = False
+            preamble = PREAMBLE_RE.match(line)
+            if preamble:
+                title = preamble.group("title").strip()
+                if title and title != page_title:
+                    group += 1
+                    blocks.append({"kind": "section", "text": title, "group": group})
+                group += 1
+                blocks.append({"kind": "note", "text": f"（{preamble.group('note').strip()}）", "group": group})
+                continue
 
         question = QUESTION_RE.match(line)
         if question:
@@ -411,7 +430,7 @@ def build(docx: Path, questions: Path, events: Path) -> dict:
         make_node(
             "game-guide/initial-questions", "游戏初始问题",
             description="开局访谈的 14 道问题：选项影响艺人初始友好度与道具，点「接问题Ｎ」可跳到下一题。",
-            blocks=build_question_blocks(questions),
+            blocks=build_question_blocks(questions, page_title="游戏初始问题"),
         ),
         make_node(
             "game-guide/initial-events", "初始事件",
