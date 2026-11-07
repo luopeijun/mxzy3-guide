@@ -1,8 +1,8 @@
 import type { ContentBlock } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
-import { cn } from '../lib/cn';
 import DataTable from './DataTable';
+import OptionLine from './OptionLine';
 import QuestionCard from './QuestionCard';
 import TypeTag from './TypeTag';
 
@@ -48,16 +48,10 @@ function EventDetail({ block }: { block: IndexedBlock }) {
       </p>
     );
   }
-  return (
-    <p
-      className={cn(
-        'text-ui-sm leading-[1.8] break-words',
-        block.kind === 'option' ? 'text-ink-muted' : 'text-ink',
-      )}
-    >
-      {block.text}
-    </p>
-  );
+  if (block.kind === 'option') {
+    return <OptionLine text={block.text} className="ml-[10px]" />;
+  }
+  return <p className="text-ui-sm leading-[1.8] break-words text-ink">{block.text}</p>;
 }
 
 function BlockView({ block }: { block: IndexedBlock }) {
@@ -95,7 +89,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
         </div>
       );
     case 'option':
-      return <p className="mb-[3px] pl-10 text-ui-sm leading-[1.85] text-ink-muted phone:pl-[22px]">{block.text}</p>;
+      return <OptionLine text={block.text} className="mb-[3px] ml-10 phone:ml-[22px]" />;
     case 'note':
       return (
         <p className="mb-[5px] whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-3 py-2 text-ui-sm leading-[1.8] text-note">

@@ -46,6 +46,11 @@
   --color-violet: #63437e;
   --color-violet-soft: #f1eaf7;
   --color-violet-line: #e2d5ee;
+  /* Choices (A. / B. / C. …) — neutral grey so a list of options reads as a
+     block of its own instead of one more line of event text. */
+  --color-choice: #494048;
+  --color-choice-soft: #f4f2f4;
+  --color-choice-line: #e2dcdf;
 
   /* Type scale — one step larger than before for comfortable reading */
   --text-ui-2xs: 12px;
