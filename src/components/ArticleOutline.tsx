@@ -1,9 +1,26 @@
 import { useId, useState } from 'react';
 import { cn } from '../lib/cn';
+import type { OutlineItem } from '../lib/guide';
 
 interface Props {
-  items: { id: string; text: string }[];
+  items: OutlineItem[];
   onJump?: (anchor: string) => void;
+}
+
+/** `2.` for sections, `2.1.` for sub-titles so nesting reads at a glance. */
+function numberItems(items: OutlineItem[]): (OutlineItem & { marker: string })[] {
+  let section = 0;
+  let subtitle = 0;
+  return items.map((item) => {
+    // A sub-title before any section has no parent to attach to; show it flat.
+    if (item.depth > 0 && section > 0) {
+      subtitle += 1;
+      return { ...item, marker: `${section}.${subtitle}.` };
+    }
+    section += 1;
+    subtitle = 0;
+    return { ...item, marker: `${section}.` };
+  });
 }
 
 /** In-page section list. Collapsed by default so it reads as a single summary
@@ -57,14 +74,27 @@ export default function ArticleOutline({ items, onJump }: Props) {
 
       {open && (
         <ol id={listId} className="max-h-[320px] overflow-y-auto border-t border-line px-[10px] py-2">
-          {items.map((item, index) => (
-            <li key={item.id}>
+          {numberItems(items).map((item) => (
+            <li
+              key={item.id}
+              className={cn('relative', item.depth > 0 && 'ml-[7px] pl-[15px]')}
+            >
+              {item.depth > 0 && (
+                <span aria-hidden="true" className="absolute bottom-[8px] left-0 top-[8px] w-px bg-line" />
+              )}
               <button
                 className="flex w-full items-start gap-2 rounded-ui-sm px-2 py-[7px] text-left text-ui-xs leading-[1.65] text-brand hover:bg-brand-soft hover:no-underline"
                 type="button"
                 onClick={() => jump(item.id)}
               >
-                <span className="w-[20px] shrink-0 tabular-nums text-ui-2xs text-ink-faint">{index + 1}.</span>
+                <span
+                  className={cn(
+                    'shrink-0 tabular-nums text-ui-2xs text-ink-faint',
+                    item.marker.length > 2 ? 'w-[26px]' : 'w-[20px]',
+                  )}
+                >
+                  {item.marker}
+                </span>
                 <span className="min-w-0">{item.text}</span>
               </button>
             </li>

@@ -129,7 +129,14 @@ export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
   return hits.sort((a, b) => b.score - a.score).slice(0, 40);
 }
 
-export function outlineOf(node: GuideNode): { id: string; text: string }[] {
+export interface OutlineItem {
+  id: string;
+  text: string;
+  /** 0 = section, 1 = sub-title nested under the preceding section. */
+  depth: number;
+}
+
+export function outlineOf(node: GuideNode): OutlineItem[] {
   return node.blocks
     .map((block, index) => ({ block, index }))
     .filter(({ block }) => block.kind === 'section' || block.kind === 'heading')
@@ -137,6 +144,7 @@ export function outlineOf(node: GuideNode): { id: string; text: string }[] {
       id: block.id ?? `block-${index}`,
       // Labelled headings (questions) read better as a compact marker.
       text: block.label ?? block.text,
+      depth: block.depth ?? 0,
     }));
 }
 

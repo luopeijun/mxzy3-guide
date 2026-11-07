@@ -41,6 +41,8 @@ export interface ContentBlock {
   targetLabel?: string;
   /** Footnote under an option, e.g. the bracket note after 问题结束. */
   hint?: string;
+  /** Nesting level of a section (0) or a sub-title (1), used by the outline. */
+  depth?: number;
   /** Tabular payload of a `table` block. */
   table?: TableData;
 }
