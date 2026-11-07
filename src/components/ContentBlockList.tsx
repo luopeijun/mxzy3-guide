@@ -3,6 +3,7 @@ import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
 import { cn } from '../lib/cn';
 import QuestionCard from './QuestionCard';
+import TypeTag from './TypeTag';
 
 interface Props {
   blocks: ContentBlock[];
@@ -24,7 +25,10 @@ function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
             {head.label}
           </span>
         )}
-        <span className="min-w-0 flex-1 break-words">{head.text}</span>
+        <span className="min-w-0 flex-1 break-words">
+          {head.tag && <TypeTag label={head.tag} />}
+          {head.text}
+        </span>
       </div>
       {rest.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">
@@ -83,7 +87,10 @@ function BlockView({ block }: { block: IndexedBlock }) {
               {block.label}
             </span>
           )}
-          <span className="min-w-0 flex-1 break-words">{block.text}</span>
+          <span className="min-w-0 flex-1 break-words">
+            {block.tag && <TypeTag label={block.tag} />}
+            {block.text}
+          </span>
         </div>
       );
     case 'option':

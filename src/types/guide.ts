@@ -6,6 +6,8 @@ export interface ContentBlock {
   group: number;
   /** Short marker shown in front of the text, e.g. an event number or 问题１. */
   label?: string;
+  /** Trigger type of an event, rendered as a tag: 自动 / 场景 / 跟随 / 手动. */
+  tag?: string;
   /** Stable in-page anchor id, used by outline links and jump targets. */
   id?: string;
   /** Option name for question cards, e.g. 爱的教育. */

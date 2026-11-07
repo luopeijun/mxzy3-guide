@@ -29,8 +29,8 @@ EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（
 OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ][\.．、]\s*")
 # Plain-text sources: `#` and `*` are the same heading level by design.
 SECTION_RE = re.compile(r"^[#*]\s*(.+)$")
-# `1.（自动）` / `3－1 （跟随）` / `6 （手动）` — keep the trailing marker in the body.
-EVENT_LINE_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s*[（(]")
+# `1.（自动）` / `3－1 （跟随）` / `6 （手动）` — the marker becomes a tag.
+EVENT_LINE_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s*[（(]([^）)]+)[）)]\s*")
 CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
 QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
 QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
@@ -290,8 +290,9 @@ def build_event_blocks(path: Path) -> tuple[str, list[dict]]:
             group += 1
             blocks.append({
                 "kind": "event",
-                "text": line[event.end() - 1:].strip(),
+                "text": line[event.end():].strip(),
                 "label": event.group(1),
+                "tag": event.group(2),
                 "group": group,
             })
             continue

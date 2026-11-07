@@ -33,6 +33,9 @@
   --color-note-soft: #fdf5e9;
   --color-missing: #6b5860;
   --color-missing-soft: #f4e9ee;
+  /* Fourth tag tone (手动) — stays inside the plum family */
+  --color-violet: #63437e;
+  --color-violet-soft: #f1eaf7;
 
   /* Type scale — one step larger than before for comfortable reading */
   --text-ui-2xs: 12px;
