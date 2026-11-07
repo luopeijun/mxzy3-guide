@@ -1,4 +1,4 @@
-export type ContentBlockKind = 'heading' | 'event' | 'option' | 'note' | 'paragraph';
+export type ContentBlockKind = 'section' | 'heading' | 'event' | 'option' | 'note' | 'paragraph';
 
 export interface ContentBlock {
   kind: ContentBlockKind;

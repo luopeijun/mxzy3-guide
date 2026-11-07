@@ -10,6 +10,15 @@ interface Props {
 
 function BlockView({ block }: { block: IndexedBlock }) {
   switch (block.kind) {
+    case 'section':
+      return (
+        <h3
+          id={block.id ?? `block-${block.index}`}
+          className="mt-7 mb-3 scroll-mt-[18px] text-ui-lg font-bold tracking-[0.01em] text-brand-strong"
+        >
+          {block.text}
+        </h3>
+      );
     case 'heading':
       return (
         <h3

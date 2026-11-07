@@ -108,7 +108,7 @@ export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
 export function outlineOf(node: GuideNode): { id: string; text: string }[] {
   return node.blocks
     .map((block, index) => ({ block, index }))
-    .filter(({ block }) => block.kind === 'heading')
+    .filter(({ block }) => block.kind === 'section' || block.kind === 'heading')
     .map(({ block, index }) => ({
       id: block.id ?? `block-${index}`,
       // Labelled headings (questions) read better as a compact marker.
