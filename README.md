@@ -54,6 +54,7 @@ src/styles/patterns.ts         # 跨组件复用的 Tailwind 配方（卡片、�
 - 「游戏初始问题」每题是一个 `heading` 块（`id: q1`…`q14`），每个选项记录 `target`（下一题）、`targetLabel`（显示为「接问题３」）与可选的 `reward`。
 - 点击跳转链接会平滑滚动到目标、加一圈高亮闪动，并把地址写成 `#/game-guide/initial-questions~q3`（用 `replaceState`，不会触发 `hashchange` 重置选中项）。
 - 刷新或分享该地址会直接落回对应题目：`useHashSelection` 只取 `~` 之前的部分作为节点 id，`useAnchorJump` 负责滚到锚点。
+- 「本页小节」默认折叠成一行标题，点击展开为竖向编号列表（超过 320px 行内滚动），跳转行为与「接问题Ｎ」一致；展开状态在切换条目时保留，刷新后回到折叠。
 
 ## 样式约定
 
