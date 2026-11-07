@@ -680,7 +680,7 @@ def build(docx: Path, questions: Path, events: Path, stats: Path) -> dict:
 
     categories = [
         make_node(
-            "game-guide", "游戏攻略",
+            "game-guide", "经纪人事件簿",
             source_title="明3 · 原片+资料集 · 攻略",
             description="系统机制、数值、称号与结局条件等基础资料。",
             children=game_items,
