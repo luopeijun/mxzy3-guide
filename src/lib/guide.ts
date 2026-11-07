@@ -36,9 +36,33 @@ export function flattenNodes(data: GuideData): GuideNode[] {
   return result;
 }
 
+/** Table cells, flattened in column order; empty for non-table blocks. */
+function tableCells(block: ContentBlock): string[] {
+  if (!block.table) return [];
+  return block.table.rows.flatMap((row) =>
+    block.table!.columns.map((column) => row[column.key] ?? ''),
+  );
+}
+
+/** Table rows as readable `姓名 演技182 口才140` pairs, for search + snippets. */
+function tableText(block: ContentBlock): string {
+  if (!block.table) return '';
+  const { columns, rows } = block.table;
+  const [nameColumn, ...rest] = columns;
+  return rows
+    .map((row) => {
+      const values = rest.map((column) => `${column.label}${row[column.key] ?? ''}`).join(' ');
+      return `${row[nameColumn.key] ?? ''} ${values}`;
+    })
+    .join(' ');
+}
+
 /** Characters in a node's own body text; whitespace is ignored, punctuation kept. */
 export function countChars(node: GuideNode): number {
-  return node.blocks.reduce((sum, block) => sum + block.text.replace(/\s/g, '').length, 0);
+  return node.blocks.reduce(
+    (sum, block) => sum + (block.text + tableCells(block).join('')).replace(/\s/g, '').length,
+    0,
+  );
 }
 
 /** Characters including every descendant, used for category-level sizes. */
@@ -66,7 +90,7 @@ function snippetOf(text: string, query: string): string {
 
 /** Everything in a block that the search box should look at. */
 function searchableText(block: ContentBlock): string {
-  return [block.text, block.action, block.reward, block.label, block.targetLabel]
+  return [block.text, block.action, block.reward, block.label, block.targetLabel, tableText(block)]
     .filter(Boolean)
     .join(' ');
 }

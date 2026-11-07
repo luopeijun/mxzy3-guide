@@ -2,6 +2,7 @@ import type { ContentBlock } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
 import { cn } from '../lib/cn';
+import DataTable from './DataTable';
 import QuestionCard from './QuestionCard';
 import TypeTag from './TypeTag';
 
@@ -101,6 +102,8 @@ function BlockView({ block }: { block: IndexedBlock }) {
           {block.text}
         </p>
       );
+    case 'table':
+      return block.table ? <DataTable data={block.table} /> : null;
     default:
       return <p className="mb-1 text-ui-md leading-[1.9] break-words text-ink">{block.text}</p>;
   }

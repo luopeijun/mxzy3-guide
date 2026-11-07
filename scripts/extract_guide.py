@@ -23,6 +23,7 @@ DEFAULT_DOCX = Path("E:/Downloads/明星志愿3攻略.docx")
 SOURCES = ROOT / "sources"
 DEFAULT_QUESTIONS = SOURCES / "game-initial-questions.txt"
 DEFAULT_EVENTS = SOURCES / "initial-events.txt"
+DEFAULT_STATS = SOURCES / "character-stats.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -41,6 +42,9 @@ CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
 QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
 QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
 QUESTION_LINK_RE = re.compile(r"^接问题([0-9０-９]+)$")
+# `姓名：林芬芬` / `年龄：16` / `生日：11/12` and `演技：182` in the stats sheet.
+STATS_FIELD_RE = re.compile(r"^(姓名|年龄|生日)[：:]\s*(.+)$")
+STATS_VALUE_RE = re.compile(r"^(.+?)[：:]\s*([0-9０-９]+)\s*$")
 # Leading line of a plain-text source: `标题（补充说明）`.
 PREAMBLE_RE = re.compile(r"^(?P<title>[^（(]+?)\s*[（(](?P<note>.+?)[）)]\s*$")
 FULLWIDTH_DIGITS = str.maketrans("0123456789", "０１２３４５６７８９")
@@ -363,6 +367,79 @@ def build_event_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+# Attribute columns of the stats sheet, in source order: (label, key).
+STATS_ATTRS = [
+    ("演技", "acting"),
+    ("口才", "eloquence"),
+    ("歌艺", "singing"),
+    ("名气", "fame"),
+    ("仪态", "etiquette"),
+    ("动感", "dynamism"),
+    ("体能", "stamina"),
+    ("才智", "wit"),
+    ("自信", "confidence"),
+]
+STATS_ATTR_KEYS = {label: key for label, key in STATS_ATTRS}
+
+
+def build_stats_blocks(path: Path) -> list[dict]:
+    """Turn the 所有人物初始属性 sheet into one `table` block.
+
+    The TXT holds one character per blank-line separated stanza: `姓名` /
+    `年龄` / `生日` followed by the nine attributes. That maps straight onto a
+    table — one row per character, one column per attribute — which reads far
+    better than repeating `演技：182` as prose.
+    """
+    rows: list[dict] = []
+    current: dict | None = None
+    for raw_line in _read_text(path).splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        field = STATS_FIELD_RE.match(line)
+        if field:
+            label, value = field.group(1), field.group(2).strip()
+            if label == "姓名":
+                current = {"name": value}
+                rows.append(current)
+            elif current is not None:
+                current["age" if label == "年龄" else "birthday"] = value
+            continue
+
+        value = STATS_VALUE_RE.match(line)
+        if value and current is not None:
+            key = STATS_ATTR_KEYS.get(value.group(1).strip())
+            if key:
+                current[key] = value.group(2).translate(HALFWIDTH_DIGITS)
+
+    expected = ["name", "age", "birthday", *(key for _, key in STATS_ATTRS)]
+    broken = [
+        (row.get("name", "?"), key)
+        for row in rows
+        for key in expected
+        if key not in row
+    ]
+    if broken:
+        raise ValueError(f"stats sheet is incomplete: {broken}")
+
+    columns: list[dict] = [
+        {"key": "name", "label": "姓名"},
+        {"key": "age", "label": "年龄", "numeric": True},
+        {"key": "birthday", "label": "生日"},
+        *(
+            {"key": key, "label": label, "numeric": True, "highlight": True}
+            for label, key in STATS_ATTRS
+        ),
+    ]
+    return [{
+        "kind": "table",
+        "text": f"{len(rows)} 位可签约艺人的初始属性",
+        "table": {"columns": columns, "rows": rows},
+        "group": 1,
+    }]
+
+
 def make_node(
     node_id: str,
     title: str,
@@ -451,10 +528,11 @@ class Sections:
         return nodes
 
 
-def build(docx: Path, questions: Path, events: Path) -> dict:
+def build(docx: Path, questions: Path, events: Path, stats: Path) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
     event_blocks = build_event_blocks(events)
+    stats_blocks = build_stats_blocks(stats)
 
     required = [
         "角色攻略", "初始问题选项", "场景开启方法", "★制作人选择", "打工相关",
@@ -481,7 +559,7 @@ def build(docx: Path, questions: Path, events: Path) -> dict:
     ending_lines = sections.texts[ending_marker:fatigue_marker]
     fatigue_lines = sections.texts[fatigue_marker:sd_end]
 
-    # ---- 游戏攻略 ----
+    # ---- 经纪人事件簿 ----
     game_items = [
         make_node(
             "game-guide/initial-questions", "游戏初始问题",
@@ -493,7 +571,11 @@ def build(docx: Path, questions: Path, events: Path) -> dict:
             description="开局第一周的新手事件，以及初始女艺人（林芬芬、苏嫚君、萧依莉、姚子莹）的疑惑与请求；序号后的标签是触发方式。",
             blocks=event_blocks,
         ),
-        make_node("game-guide/initial-stats", "所有人物初始属性", status="missing"),
+        make_node(
+            "game-guide/initial-stats", "所有人物初始属性",
+            description="12 位可签约艺人在游戏开始时的属性值；每列加粗的是该项最高的人。",
+            blocks=stats_blocks,
+        ),
         make_node(
             "game-guide/scenes", "场景开启方法",
             blocks=build_blocks(sections.intro("场景开启方法")),
@@ -654,13 +736,16 @@ def main() -> None:
     docx = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DOCX
     questions = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_QUESTIONS
     events = Path(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_EVENTS
+    stats = Path(sys.argv[4]) if len(sys.argv) > 4 else DEFAULT_STATS
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
         raise SystemExit(f"questions txt not found: {questions}")
     if not events.exists():
         raise SystemExit(f"events txt not found: {events}")
-    data = build(docx, questions, events)
+    if not stats.exists():
+        raise SystemExit(f"stats txt not found: {stats}")
+    data = build(docx, questions, events, stats)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

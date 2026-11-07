@@ -1,4 +1,25 @@
-export type ContentBlockKind = 'section' | 'heading' | 'event' | 'option' | 'note' | 'paragraph';
+export type ContentBlockKind =
+  | 'section'
+  | 'heading'
+  | 'event'
+  | 'option'
+  | 'note'
+  | 'paragraph'
+  | 'table';
+
+export interface TableColumn {
+  key: string;
+  label: string;
+  /** Numbers: right-aligned with tabular figures. */
+  numeric?: boolean;
+  /** Marks the highest value of this column on every row. */
+  highlight?: boolean;
+}
+
+export interface TableData {
+  columns: TableColumn[];
+  rows: Record<string, string>[];
+}
 
 export interface ContentBlock {
   kind: ContentBlockKind;
@@ -20,6 +41,8 @@ export interface ContentBlock {
   targetLabel?: string;
   /** Footnote under an option, e.g. the bracket note after 问题结束. */
   hint?: string;
+  /** Tabular payload of a `table` block. */
+  table?: TableData;
 }
 
 export interface GuideNode {
