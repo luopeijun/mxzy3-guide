@@ -29,6 +29,12 @@ EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（
 OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ][\.．、]\s*")
 # Plain-text sources: `#` and `*` are the same heading level by design.
 SECTION_RE = re.compile(r"^[#*]\s*(.+)$")
+# Untagged source titles: `初始女艺人的事件（指…）：` — a lone colon-terminated
+# line with no sentence punctuation of its own.
+SECTION_END_RE = re.compile(r"^[^，,。！？；;]{2,40}[：:]$")
+# `女艺人的疑惑` — a bare short line inside a section becomes a sub-heading.
+SUBTITLE_RE = re.compile(r"^[^，,。！？；;：:\dA-Za-z]{2,16}$")
+SUBTITLE_BLOCKERS = ("提醒", "以上", "该", "此", "主角", "谈话", "日后")
 # `1.（自动）` / `3－1 （跟随）` / `6 （手动）` — the marker becomes a tag.
 EVENT_LINE_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s*[（(]([^）)]+)[）)]\s*")
 CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
@@ -159,6 +165,15 @@ def _read_text(path: Path) -> str:
     raise ValueError(f"cannot decode {path}")
 
 
+DASH_RE = re.compile(r"(?<!-)--(?!-)")
+CJK_COMMA_RE = re.compile(r",(?=[\u3400-\u9fff])")
+
+
+def _tidy(text: str) -> str:
+    """Normalise the ASCII punctuation the plain-text sources mix in."""
+    return CJK_COMMA_RE.sub("，", DASH_RE.sub("——", text))
+
+
 def _parse_question_option(number: str, body: str) -> dict:
     """`１．爱的教育→林芬芬的友好度＋20，获得道具→接问题３` -> option block.
 
@@ -284,30 +299,32 @@ def build_question_blocks(path: Path, page_title: str = "") -> list[dict]:
     return blocks
 
 
-def build_event_blocks(path: Path) -> tuple[str, list[dict]]:
-    """Turn the 初始事件 txt into (description, blocks).
+def build_event_blocks(path: Path) -> list[dict]:
+    """Turn the 初始事件 txt into blocks.
 
-    `#` and `*` mark the same heading level, so both become `heading` blocks.
-    Numbered lines become `event` blocks (the number survives as `label`),
-    A./B. lines become options, `提醒：` lines become notes, and per-character
-    alternatives (`旗下艺人为…`) are indented like options.
+    `#` and `*` mark the same heading level, so both become `section` blocks;
+    an untagged title such as `初始女艺人的事件（指…）：` is recognised by its
+    trailing colon, and a bare short line inside a section (`女艺人的疑惑`)
+    becomes a `heading` sub-title. Numbered lines become `event` blocks (the
+    number survives as `label`), A./B. lines become options, `提醒：` lines
+    become notes, and per-character alternatives (`旗下艺人为…`) are indented
+    like options. The leading `★标题` line is the page title and is skipped.
     """
     blocks: list[dict] = []
-    description = ""
     group = 0
+    in_section = False
     for raw_line in _read_text(path).splitlines():
         line = raw_line.strip()
         if not line:
             continue
-
-        if not blocks and not description and line.endswith(("：", ":")):
-            description = line.rstrip("：:")
+        if not blocks and line.startswith(("★", "☆")):
             continue
 
         section = SECTION_RE.match(line)
         if section:
             group += 1
-            blocks.append({"kind": "section", "text": section.group(1).strip(), "group": group})
+            in_section = True
+            blocks.append({"kind": "section", "text": _tidy(section.group(1).strip()), "group": group})
             continue
 
         event = EVENT_LINE_RE.match(line)
@@ -315,7 +332,7 @@ def build_event_blocks(path: Path) -> tuple[str, list[dict]]:
             group += 1
             blocks.append({
                 "kind": "event",
-                "text": line[event.end():].strip(),
+                "text": _tidy(line[event.end():].strip()),
                 "label": event.group(1),
                 "tag": event.group(2),
                 "group": group,
@@ -323,14 +340,27 @@ def build_event_blocks(path: Path) -> tuple[str, list[dict]]:
             continue
 
         if line.startswith("提醒"):
-            blocks.append({"kind": "note", "text": line, "group": group})
+            blocks.append({"kind": "note", "text": _tidy(line), "group": group})
             continue
         if OPTION_RE.match(line) or CHARACTER_OPTION_RE.match(line):
-            blocks.append({"kind": "option", "text": line, "group": group})
+            blocks.append({"kind": "option", "text": _tidy(line), "group": group})
             continue
-        blocks.append({"kind": "paragraph", "text": line, "group": group})
+        if SECTION_END_RE.match(line):
+            group += 1
+            in_section = True
+            blocks.append({"kind": "section", "text": _tidy(line.rstrip("：:")), "group": group})
+            continue
+        if (
+            in_section
+            and SUBTITLE_RE.match(line)
+            and not line.startswith(SUBTITLE_BLOCKERS)
+        ):
+            group += 1
+            blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+            continue
+        blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
 
-    return description, blocks
+    return blocks
 
 
 def make_node(
@@ -424,7 +454,7 @@ class Sections:
 def build(docx: Path, questions: Path, events: Path) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
-    events_description, event_blocks = build_event_blocks(events)
+    event_blocks = build_event_blocks(events)
 
     required = [
         "角色攻略", "初始问题选项", "场景开启方法", "★制作人选择", "打工相关",
@@ -460,7 +490,7 @@ def build(docx: Path, questions: Path, events: Path) -> dict:
         ),
         make_node(
             "game-guide/initial-events", "初始事件",
-            description=events_description or None,
+            description="开局第一周的新手事件，以及初始女艺人（林芬芬、苏嫚君、萧依莉、姚子莹）的疑惑与请求；序号后的标签是触发方式。",
             blocks=event_blocks,
         ),
         make_node("game-guide/initial-stats", "所有人物初始属性", status="missing"),
