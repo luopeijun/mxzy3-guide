@@ -20,10 +20,17 @@ from pathlib import Path
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DOCX = Path("E:/Downloads/明星志愿3攻略.docx")
+SOURCES = ROOT / "sources"
+DEFAULT_QUESTIONS = SOURCES / "game-initial-questions.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
 OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ][\.．、]\s*")
+QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
+QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
+QUESTION_LINK_RE = re.compile(r"^接问题([0-9０-９]+)$")
+FULLWIDTH_DIGITS = str.maketrans("0123456789", "０１２３４５６７８９")
+HALFWIDTH_DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
 NOTE_PREFIXES = (
     "（提示", "（注意", "（PS", "（特别", "（如果",
     "PS：", "PS:", "超PS", "重要前提", "提示：", "注意：", "BTW：",
@@ -133,6 +140,100 @@ def build_blocks(lines: list[str]) -> list[dict]:
     return blocks
 
 
+def _read_text(path: Path) -> str:
+    """Decode a plain-text source, tolerating the GBK files the game guides use."""
+    raw = path.read_bytes()
+    for encoding in ("utf-8-sig", "gb18030"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise ValueError(f"cannot decode {path}")
+
+
+def _parse_question_option(number: str, body: str) -> dict:
+    """`１．爱的教育→林芬芬的友好度＋20，获得道具→接问题３` -> option block."""
+    parts = [part.strip() for part in body.split("→") if part.strip()]
+    action = parts[0] if parts else ""
+    effects: list[str] = []
+    target = ""
+    target_label = ""
+
+    for part in parts[1:]:
+        link = QUESTION_LINK_RE.match(part)
+        if link:
+            number_next = link.group(1).translate(HALFWIDTH_DIGITS)
+            target = f"q{number_next}"
+            target_label = f"接问题{number_next.translate(FULLWIDTH_DIGITS)}"
+            continue
+        if part.startswith("问题结束"):
+            target_label = "问题结束"
+            extra = part[len("问题结束"):].strip().strip("（）()")
+            if extra:
+                effects.append(extra)
+            continue
+        effects.append(part)
+
+    text = "，".join(effects)
+    block: dict = {
+        "kind": "option",
+        "text": text,
+        "label": number.translate(HALFWIDTH_DIGITS),
+        "action": action,
+    }
+    reward = re.search(r"[，,]?\s*获得(.+)$", text)
+    if reward:
+        block["reward"] = reward.group(1).strip()
+        block["text"] = text[:reward.start()].strip("，, ")
+    if target:
+        block["target"] = target
+    if target_label:
+        block["targetLabel"] = target_label
+    return block
+
+
+def build_question_blocks(path: Path) -> list[dict]:
+    """Turn the 游戏初始问题 txt into anchor-linked question cards.
+
+    Each question becomes a `heading` block carrying a stable `id` (q1, q2 …),
+    and every option records the question it flows into as `target`, so the
+    front-end can render "接问题３" as an in-page jump link.
+    """
+    blocks: list[dict] = []
+    group = 0
+    in_question = False
+    for raw_line in _read_text(path).splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        question = QUESTION_RE.match(line)
+        if question:
+            group += 1
+            in_question = True
+            number = question.group(1).translate(HALFWIDTH_DIGITS)
+            blocks.append({
+                "kind": "heading",
+                "text": question.group(2).strip(),
+                "label": f"问题{number.translate(FULLWIDTH_DIGITS)}",
+                "id": f"q{number}",
+                "group": group,
+            })
+            continue
+
+        option = QUESTION_OPTION_RE.match(line)
+        if option and in_question:
+            blocks.append({**_parse_question_option(option.group(1), option.group(2)), "group": group})
+            continue
+
+        group += 1
+        in_question = False
+        kind = "note" if not blocks else "paragraph"
+        blocks.append({"kind": kind, "text": line, "group": group})
+
+    return blocks
+
+
 def make_node(
     node_id: str,
     title: str,
@@ -221,7 +322,7 @@ class Sections:
         return nodes
 
 
-def build(docx: Path) -> dict:
+def build(docx: Path, questions: Path) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
 
@@ -252,12 +353,11 @@ def build(docx: Path) -> dict:
 
     # ---- 游戏攻略 ----
     game_items = [
-        make_node("game-guide/character-intro", "角色介绍", status="missing"),
-        make_node("game-guide/relationship-map", "人物关系图", status="missing"),
         make_node(
             "game-guide/initial-questions", "游戏初始问题",
             source_title="初始问题选项",
-            blocks=build_blocks(sections.intro("初始问题选项")),
+            description="开局访谈的 14 道问题：选项影响艺人初始友好度与道具，点「接问题Ｎ」可跳到下一题。",
+            blocks=build_question_blocks(questions),
         ),
         make_node(
             "game-guide/initial-events", "初始事件",
@@ -423,9 +523,12 @@ def build(docx: Path) -> dict:
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     docx = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DOCX
+    questions = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_QUESTIONS
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
-    data = build(docx)
+    if not questions.exists():
+        raise SystemExit(f"questions txt not found: {questions}")
+    data = build(docx, questions)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

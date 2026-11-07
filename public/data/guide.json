@@ -5,10 +5,10 @@
     "generatedBy": "scripts/extract_guide.py",
     "stats": {
       "categories": 4,
-      "items": 61,
-      "blocks": 2923,
+      "items": 59,
+      "blocks": 2921,
       "readyItems": 39,
-      "missingItems": 9,
+      "missingItems": 7,
       "sourceParagraphs": 3706
     }
   },
@@ -22,324 +22,493 @@
       "blocks": [],
       "children": [
         {
-          "id": "game-guide/character-intro",
-          "title": "角色介绍",
-          "status": "missing",
-          "blocks": [],
-          "children": []
-        },
-        {
-          "id": "game-guide/relationship-map",
-          "title": "人物关系图",
-          "status": "missing",
-          "blocks": [],
-          "children": []
-        },
-        {
           "id": "game-guide/initial-questions",
           "title": "游戏初始问题",
           "status": "ready",
           "sourceTitle": "初始问题选项",
+          "description": "开局访谈的 14 道问题：选项影响艺人初始友好度与道具，点「接问题Ｎ」可跳到下一题。",
           "blocks": [
             {
-              "kind": "paragraph",
-              "text": "新档开始时会需要回答一系列问题，主要作用是给予相关艺人更多初始友好度和一些道具物品，但其实对于开局和后续签约并没有重大影响。",
-              "group": 0
-            },
-            {
-              "kind": "paragraph",
-              "text": "因此，建议各位在这里就以自己作为经纪人的初心来回答，就挺好",
-              "group": 0
-            },
-            {
-              "kind": "paragraph",
-              "text": "若选择预设角色，则所有可签艺人（18位）初始好感为30，部分制作人好感为30—50。",
+              "kind": "note",
+              "text": "游戏初始问题（增加友好度的艺人不包括资料片中新增的）",
               "group": 1
             },
             {
-              "kind": "paragraph",
-              "text": "若回答问题，则克烈斯的好感从30加起，其他17位从0加起。",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "问题１：如果你是经纪人，对于旗下艺人，你采用的教育方式是？",
+              "kind": "heading",
+              "text": "如果你是经纪人，对于旗下艺人，你采用的教育方式是？",
+              "label": "问题１",
+              "id": "q1",
               "group": 2
             },
             {
-              "kind": "paragraph",
-              "text": "１．爱的教育→林芬芬、欧怡青、苏嫚君的友好度各＋20→接问题３",
+              "kind": "option",
+              "text": "林芬芬、欧怡青、苏嫚君的友好度各＋20",
+              "label": "1",
+              "action": "爱的教育",
+              "target": "q3",
+              "targetLabel": "接问题３",
               "group": 2
             },
             {
-              "kind": "paragraph",
-              "text": "２．严格管教→桑禾蓓、萧依莉的友好度各＋20→接问题４",
+              "kind": "option",
+              "text": "桑禾蓓、萧依莉的友好度各＋20",
+              "label": "2",
+              "action": "严格管教",
+              "target": "q4",
+              "targetLabel": "接问题４",
               "group": 2
             },
             {
-              "kind": "paragraph",
-              "text": "３．自由放任→林芬芬、纪翔、姚子奇的友好度各＋20→接问题２",
+              "kind": "option",
+              "text": "林芬芬、纪翔、姚子奇的友好度各＋20",
+              "label": "3",
+              "action": "自由放任",
+              "target": "q2",
+              "targetLabel": "接问题２",
               "group": 2
             },
             {
-              "kind": "paragraph",
-              "text": "问题２：旗下艺人要求帮忙付账单，你会？",
+              "kind": "heading",
+              "text": "旗下艺人要求帮忙付账单，你会？",
+              "label": "问题２",
+              "id": "q2",
               "group": 3
             },
             {
-              "kind": "paragraph",
-              "text": "１．一口答应→林芬芬、天晴的友好度各＋20→接问题５",
+              "kind": "option",
+              "text": "林芬芬、天晴的友好度各＋20",
+              "label": "1",
+              "action": "一口答应",
+              "target": "q5",
+              "targetLabel": "接问题５",
               "group": 3
             },
             {
-              "kind": "paragraph",
-              "text": "２．不理不睬→桑禾蓓、纪翔的友好度各＋20，获得人面狮王身纸镇→接问题６",
+              "kind": "option",
+              "text": "桑禾蓓、纪翔的友好度各＋20",
+              "label": "2",
+              "action": "不理不睬",
+              "reward": "人面狮王身纸镇",
+              "target": "q6",
+              "targetLabel": "接问题６",
               "group": 3
             },
             {
-              "kind": "paragraph",
-              "text": "３．扣薪赔偿→关古威、路风的友好度各＋20→接问题７",
+              "kind": "option",
+              "text": "关古威、路风的友好度各＋20",
+              "label": "3",
+              "action": "扣薪赔偿",
+              "target": "q7",
+              "targetLabel": "接问题７",
               "group": 3
             },
             {
-              "kind": "paragraph",
-              "text": "问题３：旗下艺人忙于副业，你会？",
+              "kind": "heading",
+              "text": "旗下艺人忙于副业，你会？",
+              "label": "问题３",
+              "id": "q3",
               "group": 4
             },
             {
-              "kind": "paragraph",
-              "text": "１．热心帮忙→苏嫚君、陈奕夫的友好度各＋20→接问题４",
+              "kind": "option",
+              "text": "苏嫚君、陈奕夫的友好度各＋20",
+              "label": "1",
+              "action": "热心帮忙",
+              "target": "q4",
+              "targetLabel": "接问题４",
               "group": 4
             },
             {
-              "kind": "paragraph",
-              "text": "２．规劝督导→路敏、萧依莉的友好度各＋20→接问题５",
+              "kind": "option",
+              "text": "路敏、萧依莉的友好度各＋20",
+              "label": "2",
+              "action": "规劝督导",
+              "target": "q5",
+              "targetLabel": "接问题５",
               "group": 4
             },
             {
-              "kind": "paragraph",
-              "text": "３．大力反对→姚子奇的友好度各＋20，获得百舌鸟之舌→接问题６",
+              "kind": "option",
+              "text": "姚子奇的友好度各＋20",
+              "label": "3",
+              "action": "大力反对",
+              "reward": "百舌鸟之舌",
+              "target": "q6",
+              "targetLabel": "接问题６",
               "group": 4
             },
             {
-              "kind": "paragraph",
-              "text": "问题４：旗下艺人身体不好，你会？",
+              "kind": "heading",
+              "text": "旗下艺人身体不好，你会？",
+              "label": "问题４",
+              "id": "q4",
               "group": 5
             },
             {
-              "kind": "paragraph",
-              "text": "１．细心照顾→萧依莉、路风的友好度各＋20，获得补脑养生丸→接问题７",
+              "kind": "option",
+              "text": "萧依莉、路风的友好度各＋20",
+              "label": "1",
+              "action": "细心照顾",
+              "reward": "补脑养生丸",
+              "target": "q7",
+              "targetLabel": "接问题７",
               "group": 5
             },
             {
-              "kind": "paragraph",
-              "text": "２．加强管理→欧怡青、关古威的友好度各＋20→接问题６",
+              "kind": "option",
+              "text": "欧怡青、关古威的友好度各＋20",
+              "label": "2",
+              "action": "加强管理",
+              "target": "q6",
+              "targetLabel": "接问题６",
               "group": 5
             },
             {
-              "kind": "paragraph",
-              "text": "３．不闻不问→纪翔的友好度＋20→接问题５",
+              "kind": "option",
+              "text": "纪翔的友好度＋20",
+              "label": "3",
+              "action": "不闻不问",
+              "target": "q5",
+              "targetLabel": "接问题５",
               "group": 5
             },
             {
-              "kind": "paragraph",
-              "text": "问题５：电视台有制作人骚扰你的时候，你怎么办？",
+              "kind": "heading",
+              "text": "电视台有制作人骚扰你的时候，你怎么办？",
+              "label": "问题５",
+              "id": "q5",
               "group": 6
             },
             {
-              "kind": "paragraph",
-              "text": "１．牺牲小我→苏嫚君、陈奕夫的友好度各＋20→接问题７",
+              "kind": "option",
+              "text": "苏嫚君、陈奕夫的友好度各＋20",
+              "label": "1",
+              "action": "牺牲小我",
+              "target": "q7",
+              "targetLabel": "接问题７",
               "group": 6
             },
             {
-              "kind": "paragraph",
-              "text": "２．断然拒绝→路敏、路风的友好度各＋20→接问题８",
+              "kind": "option",
+              "text": "路敏、路风的友好度各＋20",
+              "label": "2",
+              "action": "断然拒绝",
+              "target": "q8",
+              "targetLabel": "接问题８",
               "group": 6
             },
             {
-              "kind": "paragraph",
-              "text": "３．虚与委蛇→林芬芬、天晴的友好度各＋20→接问题９",
+              "kind": "option",
+              "text": "林芬芬、天晴的友好度各＋20",
+              "label": "3",
+              "action": "虚与委蛇",
+              "target": "q9",
+              "targetLabel": "接问题９",
               "group": 6
             },
             {
-              "kind": "paragraph",
-              "text": "问题６：唱片公司的柜台小姐不让你进门的时候，你怎么办？",
+              "kind": "heading",
+              "text": "唱片公司的柜台小姐不让你进门的时候，你怎么办？",
+              "label": "问题６",
+              "id": "q6",
               "group": 7
             },
             {
-              "kind": "paragraph",
-              "text": "１．多去几趟→欧怡青、关古威、姚子奇的友好度各＋20→接问题１０",
+              "kind": "option",
+              "text": "欧怡青、关古威、姚子奇的友好度各＋20",
+              "label": "1",
+              "action": "多去几趟",
+              "target": "q10",
+              "targetLabel": "接问题１０",
               "group": 7
             },
             {
-              "kind": "paragraph",
-              "text": "２．拿钱贿赂→苏嫚君的友好度＋20→接问题７",
+              "kind": "option",
+              "text": "苏嫚君的友好度＋20",
+              "label": "2",
+              "action": "拿钱贿赂",
+              "target": "q7",
+              "targetLabel": "接问题７",
               "group": 7
             },
             {
-              "kind": "paragraph",
-              "text": "３．转身离开→天晴、纪翔的友好度各＋20→接问题８",
+              "kind": "option",
+              "text": "天晴、纪翔的友好度各＋20",
+              "label": "3",
+              "action": "转身离开",
+              "target": "q8",
+              "targetLabel": "接问题８",
               "group": 7
             },
             {
-              "kind": "paragraph",
-              "text": "问题７：电影公司的导演开出的条件太严苛，你怎么办？",
+              "kind": "heading",
+              "text": "电影公司的导演开出的条件太严苛，你怎么办？",
+              "label": "问题７",
+              "id": "q7",
               "group": 8
             },
             {
-              "kind": "paragraph",
-              "text": "１．加强艺人训练→关古威、路风的友好度各＋20→接问题８",
+              "kind": "option",
+              "text": "关古威、路风的友好度各＋20",
+              "label": "1",
+              "action": "加强艺人训练",
+              "target": "q8",
+              "targetLabel": "接问题８",
               "group": 8
             },
             {
-              "kind": "paragraph",
-              "text": "２．找人关说→林芬芬、贺总的友好度各＋20→接问题９",
+              "kind": "option",
+              "text": "林芬芬、贺总的友好度各＋20",
+              "label": "2",
+              "action": "找人关说",
+              "target": "q9",
+              "targetLabel": "接问题９",
               "group": 8
             },
             {
-              "kind": "paragraph",
-              "text": "３．色诱导演→桑禾蓓、姚子奇的友好度各＋20→接问题９",
+              "kind": "option",
+              "text": "桑禾蓓、姚子奇的友好度各＋20",
+              "label": "3",
+              "action": "色诱导演",
+              "target": "q9",
+              "targetLabel": "接问题９",
               "group": 8
             },
             {
-              "kind": "paragraph",
-              "text": "问题８：你培养的演员，在摄影棚被制作人骂不够认真，你会？",
+              "kind": "heading",
+              "text": "你培养的演员，在摄影棚被制作人骂不够认真，你会？",
+              "label": "问题８",
+              "id": "q8",
               "group": 9
             },
             {
-              "kind": "paragraph",
-              "text": "１．加强戏剧训练→关古威、萧依莉的友好度＋20→接问题１１",
+              "kind": "option",
+              "text": "关古威的友好度＋20",
+              "label": "1",
+              "action": "加强戏剧训练",
+              "target": "q11",
+              "targetLabel": "接问题１１",
               "group": 9
             },
             {
-              "kind": "paragraph",
-              "text": "２．安慰艺人→苏嫚君、陈奕夫的友好度各＋20→接问题９",
+              "kind": "option",
+              "text": "苏嫚君、陈奕夫的友好度各＋20",
+              "label": "2",
+              "action": "安慰艺人",
+              "target": "q9",
+              "targetLabel": "接问题９",
               "group": 9
             },
             {
-              "kind": "paragraph",
-              "text": "３．痛扁制作人→路敏的友好度＋20→接问题１１",
+              "kind": "option",
+              "text": "路敏的友好度＋20",
+              "label": "3",
+              "action": "痛扁制作人",
+              "target": "q11",
+              "targetLabel": "接问题１１",
               "group": 9
             },
             {
-              "kind": "paragraph",
-              "text": "问题９：你培养的偶像，在大街上被拍到了绯闻照，你会？",
+              "kind": "heading",
+              "text": "你培养的偶像，在大街上被拍到了绯闻照，你会？",
+              "label": "问题９",
+              "id": "q9",
               "group": 10
             },
             {
-              "kind": "paragraph",
-              "text": "１．趁机炒作→林芬芬的友好度＋20→接问题１１",
+              "kind": "option",
+              "text": "林芬芬的友好度＋20",
+              "label": "1",
+              "action": "趁机炒作",
+              "target": "q11",
+              "targetLabel": "接问题１１",
               "group": 10
             },
             {
-              "kind": "paragraph",
-              "text": "２．迅速否认→桑禾蓓的友好度＋20→接问题１０",
+              "kind": "option",
+              "text": "桑禾蓓的友好度＋20",
+              "label": "2",
+              "action": "迅速否认",
+              "target": "q10",
+              "targetLabel": "接问题１０",
               "group": 10
             },
             {
-              "kind": "paragraph",
-              "text": "３．承认恋情→林芬芬、欧怡青、天晴的友好度各＋20→接问题１１",
+              "kind": "option",
+              "text": "林芬芬、欧怡青、天晴的友好度各＋20",
+              "label": "3",
+              "action": "承认恋情",
+              "target": "q11",
+              "targetLabel": "接问题１１",
               "group": 10
             },
             {
-              "kind": "paragraph",
-              "text": "问题１０：你培养的歌手，在演唱会上被听众嫌唱歌难听，你会？",
+              "kind": "heading",
+              "text": "你培养的歌手，在演唱会上被听众嫌唱歌难听，你会？",
+              "label": "问题１０",
+              "id": "q10",
               "group": 11
             },
             {
-              "kind": "paragraph",
-              "text": "１．加强训练→欧怡青、萧依莉、关古威的友好度各＋20→接问题１１",
+              "kind": "option",
+              "text": "欧怡青、萧依莉、关古威、天晴的友好度各＋20",
+              "label": "1",
+              "action": "加强训练",
+              "target": "q11",
+              "targetLabel": "接问题１１",
               "group": 11
             },
             {
-              "kind": "paragraph",
-              "text": "２．找人帮忙唱→林芬芬、天晴、贺总的友好度各＋20→接问题１１",
+              "kind": "option",
+              "text": "林芬芬、天晴、贺总的友好度各＋20",
+              "label": "2",
+              "action": "找人帮忙唱",
+              "target": "q11",
+              "targetLabel": "接问题１１",
               "group": 11
             },
             {
-              "kind": "paragraph",
-              "text": "３．往台下丢东西→路敏的友好度＋20→接问题１１",
+              "kind": "option",
+              "text": "路敏的友好度＋20",
+              "label": "3",
+              "action": "往台下丢东西",
+              "target": "q11",
+              "targetLabel": "接问题１１",
               "group": 11
             },
             {
-              "kind": "paragraph",
-              "text": "问题１１：总而言之，你认为自己会是一个怎样的经纪人？",
+              "kind": "heading",
+              "text": "总而言之，你认为自己会是一个怎样的经纪人？",
+              "label": "问题１１",
+              "id": "q11",
               "group": 12
             },
             {
-              "kind": "paragraph",
-              "text": "１．循规蹈矩做事严谨→桑禾蓓、萧依莉、关古威、路风的友好度各＋20→接问题１２",
+              "kind": "option",
+              "text": "桑禾蓓、萧依莉、关古威、路风的友好度各＋20",
+              "label": "1",
+              "action": "循规蹈矩做事严谨",
+              "target": "q12",
+              "targetLabel": "接问题１２",
               "group": 12
             },
             {
-              "kind": "paragraph",
-              "text": "２．悠游自在随性所致→欧怡青、路敏、天晴、姚子奇的友好度各＋20→接问题１２",
+              "kind": "option",
+              "text": "欧怡青、路敏、天晴、姚子奇的友好度各＋20",
+              "label": "2",
+              "action": "悠游自在随性所致",
+              "target": "q12",
+              "targetLabel": "接问题１２",
               "group": 12
             },
             {
-              "kind": "paragraph",
-              "text": "３．逢迎拍马见缝插针→林芬芬、苏嫚君、陈奕夫、纪翔的友好度各＋20→接问题１２",
+              "kind": "option",
+              "text": "林芬芬、苏嫚君、陈奕夫、纪翔的友好度各＋20",
+              "label": "3",
+              "action": "逢迎拍马见缝插针",
+              "target": "q12",
+              "targetLabel": "接问题１２",
               "group": 12
             },
             {
-              "kind": "paragraph",
-              "text": "问题１２：是不是第一次完明星志愿系列游戏？",
+              "kind": "heading",
+              "text": "是不是第一次玩明星志愿系列游戏？",
+              "label": "问题１２",
+              "id": "q12",
               "group": 13
             },
             {
-              "kind": "paragraph",
-              "text": "１．是→问题结束",
+              "kind": "option",
+              "text": "",
+              "label": "1",
+              "action": "是",
+              "targetLabel": "问题结束",
               "group": 13
             },
             {
-              "kind": "paragraph",
-              "text": "２.不是→明3可签约的12位艺人和星光圆舞曲可签约的2位艺人（姚子莹、克烈斯） 友好度各+20→接问题13",
+              "kind": "option",
+              "text": "可签约的１２名艺人的友好度各＋20",
+              "label": "2",
+              "action": "不是",
+              "target": "q13",
+              "targetLabel": "接问题１３",
               "group": 13
             },
             {
-              "kind": "paragraph",
-              "text": "３．忘了→问题结束",
+              "kind": "option",
+              "text": "",
+              "label": "3",
+              "action": "忘了",
+              "targetLabel": "问题结束",
               "group": 13
             },
             {
-              "kind": "paragraph",
-              "text": "问题１３：玩过明星志愿2吗？",
+              "kind": "heading",
+              "text": "玩过明星志愿２吗？",
+              "label": "问题１３",
+              "id": "q13",
               "group": 14
             },
             {
-              "kind": "paragraph",
-              "text": "１．玩过→林芬芬、苏嫚君、萧依莉、姚子莹的友好度各＋20→接问题14",
+              "kind": "option",
+              "text": "林芬芬、苏嫚君、萧依莉的友好度各＋20",
+              "label": "1",
+              "action": "玩过",
+              "target": "q14",
+              "targetLabel": "接问题１４",
               "group": 14
             },
             {
-              "kind": "paragraph",
-              "text": "２．没玩过→问题结束",
+              "kind": "option",
+              "text": "",
+              "label": "2",
+              "action": "没玩过",
+              "targetLabel": "问题结束",
               "group": 14
             },
             {
-              "kind": "paragraph",
-              "text": "３．忘了→问题结束",
+              "kind": "option",
+              "text": "",
+              "label": "3",
+              "action": "忘了",
+              "targetLabel": "问题结束",
               "group": 14
             },
             {
-              "kind": "paragraph",
-              "text": "问题１４：玩明星志愿2时，最常使用的主角姓名为？",
+              "kind": "heading",
+              "text": "玩明星志愿２时，最常使用的主角姓名为？",
+              "label": "问题１４",
+              "id": "q14",
+              "group": 15
+            },
+            {
+              "kind": "option",
+              "text": "",
+              "label": "1",
+              "action": "方若绮",
+              "targetLabel": "问题结束",
+              "group": 15
+            },
+            {
+              "kind": "option",
+              "text": "",
+              "label": "2",
+              "action": "忘了",
+              "targetLabel": "问题结束",
+              "group": 15
+            },
+            {
+              "kind": "option",
+              "text": "输入以后游戏中「方若绮」会改成你输入的名字",
+              "label": "3",
+              "action": "其它",
+              "targetLabel": "问题结束",
               "group": 15
             },
             {
               "kind": "paragraph",
-              "text": "１．方若绮→问题结束",
-              "group": 15
-            },
-            {
-              "kind": "paragraph",
-              "text": "２．忘了→问题结束",
-              "group": 15
-            },
-            {
-              "kind": "paragraph",
-              "text": "３．其它→问题结束（输入以后游戏中“方若绮”会改成你输入的名字）",
-              "group": 15
+              "text": "注：原文问题１２选「不是」后没写后续，按流程接问题１３；问题１４只在前两题都玩过系列前作时才会出现。",
+              "group": 16
             }
           ],
           "children": []
