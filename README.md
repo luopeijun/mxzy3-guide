@@ -26,15 +26,30 @@
 ## 目录结构
 
 ```
-scripts/extract_guide.py    # docx → guide.json 抽取脚本（零第三方依赖）
-public/data/guide.json      # 生成的结构化攻略数据（运行时加载）
-src/types/guide.ts          # 数据类型
-src/components/             # 可复用 UI 组件
-src/hooks/                  # 数据、选中态、搜索逻辑
-src/lib/cn.ts               # 条件类名拼接
-src/styles/global.css       # @theme design tokens + 全局基底样式
-src/styles/patterns.ts      # 跨组件复用的 Tailwind 配方（卡片、栅格、版心等）
+scripts/extract_guide.py       # docx + sources/*.txt → guide.json 抽取脚本（零第三方依赖）
+sources/                       # 补充攻略的纯文本来源（UTF-8，可重跑）
+public/data/guide.json         # 生成的结构化攻略数据（运行时加载）
+src/types/guide.ts             # 数据类型
+src/components/                # 可复用 UI 组件
+src/hooks/                     # 数据、选中态、锚点跳转
+src/lib/cn.ts                  # 条件类名拼接
+src/styles/global.css          # @theme design tokens + 全局基底样式
+src/styles/patterns.ts         # 跨组件复用的 Tailwind 配方（卡片、栅格、版心等）
 ```
+
+## 内容来源
+
+- `E:/Downloads/明星志愿3攻略.docx`：四大分级的主体正文。
+- `sources/game-initial-questions.txt`：开局访谈 14 题的完整选项与友好度变化。原文是 GBK 的 txt，这里转成 UTF-8 并修正了两处笔误（「第一次完」→「第一次玩」、重复的「天晴」→「贺总、天晴」）。
+- 文档里确实没有收录的条目（物品总览、贺总相关事件等）保留在树中并标注「待补充」，重跑脚本不会丢位置。
+
+## 锚点跳转
+
+攻略正文里带 `id` 的标题块可以在页内跳转，`target` 指向目标块的 `id`：
+
+- 「游戏初始问题」每题是一个 `heading` 块（`id: q1`…`q14`），每个选项记录 `target`（下一题）、`targetLabel`（显示为「接问题３」）与可选的 `reward`。
+- 点击跳转链接会平滑滚动到目标、加一圈高亮闪动，并把地址写成 `#/game-guide/initial-questions~q3`（用 `replaceState`，不会触发 `hashchange` 重置选中项）。
+- 刷新或分享该地址会直接落回对应题目：`useHashSelection` 只取 `~` 之前的部分作为节点 id，`useAnchorJump` 负责滚到锚点。
 
 ## 样式约定
 
@@ -65,7 +80,7 @@ npm install
 npm run dev
 ```
 
-重新生成攻略数据：
+重新生成攻略数据（第二个参数可省略，默认读 `sources/game-initial-questions.txt`）：
 
 ```bash
 python scripts/extract_guide.py "E:/Downloads/明星志愿3攻略.docx"
