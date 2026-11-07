@@ -27,7 +27,9 @@ DEFAULT_STATS = SOURCES / "character-stats.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
-OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ][\.．、]\s*")
+# `A.xxx` in most paragraphs, but the docx also writes `C 关古威…` with a plain
+# space; the CJK lookahead keeps headings such as `M V 演出：` out of the match.
+OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ](?:[\.．、]\s*|[ 　]+(?=[\u4e00-\u9fff]))")
 # Plain-text sources: `#` and `*` are the same heading level by design.
 SECTION_RE = re.compile(r"^[#*]\s*(.+)$")
 # Untagged source titles: `初始女艺人的事件（指…）：` — a lone colon-terminated
