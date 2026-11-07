@@ -1,9 +1,11 @@
 import type { ContentBlock } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
+import QuestionCard from './QuestionCard';
 
 interface Props {
   blocks: ContentBlock[];
+  onJump?: (anchor: string) => void;
 }
 
 function BlockView({ block }: { block: IndexedBlock }) {
@@ -11,7 +13,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
     case 'heading':
       return (
         <h3
-          id={`block-${block.index}`}
+          id={block.id ?? `block-${block.index}`}
           className="mt-5 mb-2 scroll-mt-[18px] border-l-[3px] border-brand pl-[10px] text-ui-md font-bold text-brand-strong"
         >
           {block.text}
@@ -41,17 +43,27 @@ function BlockView({ block }: { block: IndexedBlock }) {
   }
 }
 
-export default function ContentBlockList({ blocks }: Props) {
+export default function ContentBlockList({ blocks, onJump }: Props) {
   const groups = groupBlocks(blocks);
   if (!groups.length) return null;
 
   return (
     <article>
-      {groups.map((group) => (
-        <section key={group.group} className="mb-4">
-          {group.blocks.map((block) => <BlockView key={block.index} block={block} />)}
-        </section>
-      ))}
+      {groups.map((group) => {
+        const [first, ...rest] = group.blocks;
+        const options = rest.filter((block) => block.kind === 'option');
+        // A labelled heading with options is a question card (see QuestionCard).
+        if (onJump && first.kind === 'heading' && first.id && options.length) {
+          return (
+            <QuestionCard key={group.group} heading={first} options={options} onJump={onJump} />
+          );
+        }
+        return (
+          <section key={group.group} className="mb-4">
+            {group.blocks.map((block) => <BlockView key={block.index} block={block} />)}
+          </section>
+        );
+      })}
     </article>
   );
 }

@@ -1,9 +1,18 @@
 interface Props {
   items: { id: string; text: string }[];
+  onJump?: (anchor: string) => void;
 }
 
-export default function ArticleOutline({ items }: Props) {
+export default function ArticleOutline({ items, onJump }: Props) {
   if (items.length === 0) return null;
+
+  const jump = (id: string) => {
+    if (onJump) {
+      onJump(id);
+      return;
+    }
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <section className="mb-[26px] rounded-ui-md border border-line bg-surface-soft px-[18px] py-[14px]" aria-label="本页小节">
@@ -14,7 +23,7 @@ export default function ArticleOutline({ items }: Props) {
             key={item.id}
             className="text-left text-ui-xs text-brand hover:underline"
             type="button"
-            onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onClick={() => jump(item.id)}
             title={item.text}
           >
             {item.text}

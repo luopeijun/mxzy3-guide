@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 function readHash(): string {
-  const raw = window.location.hash.replace(/^#\/?/, '');
+  // `#/node-id~anchor` keeps the in-page anchor in the same fragment.
+  const raw = window.location.hash.replace(/^#\/?/, '').split('~')[0];
   try {
     return decodeURIComponent(raw);
   } catch {

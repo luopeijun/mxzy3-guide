@@ -70,6 +70,25 @@
 @custom-variant nav (@media (max-width: 860px));
 @custom-variant phone (@media (max-width: 520px));
 
+/* Feedback for in-page anchor jumps (see useAnchorJump). */
+@keyframes anchorFlash {
+  0%,
+  35% {
+    box-shadow:
+      0 0 0 3px rgba(168, 80, 110, 0.42),
+      0 0 0 9px rgba(168, 80, 110, 0.12);
+  }
+  100% {
+    box-shadow:
+      0 0 0 3px rgba(168, 80, 110, 0),
+      0 0 0 9px rgba(168, 80, 110, 0);
+  }
+}
+
+.anchor-flash {
+  animation: anchorFlash 1.7s ease-out;
+}
+
 @layer base {
   html,
   body,

@@ -1,5 +1,6 @@
 import type { GuideData, GuideNode } from '../types/guide';
 import { outlineOf } from '../lib/guide';
+import { useAnchorJump } from '../hooks/useAnchorJump';
 import ArticleHeader from './ArticleHeader';
 import ArticleOutline from './ArticleOutline';
 import Breadcrumbs from './Breadcrumbs';
@@ -20,6 +21,8 @@ interface Props {
 }
 
 export default function ContentPanel({ data, node, path, prev, next, onSelect }: Props) {
+  const jump = useAnchorJump(node?.id ?? '');
+
   if (!node) return <Overview data={data} onSelect={onSelect} />;
 
   const isCategory = path.length === 1;
@@ -30,8 +33,8 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
     <div className={ui.content}>
       <Breadcrumbs path={path} onSelect={onSelect} />
       <ArticleHeader node={node} blockCount={node.blocks.length} />
-      <ArticleOutline items={outlineOf(node)} />
-      <ContentBlockList blocks={node.blocks} />
+      <ArticleOutline items={outlineOf(node)} onJump={jump} />
+      <ContentBlockList blocks={node.blocks} onJump={jump} />
       {node.children.length > 0 && (
         <ChildLinks
           nodes={node.children}

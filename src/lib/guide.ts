@@ -51,6 +51,13 @@ function snippetOf(text: string, query: string): string {
   return `${start > 0 ? '…' : ''}${text.slice(start, end)}${end < text.length ? '…' : ''}`;
 }
 
+/** Everything in a block that the search box should look at. */
+function searchableText(block: ContentBlock): string {
+  return [block.text, block.action, block.reward, block.label, block.targetLabel]
+    .filter(Boolean)
+    .join(' ');
+}
+
 /** Lightweight title + full-text search over the generated guide data. */
 export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
   const query = keyword.trim().toLowerCase();
@@ -64,7 +71,7 @@ export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
       .toLowerCase();
     const titleMatch = haystack.includes(query);
     const contentMatch = node.blocks.find(
-      (block) => block.text.toLowerCase().includes(query),
+      (block) => searchableText(block).toLowerCase().includes(query),
     );
 
     if (titleMatch || contentMatch) {
@@ -72,7 +79,10 @@ export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
         node,
         path,
         score: titleMatch ? 2 : 1,
-        snippet: contentMatch && !titleMatch ? snippetOf(contentMatch.text, query) : undefined,
+        snippet:
+          contentMatch && !titleMatch
+            ? snippetOf(searchableText(contentMatch), query)
+            : undefined,
       });
     }
     node.children.forEach((child) => walk(child, path));
@@ -86,7 +96,11 @@ export function outlineOf(node: GuideNode): { id: string; text: string }[] {
   return node.blocks
     .map((block, index) => ({ block, index }))
     .filter(({ block }) => block.kind === 'heading')
-    .map(({ block, index }) => ({ id: `block-${index}`, text: block.text }));
+    .map(({ block, index }) => ({
+      id: block.id ?? `block-${index}`,
+      // Labelled headings (questions) read better as a compact marker.
+      text: block.label ?? block.text,
+    }));
 }
 
 export interface IndexedBlock extends ContentBlock {
