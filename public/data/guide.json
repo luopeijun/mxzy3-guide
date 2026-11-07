@@ -6,9 +6,9 @@
     "stats": {
       "categories": 4,
       "items": 59,
-      "blocks": 2922,
-      "readyItems": 39,
-      "missingItems": 7,
+      "blocks": 2923,
+      "readyItems": 40,
+      "missingItems": 6,
       "sourceParagraphs": 3706
     }
   },
@@ -766,8 +766,256 @@
         {
           "id": "game-guide/initial-stats",
           "title": "所有人物初始属性",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "description": "12 位可签约艺人在游戏开始时的属性值；每列加粗的是该项最高的人。",
+          "blocks": [
+            {
+              "kind": "table",
+              "text": "12 位可签约艺人的初始属性",
+              "table": {
+                "columns": [
+                  {
+                    "key": "name",
+                    "label": "姓名"
+                  },
+                  {
+                    "key": "age",
+                    "label": "年龄",
+                    "numeric": true
+                  },
+                  {
+                    "key": "birthday",
+                    "label": "生日"
+                  },
+                  {
+                    "key": "acting",
+                    "label": "演技",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "eloquence",
+                    "label": "口才",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "singing",
+                    "label": "歌艺",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "fame",
+                    "label": "名气",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "etiquette",
+                    "label": "仪态",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "dynamism",
+                    "label": "动感",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "stamina",
+                    "label": "体能",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "wit",
+                    "label": "才智",
+                    "numeric": true,
+                    "highlight": true
+                  },
+                  {
+                    "key": "confidence",
+                    "label": "自信",
+                    "numeric": true,
+                    "highlight": true
+                  }
+                ],
+                "rows": [
+                  {
+                    "name": "林芬芬",
+                    "age": "16",
+                    "birthday": "11/12",
+                    "acting": "182",
+                    "eloquence": "140",
+                    "singing": "191",
+                    "fame": "83",
+                    "etiquette": "108",
+                    "dynamism": "180",
+                    "stamina": "146",
+                    "wit": "77",
+                    "confidence": "210"
+                  },
+                  {
+                    "name": "桑禾蓓",
+                    "age": "20",
+                    "birthday": "8/29",
+                    "acting": "230",
+                    "eloquence": "71",
+                    "singing": "82",
+                    "fame": "140",
+                    "etiquette": "241",
+                    "dynamism": "102",
+                    "stamina": "178",
+                    "wit": "112",
+                    "confidence": "142"
+                  },
+                  {
+                    "name": "欧怡青",
+                    "age": "21",
+                    "birthday": "10/7",
+                    "acting": "67",
+                    "eloquence": "102",
+                    "singing": "231",
+                    "fame": "0",
+                    "etiquette": "165",
+                    "dynamism": "113",
+                    "stamina": "192",
+                    "wit": "249",
+                    "confidence": "102"
+                  },
+                  {
+                    "name": "苏嫚君",
+                    "age": "22",
+                    "birthday": "7/13",
+                    "acting": "162",
+                    "eloquence": "193",
+                    "singing": "86",
+                    "fame": "21",
+                    "etiquette": "87",
+                    "dynamism": "222",
+                    "stamina": "283",
+                    "wit": "91",
+                    "confidence": "80"
+                  },
+                  {
+                    "name": "路敏",
+                    "age": "19",
+                    "birthday": "3/21",
+                    "acting": "104",
+                    "eloquence": "130",
+                    "singing": "229",
+                    "fame": "0",
+                    "etiquette": "91",
+                    "dynamism": "304",
+                    "stamina": "231",
+                    "wit": "42",
+                    "confidence": "142"
+                  },
+                  {
+                    "name": "萧依莉",
+                    "age": "22",
+                    "birthday": "2/20",
+                    "acting": "188",
+                    "eloquence": "98",
+                    "singing": "76",
+                    "fame": "79",
+                    "etiquette": "284",
+                    "dynamism": "84",
+                    "stamina": "65",
+                    "wit": "222",
+                    "confidence": "241"
+                  },
+                  {
+                    "name": "天晴",
+                    "age": "22",
+                    "birthday": "2/7",
+                    "acting": "77",
+                    "eloquence": "92",
+                    "singing": "214",
+                    "fame": "0",
+                    "etiquette": "142",
+                    "dynamism": "112",
+                    "stamina": "182",
+                    "wit": "310",
+                    "confidence": "150"
+                  },
+                  {
+                    "name": "陈奕夫",
+                    "age": "25",
+                    "birthday": "8/22",
+                    "acting": "110",
+                    "eloquence": "249",
+                    "singing": "76",
+                    "fame": "142",
+                    "etiquette": "86",
+                    "dynamism": "156",
+                    "stamina": "310",
+                    "wit": "74",
+                    "confidence": "84"
+                  },
+                  {
+                    "name": "关古威",
+                    "age": "28",
+                    "birthday": "6/11",
+                    "acting": "320",
+                    "eloquence": "298",
+                    "singing": "411",
+                    "fame": "329",
+                    "etiquette": "289",
+                    "dynamism": "192",
+                    "stamina": "296",
+                    "wit": "249",
+                    "confidence": "218"
+                  },
+                  {
+                    "name": "路风",
+                    "age": "23",
+                    "birthday": "5/19",
+                    "acting": "332",
+                    "eloquence": "84",
+                    "singing": "210",
+                    "fame": "0",
+                    "etiquette": "102",
+                    "dynamism": "167",
+                    "stamina": "240",
+                    "wit": "107",
+                    "confidence": "108"
+                  },
+                  {
+                    "name": "纪翔",
+                    "age": "22",
+                    "birthday": "12/1",
+                    "acting": "67",
+                    "eloquence": "109",
+                    "singing": "243",
+                    "fame": "0",
+                    "etiquette": "212",
+                    "dynamism": "83",
+                    "stamina": "181",
+                    "wit": "261",
+                    "confidence": "212"
+                  },
+                  {
+                    "name": "姚子奇",
+                    "age": "20",
+                    "birthday": "12/28",
+                    "acting": "71",
+                    "eloquence": "80",
+                    "singing": "201",
+                    "fame": "0",
+                    "etiquette": "102",
+                    "dynamism": "213",
+                    "stamina": "126",
+                    "wit": "246",
+                    "confidence": "218"
+                  }
+                ]
+              },
+              "group": 1
+            }
+          ],
           "children": []
         },
         {
