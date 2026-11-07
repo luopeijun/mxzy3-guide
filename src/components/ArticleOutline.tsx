@@ -1,26 +1,11 @@
 import { useId, useState } from 'react';
 import { cn } from '../lib/cn';
+import { numberOutline } from '../lib/guide';
 import type { OutlineItem } from '../lib/guide';
 
 interface Props {
   items: OutlineItem[];
   onJump?: (anchor: string) => void;
-}
-
-/** `2.` for sections, `2.1.` for sub-titles so nesting reads at a glance. */
-function numberItems(items: OutlineItem[]): (OutlineItem & { marker: string })[] {
-  let section = 0;
-  let subtitle = 0;
-  return items.map((item) => {
-    // A sub-title before any section has no parent to attach to; show it flat.
-    if (item.depth > 0 && section > 0) {
-      subtitle += 1;
-      return { ...item, marker: `${section}.${subtitle}.` };
-    }
-    section += 1;
-    subtitle = 0;
-    return { ...item, marker: `${section}.` };
-  });
 }
 
 /** In-page section list. Collapsed by default so it reads as a single summary
@@ -74,7 +59,7 @@ export default function ArticleOutline({ items, onJump }: Props) {
 
       {open && (
         <ol id={listId} className="max-h-[320px] overflow-y-auto border-t border-line px-[10px] py-2">
-          {numberItems(items).map((item) => (
+          {numberOutline(items).map((item) => (
             <li
               key={item.id}
               className={cn('relative', item.depth > 0 && 'ml-[7px] pl-[15px]')}

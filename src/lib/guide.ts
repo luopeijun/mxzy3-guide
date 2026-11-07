@@ -148,6 +148,26 @@ export function outlineOf(node: GuideNode): OutlineItem[] {
     }));
 }
 
+export interface NumberedOutlineItem extends OutlineItem {
+  marker: string;
+}
+
+/** `2.` for sections, `2.1.` for sub-titles so the nesting reads at a glance. */
+export function numberOutline(items: OutlineItem[]): NumberedOutlineItem[] {
+  let section = 0;
+  let subtitle = 0;
+  return items.map((item) => {
+    // A sub-title before any section has no parent to attach to; show it flat.
+    if (item.depth > 0 && section > 0) {
+      subtitle += 1;
+      return { ...item, marker: `${section}.${subtitle}.` };
+    }
+    section += 1;
+    subtitle = 0;
+    return { ...item, marker: `${section}.` };
+  });
+}
+
 export interface IndexedBlock extends ContentBlock {
   index: number;
 }
