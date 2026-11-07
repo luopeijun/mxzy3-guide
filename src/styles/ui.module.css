@@ -291,6 +291,10 @@
   margin-top: 0;
 }
 
+.treeCategory > .treeRow {
+  border-left: 2px solid var(--color-primary-border);
+}
+
 .treeRow {
   display: flex;
   align-items: center;
@@ -333,6 +337,7 @@
 .treeToggle {
   width: 16px;
   flex-shrink: 0;
+  padding: 0;
   text-align: center;
   font-size: 10px;
   color: var(--color-text-faint);
@@ -342,9 +347,11 @@
 .treeLabel {
   flex: 1;
   min-width: 0;
+  padding: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
 
 .treeCount {
