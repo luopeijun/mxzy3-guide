@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import styles from '../styles/ui.module.css';
 
 interface Props {
   header: ReactNode;
@@ -21,19 +20,19 @@ export default function AppShell({
   }, [scrollKey]);
 
   return (
-    <div className={styles.shell}>
+    <div className="flex h-screen flex-col overflow-hidden">
       {header}
-      <div className={styles.shellBody}>
+      <div className="relative flex min-h-0 flex-1">
         {sidebar}
         {sidebarOpen && (
           <div
-            className={styles.overlay}
+            className="hidden bg-[rgba(48,42,38,0.32)] nav:absolute nav:inset-0 nav:z-[25] nav:block"
             onClick={onCloseSidebar}
             role="presentation"
             aria-hidden="true"
           />
         )}
-        <main className={styles.shellMain} ref={mainRef}>
+        <main className="min-w-0 flex-1 overflow-y-auto scroll-smooth" ref={mainRef}>
           {children}
         </main>
       </div>

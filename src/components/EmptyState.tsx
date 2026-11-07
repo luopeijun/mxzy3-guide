@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import styles from '../styles/ui.module.css';
 
 interface Props {
   icon?: string;
@@ -10,10 +9,10 @@ interface Props {
 
 export default function EmptyState({ icon = '◇', title, text, children }: Props) {
   return (
-    <div className={styles.empty}>
-      <div className={styles.emptyIcon} aria-hidden="true">{icon}</div>
-      <h2 className={styles.emptyTitle}>{title}</h2>
-      <p className={styles.emptyText}>{text}</p>
+    <div className="rounded-ui-lg border border-dashed border-line-strong bg-surface-soft px-7 py-12 text-center">
+      <div className="text-[30px] text-brand-line" aria-hidden="true">{icon}</div>
+      <h2 className="mt-2.5 text-ui-lg font-bold">{title}</h2>
+      <p className="mt-2 text-ui-xs leading-[1.8] text-ink-muted">{text}</p>
       {children}
     </div>
   );

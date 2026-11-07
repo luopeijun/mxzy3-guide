@@ -8,7 +8,7 @@ import ContentBlockList from './ContentBlockList';
 import EmptyState from './EmptyState';
 import Overview from './Overview';
 import PrevNextNav from './PrevNextNav';
-import styles from '../styles/ui.module.css';
+import { ui } from '../styles/patterns';
 
 interface Props {
   data: GuideData;
@@ -27,7 +27,7 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
     || (node.blocks.length === 0 && node.children.length === 0);
 
   return (
-    <div className={styles.content}>
+    <div className={ui.content}>
       <Breadcrumbs path={path} onSelect={onSelect} />
       <ArticleHeader node={node} blockCount={node.blocks.length} />
       <ArticleOutline items={outlineOf(node)} />

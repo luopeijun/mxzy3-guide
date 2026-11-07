@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import styles from '../styles/ui.module.css';
+import { cn } from '../lib/cn';
 
 interface Props {
   children: ReactNode;
@@ -7,11 +7,20 @@ interface Props {
 }
 
 const VARIANT_CLASS = {
-  missing: styles.badgeMissing,
-  accent: styles.badgeAccent,
-  primary: styles.badgePrimary,
-};
+  missing: 'border-line bg-missing-soft text-missing',
+  accent: 'border-gold-line bg-gold-soft text-gold',
+  primary: 'border-brand-line bg-brand-soft text-brand-strong',
+} as const;
 
 export default function StatusBadge({ children, variant = 'missing' }: Props) {
-  return <span className={`${styles.badge} ${VARIANT_CLASS[variant]}`}>{children}</span>;
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full border px-[7px] py-px text-ui-2xs font-medium leading-[1.6] whitespace-nowrap',
+        VARIANT_CLASS[variant],
+      )}
+    >
+      {children}
+    </span>
+  );
 }

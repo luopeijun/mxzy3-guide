@@ -1,7 +1,7 @@
 import type { GuideNode } from '../types/guide';
 import { countBlocks } from '../lib/guide';
 import StatusBadge from './StatusBadge';
-import styles from '../styles/ui.module.css';
+import { ui } from '../styles/patterns';
 
 interface Props {
   nodes: GuideNode[];
@@ -15,22 +15,17 @@ export default function ChildLinks({ nodes, onSelect, title = '下级条目' }: 
 
   return (
     <section>
-      <h2 className={styles.sectionTitle}>{title} · {nodes.length}</h2>
-      <div className={styles.categoryGrid}>
+      <h2 className={ui.sectionTitle}>{title} · {nodes.length}</h2>
+      <div className={ui.cardGrid}>
         {nodes.map((node) => (
-          <button
-            key={node.id}
-            className={styles.categoryCard}
-            type="button"
-            onClick={() => onSelect(node.id)}
-          >
-            <div className={styles.categoryCardHead}>
-              <span className={styles.categoryCardTitle}>{node.title}</span>
+          <button key={node.id} className={ui.card} type="button" onClick={() => onSelect(node.id)}>
+            <div className={ui.cardHead}>
+              <span className={ui.cardTitle}>{node.title}</span>
               {node.status === 'missing' && <StatusBadge>待补充</StatusBadge>}
             </div>
-            {node.sourceTitle && <div className={styles.categoryCardSource}>原目录：{node.sourceTitle}</div>}
-            {node.description && <p className={styles.categoryCardDesc}>{node.description}</p>}
-            <div className={styles.categoryCardFoot}>
+            {node.sourceTitle && <div className={ui.cardSource}>原目录：{node.sourceTitle}</div>}
+            {node.description && <p className={ui.cardDesc}>{node.description}</p>}
+            <div className={ui.cardFoot}>
               {node.status === 'missing'
                 ? '攻略文档中暂未收录'
                 : `${countBlocks(node)} 段内容${node.children.length ? ` · ${node.children.length} 个子条目` : ''}`}

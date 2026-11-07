@@ -1,5 +1,4 @@
 import EmptyState from './EmptyState';
-import styles from '../styles/ui.module.css';
 
 interface Props {
   title: string;
@@ -8,8 +7,8 @@ interface Props {
 
 export default function LoadingScreen({ title, text }: Props) {
   return (
-    <div className={styles.loading}>
-      <div className={styles.loadingCard}>
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-[520px]">
         <EmptyState title={title} text={text} />
       </div>
     </div>
