@@ -13,7 +13,12 @@ export default function Overview({ data, onSelect }: Props) {
 
   return (
     <div className={ui.content}>
-      <section className="rounded-ui-lg bg-[linear-gradient(120deg,#4d1c44,#7d3568_58%,#9c4a73)] p-8 text-white shadow-card nav:px-[22px] nav:py-6">
+      <section className="relative isolate overflow-hidden rounded-ui-lg bg-[linear-gradient(118deg,#5e2540,#9a4664_58%,#a8506e)] p-8 text-white shadow-card nav:px-[22px] nav:py-6">
+        <div aria-hidden="true" className="starfield pointer-events-none absolute inset-0 -z-10" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(75%_130%_at_92%_-10%,rgba(255,255,255,0.14),transparent_62%)]"
+        />
         <div className="text-ui-2xs tracking-[0.16em] text-white/90">STARDOM 3 · GUIDE BROWSER</div>
         <h1 className="mt-2 text-ui-2xl font-bold">明星志愿3 · 攻略助手</h1>
         <p className="mt-2.5 max-w-[620px] text-ui-md leading-[1.9] text-white/95">

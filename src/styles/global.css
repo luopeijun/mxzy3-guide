@@ -6,31 +6,33 @@
   --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
   --font-serif: "Songti SC", "SimSun", Georgia, serif;
 
-  /* Surfaces & lines — near-white with a faint plum cast */
-  --color-canvas: #f8f6fa;
+  /* Surfaces & lines — near-white with a faint rose cast.
+     Sampled straight from the in-game starfield art (#a8506e). */
+  --color-canvas: #faf5f7;
   --color-surface: #ffffff;
-  --color-surface-soft: #fbf9fc;
-  --color-sidebar: #f3eefa;
-  --color-line: #e8e2f0;
-  --color-line-strong: #d6cce4;
+  --color-surface-soft: #fdfafb;
+  --color-sidebar: #f6ebf0;
+  --color-line: #eedde5;
+  --color-line-strong: #dcc2ce;
 
   /* Text — every role clears WCAG AA on its own background */
-  --color-ink: #1b1622;
-  --color-ink-muted: #4c4459;
-  --color-ink-faint: #6d6479;
+  --color-ink: #1c1216;
+  --color-ink-muted: #4d3c44;
+  --color-ink-faint: #6b5860;
 
-  /* Brand & accents — the original pink-plum mood, deepened for contrast */
-  --color-brand: #8e3a72;
-  --color-brand-strong: #5c2350;
-  --color-brand-soft: #ecd9e8;
-  --color-brand-line: #e3c8dc;
+  /* Brand & accents — the game's rose (#a8506e), deepened for text roles.
+     brand itself is 5.2:1 on white, so it is safe for links too. */
+  --color-brand: #a8506e;
+  --color-brand-strong: #7a3550;
+  --color-brand-soft: #f7e3ea;
+  --color-brand-line: #eac3d2;
   --color-gold: #8a6114;
   --color-gold-soft: #fdf4dd;
   --color-gold-line: #f0dfb4;
-  --color-note: #7a5619;
-  --color-note-soft: #fdf6e7;
-  --color-missing: #6d6479;
-  --color-missing-soft: #f1ecf6;
+  --color-note: #87551f;
+  --color-note-soft: #fdf5e9;
+  --color-missing: #6b5860;
+  --color-missing-soft: #f4e9ee;
 
   /* Type scale — one step larger than before for comfortable reading */
   --text-ui-2xs: 12px;
@@ -47,11 +49,19 @@
   --radius-ui-md: 12px;
   --radius-ui-lg: 18px;
 
-  /* Elevation */
-  --shadow-soft: 0 1px 2px rgba(48, 42, 38, 0.05);
-  --shadow-card: 0 6px 20px rgba(48, 42, 38, 0.07);
-  --shadow-float: 0 14px 36px rgba(48, 42, 38, 0.12);
+  /* Elevation — tinted with the brand hue so shadows sit in the same family */
+  --shadow-soft: 0 1px 2px rgba(60, 20, 38, 0.05);
+  --shadow-card: 0 6px 20px rgba(60, 20, 38, 0.08);
+  --shadow-float: 0 14px 36px rgba(60, 20, 38, 0.14);
 
+}
+
+/* Repeats the in-game starfield texture (four-point sparkles on the rose base).
+   Used as an overlay layer so gradients underneath stay configurable. */
+@utility starfield {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='%23ffffff'%3E%3Cpath fill-opacity='.18' d='M14 7.5 15.35 10.65 18.5 12 15.35 13.35 14 16.5 12.65 13.35 9.5 12 12.65 10.65Z'/%3E%3Cpath fill-opacity='.12' d='M42 16.8 42.96 19.04 45.2 20 42.96 20.96 42 23.2 41.04 20.96 38.8 20 41.04 19.04Z'/%3E%3Cpath fill-opacity='.16' d='M58 42 59.2 44.8 62 46 59.2 47.2 58 50 56.8 47.2 54 46 56.8 44.8Z'/%3E%3Cpath fill-opacity='.13' d='M28 34.4 29.08 36.92 31.6 38 29.08 39.08 28 41.6 26.92 39.08 24.4 38 26.92 36.92Z'/%3E%3Cpath fill-opacity='.11' d='M8 47.2 8.84 49.16 10.8 50 8.84 50.84 8 52.8 7.16 50.84 5.2 50 7.16 49.16Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 64px 64px;
+  background-repeat: repeat;
 }
 
 /* Tailwind breakpoints are mobile-first (min-width). The original design uses
