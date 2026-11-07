@@ -6,40 +6,40 @@
   --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
   --font-serif: "Songti SC", "SimSun", Georgia, serif;
 
-  /* Surfaces & lines — cool neutral, keeps long reading sessions calm */
-  --color-canvas: #f4f6f9;
+  /* Surfaces & lines — near-white with a faint plum cast */
+  --color-canvas: #f8f6fa;
   --color-surface: #ffffff;
-  --color-surface-soft: #f7f9fb;
-  --color-sidebar: #eef2f6;
-  --color-line: #e2e7ee;
-  --color-line-strong: #cbd4df;
+  --color-surface-soft: #fbf9fc;
+  --color-sidebar: #f3eefa;
+  --color-line: #e8e2f0;
+  --color-line-strong: #d6cce4;
 
   /* Text — every role clears WCAG AA on its own background */
-  --color-ink: #12171f;
-  --color-ink-muted: #3f4a59;
-  --color-ink-faint: #5f6b7d;
+  --color-ink: #1b1622;
+  --color-ink-muted: #4c4459;
+  --color-ink-faint: #6d6479;
 
-  /* Brand & accents */
-  --color-brand: #0f6b5c;
-  --color-brand-strong: #0a4b41;
-  --color-brand-soft: #d3ebe4;
-  --color-brand-line: #b9dcd3;
+  /* Brand & accents — the original pink-plum mood, deepened for contrast */
+  --color-brand: #8e3a72;
+  --color-brand-strong: #5c2350;
+  --color-brand-soft: #ecd9e8;
+  --color-brand-line: #e3c8dc;
   --color-gold: #8a6114;
   --color-gold-soft: #fdf4dd;
   --color-gold-line: #f0dfb4;
   --color-note: #7a5619;
   --color-note-soft: #fdf6e7;
-  --color-missing: #5f6b7d;
-  --color-missing-soft: #edf1f5;
+  --color-missing: #6d6479;
+  --color-missing-soft: #f1ecf6;
 
-  /* Type scale (custom names avoid clashing with Tailwind defaults) */
-  --text-ui-2xs: 11px;
-  --text-ui-xs: 12px;
-  --text-ui-sm: 14px;
-  --text-ui-md: 15px;
-  --text-ui-lg: 18px;
-  --text-ui-xl: 22px;
-  --text-ui-2xl: 28px;
+  /* Type scale — one step larger than before for comfortable reading */
+  --text-ui-2xs: 12px;
+  --text-ui-xs: 13px;
+  --text-ui-sm: 15px;
+  --text-ui-md: 16px;
+  --text-ui-lg: 19px;
+  --text-ui-xl: 24px;
+  --text-ui-2xl: 30px;
 
   /* Radii */
   --radius-ui-xs: 5px;

@@ -13,7 +13,7 @@ export default function Overview({ data, onSelect }: Props) {
 
   return (
     <div className={ui.content}>
-      <section className="rounded-ui-lg bg-[linear-gradient(120deg,#0a4b41,#0f6b5c_58%,#16796c)] p-8 text-white shadow-card nav:px-[22px] nav:py-6">
+      <section className="rounded-ui-lg bg-[linear-gradient(120deg,#4d1c44,#7d3568_58%,#9c4a73)] p-8 text-white shadow-card nav:px-[22px] nav:py-6">
         <div className="text-ui-2xs tracking-[0.16em] text-white/90">STARDOM 3 · GUIDE BROWSER</div>
         <h1 className="mt-2 text-ui-2xl font-bold">明星志愿3 · 攻略助手</h1>
         <p className="mt-2.5 max-w-[620px] text-ui-md leading-[1.9] text-white/95">
