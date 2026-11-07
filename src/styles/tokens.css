@@ -1,0 +1,58 @@
+:root {
+  /* Surfaces */
+  --color-bg: #f6f4f0;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fbf9f5;
+  --color-sidebar: #f2eee8;
+  --color-border: #e8e1d7;
+  --color-border-strong: #d9cec0;
+
+  /* Text */
+  --color-text: #302a26;
+  --color-text-muted: #7a7067;
+  --color-text-faint: #a99e92;
+  --color-text-inverse: #ffffff;
+
+  /* Brand */
+  --color-primary: #7b3f6b;
+  --color-primary-strong: #5c2c50;
+  --color-primary-soft: #f3e9f1;
+  --color-primary-border: #e2cfe0;
+  --color-accent: #b9873c;
+  --color-accent-soft: #faf1de;
+  --color-accent-border: #efdcb9;
+  --color-note: #8a5a2b;
+  --color-note-soft: #fdf4e6;
+  --color-note-border: #f0dcbb;
+  --color-missing: #8d857c;
+  --color-missing-soft: #f1ede8;
+
+  /* Radii */
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(48, 42, 38, 0.05);
+  --shadow-md: 0 6px 20px rgba(48, 42, 38, 0.07);
+  --shadow-lg: 0 14px 36px rgba(48, 42, 38, 0.12);
+
+  /* Typography */
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Songti SC", "SimSun", Georgia, serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  /* Layout */
+  --layout-header-height: 64px;
+  --layout-sidebar-width: 302px;
+  --layout-content-max: 880px;
+  --transition: 160ms ease;
+}
