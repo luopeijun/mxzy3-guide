@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 构建 | Vite 6 | 启动快、配置少，纯静态产物便于 GitHub Pages 托管 |
 | 框架 | React 19 + TypeScript | 组件化 + 类型约束，后续功能扩展成本低 |
-| 样式 | CSS Modules + 全局 design tokens | 统一视觉语言，组件样式隔离，零运行时依赖 |
+| 样式 | Tailwind CSS v4（`@tailwindcss/vite`）+ `@theme` design tokens | 语义化色板/字号/圆角/阴影统一收口，组件内直接写工具类，无运行时依赖；重复配方抽到 `patterns.ts` 复用 |
 | 内容数据 | Python 标准库脚本解析 docx → `public/data/guide.json`，运行时加载 | 内容与 UI 解耦；攻略更新只需替换 JSON，无需重新打包前端 |
 | 导航状态 | React hooks + URL Hash | 第一步纯浏览，Hash 即可支持刷新保留、深链分享，暂不引入路由库 |
 | 包管理 | npm | 环境自带，无额外工具链 |
@@ -31,8 +31,16 @@ public/data/guide.json      # 生成的结构化攻略数据（运行时加载�
 src/types/guide.ts          # 数据类型
 src/components/             # 可复用 UI 组件
 src/hooks/                  # 数据、选中态、搜索逻辑
-src/styles/                 # design tokens 与全局样式
+src/lib/cn.ts               # 条件类名拼接
+src/styles/global.css       # @theme design tokens + 全局基底样式
+src/styles/patterns.ts      # 跨组件复用的 Tailwind 配方（卡片、栅格、版心等）
 ```
+
+## 样式约定
+
+- 颜色、字号、圆角、阴影只在 `src/styles/global.css` 的 `@theme` 中定义，组件统一使用 `text-ink`、`bg-brand-soft`、`rounded-ui-md` 这类语义类，不写裸色值。
+- 响应式断点沿用原设计的向下阈值，用 `@custom-variant` 定义：`tab:`（≤980px）、`nav:`（≤860px，侧栏切换为抽屉）、`phone:`（≤520px）。它们是 **max-width** 变体，不是 Tailwind 默认的移动优先断点。
+- 卡片、栅格、版心等重复组合放在 `src/styles/patterns.ts` 的 `ui` 对象里；组件特有的类名就近写在 JSX 中，条件类用 `cn()` 拼接并尽量互斥，避免同属性类互相覆盖。
 
 ## 路线图
 
