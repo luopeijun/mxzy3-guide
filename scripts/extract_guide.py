@@ -29,6 +29,7 @@ DEFAULT_WORK = SOURCES / "work.txt"
 DEFAULT_TRAINING = SOURCES / "training.txt"
 DEFAULT_CERTIFICATES = SOURCES / "certificates.txt"
 DEFAULT_PRODUCERS = SOURCES / "producers.txt"
+DEFAULT_SELFMADE = SOURCES / "self-made.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -733,6 +734,39 @@ def build_producers_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+def build_selfmade_blocks(path: Path) -> list[dict]:
+    """Turn the 自制通告创作条件一览 txt into blocks.
+
+    The opening `★当公司资金…。` is the page's only lead-in paragraph (it ends
+    with a full stop, so it is not a section divider). The two `★歌曲部分…` /
+    `★剧本部分…` lines (no full stop) are major sections, each with a hairline
+    above it. Under each section a bare character name (`林芬芬`, `其他`) or a
+    name with an annotation (`纪翔（…）`) is a diamond sub-heading, and every
+    song line that carries the `－` separator (`歌名－条件`) is a paragraph.
+    """
+    lines = [raw.strip() for raw in _read_text(path).splitlines() if raw.strip()]
+    blocks: list[dict] = []
+    group = 0
+    for line in lines:
+        if line.startswith("★"):
+            group += 1
+            rest = line.lstrip("★").strip()
+            if rest.endswith("。"):
+                blocks.append({"kind": "paragraph", "text": _tidy(rest), "group": group})
+            else:
+                blocks.append({
+                    "kind": "section", "text": _tidy(rest), "depth": 0, "group": group,
+                })
+            continue
+        if "－" in line or "-" in line:
+            group += 1
+            blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+            continue
+        group += 1
+        blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+    return blocks
+
+
 def build(
     docx: Path,
     questions: Path,
@@ -743,6 +777,7 @@ def build(
     training: Path,
     certificates: Path,
     producers: Path,
+    selfmade: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -801,6 +836,12 @@ def build(
             blocks=build_producers_blocks(producers),
         ),
         make_node(
+            "game-guide/self-made", "自制通告创作条件一览",
+            source_title="自制通告创作条件一览.txt",
+            description="各艺人可创作的自制歌曲 / 剧本及其触发或属性条件；满足条件的歌曲需安排自由活动大于 20 天、剧本大于 40 天。",
+            blocks=build_selfmade_blocks(selfmade),
+        ),
+        make_node(
             "game-guide/initial-stats", "所有人物初始属性",
             description="18 位可签约艺人（含资料片新增）在游戏开始时的属性与成长加成。",
             blocks=stats_blocks,
@@ -815,7 +856,6 @@ def build(
         make_node("game-guide/items", "物品总览", status="missing"),
         make_node("game-guide/favorite-items", "艺人喜爱物品一览", status="missing"),
         make_node("game-guide/monopoly-answers", "大富翁B&B&B答案", status="missing"),
-        make_node("game-guide/self-made-works", "艺人自制作品详解", status="missing"),
         make_node(
             "game-guide/titles", "明星称号详解",
             source_title="艺人称号说明",
@@ -954,6 +994,7 @@ def main() -> None:
     training = Path(sys.argv[7]) if len(sys.argv) > 7 else DEFAULT_TRAINING
     certificates = Path(sys.argv[8]) if len(sys.argv) > 8 else DEFAULT_CERTIFICATES
     producers = Path(sys.argv[9]) if len(sys.argv) > 9 else DEFAULT_PRODUCERS
+    selfmade = Path(sys.argv[10]) if len(sys.argv) > 10 else DEFAULT_SELFMADE
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -972,7 +1013,9 @@ def main() -> None:
         raise SystemExit(f"certificates txt not found: {certificates}")
     if not producers.exists():
         raise SystemExit(f"producers txt not found: {producers}")
-    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers)
+    if not selfmade.exists():
+        raise SystemExit(f"self-made txt not found: {selfmade}")
+    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
