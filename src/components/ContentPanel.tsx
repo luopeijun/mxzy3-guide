@@ -13,6 +13,7 @@ import EmptyState from './EmptyState';
 import Overview from './Overview';
 import PageRail from './PageRail';
 import PrevNextNav from './PrevNextNav';
+import RequirementsCard from './RequirementsCard';
 import { ui } from '../styles/patterns';
 
 interface Props {
@@ -42,6 +43,7 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
       <div className={cn(ui.article, !wide && 'pr-6 nav:pr-[26px]')}>
         <Breadcrumbs path={path} onSelect={onSelect} />
         <ArticleHeader node={node} />
+        {node.requirements && <RequirementsCard requirements={node.requirements} />}
         {!wide && <ArticleOutline items={outline} onJump={jump} />}
         <ContentBlockList blocks={node.blocks} onJump={jump} />
         {node.children.length > 0 && (

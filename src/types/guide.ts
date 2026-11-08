@@ -65,6 +65,32 @@ export interface ContentBlock {
   table?: TableData;
 }
 
+/** Numeric threshold of a notice, e.g. 歌艺 700. */
+export interface RequirementStat {
+  label: string;
+  value: string;
+}
+
+/** A prop a notice consumes, plus where to get it. `parts` holds the材料 of a
+ *  crafted prop (天使羽衣 needs four of them). */
+export interface RequirementProp {
+  name: string;
+  from: string;
+  parts?: RequirementProp[];
+}
+
+/** Hand-written summary card at the top of a notice page. */
+export interface NodeRequirements {
+  /** Attribute threshold the notice itself asks for. */
+  stats?: RequirementStat[];
+  /** Everything the artist must already have done / hold. */
+  cast?: string[];
+  /** Props and their sources. */
+  items?: RequirementProp[];
+  /** Closing remark, e.g. the timing caveat. */
+  note?: string;
+}
+
 export interface GuideNode {
   id: string;
   title: string;
@@ -72,6 +98,7 @@ export interface GuideNode {
   sourceTitle?: string;
   description?: string;
   status: 'ready' | 'missing';
+  requirements?: NodeRequirements;
   blocks: ContentBlock[];
   children: GuideNode[];
 }

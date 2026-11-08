@@ -102,6 +102,44 @@ CHILD_SLUGS = {
     "演艺圈前辈事件": ["gu-qianjing", "fang-ruoqi", "ma-zhiwen"],
 }
 
+# Hand-written summary shown as a card above each notice page: the artist the
+# notice asks for plus every prop it consumes and how to get it. Keyed by the
+# same slug as SIX_NOTICES so the two stay in step.
+NOTICE_REQUIREMENTS: dict[str, dict] = {
+    "angel": {
+        "stats": [
+            {"label": "歌艺", "value": "700"},
+            {"label": "名气", "value": "500"},
+            {"label": "仪态", "value": "700"},
+            {"label": "自信", "value": "550"},
+        ],
+        "cast": [
+            "限女艺人，只会找旗下人气最高的那一位",
+            "参加过慈善义演（义演邀约门槛：歌艺 300 / 仪态 300 / 人气 3）",
+            "参加过「饥饿百分百」的第三世界行程，当时选择「答应」",
+            "持有国际音乐学院的证书",
+            "个人唱片多于 5 张，开过演唱会（最好大型）",
+        ],
+        "items": [
+            {
+                "name": "天使的音乐盒",
+                "from": "答应捐款后 3 天，大天使寄来感谢卡，随信赠送",
+            },
+            {
+                "name": "天使羽衣",
+                "from": "集齐下面四样材料后到巴黎找老板制作，两周后领取",
+                "parts": [
+                    {"name": "人鱼的眼泪", "from": "综艺节目「大富翁BABABA」赢得的第二个神秘礼物"},
+                    {"name": "天使的羽翼", "from": "旗下任一艺人带病前往医院就医满 10 次，欧医生赠送"},
+                    {"name": "精灵的祈祷", "from": "到公园找塔罗小魔女占卜 10 次后赠送"},
+                    {"name": "光丝布料", "from": "在薇薇安精品买东西超过 10 次，把音乐盒交给周映彤后再去，老板赠送"},
+                ],
+            },
+        ],
+        "note": "做出天使羽衣后，下一档通告就会放出本通告，若赶上团体通告需再等一轮；拿到羽衣后要在周末排行程时送给触发任务的女艺人。",
+    },
+}
+
 
 def read_paragraphs(docx: Path) -> list[tuple[str, str]]:
     """Return (style, text) for every paragraph, TOC paragraphs included."""
@@ -693,6 +731,7 @@ def make_node(
     description: str | None = None,
     blocks: list[dict] | None = None,
     children: list[dict] | None = None,
+    requirements: dict | None = None,
     status: str = "ready",
 ) -> dict:
     node: dict = {"id": node_id, "title": title, "status": status}
@@ -702,6 +741,8 @@ def make_node(
         node["sourceTitle"] = source_title
     if description:
         node["description"] = description
+    if requirements:
+        node["requirements"] = requirements
     node["blocks"] = blocks or []
     node["children"] = children or []
     return node
@@ -1531,6 +1572,7 @@ def build(
         notice_items.append(make_node(
             f"notices/{slug}", page["title"],
             blocks=page["blocks"],
+            requirements=NOTICE_REQUIREMENTS.get(slug),
         ))
     if notice_pages:
         raise ValueError(f"unmapped notice chapters: {sorted(notice_pages)}")

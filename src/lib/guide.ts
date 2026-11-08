@@ -116,6 +116,20 @@ function searchableText(block: ContentBlock): string {
     .join(' ');
 }
 
+/** Summary card text, flattened so search can reach it too. */
+function requirementsText(node: GuideNode): string {
+  const req = node.requirements;
+  if (!req) return '';
+  const props = (items: NonNullable<typeof req.items>): string[] =>
+    items.flatMap((item) => [item.name, item.from, ...props(item.parts ?? [])]);
+  return [
+    ...(req.stats ?? []).map((stat) => `${stat.label}${stat.value}`),
+    ...(req.cast ?? []),
+    ...props(req.items ?? []),
+    req.note ?? '',
+  ].join(' ');
+}
+
 /** Lightweight title + full-text search over the generated guide data. */
 export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
   const query = keyword.trim().toLowerCase();
@@ -128,11 +142,13 @@ export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
       .join(' ')
       .toLowerCase();
     const titleMatch = haystack.includes(query);
+    const reqText = requirementsText(node);
+    const reqMatch = reqText.toLowerCase().includes(query);
     const contentMatch = node.blocks.find(
       (block) => searchableText(block).toLowerCase().includes(query),
     );
 
-    if (titleMatch || contentMatch) {
+    if (titleMatch || contentMatch || reqMatch) {
       hits.push({
         node,
         path,
@@ -140,7 +156,9 @@ export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
         snippet:
           contentMatch && !titleMatch
             ? snippetOf(searchableText(contentMatch), query)
-            : undefined,
+            : reqMatch && !titleMatch
+              ? snippetOf(reqText, query)
+              : undefined,
       });
     }
     node.children.forEach((child) => walk(child, path));
