@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { GuideNode, GuideSummary } from '../types/guide';
 import type { SearchHit } from '../lib/guide';
 import type { ReorderRequest } from '../lib/treeOrder';
@@ -28,6 +29,26 @@ export default function Sidebar({
   categories, selectedId, expandedIds, query, hits, open, summary, customized,
   onToggle, onSelect, onQueryChange, onReorder, onResetOrder,
 }: Props) {
+  const navRef = useRef<HTMLElement>(null);
+
+  // When the selected node changes (or its ancestors expand into view), bring
+  // the directory row into view so the reader can see where they landed. We
+  // scroll only the directory list itself — never the article column — by
+  // computing the offset against the nav container instead of scrollIntoView,
+  // which would otherwise bubble up and yank the main panel too.
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || !selectedId) return;
+    const row = Array.from(nav.querySelectorAll<HTMLElement>('[data-node-id]'))
+      .find((element) => element.dataset.nodeId === selectedId);
+    if (!row) return;
+    const navRect = nav.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    if (rowRect.top >= navRect.top && rowRect.bottom <= navRect.bottom) return;
+    const top = rowRect.top - navRect.top + nav.scrollTop - 12;
+    nav.scrollTo({ top, behavior: 'smooth' });
+  }, [selectedId, expandedIds]);
+
   return (
     <aside
       data-open={open}
@@ -63,7 +84,7 @@ export default function Sidebar({
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-[10px] pt-3 pb-6" aria-label="攻略分级目录">
+      <nav ref={navRef} className="flex-1 overflow-y-auto px-[10px] pt-3 pb-6" aria-label="攻略分级目录">
         {query.trim() ? (
           <SearchResults hits={hits} keyword={query.trim()} onSelect={onSelect} />
         ) : (
