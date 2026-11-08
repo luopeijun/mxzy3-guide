@@ -5892,7 +5892,7 @@
           "sourceTitle": "大富翁题目答案.txt",
           "blocks": [
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第1题",
               "group": 1
             },
@@ -6065,7 +6065,7 @@
               "group": 1
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第2题",
               "group": 2
             },
@@ -6250,7 +6250,7 @@
               "group": 2
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第3题",
               "group": 3
             },
@@ -6429,7 +6429,7 @@
               "group": 3
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第4题",
               "group": 4
             },
@@ -6590,7 +6590,7 @@
               "group": 4
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第5题",
               "group": 5
             },
@@ -6703,7 +6703,7 @@
               "group": 5
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第6题",
               "group": 6
             },
@@ -6798,7 +6798,7 @@
               "group": 6
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第7题",
               "group": 7
             },
@@ -6893,7 +6893,7 @@
               "group": 7
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第8题",
               "group": 8
             },
@@ -6964,7 +6964,7 @@
               "group": 8
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第9题",
               "group": 9
             },
@@ -7053,7 +7053,7 @@
               "group": 9
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "第10题",
               "group": 10
             },

@@ -1865,9 +1865,9 @@ def build_monopoly_blocks(path: Path) -> list[dict]:
 
     Every `N) 题目` line carries the same N for a whole batch, since each batch
     is the set of questions that can be dealt at slot N; a change of N opens a
-    new `第N题` sub-heading and every `Ans: …` line under it becomes one `qa`
-    block (question + answer). The trailing `卡片功用` block is a section whose
-    `名称: 说明` lines are paragraphs.
+    new `第N题` major section (第1~10题, each a big title) and every `Ans: …`
+    line under it becomes one `qa` block (question + answer). The trailing
+    `卡片功用` block is also a section, whose `名称: 说明` lines are paragraphs.
     """
     raw = [line.strip() for line in _read_text(path).splitlines()]
     lines: list[str] = []
@@ -1905,7 +1905,7 @@ def build_monopoly_blocks(path: Path) -> list[dict]:
             if current != number:
                 number = current
                 group += 1
-                blocks.append({"kind": "heading", "text": f"第{current}题", "group": group})
+                blocks.append({"kind": "section", "text": f"第{current}题", "group": group})
             continue
         ans = MONOPOLY_ANSWER_RE.match(line)
         if ans:
