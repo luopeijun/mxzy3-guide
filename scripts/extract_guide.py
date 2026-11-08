@@ -683,87 +683,61 @@ def build_sd_blocks(path: Path) -> list[dict]:
     return blocks
 
 
-def build_laoba_blocks(path: Path) -> list[dict]:
-    """老爸相关事件（金父）：与 SD 同属「其他事件」，但走通用 build_blocks 流水线
-    —— 和威尔 / 蛮羊 / 小秘书等兄弟页一致，事件不单独拆标签。
+def build_event_like_blocks(path: Path, *, page_title: str) -> list[dict]:
+    """其他事件章节（老爸 / 好莱坞 / 威尔）的通用构建器。
 
-    `★老爸相关` 只是页标题，跳过；其余 `★X`（买药 / 老爸的建议 / 父亲节）是子章节
-    标题。空白行保留，让 build_blocks 按段落分组，事件、提示、提醒各归其位；缩进的
-    `第N次送药得到：…` 等由前端的冒号前缀规则自动渲染成条目。"""
+    与六大特殊通告（build_event_blocks）同一套事件渲染：编号行 `N （tag）正文`
+    拆成 `event` 块，括号里的 tag（新闻 / 场景 / 自动 / 跟随…）单独抽出成 `tag`
+    字段、并从正文里剥掉，前端据此渲染成「编号徽章 + TypeTag + 白底卡片」。每个
+    事件独占一个 group，各自得到一张 EventCard（而不是把连续事件塞进同一张卡、只让
+    第一个显示编号）。
 
-    def tidy_line(raw: str) -> str:
-        stripped = raw.strip()
-        if not stripped:
-            return ""
-        return stripped.lstrip("★☆").strip()
+    `★X` 是子章节标题（强制 heading，长标题也照样）；`提醒：` 是警示，渲染成黄色
+    提示块。页标题 `★{page_title}` 跳过，不重复成块。"""
 
-    lines: list[str] = []
-    for raw in _read_text(path).split("\n"):
-        text = tidy_line(raw)
-        if text == "老爸相关":
+    blocks: list[dict] = []
+    group = 0
+    for raw in [line.rstrip("\r") for line in _read_text(path).split("\n")]:
+        line = raw.strip()
+        if not line:
+            continue
+        tidied = line.lstrip("★☆").strip()
+        if tidied == page_title:
             continue  # 页标题，不重复成块
-        lines.append(text)
-    blocks = build_blocks(lines)
-    # `提醒：…` 是警示，渲染成黄色提示块；也避免前端把「提醒」误判为列表条目。
-    for block in blocks:
-        if block["kind"] == "paragraph" and block["text"].startswith(("提醒：", "（提醒")):
-            block["kind"] = "note"
+        event = EVENT_LINE_RE.match(line)
+        if event:
+            group += 1
+            blocks.append({
+                "kind": "event",
+                "text": _tidy(line[event.end():].strip()),
+                "label": event.group(1),
+                "tag": event.group(2),
+                "group": group,
+            })
+            continue
+        if tidied.startswith(("提醒：", "（提醒")):
+            group += 1
+            blocks.append({"kind": "note", "text": tidied, "group": group})
+            continue
+        if line.startswith(("★", "☆")):
+            group += 1
+            blocks.append({"kind": "heading", "text": tidied, "group": group})
+            continue
+        group += 1
+        blocks.append({**classify(line), "group": group})
     return blocks
+
+
+def build_laoba_blocks(path: Path) -> list[dict]:
+    return build_event_like_blocks(path, page_title="老爸相关")
 
 
 def build_hollywood_blocks(path: Path) -> list[dict]:
-    """好莱坞相关（进军好莱坞 / 史麦克的拜访 / 暗夜惊魂）：与 SD、老爸同属「其他事件」，
-    走通用 build_blocks 流水线，事件不单独拆标签。
-
-    `★好莱坞` 只是页标题，跳过；其余 `★X`（史麦克的拜访 / 暗夜惊魂）是子章节标题。
-    空白行保留，让 build_blocks 按段落分组，事件与提示各归其位。"""
-
-    def tidy_line(raw: str) -> str:
-        stripped = raw.strip()
-        if not stripped:
-            return ""
-        return stripped.lstrip("★☆").strip()
-
-    lines: list[str] = []
-    for raw in _read_text(path).split("\n"):
-        text = tidy_line(raw)
-        if text == "好莱坞":
-            continue  # 页标题，不重复成块
-        lines.append(text)
-    return build_blocks(lines)
+    return build_event_like_blocks(path, page_title="好莱坞")
 
 
 def build_will_blocks(path: Path) -> list[dict]:
-    """威尔相关事件：与 SD、老爸、好莱坞同属「其他事件」，走通用 build_blocks 流水线，
-    事件不单独拆标签。
-
-    `★威尔相关` 只是页标题，跳过；其余 `★X`（星探 / 误会 / 拜访）是子章节标题。
-    子章节标题带括号说明、超过 22 字，generic classify 会误判成 paragraph，这里显式
-    把 `★` 行强制为 heading，保持和老爸 / 好莱坞的子章节一致。
-    `提醒：` 是警示，渲染成黄色提示块；也避免前端把「提醒」误判为列表条目。"""
-
-    def tidy_line(raw: str) -> str:
-        stripped = raw.strip()
-        if not stripped:
-            return ""
-        return stripped.lstrip("★☆").strip()
-
-    heading_texts: set[str] = set()
-    lines: list[str] = []
-    for raw in _read_text(path).split("\n"):
-        text = tidy_line(raw)
-        if text == "威尔相关":
-            continue  # 页标题，不重复成块
-        if raw.strip().startswith(("★", "☆")):
-            heading_texts.add(text)
-        lines.append(text)
-    blocks = build_blocks(lines)
-    for block in blocks:
-        if block["kind"] == "paragraph" and block["text"] in heading_texts:
-            block["kind"] = "heading"
-        elif block["kind"] == "paragraph" and block["text"].startswith(("提醒：", "（提醒")):
-            block["kind"] = "note"
-    return blocks
+    return build_event_like_blocks(path, page_title="威尔相关")
 
 
 NOTICE_TITLE_RE = re.compile(r"^★\s*(.+)$")
