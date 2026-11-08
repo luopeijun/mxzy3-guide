@@ -108,6 +108,10 @@ NOTE_PREFIXES = (
     "（提示", "（注意", "（PS", "（特别", "（如果",
     "PS：", "PS:", "超PS", "重要前提", "提示：", "注意：", "BTW：",
 )
+# Note 文本里 `《标题》` → 站内节点：渲染成可点击链接，跳转到对应页面。
+LINK_TARGETS = {
+    "路欧桑剧情整理": "other-events/luousang",
+}
 
 # Screenshot order of the original directory tree.
 CHARACTERS = [
@@ -1036,7 +1040,16 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
         # 提示 / 注意 / PS 等提醒行优先于任何事件/圆点判定，始终作黄底 note。
         if line.startswith(NOTE_PREFIXES):
             state["group"] += 1
-            blocks.append({"kind": "note", "text": line, "group": state["group"]})
+            note: dict = {"kind": "note", "text": line, "group": state["group"]}
+            # 《标题》 出现在 LINK_TARGETS 里时，把该片段标为站内链接。
+            note_links = [
+                {"text": f"《{title}》", "target": LINK_TARGETS[title]}
+                for title in re.findall(r"《([^《》]+)》", line)
+                if title in LINK_TARGETS
+            ]
+            if note_links:
+                note["links"] = note_links
+            blocks.append(note)
             method_step_pending = False
             continue
         marker = _bullet_marker(line)
@@ -1109,14 +1122,22 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             j += 1
         next_line = lines[j].strip() if j < len(lines) else ""
         follows_event = bool(EVENT_LINE_RE.match(next_line) or EVENT_PLAIN_RE.match(next_line))
+        # 标题不应含任何句读/引号（情况说明、剧情叙述都不是标题）；超过 22 字的
+        # 裸标题必须带括号补充（如「与姚子奇相关事件（…）」）才算标题。
         is_title = (
             follows_event
             and "：" not in line
             and ":" not in line
+            and not re.search(r"[，,。！？；;“”]", line)
+            and (len(line) <= 22 or "（" in line or "(" in line)
             # 括号开头的行（如加入B 的限定说明）不是标题，落入正文/事件卡分支。
             and not line.startswith(("（", "("))
         )
         cls = classify(line)
+        # 含冒号的短行（「无法看到的CG有：…」这类说明）不是标题，降级为普通正文，
+        # 否则兜底分支会把 classify 给出的 heading 原样追加（缺 depth）。
+        if cls["kind"] == "heading" and ("：" in line or ":" in line):
+            cls = {**cls, "kind": "paragraph"}
         if cls["kind"] == "heading" or is_title:
             state["group"] += 1
             # 标题层级：section=0；section 下的副标题=1；再低一级=2（签约方法的

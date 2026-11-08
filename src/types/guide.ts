@@ -55,6 +55,8 @@ export interface ContentBlock {
   depth?: number;
   /** Marks a `paragraph` as a list item, rendered with a leading round dot. */
   bullet?: boolean;
+  /** Inline site links inside a `note` (《标题》 pointing at another node). */
+  links?: { text: string; target: string }[];
   /** Marks a `bullet` as special (source `*` prefix), rendered with a gold diamond. */
   special?: boolean;
   /** Marks an `event` that yields a CG, rendered with a brand highlight + 标签. */

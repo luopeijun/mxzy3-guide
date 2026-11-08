@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import type { ReactNode } from 'react';
 import type { ContentBlock } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
@@ -224,12 +225,41 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
       );
     case 'option':
       return <OptionLine text={block.text} className="mb-[3px] ml-10 phone:ml-[22px]" />;
-    case 'note':
+    case 'note': {
+      const links = block.links;
+      if (!links?.length) {
+        return (
+          <p className="mb-[5px] whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-3 py-2 text-ui-sm leading-[1.8] text-note">
+            <HighlightText text={block.text} tone="note" />
+          </p>
+        );
+      }
+      // Split the note around each 《link》 and render those as in-site anchors.
+      const parts: ReactNode[] = [];
+      let rest = block.text;
+      links.forEach((link, i) => {
+        const idx = rest.indexOf(link.text);
+        if (idx === -1) return;
+        const before = rest.slice(0, idx);
+        if (before) parts.push(<HighlightText key={`seg-${i}`} text={before} tone="note" />);
+        parts.push(
+          <a
+            key={`link-${i}`}
+            href={`#/${link.target}`}
+            className="font-bold text-brand-strong underline decoration-gold decoration-2 underline-offset-2 hover:text-brand"
+          >
+            {link.text}
+          </a>,
+        );
+        rest = rest.slice(idx + link.text.length);
+      });
+      if (rest) parts.push(<HighlightText key="seg-tail" text={rest} tone="note" />);
       return (
         <p className="mb-[5px] whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-3 py-2 text-ui-sm leading-[1.8] text-note">
-          <HighlightText text={block.text} tone="note" />
+          {parts}
         </p>
       );
+    }
     case 'qa':
       // Every Q&A pair is its own item: a dot in the gutter for the question,
       // and the answer nested under it, so a long run of questions stays scannable.
