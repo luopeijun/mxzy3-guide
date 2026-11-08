@@ -12151,9 +12151,6 @@
           "id": "characters/su-manjun",
           "title": "苏嫚君",
           "status": "ready",
-          "aliases": [
-            "苏曼君"
-          ],
           "avatar": "images/characters/su-manjun-logo.png",
           "cover": "images/characters/su-manjun-cover.jpg",
           "blocks": [
@@ -12913,15 +12910,16 @@
               "cg": false
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "与主角的感情",
-              "group": 103
+              "group": 103,
+              "depth": 1
             },
             {
               "kind": "heading",
               "text": "达成结局条件",
               "group": 104,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "paragraph",
@@ -12991,9 +12989,10 @@
               "cg": true
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "与王瑞恩的事件（需安装资料片“星光圆舞曲”）",
-              "group": 114
+              "group": 114,
+              "depth": 1
             },
             {
               "kind": "event",

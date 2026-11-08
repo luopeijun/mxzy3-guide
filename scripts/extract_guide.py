@@ -118,7 +118,7 @@ CHARACTERS = [
     ("林芬芬", "lin-fenfen", []),
     ("萧依莉", "xiao-yili", []),
     ("桑禾蓓", "sang-hebei", []),
-    ("苏嫚君", "su-manjun", ["苏曼君"]),
+    ("苏嫚君", "su-manjun", []),
     ("欧怡青", "ou-yiqing", []),
     ("路敏", "lu-min", []),
     ("路风", "lu-feng", []),
