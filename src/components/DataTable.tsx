@@ -110,10 +110,18 @@ export default function DataTable({ data }: Props) {
                         <span
                           className={cn(
                             'block text-ui-2xs leading-[1.5]',
-                            isBestGrowth ? 'font-bold text-growth' : 'text-growth',
+                            isBestGrowth
+                              ? 'font-bold text-growth-strong'
+                              : 'font-medium text-growth',
                           )}
                         >
-                          +{growth}
+                          {isBestGrowth ? (
+                            <span className="rounded-[4px] bg-growth-soft px-1.5 py-0.5 ring-1 ring-inset ring-growth-line">
+                              +{growth}
+                            </span>
+                          ) : (
+                            <span className="px-1.5">+{growth}</span>
+                          )}
                         </span>
                       )}
                     </td>
@@ -126,7 +134,7 @@ export default function DataTable({ data }: Props) {
       </div>
       <p className="mt-2 px-1 text-ui-2xs text-ink-faint">
         {growthColumns.length > 0 && '「＋」为该属性的成长加成，写在数值下一行（绿色）。'}
-        {best.size > 0 && '带框的是该列最高值，多人并列时一并标出。'}
+        {best.size > 0 && '带框的是该列最高值与最高成长加成，多人并列时一并标出。'}
       </p>
     </div>
   );
