@@ -134,11 +134,19 @@ function BlockView({ block }: { block: IndexedBlock }) {
         </p>
       );
     case 'qa':
+      // Every Q&A pair is its own item: a dot in the gutter for the question,
+      // and the answer nested under it, so a long run of questions stays scannable.
       return (
-        <div className="mb-2.5">
-          <p className="text-ui-sm leading-[1.75] break-words text-ink">{block.text}</p>
+        <div className="mb-3.5">
+          <p className="relative pl-[19px] text-ui-sm leading-[1.75] break-words text-ink">
+            <span
+              aria-hidden="true"
+              className="absolute left-[6px] top-[11px] h-[5px] w-[5px] rounded-full bg-brand"
+            />
+            {block.text}
+          </p>
           {block.answer && (
-            <p className="mt-1 flex items-start gap-1.5">
+            <p className="mt-1 flex items-start gap-1.5 pl-[19px]">
               <span className="mt-[3px] shrink-0 rounded-ui-xs bg-brand-soft px-[5px] text-ui-2xs font-bold leading-[1.6] text-brand-strong">
                 答
               </span>
