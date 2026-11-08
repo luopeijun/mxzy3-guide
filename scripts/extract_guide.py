@@ -37,6 +37,7 @@ DEFAULT_ITEMS = SOURCES / "items.txt"
 DEFAULT_FAVORITES = SOURCES / "favorites.txt"
 DEFAULT_EASYSHOP = SOURCES / "easyshop.txt"
 DEFAULT_NOTICES = SOURCES / "notices.txt"
+DEFAULT_NOTICES_INTRO = SOURCES / "notices-intro.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -176,7 +177,7 @@ def _read_text(path: Path) -> str:
     raise ValueError(f"cannot decode {path}")
 
 
-DASH_RE = re.compile(r"(?<!-)--(?!-)")
+DASH_RE = re.compile(r"-{2,}")
 CJK_COMMA_RE = re.compile(r",(?=[\u3400-\u9fff])")
 
 
@@ -516,6 +517,50 @@ def build_notice_pages(path: Path) -> list[dict]:
         add("paragraph", line)
 
     return pages
+
+
+def build_notice_intro_blocks(path: Path) -> list[dict]:
+    """Turn 六大特殊国际通告.txt into the category page's own content.
+
+    The first line repeats the chapter title, which the page header already
+    shows, so it is skipped. `条件：已还清贺总欠款` reads as a `项目：内容` entry
+    and gets the usual bullet dot; `提醒：` opens a yellow note and the
+    `（1）…（6）` mapping under it stays inside that note, one light per line.
+    """
+    blocks: list[dict] = []
+    group = 0
+    pending_note = False
+    seen_title = False
+
+    for raw in [line.rstrip("\r") for line in _read_text(path).split("\n")]:
+        line = raw.strip()
+        if not line:
+            continue
+        if not seen_title:
+            seen_title = True
+            continue
+        if line.startswith(("提醒", "注意", "提示")):
+            group += 1
+            blocks.append({
+                "kind": "note",
+                "text": _tidy(re.sub(r"^(提醒|注意|提示)[：:]?\s*", "", line)),
+                "group": group,
+            })
+            pending_note = True
+            continue
+        if pending_note:
+            blocks[-1]["text"] += "\n" + _tidy(line)
+            continue
+        group += 1
+        is_item = not line.endswith(("：", ":")) and _item_prefix(line) is not None
+        blocks.append({
+            "kind": "paragraph",
+            "text": _tidy(line),
+            "group": group,
+            **({"bullet": True} if is_item else {}),
+        })
+
+    return blocks
 
 
 # Attribute columns of the stats sheet, in source order: (label, key).
@@ -1346,6 +1391,7 @@ def build(
     favorites: Path,
     easyshop: Path,
     notices: Path,
+    notices_intro: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -1478,13 +1524,7 @@ def build(
     if notice_pages:
         raise ValueError(f"unmapped notice chapters: {sorted(notice_pages)}")
 
-    # The 前情概要 of the old docx chapter is 昆仑历险 事件62 in the txt now, so
-    # the category page keeps only the 前言 — no duplicated 小魔女 conversation.
-    notice_intro = sections.intro("六大传说级通告（99%获奖）")
-    notice_preface = notice_intro[:next(
-        (i for i, line in enumerate(notice_intro) if line.startswith("前情概要")),
-        len(notice_intro),
-    )]
+    notice_intro = build_notice_intro_blocks(notices_intro)
 
     # ---- 其他事件 ----
     other_items = [
@@ -1546,7 +1586,7 @@ def build(
             "notices", "六大特殊通告",
             source_title="六大特殊国际通告",
             description="六个传说级国际通告的道具、剧本与达成流程。",
-            blocks=build_blocks(notice_preface),
+            blocks=notice_intro,
             children=notice_items,
         ),
         make_node(
@@ -1601,6 +1641,7 @@ def main() -> None:
     favorites = Path(sys.argv[15]) if len(sys.argv) > 15 else DEFAULT_FAVORITES
     easyshop = Path(sys.argv[16]) if len(sys.argv) > 16 else DEFAULT_EASYSHOP
     notices = Path(sys.argv[17]) if len(sys.argv) > 17 else DEFAULT_NOTICES
+    notices_intro = Path(sys.argv[18]) if len(sys.argv) > 18 else DEFAULT_NOTICES_INTRO
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1635,9 +1676,11 @@ def main() -> None:
         raise SystemExit(f"easyshop txt not found: {easyshop}")
     if not notices.exists():
         raise SystemExit(f"notices txt not found: {notices}")
+    if not notices_intro.exists():
+        raise SystemExit(f"notices intro txt not found: {notices_intro}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
-                 easyshop, notices)
+                 easyshop, notices, notices_intro)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
