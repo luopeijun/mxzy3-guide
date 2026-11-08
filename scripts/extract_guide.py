@@ -1968,13 +1968,15 @@ def build_endings_blocks(path: Path) -> list[dict]:
             continue
         lead = ENDING_LEAD_RE.match(line)
         if lead:
+            # 达成条件（含达成条件1/2…）作为条件组标识，前面加项目圆点，
+            # 与下面的编号条件形成清晰的层级。
             body = _angle_asides(lead.group(2).strip())
             if not body:
-                add("paragraph", lead.group(1))
+                add("paragraph", lead.group(1), bullet=True)
             elif body.startswith("（"):
-                add("paragraph", f"{lead.group(1)}{body}")
+                add("paragraph", f"{lead.group(1)}{body}", bullet=True)
             else:
-                add("paragraph", f"{lead.group(1)}：{body}")
+                add("paragraph", f"{lead.group(1)}：{body}", bullet=True)
             continue
         item = ENDING_ITEM_RE.match(line)
         if item:

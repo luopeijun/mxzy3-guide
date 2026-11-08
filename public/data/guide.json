@@ -7205,7 +7205,8 @@
             {
               "kind": "paragraph",
               "text": "达成条件：从头到尾都没还贺总钱。",
-              "group": 2
+              "group": 2,
+              "bullet": true
             },
             {
               "kind": "heading",
@@ -7220,7 +7221,8 @@
             {
               "kind": "paragraph",
               "text": "达成条件",
-              "group": 3
+              "group": 3,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -7283,7 +7285,8 @@
             {
               "kind": "paragraph",
               "text": "达成条件",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -7340,7 +7343,8 @@
             {
               "kind": "paragraph",
               "text": "达成条件1（2种选1种）",
-              "group": 5
+              "group": 5,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -7387,7 +7391,8 @@
             {
               "kind": "paragraph",
               "text": "达成条件2（2种选1种）",
-              "group": 5
+              "group": 5,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -7444,7 +7449,8 @@
             {
               "kind": "paragraph",
               "text": "达成条件1（2种选1种）",
-              "group": 6
+              "group": 6,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -7491,7 +7497,8 @@
             {
               "kind": "paragraph",
               "text": "达成条件2（2种选1种）",
-              "group": 6
+              "group": 6,
+              "bullet": true
             },
             {
               "kind": "paragraph",
