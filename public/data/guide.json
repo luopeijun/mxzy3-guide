@@ -20760,22 +20760,26 @@
             {
               "kind": "paragraph",
               "text": "第一次送药得到：自信粉底（拍摄广告类通告时成功率上升）",
-              "group": 9
+              "group": 9,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "第二次送药得到：机智唇膏（录制电视类通告时成功率上升）",
-              "group": 10
+              "group": 10,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "第三次送药得到：动感舞鞋（录制动感类通告时成功率上升）",
-              "group": 11
+              "group": 11,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "第四次送药得到：放电眼影（拍摄电影类通告时成功率上升）",
-              "group": 12
+              "group": 12,
+              "bullet": true
             },
             {
               "kind": "note",
@@ -20936,114 +20940,118 @@
             {
               "kind": "option",
               "text": "A.该女艺人友好度最高，且为初始女艺人（林芬芬、萧依莉、苏嫚君、姚子莹），老爸会暗示主角其实女孩子是真心喜欢主角的，该艺人友好度上升30.",
-              "group": 39
+              "group": 38
             },
             {
               "kind": "option",
               "text": "B.该女艺人友好度最高，不是初始女艺人，老爸识破主角，该艺人友好度上升20",
-              "group": 40
+              "group": 38
             },
             {
               "kind": "option",
               "text": "C.该女艺人友好度不是最高，该艺人友好度下降20。",
-              "group": 41
+              "group": 38
             },
             {
               "kind": "option",
               "text": "D.如果旗下有纪翔且友好度最高，该女艺人友好度下降30。",
-              "group": 42
+              "group": 38
             },
             {
               "kind": "event",
               "text": "事件16中女艺人答应后，但当天主角未去赴约，女艺人质问主角为何爽约，该艺人友好度下降。",
               "label": "17－1",
               "tag": "自动",
-              "group": 43
+              "group": 39
             },
             {
               "kind": "heading",
               "text": "老爸的生死",
-              "group": 44
+              "group": 40
             },
             {
-              "kind": "heading",
-              "text": "18 老爸死亡的时间点：",
-              "group": 45
+              "kind": "event",
+              "text": "老爸死亡的时间点：",
+              "label": "18",
+              "group": 41
             },
             {
               "kind": "paragraph",
               "text": "（1）没有按时送药，拖过半年后老爸会死去。",
-              "group": 46
+              "group": 41
             },
             {
               "kind": "paragraph",
               "text": "（2）一直没有还贺总的钱，老爸第二年10月前会死去。",
-              "group": 47
+              "group": 41
             },
             {
               "kind": "paragraph",
               "text": "（3）没有过第一年的父亲节（8月8日），老爸在第二年7月前会死去。",
-              "group": 48
+              "group": 41
             },
             {
               "kind": "paragraph",
               "text": "（4）没有过第二年的父亲节，老爸在第二年9月会死去。",
-              "group": 49
+              "group": 41
             },
             {
               "kind": "paragraph",
               "text": "（5）没有触发“笑傲天际”的电影宣传会，老爸会在第二年12月死去。（裸3中即使触发此宣传会，也会在宣传会当天死去）",
-              "group": 50
+              "group": 41
             },
             {
-              "kind": "paragraph",
-              "text": "19 老爸不死的方法：（只有资料片中才能不死）",
-              "group": 51
+              "kind": "event",
+              "text": "老爸不死的方法：（只有资料片中才能不死）",
+              "label": "19",
+              "group": 42
             },
             {
               "kind": "paragraph",
               "text": "（1）定时送满4次药。",
-              "group": 52
+              "group": 42
             },
             {
               "kind": "paragraph",
               "text": "（2）在第二年10月前还清贺总的钱。",
-              "group": 53
+              "group": 42
             },
             {
               "kind": "paragraph",
               "text": "（3）需前两年8月8日陪老爸过父亲节。",
-              "group": 54
+              "group": 42
             },
             {
               "kind": "paragraph",
               "text": "（4）参加“笑傲天际”的电影宣传会。",
-              "group": 55
+              "group": 42
+            },
+            {
+              "kind": "event",
+              "text": "未满足上述条件时，前往任一场景会遇到老爸，他交代了主角一番，一周后秘书报告老爸过世。",
+              "label": "19－1",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "在结局看到老爸和主角在一起的方法：",
+              "label": "20",
+              "group": 44
             },
             {
               "kind": "paragraph",
-              "text": "19－1 未满足上述条件时，前往任一场景会遇到老爸，他交代了主角一番，一周后秘书报告老爸过世。",
-              "group": 56
-            },
-            {
-              "kind": "heading",
-              "text": "20 在结局看到老爸和主角在一起的方法：",
-              "group": 57
-            },
-            {
-              "kind": "heading",
               "text": "（1）金父没有死",
-              "group": 58
+              "group": 44
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "（2）和威尔合作或超越威尔",
-              "group": 59
+              "group": 44
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "（3）SD回归",
-              "group": 60
+              "group": 44
             }
           ],
           "children": []

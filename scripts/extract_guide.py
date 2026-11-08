@@ -58,6 +58,14 @@ SUBTITLE_RE = re.compile(r"^[^，,。！？；;：:\dA-Za-z]{2,16}$")
 SUBTITLE_BLOCKERS = ("提醒", "以上", "该", "此", "主角", "谈话", "日后")
 # `1.（自动）` / `3－1 （跟随）` / `6 （手动）` — the marker becomes a tag.
 EVENT_LINE_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s*[（(]([^）)]+)[）)]\s*")
+# `18 老爸死亡的时间点：` — a numbered line with no `(tag)` marker; still an event,
+# so it keeps the white-card treatment like the tagged events.
+EVENT_PLAIN_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s+(.+)$")
+# `（1）金父没有死` — a numbered sub-item that belongs inside the preceding event's
+# card, not a sub-heading of its own.
+NUMBERED_ITEM_RE = re.compile(r"^（([0-9０-９]+)）(.+)$")
+# `第一次送药得到：…` — a round-dot list item (the four medicine rewards).
+MEDICINE_RE = re.compile(r"^第.+?次送药得到：")
 CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
 QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
 QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
@@ -689,14 +697,16 @@ def build_event_like_blocks(path: Path, *, page_title: str) -> list[dict]:
     与六大特殊通告（build_event_blocks）同一套事件渲染：编号行 `N （tag）正文`
     拆成 `event` 块，括号里的 tag（新闻 / 场景 / 自动 / 跟随…）单独抽出成 `tag`
     字段、并从正文里剥掉，前端据此渲染成「编号徽章 + TypeTag + 白底卡片」。每个
-    事件独占一个 group，各自得到一张 EventCard（而不是把连续事件塞进同一张卡、只让
-    第一个显示编号）。
+    事件独占一个 group，各自得到一张 EventCard。`N 正文`（无 tag，如老爸的
+    18/19/20）同样是事件，照样给白底卡片。
 
-    `★X` 是子章节标题（强制 heading，长标题也照样）；`提醒：` 是警示，渲染成黄色
-    提示块。页标题 `★{page_title}` 跳过，不重复成块。"""
+    事件之后直接跟的 `A.…` 选项或 `（N）…` 条目，归属该事件、塞进同一张卡片内，
+    不会变成副标题；`第N次送药得到：…` 是圆点列表项；`★X` 是子章节大标题；
+    `提醒：` 是黄色提示。页标题 `★{page_title}` 跳过，不重复成块。"""
 
     blocks: list[dict] = []
     group = 0
+    last_event_group: int | None = None
     for raw in [line.rstrip("\r") for line in _read_text(path).split("\n")]:
         line = raw.strip()
         if not line:
@@ -714,6 +724,40 @@ def build_event_like_blocks(path: Path, *, page_title: str) -> list[dict]:
                 "tag": event.group(2),
                 "group": group,
             })
+            last_event_group = group
+            continue
+        plain = EVENT_PLAIN_RE.match(line)
+        if plain:
+            group += 1
+            blocks.append({
+                "kind": "event",
+                "text": _tidy(plain.group(2).strip()),
+                "label": plain.group(1),
+                "group": group,
+            })
+            last_event_group = group
+            continue
+        if OPTION_RE.match(line):
+            # 事件之后的 A./B./C./D. 选项归入该事件卡片内。
+            if last_event_group is not None and blocks and blocks[-1]["group"] == last_event_group:
+                blocks.append({"kind": "option", "text": _tidy(line.strip()), "group": last_event_group})
+            else:
+                group += 1
+                blocks.append({"kind": "option", "text": _tidy(line.strip()), "group": group})
+            continue
+        numbered = NUMBERED_ITEM_RE.match(line)
+        if numbered:
+            # 老爸 18/19/20 之后的 （1）（2）（3） 列表，归进事件卡片内，不作副标题。
+            if last_event_group is not None and blocks and blocks[-1]["group"] == last_event_group:
+                blocks.append({"kind": "paragraph", "text": tidied, "group": last_event_group})
+            else:
+                group += 1
+                blocks.append({"kind": "paragraph", "text": tidied, "group": group})
+            continue
+        if MEDICINE_RE.match(line):
+            # `第一次送药得到：…` 等四条奖励，渲染成圆点列表项。
+            group += 1
+            blocks.append({"kind": "paragraph", "text": tidied, "group": group, "bullet": True})
             continue
         if tidied.startswith(("提醒：", "（提醒")):
             group += 1
