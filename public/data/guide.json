@@ -8668,6 +8668,8 @@
           "id": "characters/xiao-yili",
           "title": "萧依莉",
           "status": "ready",
+          "avatar": "images/characters/xiao-yili-logo.png",
+          "cover": "images/characters/xiao-yili-cover.jpg",
           "blocks": [
             {
               "kind": "section",
