@@ -7,14 +7,11 @@ interface Props {
 
 interface Best {
   value: number;
-  /** Ties are left unmarked, matching the in-game table. */
-  unique: boolean;
 }
 
 function bestOf(values: number[]): Best | null {
   if (!values.length || values.some((value) => Number.isNaN(value))) return null;
-  const value = Math.max(...values);
-  return { value, unique: values.filter((item) => item === value).length === 1 };
+  return { value: Math.max(...values) };
 }
 
 function bestValues(
@@ -84,13 +81,10 @@ export default function DataTable({ data }: Props) {
                   const bestGrowthValue = bestGrowth.get(column.key);
                   const isBest =
                     column.highlight &&
-                    bestValue?.unique === true &&
                     Number(value) > 0 &&
-                    Number(value) === bestValue.value;
+                    Number(value) === bestValue?.value;
                   const isBestGrowth =
-                    growth !== '' &&
-                    bestGrowthValue?.unique === true &&
-                    Number(growth) === bestGrowthValue.value;
+                    growth !== '' && Number(growth) === bestGrowthValue?.value;
 
                   return (
                     <td
@@ -105,7 +99,7 @@ export default function DataTable({ data }: Props) {
                     >
                       <span className="block">
                         {isBest ? (
-                          <span className="rounded-[4px] bg-brand-soft px-1.5 py-0.5 font-bold text-brand-strong">
+                          <span className="rounded-[4px] bg-brand-soft px-1.5 py-0.5 font-bold text-brand-strong ring-1 ring-inset ring-brand/45">
                             {value}
                           </span>
                         ) : (
@@ -116,7 +110,7 @@ export default function DataTable({ data }: Props) {
                         <span
                           className={cn(
                             'block text-ui-2xs leading-[1.5]',
-                            isBestGrowth ? 'font-semibold text-gold' : 'text-ink-faint',
+                            isBestGrowth ? 'font-bold text-growth' : 'text-growth',
                           )}
                         >
                           +{growth}
@@ -131,8 +125,8 @@ export default function DataTable({ data }: Props) {
         </table>
       </div>
       <p className="mt-2 px-1 text-ui-2xs text-ink-faint">
-        {growthColumns.length > 0 && '「＋」为该属性的成长加成，写在数值下一行。'}
-        {best.size > 0 && '加深的是该列最高值，多人并列时不标。'}
+        {growthColumns.length > 0 && '「＋」为该属性的成长加成，写在数值下一行（绿色）。'}
+        {best.size > 0 && '带框的是该列最高值，多人并列时一并标出。'}
       </p>
     </div>
   );

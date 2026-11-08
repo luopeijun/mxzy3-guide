@@ -51,6 +51,11 @@
   --color-choice: #494048;
   --color-choice-soft: #f4f2f4;
   --color-choice-line: #e2dcdf;
+  /* Growth bonus (the "+…" line under each stat) — green reads as "up/plus"
+     and stays visually apart from the rose brand and gold accents. */
+  --color-growth: #2f7d5b;
+  --color-growth-soft: #eef8f2;
+  --color-growth-line: #c2e0d0;
 
   /* Type scale — one step larger than before for comfortable reading */
   --text-ui-2xs: 12px;
