@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { ContentBlock } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
@@ -110,7 +111,7 @@ export default function ContentBlockList({ blocks, onJump }: Props) {
 
   return (
     <article>
-      {groups.map((group) => {
+      {groups.map((group, index) => {
         const [first, ...rest] = group.blocks;
         const options = rest.filter((block) => block.kind === 'option');
         // A labelled heading with options is a question card (see QuestionCard).
@@ -123,10 +124,18 @@ export default function ContentBlockList({ blocks, onJump }: Props) {
         if (first.kind === 'event') {
           return <EventCard key={group.group} blocks={group.blocks} />;
         }
+        // A long hairline above every major section (except the first) marks the
+        // boundary between chapters — the section title alone read too weakly.
+        const sectionRule = first.kind === 'section' && index > 0 && (
+          <div className="mb-6 mt-7 border-t border-brand-line" />
+        );
         return (
-          <section key={group.group} className="mb-4">
-            {group.blocks.map((block) => <BlockView key={block.index} block={block} />)}
-          </section>
+          <Fragment key={group.group}>
+            {sectionRule}
+            <section className="mb-4">
+              {group.blocks.map((block) => <BlockView key={block.index} block={block} />)}
+            </section>
+          </Fragment>
         );
       })}
     </article>
