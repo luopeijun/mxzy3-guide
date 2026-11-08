@@ -76,6 +76,10 @@ EVENT_PLAIN_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)*)[\.．]?\
 NUMBERED_ITEM_RE = re.compile(r"^（([0-9０-９]+)）(.+)$")
 # `第一次送药得到：…` — a round-dot list item (the four medicine rewards).
 MEDICINE_RE = re.compile(r"^第.+?次送药得到：")
+# `（新闻）林芬芬…` / `（自动）方若绮…` — an event whose number is omitted; the
+# parenthetical is the trigger-type tag. Restricted to short CJK/letter tags so it
+# never grabs a `（提示：…）` note or a `（1）` sub-item.
+EVENT_TAG_RE = re.compile(r"^[（(]([^）)0-9，。！？；:：]{1,6})[）)]\s*")
 # `情况一：` / `条件二：` — a bulleted list item (the 大侠金牌的作用 choices).
 SUB_ITEM_RE = re.compile(r"^(?:情况|条件|方法|步骤)[一二三四五六七八九十０-９0-9]+[：:]")
 CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
@@ -972,16 +976,22 @@ def build_event_like_blocks(path: Path, *, page_title: str, mark_cg: bool = Fals
 
 
 def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False) -> list[dict]:
-    """艺人事件簿（角色攻略）的构建器：事件抽成 `tag` 字段的彩色 chip（与其他事件簿一致），
-    子事件（含 `－` 编号，如 20－1 / 24－2－1）按层级嵌套；签约金 / 比较喜欢的物品 /
-    可创作作品 / 签约方法 等前言保留为段落与标题。
+    """艺人事件簿（角色攻略）的构建器。
 
-    关键修正：签约方法里「加入B：」的描述会把签约步骤写成缩进的编号行（如「 2 （场景）…」、
-    「 3 （自动）…」），这些不是真实事件，不能当成事件卡片。规则：编号行若缩进且尚未出现任何
-    真实事件（即仍在前言区），当作描述段落；一旦首个真实事件出现，之后的缩进编号行才视为子事件。"""
+    页面结构约定（后续角色同理）：
+    - `★` 行是大标题（section）：`★基础信息`、`★事件` 两个主章节；其余裸标题
+      （与SD相关事件、出国后的恋情、与主角的感情结局达成条件…）一律作二级标题
+      （heading）。
+    - 基础信息里的字段（签约金 / 比较喜欢的物品 / 可创作作品 / 签约方法 / 加入后续 …）
+      各作一个二级标题（heading）；字段下的说明文字为普通正文（paragraph），
+      没有冒号的列举用 `· `/`• ` 显式圆点（如歌曲逐行）。
+    - 编号带 `(tag)` 的行（含 `－` 子事件编号）一律是事件，渲染为白底卡；其中
+      签约方法→加入B 的步骤（1/2/3）也是事件卡。
+    - 省略编号的事件行（如 `（新闻）…` / `（自动）…`）：括号里是触发类型 tag，
+      同样渲染为白底事件卡，与编号事件统一样式（`加入后续` 的提醒即此类）。"""
     lines = [ln.rstrip("\r") for ln in _read_text(path).split("\n")]
     blocks: list[dict] = []
-    state: dict = {"group": 0, "last_event_group": None, "has_event": False}
+    state: dict = {"group": 0, "last_event_group": None}
     for i, raw in enumerate(lines):
         indent = len(raw) - len(raw.lstrip(" "))
         line = raw.strip()
@@ -995,13 +1005,21 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             blocks.append({"kind": "section", "text": chapter, "group": state["group"]})
             state["last_event_group"] = None
             continue
+        # 提示 / 注意 / PS 等提醒行优先于任何事件/圆点判定，始终作黄底 note。
+        if line.startswith(NOTE_PREFIXES):
+            state["group"] += 1
+            blocks.append({"kind": "note", "text": line, "group": state["group"]})
+            continue
+        marker = _bullet_marker(line)
+        if marker:
+            state["group"] += 1
+            blocks.append({
+                "kind": "paragraph", "text": line[len(marker):].strip(),
+                "group": state["group"], "bullet": True, "depth": min(indent // 2, 2),
+            })
+            continue
         event = EVENT_LINE_RE.match(line)
         if event:
-            if indent > 0 and not state["has_event"]:
-                # 签约方法→加入B 描述里的缩进编号行是步骤说明，不是事件。
-                state["group"] += 1
-                blocks.append({"kind": "paragraph", "text": line, "group": state["group"]})
-                continue
             state["group"] += 1
             text = _tidy(line[event.end():].strip())
             blocks.append({
@@ -1009,14 +1027,9 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
             })
             state["last_event_group"] = state["group"]
-            state["has_event"] = True
             continue
         plain = EVENT_PLAIN_RE.match(line)
         if plain:
-            if indent > 0 and not state["has_event"]:
-                state["group"] += 1
-                blocks.append({"kind": "paragraph", "text": line, "group": state["group"]})
-                continue
             state["group"] += 1
             text = _tidy(plain.group(2).strip())
             blocks.append({
@@ -1024,7 +1037,18 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
             })
             state["last_event_group"] = state["group"]
-            state["has_event"] = True
+            continue
+        # `（新闻）` / `（自动）` 等省略了编号的事件：括号里是触发类型 tag，无 label。
+        # 一律走白底事件卡，与编号事件统一样式（`加入后续` 的提醒即此类）。
+        tag_event = EVENT_TAG_RE.match(line)
+        if tag_event:
+            state["group"] += 1
+            text = _tidy(line[tag_event.end():].strip())
+            blocks.append({
+                "kind": "event", "text": text, "tag": tag_event.group(1),
+                "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
+            })
+            state["last_event_group"] = state["group"]
             continue
         if OPTION_RE.match(line):
             if state["last_event_group"] is not None and blocks and blocks[-1]["group"] == state["last_event_group"]:
@@ -1034,20 +1058,19 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 blocks.append({"kind": "option", "text": _tidy(line), "group": state["group"]})
                 state["last_event_group"] = state["group"]
             continue
-        if line.startswith(NOTE_PREFIXES):
-            state["group"] += 1
-            blocks.append({"kind": "note", "text": line, "group": state["group"]})
-            continue
-        # 裸标题：下一行紧跟编号事件 → 大标题章节；否则副标题。
+        # 裸标题一律作二级标题（heading）；大标题只由 `★` 行产生。判定：短标题行，
+        # 或下一行紧跟编号事件的分隔行（即便标题较长如「与姚子奇相关事件（…）」）。
+        # 含冒号的行视为正文（即使后面紧跟事件，如「在感情结局的基础上…」补充句）。
+        j = i + 1
+        while j < len(lines) and not lines[j].strip():
+            j += 1
+        next_line = lines[j].strip() if j < len(lines) else ""
+        follows_event = bool(EVENT_LINE_RE.match(next_line) or EVENT_PLAIN_RE.match(next_line))
+        is_title = follows_event and "：" not in line and ":" not in line
         cls = classify(line)
-        if cls["kind"] == "heading":
-            next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
-            follows_event = bool(EVENT_LINE_RE.match(next_line) or EVENT_PLAIN_RE.match(next_line))
+        if cls["kind"] == "heading" or is_title:
             state["group"] += 1
-            if follows_event:
-                blocks.append({"kind": "section", "text": line, "group": state["group"]})
-            else:
-                blocks.append({"kind": "heading", "text": line, "group": state["group"]})
+            blocks.append({"kind": "heading", "text": line, "group": state["group"]})
             state["last_event_group"] = None
             continue
         state["group"] += 1
@@ -1893,6 +1916,18 @@ def _is_item_line(line: str) -> bool:
         return False
     prefix = _item_prefix(line)
     return prefix is not None and not ITEM_PROSE_RE.search(prefix)
+
+
+BULLET_MARKERS = ("· ", "• ", "▪ ")
+
+
+def _bullet_marker(line: str) -> str | None:
+    """Explicit list-item markers (`· `/`• `/`▪ `) for bare enumerations that have
+    no `项目：` colon prefix — e.g. the four 感情结局 conditions, or each 歌曲 line."""
+    for mk in BULLET_MARKERS:
+        if line.startswith(mk):
+            return mk
+    return None
 
 
 def build_producers_blocks(path: Path) -> list[dict]:

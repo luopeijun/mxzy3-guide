@@ -248,9 +248,12 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
     default: {
       // A list item carries a round dot in the gutter and a hanging indent, so
       // a run of names/types reads as separate entries instead of one text wall.
+      // Nested entries step in one level per `depth` so 歌曲 / 子项 read as a
+      // hierarchy under their parent bullet.
       if (block.bullet) {
+        const step = block.depth === 2 ? 'ml-[42px]' : block.depth === 1 ? 'ml-[19px]' : '';
         return (
-          <p className="relative mb-1 mt-2 pl-[19px] text-ui-md leading-[1.9] break-words text-ink">
+          <p className={`relative mb-1 mt-2 pl-[19px] ${step} text-ui-md leading-[1.9] break-words text-ink`}>
             <span
               aria-hidden="true"
               className="absolute left-[6px] top-[12px] h-[5px] w-[5px] rounded-full bg-brand"
