@@ -885,8 +885,11 @@ def _append_event_like(
     if "CG" in line:
         # `…陪伴的CG` 等结局 / CG 说明是陈述句，不是章节标题，避免被 classify 的
         # 短行启发式误判成副标题（在没有任何 section 的平铺页上会被渲染成大标题）。
+        # 但若它出现在正文之前的「前言」区（还没有任何事件 / 章节 / 选项），
+        # 它其实是该路线拿不到 / 别处取得的 CG 注解，应当进黄色提示框。
         group += 1
-        blocks.append({"kind": "paragraph", "text": tidied, "group": group})
+        has_content = any(b["kind"] in ("event", "section", "heading", "option") for b in blocks)
+        blocks.append({"kind": "note" if not has_content else "paragraph", "text": tidied, "group": group})
         state["group"] = group
         return
 
