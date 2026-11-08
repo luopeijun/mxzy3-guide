@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GuideData } from './types/guide';
 import type { ReorderRequest } from './lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
+import { HighlightProvider } from './hooks/useHighlightPref';
 import { useHashSelection } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
 import { useTreeOrder } from './hooks/useTreeOrder';
@@ -73,46 +74,48 @@ function GuideApp({ data: source }: { data: GuideData }) {
   const nextNode = position >= 0 && position < allNodes.length - 1 ? allNodes[position + 1] : null;
 
   return (
-    <AppShell
-      scrollKey={selectedId}
-      sidebarOpen={sidebarOpen}
-      onCloseSidebar={() => setSidebarOpen(false)}
-      header={(
-        <BrandHeader
-          categories={data.categories}
-          activeCategoryId={activeCategoryId}
-          summary={summary}
+    <HighlightProvider>
+      <AppShell
+        scrollKey={selectedId}
+        sidebarOpen={sidebarOpen}
+        onCloseSidebar={() => setSidebarOpen(false)}
+        header={(
+          <BrandHeader
+            categories={data.categories}
+            activeCategoryId={activeCategoryId}
+            summary={summary}
+            onSelect={handleSelect}
+            onMenuClick={() => setSidebarOpen(true)}
+          />
+        )}
+        sidebar={(
+          <Sidebar
+            categories={data.categories}
+            selectedId={selectedId}
+            expandedIds={expandedIds}
+            query={query}
+            hits={hits}
+            open={sidebarOpen}
+            summary={summary}
+            customized={customized}
+            onToggle={toggle}
+            onSelect={handleSelect}
+            onQueryChange={setQuery}
+            onReorder={handleReorder}
+            onResetOrder={reset}
+          />
+        )}
+      >
+        <ContentPanel
+          data={data}
+          node={currentNode}
+          path={path}
+          prev={previousNode}
+          next={nextNode}
           onSelect={handleSelect}
-          onMenuClick={() => setSidebarOpen(true)}
         />
-      )}
-      sidebar={(
-        <Sidebar
-          categories={data.categories}
-          selectedId={selectedId}
-          expandedIds={expandedIds}
-          query={query}
-          hits={hits}
-          open={sidebarOpen}
-          summary={summary}
-          customized={customized}
-          onToggle={toggle}
-          onSelect={handleSelect}
-          onQueryChange={setQuery}
-          onReorder={handleReorder}
-          onResetOrder={reset}
-        />
-      )}
-    >
-      <ContentPanel
-        data={data}
-        node={currentNode}
-        path={path}
-        prev={previousNode}
-        next={nextNode}
-        onSelect={handleSelect}
-      />
-    </AppShell>
+      </AppShell>
+    </HighlightProvider>
   );
 }
 

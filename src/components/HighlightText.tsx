@@ -1,17 +1,20 @@
-import { parseInline } from '../lib/markup';
+import { parseInline, plainText } from '../lib/markup';
+import { useHighlightPref } from '../hooks/useHighlightPref';
 
 /** Text with the inline markers rendered as highlights. One look for every
  *  category — soft tint, bold, deep tone — the same treatment the notice summary
  *  card uses, so a highlighted keyword means the same thing everywhere and a
  *  step with several of them still reads as one sentence.
  *
- *  `tone="note"` re-cuts that look in amber for the cream reminder blocks, where
- *  a rose chip would clash with the block's own background. */
+ *  The header switch can turn tints off for body copy: the markers are stripped
+ *  rather than shown, so the sentence still reads normally. `persistent` opts a
+ *  spot out of that switch (the 速览 card, where the tint carries the structure). */
 
 interface Props {
   text: string;
   className?: string;
   tone?: 'brand' | 'note';
+  persistent?: boolean;
 }
 
 const TONE_CLASS = {
@@ -19,8 +22,12 @@ const TONE_CLASS = {
   note: 'bg-hl-note-soft text-hl-note',
 };
 
-export default function HighlightText({ text, className, tone = 'brand' }: Props) {
+export default function HighlightText({ text, className, tone = 'brand', persistent }: Props) {
+  const { enabled } = useHighlightPref();
   const segments = parseInline(text);
+  if (!enabled && !persistent) {
+    return <span className={className}>{plainText(text)}</span>;
+  }
   if (segments.length === 1 && !segments[0].kind) {
     return <span className={className}>{text}</span>;
   }

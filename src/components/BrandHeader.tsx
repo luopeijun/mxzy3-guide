@@ -1,6 +1,7 @@
 import type { GuideNode, GuideSummary } from '../types/guide';
 import { formatCount } from '../lib/guide';
 import { cn } from '../lib/cn';
+import HighlightSwitch from './HighlightSwitch';
 
 interface Props {
   categories: GuideNode[];
@@ -32,26 +33,30 @@ export default function BrandHeader({
           <span className="whitespace-nowrap text-ui-md font-bold tracking-[0.02em]">明星志愿3 · 攻略助手</span>
         </button>
 
-        <nav className="ml-auto flex items-center gap-1 tab:gap-0 nav:hidden" aria-label="攻略分类">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              className={cn(
-                'whitespace-nowrap rounded-full px-[13px] py-[7px] text-ui-xs transition-colors duration-150 tab:px-[9px] tab:py-1.5',
-                activeCategoryId === category.id
-                  ? 'bg-brand-soft font-semibold text-brand-strong'
-                  : 'text-ink-muted hover:bg-surface-soft hover:text-ink',
-              )}
-              onClick={() => onSelect(category.id)}
-            >
-              {category.title}
-            </button>
-          ))}
-        </nav>
+        <div className="ml-auto flex items-center gap-4 nav:gap-3">
+          <nav className="flex items-center gap-1 tab:gap-0 nav:hidden" aria-label="攻略分类">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                className={cn(
+                  'whitespace-nowrap rounded-full px-[13px] py-[7px] text-ui-xs transition-colors duration-150 tab:px-[9px] tab:py-1.5',
+                  activeCategoryId === category.id
+                    ? 'bg-brand-soft font-semibold text-brand-strong'
+                    : 'text-ink-muted hover:bg-surface-soft hover:text-ink',
+                )}
+                onClick={() => onSelect(category.id)}
+              >
+                {category.title}
+              </button>
+            ))}
+          </nav>
 
-        <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
-          {summary.items} 条目 · {formatCount(summary.chars)} 字
+          <HighlightSwitch />
+
+          <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
+            {summary.items} 条目 · {formatCount(summary.chars)} 字
+          </div>
         </div>
       </div>
     </header>

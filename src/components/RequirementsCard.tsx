@@ -32,6 +32,7 @@ function NumberedLines({ lines, parts }: { lines?: string[]; parts?: Requirement
         >
           <span className={MARKER}>{index + 1}</span>
           <HighlightText
+            persistent
             className="text-ui-2xs leading-[1.75] text-ink-muted"
             text={typeof row === 'string' ? row : `**${row.name}** —— ${row.from ?? ''}`}
           />
@@ -47,6 +48,7 @@ function PropCard({ prop }: { prop: RequirementProp }) {
       <div className="text-ui-sm font-semibold text-ink">{prop.name}</div>
       {prop.from && (
         <HighlightText
+          persistent
           className="mt-0.5 block text-ui-xs leading-[1.7] text-ink-muted"
           text={prop.from}
         />
@@ -93,7 +95,7 @@ export default function RequirementsCard({ requirements }: Props) {
                 className="mt-[9px] h-[5px] w-[5px] shrink-0 rounded-full bg-brand-line"
                 aria-hidden="true"
               />
-              <HighlightText className="text-ui-xs leading-[1.75] text-ink-muted" text={line} />
+              <HighlightText persistent className="text-ui-xs leading-[1.75] text-ink-muted" text={line} />
             </li>
           ))}
         </ul>
@@ -108,7 +110,7 @@ export default function RequirementsCard({ requirements }: Props) {
 
       {note && (
         <p className="border-t border-dashed border-line px-5 py-2.5 text-ui-2xs leading-[1.75] text-ink-faint">
-          <HighlightText text={note} />
+          <HighlightText persistent text={note} />
         </p>
       )}
     </section>
