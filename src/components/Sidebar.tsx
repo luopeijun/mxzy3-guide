@@ -48,7 +48,7 @@ export default function Sidebar({
               onClick={onResetOrder}
               title="恢复脚本生成时的默认顺序"
             >
-              恢复默认
+              恢复默认顺序
             </button>
           ) : (
             <span className="text-ui-2xs text-ink-faint">4 大类</span>
