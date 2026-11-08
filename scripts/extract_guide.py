@@ -40,6 +40,7 @@ DEFAULT_NOTICES = SOURCES / "notices.txt"
 DEFAULT_NOTICES_INTRO = SOURCES / "notices-intro.txt"
 DEFAULT_SD = SOURCES / "sd.txt"
 DEFAULT_LAOBA = SOURCES / "laoba.txt"
+DEFAULT_HOLLYWOOD = SOURCES / "hollywood.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -707,6 +708,28 @@ def build_laoba_blocks(path: Path) -> list[dict]:
         if block["kind"] == "paragraph" and block["text"].startswith(("提醒：", "（提醒")):
             block["kind"] = "note"
     return blocks
+
+
+def build_hollywood_blocks(path: Path) -> list[dict]:
+    """好莱坞相关（进军好莱坞 / 史麦克的拜访 / 暗夜惊魂）：与 SD、老爸同属「其他事件」，
+    走通用 build_blocks 流水线，事件不单独拆标签。
+
+    `★好莱坞` 只是页标题，跳过；其余 `★X`（史麦克的拜访 / 暗夜惊魂）是子章节标题。
+    空白行保留，让 build_blocks 按段落分组，事件与提示各归其位。"""
+
+    def tidy_line(raw: str) -> str:
+        stripped = raw.strip()
+        if not stripped:
+            return ""
+        return stripped.lstrip("★☆").strip()
+
+    lines: list[str] = []
+    for raw in _read_text(path).split("\n"):
+        text = tidy_line(raw)
+        if text == "好莱坞":
+            continue  # 页标题，不重复成块
+        lines.append(text)
+    return build_blocks(lines)
 
 
 NOTICE_TITLE_RE = re.compile(r"^★\s*(.+)$")
@@ -1968,6 +1991,7 @@ def build(
     notices_intro: Path,
     sd_events: Path,
     laoba_events: Path,
+    hollywood_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -1977,7 +2001,7 @@ def build(
     required = [
         "角色攻略", "初始问题选项",
         "接手第一周细节", "小秘书相关事件（不涉艺人）",
-        "蛮羊事件：", "史麦克的拜访", "美丽之星事件", "演艺圈前辈事件",
+        "蛮羊事件：", "美丽之星事件", "演艺圈前辈事件",
         "威尔相关事件", "六大传说级通告（99%获奖）",
     ]
     missing = [title for title in required if title not in sections.index]
@@ -2114,9 +2138,9 @@ def build(
             blocks=build_blocks(sections.intro("蛮羊事件：")),
         ),
         make_node(
-            "other-events/hollywood", "进军好莱坞",
-            source_title="史麦克的拜访",
-            blocks=build_blocks(sections.intro("史麦克的拜访")),
+            "other-events/hollywood", "好莱坞相关",
+            source_title="好莱坞相关.txt",
+            blocks=build_hollywood_blocks(hollywood_events),
         ),
         make_node(
             "other-events/sd", "SD相关事件",
@@ -2216,6 +2240,7 @@ def main() -> None:
     notices_intro = Path(sys.argv[18]) if len(sys.argv) > 18 else DEFAULT_NOTICES_INTRO
     sd_events = Path(sys.argv[19]) if len(sys.argv) > 19 else DEFAULT_SD
     laoba_events = Path(sys.argv[20]) if len(sys.argv) > 20 else DEFAULT_LAOBA
+    hollywood_events = Path(sys.argv[21]) if len(sys.argv) > 21 else DEFAULT_HOLLYWOOD
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -2256,9 +2281,12 @@ def main() -> None:
         raise SystemExit(f"sd events txt not found: {sd_events}")
     if not laoba_events.exists():
         raise SystemExit(f"laoba events txt not found: {laoba_events}")
+    if not hollywood_events.exists():
+        raise SystemExit(f"hollywood events txt not found: {hollywood_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
-                 easyshop, notices, notices_intro, sd_events, laoba_events)
+                 easyshop, notices, notices_intro, sd_events, laoba_events,
+                 hollywood_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
