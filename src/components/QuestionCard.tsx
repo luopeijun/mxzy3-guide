@@ -1,4 +1,5 @@
 import type { IndexedBlock } from '../lib/guide';
+import HighlightText from './HighlightText';
 
 interface Props {
   heading: IndexedBlock;
@@ -59,7 +60,9 @@ export default function QuestionCard({ heading, options, onJump }: Props) {
             </span>
             <span className="shrink-0 text-ui-sm font-semibold text-ink">{option.action}</span>
             {option.text && (
-              <span className="min-w-0 text-ui-sm leading-[1.7] text-ink-muted">{option.text}</span>
+              <span className="min-w-0 text-ui-sm leading-[1.7] text-ink-muted">
+                <HighlightText text={option.text} />
+              </span>
             )}
             {option.reward && (
               <span className="shrink-0 rounded-full border border-gold-line bg-gold-soft px-2 py-[1px] text-ui-2xs font-medium text-gold">

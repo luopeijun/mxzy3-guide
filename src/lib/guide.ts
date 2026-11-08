@@ -67,11 +67,11 @@ function itemRows(block: ContentBlock): string[] {
 export function countChars(node: GuideNode): number {
   return node.blocks.reduce((sum, block) => {
     const own = [
-      block.text,
-      block.answer ?? '',
-      ...itemRows(block),
-      ...(block.notes ?? []),
-      ...tableCells(block),
+      plainText(block.text),
+      plainText(block.answer ?? ''),
+      ...itemRows(block).map(plainText),
+      ...(block.notes ?? []).map(plainText),
+      ...tableCells(block).map(plainText),
     ].join('');
     return sum + own.replace(/\s/g, '').length;
   }, 0);
@@ -103,14 +103,14 @@ function snippetOf(text: string, query: string): string {
 /** Everything in a block that the search box should look at. */
 function searchableText(block: ContentBlock): string {
   return [
-    block.text,
-    block.answer,
-    block.action,
-    block.reward,
-    block.label,
-    block.targetLabel,
-    ...itemRows(block),
-    ...(block.notes ?? []),
+    plainText(block.text),
+    plainText(block.answer ?? ''),
+    plainText(block.action ?? ''),
+    plainText(block.reward ?? ''),
+    plainText(block.label ?? ''),
+    plainText(block.targetLabel ?? ''),
+    ...itemRows(block).map(plainText),
+    ...(block.notes ?? []).map(plainText),
     tableText(block),
   ]
     .filter(Boolean)

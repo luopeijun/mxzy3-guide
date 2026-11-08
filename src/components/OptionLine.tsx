@@ -1,4 +1,5 @@
 import { cn } from '../lib/cn';
+import HighlightText from './HighlightText';
 
 /** `A.先接电话——…` / `b.自制唱片5张…` / `C 关古威…` — the marker is the choice label.
  *  The docx mixes a dot and a plain space, so both forms are accepted; the CJK
@@ -25,7 +26,7 @@ export default function OptionLine({ text, className }: Props) {
           className,
         )}
       >
-        {text}
+        <HighlightText text={text} />
       </p>
     );
   }
@@ -43,7 +44,9 @@ export default function OptionLine({ text, className }: Props) {
       >
         {match[1].toUpperCase()}
       </span>
-      <span className="min-w-0 flex-1 text-ui-sm leading-[1.8] break-words text-choice">{match[2]}</span>
+      <span className="min-w-0 flex-1 text-ui-sm leading-[1.8] break-words text-choice">
+        <HighlightText text={match[2]} />
+      </span>
     </div>
   );
 }

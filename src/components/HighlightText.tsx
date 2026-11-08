@@ -1,8 +1,9 @@
-import { HIGHLIGHT_RE } from '../lib/markup';
+import { parseInline } from '../lib/markup';
 
-/** Text with `**keyword**` markers rendered as a soft highlight. Keeps the
- *  emphasis in the data layer so the important limits (男艺人 / 团体 / 3 张以上)
- *  are decided while writing, not guessed by a keyword list in the UI. */
+/** Text with the inline markers rendered as highlights. One look for every
+ *  category — soft brand tint, bold, deep plum — the same treatment the notice
+ *  summary card uses, so a highlighted keyword means the same thing everywhere
+ *  and a step with several of them still reads as one sentence. */
 
 interface Props {
   text: string;
@@ -10,22 +11,23 @@ interface Props {
 }
 
 export default function HighlightText({ text, className }: Props) {
-  // split() keeps the captured groups, so odd indices are the highlighted runs.
-  const parts = text.split(HIGHLIGHT_RE);
-  if (parts.length === 1) return <span className={className}>{text}</span>;
+  const segments = parseInline(text);
+  if (segments.length === 1 && !segments[0].kind) {
+    return <span className={className}>{text}</span>;
+  }
 
   return (
     <span className={className}>
-      {parts.map((part, index) =>
-        index % 2 === 1 ? (
+      {segments.map((segment, index) =>
+        segment.kind ? (
           <mark
             key={index}
             className="rounded-[3px] bg-brand-soft px-[3px] font-semibold text-brand-strong"
           >
-            {part}
+            {segment.text}
           </mark>
         ) : (
-          part
+          segment.text
         ),
       )}
     </span>

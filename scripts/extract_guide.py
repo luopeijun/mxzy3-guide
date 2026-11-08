@@ -647,6 +647,155 @@ NOTICE_TITLE_RE = re.compile(r"^★\s*(.+)$")
 NOTICE_SUBTITLE_RE = re.compile(r"^\*\s*(.+)$")
 
 
+# ---- Inline highlights in event copy -------------------------------------
+# `{时间:…}` / `{地点:…}` / `{人物:…}` / `{选项:…}` / `{物品:…}` are decoded by
+# HighlightText into tinted runs, so a reader scans a step for *when / where /
+# who / which choice* without reading the sentence. The classification happens
+# here, where the sentence is still whole — the UI only renders what it is told.
+# plainText() strips the markers again for search and character counts.
+
+PLACE_WORDS = (
+    "EAMI", "日月光", "钜子娱乐", "钜子", "京风唱片", "SOSA", "全球", "薇薇安",
+    "机场", "公园", "育幼院", "市民音乐厅", "商店街", "医院", "电视台",
+    "唱片公司", "广告公司", "电影公司", "经纪公司", "酒馆", "饭店", "精品店",
+    "摄影棚", "片场", "影城",
+    "塞外", "长城", "开罗", "巴黎", "维也纳", "纽约", "夏威夷", "好莱坞",
+    "东京", "京都", "第三世界",
+)
+
+PERSON_WORDS = (
+    # 旗下艺人
+    "林芬芬", "萧依莉", "桑禾蓓", "苏嫚君", "欧怡青", "路敏", "路风", "姚子奇",
+    "天晴", "关古威", "陈奕夫", "纪翔", "新名纱雪", "姚子莹", "聆香", "克烈斯",
+    "卫亚", "原少纬",
+    # 固定 NPC
+    "周映彤", "周先生", "金父", "贺总", "塔罗小魔女", "小魔女", "加贺大泽",
+    "加贺", "史麦克", "王瑞恩", "大天使", "朱莉", "欧医生", "陈乐群", "张导演",
+)
+
+TIME_PATTERNS = (
+    r"第[一二三四五六七八九十0-9]+年(?:[0-9]{1,2}月(?:[0-9]{1,2}日)?)?(?:后|前|内|之前)?",
+    r"上个事件(?:[0-9一二三四五六七八九十半]+ *个?(?:天|周|月))?(?:后(?:一?个?[天周月]内?)?|内)",
+    r"事件[0-9]+(?:－[0-9]+)?(?:后|前)",
+    r"(?:[0-9]+|[一二三四五六七八九十两半])(?:个)?(?:天|周|月|年|星期)(?:后|内|前)?",
+    r"每(?:年|周|月|轮)(?:会)?(?:有)?(?:一次|一回)?",
+    r"(?:两周|一周|半个月|一个月)(?:后|内)",
+)
+TIME_RE = re.compile("|".join(f"(?:{pattern})" for pattern in TIME_PATTERNS))
+# A time worth tinting carries a number (3 天后 / 第二年 6 月 / 事件 28 后) or a
+# recurring rule (每年会有一次); a bare 上个事件后 is just list order.
+TIME_DETAIL_RE = re.compile(r"[0-9]|第[一二三四五六七八九十]年|每[年月周轮]|半[月]|两[周个]|一[周月]")
+
+# What a reader needs first. One span per category, HIGHLIGHT_LIMIT in total —
+# see mark_highlights() for why the page stays mostly un-tinted.
+HIGHLIGHT_PRIORITY = ("选项", "时间", "人物", "物品", "地点")
+HIGHLIGHT_LIMIT = 3
+QUOTE_RE = re.compile(r"“[^”]{1,24}”")
+# Menu entries show up in quotes too (`找加贺“闲聊”`), but they are an action to
+# click, not something to keep in mind — tinting them only adds noise.
+MENU_QUOTES = ("闲聊", "聊天", "谈话", "打招呼")
+
+
+def _highlight_spans(line: str) -> list[tuple[int, int, str]]:
+    """Ranges worth tinting, longest match first, never overlapping."""
+    found: list[tuple[int, int, str]] = []
+
+    for match in TIME_RE.finditer(line):
+        found.append((match.start(), match.end(), "时间"))
+
+    for kind, words in (("地点", PLACE_WORDS), ("人物", PERSON_WORDS)):
+        for word in words:
+            start = line.find(word)
+            while start != -1:
+                found.append((start, start + len(word), kind))
+                start = line.find(word, start + 1)
+
+    # A quoted name is a prop (`“天使羽衣”`) unless the sentence offers it as a
+    # choice (`选择“答应”`) — then it is the decision itself. `点选周映彤“闲聊”`
+    # is neither: 点选 is a menu action, so only 选 counts. Long quotes are news
+    # headlines (`“XXX捐出演唱会收入…”`), and tinting a whole sentence would
+    # drown the step it belongs to, so those stay plain.
+    for match in QUOTE_RE.finditer(line):
+        inner = match.group(0)[1:-1]
+        if len(inner) > 12 or inner in MENU_QUOTES:
+            continue
+        before = line[max(0, match.start() - 6):match.start()]
+        if "点选" in before:
+            continue
+        kind = "选项" if re.search(r"选(?:择)?\s*$", before) else "物品"
+        found.append((match.start(), match.end(), kind))
+
+    found.sort(key=lambda span: (span[0], -(span[1] - span[0])))
+    kept: list[tuple[int, int, str]] = []
+    cursor = 0
+    for start, end, kind in found:
+        if start >= cursor:
+            kept.append((start, end, kind))
+            cursor = end
+    return kept
+
+
+def _time_is_specific(label: str) -> bool:
+    """`上个事件3天后` is a real anchor; a bare `上个事件后` only repeats the
+    order of the list and is skipped, or every second line would be tinted."""
+    return bool(TIME_DETAIL_RE.search(label))
+
+
+def mark_highlights(text: str) -> str:
+    """Wrap a block's most useful spans in `{kind:…}` markers.
+
+    Tinting everything that *could* be highlighted turns a page pink and stops
+    being a signal, so each block keeps at most one span per category and at
+    most `HIGHLIGHT_LIMIT` spans overall, decided by HIGHLIGHT_PRIORITY: the
+    decision the player has to make first, then when, then who / what / where.
+    """
+    lines = text.split("\n")
+    spans: list[tuple[int, int, int, str]] = []  # line, start, end, kind
+    for index, line in enumerate(lines):
+        for start, end, kind in _highlight_spans(line):
+            if kind == "时间" and not _time_is_specific(line[start:end]):
+                continue
+            spans.append((index, start, end, kind))
+
+    seen: set[str] = set()
+    unique: list[tuple[int, int, int, str]] = []
+    for span in spans:
+        if span[3] in seen:
+            continue
+        seen.add(span[3])
+        unique.append(span)
+
+    rank = {kind: position for position, kind in enumerate(HIGHLIGHT_PRIORITY)}
+    chosen = sorted(unique, key=lambda span: rank[span[3]])[:HIGHLIGHT_LIMIT]
+
+    by_line: dict[int, list[tuple[int, int, str]]] = {}
+    for index, start, end, kind in sorted(chosen):
+        by_line.setdefault(index, []).append((start, end, kind))
+
+    out: list[str] = []
+    for index, line in enumerate(lines):
+        picked = by_line.get(index)
+        if not picked:
+            out.append(line)
+            continue
+        pieces: list[str] = []
+        cursor = 0
+        for start, end, kind in picked:
+            pieces.append(line[cursor:start])
+            pieces.append(f"{{{kind}:{line[start:end]}}}")
+            cursor = end
+        pieces.append(line[cursor:])
+        out.append("".join(pieces))
+    return "\n".join(out)
+
+
+def annotate_highlight_blocks(blocks: list[dict]) -> None:
+    """Add highlights to prose blocks; headings and sections stay plain."""
+    for block in blocks:
+        if block["kind"] in {"event", "paragraph", "note", "option"}:
+            block["text"] = mark_highlights(block["text"])
+
+
 def _split_preamble(line: str) -> tuple[str, str]:
     """`落入凡间的天使（不需要和塔罗小魔女交谈就能触发）` -> (title, note)."""
     match = PREAMBLE_RE.match(line)
@@ -724,6 +873,8 @@ def build_notice_pages(path: Path) -> list[dict]:
             continue
         add("paragraph", line)
 
+    for page in pages:
+        annotate_highlight_blocks(page["blocks"])
     return pages
 
 

@@ -3,6 +3,7 @@ import type { ContentBlock } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
 import DataTable from './DataTable';
+import HighlightText from './HighlightText';
 import OptionLine from './OptionLine';
 import QuestionCard from './QuestionCard';
 import TypeTag from './TypeTag';
@@ -29,7 +30,7 @@ function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
         )}
         <span className="min-w-0 flex-1 break-words">
           {head.tag && <TypeTag label={head.tag} />}
-          {head.text}
+          <HighlightText text={head.text} />
         </span>
       </div>
       {rest.length > 0 && (
@@ -45,14 +46,18 @@ function EventDetail({ block }: { block: IndexedBlock }) {
   if (block.kind === 'note') {
     return (
       <p className="whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-2.5 py-1.5 text-ui-2xs leading-[1.8] text-note">
-        {block.text}
+        <HighlightText text={block.text} />
       </p>
     );
   }
   if (block.kind === 'option') {
     return <OptionLine text={block.text} className="ml-[10px]" />;
   }
-  return <p className="text-ui-sm leading-[1.8] break-words text-ink">{block.text}</p>;
+  return (
+    <p className="text-ui-sm leading-[1.8] break-words text-ink">
+      <HighlightText text={block.text} />
+    </p>
+  );
 }
 
 /** One catalogue entry: its name, a few labelled lines and optional notes. */
@@ -121,7 +126,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
           )}
           <span className="min-w-0 flex-1 break-words">
             {block.tag && <TypeTag label={block.tag} />}
-            {block.text}
+            <HighlightText text={block.text} />
           </span>
         </div>
       );
@@ -130,7 +135,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
     case 'note':
       return (
         <p className="mb-[5px] whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-3 py-2 text-ui-sm leading-[1.8] text-note">
-          {block.text}
+          <HighlightText text={block.text} />
         </p>
       );
     case 'qa':
@@ -143,7 +148,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
               aria-hidden="true"
               className="absolute left-[6px] top-[11px] h-[5px] w-[5px] rounded-full bg-brand"
             />
-            {block.text}
+            <HighlightText text={block.text} />
           </p>
           {block.answer && (
             <p className="mt-1 flex items-start gap-1.5 pl-[19px]">
@@ -151,7 +156,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
                 答
               </span>
               <span className="min-w-0 flex-1 text-ui-sm leading-[1.75] break-words text-ink">
-                {block.answer}
+                <HighlightText text={block.answer} />
               </span>
             </p>
           )}
@@ -171,7 +176,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
               aria-hidden="true"
               className="absolute left-[6px] top-[12px] h-[5px] w-[5px] rounded-full bg-brand"
             />
-            {block.text}
+            <HighlightText text={block.text} />
           </p>
         );
       }
@@ -180,18 +185,22 @@ function BlockView({ block }: { block: IndexedBlock }) {
       if (block.depth === 2) {
         return (
           <p className="mb-1 ml-[42px] text-ui-sm leading-[1.85] break-words text-ink-muted">
-            {block.text}
+            <HighlightText text={block.text} />
           </p>
         );
       }
       if (block.depth === 1) {
         return (
           <p className="mb-1 ml-[19px] text-ui-md leading-[1.9] break-words text-ink">
-            {block.text}
+            <HighlightText text={block.text} />
           </p>
         );
       }
-      return <p className="mb-1 text-ui-md leading-[1.9] break-words text-ink">{block.text}</p>;
+      return (
+        <p className="mb-1 text-ui-md leading-[1.9] break-words text-ink">
+          <HighlightText text={block.text} />
+        </p>
+      );
     }
   }
 }
