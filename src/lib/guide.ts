@@ -1,4 +1,5 @@
 import type { ContentBlock, GuideData, GuideNode } from '../types/guide';
+import { plainText } from './markup';
 
 export interface SearchHit {
   node: GuideNode;
@@ -123,16 +124,18 @@ function requirementsText(node: GuideNode): string {
   const props = (items: NonNullable<typeof req.items>): string[] =>
     items.flatMap((item) => [
       item.name,
-      item.from ?? '',
-      ...(item.steps ?? []),
+      plainText(item.from ?? ''),
+      ...(item.steps ?? []).map(plainText),
       ...props(item.parts ?? []),
     ]);
-  return [
-    ...(req.stats ?? []).map((stat) => `${stat.label}${stat.value}`),
-    ...(req.cast ?? []),
-    ...props(req.items ?? []),
-    req.note ?? '',
-  ].join(' ');
+  return plainText(
+    [
+      ...(req.stats ?? []).map((stat) => `${stat.label}${stat.value}`),
+      ...(req.cast ?? []),
+      ...props(req.items ?? []),
+      req.note ?? '',
+    ].join(' '),
+  );
 }
 
 /** Lightweight title + full-text search over the generated guide data. */
