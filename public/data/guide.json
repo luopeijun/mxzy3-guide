@@ -16872,9 +16872,10 @@
               "cg": false
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "与路敏的感情",
-              "group": 59
+              "group": 59,
+              "depth": 1
             },
             {
               "kind": "event",
