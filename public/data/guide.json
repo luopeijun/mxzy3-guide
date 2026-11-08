@@ -17470,15 +17470,16 @@
               "cg": false
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "爱情大混战",
-              "group": 49
+              "group": 49,
+              "depth": 1
             },
             {
               "kind": "heading",
               "text": "和方若绮的绯闻",
               "group": 50,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -17604,7 +17605,7 @@
               "kind": "heading",
               "text": "情人节",
               "group": 66,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -17658,7 +17659,7 @@
               "kind": "heading",
               "text": "在巴黎",
               "group": 73,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -17701,10 +17702,10 @@
               "cg": false
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "情况一：只有关古威前往巴黎时",
               "group": 79,
-              "depth": 2
+              "bullet": true
             },
             {
               "kind": "event",
@@ -17747,10 +17748,10 @@
               "cg": false
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "情况二：关古威、黎华均前往巴黎时",
               "group": 85,
-              "depth": 2
+              "bullet": true
             },
             {
               "kind": "event",
@@ -17793,10 +17794,10 @@
               "cg": false
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "情况三：只有王瑞恩前往巴黎时",
               "group": 91,
-              "depth": 2
+              "bullet": true
             },
             {
               "kind": "event",
@@ -17826,7 +17827,7 @@
               "kind": "heading",
               "text": "感情结果",
               "group": 95,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",

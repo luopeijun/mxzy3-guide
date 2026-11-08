@@ -1084,6 +1084,18 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             blocks.append(entry)
             method_step_pending = False
             continue
+        # `情况一：` / `条件二：` 这类裸写列表项 → 品牌色圆点（与 老爸页 的
+        # SUB_ITEM_RE 约定一致，如关古威「在巴黎」下的三个情况）。注意带 `☆`
+        # 前缀的已在上面 ☆ 分支接住（克烈斯的 情况一～四 仍作三级标题），此处
+        # 只兜裸写行。
+        if SUB_ITEM_RE.match(line):
+            state["group"] += 1
+            blocks.append({
+                "kind": "paragraph", "text": line,
+                "group": state["group"], "bullet": True,
+            })
+            method_step_pending = False
+            continue
         event = EVENT_LINE_RE.match(line)
         if event:
             state["group"] += 1
