@@ -1000,6 +1000,9 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
     - `★` 行是大标题（section）：`★基础信息`、`★事件` 两个主章节；其余裸标题
       （与SD相关事件、出国后的恋情、与主角的感情结局达成条件…）一律作二级标题
       （heading）。
+    - `☆` 行是副标题（heading）：出现在大标题之下、但标题本身含冒号/括号说明
+      （如桑禾蓓补充攻略的 `☆情况1：…`，后接说明文字而非事件，无法走裸标题
+      判定）时，用 `☆` 显式标注为二级标题。
     - 基础信息里的字段（签约金 / 比较喜欢的物品 / 可创作作品 / 签约方法 / 加入后续 …）
       各作一个二级标题（heading）；字段下的说明文字为普通正文（paragraph），
       没有冒号的列举用 `· `/`• ` 显式圆点（如歌曲逐行）。
@@ -1030,6 +1033,16 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             chapter = line.lstrip("★☆").strip().rstrip("：:").strip()
             if chapter == page_title:
                 continue  # 页标题，不重复成块
+            if line.startswith("☆"):
+                # `☆` 显式副标题：渲染为 section 之下的二级标题。
+                state["group"] += 1
+                blocks.append({
+                    "kind": "heading", "text": chapter, "group": state["group"],
+                    "depth": 1 if seen_section else 0,
+                })
+                in_sign_method = False
+                method_step_pending = False
+                continue
             state["group"] += 1
             blocks.append({"kind": "section", "text": chapter, "group": state["group"]})
             state["last_event_group"] = None

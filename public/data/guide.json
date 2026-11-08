@@ -9812,9 +9812,10 @@
               ]
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "情况1：（只有路风在旗下）不会出现路欧恋",
-              "group": 17
+              "group": 17,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -10115,9 +10116,10 @@
               "cg": false
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "情况2：（只有欧怡青在旗下）路欧恋无法修成正果",
-              "group": 56
+              "group": 56,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -10402,9 +10404,10 @@
               "cg": false
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "情况3：（只有桑禾蓓在旗下）不会出现路欧恋",
-              "group": 93
+              "group": 93,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -10785,9 +10788,10 @@
               "cg": true
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "情况4：（路风和欧怡青都在旗下）可看到路欧全部CG",
-              "group": 142
+              "group": 142,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -11470,9 +11474,10 @@
               "cg": false
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "情况5：（路风和桑禾蓓都在旗下）不会出现路欧恋",
-              "group": 229
+              "group": 229,
+              "depth": 1
             },
             {
               "kind": "paragraph",
