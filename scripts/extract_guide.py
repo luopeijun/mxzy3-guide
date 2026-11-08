@@ -658,7 +658,7 @@ def build_easyshop_blocks(path: Path, *, mark_cg: bool = False) -> list[dict]:
                 "label": event.group(1),
                 "tag": event.group(2),
                 "group": group,
-                "cg": bool(mark_cg and "CG" in event_text),
+                "cg": bool(mark_cg and _has_cg(event_text)),
             })
             continue
         if OPTION_RE.match(line):
@@ -746,6 +746,21 @@ def _merge_intro_note(blocks: list[dict], group: int, state: dict, text: str) ->
     return group
 
 
+# 明确说「没有 CG」的本事件（如「结局没有特殊对白和CG」）不算有 CG；
+# 但若同一段里另有确凿的 CG 标记（（CG）/获得CG/可看到CG/看到CG/CG图），
+# 仍以有 CG 论（如某分支给 CG、另一分支不给）。
+_CG_DENY = re.compile(r"没有.{0,12}CG|无CG|不含CG|拿不到CG")
+_CG_POSITIVE = re.compile(r"（CG）|获得CG|可看到CG|看到CG|CG图")
+
+
+def _has_cg(text: str) -> bool:
+    if "CG" not in text:
+        return False
+    if _CG_DENY.search(text) and not _CG_POSITIVE.search(text):
+        return False
+    return True
+
+
 def _append_event_like(
     blocks: list[dict],
     state: dict,
@@ -824,7 +839,7 @@ def _append_event_like(
             "label": event.group(1),
             "tag": event.group(2),
             "group": group,
-            "cg": bool(mark_cg and "CG" in event_text),
+            "cg": bool(mark_cg and _has_cg(event_text)),
         })
         state["group"] = group
         state["last_event_group"] = group
@@ -839,7 +854,7 @@ def _append_event_like(
             "text": event_text,
             "label": plain.group(1),
             "group": group,
-            "cg": bool(mark_cg and "CG" in event_text),
+            "cg": bool(mark_cg and _has_cg(event_text)),
         })
         state["group"] = group
         state["last_event_group"] = group

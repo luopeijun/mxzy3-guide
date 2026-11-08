@@ -26192,7 +26192,7 @@
                   "label": "78",
                   "tag": "沟通",
                   "group": 85,
-                  "cg": true
+                  "cg": false
                 }
               ],
               "children": []
