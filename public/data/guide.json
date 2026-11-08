@@ -5,8 +5,8 @@
     "generatedBy": "scripts/extract_guide.py",
     "stats": {
       "categories": 4,
-      "items": 57,
-      "blocks": 2911,
+      "items": 51,
+      "blocks": 2813,
       "readyItems": 42,
       "missingItems": 6,
       "sourceParagraphs": 3706
@@ -945,7 +945,6 @@
           "id": "game-guide/training",
           "title": "训练相关",
           "status": "ready",
-          "sourceTitle": "训练相关.txt",
           "blocks": [
             {
               "kind": "paragraph",
@@ -1155,6 +1154,336 @@
               "kind": "note",
               "text": "只有属性达标且从国外上课回来的周末才能得到证书，所以为了节省时间，\n建议先上两次课，再在国内把相关属性训练到基本达标，再去上一次课，周末即可得到证书。",
               "group": 10
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "game-guide/producers",
+          "title": "制作人相关",
+          "status": "ready",
+          "sourceTitle": "制作人相关.txt",
+          "blocks": [
+            {
+              "kind": "heading",
+              "text": "唱片制作人选择",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "林永育：",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－爵士",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－游戏一开始即拥有",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "季青平：",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－另类",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－游戏一开始即拥有",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "金妮：",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－抒情",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－游戏一开始即拥有",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "小熊：日月光音乐负责人",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－摇滚",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "讨厌类型－民歌",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－小熊的友好度＞200",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "迟浩：",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－舞曲、节奏蓝调",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－小熊的友好度＞200",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "周映彤：EAMI唱片公司负责人",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－抒情",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－周映彤的友好度＞200",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "林明扬：",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－民歌",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－周映彤的友好度＞200",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "钱永富：",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "擅长类型－抒情、儿歌",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "出现条件－周映彤的友好度＞200",
+              "group": 26
+            },
+            {
+              "kind": "note",
+              "text": "即使该唱片公司负责人的友好度＞200，但是尔后又低于或等于200时，则该相关唱片制作人会从自制唱片的制作人名单消失",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "周映彤与小熊的友好度增加的方法：",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "该唱片公司第一次预约唱片成功－>该唱片公司负责人的友好度－8",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "除了第一次外，成功预约唱片－>该唱片公司负责人的友好度＋10",
+              "group": 30
+            },
+            {
+              "kind": "paragraph",
+              "text": "个人唱片杀青－>该唱片公司负责人的友好度＋20",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "个人拍摄1天的MTV－>该唱片公司负责人的友好度＋2",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "个人参加1天的签唱会－>该唱片公司负责人的友好度＋2",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "个人参加1天的唱片宣传－>该唱片公司负责人的友好度＋2",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "团体唱片杀青－>该唱片公司负责人的友好度＋40",
+              "group": 35
+            },
+            {
+              "kind": "paragraph",
+              "text": "团体拍摄1天的MTV－>该唱片公司负责人的友好度＋4",
+              "group": 36
+            },
+            {
+              "kind": "paragraph",
+              "text": "团体参加1天的签唱会－>该唱片公司负责人的友好度＋4",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "团体参加1天的唱片宣传－>该唱片公司负责人的友好度＋4",
+              "group": 38
+            },
+            {
+              "kind": "heading",
+              "text": "电视剧制作人选择",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "温馨伦理剧：蔡筱韵",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "爱情偶像剧：陈淑敏（最强） 李美静（第二强）",
+              "group": 41
+            },
+            {
+              "kind": "paragraph",
+              "text": "冒险动作剧：魏冠霖",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "轻松幽默剧：蔡昆隆",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "社会乡土剧：龙少武",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "侦探悬疑剧：红英",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "古装宫廷剧：卫国强",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "少年励志剧：白军羽",
+              "group": 47
+            },
+            {
+              "kind": "heading",
+              "text": "电影 各导演擅长的类型",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "爱情文艺：王瑞恩（最强）、孙凌香（此人作品量大，但有好有坏，依剧情慎选）",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "动作冒险：李恩光",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "侦探悬疑：范晓阳",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "科幻未来片：张子轩",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "剧情片：王金",
+              "group": 53
+            },
+            {
+              "kind": "section",
+              "text": "制作人放水情况",
+              "depth": 0,
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "制作人放水是指旗下艺人属性与通告要求属性相差极少时，某些情况下与制作人多交涉几次可以成功预约，只是酬劳较低；",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "另外有些制作人需要好感够高等条件才能给主角接一些重要通告，情况如下",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "周映彤，小熊：满足条件就能接，无论好感都会放水",
+              "group": 57
+            },
+            {
+              "kind": "paragraph",
+              "text": "王瑞恩：好感度高才能接主角，好感度高配角才可以放水",
+              "group": 58
+            },
+            {
+              "kind": "paragraph",
+              "text": "创意：条件满足就能接，好感够高才会放水",
+              "group": 59
+            },
+            {
+              "kind": "paragraph",
+              "text": "追梦：好感度高才可以放水 好感度高才可以接S级case",
+              "group": 60
+            },
+            {
+              "kind": "paragraph",
+              "text": "sosa：主持：条件满足就可以接，好感高并且艺人人气高才可以放水",
+              "group": 61
+            },
+            {
+              "kind": "paragraph",
+              "text": "戏剧：好感度高才能接主角，好感度高配角才可以放水",
+              "group": 62
+            },
+            {
+              "kind": "paragraph",
+              "text": "永振：主持：一定不放水，条件过了就可以接",
+              "group": 63
+            },
+            {
+              "kind": "paragraph",
+              "text": "戏剧：好感度高才能接主角，好感度高才可以放水（主配角都可以）",
+              "group": 64
             }
           ],
           "children": []
@@ -1924,873 +2253,6 @@
           "status": "missing",
           "blocks": [],
           "children": []
-        },
-        {
-          "id": "game-guide/producers",
-          "title": "制作人推荐",
-          "status": "ready",
-          "sourceTitle": "★制作人选择",
-          "blocks": [],
-          "children": [
-            {
-              "id": "game-guide/producers/record-producer",
-              "title": "☆唱片制作人选择：",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "heading",
-                  "text": "林永育：",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－爵士",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－游戏一开始即拥有",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "季青平：",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－另类",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－游戏一开始即拥有",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "金妮：",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－抒情",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－游戏一开始即拥有",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "小熊：日月光音乐负责人",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－摇滚",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "讨厌类型－民歌",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－小熊的友好度＞200",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "迟浩：",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－舞曲、节奏蓝调",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－小熊的友好度＞200",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "周映彤：EAMI唱片公司负责人",
-                  "group": 5
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－抒情",
-                  "group": 5
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－周映彤的友好度＞200",
-                  "group": 5
-                },
-                {
-                  "kind": "heading",
-                  "text": "林明扬：",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－民歌",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－周映彤的友好度＞200",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "钱永富：",
-                  "group": 7
-                },
-                {
-                  "kind": "heading",
-                  "text": "擅长类型－抒情、儿歌",
-                  "group": 7
-                },
-                {
-                  "kind": "heading",
-                  "text": "出现条件－周映彤的友好度＞200",
-                  "group": 7
-                },
-                {
-                  "kind": "note",
-                  "text": "注意：即使该唱片公司负责人的友好度＞200，但是尔后又低于或等于200时，则该相关唱片制作人会从自制唱片的制作人名单消失",
-                  "group": 8
-                },
-                {
-                  "kind": "heading",
-                  "text": "周映彤与小熊的友好度增加的方法：",
-                  "group": 9
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "该唱片公司第一次预约唱片成功－>该唱片公司负责人的友好度－8",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "除了第一次外，成功预约唱片－>该唱片公司负责人的友好度＋10",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "个人唱片杀青－>该唱片公司负责人的友好度＋20",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "个人拍摄1天的MTV－>该唱片公司负责人的友好度＋2",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "个人参加1天的签唱会－>该唱片公司负责人的友好度＋2",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "个人参加1天的唱片宣传－>该唱片公司负责人的友好度＋2",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "团体唱片杀青－>该唱片公司负责人的友好度＋40",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "团体拍摄1天的MTV－>该唱片公司负责人的友好度＋4",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "团体参加1天的签唱会－>该唱片公司负责人的友好度＋4",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "团体参加1天的唱片宣传－>该唱片公司负责人的友好度＋4",
-                  "group": 10
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/producers/tv-producer",
-              "title": "☆电视剧制作人选择：",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "heading",
-                  "text": "温馨伦理剧：蔡筱韵",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "爱情偶像剧：陈淑敏（最强） 李美静（第二强）",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "冒险动作剧：魏冠霖",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "轻松幽默剧：蔡昆隆",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "社会乡土剧：龙少武",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "侦探悬疑剧：红英",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "古装宫廷剧：卫国强",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "少年励志剧：白军羽",
-                  "group": 0
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/producers/film-director",
-              "title": "☆电影 各导演擅长的类型：",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "paragraph",
-                  "text": "爱情文艺：王瑞恩（最强）、孙凌香（此人作品量大，但有好有坏，依剧情慎选）",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "动作冒险：李恩光",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "侦探悬疑：范晓阳",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "科幻未来片：张子轩",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "剧情片：王金",
-                  "group": 0
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/producers/relaxed-rules",
-              "title": "★制作人放水情况",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "paragraph",
-                  "text": "制作人放水是指旗下艺人属性与通告要求属性相差极少时，某些情况下与制作人多交涉几次可以成功预约，只是酬劳较低；",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "另外有些制作人需要好感够高等条件才能给主角接一些重要通告，情况如下",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "周映彤，小熊：满足条件就能接，无论好感都会放水",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "王瑞恩：好感度高才能接主角，好感度高配角才可以放水",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "创意：条件满足就能接，好感够高才会放水",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "追梦：好感度高才可以放水 好感度高才可以接S级case",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "sosa：主持：条件满足就可以接，好感高并且艺人人气高才可以放水",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "戏剧：好感度高才能接主角，好感度高配角才可以放水",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "永振：主持：一定不放水，条件过了就可以接",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "戏剧：好感度高才能接主角，好感度高才可以放水（主配角都可以）",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "自制相关",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "当公司资金大于1000万时，秘书会提示自制通告已经可以开启",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "通过自制通告可大量累积资金（投入成本虽然高，但回报也更加丰厚），自制可以收获的奖项也更多，同时自制还可以拥有选择延长工期的额外选项（尽量还是正常完工）",
-                  "group": 1
-                },
-                {
-                  "kind": "note",
-                  "text": "PS：自制时，选择的制作人所在公司，即是艺人当天工作的场景地点",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "以下罗列拥有自制潜力的艺人以及自制作品产出条件：",
-                  "group": 3
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/producers/songs",
-              "title": "★歌曲部分（满足条件后需安排自由活动大于20天）",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "heading",
-                  "text": "林芬芬",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "薰衣草之恋－与关古威组团出唱片",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "莎乐美之吻－与姚子奇分手后且歌艺550、自信550、动感700、体能700（尚待研究）",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "欧怡青",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Good Night－日本逛街后，歌艺300、名气200、仪态250、自信250",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Sleep In My Heart－美国探险后，歌艺400、名气300、仪态360、自信360、才智350",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Spice Girl－岛屿度假后，歌艺480、名气330、仪态420、自信420、才智450",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Please Tell Me－塞外观光后，歌艺480、名气330、仪态420、自信420、才智450",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Summer Of Love－欧洲旅游后，歌艺600、名气450、仪态520、自信520、才智500",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "No More Cry:－古国寻奇后，歌艺600、名气450、仪态520、自信520、才智5000",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "10 Years－歌艺600、名气450、仪态520、自信520、才智500",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Sweat Season－被路风从欧洲带回再度签约后，歌艺700、名气500、仪态550、自信550、才智650",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "飞行日记（需安装资料片“星光圆舞曲”）－路欧恋情确定，回欧洲两周后，寄至公司",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "姚子莹",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "新凉时节－与姚子奇同在旗下时",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "在水一方－乐谱事件中受到慕容和希称赞后",
-                  "group": 2
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "夏之恋－出席慕容和希的演唱会后，相关报道出现，跟随子莹时，慕容和希会赠送",
-                  "group": 2
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "沙漏－子莹收到慕容和希的赠曲后，次周由子奇赠送",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "聆香",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "晚安明天见－获得金曲奖任一奖项后",
-                  "group": 3
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "阿妈的肉棕－表示愿意娶聆香，相亲事件后",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "新名纱雪",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "下弦月－推出专辑后且友好度大于200",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "星光圆舞曲－推出国际专辑且未承认弟弟",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "陈奕夫",
-                  "group": 5
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Game Over－歌艺450、自信300、动感500、体能450、才智450",
-                  "group": 5
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "Don't Speak－当球季特派记者回来后，触发欢迎回国的对话",
-                  "group": 5
-                },
-                {
-                  "kind": "heading",
-                  "text": "姚子奇",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "爱、却步－加入公司一个月后",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "流浪猫－加入公司三个月后",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "唐朝栗子－加入公司六个月后，歌艺480、名气330、动感420、体能420",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "寓言柚子－歌艺480、名气330、动感420、体能420",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "毕业之歌－第二年9月从学校毕业后",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "恋爱最终章－母亲再婚后",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "红色情热蓝色忧伤－与林芬芬分手后，触发主角去喝酒的事件",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "记得忘记－歌艺700、名气500、动感550、体能550",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "侠客行－触发认识金勇的事件，看到两人聊天数次后获得",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "夏之夜不可思议（需安装资料片“星光圆舞曲”）－姚子莹在旗下，未解决附身事件，第二年7月警戒主角时赠送",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "纪翔（简体的原版需打过1.03补丁后才可全部取得）",
-                  "group": 7
-                },
-                {
-                  "kind": "heading",
-                  "text": "心扉的信－跟随大于30天、友好度大于100",
-                  "group": 7
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "恋人再见－得到上一首后继续跟随大于30天、友好度大于150",
-                  "group": 7
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "爱在星期天－得到上一首后继续跟随大于30天、友好度大于200",
-                  "group": 7
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "你就是你－得到上一首后继续跟随大于30天，友好度大于250",
-                  "group": 7
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "模糊的轮廓－参与同志电影，杀青后",
-                  "group": 7
-                },
-                {
-                  "kind": "heading",
-                  "text": "那一年夏天－一起看过烟火后",
-                  "group": 7
-                },
-                {
-                  "kind": "heading",
-                  "text": "天晴",
-                  "group": 8
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "恋爱三部曲－劝天晴不要放弃和凌玮翎的感情，两人分手新闻出现后（尚待研究）",
-                  "group": 8
-                },
-                {
-                  "kind": "heading",
-                  "text": "雨天浪漫梦－路敏借伞后",
-                  "group": 8
-                },
-                {
-                  "kind": "heading",
-                  "text": "午夜迷香－称赞路敏歌声后（不需自由活动）",
-                  "group": 8
-                },
-                {
-                  "kind": "heading",
-                  "text": "感谢之歌－跟随120天后",
-                  "group": 8
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "蓝色信笺的单恋－歌艺600、名气450、仪态520、才智350",
-                  "group": 8
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "珍珠耳环的少女－歌艺700、名气500、仪态550、才智450",
-                  "group": 8
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "有朋自远方来－游戏一开始在公园见到天晴，之后在19号酒馆看到他打工，两周后再去找他，会赠送",
-                  "group": 8
-                },
-                {
-                  "kind": "heading",
-                  "text": "关古威",
-                  "group": 9
-                },
-                {
-                  "kind": "heading",
-                  "text": "直到爱上那天－与方若绮合作后",
-                  "group": 9
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "在你醒来之前－歌艺700、名气500、仪态700、自信550、才智650",
-                  "group": 9
-                },
-                {
-                  "kind": "heading",
-                  "text": "克烈斯",
-                  "group": 10
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "白色蔷薇－为史蒂芬选打歌服后，跟随克烈斯，下一次见到史蒂芬时，他会送克烈斯歌曲，周日与克烈斯沟通获得",
-                  "group": 10
-                },
-                {
-                  "kind": "heading",
-                  "text": "卫亚",
-                  "group": 11
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "梦的十四行诗－卖艺第四周，到商店街，看见子奇、慕容和希比赛音乐的CG图后",
-                  "group": 11
-                },
-                {
-                  "kind": "heading",
-                  "text": "原少纬",
-                  "group": 12
-                },
-                {
-                  "kind": "heading",
-                  "text": "倾城之恋—推出首张专辑后",
-                  "group": 12
-                },
-                {
-                  "kind": "heading",
-                  "text": "我的空气－耿言颢过世后",
-                  "group": 12
-                },
-                {
-                  "kind": "heading",
-                  "text": "其他",
-                  "group": 13
-                },
-                {
-                  "kind": "heading",
-                  "text": "爱·隐－把NP鸡还给方若绮后会赠送",
-                  "group": 13
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/producers/scripts",
-              "title": "★剧本部分（满足条件后需安排自由活动大于40天）",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "heading",
-                  "text": "萧依莉",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "无价的相遇－第一轮萧依莉去世后选择公开笔记本，甄红会赠送",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "一夜绯闻－从第二轮开始且友好度大于100",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "二见钟情－从第二轮开始且友好度大于180",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "三世情缘－从第二轮开始且友好度大于250",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "苏嫚君",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "佳偶天成－赠送喜欢的物品大于5件",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "长夜未央－赠送喜欢的物品大于10件",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "陌上云朗－赠送喜欢的物品大于20件，友好度大于160，且演技500、仪态600、才智500、名气500、自信500",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "聆香",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "朱槿花开－友好度大于100时",
-                  "group": 2
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "商场风云－引发裸照事件，且看到CG后",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "新名纱雪",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "樱似雪－父亲再婚事件后",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "琉璃色少年－承认弟弟后且友好度大于200",
-                  "group": 3
-                },
-                {
-                  "kind": "heading",
-                  "text": "路风",
-                  "group": 4
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "相亲不相爱－与桑禾蓓或欧怡青同在旗下且发展感情后",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "姚子奇",
-                  "group": 5
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "幽灵新娘－触发替女鬼完成心愿事件，三个月后（需要10天左右的自由活动）",
-                  "group": 5
-                },
-                {
-                  "kind": "heading",
-                  "text": "克烈斯",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "真假太子－纪翔为私生子的新闻出现后",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "公主盟约－出现和杨安妤的绯闻，安妤要求不再见面后",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "昨日约定－友好度大于100后",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "向日葵的夏天－友好度大于200后",
-                  "group": 6
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "维纳斯之恋－决斗失败回国，将克烈斯留下的信交给杨安妤后会赠送",
-                  "group": 6
-                },
-                {
-                  "kind": "heading",
-                  "text": "卫亚",
-                  "group": 7
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "捉迷藏－与原少纬吃过饭后，友好度大于100",
-                  "group": 7
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "明天的我们－新名纱雪在旗下时，送给纱雪的生日礼物",
-                  "group": 7
-                },
-                {
-                  "kind": "heading",
-                  "text": "也许、未来－获得任一戏剧类奖项",
-                  "group": 7
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "恋爱的十字街－跟随大于六个月，友好度大于200",
-                  "group": 7
-                },
-                {
-                  "kind": "heading",
-                  "text": "其他",
-                  "group": 8
-                },
-                {
-                  "kind": "heading",
-                  "text": "握斧长龙－参加笑傲天际电影宣传会后金父会给",
-                  "group": 8
-                }
-              ],
-              "children": []
-            }
-          ]
         },
         {
           "id": "game-guide/titles",
