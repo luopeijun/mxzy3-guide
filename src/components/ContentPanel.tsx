@@ -48,7 +48,7 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
         <ContentBlockList
           blocks={node.blocks}
           onJump={jump}
-          nestSubEvents={node.id.startsWith('other-events/')}
+          nestSubEvents={node.id.startsWith('other-events/') || node.id.startsWith('game-guide/')}
         />
         {node.children.length > 0 && (
           <ChildLinks

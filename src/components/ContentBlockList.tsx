@@ -11,7 +11,7 @@ import TypeTag from './TypeTag';
 interface Props {
   blocks: ContentBlock[];
   onJump?: (anchor: string) => void;
-  /** 子事件（如 3-1 / 3-1-1）按其编号层级嵌套到父事件之下，呈现父子关系。作用于「其他事件」全部章节（角色攻略暂不启用）。 */
+  /** 子事件（如 3-1 / 3-1-1）按其编号层级嵌套到父事件之下，呈现父子关系。作用于「其他事件」全部章节与「经纪人事件簿」（角色攻略暂不启用）。 */
   nestSubEvents?: boolean;
 }
 
