@@ -45,7 +45,7 @@ export default function Overview({ data, onSelect }: Props) {
         </div>
       </section>
 
-      <div className={ui.cardGrid}>
+      <div className={`${ui.cardGrid} mt-8 nav:mt-6`}>
         {data.categories.map((category) => (
           <button key={category.id} className={ui.card} type="button" onClick={() => onSelect(category.id)}>
             <div className={ui.cardHead}>
