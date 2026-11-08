@@ -74,7 +74,7 @@ export default function RequirementsCard({ requirements }: Props) {
         </h2>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-x-6 gap-y-5 px-5 py-4 nav:grid-cols-1">
+      <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-x-6 gap-y-5 px-5 py-4 nav:grid-cols-1">
         <div>
           <h3 className="mb-2.5 flex items-center gap-1.5 text-ui-xs font-bold text-ink">
             <span className="h-[6px] w-[6px] rounded-full bg-brand" aria-hidden="true" />
