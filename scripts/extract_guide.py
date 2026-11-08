@@ -682,14 +682,48 @@ TIME_PATTERNS = (
     r"(?:两周|一周|半个月|一个月)(?:后|内)",
 )
 TIME_RE = re.compile("|".join(f"(?:{pattern})" for pattern in TIME_PATTERNS))
+
+# Gating conditions — the numbers and prerequisites a player must *meet* before
+# the step is even available (`歌艺300`, `个人唱片大于5张`, `开过演唱会`). They
+# outrank the surrounding scenery: knowing you go to 第三世界 is useless if the
+# artist does not qualify yet.
+CONDITION_PATTERNS = (
+    # stat thresholds: 歌艺700 / 人气3 / 自信550
+    r"(?:歌艺|仪态|人气|名气|自信|口才|才艺|才智|体能|道德|叛逆|性感|魅力|亲和|胆识|智慧|气质|演技|创作|主持|舞台|知名度|亲切度)"
+    r"[ ]?[0-9]{1,4}",
+    # 个人唱片大于5张 / 唱片数超过5张
+    r"(?:个人)?(?:唱片|专辑)[^，。；！？（）]{0,6}?(?:大于|超过|达到|满|少于|低于)[0-9]+张",
+    r"(?:大于|超过|达到|满)[0-9]+(?:张|片|个|次|场)",
+    # 有国际音乐学院的证书 / 舞蹈证书 — the qualifier names which certificate, so
+    # the tint keeps it and drops the sentence around it.
+    r"(?:国际|音乐|戏剧|舞蹈|美术|专业|相关|各类)?(?:[^，。；！？（）.的]{0,4})?的?证书",
+    # 开过演唱会（最好是大型的）
+    r"开过[^，。；！？]{0,8}演唱会(?:（[^）]{0,12}）)?",
+    # 参加过慈善义演 / 参加过…节目
+    r"参加过[^，。；！？]{0,12}?(?:义演|活动|节目|比赛|演唱会)",
+    # 只会邀请人气最高的女艺人
+    r"只会(?:邀请|请|找)[^，。；！？（）]{0,12}",
+    # 就医满10次 / 占卜10次 / 买过东西大于10次 — a count to reach, kept with the
+    # verb that produces it so the tint reads as an action, not a stray number.
+    r"(?:就医|看病|占卜|参加|完成|光顾|消费|买过|购买|送礼|拜访|培训|上课|"
+    r"打工|探班|开出|发表|拍摄|代言|练习|投资|捐赠|捐款)"
+    r"[^，。；！？（）]{0,6}?[0-9]+(?:次|张|场|个)",
+    # Fallback threshold when no verb is around: 大于10次 / 满10次
+    r"(?:大于|超过|达到|满|少于|低于)[0-9]+(?:次|张|场|片|个)",
+)
+CONDITION_RE = re.compile("|".join(f"(?:{pattern})" for pattern in CONDITION_PATTERNS))
 # A time worth tinting carries a number (3 天后 / 第二年 6 月 / 事件 28 后) or a
 # recurring rule (每年会有一次); a bare 上个事件后 is just list order.
 TIME_DETAIL_RE = re.compile(r"[0-9]|第[一二三四五六七八九十]年|每[年月周轮]|半[月]|两[周个]|一[周月]")
 
-# What a reader needs first. One span per category, HIGHLIGHT_LIMIT in total —
-# see mark_highlights() for why the page stays mostly un-tinted.
-HIGHLIGHT_PRIORITY = ("选项", "时间", "人物", "物品", "地点")
-HIGHLIGHT_LIMIT = 3
+# What a reader needs first. Conditions lead, then the decision, then when,
+# then who / what / where — see mark_highlights() for why the page stays mostly
+# un-tinted.
+HIGHLIGHT_PRIORITY = ("条件", "选项", "时间", "人物", "物品", "地点")
+HIGHLIGHT_LIMIT = 5
+# Conditions come as a checklist (`证书 + 唱片5张 + 开过演唱会`); one tint would
+# drop two thirds of them, so they get their own quota.
+CONDITION_LIMIT = 4
 QUOTE_RE = re.compile(r"“[^”]{1,24}”")
 # Menu entries show up in quotes too (`找加贺“闲聊”`), but they are an action to
 # click, not something to keep in mind — tinting them only adds noise.
@@ -697,11 +731,19 @@ MENU_QUOTES = ("闲聊", "聊天", "谈话", "打招呼")
 
 
 def _highlight_spans(line: str) -> list[tuple[int, int, str]]:
-    """Ranges worth tinting, longest match first, never overlapping."""
+    """Ranges worth tinting, never overlapping.
+
+    When two candidates cover the same characters the more useful one wins —
+    `就医满10次` beats the `医院` inside it, and a longer reading beats a shorter
+    one — because a tint cannot be cut in half once it is placed.
+    """
     found: list[tuple[int, int, str]] = []
 
     for match in TIME_RE.finditer(line):
         found.append((match.start(), match.end(), "时间"))
+
+    for match in CONDITION_RE.finditer(line):
+        found.append((match.start(), match.end(), "条件"))
 
     for kind, words in (("地点", PLACE_WORDS), ("人物", PERSON_WORDS)):
         for word in words:
@@ -725,14 +767,14 @@ def _highlight_spans(line: str) -> list[tuple[int, int, str]]:
         kind = "选项" if re.search(r"选(?:择)?\s*$", before) else "物品"
         found.append((match.start(), match.end(), kind))
 
-    found.sort(key=lambda span: (span[0], -(span[1] - span[0])))
+    rank = {kind: position for position, kind in enumerate(HIGHLIGHT_PRIORITY)}
+    ordered = sorted(found, key=lambda span: (rank[span[2]], -(span[1] - span[0]), span[0]))
     kept: list[tuple[int, int, str]] = []
-    cursor = 0
-    for start, end, kind in found:
-        if start >= cursor:
-            kept.append((start, end, kind))
-            cursor = end
-    return kept
+    for start, end, kind in ordered:
+        if any(start < other_end and other_start < end for other_start, other_end, _ in kept):
+            continue
+        kept.append((start, end, kind))
+    return sorted(kept)
 
 
 def _time_is_specific(label: str) -> bool:
@@ -741,35 +783,56 @@ def _time_is_specific(label: str) -> bool:
     return bool(TIME_DETAIL_RE.search(label))
 
 
-def mark_highlights(text: str) -> str:
+def mark_highlights(text: str, taken: set[str] | None = None, title: str = "") -> str:
     """Wrap a block's most useful spans in `{kind:…}` markers.
 
     Tinting everything that *could* be highlighted turns a page pink and stops
-    being a signal, so each block keeps at most one span per category and at
-    most `HIGHLIGHT_LIMIT` spans overall, decided by HIGHLIGHT_PRIORITY: the
-    decision the player has to make first, then when, then who / what / where.
+    being a signal, so each block keeps at most one span per category (conditions
+    up to `CONDITION_LIMIT`) and at most `HIGHLIGHT_LIMIT` spans overall, decided
+    by HIGHLIGHT_PRIORITY: what you must qualify for, the decision the player has
+    to make, then when, then who / what / where.
+
+    `taken` is shared across a page: a prop or a person is tinted the first time
+    it matters and stays plain afterwards (`天使羽衣` is worth a highlight when
+    it is crafted, not on every later step that merely holds it). Wording that
+    the page title already carries is skipped for the same reason.
     """
+    taken = set() if taken is None else taken
     lines = text.split("\n")
-    spans: list[tuple[int, int, int, str]] = []  # line, start, end, kind
+    spans: list[tuple[int, int, int, str, str]] = []  # line, start, end, kind, label
     for index, line in enumerate(lines):
         for start, end, kind in _highlight_spans(line):
-            if kind == "时间" and not _time_is_specific(line[start:end]):
+            label = line[start:end]
+            if kind == "时间" and not _time_is_specific(label):
                 continue
-            spans.append((index, start, end, kind))
-
-    seen: set[str] = set()
-    unique: list[tuple[int, int, int, str]] = []
-    for span in spans:
-        if span[3] in seen:
-            continue
-        seen.add(span[3])
-        unique.append(span)
+            if kind == "条件" and len(label) < 3:
+                continue
+            spans.append((index, start, end, kind, label))
 
     rank = {kind: position for position, kind in enumerate(HIGHLIGHT_PRIORITY)}
-    chosen = sorted(unique, key=lambda span: rank[span[3]])[:HIGHLIGHT_LIMIT]
+    quota = {kind: (CONDITION_LIMIT if kind == "条件" else 1) for kind in HIGHLIGHT_PRIORITY}
+    used = dict.fromkeys(HIGHLIGHT_PRIORITY, 0)
+
+    chosen: list[tuple[int, int, int, str, str]] = []
+    for span in sorted(spans, key=lambda item: rank[item[3]]):
+        index, start, end, kind, label = span
+        if used[kind] >= quota[kind]:
+            continue
+        # A choice belongs to its own step, so it is never suppressed as a repeat.
+        if kind != "选项":
+            # Compare bare wording: the prop is quoted in the body but plain in the title.
+            word = label.strip("“”‘’「」")
+            if word in taken or (title and word in title):
+                continue
+        used[kind] += 1
+        chosen.append(span)
+        if kind != "选项":
+            taken.add(label.strip("“”‘’「」"))
+        if len(chosen) >= HIGHLIGHT_LIMIT:
+            break
 
     by_line: dict[int, list[tuple[int, int, str]]] = {}
-    for index, start, end, kind in sorted(chosen):
+    for index, start, end, kind, _label in sorted(chosen):
         by_line.setdefault(index, []).append((start, end, kind))
 
     out: list[str] = []
@@ -789,11 +852,15 @@ def mark_highlights(text: str) -> str:
     return "\n".join(out)
 
 
-def annotate_highlight_blocks(blocks: list[dict]) -> None:
-    """Add highlights to prose blocks; headings and sections stay plain."""
+def annotate_highlight_blocks(blocks: list[dict], title: str = "") -> None:
+    """Add highlights to prose blocks; headings and sections stay plain.
+
+    One `taken` set per page, so a repeated prop or name is only tinted once.
+    """
+    taken: set[str] = set()
     for block in blocks:
         if block["kind"] in {"event", "paragraph", "note", "option"}:
-            block["text"] = mark_highlights(block["text"])
+            block["text"] = mark_highlights(block["text"], taken, title)
 
 
 def _split_preamble(line: str) -> tuple[str, str]:
@@ -874,7 +941,7 @@ def build_notice_pages(path: Path) -> list[dict]:
         add("paragraph", line)
 
     for page in pages:
-        annotate_highlight_blocks(page["blocks"])
+        annotate_highlight_blocks(page["blocks"], page["title"])
     return pages
 
 
