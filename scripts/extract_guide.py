@@ -1696,9 +1696,9 @@ def _is_item_line(line: str) -> bool:
 def build_producers_blocks(path: Path) -> list[dict]:
     """Turn the 制作人相关 txt into blocks.
 
-    A second `★` marks a major section (`制作人放水情况`, hairline above);
-    `☆ …：` marks a diamond sub-heading (唱片 / 电视剧 / 电影 制作人选择),
-    `注意：` becomes a yellow note.
+    A `★` marks a major section (`唱片制作人选择` / `电视剧制作人选择` /
+    `电影 各导演擅长的类型` / `制作人放水情况`, each with a hairline above);
+    `☆ …：` marks a diamond sub-heading, `注意：` becomes a yellow note.
 
     Everything else is a list: a flush-left line that reads as `项目：内容`
     (`林永育：`, `小熊：日月光音乐负责人`, `爱情偶像剧：陈淑敏（最强）`) opens a
@@ -1729,7 +1729,7 @@ def build_producers_blocks(path: Path) -> list[dict]:
             # The opening `★制作人选择` is the page title, already shown above.
             continue
         if text.startswith("★"):
-            add("section", text.lstrip("★").strip(), depth=0)
+            add("section", text.lstrip("★").rstrip("：:").strip(), depth=0)
             detail_depth = 0
             continue
         if text.startswith("☆"):

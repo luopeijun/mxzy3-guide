@@ -1215,9 +1215,10 @@
           "sourceTitle": "制作人相关.txt",
           "blocks": [
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "唱片制作人选择",
-              "group": 1
+              "group": 1,
+              "depth": 0
             },
             {
               "kind": "paragraph",
@@ -1440,9 +1441,10 @@
               "depth": 1
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "电视剧制作人选择",
-              "group": 39
+              "group": 39,
+              "depth": 0
             },
             {
               "kind": "paragraph",
@@ -1493,9 +1495,10 @@
               "bullet": true
             },
             {
-              "kind": "heading",
+              "kind": "section",
               "text": "电影 各导演擅长的类型",
-              "group": 48
+              "group": 48,
+              "depth": 0
             },
             {
               "kind": "paragraph",
