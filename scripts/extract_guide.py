@@ -49,7 +49,7 @@ DEFAULT_BEAUTY_STAR = SOURCES / "beauty-star.txt"
 DEFAULT_PRESIDENT_HE = SOURCES / "president-he.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
-EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)*(?:丵)?)\s*[（(]")
+EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
 # `A.xxx` in most paragraphs, but the docx also writes `C 关古威…` with a plain
 # space; the CJK lookahead keeps headings such as `M V 演出：` out of the match.
 OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ](?:[\.．、]\s*|[ 　]+(?=[\u4e00-\u9fff]))")
