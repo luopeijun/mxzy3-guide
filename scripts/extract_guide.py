@@ -2289,19 +2289,14 @@ def build(
             blocks=build_easyshop_blocks(easyshop),
         ),
         make_node(
+            "other-events/sd", "SD相关事件",
+            source_title="SD相关事件.txt",
+            blocks=build_sd_blocks(sd_events),
+        ),
+        make_node(
             "other-events/laoba", "老爸相关事件",
             source_title="老爸相关事件.txt",
             blocks=build_laoba_blocks(laoba_events),
-        ),
-        make_node(
-            "other-events/will", "威尔相关事件",
-            source_title="威尔相关事件.txt",
-            blocks=build_will_blocks(will_events),
-        ),
-        make_node(
-            "other-events/manyang", "蛮羊事件",
-            source_title="蛮羊事件.txt",
-            blocks=build_event_like_blocks(manyang_events, page_title="蛮羊事件"),
         ),
         make_node(
             "other-events/hollywood", "好莱坞相关",
@@ -2309,15 +2304,9 @@ def build(
             blocks=build_hollywood_blocks(hollywood_events),
         ),
         make_node(
-            "other-events/sd", "SD相关事件",
-            source_title="SD相关事件.txt",
-            blocks=build_sd_blocks(sd_events),
-        ),
-        make_node("other-events/president-he", "贺总相关事件", status="missing"),
-        make_node(
-            "other-events/secretary", "秘书莉铃事件",
-            source_title="秘书莉铃事件.txt",
-            blocks=build_event_like_blocks(secretary_events, page_title="莉玲相关"),
+            "other-events/will", "威尔相关事件",
+            source_title="威尔相关事件.txt",
+            blocks=build_will_blocks(will_events),
         ),
         make_node(
             "other-events/expansion", "资料片新增事件",
@@ -2333,6 +2322,17 @@ def build(
                 )
             ],
         ),
+        make_node(
+            "other-events/secretary", "秘书莉铃事件",
+            source_title="秘书莉铃事件.txt",
+            blocks=build_event_like_blocks(secretary_events, page_title="莉玲相关"),
+        ),
+        make_node(
+            "other-events/manyang", "蛮羊事件",
+            source_title="蛮羊事件.txt",
+            blocks=build_event_like_blocks(manyang_events, page_title="蛮羊事件"),
+        ),
+        make_node("other-events/president-he", "贺总相关事件", status="missing"),
         make_node(
             "other-events/beauty-star", "美丽之星事件",
             source_title="银色幻想曲“美丽之星”事件.txt",
