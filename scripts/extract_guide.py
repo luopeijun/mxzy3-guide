@@ -39,7 +39,7 @@ DEFAULT_EASYSHOP = SOURCES / "easyshop.txt"
 DEFAULT_NOTICES = SOURCES / "notices.txt"
 DEFAULT_NOTICES_INTRO = SOURCES / "notices-intro.txt"
 DEFAULT_SD = SOURCES / "sd.txt"
-DEFAULT_LAOBA = SOURCES / "laoba.txt"
+DEFAULT_FATHER = SOURCES / "father.txt"
 DEFAULT_HOLLYWOOD = SOURCES / "hollywood.txt"
 DEFAULT_WILL = SOURCES / "will.txt"
 DEFAULT_EXPANSION = SOURCES / "expansion.txt"
@@ -831,8 +831,10 @@ def _append_event_like(
             group += 1
             blocks.append({"kind": "section", "text": tidied, "group": group})
         else:
+            # 副标题：下一行是 情况/条件/方法/步骤 列表，挂在上一个 section 之下，
+            # 本页小节里作为子项目缩进（depth=1），而不是和 section 并列。
             group += 1
-            blocks.append({"kind": "heading", "text": tidied, "group": group})
+            blocks.append({"kind": "heading", "text": tidied, "group": group, "depth": 1})
         state["group"] = group
         return
 
@@ -879,7 +881,7 @@ def build_expansion_pages(path: Path) -> list[dict]:
     return pages
 
 
-def build_laoba_blocks(path: Path) -> list[dict]:
+def build_father_blocks(path: Path) -> list[dict]:
     return build_event_like_blocks(path, page_title="老爸相关")
 
 
@@ -2151,7 +2153,7 @@ def build(
     notices: Path,
     notices_intro: Path,
     sd_events: Path,
-    laoba_events: Path,
+    father_events: Path,
     hollywood_events: Path,
     will_events: Path,
     expansion_events: Path,
@@ -2296,9 +2298,9 @@ def build(
             blocks=build_sd_blocks(sd_events),
         ),
         make_node(
-            "other-events/laoba", "老爸相关事件",
+            "other-events/father", "老爸相关事件",
             source_title="老爸相关事件.txt",
-            blocks=build_laoba_blocks(laoba_events),
+            blocks=build_father_blocks(father_events),
         ),
         make_node(
             "other-events/hollywood", "好莱坞相关",
@@ -2416,7 +2418,7 @@ def main() -> None:
     notices = Path(sys.argv[17]) if len(sys.argv) > 17 else DEFAULT_NOTICES
     notices_intro = Path(sys.argv[18]) if len(sys.argv) > 18 else DEFAULT_NOTICES_INTRO
     sd_events = Path(sys.argv[19]) if len(sys.argv) > 19 else DEFAULT_SD
-    laoba_events = Path(sys.argv[20]) if len(sys.argv) > 20 else DEFAULT_LAOBA
+    father_events = Path(sys.argv[20]) if len(sys.argv) > 20 else DEFAULT_FATHER
     hollywood_events = Path(sys.argv[21]) if len(sys.argv) > 21 else DEFAULT_HOLLYWOOD
     will_events = Path(sys.argv[22]) if len(sys.argv) > 22 else DEFAULT_WILL
     expansion_events = Path(sys.argv[23]) if len(sys.argv) > 23 else DEFAULT_EXPANSION
@@ -2461,8 +2463,8 @@ def main() -> None:
         raise SystemExit(f"notices intro txt not found: {notices_intro}")
     if not sd_events.exists():
         raise SystemExit(f"sd events txt not found: {sd_events}")
-    if not laoba_events.exists():
-        raise SystemExit(f"laoba events txt not found: {laoba_events}")
+    if not father_events.exists():
+        raise SystemExit(f"father events txt not found: {father_events}")
     if not hollywood_events.exists():
         raise SystemExit(f"hollywood events txt not found: {hollywood_events}")
     if not will_events.exists():
@@ -2477,7 +2479,7 @@ def main() -> None:
         raise SystemExit(f"beauty-star events txt not found: {beauty_star_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
-                 easyshop, notices, notices_intro, sd_events, laoba_events,
+                 easyshop, notices, notices_intro, sd_events, father_events,
                  hollywood_events, will_events, expansion_events, secretary_events,
                  manyang_events, beauty_star_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

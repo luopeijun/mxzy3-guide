@@ -20918,7 +20918,7 @@
           "children": []
         },
         {
-          "id": "other-events/laoba",
+          "id": "other-events/father",
           "title": "老爸相关事件",
           "status": "ready",
           "sourceTitle": "老爸相关事件.txt",
@@ -21100,7 +21100,8 @@
             {
               "kind": "heading",
               "text": "大侠金牌的作用：",
-              "group": 29
+              "group": 29,
+              "depth": 1
             },
             {
               "kind": "paragraph",
