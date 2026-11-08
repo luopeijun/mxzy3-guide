@@ -4,7 +4,24 @@ interface Props {
   requirements: NodeRequirements;
 }
 
-/** `①名称 — 获得途径` line; crafted props list their materials underneath. */
+const MARKER_CLASS =
+  'mt-[1px] w-[13px] shrink-0 text-right text-ui-2xs font-bold tabular-nums text-brand';
+
+/** Ordered prerequisites, drawn the same way as the 材料 list below. */
+function StepList({ steps }: { steps: string[] }) {
+  return (
+    <ol className="mt-2 space-y-[6px] border-l border-dashed border-brand-line pl-3">
+      {steps.map((step, i) => (
+        <li key={step} className="flex items-start gap-1.5">
+          <span className={MARKER_CLASS}>{i + 1}</span>
+          <p className="text-ui-2xs leading-[1.75] text-ink-muted">{step}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** `名称 — 获得途径` line; crafted props list their materials underneath. */
 function PropLine({
   prop,
   index,
@@ -18,9 +35,7 @@ function PropLine({
     <li>
       {nested ? (
         <div className="flex items-start gap-1.5">
-          <span className="mt-[1px] w-[13px] shrink-0 text-right text-ui-2xs font-bold tabular-nums text-brand">
-            {index + 1}
-          </span>
+          <span className={MARKER_CLASS}>{index + 1}</span>
           <p className="text-ui-2xs leading-[1.75] text-ink-muted">
             <span className="font-semibold text-ink">{prop.name}</span>
             <span className="px-1 text-ink-faint">—</span>
@@ -30,7 +45,10 @@ function PropLine({
       ) : (
         <>
           <div className="text-ui-sm font-semibold text-ink">{prop.name}</div>
-          <p className="mt-0.5 text-ui-xs leading-[1.7] text-ink-muted">{prop.from}</p>
+          {prop.from && (
+            <p className="mt-0.5 text-ui-xs leading-[1.7] text-ink-muted">{prop.from}</p>
+          )}
+          {prop.steps?.length ? <StepList steps={prop.steps} /> : null}
         </>
       )}
       {prop.parts?.length ? (
@@ -56,7 +74,7 @@ export default function RequirementsCard({ requirements }: Props) {
         </h2>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-x-6 gap-y-5 px-5 py-4 nav:grid-cols-1">
+      <div className="grid grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] gap-x-6 gap-y-5 px-5 py-4 nav:grid-cols-1">
         <div>
           <h3 className="mb-2.5 flex items-center gap-1.5 text-ui-xs font-bold text-ink">
             <span className="h-[6px] w-[6px] rounded-full bg-brand" aria-hidden="true" />

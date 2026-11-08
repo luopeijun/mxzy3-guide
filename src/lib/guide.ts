@@ -121,7 +121,12 @@ function requirementsText(node: GuideNode): string {
   const req = node.requirements;
   if (!req) return '';
   const props = (items: NonNullable<typeof req.items>): string[] =>
-    items.flatMap((item) => [item.name, item.from, ...props(item.parts ?? [])]);
+    items.flatMap((item) => [
+      item.name,
+      item.from ?? '',
+      ...(item.steps ?? []),
+      ...props(item.parts ?? []),
+    ]);
   return [
     ...(req.stats ?? []).map((stat) => `${stat.label}${stat.value}`),
     ...(req.cast ?? []),

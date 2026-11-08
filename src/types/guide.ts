@@ -71,11 +71,15 @@ export interface RequirementStat {
   value: string;
 }
 
-/** A prop a notice consumes, plus where to get it. `parts` holds the材料 of a
- *  crafted prop (天使羽衣 needs four of them). */
+/** A prop a notice consumes, plus where to get it. `steps` spells out a chain
+ *  of prerequisites in order; `parts` holds the 材料 of a crafted prop
+ *  (天使羽衣 needs four of them). */
 export interface RequirementProp {
   name: string;
-  from: string;
+  /** One-line source, used when the chain is short enough to say in a sentence. */
+  from?: string;
+  /** Ordered prerequisites, for props that need several conditions first. */
+  steps?: string[];
   parts?: RequirementProp[];
 }
 
