@@ -116,8 +116,25 @@ function BlockView({ block }: { block: IndexedBlock }) {
       );
     case 'table':
       return block.table ? <DataTable data={block.table} /> : null;
-    default:
+    default: {
+      // Nested lines (e.g. the a/b/c alternatives under a numbered condition)
+      // step in once per level and fade a notch so the hierarchy reads at a glance.
+      if (block.depth === 2) {
+        return (
+          <p className="mb-1 ml-[42px] text-ui-sm leading-[1.85] break-words text-ink-muted">
+            {block.text}
+          </p>
+        );
+      }
+      if (block.depth === 1) {
+        return (
+          <p className="mb-1 ml-[19px] text-ui-md leading-[1.9] break-words text-ink">
+            {block.text}
+          </p>
+        );
+      }
       return <p className="mb-1 text-ui-md leading-[1.9] break-words text-ink">{block.text}</p>;
+    }
   }
 }
 

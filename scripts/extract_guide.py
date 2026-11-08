@@ -32,6 +32,7 @@ DEFAULT_PRODUCERS = SOURCES / "producers.txt"
 DEFAULT_SELFMADE = SOURCES / "self-made.txt"
 DEFAULT_TITLES = SOURCES / "titles.txt"
 DEFAULT_MONOPOLY = SOURCES / "monopoly.txt"
+DEFAULT_ENDINGS = SOURCES / "endings.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -880,6 +881,73 @@ def build_monopoly_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+ENDING_RE = re.compile(r"^结局\s*([0-9]+)\s+(.+?)[：:]\s*(.*)$")
+ENDING_LEAD_RE = re.compile(r"^(达成条件[0-9]?)[：:]?\s*(.*)$")
+ENDING_ITEM_RE = re.compile(r"^([0-9]+)[.．、]\s*(.+)$")
+ENDING_SUBITEM_RE = re.compile(r"^([a-zA-Z])[.．、]\s*(.+)$")
+
+
+def _angle_asides(text: str) -> str:
+    """`<2种选1种>` → `（2种选1种）`: the sources use ASCII angle brackets as asides."""
+    if "<" in text and text.count("<") == text.count(">"):
+        return text.replace("<", "（").replace(">", "）")
+    return text
+
+
+def build_endings_blocks(path: Path) -> list[dict]:
+    """Turn the 结局条件一览 txt into one card per ending.
+
+    `结局N 名称：描述` opens a diamond sub-heading (`结局N 名称`) plus the
+    description paragraph under it. `达成条件…` lines are lead-ins, the
+    numbered lines are the conditions (indent 1) and the `a.` / `b.` lines are
+    the alternatives inside them (indent 2). The opening `★提示：…` is the
+    page's only caution.
+    """
+    lines = [_tidy(raw.strip()) for raw in _read_text(path).splitlines() if raw.strip()]
+    blocks: list[dict] = []
+    group = 0
+
+    def add(kind: str, text: str, **extra) -> None:
+        blocks.append({
+            "kind": kind, "text": _angle_asides(text), "group": group, **extra,
+        })
+
+    for line in lines:
+        if line.startswith("★"):
+            group += 1
+            text = re.sub(r"^(提示|注意)[：:]?\s*", "", line.lstrip("★").strip())
+            # `…与钜子合作） 才有主角…` — drop the stray space after a bracket.
+            add("note", re.sub(r"(?<=[）】」》])\s+(?=[\u4e00-\u9fff])", "", text))
+            continue
+        ending = ENDING_RE.match(line)
+        if ending:
+            group += 1
+            add("heading", f"结局{ending.group(1)} {ending.group(2).strip()}")
+            if ending.group(3).strip():
+                add("paragraph", ending.group(3).strip())
+            continue
+        lead = ENDING_LEAD_RE.match(line)
+        if lead:
+            body = _angle_asides(lead.group(2).strip())
+            if not body:
+                add("paragraph", lead.group(1))
+            elif body.startswith("（"):
+                add("paragraph", f"{lead.group(1)}{body}")
+            else:
+                add("paragraph", f"{lead.group(1)}：{body}")
+            continue
+        item = ENDING_ITEM_RE.match(line)
+        if item:
+            add("paragraph", f"{item.group(1)}. {item.group(2).strip()}", depth=1)
+            continue
+        sub = ENDING_SUBITEM_RE.match(line)
+        if sub:
+            add("paragraph", f"{sub.group(1)}. {sub.group(2).strip()}", depth=2)
+            continue
+        add("paragraph", line)
+    return blocks
+
+
 def build(
     docx: Path,
     questions: Path,
@@ -893,6 +961,7 @@ def build(
     selfmade: Path,
     titles: Path,
     monopoly: Path,
+    endings: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -909,7 +978,7 @@ def build(
     if missing:
         raise ValueError(f"document structure changed, missing chapters: {missing}")
 
-    # ---- Split the trailing SD chapter into SD events / endings ----
+    # ---- The SD chapter ends with the 结局 section, now sourced from endings.txt ----
     sd = sections.index["SD相关事件"]
     sd_start, sd_end = sd["start"] + 1, sd["end"]
     ending_marker = next(
@@ -917,7 +986,6 @@ def build(
         if sections.texts[i].startswith("若要说明3的遗憾")
     )
     sd_lines = sections.texts[sd_start:ending_marker]
-    ending_lines = sections.texts[ending_marker:sd_end]
 
     # ---- 经纪人事件簿 ----
     game_items = [
@@ -980,7 +1048,9 @@ def build(
                   blocks=build_monopoly_blocks(monopoly)),
         make_node(
             "game-guide/endings", "结局条件一览",
-            blocks=build_blocks(ending_lines),
+            source_title="结局条件一览.txt",
+            description="公司结局 1–22 的达成条件；结局 2–5 才会出现主角的感情结局。",
+            blocks=build_endings_blocks(endings),
         ),
     ]
 
@@ -1114,6 +1184,7 @@ def main() -> None:
     selfmade = Path(sys.argv[10]) if len(sys.argv) > 10 else DEFAULT_SELFMADE
     titles = Path(sys.argv[11]) if len(sys.argv) > 11 else DEFAULT_TITLES
     monopoly = Path(sys.argv[12]) if len(sys.argv) > 12 else DEFAULT_MONOPOLY
+    endings = Path(sys.argv[13]) if len(sys.argv) > 13 else DEFAULT_ENDINGS
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1138,7 +1209,9 @@ def main() -> None:
         raise SystemExit(f"titles txt not found: {titles}")
     if not monopoly.exists():
         raise SystemExit(f"monopoly txt not found: {monopoly}")
-    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade, titles, monopoly)
+    if not endings.exists():
+        raise SystemExit(f"endings txt not found: {endings}")
+    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade, titles, monopoly, endings)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
