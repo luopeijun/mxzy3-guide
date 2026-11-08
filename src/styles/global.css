@@ -33,19 +33,22 @@
   --color-note-soft: #fdf5e9;
   --color-missing: #6b5860;
   --color-missing-soft: #f4e9ee;
-  /* Trigger-type tags (自动 / 场景 / 跟随 / 手动). Deliberately off the brand hue
-     so four chips never read as the same colour, while staying in the same warm
-     family: neutral taupe, berry, gold, plum. All clear AA at 12px. */
-  --color-auto: #4e4750;
-  --color-auto-soft: #eeecef;
-  --color-auto-line: #d6cfd4;
-  --color-scene: #8e2f56;
-  --color-scene-soft: #f7dae7;
-  --color-scene-line: #edbcd2;
-  /* Fourth tag tone (手动) — stays inside the plum family */
-  --color-violet: #63437e;
-  --color-violet-soft: #f1eaf7;
-  --color-violet-line: #e2d5ee;
+  /* Trigger-type tags (自动 / 场景 / 新闻 / 跟随 / 手动 / 沟通). Six hues spread
+     across the wheel — warm grey, teal, indigo, amber, plum, rose — with a
+     saturated enough tint that a two-character chip can be told apart from its
+     colour alone, without reading 12px text. Text keeps ≥5:1 on its own tint. */
+  --color-tag-auto: #514a54;
+  --color-tag-auto-soft: #ded9dd;
+  --color-tag-scene: #0f5a52;
+  --color-tag-scene-soft: #bfe3da;
+  --color-tag-news: #2f4a78;
+  --color-tag-news-soft: #ccd9f3;
+  --color-tag-follow: #77500b;
+  --color-tag-follow-soft: #f6e3ae;
+  --color-tag-manual: #5d3d78;
+  --color-tag-manual-soft: #e0d2f0;
+  --color-tag-talk: #8f3358;
+  --color-tag-talk-soft: #f8c8d8;
   /* Choices (A. / B. / C. …) — neutral grey so a list of options reads as a
      block of its own instead of one more line of event text. */
   --color-choice: #494048;
