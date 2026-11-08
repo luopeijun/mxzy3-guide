@@ -49,7 +49,7 @@ DEFAULT_BEAUTY_STAR = SOURCES / "beauty-star.txt"
 DEFAULT_PRESIDENT_HE = SOURCES / "president-he.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
-EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
+EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)*(?:丵)?)\s*[（(]")
 # `A.xxx` in most paragraphs, but the docx also writes `C 关古威…` with a plain
 # space; the CJK lookahead keeps headings such as `M V 演出：` out of the match.
 OPTION_RE = re.compile(r"^[A-Za-zＡ-Ｚａ-ｚ](?:[\.．、]\s*|[ 　]+(?=[\u4e00-\u9fff]))")
@@ -62,10 +62,10 @@ SECTION_END_RE = re.compile(r"^[^，,。！？；;]{2,40}[：:]$")
 SUBTITLE_RE = re.compile(r"^[^，,。！？；;：:\dA-Za-z]{2,16}$")
 SUBTITLE_BLOCKERS = ("提醒", "以上", "该", "此", "主角", "谈话", "日后")
 # `1.（自动）` / `3－1 （跟随）` / `6 （手动）` — the marker becomes a tag.
-EVENT_LINE_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s*[（(]([^）)]+)[）)]\s*")
+EVENT_LINE_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)*)[\.．]?\s*[（(]([^）)]+)[）)]\s*")
 # `18 老爸死亡的时间点：` — a numbered line with no `(tag)` marker; still an event,
 # so it keeps the white-card treatment like the tagged events.
-EVENT_PLAIN_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\s+(.+)$")
+EVENT_PLAIN_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)*)[\.．]?\s+(.+)$")
 # `（1）金父没有死` — a numbered sub-item that belongs inside the preceding event's
 # card, not a sub-heading of its own.
 NUMBERED_ITEM_RE = re.compile(r"^（([0-9０-９]+)）(.+)$")
