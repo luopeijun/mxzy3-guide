@@ -971,6 +971,90 @@ def build_event_like_blocks(path: Path, *, page_title: str, mark_cg: bool = Fals
     return blocks
 
 
+def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False) -> list[dict]:
+    """艺人事件簿（角色攻略）的构建器：事件抽成 `tag` 字段的彩色 chip（与其他事件簿一致），
+    子事件（含 `－` 编号，如 20－1 / 24－2－1）按层级嵌套；签约金 / 比较喜欢的物品 /
+    可创作作品 / 签约方法 等前言保留为段落与标题。
+
+    关键修正：签约方法里「加入B：」的描述会把签约步骤写成缩进的编号行（如「 2 （场景）…」、
+    「 3 （自动）…」），这些不是真实事件，不能当成事件卡片。规则：编号行若缩进且尚未出现任何
+    真实事件（即仍在前言区），当作描述段落；一旦首个真实事件出现，之后的缩进编号行才视为子事件。"""
+    lines = [ln.rstrip("\r") for ln in _read_text(path).split("\n")]
+    blocks: list[dict] = []
+    state: dict = {"group": 0, "last_event_group": None, "has_event": False}
+    for i, raw in enumerate(lines):
+        indent = len(raw) - len(raw.lstrip(" "))
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith(("★", "☆")):
+            chapter = line.lstrip("★☆").strip().rstrip("：:").strip()
+            if chapter == page_title:
+                continue  # 页标题，不重复成块
+            state["group"] += 1
+            blocks.append({"kind": "section", "text": chapter, "group": state["group"]})
+            state["last_event_group"] = None
+            continue
+        event = EVENT_LINE_RE.match(line)
+        if event:
+            if indent > 0 and not state["has_event"]:
+                # 签约方法→加入B 描述里的缩进编号行是步骤说明，不是事件。
+                state["group"] += 1
+                blocks.append({"kind": "paragraph", "text": line, "group": state["group"]})
+                continue
+            state["group"] += 1
+            text = _tidy(line[event.end():].strip())
+            blocks.append({
+                "kind": "event", "text": text, "label": event.group(1), "tag": event.group(2),
+                "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
+            })
+            state["last_event_group"] = state["group"]
+            state["has_event"] = True
+            continue
+        plain = EVENT_PLAIN_RE.match(line)
+        if plain:
+            if indent > 0 and not state["has_event"]:
+                state["group"] += 1
+                blocks.append({"kind": "paragraph", "text": line, "group": state["group"]})
+                continue
+            state["group"] += 1
+            text = _tidy(plain.group(2).strip())
+            blocks.append({
+                "kind": "event", "text": text, "label": plain.group(1),
+                "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
+            })
+            state["last_event_group"] = state["group"]
+            state["has_event"] = True
+            continue
+        if OPTION_RE.match(line):
+            if state["last_event_group"] is not None and blocks and blocks[-1]["group"] == state["last_event_group"]:
+                blocks.append({"kind": "option", "text": _tidy(line), "group": state["last_event_group"]})
+            else:
+                state["group"] += 1
+                blocks.append({"kind": "option", "text": _tidy(line), "group": state["group"]})
+                state["last_event_group"] = state["group"]
+            continue
+        if line.startswith(NOTE_PREFIXES):
+            state["group"] += 1
+            blocks.append({"kind": "note", "text": line, "group": state["group"]})
+            continue
+        # 裸标题：下一行紧跟编号事件 → 大标题章节；否则副标题。
+        cls = classify(line)
+        if cls["kind"] == "heading":
+            next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
+            follows_event = bool(EVENT_LINE_RE.match(next_line) or EVENT_PLAIN_RE.match(next_line))
+            state["group"] += 1
+            if follows_event:
+                blocks.append({"kind": "section", "text": line, "group": state["group"]})
+            else:
+                blocks.append({"kind": "heading", "text": line, "group": state["group"]})
+            state["last_event_group"] = None
+            continue
+        state["group"] += 1
+        blocks.append({**cls, "group": state["group"]})
+    return blocks
+
+
 def build_expansion_pages(path: Path, *, mark_cg: bool = False) -> list[dict]:
     """资料片新增事件.txt 按 `★` 拆成多个章节页（方若绮 / 马智文 / 古芊菁）。"""
     lines = [ln.rstrip("\r") for ln in _read_text(path).split("\n")]
@@ -2381,10 +2465,17 @@ def build(
     character_items = []
     for title, slug, aliases in CHARACTERS:
         child = character_by_title[title]
+        # 若提供专属纯文本源（sources/<slug>.txt，UTF-8），优先用它构建——事件会抽成
+        # 彩色 tag chip、子事件按层级嵌套，与其它事件簿一致；否则回退到 docx 正文。
+        txt_source = SOURCES / f"{slug}.txt"
+        if txt_source.exists():
+            blocks = build_character_blocks(txt_source, page_title=title, mark_cg=True)
+        else:
+            blocks = build_blocks(sections.texts[child["start"] + 1:child["end"]], mark_cg=True)
         character_items.append(make_node(
             f"characters/{slug}", title,
             aliases=aliases or None,
-            blocks=build_blocks(sections.texts[child["start"] + 1:child["end"]], mark_cg=True),
+            blocks=blocks,
         ))
     unused = set(character_by_title) - {title for title, _, _ in CHARACTERS}
     if unused:
@@ -2507,7 +2598,7 @@ def build(
             children=game_items,
         ),
         make_node(
-            "characters", "角色攻略",
+            "characters", "艺人事件簿",
             source_title="全角色事件攻略",
             children=character_items,
         ),

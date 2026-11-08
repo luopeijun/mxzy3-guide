@@ -11,7 +11,7 @@ import TypeTag from './TypeTag';
 interface Props {
   blocks: ContentBlock[];
   onJump?: (anchor: string) => void;
-  /** 子事件（如 3-1 / 3-1-1）按其编号层级嵌套到父事件之下，呈现父子关系。作用于「其他事件」全部章节与「经纪人事件簿」（角色攻略暂不启用）。 */
+  /** 子事件（如 3-1 / 3-1-1）按其编号层级嵌套到父事件之下，呈现父子关系。作用于「其他事件」全部章节、「经纪人事件簿」与「艺人事件簿」；无子事件编号的页面仍平铺渲染。 */
   nestSubEvents?: boolean;
 }
 
@@ -293,7 +293,7 @@ export default function ContentBlockList({ blocks, onJump, nestSubEvents }: Prop
   // heading 才作为次级标题。
   const flat = !blocks.some((b) => b.kind === 'section');
 
-  // 嵌套模式（其他事件全部章节启用，角色攻略暂不启用）：把事件分组按编号层级
+  // 嵌套模式（其他事件 / 经纪人事件簿 / 艺人事件簿 全部启用）：把事件分组按编号层级
   // 组织成树，子事件挂在父事件之下；同级兄弟共享同一父。
   const eventGroups = groups.filter((g) => g.blocks[0]?.kind === 'event');
   const { roots, byGroup } = buildEventTree(eventGroups);
