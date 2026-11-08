@@ -2390,26 +2390,22 @@ def build(
         make_node(
             "game-guide", "经纪人事件簿",
             source_title="明3 · 原片+资料集 · 攻略",
-            description="系统机制、数值、称号与结局条件等基础资料。",
             children=game_items,
         ),
         make_node(
             "characters", "角色攻略",
             source_title="全角色事件攻略",
-            description="18 位可签约艺人的签约方法、事件链与感情线。",
             children=character_items,
         ),
         make_node(
             "notices", "六大特殊通告",
             source_title="六大特殊国际通告",
-            description="六个传说级国际通告的道具、剧本与达成流程。",
             blocks=notice_intro,
             children=notice_items,
         ),
         make_node(
             "other-events", "其他事件",
             source_title="其他事件相关攻略",
-            description="Easyshop、金父、威尔、SD、小秘书等支线事件整理。",
             children=other_items,
         ),
     ]

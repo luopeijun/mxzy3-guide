@@ -45,7 +45,6 @@ export default function Overview({ data, onSelect }: Props) {
         </div>
       </section>
 
-      <h2 className={ui.sectionTitle}>按分级浏览</h2>
       <div className={ui.cardGrid}>
         {data.categories.map((category) => (
           <button key={category.id} className={ui.card} type="button" onClick={() => onSelect(category.id)}>
@@ -53,15 +52,9 @@ export default function Overview({ data, onSelect }: Props) {
               <span className={ui.cardTitle}>{category.title}</span>
               <StatusBadge variant="accent">{countItems(category)} 项</StatusBadge>
             </div>
-            {category.description && <p className={ui.cardDesc}>{category.description}</p>}
             <div className={ui.cardFoot}>{category.children.length} 个一级条目 → 点击查看</div>
           </button>
         ))}
-      </div>
-
-      <div className="mt-[26px] rounded-ui-md border border-gold-line bg-gold-soft px-[18px] py-[14px] text-ui-xs leading-[1.8] text-note">
-        数据来源：{data.meta.source}。目录中 {stats.missingItems} 个条目在这份文档中暂未收录，已在树与页面中标注「待补充」；
-        「结局条件一览」等内容按原文档实际位置归入对应分级。
       </div>
     </div>
   );
