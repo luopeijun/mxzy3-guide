@@ -999,13 +999,21 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
     - 基础信息里的字段（签约金 / 比较喜欢的物品 / 可创作作品 / 签约方法 / 加入后续 …）
       各作一个二级标题（heading）；字段下的说明文字为普通正文（paragraph），
       没有冒号的列举用 `· `/`• ` 显式圆点（如歌曲逐行）。
-    - 编号带 `(tag)` 的行（含 `－` 子事件编号）一律是事件，渲染为白底卡；其中
-      签约方法→加入B 的步骤（1/2/3）也是事件卡。
+    - 签约方法 之下，加入A / 加入B 是并列的次级标题（heading）；加入B 的编号步骤
+      （1/2/3）是事件卡，加入A 紧跟的纯说明文字也渲染为白底事件卡，与编号事件
+      统一样式。
+    - 编号带 `(tag)` 的行（含 `－` 子事件编号）一律是事件，渲染为白底卡。
     - 省略编号的事件行（如 `（新闻）…` / `（自动）…`）：括号里是触发类型 tag，
       同样渲染为白底事件卡，与编号事件统一样式（`加入后续` 的提醒即此类）。"""
     lines = [ln.rstrip("\r") for ln in _read_text(path).split("\n")]
     blocks: list[dict] = []
     state: dict = {"group": 0, "last_event_group": None}
+    # 基础信息下各字段（后续角色同理，均为游戏标准字段名）。签约方法 之子步骤
+    # （加入A / 加入B）紧跟的纯说明文字要渲染成事件卡（白底）。
+    BASE_INFO_FIELDS = {"签约金", "比较喜欢的物品", "可创作作品", "签约方法", "加入后续"}
+    # 是否处于「签约方法」字段之下；method_step_pending 标记「下一段落即事件」。
+    in_sign_method = False
+    method_step_pending = False
     for i, raw in enumerate(lines):
         indent = len(raw) - len(raw.lstrip(" "))
         line = raw.strip()
@@ -1018,11 +1026,14 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             state["group"] += 1
             blocks.append({"kind": "section", "text": chapter, "group": state["group"]})
             state["last_event_group"] = None
+            in_sign_method = False
+            method_step_pending = False
             continue
         # 提示 / 注意 / PS 等提醒行优先于任何事件/圆点判定，始终作黄底 note。
         if line.startswith(NOTE_PREFIXES):
             state["group"] += 1
             blocks.append({"kind": "note", "text": line, "group": state["group"]})
+            method_step_pending = False
             continue
         marker = _bullet_marker(line)
         if marker:
@@ -1031,6 +1042,7 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 "kind": "paragraph", "text": line[len(marker):].strip(),
                 "group": state["group"], "bullet": True, "depth": min(indent // 2, 2),
             })
+            method_step_pending = False
             continue
         event = EVENT_LINE_RE.match(line)
         if event:
@@ -1041,6 +1053,7 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
             })
             state["last_event_group"] = state["group"]
+            method_step_pending = False
             continue
         plain = EVENT_PLAIN_RE.match(line)
         if plain:
@@ -1051,6 +1064,7 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
             })
             state["last_event_group"] = state["group"]
+            method_step_pending = False
             continue
         # `（新闻）` / `（自动）` 等省略了编号的事件：括号里是触发类型 tag，无 label。
         # 一律走白底事件卡，与编号事件统一样式（`加入后续` 的提醒即此类）。
@@ -1063,6 +1077,7 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
             })
             state["last_event_group"] = state["group"]
+            method_step_pending = False
             continue
         if OPTION_RE.match(line):
             if state["last_event_group"] is not None and blocks and blocks[-1]["group"] == state["last_event_group"]:
@@ -1071,6 +1086,7 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 state["group"] += 1
                 blocks.append({"kind": "option", "text": _tidy(line), "group": state["group"]})
                 state["last_event_group"] = state["group"]
+            method_step_pending = False
             continue
         # 裸标题一律作二级标题（heading）；大标题只由 `★` 行产生。判定：短标题行，
         # 或下一行紧跟编号事件的分隔行（即便标题较长如「与姚子奇相关事件（…）」）。
@@ -1086,9 +1102,30 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             state["group"] += 1
             blocks.append({"kind": "heading", "text": line, "group": state["group"]})
             state["last_event_group"] = None
+            if line == "签约方法":
+                in_sign_method = True
+                method_step_pending = False
+            elif line in BASE_INFO_FIELDS:
+                # 其它基础信息字段（含紧跟在签约方法之后的 加入后续）：离开签约方法。
+                in_sign_method = False
+                method_step_pending = False
+            else:
+                # 签约方法下的子步骤（加入A / 加入B）等：保留 in_sign_method，
+                # 并把该子步骤紧跟的纯说明文字标记为事件卡。
+                method_step_pending = in_sign_method and line != "签约方法"
             continue
+        # 签约方法 → 加入A / 加入B 子步骤紧跟的纯说明文字（非编号事件、非圆点列表）
+        # 渲染为白底事件卡，与编号事件统一样式。
         state["group"] += 1
-        blocks.append({**cls, "group": state["group"]})
+        if method_step_pending and indent < 4:
+            text = cls.get("text", line)
+            blocks.append({
+                "kind": "event", "text": text,
+                "group": state["group"], "cg": bool(mark_cg and _has_cg(text)),
+            })
+        else:
+            blocks.append({**cls, "group": state["group"]})
+        method_step_pending = False
     return blocks
 
 
