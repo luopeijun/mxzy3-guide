@@ -27,8 +27,10 @@ export default function BrandHeader({
           ☰
         </button>
         <button className="flex min-w-0 items-center gap-[11px]" type="button" onClick={() => onSelect('')}>
-          <span
-            className="h-[26px] w-[26px] shrink-0 rotate-45 rounded-[7px] bg-[linear-gradient(135deg,#b0567a,#7a3550)] shadow-[0_3px_8px_rgba(122,53,80,0.32)]"
+          <img
+            src={`${import.meta.env.BASE_URL}favicon.ico`}
+            alt=""
+            className="h-[26px] w-[26px] shrink-0 rounded-[6px]"
             aria-hidden="true"
           />
           <span className="whitespace-nowrap text-ui-md font-bold tracking-[0.02em]">明星志愿3 · 攻略助手</span>
