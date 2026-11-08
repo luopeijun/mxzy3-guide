@@ -44,7 +44,7 @@ function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
 function EventDetail({ block }: { block: IndexedBlock }) {
   if (block.kind === 'note') {
     return (
-      <p className="rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-2.5 py-1.5 text-ui-2xs leading-[1.8] text-note">
+      <p className="whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-2.5 py-1.5 text-ui-2xs leading-[1.8] text-note">
         {block.text}
       </p>
     );

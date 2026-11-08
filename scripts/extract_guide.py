@@ -36,6 +36,7 @@ DEFAULT_ENDINGS = SOURCES / "endings.txt"
 DEFAULT_ITEMS = SOURCES / "items.txt"
 DEFAULT_FAVORITES = SOURCES / "favorites.txt"
 DEFAULT_EASYSHOP = SOURCES / "easyshop.txt"
+DEFAULT_NOTICES = SOURCES / "notices.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -430,6 +431,91 @@ def build_easyshop_blocks(path: Path) -> list[dict]:
         blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
 
     return blocks
+
+
+NOTICE_TITLE_RE = re.compile(r"^★\s*(.+)$")
+# `*金父事件后续` — a section inside 笑傲天际 rather than a chapter of its own.
+NOTICE_SUBTITLE_RE = re.compile(r"^\*\s*(.+)$")
+
+
+def _split_preamble(line: str) -> tuple[str, str]:
+    """`落入凡间的天使（不需要和塔罗小魔女交谈就能触发）` -> (title, note)."""
+    match = PREAMBLE_RE.match(line)
+    if not match:
+        return line.strip(), ""
+    return match.group("title").strip(), match.group("note").strip()
+
+
+def build_notice_pages(path: Path) -> list[dict]:
+    """Split 六大特殊通告.txt into one page per `★` chapter.
+
+    A `★<标题>（补充说明）` line opens a chapter and its bracket text becomes the
+    note at the top of that page; `*金父事件后续` is a section within 笑傲天际.
+    Numbered lines are `event` blocks (the `（自动）/（场景）/（新闻）` marker
+    survives as `tag`), and `提醒：` opens a yellow note whose following lines
+    stay inside it — that is how the material lists (`A.…B.…`) keep their
+    line breaks instead of scattering into a dozen paragraphs.
+    """
+    pages: list[dict] = []
+    blocks: list[dict] = []
+    group = 0
+    pending_note = False
+
+    def add(kind: str, text: str, **extra) -> None:
+        nonlocal group
+        group += 1
+        blocks.append({"kind": kind, "text": _tidy(text), "group": group, **extra})
+
+    for raw in [line.rstrip("\r") for line in _read_text(path).split("\n")]:
+        line = raw.strip()
+        if not line:
+            continue
+        chapter = NOTICE_TITLE_RE.match(line)
+        if chapter:
+            title, note = _split_preamble(chapter.group(1))
+            blocks = []
+            group = 0
+            pending_note = False
+            pages.append({"title": title, "note": note, "blocks": blocks})
+            if note:
+                add("note", note)
+            continue
+        if not pages:
+            continue
+        subtitle = NOTICE_SUBTITLE_RE.match(line)
+        if subtitle:
+            add("section", subtitle.group(1))
+            pending_note = False
+            continue
+        if line.startswith(("提醒", "注意", "提示")):
+            # Kept in the group of the event above, so the caveat rides along
+            # with the step it belongs to (same as 初始事件).
+            blocks.append({
+                "kind": "note",
+                "text": _tidy(re.sub(r"^(提醒|注意|提示)[：:]?\s*", "", line)),
+                "group": group,
+            })
+            pending_note = True
+            continue
+        event = EVENT_LINE_RE.match(line)
+        if event:
+            add("event", line[event.end():].strip(), label=event.group(1), tag=event.group(2))
+            pending_note = False
+            continue
+        if pending_note:
+            blocks[-1]["text"] += "\n" + _tidy(line)
+            continue
+        if OPTION_RE.match(line):
+            # Choices (`A.…`) stay in the group of the event that offers them.
+            blocks.append({"kind": "option", "text": _tidy(line), "group": group})
+            continue
+        if line.startswith("（"):
+            # `（有BUG：…）` is a remark on the event above, not a step of its own.
+            blocks.append({"kind": "note", "text": _tidy(line.strip("（）")), "group": group})
+            continue
+        add("paragraph", line)
+
+    return pages
 
 
 # Attribute columns of the stats sheet, in source order: (label, key).
@@ -1252,6 +1338,7 @@ def build(
     items: Path,
     favorites: Path,
     easyshop: Path,
+    notices: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -1370,13 +1457,27 @@ def build(
         raise ValueError(f"unmapped character chapters: {sorted(unused)}")
 
     # ---- 六大特殊通告 ----
+    # The txt carries the six chapters verbatim, `★标题（补充说明）` per page.
+    notice_pages = {page["title"]: page for page in build_notice_pages(notices)}
     notice_items = []
     for title, slug in SIX_NOTICES:
-        child = sections.child("六大传说级通告（99%获奖）", title)
+        page = notice_pages.pop(title, None)
+        if page is None:
+            raise ValueError(f"notice chapter missing from notices.txt: {title}")
         notice_items.append(make_node(
-            f"notices/{slug}", title,
-            blocks=build_blocks(sections.texts[child["start"] + 1:child["end"]]),
+            f"notices/{slug}", page["title"],
+            blocks=page["blocks"],
         ))
+    if notice_pages:
+        raise ValueError(f"unmapped notice chapters: {sorted(notice_pages)}")
+
+    # The 前情概要 of the old docx chapter is 昆仑历险 事件62 in the txt now, so
+    # the category page keeps only the 前言 — no duplicated 小魔女 conversation.
+    notice_intro = sections.intro("六大传说级通告（99%获奖）")
+    notice_preface = notice_intro[:next(
+        (i for i, line in enumerate(notice_intro) if line.startswith("前情概要")),
+        len(notice_intro),
+    )]
 
     # ---- 其他事件 ----
     other_items = [
@@ -1438,7 +1539,7 @@ def build(
             "notices", "六大特殊通告",
             source_title="六大特殊国际通告",
             description="六个传说级国际通告的道具、剧本与达成流程。",
-            blocks=build_blocks(sections.intro("六大传说级通告（99%获奖）")),
+            blocks=build_blocks(notice_preface),
             children=notice_items,
         ),
         make_node(
@@ -1492,6 +1593,7 @@ def main() -> None:
     items_src = Path(sys.argv[14]) if len(sys.argv) > 14 else DEFAULT_ITEMS
     favorites = Path(sys.argv[15]) if len(sys.argv) > 15 else DEFAULT_FAVORITES
     easyshop = Path(sys.argv[16]) if len(sys.argv) > 16 else DEFAULT_EASYSHOP
+    notices = Path(sys.argv[17]) if len(sys.argv) > 17 else DEFAULT_NOTICES
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1524,9 +1626,11 @@ def main() -> None:
         raise SystemExit(f"favorites txt not found: {favorites}")
     if not easyshop.exists():
         raise SystemExit(f"easyshop txt not found: {easyshop}")
+    if not notices.exists():
+        raise SystemExit(f"notices txt not found: {notices}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
-                 easyshop)
+                 easyshop, notices)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

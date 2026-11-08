@@ -7,13 +7,14 @@ interface Props {
 
 /* One tone per trigger type so cards can be scanned without reading the text:
    自动 = nothing to do (neutral taupe), 场景 = travel somewhere (berry),
-   跟随 = follow an artist (gold), 手动 = a manual step (plum).
-   Unknown types fall back to a neutral chip. */
+   跟随 = follow an artist (gold), 手动/沟通 = a step taken while scheduling
+   (plum). 新闻 and the mixed `自动或场景` fall back to a neutral chip. */
 const TONE_CLASS: Record<string, string> = {
   自动: 'border-auto-line bg-auto-soft text-auto',
   场景: 'border-scene-line bg-scene-soft text-scene',
   跟随: 'border-gold-line bg-gold-soft text-gold',
   手动: 'border-violet-line bg-violet-soft text-violet',
+  沟通: 'border-violet-line bg-violet-soft text-violet',
 };
 
 const FALLBACK_CLASS = 'border-line bg-surface-soft text-ink-muted';
