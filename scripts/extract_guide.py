@@ -24,6 +24,7 @@ SOURCES = ROOT / "sources"
 DEFAULT_QUESTIONS = SOURCES / "game-initial-questions.txt"
 DEFAULT_EVENTS = SOURCES / "initial-events.txt"
 DEFAULT_STATS = SOURCES / "character-stats.txt"
+DEFAULT_SCENES = SOURCES / "scenes.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -591,14 +592,67 @@ class Sections:
         return nodes
 
 
-def build(docx: Path, questions: Path, events: Path, stats: Path) -> dict:
+def build_scenes_blocks(path: Path) -> list[dict]:
+    """Turn the 场景开启方法 txt into grouped scene/condition blocks.
+
+    The txt groups scenes into 国内场景 / 国外场景（旅游项目）. A grouped
+    heading line (`国内场景：` or `国外场景（旅游项目）`) becomes a `section`;
+    a domestic `名称：条件` line splits into a `heading` + `paragraph`;
+    an overseas project line `名称（注释）` becomes a `heading`; `A./B./C/D`
+    lines become `option` (lettered badge), and `提示：` lines become `note`
+    (yellow hint). Everything else is a `paragraph` attached to the current
+    project group.
+    """
+    lines = [raw.strip() for raw in _read_text(path).splitlines()]
+    lines = [ln for ln in lines if ln]
+    blocks: list[dict] = []
+    group = 0
+    for line in lines:
+        # Group heading: ends with a full-width colon, or starts with 国内/国外.
+        if line.endswith("：") or line.startswith(("国内", "国外")):
+            group += 1
+            blocks.append({
+                "kind": "section",
+                "text": _tidy(line.rstrip("：").strip()),
+                "depth": 0,
+                "group": group,
+            })
+            continue
+        # 提示 / 提醒 lines fold into a note (yellow hint) of the current project.
+        if line.startswith(("提示", "提醒")):
+            text = re.sub(r"^(提示|提醒)[：:]?\s*", "", line)
+            blocks.append({"kind": "note", "text": _tidy(text), "group": group})
+            continue
+        # Domestic scene: 名称：条件 -> heading + paragraph, opening a new group.
+        if "：" in line:
+            name, _, cond = line.partition("：")
+            group += 1
+            blocks.append({"kind": "heading", "text": _tidy(name.strip()), "group": group})
+            if cond.strip():
+                blocks.append({"kind": "paragraph", "text": _tidy(cond.strip()), "group": group})
+            continue
+        # Lettered prerequisites (A./B./C /D …) -> option with a badge.
+        if OPTION_RE.match(line):
+            blocks.append({"kind": "option", "text": _tidy(line), "group": group})
+            continue
+        # Overseas project title: 名称（注释） -> heading, opening a new group.
+        if "（" in line and "）" in line and len(line) <= 18:
+            group += 1
+            blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+            continue
+        # Otherwise a continuation line of the current project.
+        blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+    return blocks
+
+
+def build(docx: Path, questions: Path, events: Path, stats: Path, scenes: Path) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
     event_blocks = build_event_blocks(events)
     stats_blocks = build_stats_blocks(stats)
 
     required = [
-        "角色攻略", "初始问题选项", "场景开启方法", "★制作人选择", "打工相关",
+        "角色攻略", "初始问题选项", "★制作人选择", "打工相关",
         "艺人称号说明", "接手第一周细节", "小秘书相关事件（不涉艺人）",
         "蛮羊事件：", "史麦克的拜访", "美丽之星事件", "演艺圈前辈事件",
         "威尔相关事件", "六大传说级通告（99%获奖）", "老爸相关事件", "SD相关事件",
@@ -641,7 +695,7 @@ def build(docx: Path, questions: Path, events: Path, stats: Path) -> dict:
         ),
         make_node(
             "game-guide/scenes", "场景开启方法",
-            blocks=build_blocks(sections.intro("场景开启方法")),
+            blocks=build_scenes_blocks(scenes),
         ),
     ]
 
@@ -800,6 +854,7 @@ def main() -> None:
     questions = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_QUESTIONS
     events = Path(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_EVENTS
     stats = Path(sys.argv[4]) if len(sys.argv) > 4 else DEFAULT_STATS
+    scenes = Path(sys.argv[5]) if len(sys.argv) > 5 else DEFAULT_SCENES
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -808,7 +863,9 @@ def main() -> None:
         raise SystemExit(f"events txt not found: {events}")
     if not stats.exists():
         raise SystemExit(f"stats txt not found: {stats}")
-    data = build(docx, questions, events, stats)
+    if not scenes.exists():
+        raise SystemExit(f"scenes txt not found: {scenes}")
+    data = build(docx, questions, events, stats, scenes)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
