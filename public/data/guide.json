@@ -811,72 +811,86 @@
             {
               "kind": "paragraph",
               "text": "唱片助理：（新手）歌艺+2才智+4动感-1压力+3疲劳+3。",
-              "group": 7
+              "group": 7,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "（资深）歌艺+2才智+6动感-1压力+6疲劳+6。(新手助理动感300达到不降低，资深助理动感达到400不降低)",
-              "group": 8
+              "group": 8,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "戏剧配音：（新手）演技+3、名气+2、压力+3、疲劳+3。",
-              "group": 9
+              "group": 9,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "（资深）演技+3、自信+1、名气+3、压力+6、疲劳+6。",
-              "group": 10
+              "group": 10,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "幕后合音：（新手）歌艺+4、仪态+1、压力+3、疲劳+3。",
-              "group": 11
+              "group": 11,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "（资深）歌艺+4、仪态+2、名气+2、压力+6、疲劳+6。",
-              "group": 12
+              "group": 12,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "M V 演出：（新手）演技+3、名气+2，压力+3、疲劳+4。",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "（资深）演技+3、自信+2、名气+3，压力+6、疲劳+8。",
-              "group": 14
+              "group": 14,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "节目助理：（新手）口才+2、体能+1、名气+2，压力+3、疲劳+3。",
-              "group": 15
+              "group": 15,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "（资深）口才+2、自信+2、名气+4，压力+6、疲劳+6。",
-              "group": 16
+              "group": 16,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "舞群伴舞：（新手）动感+1、体能+3、名气+1，压力+3、疲劳+1。",
-              "group": 17
+              "group": 17,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "（资深）动感+2、体能+3、名气+2，压力+6、疲劳+2。",
-              "group": 18
+              "group": 18,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "平面模特：（新手）仪态+2、自信+1、名气+2，压力+3、疲劳+4。",
-              "group": 19
+              "group": 19,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "（资深）仪态+2、自信+2、名气+4，压力+6、疲劳+8。",
-              "group": 20
+              "group": 20,
+              "depth": 2
             },
             {
               "kind": "heading",
@@ -891,42 +905,50 @@
             {
               "kind": "paragraph",
               "text": "唱片助理：才智150、自信100",
-              "group": 23
+              "group": 23,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "戏剧配音：演技150、口才150",
-              "group": 24
+              "group": 24,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "幕后合音：歌艺200",
-              "group": 25
+              "group": 25,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "M V演出：演技150、仪态150",
-              "group": 26
+              "group": 26,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "节目助理：口才100、仪态150",
-              "group": 27
+              "group": 27,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "秀场主持：口才150，名气100",
-              "group": 28
+              "group": 28,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "舞群伴舞：动感200、体能100",
-              "group": 29
+              "group": 29,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "平面广告：仪态150、名气150",
-              "group": 30
+              "group": 30,
+              "bullet": true
             },
             {
               "kind": "heading",
@@ -964,52 +986,62 @@
             {
               "kind": "paragraph",
               "text": "音感发声：歌艺、自信",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "乐器乐理：歌艺、才智",
-              "group": 5
+              "group": 5,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "声音表情：演技、口才",
-              "group": 6
+              "group": 6,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "肢体动作：演技、动感",
-              "group": 7
+              "group": 7,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "说话技巧：口才、自信",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "摄影训练：仪态、体能",
-              "group": 9
+              "group": 9,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "舞台表演：仪态、动感",
-              "group": 10
+              "group": 10,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "有氧舞蹈：动感、体能",
-              "group": 11
+              "group": 11,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "快速记忆：口才、才智",
-              "group": 12
+              "group": 12,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "美姿美仪：仪态、自信",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -1019,7 +1051,8 @@
             {
               "kind": "paragraph",
               "text": "说话技巧：初级（0-199）中级（200-299）高级（300-399）专业（400以上）",
-              "group": 15
+              "group": 15,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -1034,57 +1067,68 @@
             {
               "kind": "paragraph",
               "text": "音感发音：歌艺",
-              "group": 18
+              "group": 18,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "乐器乐理：歌艺",
-              "group": 19
+              "group": 19,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "声音表情：演技",
-              "group": 20
+              "group": 20,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "肢体动作：演技",
-              "group": 21
+              "group": 21,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "说话技巧：口才",
-              "group": 22
+              "group": 22,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "摄影训练：体能",
-              "group": 23
+              "group": 23,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "舞台表演：仪态",
-              "group": 24
+              "group": 24,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "有氧舞蹈：动感、体能",
-              "group": 25
+              "group": 25,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "快速记忆：才智",
-              "group": 26
+              "group": 26,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "美姿仪态：仪态",
-              "group": 27
+              "group": 27,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "资料片训练小游戏：如果游戏成功显示为超完美，所加属性将是原来的1.2-1.5倍。",
-              "group": 28
+              "group": 28,
+              "bullet": true
             },
             {
               "kind": "paragraph",
@@ -1118,17 +1162,20 @@
             {
               "kind": "paragraph",
               "text": "音乐学院（维也纳）： 音感发生（专业）、乐器乐理（专业）、快速记忆（高级）、美姿美仪（高级）",
-              "group": 3
+              "group": 3,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "舞蹈学院（夏威夷）： 有氧舞蹈（专业）、舞台表演（专业）、摄影训练（高级）",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "戏剧学院（纽约）： 声音表情（专业）、肢体语言（专业）、说话技巧（高级）",
-              "group": 5
+              "group": 5,
+              "bullet": true
             },
             {
               "kind": "heading",
@@ -1138,17 +1185,20 @@
             {
               "kind": "paragraph",
               "text": "表演证书：演技700+，口才600+，自信500+。",
-              "group": 7
+              "group": 7,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "音乐证书：歌艺700+，才智600+，自信500+。",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "舞蹈证书：仪态650+，动感650+，体能550+。",
-              "group": 9
+              "group": 9,
+              "bullet": true
             },
             {
               "kind": "note",

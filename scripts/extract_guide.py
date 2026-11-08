@@ -659,53 +659,91 @@ def build_reference_blocks(path: Path) -> list[dict]:
 
     The `★` title line is the page heading and skipped. Short `：`-terminated
     lines (`增加属性：`, `打工升级条件：`) become diamond sub-headings; `提示：`
-    / `提醒：` lines plus their continuation become a yellow note; everything
-    else is a paragraph, one block per source line so the per-打工 / per-课程
-    list reads cleanly.
+    / `提醒：` lines plus their continuation become a yellow note.
+
+    Everything else follows the same list convention as 制作人相关: a
+    flush-left `项目：内容` line (`唱片助理：（新手）…`, `音乐学院（维也纳）：…`)
+    is a bulleted entry, and the lines underneath it — the source-indented
+    `（资深）…` continuation, for instance — are its indented details.
     """
-    lines = [raw.strip() for raw in _read_text(path).splitlines() if raw.strip()]
+    # `\r\r\n` endings would leave an empty line after every row.
+    raw_lines = [line.rstrip("\r") for line in _read_text(path).split("\n")]
     blocks: list[dict] = []
     group = 0
-    if not lines:
-        return blocks
-    start = 1 if lines[0].startswith(("★", "☆")) else 0
+    # Nesting level for the lines below the current entry; 0 means "no entry".
+    detail_depth = 0
     pending_note = False
-    for line in lines[start:]:
+    seen_title = False
+
+    def add(kind: str, text: str, **extra) -> None:
+        nonlocal group
+        group += 1
+        blocks.append({"kind": kind, "text": _tidy(text), "group": group, **extra})
+
+    for raw in raw_lines:
+        line = raw.strip()
+        if not line:
+            continue
+        if not seen_title:
+            seen_title = True
+            if line.startswith(("★", "☆")):
+                continue
         if line.startswith(("提示", "提醒")):
-            group += 1
-            text = re.sub(r"^(提示|提醒)[：:]?\s*", "", line)
-            blocks.append({"kind": "note", "text": _tidy(text), "group": group})
+            add("note", re.sub(r"^(提示|提醒)[：:]?\s*", "", line))
+            detail_depth = 0
             pending_note = True
             continue
         if pending_note:
-            if line.endswith("：") and len(line) <= 16:
+            if (line.endswith(("：", ":")) and len(line) <= 16) or _is_item_line(line):
                 pending_note = False
             else:
                 blocks[-1]["text"] += "\n" + _tidy(line)
                 continue
-        if line.endswith("：") and len(line) <= 16:
-            group += 1
-            blocks.append({
-                "kind": "heading", "text": _tidy(line.rstrip("：")), "group": group,
-            })
+        if line.endswith(("：", ":")) and len(line) <= 16:
+            add("heading", line.rstrip("："))
+            detail_depth = 0
             continue
         if REFERENCE_SUBTITLE_RE.match(line):
-            group += 1
-            blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+            add("heading", line)
+            detail_depth = 0
             continue
-        group += 1
-        blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+        if line.endswith(("：", ":")):
+            # A longer lead-in sentence (`升级的条件：…升级范围如下：`).
+            add("paragraph", line)
+            detail_depth = 0
+            continue
+
+        indent = len(raw) - len(raw.lstrip())
+        if indent == 0 and _is_item_line(line):
+            add("paragraph", line, bullet=True)
+            # Details step past the bulleted label, not level with it.
+            detail_depth = 2
+            continue
+        if indent == 0 and ("：" in line or ":" in line):
+            # Flush-left prose carrying a colon (`其他课程数值均为：…`) is a
+            # sentence, not a detail row of the entry above it.
+            add("paragraph", line)
+            detail_depth = 0
+            continue
+        if detail_depth or indent > 0:
+            add("paragraph", line, depth=detail_depth or 1)
+            continue
+        add("paragraph", line)
+
     return blocks
 
 
-PRODUCER_ITEM_MAX = 8  # a name/type label ("林永育", "温馨伦理剧") is short
+ITEM_PREFIX_MAX = 10  # `音乐学院（维也纳）` is the longest real label in the sources
+# A label names a thing; a sentence before the colon leans on these words
+# (`打工有两个档次：…`, `其他课程数值均为：…`), so it stays prose.
+ITEM_PROSE_RE = re.compile(r"[个是为会但则即指若如]")
 
 
-def _producer_item_prefix(line: str) -> str | None:
+def _item_prefix(line: str) -> str | None:
     """Text before the first colon when the line reads as `项目：内容`.
 
-    Every list item of this page is introduced by its label and a colon
-    (`林永育：`, `小熊：日月光音乐负责人`, `爱情偶像剧：陈淑敏（最强）`), while a
+    Reference pages list things as `<label>：<content>` (`林永育：`,
+    `唱片助理：（新手）歌艺+2…`, `音乐学院（维也纳）： 音感发生（专业）…`), while a
     running sentence that merely contains a colon is much longer
     (`周映彤与小熊的友好度增加的方法：`), so a length cap separates the two.
     """
@@ -713,9 +751,22 @@ def _producer_item_prefix(line: str) -> str | None:
     if not match:
         return None
     prefix = match.group(1).strip()
-    if not prefix or len(prefix) > PRODUCER_ITEM_MAX:
+    if not prefix or len(prefix) > ITEM_PREFIX_MAX:
         return None
     return prefix
+
+
+def _is_item_line(line: str) -> bool:
+    """A flush-left `项目：内容` line — a list entry, not a lead-in sentence.
+
+    Lines that end with the colon (`升级的条件：训练有4个档次…如下：`) introduce
+    what follows instead of being an entry of their own, and a sentence whose
+    subject before the colon is a clause rather than a name is prose.
+    """
+    if line.endswith(("：", ":")):
+        return False
+    prefix = _item_prefix(line)
+    return prefix is not None and not ITEM_PROSE_RE.search(prefix)
 
 
 def build_producers_blocks(path: Path) -> list[dict]:
@@ -767,7 +818,7 @@ def build_producers_blocks(path: Path) -> list[dict]:
             continue
 
         indent = len(line) - len(line.lstrip())
-        prefix = _producer_item_prefix(text) if indent == 0 else None
+        prefix = _item_prefix(text) if indent == 0 else None
         if prefix:
             label = text[:-1].strip() if text.endswith(("：", ":")) else text
             add("paragraph", label, bullet=True)
