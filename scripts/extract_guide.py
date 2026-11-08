@@ -38,6 +38,7 @@ DEFAULT_FAVORITES = SOURCES / "favorites.txt"
 DEFAULT_EASYSHOP = SOURCES / "easyshop.txt"
 DEFAULT_NOTICES = SOURCES / "notices.txt"
 DEFAULT_NOTICES_INTRO = SOURCES / "notices-intro.txt"
+DEFAULT_SD = SOURCES / "sd.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -576,6 +577,67 @@ def build_easyshop_blocks(path: Path) -> list[dict]:
             continue
         group += 1
         blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+
+    return blocks
+
+
+SD_SECTION_RE = re.compile(r"^(恩怨|跳槽)(?:[（(](?P<note>[^）)]*)[）)])?$")
+
+
+def build_sd_blocks(path: Path) -> list[dict]:
+    """Turn the SD相关事件 txt into blocks.
+
+    `★SD相关` only repeats the page title; `★提示：…` becomes the intro note.
+    `恩怨` / `跳槽` open a chapter (`heading`), and the bracket text glued to
+    `恩怨` is that chapter's rule line, kept as the next paragraph. Numbered
+    lines are `event` blocks whose bracket marker (新闻/场景/自动/跟随) survives
+    as `tag`; the `A. / B.` cases under event 7 stay options of that event, and
+    `（特别注意：…）/（提示：…）` reminders stick to the event above them.
+    """
+    blocks: list[dict] = []
+    group = 0
+
+    def add(kind: str, text: str, **extra) -> None:
+        nonlocal group
+        group += 1
+        blocks.append({"kind": kind, "text": _tidy(text), "group": group, **extra})
+
+    for raw in [line.rstrip("\r") for line in _read_text(path).split("\n")]:
+        line = raw.replace("丵", "").strip()
+        if not line:
+            continue
+        if line.startswith(("★", "☆")):
+            text = line.lstrip("★☆").strip()
+            if text == "SD相关":
+                continue
+            add("note", re.sub(r"^(提示|提醒|注意)[：:]\s*", "", text))
+            continue
+        section = SD_SECTION_RE.match(line)
+        if section:
+            add("heading", section.group(1))
+            if section.group("note"):
+                add("paragraph", f"（{section.group('note')}）")
+            continue
+        event = EVENT_LINE_RE.match(line)
+        if event:
+            add(
+                "event",
+                line[event.end():].strip(),
+                label=event.group(1),
+                tag=event.group(2),
+            )
+            continue
+        if OPTION_RE.match(line):
+            # Options and reminders belong to the event above them: same group,
+            # so they render inside that event's card.
+            blocks.append({"kind": "option", "text": _tidy(line), "group": group})
+            continue
+        if line.startswith(("（", "(")) and re.match(
+            r"^[（(](特别注意|提示|注意|提醒)", line
+        ):
+            blocks.append({"kind": "note", "text": _tidy(line), "group": group})
+            continue
+        add("paragraph", line)
 
     return blocks
 
@@ -1552,6 +1614,7 @@ def build(
     easyshop: Path,
     notices: Path,
     notices_intro: Path,
+    sd_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -1562,20 +1625,11 @@ def build(
         "角色攻略", "初始问题选项",
         "接手第一周细节", "小秘书相关事件（不涉艺人）",
         "蛮羊事件：", "史麦克的拜访", "美丽之星事件", "演艺圈前辈事件",
-        "威尔相关事件", "六大传说级通告（99%获奖）", "老爸相关事件", "SD相关事件",
+        "威尔相关事件", "六大传说级通告（99%获奖）", "老爸相关事件",
     ]
     missing = [title for title in required if title not in sections.index]
     if missing:
         raise ValueError(f"document structure changed, missing chapters: {missing}")
-
-    # ---- The SD chapter ends with the 结局 section, now sourced from endings.txt ----
-    sd = sections.index["SD相关事件"]
-    sd_start, sd_end = sd["start"] + 1, sd["end"]
-    ending_marker = next(
-        i for i in range(sd_start, sd_end)
-        if sections.texts[i].startswith("若要说明3的遗憾")
-    )
-    sd_lines = sections.texts[sd_start:ending_marker]
 
     # ---- 经纪人事件簿 ----
     game_items = [
@@ -1711,7 +1765,11 @@ def build(
             source_title="史麦克的拜访",
             blocks=build_blocks(sections.intro("史麦克的拜访")),
         ),
-        make_node("other-events/sd", "SD相关事件", blocks=build_blocks(sd_lines)),
+        make_node(
+            "other-events/sd", "SD相关事件",
+            source_title="SD相关事件.txt",
+            blocks=build_sd_blocks(sd_events),
+        ),
         make_node("other-events/president-he", "贺总相关事件", status="missing"),
         make_node(
             "other-events/secretary", "小秘书莉铃相关事件",
@@ -1803,6 +1861,7 @@ def main() -> None:
     easyshop = Path(sys.argv[16]) if len(sys.argv) > 16 else DEFAULT_EASYSHOP
     notices = Path(sys.argv[17]) if len(sys.argv) > 17 else DEFAULT_NOTICES
     notices_intro = Path(sys.argv[18]) if len(sys.argv) > 18 else DEFAULT_NOTICES_INTRO
+    sd_events = Path(sys.argv[19]) if len(sys.argv) > 19 else DEFAULT_SD
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1839,9 +1898,11 @@ def main() -> None:
         raise SystemExit(f"notices txt not found: {notices}")
     if not notices_intro.exists():
         raise SystemExit(f"notices intro txt not found: {notices_intro}")
+    if not sd_events.exists():
+        raise SystemExit(f"sd events txt not found: {sd_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
-                 easyshop, notices, notices_intro)
+                 easyshop, notices, notices_intro, sd_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
