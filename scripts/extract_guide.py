@@ -2384,6 +2384,10 @@ def build(
             source_title="银色幻想曲“美丽之星”事件.txt",
             blocks=build_event_like_blocks(beauty_star_events, page_title="美丽之星"),
         ),
+        make_node(
+            "other-events/luousang", "路欧桑剧情整理",
+            status="missing",
+        ),
     ]
 
     categories = [

@@ -5,10 +5,10 @@
     "generatedBy": "scripts/extract_guide.py",
     "stats": {
       "categories": 4,
-      "items": 51,
+      "items": 52,
       "blocks": 3330,
       "readyItems": 48,
-      "missingItems": 0,
+      "missingItems": 1,
       "sourceParagraphs": 3706
     }
   },
@@ -22331,6 +22331,13 @@
               "group": 22
             }
           ],
+          "children": []
+        },
+        {
+          "id": "other-events/luousang",
+          "title": "路欧桑剧情整理",
+          "status": "missing",
+          "blocks": [],
           "children": []
         }
       ]
