@@ -39,6 +39,7 @@ DEFAULT_EASYSHOP = SOURCES / "easyshop.txt"
 DEFAULT_NOTICES = SOURCES / "notices.txt"
 DEFAULT_NOTICES_INTRO = SOURCES / "notices-intro.txt"
 DEFAULT_SD = SOURCES / "sd.txt"
+DEFAULT_LAOBA = SOURCES / "laoba.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -677,6 +678,34 @@ def build_sd_blocks(path: Path) -> list[dict]:
             continue
         add("paragraph", line)
 
+    return blocks
+
+
+def build_laoba_blocks(path: Path) -> list[dict]:
+    """老爸相关事件（金父）：与 SD 同属「其他事件」，但走通用 build_blocks 流水线
+    —— 和威尔 / 蛮羊 / 小秘书等兄弟页一致，事件不单独拆标签。
+
+    `★老爸相关` 只是页标题，跳过；其余 `★X`（买药 / 老爸的建议 / 父亲节）是子章节
+    标题。空白行保留，让 build_blocks 按段落分组，事件、提示、提醒各归其位；缩进的
+    `第N次送药得到：…` 等由前端的冒号前缀规则自动渲染成条目。"""
+
+    def tidy_line(raw: str) -> str:
+        stripped = raw.strip()
+        if not stripped:
+            return ""
+        return stripped.lstrip("★☆").strip()
+
+    lines: list[str] = []
+    for raw in _read_text(path).split("\n"):
+        text = tidy_line(raw)
+        if text == "老爸相关":
+            continue  # 页标题，不重复成块
+        lines.append(text)
+    blocks = build_blocks(lines)
+    # `提醒：…` 是警示，渲染成黄色提示块；也避免前端把「提醒」误判为列表条目。
+    for block in blocks:
+        if block["kind"] == "paragraph" and block["text"].startswith(("提醒：", "（提醒")):
+            block["kind"] = "note"
     return blocks
 
 
@@ -1938,6 +1967,7 @@ def build(
     notices: Path,
     notices_intro: Path,
     sd_events: Path,
+    laoba_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -1948,7 +1978,7 @@ def build(
         "角色攻略", "初始问题选项",
         "接手第一周细节", "小秘书相关事件（不涉艺人）",
         "蛮羊事件：", "史麦克的拜访", "美丽之星事件", "演艺圈前辈事件",
-        "威尔相关事件", "六大传说级通告（99%获奖）", "老爸相关事件",
+        "威尔相关事件", "六大传说级通告（99%获奖）",
     ]
     missing = [title for title in required if title not in sections.index]
     if missing:
@@ -2071,9 +2101,9 @@ def build(
             blocks=build_easyshop_blocks(easyshop),
         ),
         make_node(
-            "other-events/golden-father", "金父相关事件",
-            source_title="老爸相关事件",
-            blocks=build_blocks(sections.intro("老爸相关事件")),
+            "other-events/golden-father", "老爸相关事件",
+            source_title="老爸相关事件.txt",
+            blocks=build_laoba_blocks(laoba_events),
         ),
         make_node(
             "other-events/will", "威尔相关事件",
@@ -2185,6 +2215,7 @@ def main() -> None:
     notices = Path(sys.argv[17]) if len(sys.argv) > 17 else DEFAULT_NOTICES
     notices_intro = Path(sys.argv[18]) if len(sys.argv) > 18 else DEFAULT_NOTICES_INTRO
     sd_events = Path(sys.argv[19]) if len(sys.argv) > 19 else DEFAULT_SD
+    laoba_events = Path(sys.argv[20]) if len(sys.argv) > 20 else DEFAULT_LAOBA
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -2223,9 +2254,11 @@ def main() -> None:
         raise SystemExit(f"notices intro txt not found: {notices_intro}")
     if not sd_events.exists():
         raise SystemExit(f"sd events txt not found: {sd_events}")
+    if not laoba_events.exists():
+        raise SystemExit(f"laoba events txt not found: {laoba_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
-                 easyshop, notices, notices_intro, sd_events)
+                 easyshop, notices, notices_intro, sd_events, laoba_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
