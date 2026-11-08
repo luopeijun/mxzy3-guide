@@ -25,6 +25,9 @@ DEFAULT_QUESTIONS = SOURCES / "game-initial-questions.txt"
 DEFAULT_EVENTS = SOURCES / "initial-events.txt"
 DEFAULT_STATS = SOURCES / "character-stats.txt"
 DEFAULT_SCENES = SOURCES / "scenes.txt"
+DEFAULT_WORK = SOURCES / "work.txt"
+DEFAULT_TRAINING = SOURCES / "training.txt"
+DEFAULT_CERTIFICATES = SOURCES / "certificates.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -90,7 +93,6 @@ CHILD_SLUGS = {
         "record-producer", "tv-producer", "film-director",
         "relaxed-rules", "songs", "scripts",
     ],
-    "打工相关": ["attribute-gain", "training", "certificates"],
     "演艺圈前辈事件": ["gu-qianjing", "fang-ruoqi", "ma-zhiwen"],
 }
 
@@ -645,14 +647,71 @@ def build_scenes_blocks(path: Path) -> list[dict]:
     return blocks
 
 
-def build(docx: Path, questions: Path, events: Path, stats: Path, scenes: Path) -> dict:
+# Short bare sub-heading inside a reference page (no colon), e.g. `证书取得`.
+REFERENCE_SUBTITLE_RE = re.compile(r"^[^，,。！？；;：:\dA-Za-z]{2,12}$")
+
+
+def build_reference_blocks(path: Path) -> list[dict]:
+    """Turn a plain-text reference source (打工/训练/证书相关) into blocks.
+
+    The `★` title line is the page heading and skipped. Short `：`-terminated
+    lines (`增加属性：`, `打工升级条件：`) become diamond sub-headings; `提示：`
+    / `提醒：` lines plus their continuation become a yellow note; everything
+    else is a paragraph, one block per source line so the per-打工 / per-课程
+    list reads cleanly.
+    """
+    lines = [raw.strip() for raw in _read_text(path).splitlines() if raw.strip()]
+    blocks: list[dict] = []
+    group = 0
+    if not lines:
+        return blocks
+    start = 1 if lines[0].startswith(("★", "☆")) else 0
+    pending_note = False
+    for line in lines[start:]:
+        if line.startswith(("提示", "提醒")):
+            group += 1
+            text = re.sub(r"^(提示|提醒)[：:]?\s*", "", line)
+            blocks.append({"kind": "note", "text": _tidy(text), "group": group})
+            pending_note = True
+            continue
+        if pending_note:
+            if line.endswith("：") and len(line) <= 16:
+                pending_note = False
+            else:
+                blocks[-1]["text"] += "\n" + _tidy(line)
+                continue
+        if line.endswith("：") and len(line) <= 16:
+            group += 1
+            blocks.append({
+                "kind": "heading", "text": _tidy(line.rstrip("：")), "group": group,
+            })
+            continue
+        if REFERENCE_SUBTITLE_RE.match(line):
+            group += 1
+            blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+            continue
+        group += 1
+        blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+    return blocks
+
+
+def build(
+    docx: Path,
+    questions: Path,
+    events: Path,
+    stats: Path,
+    scenes: Path,
+    work: Path,
+    training: Path,
+    certificates: Path,
+) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
     event_blocks = build_event_blocks(events)
     stats_blocks = build_stats_blocks(stats)
 
     required = [
-        "角色攻略", "初始问题选项", "★制作人选择", "打工相关",
+        "角色攻略", "初始问题选项", "★制作人选择",
         "艺人称号说明", "接手第一周细节", "小秘书相关事件（不涉艺人）",
         "蛮羊事件：", "史麦克的拜访", "美丽之星事件", "演艺圈前辈事件",
         "威尔相关事件", "六大传说级通告（99%获奖）", "老爸相关事件", "SD相关事件",
@@ -661,20 +720,15 @@ def build(docx: Path, questions: Path, events: Path, stats: Path, scenes: Path) 
     if missing:
         raise ValueError(f"document structure changed, missing chapters: {missing}")
 
-    # ---- Split the trailing SD chapter into SD events / endings / fatigue ----
+    # ---- Split the trailing SD chapter into SD events / endings ----
     sd = sections.index["SD相关事件"]
     sd_start, sd_end = sd["start"] + 1, sd["end"]
     ending_marker = next(
         i for i in range(sd_start, sd_end)
         if sections.texts[i].startswith("若要说明3的遗憾")
     )
-    fatigue_marker = next(
-        i for i in range(ending_marker, sd_end)
-        if sections.texts[i].strip() == "压力疲劳增加"
-    )
     sd_lines = sections.texts[sd_start:ending_marker]
-    ending_lines = sections.texts[ending_marker:fatigue_marker]
-    fatigue_lines = sections.texts[fatigue_marker:sd_end]
+    ending_lines = sections.texts[ending_marker:sd_end]
 
     # ---- 经纪人事件簿 ----
     game_items = [
@@ -689,6 +743,21 @@ def build(docx: Path, questions: Path, events: Path, stats: Path, scenes: Path) 
             blocks=event_blocks,
         ),
         make_node(
+            "game-guide/work", "打工相关",
+            source_title="打工相关.txt",
+            blocks=build_reference_blocks(work),
+        ),
+        make_node(
+            "game-guide/training", "训练相关",
+            source_title="训练相关.txt",
+            blocks=build_reference_blocks(training),
+        ),
+        make_node(
+            "game-guide/certificates", "证书相关",
+            source_title="证书相关.txt",
+            blocks=build_reference_blocks(certificates),
+        ),
+        make_node(
             "game-guide/initial-stats", "所有人物初始属性",
             description="18 位可签约艺人（含资料片新增）在游戏开始时的属性与成长加成。",
             blocks=stats_blocks,
@@ -699,18 +768,7 @@ def build(docx: Path, questions: Path, events: Path, stats: Path, scenes: Path) 
         ),
     ]
 
-    work_children = sections.sub_nodes("打工相关", "game-guide/work-and-courses")
-    work_children.append(make_node(
-        "game-guide/work-and-courses/fatigue", "压力疲劳增加",
-        blocks=build_blocks(fatigue_lines),
-    ))
     game_items += [
-        make_node(
-            "game-guide/work-and-courses", "打工课程详解",
-            source_title="打工相关",
-            blocks=build_blocks(sections.intro("打工相关")),
-            children=work_children,
-        ),
         make_node("game-guide/items", "物品总览", status="missing"),
         make_node("game-guide/favorite-items", "艺人喜爱物品一览", status="missing"),
         make_node("game-guide/monopoly-answers", "大富翁B&B&B答案", status="missing"),
@@ -855,6 +913,9 @@ def main() -> None:
     events = Path(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_EVENTS
     stats = Path(sys.argv[4]) if len(sys.argv) > 4 else DEFAULT_STATS
     scenes = Path(sys.argv[5]) if len(sys.argv) > 5 else DEFAULT_SCENES
+    work = Path(sys.argv[6]) if len(sys.argv) > 6 else DEFAULT_WORK
+    training = Path(sys.argv[7]) if len(sys.argv) > 7 else DEFAULT_TRAINING
+    certificates = Path(sys.argv[8]) if len(sys.argv) > 8 else DEFAULT_CERTIFICATES
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -865,7 +926,13 @@ def main() -> None:
         raise SystemExit(f"stats txt not found: {stats}")
     if not scenes.exists():
         raise SystemExit(f"scenes txt not found: {scenes}")
-    data = build(docx, questions, events, stats, scenes)
+    if not work.exists():
+        raise SystemExit(f"work txt not found: {work}")
+    if not training.exists():
+        raise SystemExit(f"training txt not found: {training}")
+    if not certificates.exists():
+        raise SystemExit(f"certificates txt not found: {certificates}")
+    data = build(docx, questions, events, stats, scenes, work, training, certificates)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

@@ -5,9 +5,9 @@
     "generatedBy": "scripts/extract_guide.py",
     "stats": {
       "categories": 4,
-      "items": 59,
-      "blocks": 2925,
-      "readyItems": 40,
+      "items": 57,
+      "blocks": 2911,
+      "readyItems": 42,
       "missingItems": 6,
       "sourceParagraphs": 3706
     }
@@ -773,6 +773,393 @@
           "children": []
         },
         {
+          "id": "game-guide/work",
+          "title": "打工相关",
+          "status": "ready",
+          "sourceTitle": "打工相关.txt",
+          "blocks": [
+            {
+              "kind": "heading",
+              "text": "打工增加属性",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "打工有两个档次：新手、资深，资深增加的属性较多，名气也较多.",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "有些打工不加名气，可以考虑用来冲属性，有些打工也会减些其他属性。",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "新手打工增加相应属性（包括名气）上限300，资深上限400。",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "以上打工每天的报酬为，新手1000，资深2000。舞群伴舞新手2000，资深4000。",
+              "group": 5
+            },
+            {
+              "kind": "heading",
+              "text": "增加属性",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片助理：（新手）歌艺+2才智+4动感-1压力+3疲劳+3。",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "（资深）歌艺+2才智+6动感-1压力+6疲劳+6。(新手助理动感300达到不降低，资深助理动感达到400不降低)",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "戏剧配音：（新手）演技+3、名气+2、压力+3、疲劳+3。",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "（资深）演技+3、自信+1、名气+3、压力+6、疲劳+6。",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "幕后合音：（新手）歌艺+4、仪态+1、压力+3、疲劳+3。",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "（资深）歌艺+4、仪态+2、名气+2、压力+6、疲劳+6。",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "M V 演出：（新手）演技+3、名气+2，压力+3、疲劳+4。",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "（资深）演技+3、自信+2、名气+3，压力+6、疲劳+8。",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "节目助理：（新手）口才+2、体能+1、名气+2，压力+3、疲劳+3。",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "（资深）口才+2、自信+2、名气+4，压力+6、疲劳+6。",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞群伴舞：（新手）动感+1、体能+3、名气+1，压力+3、疲劳+1。",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "（资深）动感+2、体能+3、名气+2，压力+6、疲劳+2。",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "平面模特：（新手）仪态+2、自信+1、名气+2，压力+3、疲劳+4。",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "（资深）仪态+2、自信+2、名气+4，压力+6、疲劳+8。",
+              "group": 20
+            },
+            {
+              "kind": "heading",
+              "text": "打工升级条件",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "新手打工成功5次后，属性满足条件打工会自动升级，数值如下：",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片助理：才智150、自信100",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "戏剧配音：演技150、口才150",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "幕后合音：歌艺200",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "M V演出：演技150、仪态150",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "节目助理：口才100、仪态150",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "秀场主持：口才150，名气100",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞群伴舞：动感200、体能100",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "平面广告：仪态150、名气150",
+              "group": 30
+            },
+            {
+              "kind": "heading",
+              "text": "组团提升名气经典BUG",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "组团接到第一张团体唱片后，所有团员名气立升至250（固定值），可充分利用提升名气",
+              "group": 32
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "game-guide/training",
+          "title": "训练相关",
+          "status": "ready",
+          "sourceTitle": "训练相关.txt",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "训练所能加的属性上限依个人特质而不同，属性有瓶颈和上限，级别越高加得越少。",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "此外如果属性已经很高，初级训练也会加的少。",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "增加的属性",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "音感发声：歌艺、自信",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "乐器乐理：歌艺、才智",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "声音表情：演技、口才",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "肢体动作：演技、动感",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "说话技巧：口才、自信",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "摄影训练：仪态、体能",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台表演：仪态、动感",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "有氧舞蹈：动感、体能",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "快速记忆：口才、才智",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "美姿美仪：仪态、自信",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "升级的条件：训练有4个档次，初级、中级、高级、专业、相应指标超过范围就会升级，升级范围如下：",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "说话技巧：初级（0-199）中级（200-299）高级（300-399）专业（400以上）",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "其他课程数值均为：初级（0-199）中级（200-299）高级（300-399）专业（400以上）",
+              "group": 16
+            },
+            {
+              "kind": "heading",
+              "text": "升级指标分别为",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "音感发音：歌艺",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "乐器乐理：歌艺",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "声音表情：演技",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "肢体动作：演技",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "说话技巧：口才",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "摄影训练：体能",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台表演：仪态",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "有氧舞蹈：动感、体能",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "快速记忆：才智",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "美姿仪态：仪态",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "资料片训练小游戏：如果游戏成功显示为超完美，所加属性将是原来的1.2-1.5倍。",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "但有个BUG：属性很低时，显示为超完美有时增加的属性还是和失败时一样，同时也增加压力，就是表面超完美，其实失败。",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "属性高于150后，成功率会很高。",
+              "group": 30
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "game-guide/certificates",
+          "title": "证书相关",
+          "status": "ready",
+          "sourceTitle": "证书相关.txt",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "满足条件后混小子会上门通知并开启相关场景，必须前往国外买听课证后再安排艺人出国训练（每张可听课一周）。",
+              "group": 1
+            },
+            {
+              "kind": "heading",
+              "text": "进修条件",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "音乐学院（维也纳）： 音感发生（专业）、乐器乐理（专业）、快速记忆（高级）、美姿美仪（高级）",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞蹈学院（夏威夷）： 有氧舞蹈（专业）、舞台表演（专业）、摄影训练（高级）",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "戏剧学院（纽约）： 声音表情（专业）、肢体语言（专业）、说话技巧（高级）",
+              "group": 5
+            },
+            {
+              "kind": "heading",
+              "text": "证书取得",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "表演证书：演技700+，口才600+，自信500+。",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "音乐证书：歌艺700+，才智600+，自信500+。",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞蹈证书：仪态650+，动感650+，体能550+。",
+              "group": 9
+            },
+            {
+              "kind": "note",
+              "text": "只有属性达标且从国外上课回来的周末才能得到证书，所以为了节省时间，\n建议先上两次课，再在国内把相关属性训练到基本达标，再去上一次课，周末即可得到证书。",
+              "group": 10
+            }
+          ],
+          "children": []
+        },
+        {
           "id": "game-guide/initial-stats",
           "title": "所有人物初始属性",
           "status": "ready",
@@ -1509,498 +1896,6 @@
             }
           ],
           "children": []
-        },
-        {
-          "id": "game-guide/work-and-courses",
-          "title": "打工课程详解",
-          "status": "ready",
-          "sourceTitle": "打工相关",
-          "blocks": [
-            {
-              "kind": "paragraph",
-              "text": "众所周知，咱们作为经纪人二代，接手的是咱自家负债累累的经纪公司（哭...）",
-              "group": 0
-            },
-            {
-              "kind": "paragraph",
-              "text": "所以在签下新人后，把他们派出去即刻开始压榨才是正道（bushi",
-              "group": 0
-            },
-            {
-              "kind": "paragraph",
-              "text": "打工可以赚钱，还能提升新人属性，最重要，是提升名气！！！",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "这个设定很现实，前期很多通告都会要求名气，虽然后期这个属性基本是max状态，可前期恰巧名气是很多新人最欠缺的",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "打工有两个档次：新手、资深。初始都是新手级别，达到要求会变成资深；资深增加的属性较多，名气也较多。",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "新手打工增加相应属性（包括名气）上限300，资深上限400。",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "注意，有些打工不加名气，可以考虑用来冲属性，有些打工也会减些其他属性。",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "以上打工每天的报酬为，新手1000，资深2000。舞群伴舞新手2000，资深4000。",
-              "group": 2
-            }
-          ],
-          "children": [
-            {
-              "id": "game-guide/work-and-courses/attribute-gain",
-              "title": "增加属性说明",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "heading",
-                  "text": "唱片助理：歌艺+ 才智+ 动感-",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（新手）歌艺+2才智+4动感-1压力+3疲劳+3。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（资深）歌艺+2才智+6动感-1压力+6疲劳+6。(新手助理动感300达到不降低，资深助理动感达到400不降低)",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "戏剧配音：演技+ 名气+",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（新手）演技+3、名气+2、压力+3、疲劳+3。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（资深）演技+3、自信+1、名气+3、压力+6、疲劳+6。",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "幕后合音：",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（新手）歌艺+4、仪态+1、压力+3、疲劳+3。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（资深）歌艺+4、仪态+2、名气+2、压力+6、疲劳+6。",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "M V 演出：",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（新手）演技+3、名气+2，压力+3、疲劳+4。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（资深）演技+3、自信+2、名气+3，压力+6、疲劳+8。",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "节目助理：",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（新手）口才+2、体能+1、名气+2，压力+3、疲劳+3。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（资深）口才+2、自信+2、名气+4，压力+6、疲劳+6。",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "秀场主持：口才、名气",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "（新手）",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "（资深）",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "舞群伴舞：",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（新手）动感+1、体能+3、名气+1，压力+3、疲劳+1。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（资深）动感+2、体能+3、名气+2，压力+6、疲劳+2。",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "平面模特：",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（新手）仪态+2、自信+1、名气+2，压力+3、疲劳+4。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "（资深）仪态+2、自信+2、名气+4，压力+6、疲劳+8。",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "打工升级条件",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "新手打工成功5次后，属性满足条件打工会自动升级，数值如下：",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "唱片助理：才智150、自信100",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "戏剧配音：演技150、口才150",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "幕后合音：歌艺200",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "M V演出：演技150、仪态150",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "节目助理：口才100、仪态150",
-                  "group": 2
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "秀场主持：口才150，名气100",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "舞群伴舞：动感200、体能100",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "平面广告：仪态150、名气150",
-                  "group": 2
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/work-and-courses/training",
-              "title": "训练相关",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "paragraph",
-                  "text": "打工终究不是正业（除非你就想带着艺人完成某些奇葩结局的话...）",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "训练以提升能力，才是快速接到优质通告的王道（想想咱们内娱那几年的选秀，是不是多少有点过于着急了...）",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "训练所能加的属性上限依个人特质而不同，属性有瓶颈和上限，级别越高加得越少。",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "此外如果属性已经很高，初级训练也会加的少。",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "训练增加的属性",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "音感发声：歌艺、自信",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "乐器乐理：歌艺、才智",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "声音表情：演技、口才",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "肢体动作：演技、动感",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "说话技巧：口才、自信",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "摄影训练：仪态、体能",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "舞台表演：仪态、动感",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "有氧舞蹈：动感、体能",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "快速记忆：口才、才智",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "美姿美仪：仪态、自信",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "升级的条件",
-                  "group": 3
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "训练有4个档次，初级、中级、高级、专业、相应指标超过范围就会升级，升级范围如下：",
-                  "group": 4
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "说话技巧：初级（0-199）中级（200-299）高级（300-399）专业（400以上）",
-                  "group": 4
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "其他课程数值均为：初级（0-199）中级（200-299）高级（300-399）专业（400以上）",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "升级指标分别为：",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "音感发音：歌艺",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "乐器乐理：歌艺",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "声音表情：演技",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "肢体动作：演技",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "说话技巧：口才",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "摄影训练：体能",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "舞台表演：仪态",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "有氧舞蹈：动感、体能",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "快速记忆：才智",
-                  "group": 4
-                },
-                {
-                  "kind": "heading",
-                  "text": "美姿仪态：仪态",
-                  "group": 4
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "资料片训练小游戏：如果游戏成功显示为超完美，所加属性将是原来的1.2—1.5倍。",
-                  "group": 5
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/work-and-courses/certificates",
-              "title": "证书相关",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "paragraph",
-                  "text": "某些特殊的通告，要求艺人必须拥有相关的证书",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "而艺人在满足条件后混小子会上门通知并开启相关场景，或者是接到要求证书的通告后去询问混小子也会触发开启。",
-                  "group": 1
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "证书必须前往国外相关场景，购买买听课证后再安排艺人出国训练（每张可上课一周）。",
-                  "group": 1
-                },
-                {
-                  "kind": "heading",
-                  "text": "进修条件：",
-                  "group": 2
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "音乐学院（维也纳）： 音感发生（专业）、乐器乐理（专业）、快速记忆（高级）、美姿美仪（高级）",
-                  "group": 2
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "舞蹈学院（夏威夷）： 有氧舞蹈（专业）、舞台表演（专业）、摄影训练（高级）",
-                  "group": 2
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "戏剧学院（纽约）： 声音表情（专业）、肢体语言（专业）、说话技巧（高级）",
-                  "group": 2
-                },
-                {
-                  "kind": "heading",
-                  "text": "证书取得",
-                  "group": 3
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "表演证书：演技700+，口才600+，自信500+。",
-                  "group": 3
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "音乐证书：歌艺700+，才智600+，自信500+。",
-                  "group": 3
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "舞蹈证书：仪态650+，动感650+，体能550+。",
-                  "group": 3
-                },
-                {
-                  "kind": "note",
-                  "text": "提示：只有属性达标且从国外上课回来的周末才能得到证书，所以为了节省时间，",
-                  "group": 4
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "建议先上两次课，再在国内把相关属性训练到基本达标，再去上一次课，周末即可得到证书。",
-                  "group": 4
-                }
-              ],
-              "children": []
-            },
-            {
-              "id": "game-guide/work-and-courses/fatigue",
-              "title": "压力疲劳增加",
-              "status": "ready",
-              "blocks": [
-                {
-                  "kind": "heading",
-                  "text": "压力疲劳增加",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "资深打工：疲劳5% 压力6%",
-                  "group": 0
-                },
-                {
-                  "kind": "heading",
-                  "text": "课程：疲劳：1-6%（完美1%） 压力0%",
-                  "group": 0
-                },
-                {
-                  "kind": "paragraph",
-                  "text": "通告：疲劳4% 压力5%  MTV：疲劳7% 压力8%",
-                  "group": 0
-                }
-              ],
-              "children": []
-            }
-          ]
         },
         {
           "id": "game-guide/items",
@@ -3490,6 +3385,26 @@
               "kind": "paragraph",
               "text": "结局22 潜力十足的普通经纪公司：以上所有条件均不符合",
               "group": 23
+            },
+            {
+              "kind": "heading",
+              "text": "压力疲劳增加",
+              "group": 24
+            },
+            {
+              "kind": "heading",
+              "text": "资深打工：疲劳5% 压力6%",
+              "group": 24
+            },
+            {
+              "kind": "heading",
+              "text": "课程：疲劳：1-6%（完美1%） 压力0%",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "通告：疲劳4% 压力5%  MTV：疲劳7% 压力8%",
+              "group": 24
             }
           ],
           "children": []
