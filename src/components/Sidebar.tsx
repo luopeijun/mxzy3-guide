@@ -102,7 +102,7 @@ export default function Sidebar({
       <div className="border-t border-line px-4 pt-[10px] pb-[14px] text-ui-2xs leading-[1.6] text-ink-faint">
         共 {summary.items} 个条目 · 约 {formatCount(summary.chars)} 字
         <br />
-        纯浏览模式 · 进度追踪即将上线
+        已支持事件追踪 · 顶栏「事件追踪」进入
       </div>
     </aside>
   );

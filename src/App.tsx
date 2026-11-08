@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GuideData } from './types/guide';
 import type { ReorderRequest } from './lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
-import { HighlightProvider } from './hooks/useHighlightPref';
-import { useHashSelection } from './hooks/useHashSelection';
+import { isTrackerRoute, readHash, useHashSelection } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
 import { useTreeOrder } from './hooks/useTreeOrder';
+import { HighlightProvider } from './hooks/useHighlightPref';
+import { TrackerProvider } from './hooks/useTracker';
 import AppShell from './components/AppShell';
 import BrandHeader from './components/BrandHeader';
 import ContentPanel from './components/ContentPanel';
 import LoadingScreen from './components/LoadingScreen';
 import Sidebar from './components/Sidebar';
+import TrackerApp from './components/tracker/TrackerApp';
 
 function GuideApp({ data: source }: { data: GuideData }) {
   // The reader may drag levels of the tree around; everything below reads the
@@ -74,53 +76,70 @@ function GuideApp({ data: source }: { data: GuideData }) {
   const nextNode = position >= 0 && position < allNodes.length - 1 ? allNodes[position + 1] : null;
 
   return (
-    <HighlightProvider>
-      <AppShell
-        scrollKey={selectedId}
-        sidebarOpen={sidebarOpen}
-        onCloseSidebar={() => setSidebarOpen(false)}
-        header={(
-          <BrandHeader
-            categories={data.categories}
-            activeCategoryId={activeCategoryId}
-            summary={summary}
-            onSelect={handleSelect}
-            onMenuClick={() => setSidebarOpen(true)}
-          />
-        )}
-        sidebar={(
-          <Sidebar
-            categories={data.categories}
-            selectedId={selectedId}
-            expandedIds={expandedIds}
-            query={query}
-            hits={hits}
-            open={sidebarOpen}
-            summary={summary}
-            customized={customized}
-            onToggle={toggle}
-            onSelect={handleSelect}
-            onQueryChange={setQuery}
-            onReorder={handleReorder}
-            onResetOrder={reset}
-          />
-        )}
-      >
-        <ContentPanel
-          data={data}
-          node={currentNode}
-          path={path}
-          prev={previousNode}
-          next={nextNode}
+    <AppShell
+      scrollKey={selectedId}
+      sidebarOpen={sidebarOpen}
+      onCloseSidebar={() => setSidebarOpen(false)}
+      header={(
+        <BrandHeader
+          categories={data.categories}
+          activeCategoryId={activeCategoryId}
+          summary={summary}
           onSelect={handleSelect}
+          onMenuClick={() => setSidebarOpen(true)}
         />
-      </AppShell>
-    </HighlightProvider>
+      )}
+      sidebar={(
+        <Sidebar
+          categories={data.categories}
+          selectedId={selectedId}
+          expandedIds={expandedIds}
+          query={query}
+          hits={hits}
+          open={sidebarOpen}
+          summary={summary}
+          customized={customized}
+          onToggle={toggle}
+          onSelect={handleSelect}
+          onQueryChange={setQuery}
+          onReorder={handleReorder}
+          onResetOrder={reset}
+        />
+      )}
+    >
+      <ContentPanel
+        data={data}
+        node={currentNode}
+        path={path}
+        prev={previousNode}
+        next={nextNode}
+        onSelect={handleSelect}
+      />
+    </AppShell>
   );
 }
 
 export default function App() {
   const { data, error } = useGuideData();
+  const [mode, setMode] = useState<'guide' | 'tracker'>(() => (isTrackerRoute() ? 'tracker' : 'guide'));
+  // Last guide node id, so closing the tracker lands back where the reader was.
+  // Seeded from the URL, because the hashchange listener below only fires on
+  // later navigations, not on the load that opened this very page.
+  const lastNodeRef = useRef<string>(isTrackerRoute() ? '' : readHash());
+
+  useEffect(() => {
+    const onChange = () => {
+      const hash = readHash();
+      if (hash === 'tracker') {
+        setMode('tracker');
+      } else {
+        setMode('guide');
+        if (hash) lastNodeRef.current = hash;
+      }
+    };
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
 
   if (error) {
     return (
@@ -135,5 +154,21 @@ export default function App() {
     return <LoadingScreen title="正在载入攻略" text="正在读取分级目录与正文内容…" />;
   }
 
-  return <GuideApp data={data} />;
+  const firstNodeId = (): string => {
+    const leaf = flattenNodes(data).find((node) => node.children.length === 0);
+    return leaf?.id ?? '';
+  };
+
+  const closeTracker = () => {
+    window.location.hash = `/${lastNodeRef.current || firstNodeId()}`;
+  };
+
+  return (
+    <TrackerProvider>
+      <HighlightProvider>
+        <GuideApp data={data} />
+        {mode === 'tracker' && <TrackerApp data={data} onClose={closeTracker} />}
+      </HighlightProvider>
+    </TrackerProvider>
+  );
 }

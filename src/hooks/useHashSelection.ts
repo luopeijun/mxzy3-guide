@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-function readHash(): string {
+export function readHash(): string {
   // `#/node-id~anchor` keeps the in-page anchor in the same fragment.
   const raw = window.location.hash.replace(/^#\/?/, '').split('~')[0];
   try {
@@ -8,6 +8,11 @@ function readHash(): string {
   } catch {
     return raw;
   }
+}
+
+/** True when the URL points at the standalone tracker view rather than a node. */
+export function isTrackerRoute(): boolean {
+  return readHash() === 'tracker';
 }
 
 /** Keep the selected guide node in the URL hash for refresh-safe deep links. */

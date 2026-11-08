@@ -57,6 +57,16 @@ export default function BrandHeader({
 
           {HIGHLIGHT_ENABLED && <HighlightSwitch />}
 
+          <button
+            type="button"
+            onClick={() => {
+              window.location.hash = '/tracker';
+            }}
+            className="rounded-full border border-brand-line bg-brand-soft px-[13px] py-[7px] text-ui-xs font-semibold text-brand-strong transition-colors hover:bg-brand hover:text-white tab:px-[9px]"
+          >
+            事件追踪
+          </button>
+
           <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
             {summary.items} 条目 · {formatCount(summary.chars)} 字
           </div>
