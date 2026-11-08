@@ -45,6 +45,7 @@ DEFAULT_WILL = SOURCES / "will.txt"
 DEFAULT_EXPANSION = SOURCES / "expansion.txt"
 DEFAULT_SECRETARY = SOURCES / "secretary.txt"
 DEFAULT_MANYANG = SOURCES / "manyang.txt"
+DEFAULT_BEAUTY_STAR = SOURCES / "beauty-star.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -2156,6 +2157,7 @@ def build(
     expansion_events: Path,
     secretary_events: Path,
     manyang_events: Path,
+    beauty_star_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -2340,7 +2342,8 @@ def build(
         ),
         make_node(
             "other-events/beauty-star", "美丽之星事件",
-            blocks=build_blocks(sections.intro("美丽之星事件")),
+            source_title="银色幻想曲“美丽之星”事件.txt",
+            blocks=build_event_like_blocks(beauty_star_events, page_title="美丽之星"),
         ),
     ]
 
@@ -2424,6 +2427,7 @@ def main() -> None:
     expansion_events = Path(sys.argv[23]) if len(sys.argv) > 23 else DEFAULT_EXPANSION
     secretary_events = Path(sys.argv[24]) if len(sys.argv) > 24 else DEFAULT_SECRETARY
     manyang_events = Path(sys.argv[25]) if len(sys.argv) > 25 else DEFAULT_MANYANG
+    beauty_star_events = Path(sys.argv[26]) if len(sys.argv) > 26 else DEFAULT_BEAUTY_STAR
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -2474,11 +2478,13 @@ def main() -> None:
         raise SystemExit(f"secretary events txt not found: {secretary_events}")
     if not manyang_events.exists():
         raise SystemExit(f"manyang events txt not found: {manyang_events}")
+    if not beauty_star_events.exists():
+        raise SystemExit(f"beauty-star events txt not found: {beauty_star_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
                  easyshop, notices, notices_intro, sd_events, laoba_events,
                  hollywood_events, will_events, expansion_events, secretary_events,
-                 manyang_events)
+                 manyang_events, beauty_star_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
