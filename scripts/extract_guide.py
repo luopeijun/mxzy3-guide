@@ -732,6 +732,7 @@ def _append_event_like(
     next_line: str | None = None,
     *,
     skip_title: str | None = None,
+    mark_cg: bool = False,
 ) -> None:
     """Classify one source line and append a block to `blocks`, mutating `state`
     (carrying `group` and `last_event_group`). Shared by the single-page event
@@ -792,12 +793,14 @@ def _append_event_like(
     event = EVENT_LINE_RE.match(line)
     if event:
         group += 1
+        event_text = _tidy(line[event.end():].strip())
         blocks.append({
             "kind": "event",
-            "text": _tidy(line[event.end():].strip()),
+            "text": event_text,
             "label": event.group(1),
             "tag": event.group(2),
             "group": group,
+            "cg": bool(mark_cg and "CG" in event_text),
         })
         state["group"] = group
         state["last_event_group"] = group
@@ -806,11 +809,13 @@ def _append_event_like(
     plain = EVENT_PLAIN_RE.match(line)
     if plain:
         group += 1
+        event_text = _tidy(plain.group(2).strip())
         blocks.append({
             "kind": "event",
-            "text": _tidy(plain.group(2).strip()),
+            "text": event_text,
             "label": plain.group(1),
             "group": group,
+            "cg": bool(mark_cg and "CG" in event_text),
         })
         state["group"] = group
         state["last_event_group"] = group
@@ -899,14 +904,14 @@ def _append_event_like(
     return
 
 
-def build_event_like_blocks(path: Path, *, page_title: str) -> list[dict]:
-    """其他事件章节（老爸 / 好莱坞 / 威尔）的通用构建器。"""
+def build_event_like_blocks(path: Path, *, page_title: str, mark_cg: bool = False) -> list[dict]:
+    """其他事件章节（老爸 / 好莱坞 / 威尔 / 路欧桑等）的通用构建器。"""
     lines = [ln.strip() for ln in (line.rstrip("\r") for line in _read_text(path).split("\n")) if ln.strip()]
     blocks: list[dict] = []
     state = {"group": 0, "last_event_group": None, "reminder_open": False}
     for i, line in enumerate(lines):
         next_line = lines[i + 1] if i + 1 < len(lines) else None
-        _append_event_like(blocks, state, line, next_line, skip_title=page_title)
+        _append_event_like(blocks, state, line, next_line, skip_title=page_title, mark_cg=mark_cg)
     return blocks
 
 
@@ -2413,7 +2418,7 @@ def build(
                 make_node(
                     "other-events/luousang/only-sanghebei", "只有桑禾蓓在旗下",
                     source_title="只有桑禾蓓在旗下.txt",
-                    blocks=build_event_like_blocks(luousang_sanghebei_events, page_title="只有桑禾蓓在旗下"),
+                    blocks=build_event_like_blocks(luousang_sanghebei_events, page_title="只有桑禾蓓在旗下", mark_cg=True),
                 ),
                 make_node(
                     "other-events/luousang/only-ouyiqing", "只有欧怡青在旗下",

@@ -19,17 +19,21 @@ interface Props {
  */
 function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
   const [head, ...rest] = blocks;
+  const cg = head.cg;
 
   return (
-    <div className="mb-3 rounded-ui-sm border border-line bg-surface px-3 py-2.5">
+    <div className={`mb-3 rounded-ui-sm border px-3 py-2.5 ${cg ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}>
       <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
         {head.label && (
-          <span className="mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs bg-brand-soft px-[5px] text-center text-ui-2xs font-bold leading-[1.7] text-brand-strong">
+          <span className={`mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7] ${cg ? "bg-brand text-white" : "bg-brand-soft text-brand-strong"}`}>
             {head.label}
           </span>
         )}
         <span className="min-w-0 flex-1 break-words">
           {head.tag && <TypeTag label={head.tag} />}
+          {cg && (
+            <span className="ml-1.5 inline-flex items-center rounded-ui-xs bg-gold px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-white align-middle">CG</span>
+          )}
           <HighlightText text={head.text} />
         </span>
       </div>
