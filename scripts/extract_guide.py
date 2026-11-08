@@ -41,6 +41,7 @@ DEFAULT_NOTICES_INTRO = SOURCES / "notices-intro.txt"
 DEFAULT_SD = SOURCES / "sd.txt"
 DEFAULT_LAOBA = SOURCES / "laoba.txt"
 DEFAULT_HOLLYWOOD = SOURCES / "hollywood.txt"
+DEFAULT_WILL = SOURCES / "will.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -730,6 +731,39 @@ def build_hollywood_blocks(path: Path) -> list[dict]:
             continue  # 页标题，不重复成块
         lines.append(text)
     return build_blocks(lines)
+
+
+def build_will_blocks(path: Path) -> list[dict]:
+    """威尔相关事件：与 SD、老爸、好莱坞同属「其他事件」，走通用 build_blocks 流水线，
+    事件不单独拆标签。
+
+    `★威尔相关` 只是页标题，跳过；其余 `★X`（星探 / 误会 / 拜访）是子章节标题。
+    子章节标题带括号说明、超过 22 字，generic classify 会误判成 paragraph，这里显式
+    把 `★` 行强制为 heading，保持和老爸 / 好莱坞的子章节一致。
+    `提醒：` 是警示，渲染成黄色提示块；也避免前端把「提醒」误判为列表条目。"""
+
+    def tidy_line(raw: str) -> str:
+        stripped = raw.strip()
+        if not stripped:
+            return ""
+        return stripped.lstrip("★☆").strip()
+
+    heading_texts: set[str] = set()
+    lines: list[str] = []
+    for raw in _read_text(path).split("\n"):
+        text = tidy_line(raw)
+        if text == "威尔相关":
+            continue  # 页标题，不重复成块
+        if raw.strip().startswith(("★", "☆")):
+            heading_texts.add(text)
+        lines.append(text)
+    blocks = build_blocks(lines)
+    for block in blocks:
+        if block["kind"] == "paragraph" and block["text"] in heading_texts:
+            block["kind"] = "heading"
+        elif block["kind"] == "paragraph" and block["text"].startswith(("提醒：", "（提醒")):
+            block["kind"] = "note"
+    return blocks
 
 
 NOTICE_TITLE_RE = re.compile(r"^★\s*(.+)$")
@@ -1992,6 +2026,7 @@ def build(
     sd_events: Path,
     laoba_events: Path,
     hollywood_events: Path,
+    will_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -2002,7 +2037,7 @@ def build(
         "角色攻略", "初始问题选项",
         "接手第一周细节", "小秘书相关事件（不涉艺人）",
         "蛮羊事件：", "美丽之星事件", "演艺圈前辈事件",
-        "威尔相关事件", "六大传说级通告（99%获奖）",
+        "六大传说级通告（99%获奖）",
     ]
     missing = [title for title in required if title not in sections.index]
     if missing:
@@ -2131,7 +2166,8 @@ def build(
         ),
         make_node(
             "other-events/will", "威尔相关事件",
-            blocks=build_blocks(sections.intro("威尔相关事件")),
+            source_title="威尔相关事件.txt",
+            blocks=build_will_blocks(will_events),
         ),
         make_node(
             "other-events/manyang", "蛮羊事件",
@@ -2241,6 +2277,7 @@ def main() -> None:
     sd_events = Path(sys.argv[19]) if len(sys.argv) > 19 else DEFAULT_SD
     laoba_events = Path(sys.argv[20]) if len(sys.argv) > 20 else DEFAULT_LAOBA
     hollywood_events = Path(sys.argv[21]) if len(sys.argv) > 21 else DEFAULT_HOLLYWOOD
+    will_events = Path(sys.argv[22]) if len(sys.argv) > 22 else DEFAULT_WILL
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -2283,10 +2320,12 @@ def main() -> None:
         raise SystemExit(f"laoba events txt not found: {laoba_events}")
     if not hollywood_events.exists():
         raise SystemExit(f"hollywood events txt not found: {hollywood_events}")
+    if not will_events.exists():
+        raise SystemExit(f"will events txt not found: {will_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
                  easyshop, notices, notices_intro, sd_events, laoba_events,
-                 hollywood_events)
+                 hollywood_events, will_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
