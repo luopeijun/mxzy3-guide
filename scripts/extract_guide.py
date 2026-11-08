@@ -254,6 +254,8 @@ NOTICE_REQUIREMENTS: dict[str, dict] = {
 # 第三世界 — tinting them on every step points at scenery, not at a decision.
 NOTICE_MUTE: dict[str, tuple[str, ...]] = {
     "落入凡间的天使": ("塔罗小魔女", "第三世界", "大天使"),
+    # 贺总是背景反派，银河线里只是顺带出现，不值得在正文里染色。
+    "银河": ("贺总",),
 }
 
 
@@ -698,16 +700,27 @@ CONDITION_PATTERNS = (
     # stat thresholds: 歌艺700 / 人气3 / 自信550
     r"(?:歌艺|仪态|人气|名气|自信|口才|才艺|才智|体能|道德|叛逆|性感|魅力|亲和|胆识|智慧|气质|演技|创作|主持|舞台|知名度|亲切度)"
     r"[ ]?[0-9]{1,4}",
+    # 名气大于6 / 人气大于5 — an attribute gated by 大于/超过/达到…
+    r"(?:歌艺|仪态|人气|名气|自信|口才|才艺|才智|体能|道德|叛逆|性感|魅力|亲和|胆识|智慧|气质|演技|创作|主持|舞台|知名度|亲切度|属性)"
+    r"(?:大于|超过|达到|满|少于|低于|不小于|不低于)[0-9]+",
+    # 旗下有团体 / 推出过3张或以上的团体唱片 — the galaxy gating pair
+    r"旗下有团体",
+    r"推出过[^，。；！？]{0,12}?团体唱片",
     # 个人唱片大于5张 / 唱片数超过5张
     r"(?:个人)?(?:唱片|专辑)[^，。；！？（）]{0,6}?(?:大于|超过|达到|满|少于|低于)[0-9]+张",
     r"(?:大于|超过|达到|满)[0-9]+(?:张|片|个|次|场)",
     # 有国际音乐学院的证书 / 舞蹈证书 — the qualifier names which certificate, so
     # the tint keeps it and drops the sentence around it.
     r"(?:国际|音乐|戏剧|舞蹈|美术|专业|相关|各类)?(?:[^，。；！？（）.的]{0,4})?的?证书",
-    # 开过演唱会（最好是大型的）
-    r"开过[^，。；！？]{0,8}演唱会(?:（[^）]{0,12}）)?",
+    # 开过 / 开完大型演唱会
+    r"开(?:过|完|过完)[^，。；！？]{0,8}演唱会(?:（[^）]{0,12}）)?",
     # 参加过慈善义演 / 参加过…节目
     r"参加过[^，。；！？]{0,12}?(?:义演|活动|节目|比赛|演唱会)",
+    # 接过京风唱片的团体通告 — a specific prior gig as a gate
+    r"有接过[^，。；！？]{0,8}?团体通告",
+    # 东京找加贺“闲聊”3次后 — talk N times is a real prerequisite; keep the
+    # place that precedes 找 inside the same tint so the whole step reads as one.
+    r"(?:[^，。；！？]{0,4})?找[^，。；！？]{0,6}?“闲聊”[0-9]+次后?",
     # 只会邀请人气最高的女艺人
     r"只会(?:邀请|请|找)[^，。；！？（）]{0,12}",
     # 就医满10次 / 占卜10次 / 买过东西大于10次 — a count to reach, kept with the
@@ -823,9 +836,15 @@ def mark_highlights(
     used = dict.fromkeys(HIGHLIGHT_PRIORITY, 0)
 
     chosen: list[tuple[int, int, int, str, str]] = []
+    other_used = 0
     for span in sorted(spans, key=lambda item: rank[item[3]]):
         index, start, end, kind, label = span
         if used[kind] >= quota[kind]:
+            continue
+        # Conditions get their own headroom (up to CONDITION_LIMIT per block); the
+        # page-wide cap only throttles 选项/时间/人物/物品/地点, so a gating event
+        # with several prerequisites can still keep its trigger and its timing.
+        if kind != "条件" and other_used >= HIGHLIGHT_LIMIT:
             continue
         # A choice belongs to its own step, so it is never suppressed as a repeat.
         if kind != "选项":
@@ -834,11 +853,11 @@ def mark_highlights(
             if word in mute or word in taken or (title and word in title):
                 continue
         used[kind] += 1
+        if kind != "条件":
+            other_used += 1
         chosen.append(span)
         if kind != "选项":
             taken.add(label.strip("“”‘’「」"))
-        if len(chosen) >= HIGHLIGHT_LIMIT:
-            break
 
     by_line: dict[int, list[tuple[int, int, str]]] = {}
     for index, start, end, kind, _label in sorted(chosen):
