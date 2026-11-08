@@ -53,9 +53,6 @@ export default function Overview({ data, onSelect }: Props) {
               <span className={ui.cardTitle}>{category.title}</span>
               <StatusBadge variant="accent">{countItems(category)} 项</StatusBadge>
             </div>
-            {category.sourceTitle && (
-              <div className={ui.cardSource}>原目录：{category.sourceTitle}</div>
-            )}
             {category.description && <p className={ui.cardDesc}>{category.description}</p>}
             <div className={ui.cardFoot}>{category.children.length} 个一级条目 → 点击查看</div>
           </button>

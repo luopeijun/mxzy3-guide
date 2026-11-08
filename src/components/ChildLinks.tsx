@@ -23,7 +23,6 @@ export default function ChildLinks({ nodes, onSelect, title = '下级条目' }: 
               <span className={ui.cardTitle}>{node.title}</span>
               {node.status === 'missing' && <StatusBadge>待补充</StatusBadge>}
             </div>
-            {node.sourceTitle && <div className={ui.cardSource}>原目录：{node.sourceTitle}</div>}
             {node.description && <p className={ui.cardDesc}>{node.description}</p>}
             <div className={ui.cardFoot}>
               {node.status === 'missing'

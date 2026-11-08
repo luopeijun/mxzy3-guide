@@ -20,7 +20,6 @@ export const ui = {
     'rounded-ui-md border border-line bg-surface px-5 py-[18px] text-left shadow-soft transition duration-150 hover:-translate-y-0.5 hover:border-brand-line hover:shadow-card',
   cardHead: 'flex items-center justify-between gap-2',
   cardTitle: 'text-ui-lg font-bold text-brand-strong',
-  cardSource: 'mt-0.5 text-ui-2xs text-ink-faint',
   cardDesc: 'mt-3 text-ui-xs leading-[1.75] text-ink-muted',
   cardFoot: 'mt-[14px] text-ui-2xs text-ink-faint',
 

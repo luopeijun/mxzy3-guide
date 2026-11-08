@@ -21,7 +21,6 @@ export default function ArticleHeader({ node }: Props) {
         )}
       </div>
 
-      {node.sourceTitle && <div className="mt-1.5 text-ui-xs text-ink-faint">原目录：{node.sourceTitle}</div>}
       {node.description && <p className="mt-3 text-ui-md leading-[1.8] text-ink-muted">{node.description}</p>}
 
       <div className="mt-[14px] flex flex-wrap gap-4 text-ui-2xs text-ink-faint">
