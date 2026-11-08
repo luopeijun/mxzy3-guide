@@ -114,6 +114,7 @@ export default function PageRail({ items, onJump }: Props) {
                   <button
                     type="button"
                     onClick={() => onJump(item.id)}
+                    title={item.text}
                     aria-current={isActive ? 'location' : undefined}
                     className={cn(
                       'flex w-full items-start gap-1.5 rounded-ui-xs py-[5px] pr-1.5 text-left text-ui-2xs leading-[1.6] transition-colors duration-150',
@@ -131,7 +132,7 @@ export default function PageRail({ items, onJump }: Props) {
                     >
                       {item.marker}
                     </span>
-                    <span className="line-clamp-2 min-w-0">{item.text}</span>
+                    <span className="line-clamp-3 min-w-0">{item.text}</span>
                   </button>
                 </li>
               );
