@@ -44,6 +44,7 @@ DEFAULT_HOLLYWOOD = SOURCES / "hollywood.txt"
 DEFAULT_WILL = SOURCES / "will.txt"
 DEFAULT_EXPANSION = SOURCES / "expansion.txt"
 DEFAULT_SECRETARY = SOURCES / "secretary.txt"
+DEFAULT_MANYANG = SOURCES / "manyang.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -720,16 +721,17 @@ def _append_event_like(
     if not line:
         return
     tidied = line.lstrip("★☆").strip()
-    if skip_title is not None and tidied == skip_title:
+    if skip_title is not None and tidied.rstrip("：:").strip() == skip_title:
         return  # 页标题，不重复成块
 
     if line.startswith(("★", "☆")):
-        if tidied.startswith(("提示", "注意", "PS", "特别", "如果")):
+        chapter = tidied.rstrip("：:").strip()  # 去掉章节标题尾部的冒号（如「蛮羊事件：」）
+        if chapter.startswith(("提示", "注意", "PS", "特别", "如果")):
             group += 1
-            blocks.append({"kind": "note", "text": tidied, "group": group})
+            blocks.append({"kind": "note", "text": chapter, "group": group})
         else:
             group += 1
-            blocks.append({"kind": "section", "text": tidied, "group": group})
+            blocks.append({"kind": "section", "text": chapter, "group": group})
         state["group"] = group
         state["last_event_group"] = None
         return
@@ -2153,6 +2155,7 @@ def build(
     will_events: Path,
     expansion_events: Path,
     secretary_events: Path,
+    manyang_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -2297,7 +2300,8 @@ def build(
         ),
         make_node(
             "other-events/manyang", "蛮羊事件",
-            blocks=build_blocks(sections.intro("蛮羊事件：")),
+            source_title="蛮羊事件.txt",
+            blocks=build_event_like_blocks(manyang_events, page_title="蛮羊事件"),
         ),
         make_node(
             "other-events/hollywood", "好莱坞相关",
@@ -2419,6 +2423,7 @@ def main() -> None:
     will_events = Path(sys.argv[22]) if len(sys.argv) > 22 else DEFAULT_WILL
     expansion_events = Path(sys.argv[23]) if len(sys.argv) > 23 else DEFAULT_EXPANSION
     secretary_events = Path(sys.argv[24]) if len(sys.argv) > 24 else DEFAULT_SECRETARY
+    manyang_events = Path(sys.argv[25]) if len(sys.argv) > 25 else DEFAULT_MANYANG
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -2467,10 +2472,13 @@ def main() -> None:
         raise SystemExit(f"expansion events txt not found: {expansion_events}")
     if not secretary_events.exists():
         raise SystemExit(f"secretary events txt not found: {secretary_events}")
+    if not manyang_events.exists():
+        raise SystemExit(f"manyang events txt not found: {manyang_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
                  easyshop, notices, notices_intro, sd_events, laoba_events,
-                 hollywood_events, will_events, expansion_events, secretary_events)
+                 hollywood_events, will_events, expansion_events, secretary_events,
+                 manyang_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
