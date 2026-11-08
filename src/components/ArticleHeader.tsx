@@ -12,13 +12,6 @@ export default function ArticleHeader({ node }: Props) {
 
   return (
     <div className="mb-6 border-b border-line pb-5">
-      {node.cover && (
-        <img
-          src={`${import.meta.env.BASE_URL}${node.cover}`}
-          alt={`${node.title} 封面`}
-          className="mb-5 w-full rounded-ui-md border border-line"
-        />
-      )}
       <div className="flex flex-wrap items-center gap-2.5">
         <h1 className="text-ui-2xl font-bold leading-[1.35] tracking-[0.01em] phone:text-ui-xl">{node.title}</h1>
         {node.status === 'missing' ? (

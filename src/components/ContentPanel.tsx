@@ -43,6 +43,13 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
       <div className={cn(ui.article, !wide && 'pr-6 nav:pr-[26px]')}>
         <Breadcrumbs path={path} onSelect={onSelect} />
         <ArticleHeader node={node} />
+        {node.cover && (
+          <img
+            src={`${import.meta.env.BASE_URL}${node.cover}`}
+            alt={`${node.title} 封面`}
+            className="mb-6 w-full rounded-ui-md border border-line"
+          />
+        )}
         {node.requirements && <RequirementsCard requirements={node.requirements} />}
         {!wide && <ArticleOutline items={outline} onJump={jump} />}
         <ContentBlockList
