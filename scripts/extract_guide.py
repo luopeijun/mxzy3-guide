@@ -1034,11 +1034,12 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             if chapter == page_title:
                 continue  # 页标题，不重复成块
             if line.startswith("☆"):
-                # `☆` 显式副标题：渲染为 section 之下的二级标题。
+                # `☆` 显式副标题：渲染为 section 之下的二级标题；缩进 ≥2 空格时
+                # 再降一级（depth 2，如陈奕夫的 小夫告白成功的条件）。
                 state["group"] += 1
                 blocks.append({
                     "kind": "heading", "text": chapter, "group": state["group"],
-                    "depth": 1 if seen_section else 0,
+                    "depth": (1 if indent < 2 else 2) if seen_section else 0,
                 })
                 in_sign_method = False
                 method_step_pending = False
