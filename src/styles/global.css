@@ -31,6 +31,11 @@
   --color-gold-line: #f0dfb4;
   --color-note: #87551f;
   --color-note-soft: #fdf5e9;
+  /* Highlights that sit inside a cream reminder block: the rose tint would fight
+     the note's own background, so the same weight is re-cut in amber. Text keeps
+     5.98:1 on the tint and the tint still reads as a tint on #fdf5e9. */
+  --color-hl-note: #6d4409;
+  --color-hl-note-soft: #f3d68f;
   --color-missing: #6b5860;
   --color-missing-soft: #f4e9ee;
   /* Trigger-type tags (自动 / 场景 / 新闻 / 跟随 / 手动 / 沟通). Six hues spread

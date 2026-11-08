@@ -46,7 +46,7 @@ function EventDetail({ block }: { block: IndexedBlock }) {
   if (block.kind === 'note') {
     return (
       <p className="whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-2.5 py-1.5 text-ui-2xs leading-[1.8] text-note">
-        <HighlightText text={block.text} />
+        <HighlightText text={block.text} tone="note" />
       </p>
     );
   }
@@ -135,7 +135,7 @@ function BlockView({ block }: { block: IndexedBlock }) {
     case 'note':
       return (
         <p className="mb-[5px] whitespace-pre-line rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-3 py-2 text-ui-sm leading-[1.8] text-note">
-          <HighlightText text={block.text} />
+          <HighlightText text={block.text} tone="note" />
         </p>
       );
     case 'qa':

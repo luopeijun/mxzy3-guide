@@ -249,6 +249,13 @@ NOTICE_REQUIREMENTS: dict[str, dict] = {
     },
 }
 
+# Names a page already makes obvious, keyed by chapter title. `落入凡间的天使`
+# is a story about 塔罗小魔女 / 大天使 handing out the quest and a detour to
+# 第三世界 — tinting them on every step points at scenery, not at a decision.
+NOTICE_MUTE: dict[str, tuple[str, ...]] = {
+    "落入凡间的天使": ("塔罗小魔女", "第三世界", "大天使"),
+}
+
 
 def read_paragraphs(docx: Path) -> list[tuple[str, str]]:
     """Return (style, text) for every paragraph, TOC paragraphs included."""
@@ -783,7 +790,9 @@ def _time_is_specific(label: str) -> bool:
     return bool(TIME_DETAIL_RE.search(label))
 
 
-def mark_highlights(text: str, taken: set[str] | None = None, title: str = "") -> str:
+def mark_highlights(
+    text: str, taken: set[str] | None = None, title: str = "", mute: frozenset[str] = frozenset()
+) -> str:
     """Wrap a block's most useful spans in `{kind:…}` markers.
 
     Tinting everything that *could* be highlighted turns a page pink and stops
@@ -822,7 +831,7 @@ def mark_highlights(text: str, taken: set[str] | None = None, title: str = "") -
         if kind != "选项":
             # Compare bare wording: the prop is quoted in the body but plain in the title.
             word = label.strip("“”‘’「」")
-            if word in taken or (title and word in title):
+            if word in mute or word in taken or (title and word in title):
                 continue
         used[kind] += 1
         chosen.append(span)
@@ -852,15 +861,19 @@ def mark_highlights(text: str, taken: set[str] | None = None, title: str = "") -
     return "\n".join(out)
 
 
-def annotate_highlight_blocks(blocks: list[dict], title: str = "") -> None:
+def annotate_highlight_blocks(
+    blocks: list[dict], title: str = "", mute: tuple[str, ...] = ()
+) -> None:
     """Add highlights to prose blocks; headings and sections stay plain.
 
-    One `taken` set per page, so a repeated prop or name is only tinted once.
+    One `taken` set per page, so a repeated prop or name is only tinted once,
+    and one `mute` list for names the page itself makes obvious.
     """
     taken: set[str] = set()
+    muted = frozenset(mute)
     for block in blocks:
         if block["kind"] in {"event", "paragraph", "note", "option"}:
-            block["text"] = mark_highlights(block["text"], taken, title)
+            block["text"] = mark_highlights(block["text"], taken, title, muted)
 
 
 def _split_preamble(line: str) -> tuple[str, str]:
@@ -869,6 +882,17 @@ def _split_preamble(line: str) -> tuple[str, str]:
     if not match:
         return line.strip(), ""
     return match.group("title").strip(), match.group("note").strip()
+
+
+# The txt runs material lists inline (`…神秘礼物。B.天使的羽翼——…`), but each
+# letter is its own entry. Break before a marker that follows a sentence end; a
+# marker already at the start of a line keeps its place.
+NOTE_LETTER_RE = re.compile(r"(?<=[。；）】])(?=[A-Z][．.])")
+
+
+def _split_letter_items(text: str) -> str:
+    """One line per `A.` / `B.` entry inside a note."""
+    return NOTE_LETTER_RE.sub("\n", text)
 
 
 def build_notice_pages(path: Path) -> list[dict]:
@@ -941,7 +965,12 @@ def build_notice_pages(path: Path) -> list[dict]:
         add("paragraph", line)
 
     for page in pages:
-        annotate_highlight_blocks(page["blocks"], page["title"])
+        for block in page["blocks"]:
+            if block["kind"] == "note":
+                block["text"] = _split_letter_items(block["text"])
+        annotate_highlight_blocks(
+            page["blocks"], page["title"], NOTICE_MUTE.get(page["title"], ())
+        )
     return pages
 
 
