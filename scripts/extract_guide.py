@@ -636,7 +636,7 @@ def build(docx: Path, questions: Path, events: Path, stats: Path) -> dict:
         ),
         make_node(
             "game-guide/initial-stats", "所有人物初始属性",
-            description="18 位可签约艺人（含资料片新增）在游戏开始时的属性与成长加成，女、男两组已合并。",
+            description="18 位可签约艺人（含资料片新增）在游戏开始时的属性与成长加成。",
             blocks=stats_blocks,
         ),
         make_node(
