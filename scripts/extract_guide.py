@@ -386,6 +386,19 @@ def _tidy(text: str) -> str:
     return CJK_COMMA_RE.sub("，", DASH_RE.sub("——", text))
 
 
+def _vertical_day_note(text: str) -> str | None:
+    """星探时间表这类 `…--周一：X；周二：Y；…周日：Z。` 的提醒，展开成竖排，
+    周一~周日各占一行，比一行用分号连排更易读、更醒目。不匹配则返回 None。"""
+    m = re.search(r"--((?:[周][一二三四五六日]：[^；]+；?)+)", text)
+    if not m:
+        return None
+    lead = text[: m.start()].rstrip("-—：: ").rstrip()
+    days = re.findall(r"[周][一二三四五六日]：[^；]+", m.group(1))
+    if len(days) < 2:
+        return None
+    return "\n".join([lead, *days])
+
+
 def _parse_question_option(number: str, body: str) -> dict:
     """`１．爱的教育→林芬芬的友好度＋20，获得道具→接问题３` -> option block.
 
@@ -799,7 +812,7 @@ def _append_event_like(
 
     if tidied.startswith(("提醒：", "（提醒", "（提示", "（注意", "（PS", "（特别", "（如果")):
         group += 1
-        blocks.append({"kind": "note", "text": tidied, "group": group})
+        blocks.append({"kind": "note", "text": _vertical_day_note(tidied) or tidied, "group": group})
         state["group"] = group
         return
 
