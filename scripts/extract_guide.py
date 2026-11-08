@@ -734,6 +734,18 @@ def build_sd_blocks(path: Path, *, mark_cg: bool = False) -> list[dict]:
     return blocks
 
 
+def _merge_intro_note(blocks: list[dict], group: int, state: dict, text: str) -> int:
+    """前言区（还没有任何事件 / 章节 / 选项）的注解合并进同一个黄色提示框：
+    若上一条已是 note 则续行，否则新建一条。返回更新后的 group。"""
+    if blocks and blocks[-1]["kind"] == "note":
+        blocks[-1]["text"] = blocks[-1]["text"] + "\n" + text
+    else:
+        group += 1
+        blocks.append({"kind": "note", "text": text, "group": group})
+        state["group"] = group
+    return group
+
+
 def _append_event_like(
     blocks: list[dict],
     state: dict,
@@ -759,6 +771,9 @@ def _append_event_like(
     last_event_group = state["last_event_group"]
     if not line:
         return
+    # 前言区（还没有任何事件 / 章节 / 选项）里的短句其实是路线注解，
+    # 应进黄色提示框，不能被当成大标题或正文段落。
+    has_content = any(b["kind"] in ("event", "section", "heading", "option") for b in blocks)
     tidied = line.lstrip("★☆").strip()
     if skip_title is not None:
         core = tidied.rstrip("：:").strip()
@@ -885,16 +900,23 @@ def _append_event_like(
     if "CG" in line:
         # `…陪伴的CG` 等结局 / CG 说明是陈述句，不是章节标题，避免被 classify 的
         # 短行启发式误判成副标题（在没有任何 section 的平铺页上会被渲染成大标题）。
-        # 但若它出现在正文之前的「前言」区（还没有任何事件 / 章节 / 选项），
-        # 它其实是该路线拿不到 / 别处取得的 CG 注解，应当进黄色提示框。
-        group += 1
-        has_content = any(b["kind"] in ("event", "section", "heading", "option") for b in blocks)
-        blocks.append({"kind": "note" if not has_content else "paragraph", "text": tidied, "group": group})
-        state["group"] = group
+        # 若它出现在正文之前的「前言」区，它是该路线拿不到 / 别处取得的 CG 注解，
+        # 并入前言那一个黄色提示框（与同区其它注解合成同一段），不单独成框；
+        # 正文开始后的 CG 说明仍按普通段落处理。
+        if not has_content:
+            group = _merge_intro_note(blocks, group, state, tidied)
+        else:
+            group += 1
+            blocks.append({"kind": "paragraph", "text": tidied, "group": group})
+            state["group"] = group
         return
 
     cls = classify(line)
     if cls["kind"] == "heading":
+        if not has_content:
+            # 前言区的标题型短句其实是路线注解，并入那一个黄色提示框，不当大标题。
+            group = _merge_intro_note(blocks, group, state, tidied)
+            return
         # 裸标题：下一行紧跟编号事件 → 大标题章节；下一行是 情况/条件 列表 → 副标题。
         follows_event = bool(next_line) and bool(
             EVENT_LINE_RE.match(next_line) or EVENT_PLAIN_RE.match(next_line)
