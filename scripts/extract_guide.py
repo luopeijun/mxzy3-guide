@@ -47,6 +47,11 @@ DEFAULT_SECRETARY = SOURCES / "secretary.txt"
 DEFAULT_MANYANG = SOURCES / "manyang.txt"
 DEFAULT_BEAUTY_STAR = SOURCES / "beauty-star.txt"
 DEFAULT_PRESIDENT_HE = SOURCES / "president-he.txt"
+DEFAULT_LUOUSANG_SANGHEBEI = SOURCES / "luousang-only-sanghebei.txt"
+DEFAULT_LUOUSANG_OUYIQING = SOURCES / "luousang-only-ouyiqing.txt"
+DEFAULT_LUOUSANG_LUFENG = SOURCES / "luousang-only-lufeng.txt"
+DEFAULT_LUOUSANG_LUFENG_SANGHEBEI = SOURCES / "luousang-lufeng-sanghebei.txt"
+DEFAULT_LUOUSANG_LUFENG_OUYIQING = SOURCES / "luousang-lufeng-ouyiqing.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -745,8 +750,21 @@ def _append_event_like(
     if not line:
         return
     tidied = line.lstrip("★☆").strip()
-    if skip_title is not None and tidied.rstrip("：:").strip() == skip_title:
-        return  # 页标题，不重复成块
+    if skip_title is not None:
+        core = tidied.rstrip("：:").strip()
+        if core == skip_title:
+            return  # 页标题，不重复成块
+        # ★ 行以页标题开头、后面带补充说明（如「只有桑禾蓓在旗下 不会出现路欧恋」），
+        # 去掉标题前缀，把剩下的补充说明作为提示框保留，避免与页面 H1 重复成章。
+        prefix = skip_title.rstrip("：:").strip()
+        if line.startswith(("★", "☆")) and core.startswith(prefix):
+            remainder = tidied[len(prefix):].strip(" ：:　")
+            if remainder:
+                group += 1
+                blocks.append({"kind": "note", "text": remainder, "group": group})
+                state["group"] = group
+                return
+            return
 
     # 提醒框的续行（如「第一年：…；第二年：…」年份条件）并入上一个提醒，
     # 让它留在黄底提示框内，且每年条件各占一行。
@@ -2198,6 +2216,11 @@ def build(
     manyang_events: Path,
     beauty_star_events: Path,
     president_he_events: Path,
+    luousang_sanghebei_events: Path,
+    luousang_ouyiqing_events: Path,
+    luousang_lufeng_events: Path,
+    luousang_lufeng_sanghebei_events: Path,
+    luousang_lufeng_ouyiqing_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -2386,7 +2409,33 @@ def build(
         ),
         make_node(
             "other-events/luousang", "路欧桑剧情整理",
-            status="missing",
+            children=[
+                make_node(
+                    "other-events/luousang/only-sanghebei", "只有桑禾蓓在旗下",
+                    source_title="只有桑禾蓓在旗下.txt",
+                    blocks=build_event_like_blocks(luousang_sanghebei_events, page_title="只有桑禾蓓在旗下"),
+                ),
+                make_node(
+                    "other-events/luousang/only-ouyiqing", "只有欧怡青在旗下",
+                    source_title="只有欧怡青在旗下.txt",
+                    blocks=build_event_like_blocks(luousang_ouyiqing_events, page_title="只有欧怡青在旗下"),
+                ),
+                make_node(
+                    "other-events/luousang/only-lufeng", "只有路风在旗下",
+                    source_title="只有路风在旗下.txt",
+                    blocks=build_event_like_blocks(luousang_lufeng_events, page_title="只有路风在旗下"),
+                ),
+                make_node(
+                    "other-events/luousang/lufeng-sanghebei", "路风和桑禾蓓都在旗下",
+                    source_title="路风和桑禾蓓都在旗下.txt",
+                    blocks=build_event_like_blocks(luousang_lufeng_sanghebei_events, page_title="路风和桑禾蓓都在旗下"),
+                ),
+                make_node(
+                    "other-events/luousang/lufeng-ouyiqing", "路风和欧怡青都在旗下",
+                    source_title="路风和欧怡青都在旗下.txt",
+                    blocks=build_event_like_blocks(luousang_lufeng_ouyiqing_events, page_title="路风和欧怡青都在旗下"),
+                ),
+            ],
         ),
     ]
 
@@ -2468,6 +2517,11 @@ def main() -> None:
     manyang_events = Path(sys.argv[25]) if len(sys.argv) > 25 else DEFAULT_MANYANG
     beauty_star_events = Path(sys.argv[26]) if len(sys.argv) > 26 else DEFAULT_BEAUTY_STAR
     president_he_events = Path(sys.argv[27]) if len(sys.argv) > 27 else DEFAULT_PRESIDENT_HE
+    luousang_sanghebei_events = Path(sys.argv[28]) if len(sys.argv) > 28 else DEFAULT_LUOUSANG_SANGHEBEI
+    luousang_ouyiqing_events = Path(sys.argv[29]) if len(sys.argv) > 29 else DEFAULT_LUOUSANG_OUYIQING
+    luousang_lufeng_events = Path(sys.argv[30]) if len(sys.argv) > 30 else DEFAULT_LUOUSANG_LUFENG
+    luousang_lufeng_sanghebei_events = Path(sys.argv[31]) if len(sys.argv) > 31 else DEFAULT_LUOUSANG_LUFENG_SANGHEBEI
+    luousang_lufeng_ouyiqing_events = Path(sys.argv[32]) if len(sys.argv) > 32 else DEFAULT_LUOUSANG_LUFENG_OUYIQING
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -2522,11 +2576,24 @@ def main() -> None:
         raise SystemExit(f"beauty-star events txt not found: {beauty_star_events}")
     if not president_he_events.exists():
         raise SystemExit(f"president-he events txt not found: {president_he_events}")
+    if not luousang_sanghebei_events.exists():
+        raise SystemExit(f"luousang sanghebei-alone txt not found: {luousang_sanghebei_events}")
+    if not luousang_ouyiqing_events.exists():
+        raise SystemExit(f"luousang ouyiqing-alone txt not found: {luousang_ouyiqing_events}")
+    if not luousang_lufeng_events.exists():
+        raise SystemExit(f"luousang lufeng-alone txt not found: {luousang_lufeng_events}")
+    if not luousang_lufeng_sanghebei_events.exists():
+        raise SystemExit(f"luousang lufeng-sanghebei txt not found: {luousang_lufeng_sanghebei_events}")
+    if not luousang_lufeng_ouyiqing_events.exists():
+        raise SystemExit(f"luousang lufeng-ouyiqing txt not found: {luousang_lufeng_ouyiqing_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
                  easyshop, notices, notices_intro, sd_events, father_events,
                  hollywood_events, will_events, expansion_events, secretary_events,
-                 manyang_events, beauty_star_events, president_he_events)
+                 manyang_events, beauty_star_events, president_he_events,
+                 luousang_sanghebei_events, luousang_ouyiqing_events,
+                 luousang_lufeng_events, luousang_lufeng_sanghebei_events,
+                 luousang_lufeng_ouyiqing_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
