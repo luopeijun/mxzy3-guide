@@ -22713,15 +22713,16 @@
               "group": 23
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "与杨安妤的感情",
-              "group": 24
+              "group": 24,
+              "depth": 1
             },
             {
               "kind": "heading",
               "text": "初识",
               "group": 25,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -22887,7 +22888,7 @@
               "kind": "heading",
               "text": "舞会",
               "group": 46,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -23021,7 +23022,7 @@
               "kind": "heading",
               "text": "感情结果",
               "group": 63,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -23185,7 +23186,7 @@
               "kind": "heading",
               "text": "决斗",
               "group": 84,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -23252,28 +23253,28 @@
               "cg": true
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "情况一：（克烈斯动感、体能均大于650，克烈斯获胜。通过此方式获胜，才能在结局看到克烈斯为杨安妤戴皇冠的CG）",
               "group": 93,
-              "depth": 2
+              "bullet": true
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "情况二：纪翔获胜，克烈斯和杨安妤已达成结局（即看到了事件38中的CG），纪翔主动回去。",
               "group": 94,
-              "depth": 2
+              "bullet": true
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "情况三：纪翔获胜，克烈斯和杨安妤的感情仍在发展（即触发了克烈斯杨安妤的所有事件，唯独事件38没有去商店街看CG），杨安妤来找克烈斯，两人一起回去。",
               "group": 95,
-              "depth": 2
+              "bullet": true
             },
             {
-              "kind": "heading",
+              "kind": "paragraph",
               "text": "情况四：纪翔获胜，克烈斯和杨安妤没有发展感情（比如安妤失踪后没有去找她），克烈斯自己回去。",
               "group": 96,
-              "depth": 2
+              "bullet": true
             },
             {
               "kind": "event",
