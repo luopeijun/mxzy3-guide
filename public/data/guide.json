@@ -20520,15 +20520,16 @@
               "cg": true
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "星光圆舞曲限定事件（只运行星光圆舞曲时出现；简体版无法遇到）",
-              "group": 113
+              "group": 113,
+              "depth": 1
             },
             {
               "kind": "heading",
               "text": "初识",
               "group": 114,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -20646,7 +20647,7 @@
               "kind": "heading",
               "text": "探病",
               "group": 129,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -20700,7 +20701,7 @@
               "kind": "heading",
               "text": "考大学",
               "group": 136,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
