@@ -40,7 +40,7 @@ export default function OptionLine({ text, className }: Props) {
     >
       <span
         aria-hidden="true"
-        className="mt-[1px] flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[4px] bg-surface text-ui-2xs font-bold text-choice shadow-[inset_0_0_0_1px_var(--color-choice-line)]"
+        className="mt-[4px] flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[4px] bg-surface text-ui-2xs font-bold text-choice shadow-[inset_0_0_0_1px_var(--color-choice-line)]"
       >
         {match[1].toUpperCase()}
       </span>
