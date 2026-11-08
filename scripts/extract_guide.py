@@ -116,9 +116,7 @@ SIX_NOTICES = [
     ("笑傲天际", "proud-of-the-world"),
 ]
 
-CHILD_SLUGS = {
-    "演艺圈前辈事件": ["gu-qianjing", "fang-ruoqi", "ma-zhiwen"],
-}
+CHILD_SLUGS = {}
 
 # Hand-written summary shown as a card above each notice page: the artist the
 # notice asks for plus every prop it consumes and how to get it. Keyed by the
@@ -2167,7 +2165,7 @@ def build(
     required = [
         "角色攻略", "初始问题选项",
         "接手第一周细节", "小秘书相关事件（不涉艺人）",
-        "蛮羊事件：", "美丽之星事件", "演艺圈前辈事件",
+        "蛮羊事件：", "美丽之星事件",
         "六大传说级通告（99%获奖）",
     ]
     missing = [title for title in required if title not in sections.index]
@@ -2334,11 +2332,6 @@ def build(
                     build_expansion_pages(expansion_events),
                 )
             ],
-        ),
-        make_node(
-            "other-events/seniors", "演艺圈前辈事件",
-            blocks=build_blocks(sections.intro("演艺圈前辈事件")),
-            children=sections.sub_nodes("演艺圈前辈事件", "other-events/seniors"),
         ),
         make_node(
             "other-events/beauty-star", "美丽之星事件",
