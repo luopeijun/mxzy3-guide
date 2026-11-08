@@ -5,9 +5,9 @@
     "generatedBy": "scripts/extract_guide.py",
     "stats": {
       "categories": 4,
-      "items": 51,
-      "blocks": 3356,
-      "readyItems": 46,
+      "items": 52,
+      "blocks": 3370,
+      "readyItems": 47,
       "missingItems": 2,
       "sourceParagraphs": 3706
     }
@@ -20171,9 +20171,109 @@
       "title": "其他事件",
       "status": "ready",
       "sourceTitle": "其他事件相关攻略",
-      "description": "金父、威尔、SD、小秘书等支线事件整理。",
+      "description": "Easyshop、金父、威尔、SD、小秘书等支线事件整理。",
       "blocks": [],
       "children": [
+        {
+          "id": "other-events/easyshop",
+          "title": "Easyshop事件",
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "note",
+              "text": "繁体版独有",
+              "group": 1
+            },
+            {
+              "kind": "event",
+              "text": "每年5月30日，新闻“ES寻找校园代言人”。",
+              "label": "1",
+              "tag": "新闻",
+              "group": 2
+            },
+            {
+              "kind": "event",
+              "text": "事件1后，6月20日前，ES可以买到报名表，同时店主会提示入选条件",
+              "label": "2",
+              "tag": "场景",
+              "group": 3
+            },
+            {
+              "kind": "event",
+              "text": "6月最后一个周日前，将报名表交给女艺人",
+              "label": "3",
+              "tag": "手动",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "旗下有艺人参选，6、7月的最后一个星期日前往创意广告。",
+              "label": "4",
+              "tag": "场景",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "每年7月，公布初选名单，入选要求摄影训练，美姿美仪高级以上。（即使是比赛当周升级都可以）",
+              "label": "5",
+              "tag": "新闻",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "上个事件后旗下艺人入选，ES寄来决选报名表，要及时交给参选艺人。",
+              "label": "6",
+              "tag": "自动",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "每年8月1日，公布决选名单，入选要求摄影训练，美姿美仪专业。",
+              "label": "7",
+              "tag": "新闻",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "8月20日，公布代言人名单，仪态、体能、自信大于300，属性最高者当选。",
+              "label": "8",
+              "tag": "新闻",
+              "group": 9
+            },
+            {
+              "kind": "event",
+              "text": "旗下艺人当选，当周，主角收到奖金，陈查理来邀约校园宣传活动。",
+              "label": "9",
+              "tag": "自动",
+              "group": 10
+            },
+            {
+              "kind": "option",
+              "text": "A 当然没问题——事件10",
+              "group": 10
+            },
+            {
+              "kind": "option",
+              "text": "B 没办法配合——事件11",
+              "group": 10
+            },
+            {
+              "kind": "event",
+              "text": "事件9选A，开始校园宣传后，“最称职的代言人”。",
+              "label": "10",
+              "tag": "新闻",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "事件9选B，“最差劲的经纪公司”。",
+              "label": "11",
+              "tag": "新闻",
+              "group": 12
+            }
+          ],
+          "children": []
+        },
         {
           "id": "other-events/golden-father",
           "title": "金父相关事件",

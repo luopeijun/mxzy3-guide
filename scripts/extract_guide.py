@@ -35,6 +35,7 @@ DEFAULT_MONOPOLY = SOURCES / "monopoly.txt"
 DEFAULT_ENDINGS = SOURCES / "endings.txt"
 DEFAULT_ITEMS = SOURCES / "items.txt"
 DEFAULT_FAVORITES = SOURCES / "favorites.txt"
+DEFAULT_EASYSHOP = SOURCES / "easyshop.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -383,6 +384,49 @@ def build_event_blocks(path: Path) -> list[dict]:
             group += 1
             blocks.append({"kind": "heading", "text": _tidy(line), "depth": 1, "group": group})
             continue
+        blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+
+    return blocks
+
+
+def build_easyshop_blocks(path: Path) -> list[dict]:
+    """Turn the Easyshop（ES 校园代言人）txt into blocks.
+
+    The leading `★繁体版独有` line flags the whole chain as exclusive to the
+    traditional version, so it becomes the intro note. Numbered lines are
+    `event` blocks whose bracket marker (`新闻`/`场景`/`手动`/`自动`) survives as
+    `tag`; the indented `A …--事件10` alternatives under event 9 stay options of
+    that event, and `--` reads as an arrow once tidied.
+    """
+    blocks: list[dict] = []
+    group = 0
+    for raw in [line.rstrip("\r") for line in _read_text(path).split("\n")]:
+        # `事丵件` is a broken glyph in the source; it stands for `事件`.
+        line = raw.replace("丵", "").strip()
+        if not line:
+            continue
+        if line.startswith(("★", "☆")):
+            group += 1
+            blocks.append({
+                "kind": "note", "text": _tidy(line.lstrip("★☆").strip()), "group": group,
+            })
+            continue
+        event = EVENT_LINE_RE.match(line)
+        if event:
+            group += 1
+            blocks.append({
+                "kind": "event",
+                "text": _tidy(line[event.end():].strip()),
+                "label": event.group(1),
+                "tag": event.group(2),
+                "group": group,
+            })
+            continue
+        if OPTION_RE.match(line):
+            # Options belong to the event above them, so they share its group.
+            blocks.append({"kind": "option", "text": _tidy(line), "group": group})
+            continue
+        group += 1
         blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
 
     return blocks
@@ -1207,6 +1251,7 @@ def build(
     endings: Path,
     items: Path,
     favorites: Path,
+    easyshop: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -1336,6 +1381,10 @@ def build(
     # ---- 其他事件 ----
     other_items = [
         make_node(
+            "other-events/easyshop", "Easyshop事件",
+            blocks=build_easyshop_blocks(easyshop),
+        ),
+        make_node(
             "other-events/golden-father", "金父相关事件",
             source_title="老爸相关事件",
             blocks=build_blocks(sections.intro("老爸相关事件")),
@@ -1395,7 +1444,7 @@ def build(
         make_node(
             "other-events", "其他事件",
             source_title="其他事件相关攻略",
-            description="金父、威尔、SD、小秘书等支线事件整理。",
+            description="Easyshop、金父、威尔、SD、小秘书等支线事件整理。",
             children=other_items,
         ),
     ]
@@ -1442,6 +1491,7 @@ def main() -> None:
     endings = Path(sys.argv[13]) if len(sys.argv) > 13 else DEFAULT_ENDINGS
     items_src = Path(sys.argv[14]) if len(sys.argv) > 14 else DEFAULT_ITEMS
     favorites = Path(sys.argv[15]) if len(sys.argv) > 15 else DEFAULT_FAVORITES
+    easyshop = Path(sys.argv[16]) if len(sys.argv) > 16 else DEFAULT_EASYSHOP
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1472,8 +1522,11 @@ def main() -> None:
         raise SystemExit(f"items txt not found: {items_src}")
     if not favorites.exists():
         raise SystemExit(f"favorites txt not found: {favorites}")
+    if not easyshop.exists():
+        raise SystemExit(f"easyshop txt not found: {easyshop}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
-                 producers, selfmade, titles, monopoly, endings, items_src, favorites)
+                 producers, selfmade, titles, monopoly, endings, items_src, favorites,
+                 easyshop)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
