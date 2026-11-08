@@ -737,6 +737,10 @@ def build_scenes_blocks(path: Path) -> list[dict]:
     lines become `option` (lettered badge), and `提示：` lines become `note`
     (yellow hint). Everything else is a `paragraph` attached to the current
     project group.
+
+    Every scene is a child of the group above it, so its heading carries
+    `depth=1` and the outline numbers it 1.1, 1.2 … instead of flattening it
+    level with 国内场景 / 国外场景.
     """
     lines = [raw.strip() for raw in _read_text(path).splitlines()]
     lines = [ln for ln in lines if ln]
@@ -762,7 +766,7 @@ def build_scenes_blocks(path: Path) -> list[dict]:
         if "：" in line:
             name, _, cond = line.partition("：")
             group += 1
-            blocks.append({"kind": "heading", "text": _tidy(name.strip()), "group": group})
+            blocks.append({"kind": "heading", "text": _tidy(name.strip()), "depth": 1, "group": group})
             if cond.strip():
                 blocks.append({"kind": "paragraph", "text": _tidy(cond.strip()), "group": group})
             continue
@@ -773,7 +777,7 @@ def build_scenes_blocks(path: Path) -> list[dict]:
         # Overseas project title: 名称（注释） -> heading, opening a new group.
         if "（" in line and "）" in line and len(line) <= 18:
             group += 1
-            blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+            blocks.append({"kind": "heading", "text": _tidy(line), "depth": 1, "group": group})
             continue
         # Otherwise a continuation line of the current project.
         blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
@@ -976,8 +980,9 @@ def build_selfmade_blocks(path: Path) -> list[dict]:
     with a full stop, so it is not a section divider). The two `★歌曲部分…` /
     `★剧本部分…` lines (no full stop) are major sections, each with a hairline
     above it. Under each section a bare character name (`林芬芬`, `其他`) or a
-    name with an annotation (`纪翔（…）`) is a diamond sub-heading, and every
-    song line that carries the `－` separator (`歌名－条件`) is a paragraph.
+    name with an annotation (`纪翔（…）`) is a diamond sub-heading nested under
+    that section (outline reads 1.1, 1.2 …), and every song line carrying the
+    `－` separator (`歌名－条件`) is one bulleted entry of that name.
     """
     lines = [raw.strip() for raw in _read_text(path).splitlines() if raw.strip()]
     blocks: list[dict] = []
@@ -995,10 +1000,12 @@ def build_selfmade_blocks(path: Path) -> list[dict]:
             continue
         if "－" in line or "-" in line:
             group += 1
-            blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+            # One dot per song/script: the entries under a name are a list.
+            blocks.append({"kind": "paragraph", "text": _tidy(line), "bullet": True, "group": group})
             continue
         group += 1
-        blocks.append({"kind": "heading", "text": _tidy(line), "group": group})
+        # A character name nests under the section above it (outline 1.1, 1.2 …).
+        blocks.append({"kind": "heading", "text": _tidy(line), "depth": 1, "group": group})
     return blocks
 
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cn } from '../lib/cn';
-import { numberOutline } from '../lib/guide';
+import { numberOutline, outlineMarkerWidth } from '../lib/guide';
 import type { OutlineItem } from '../lib/guide';
 import { useActiveOutline } from '../hooks/useActiveOutline';
 import { useReaderLayout } from '../hooks/useReaderLayout';
@@ -124,8 +124,8 @@ export default function PageRail({ items, onJump }: Props) {
                   >
                     <span
                       className={cn(
-                        'shrink-0 pl-1.5 tabular-nums',
-                        item.marker.length > 2 ? 'w-[27px]' : 'w-[21px]',
+                        'shrink-0 whitespace-nowrap pl-1.5 tabular-nums',
+                        outlineMarkerWidth(item.marker),
                         isActive ? 'text-brand' : 'text-ink-faint',
                       )}
                     >

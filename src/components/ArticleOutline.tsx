@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { cn } from '../lib/cn';
-import { numberOutline } from '../lib/guide';
+import { numberOutline, outlineMarkerWidth } from '../lib/guide';
 import type { OutlineItem } from '../lib/guide';
 
 interface Props {
@@ -74,8 +74,8 @@ export default function ArticleOutline({ items, onJump }: Props) {
               >
                 <span
                   className={cn(
-                    'shrink-0 tabular-nums text-ui-2xs text-ink-faint',
-                    item.marker.length > 2 ? 'w-[26px]' : 'w-[20px]',
+                    'shrink-0 whitespace-nowrap tabular-nums text-ui-2xs text-ink-faint',
+                    outlineMarkerWidth(item.marker),
                   )}
                 >
                   {item.marker}

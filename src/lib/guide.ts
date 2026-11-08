@@ -189,6 +189,13 @@ export function numberOutline(items: OutlineItem[]): NumberedOutlineItem[] {
   });
 }
 
+/** Fixed marker column so every title starts on the same x; `1.13.` needs more
+ *  room than `1.`, and both outlines render markers at the same 12px size. */
+export function outlineMarkerWidth(marker: string): string {
+  if (marker.length > 3) return 'w-[30px]';
+  return marker.length > 2 ? 'w-[25px]' : 'w-[21px]';
+}
+
 export interface IndexedBlock extends ContentBlock {
   index: number;
 }

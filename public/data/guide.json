@@ -1615,326 +1615,391 @@
             {
               "kind": "heading",
               "text": "林芬芬",
+              "depth": 1,
               "group": 3
             },
             {
               "kind": "paragraph",
               "text": "薰衣草之恋－与关古威组团出唱片",
+              "bullet": true,
               "group": 4
             },
             {
               "kind": "paragraph",
               "text": "莎乐美之吻－与姚子奇分手后且歌艺550、自信550、动感700、体能700（尚待研究）",
+              "bullet": true,
               "group": 5
             },
             {
               "kind": "heading",
               "text": "欧怡青",
+              "depth": 1,
               "group": 6
             },
             {
               "kind": "paragraph",
               "text": "Good Night－日本逛街后，歌艺300、名气200、仪态250、自信250",
+              "bullet": true,
               "group": 7
             },
             {
               "kind": "paragraph",
               "text": "Sleep In My Heart－美国探险后，歌艺400、名气300、仪态360、自信360、才智350",
+              "bullet": true,
               "group": 8
             },
             {
               "kind": "paragraph",
               "text": "Spice Girl－岛屿度假后，歌艺480、名气330、仪态420、自信420、才智450",
+              "bullet": true,
               "group": 9
             },
             {
               "kind": "paragraph",
               "text": "Please Tell Me－塞外观光后，歌艺480、名气330、仪态420、自信420、才智450",
+              "bullet": true,
               "group": 10
             },
             {
               "kind": "paragraph",
               "text": "Summer Of Love－欧洲旅游后，歌艺600、名气450、仪态520、自信520、才智500",
+              "bullet": true,
               "group": 11
             },
             {
               "kind": "paragraph",
               "text": "No More Cry:－古国寻奇后，歌艺600、名气450、仪态520、自信520、才智5000",
+              "bullet": true,
               "group": 12
             },
             {
               "kind": "paragraph",
               "text": "10 Years－歌艺600、名气450、仪态520、自信520、才智500",
+              "bullet": true,
               "group": 13
             },
             {
               "kind": "paragraph",
               "text": "Sweat Season－被路风从欧洲带回再度签约后，歌艺700、名气500、仪态550、自信550、才智650",
+              "bullet": true,
               "group": 14
             },
             {
               "kind": "paragraph",
               "text": "飞行日记（需安装资料片“星光圆舞曲”）－路欧恋情确定，回欧洲两周后，寄至公司",
+              "bullet": true,
               "group": 15
             },
             {
               "kind": "heading",
               "text": "姚子莹",
+              "depth": 1,
               "group": 16
             },
             {
               "kind": "paragraph",
               "text": "新凉时节－与姚子奇同在旗下时",
+              "bullet": true,
               "group": 17
             },
             {
               "kind": "paragraph",
               "text": "在水一方－乐谱事件中受到慕容和希称赞后",
+              "bullet": true,
               "group": 18
             },
             {
               "kind": "paragraph",
               "text": "夏之恋－出席慕容和希的演唱会后，相关报道出现，跟随子莹时，慕容和希会赠送",
+              "bullet": true,
               "group": 19
             },
             {
               "kind": "paragraph",
               "text": "沙漏－子莹收到慕容和希的赠曲后，次周由子奇赠送",
+              "bullet": true,
               "group": 20
             },
             {
               "kind": "heading",
               "text": "聆香",
+              "depth": 1,
               "group": 21
             },
             {
               "kind": "paragraph",
               "text": "晚安明天见－获得金曲奖任一奖项后",
+              "bullet": true,
               "group": 22
             },
             {
               "kind": "paragraph",
               "text": "阿妈的肉棕－表示愿意娶聆香，相亲事件后",
+              "bullet": true,
               "group": 23
             },
             {
               "kind": "heading",
               "text": "新名纱雪",
+              "depth": 1,
               "group": 24
             },
             {
               "kind": "paragraph",
               "text": "下弦月－推出专辑后且友好度大于200",
+              "bullet": true,
               "group": 25
             },
             {
               "kind": "paragraph",
               "text": "星光圆舞曲－推出国际专辑且未承认弟弟",
+              "bullet": true,
               "group": 26
             },
             {
               "kind": "heading",
               "text": "陈奕夫",
+              "depth": 1,
               "group": 27
             },
             {
               "kind": "paragraph",
               "text": "Game Over－歌艺450、自信300、动感500、体能450、才智450",
+              "bullet": true,
               "group": 28
             },
             {
               "kind": "paragraph",
               "text": "Don't Speak－当球季特派记者回来后，触发欢迎回国的对话",
+              "bullet": true,
               "group": 29
             },
             {
               "kind": "heading",
               "text": "姚子奇",
+              "depth": 1,
               "group": 30
             },
             {
               "kind": "paragraph",
               "text": "爱、却步－加入公司一个月后",
+              "bullet": true,
               "group": 31
             },
             {
               "kind": "paragraph",
               "text": "流浪猫－加入公司三个月后",
+              "bullet": true,
               "group": 32
             },
             {
               "kind": "paragraph",
               "text": "唐朝栗子－加入公司六个月后，歌艺480、名气330、动感420、体能420",
+              "bullet": true,
               "group": 33
             },
             {
               "kind": "paragraph",
               "text": "寓言柚子－歌艺480、名气330、动感420、体能420",
+              "bullet": true,
               "group": 34
             },
             {
               "kind": "paragraph",
               "text": "毕业之歌－第二年9月从学校毕业后",
+              "bullet": true,
               "group": 35
             },
             {
               "kind": "paragraph",
               "text": "恋爱最终章－母亲再婚后",
+              "bullet": true,
               "group": 36
             },
             {
               "kind": "paragraph",
               "text": "红色情热蓝色忧伤－与林芬芬分手后，触发主角去喝酒的事件",
+              "bullet": true,
               "group": 37
             },
             {
               "kind": "paragraph",
               "text": "记得忘记－歌艺700、名气500、动感550、体能550",
+              "bullet": true,
               "group": 38
             },
             {
               "kind": "paragraph",
               "text": "侠客行－触发认识金勇的事件，看到两人聊天数次后获得",
+              "bullet": true,
               "group": 39
             },
             {
               "kind": "paragraph",
               "text": "夏之夜不可思议（需安装资料片“星光圆舞曲”）－姚子莹在旗下，未解决附身事件，第二年7月警戒主角时赠送",
+              "bullet": true,
               "group": 40
             },
             {
               "kind": "heading",
               "text": "纪翔（简体的原版需打过1.03补丁后才可全部取得）",
+              "depth": 1,
               "group": 41
             },
             {
               "kind": "paragraph",
               "text": "心扉的信－跟随大于30天、友好度大于100",
+              "bullet": true,
               "group": 42
             },
             {
               "kind": "paragraph",
               "text": "恋人再见－得到上一首后继续跟随大于30天、友好度大于150",
+              "bullet": true,
               "group": 43
             },
             {
               "kind": "paragraph",
               "text": "爱在星期天－得到上一首后继续跟随大于30天、友好度大于200",
+              "bullet": true,
               "group": 44
             },
             {
               "kind": "paragraph",
               "text": "你就是你－得到上一首后继续跟随大于30天，友好度大于250",
+              "bullet": true,
               "group": 45
             },
             {
               "kind": "paragraph",
               "text": "模糊的轮廓－参与同志电影，杀青后",
+              "bullet": true,
               "group": 46
             },
             {
               "kind": "paragraph",
               "text": "那一年夏天－一起看过烟火后",
+              "bullet": true,
               "group": 47
             },
             {
               "kind": "heading",
               "text": "天晴",
+              "depth": 1,
               "group": 48
             },
             {
               "kind": "paragraph",
               "text": "恋爱三部曲－劝天晴不要放弃和凌玮翎的感情，两人分手新闻出现后（尚待研究）",
+              "bullet": true,
               "group": 49
             },
             {
               "kind": "paragraph",
               "text": "雨天浪漫梦－路敏借伞后",
+              "bullet": true,
               "group": 50
             },
             {
               "kind": "paragraph",
               "text": "午夜迷香－称赞路敏歌声后（不需自由活动）",
+              "bullet": true,
               "group": 51
             },
             {
               "kind": "paragraph",
               "text": "感谢之歌－跟随120天后",
+              "bullet": true,
               "group": 52
             },
             {
               "kind": "paragraph",
               "text": "蓝色信笺的单恋－歌艺600、名气450、仪态520、才智350",
+              "bullet": true,
               "group": 53
             },
             {
               "kind": "paragraph",
               "text": "珍珠耳环的少女－歌艺700、名气500、仪态550、才智450",
+              "bullet": true,
               "group": 54
             },
             {
               "kind": "paragraph",
               "text": "有朋自远方来－游戏一开始在公园见到天晴，之后在19号酒馆看到他打工，两周后再去找他，会赠送",
+              "bullet": true,
               "group": 55
             },
             {
               "kind": "heading",
               "text": "关古威",
+              "depth": 1,
               "group": 56
             },
             {
               "kind": "paragraph",
               "text": "直到爱上那天－与方若绮合作后",
+              "bullet": true,
               "group": 57
             },
             {
               "kind": "paragraph",
               "text": "在你醒来之前－歌艺700、名气500、仪态700、自信550、才智650",
+              "bullet": true,
               "group": 58
             },
             {
               "kind": "heading",
               "text": "克烈斯",
+              "depth": 1,
               "group": 59
             },
             {
               "kind": "paragraph",
               "text": "白色蔷薇－为史蒂芬选打歌服后，跟随克烈斯，下一次见到史蒂芬时，他会送克烈斯歌曲，周日与克烈斯沟通获得",
+              "bullet": true,
               "group": 60
             },
             {
               "kind": "heading",
               "text": "卫亚",
+              "depth": 1,
               "group": 61
             },
             {
               "kind": "paragraph",
               "text": "梦的十四行诗－卖艺第四周，到商店街，看见子奇、慕容和希比赛音乐的CG图后",
+              "bullet": true,
               "group": 62
             },
             {
               "kind": "heading",
               "text": "原少纬",
+              "depth": 1,
               "group": 63
             },
             {
               "kind": "paragraph",
               "text": "倾城之恋-推出首张专辑后",
+              "bullet": true,
               "group": 64
             },
             {
               "kind": "paragraph",
               "text": "我的空气－耿言颢过世后",
+              "bullet": true,
               "group": 65
             },
             {
               "kind": "heading",
               "text": "其他",
+              "depth": 1,
               "group": 66
             },
             {
               "kind": "paragraph",
               "text": "爱·隐－把NP鸡还给方若绮后会赠送",
+              "bullet": true,
               "group": 67
             },
             {
@@ -1946,161 +2011,193 @@
             {
               "kind": "heading",
               "text": "萧依莉",
+              "depth": 1,
               "group": 69
             },
             {
               "kind": "paragraph",
               "text": "无价的相遇－第一轮萧依莉去世后选择公开笔记本，甄红会赠送",
+              "bullet": true,
               "group": 70
             },
             {
               "kind": "paragraph",
               "text": "一夜绯闻－从第二轮开始且友好度大于100",
+              "bullet": true,
               "group": 71
             },
             {
               "kind": "paragraph",
               "text": "二见钟情－从第二轮开始且友好度大于180",
+              "bullet": true,
               "group": 72
             },
             {
               "kind": "paragraph",
               "text": "三世情缘－从第二轮开始且友好度大于250",
+              "bullet": true,
               "group": 73
             },
             {
               "kind": "heading",
               "text": "苏嫚君",
+              "depth": 1,
               "group": 74
             },
             {
               "kind": "paragraph",
               "text": "佳偶天成－赠送喜欢的物品大于5件",
+              "bullet": true,
               "group": 75
             },
             {
               "kind": "paragraph",
               "text": "长夜未央－赠送喜欢的物品大于10件",
+              "bullet": true,
               "group": 76
             },
             {
               "kind": "paragraph",
               "text": "陌上云朗－赠送喜欢的物品大于20件，友好度大于160，且演技500、仪态600、才智500、名气500、自信500",
+              "bullet": true,
               "group": 77
             },
             {
               "kind": "heading",
               "text": "聆香",
+              "depth": 1,
               "group": 78
             },
             {
               "kind": "paragraph",
               "text": "朱槿花开－友好度大于100时",
+              "bullet": true,
               "group": 79
             },
             {
               "kind": "paragraph",
               "text": "商场风云－引发裸照事件，且看到CG后",
+              "bullet": true,
               "group": 80
             },
             {
               "kind": "heading",
               "text": "新名纱雪",
+              "depth": 1,
               "group": 81
             },
             {
               "kind": "paragraph",
               "text": "樱似雪－父亲再婚事件后",
+              "bullet": true,
               "group": 82
             },
             {
               "kind": "paragraph",
               "text": "琉璃色少年－承认弟弟后且友好度大于200",
+              "bullet": true,
               "group": 83
             },
             {
               "kind": "heading",
               "text": "路风",
+              "depth": 1,
               "group": 84
             },
             {
               "kind": "paragraph",
               "text": "相亲不相爱－与桑禾蓓或欧怡青同在旗下且发展感情后",
+              "bullet": true,
               "group": 85
             },
             {
               "kind": "heading",
               "text": "姚子奇",
+              "depth": 1,
               "group": 86
             },
             {
               "kind": "paragraph",
               "text": "幽灵新娘－触发替女鬼完成心愿事件，三个月后（需要10天左右的自由活动）",
+              "bullet": true,
               "group": 87
             },
             {
               "kind": "heading",
               "text": "克烈斯",
+              "depth": 1,
               "group": 88
             },
             {
               "kind": "paragraph",
               "text": "真假太子－纪翔为私生子的新闻出现后",
+              "bullet": true,
               "group": 89
             },
             {
               "kind": "paragraph",
               "text": "公主盟约－出现和杨安妤的绯闻，安妤要求不再见面后",
+              "bullet": true,
               "group": 90
             },
             {
               "kind": "paragraph",
               "text": "昨日约定－友好度大于100后",
+              "bullet": true,
               "group": 91
             },
             {
               "kind": "paragraph",
               "text": "向日葵的夏天－友好度大于200后",
+              "bullet": true,
               "group": 92
             },
             {
               "kind": "paragraph",
               "text": "维纳斯之恋－决斗失败回国，将克烈斯留下的信交给杨安妤后会赠送",
+              "bullet": true,
               "group": 93
             },
             {
               "kind": "heading",
               "text": "卫亚",
+              "depth": 1,
               "group": 94
             },
             {
               "kind": "paragraph",
               "text": "捉迷藏－与原少纬吃过饭后，友好度大于100",
+              "bullet": true,
               "group": 95
             },
             {
               "kind": "paragraph",
               "text": "明天的我们－新名纱雪在旗下时，送给纱雪的生日礼物",
+              "bullet": true,
               "group": 96
             },
             {
               "kind": "paragraph",
               "text": "也许、未来－获得任一戏剧类奖项",
+              "bullet": true,
               "group": 97
             },
             {
               "kind": "paragraph",
               "text": "恋爱的十字街－跟随大于六个月，友好度大于200",
+              "bullet": true,
               "group": 98
             },
             {
               "kind": "heading",
               "text": "其他",
+              "depth": 1,
               "group": 99
             },
             {
               "kind": "paragraph",
               "text": "握斧长龙－参加笑傲天际电影宣传会后金父会给",
+              "bullet": true,
               "group": 100
             }
           ],
@@ -2638,6 +2735,7 @@
             {
               "kind": "heading",
               "text": "机场",
+              "depth": 1,
               "group": 2
             },
             {
@@ -2648,6 +2746,7 @@
             {
               "kind": "heading",
               "text": "育幼院",
+              "depth": 1,
               "group": 3
             },
             {
@@ -2658,6 +2757,7 @@
             {
               "kind": "heading",
               "text": "市民音乐厅",
+              "depth": 1,
               "group": 4
             },
             {
@@ -2668,6 +2768,7 @@
             {
               "kind": "heading",
               "text": "钜子娱乐",
+              "depth": 1,
               "group": 5
             },
             {
@@ -2678,6 +2779,7 @@
             {
               "kind": "heading",
               "text": "商店街",
+              "depth": 1,
               "group": 6
             },
             {
@@ -2688,6 +2790,7 @@
             {
               "kind": "heading",
               "text": "其余",
+              "depth": 1,
               "group": 7
             },
             {
@@ -2704,6 +2807,7 @@
             {
               "kind": "heading",
               "text": "长城（塞外观光）",
+              "depth": 1,
               "group": 9
             },
             {
@@ -2714,6 +2818,7 @@
             {
               "kind": "heading",
               "text": "开罗（古城寻奇）",
+              "depth": 1,
               "group": 10
             },
             {
@@ -2739,6 +2844,7 @@
             {
               "kind": "heading",
               "text": "巴黎（欧洲旅游）",
+              "depth": 1,
               "group": 11
             },
             {
@@ -2764,6 +2870,7 @@
             {
               "kind": "heading",
               "text": "维也纳（欧洲旅游）",
+              "depth": 1,
               "group": 12
             },
             {
@@ -2779,6 +2886,7 @@
             {
               "kind": "heading",
               "text": "纽约（美国探险）",
+              "depth": 1,
               "group": 13
             },
             {
@@ -2794,6 +2902,7 @@
             {
               "kind": "heading",
               "text": "夏威夷（岛屿度假）",
+              "depth": 1,
               "group": 14
             },
             {
@@ -2814,6 +2923,7 @@
             {
               "kind": "heading",
               "text": "好莱坞（美国探险）",
+              "depth": 1,
               "group": 15
             },
             {
@@ -2829,6 +2939,7 @@
             {
               "kind": "heading",
               "text": "东京（日本逛街）",
+              "depth": 1,
               "group": 16
             },
             {
