@@ -33,6 +33,8 @@ DEFAULT_SELFMADE = SOURCES / "self-made.txt"
 DEFAULT_TITLES = SOURCES / "titles.txt"
 DEFAULT_MONOPOLY = SOURCES / "monopoly.txt"
 DEFAULT_ENDINGS = SOURCES / "endings.txt"
+DEFAULT_ITEMS = SOURCES / "items.txt"
+DEFAULT_FAVORITES = SOURCES / "favorites.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -948,6 +950,147 @@ def build_endings_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+ITEM_SECTION_RE = re.compile(r"^[^：:\s]{2,20}篇$")
+ITEM_FIELD_RE = re.compile(r"^(简介|功用|共用|入手地点|入手方式|售价)\s*[：:]\s*(.*)$")
+ITEM_NOTE_RE = re.compile(r"^[＊*]\s*")
+
+
+def build_items_blocks(path: Path) -> list[dict]:
+    """Turn the 物品总览 txt into a catalogue of item cards.
+
+    Every `xx篇` line (特殊道具篇 / 日常道具－薇薇安篇 / 生日礼物篇 …) opens a
+    section. Inside a section a bare short line is an item name, and the
+    `简介：` / `功用：` / `入手地点：` lines under it become its labelled rows;
+    a `＊…` line is a note attached to that item. The source's `共用：` typo is
+    folded into `功用`.
+    """
+    lines = [_tidy(raw.strip()) for raw in _read_text(path).splitlines() if raw.strip()]
+    blocks: list[dict] = []
+    group = 0
+    item: dict | None = None
+
+    def flush() -> None:
+        nonlocal item
+        if item is None:
+            return
+        if not item["notes"]:
+            del item["notes"]
+        blocks.append(item)
+        item = None
+
+    for line in lines:
+        if ITEM_SECTION_RE.match(line):
+            flush()
+            group += 1
+            blocks.append({"kind": "section", "text": line, "depth": 0, "group": group})
+            continue
+        field = ITEM_FIELD_RE.match(line)
+        if field:
+            if item is not None:
+                value = field.group(2).strip()
+                if value:
+                    label = "功用" if field.group(1) == "共用" else field.group(1)
+                    item["rows"].append({"label": label, "value": value})
+            continue
+        note = ITEM_NOTE_RE.match(line)
+        if note:
+            text = line[note.end():].strip()
+            if item is not None and text:
+                item["notes"].append(text)
+            continue
+        flush()
+        group += 1
+        item = {"kind": "item", "text": line, "rows": [], "notes": [], "group": group}
+    flush()
+    return blocks
+
+
+FAVORITE_TIER_RE = re.compile(r"[（(]\s*[＋+]\s*([0-9０-９]+)\s*[）)]")
+GIFT_GAIN_RE = re.compile(r"(?:→|->)?\s*好感度\s*[＋+]\s*([0-9０-９]+)\s*[」』]?\s*$")
+FAVORITE_RULE_RE = re.compile(r"^([0-9０-９]+)\s*[.．、]\s*(.+)$")
+
+
+def _tier_rows(line: str) -> list[dict]:
+    """`A、B（＋4）C（＋3）` -> one row per bonus, holding the items before it."""
+    rows: list[dict] = []
+    last = 0
+    for match in FAVORITE_TIER_RE.finditer(line):
+        chunk = line[last:match.start()].strip("、， ")
+        if chunk:
+            rows.append({"label": f"＋{int(match.group(1))}", "value": chunk})
+        last = match.end()
+    rest = line[last:].strip("、， ")
+    if rest:
+        rows.append({"label": "其他", "value": rest})
+    return rows
+
+
+def build_favorites_blocks(path: Path) -> list[dict]:
+    """Turn the 艺人喜爱物品一览 txt into per-artist cards.
+
+    Part one lists each artist's favourite gifts, where the `（＋4）` / `（＋3）`
+    markers group the items in front of them into one row per bonus.
+    `送礼后好感度对比` repeats that per artist as one row per quote
+    (`「…」→ 好感度＋5`), and the closing `其他--` block holds the general
+    gifting mechanics, kept as numbered paragraphs.
+    """
+    lines = [_tidy(raw.strip()) for raw in _read_text(path).splitlines() if raw.strip()]
+    blocks: list[dict] = []
+    group = 0
+    mode = "favourites"
+    card: dict | None = None
+
+    def open_card(title: str) -> None:
+        nonlocal group, card
+        group += 1
+        card = {"kind": "item", "text": title, "rows": [], "group": group}
+        blocks.append(card)
+
+    def open_section(title: str) -> None:
+        nonlocal group, card
+        group += 1
+        card = None
+        blocks.append({"kind": "section", "text": title, "depth": 0, "group": group})
+
+    open_section("各艺人喜爱物品")
+
+    for line in lines:
+        if line == "艺人喜爱物品一览":
+            continue
+        if line.startswith("送礼后好感度对比"):
+            open_section("送礼后好感度对比")
+            mode = "gift"
+            continue
+        if line.startswith("其他"):
+            open_section("好感度机制补充")
+            mode = "rules"
+            continue
+        if mode == "rules":
+            rule = FAVORITE_RULE_RE.match(line)
+            group += 1
+            text = f"{int(rule.group(1))}. {rule.group(2).strip()}" if rule else line
+            blocks.append({"kind": "paragraph", "text": text, "group": group})
+            continue
+        if mode == "gift":
+            if line.startswith("「"):
+                if card is not None:
+                    gain = GIFT_GAIN_RE.search(line)
+                    card["rows"].append({
+                        "label": f"＋{int(gain.group(1))}" if gain else "－",
+                        "value": line[:gain.start()].strip() if gain else line,
+                    })
+                continue
+            open_card(line)
+            continue
+        # Favourites: an artist name line, then the items with their bonus tiers.
+        if "、" in line or FAVORITE_TIER_RE.search(line):
+            if card is not None:
+                card["rows"].extend(_tier_rows(line))
+            continue
+        open_card(line)
+    return blocks
+
+
 def build(
     docx: Path,
     questions: Path,
@@ -962,6 +1105,8 @@ def build(
     titles: Path,
     monopoly: Path,
     endings: Path,
+    items: Path,
+    favorites: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -1041,8 +1186,18 @@ def build(
     ]
 
     game_items += [
-        make_node("game-guide/items", "物品总览", status="missing"),
-        make_node("game-guide/favorite-items", "艺人喜爱物品一览", status="missing"),
+        make_node(
+            "game-guide/items", "物品总览",
+            source_title="物品总览.txt",
+            description="特殊道具、国际通告材料、角色剧情道具、开局道具、各地日常商品与生日礼物：简介、功用与入手方式。",
+            blocks=build_items_blocks(items),
+        ),
+        make_node(
+            "game-guide/favorite-items", "艺人喜爱物品一览",
+            source_title="艺人喜爱物品一览.txt",
+            description="各艺人喜爱的礼物，标签（＋3／＋4）是该礼物带来的好感加成；后半是送礼后每句反应对应的好感度，末尾为送礼机制补充。",
+            blocks=build_favorites_blocks(favorites),
+        ),
         make_node("game-guide/monopoly-answers", "大富翁BaBaBa答案",
                   source_title="大富翁题目答案.txt",
                   blocks=build_monopoly_blocks(monopoly)),
@@ -1185,6 +1340,8 @@ def main() -> None:
     titles = Path(sys.argv[11]) if len(sys.argv) > 11 else DEFAULT_TITLES
     monopoly = Path(sys.argv[12]) if len(sys.argv) > 12 else DEFAULT_MONOPOLY
     endings = Path(sys.argv[13]) if len(sys.argv) > 13 else DEFAULT_ENDINGS
+    items_src = Path(sys.argv[14]) if len(sys.argv) > 14 else DEFAULT_ITEMS
+    favorites = Path(sys.argv[15]) if len(sys.argv) > 15 else DEFAULT_FAVORITES
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1211,7 +1368,12 @@ def main() -> None:
         raise SystemExit(f"monopoly txt not found: {monopoly}")
     if not endings.exists():
         raise SystemExit(f"endings txt not found: {endings}")
-    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade, titles, monopoly, endings)
+    if not items_src.exists():
+        raise SystemExit(f"items txt not found: {items_src}")
+    if not favorites.exists():
+        raise SystemExit(f"favorites txt not found: {favorites}")
+    data = build(docx, questions, events, stats, scenes, work, training, certificates,
+                 producers, selfmade, titles, monopoly, endings, items_src, favorites)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

@@ -55,6 +55,41 @@ function EventDetail({ block }: { block: IndexedBlock }) {
   return <p className="text-ui-sm leading-[1.8] break-words text-ink">{block.text}</p>;
 }
 
+/** One catalogue entry: its name, a few labelled lines and optional notes. */
+function ItemCard({ block }: { block: IndexedBlock }) {
+  return (
+    <div className="mb-2.5 rounded-ui-sm border border-line bg-surface px-3 py-2.5">
+      <p className="text-ui-sm font-bold leading-[1.7] break-words text-ink">{block.text}</p>
+      {(block.rows?.length ?? 0) > 0 && (
+        <div className="mt-1.5 flex flex-col gap-[3px]">
+          {block.rows!.map((row, position) => (
+            <p key={position} className="flex items-start gap-2 text-ui-sm leading-[1.75]">
+              <span
+                className={
+                  row.label.startsWith('＋')
+                    ? 'mt-px w-[54px] shrink-0 text-ui-2xs font-bold leading-[2] text-brand-strong'
+                    : 'mt-px w-[54px] shrink-0 text-ui-2xs leading-[2] text-ink-faint'
+                }
+              >
+                {row.label}
+              </span>
+              <span className="min-w-0 flex-1 break-words text-ink">{row.value}</span>
+            </p>
+          ))}
+        </div>
+      )}
+      {block.notes?.map((note, position) => (
+        <p
+          key={`note-${position}`}
+          className="mt-1.5 rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-2.5 py-1.5 text-ui-2xs leading-[1.8] text-note"
+        >
+          {note}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function BlockView({ block }: { block: IndexedBlock }) {
   switch (block.kind) {
     case 'section':
@@ -116,6 +151,8 @@ function BlockView({ block }: { block: IndexedBlock }) {
       );
     case 'table':
       return block.table ? <DataTable data={block.table} /> : null;
+    case 'item':
+      return <ItemCard block={block} />;
     default: {
       // Nested lines (e.g. the a/b/c alternatives under a numbered condition)
       // step in once per level and fade a notch so the hierarchy reads at a glance.
@@ -156,6 +193,14 @@ export default function ContentBlockList({ blocks, onJump }: Props) {
         // Numbered events keep their options and reminders inside one card.
         if (first.kind === 'event') {
           return <EventCard key={group.group} blocks={group.blocks} />;
+        }
+        // Catalogue entries are one card each, with no section wrapper around them.
+        if (first.kind === 'item') {
+          return (
+            <Fragment key={group.group}>
+              {group.blocks.map((block) => <ItemCard key={block.index} block={block} />)}
+            </Fragment>
+          );
         }
         // A long hairline above every major section (except the first) marks the
         // boundary between chapters — the section title alone read too weakly.

@@ -6,6 +6,7 @@ export type ContentBlockKind =
   | 'note'
   | 'paragraph'
   | 'qa'
+  | 'item'
   | 'table';
 
 export interface TableColumn {
@@ -22,6 +23,12 @@ export interface TableColumn {
 export interface TableData {
   columns: TableColumn[];
   rows: Record<string, string>[];
+}
+
+/** One labelled line of an `item` block, e.g. 简介 / 功用 / 入手地点 / ＋4. */
+export interface ItemRow {
+  label: string;
+  value: string;
 }
 
 export interface ContentBlock {
@@ -48,6 +55,10 @@ export interface ContentBlock {
   depth?: number;
   /** Answer of a `qa` block, shown under the question. */
   answer?: string;
+  /** Labelled lines of an `item` block (name in `text`). */
+  rows?: ItemRow[];
+  /** Extra notes attached to an `item` block. */
+  notes?: string[];
   /** Tabular payload of a `table` block. */
   table?: TableData;
 }

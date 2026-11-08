@@ -57,14 +57,23 @@ function tableText(block: ContentBlock): string {
     .join(' ');
 }
 
+/** Labelled rows of an `item` block, flattened. */
+function itemRows(block: ContentBlock): string[] {
+  return (block.rows ?? []).flatMap((row) => [row.label, row.value]);
+}
+
 /** Characters in a node's own body text; whitespace is ignored, punctuation kept. */
 export function countChars(node: GuideNode): number {
-  return node.blocks.reduce(
-    (sum, block) =>
-      sum +
-      (block.text + (block.answer ?? '') + tableCells(block).join('')).replace(/\s/g, '').length,
-    0,
-  );
+  return node.blocks.reduce((sum, block) => {
+    const own = [
+      block.text,
+      block.answer ?? '',
+      ...itemRows(block),
+      ...(block.notes ?? []),
+      ...tableCells(block),
+    ].join('');
+    return sum + own.replace(/\s/g, '').length;
+  }, 0);
 }
 
 /** Characters including every descendant, used for category-level sizes. */
@@ -99,6 +108,8 @@ function searchableText(block: ContentBlock): string {
     block.reward,
     block.label,
     block.targetLabel,
+    ...itemRows(block),
+    ...(block.notes ?? []),
     tableText(block),
   ]
     .filter(Boolean)
