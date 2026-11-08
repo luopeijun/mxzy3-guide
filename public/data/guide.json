@@ -6,7 +6,7 @@
     "stats": {
       "categories": 4,
       "items": 52,
-      "blocks": 3359,
+      "blocks": 3360,
       "readyItems": 47,
       "missingItems": 2,
       "sourceParagraphs": 3706
@@ -2962,439 +2962,478 @@
           "sourceTitle": "明星称号详解.txt",
           "blocks": [
             {
+              "kind": "section",
+              "text": "基本称号",
+              "group": 1,
+              "depth": 0
+            },
+            {
               "kind": "heading",
               "text": "未出道的新人",
-              "group": 1
+              "group": 2,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "一开始即是",
-              "group": 2
+              "group": 3
             },
             {
               "kind": "heading",
               "text": "新人",
-              "group": 3
+              "group": 4,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "任意通告2支",
-              "group": 4
+              "group": 5
             },
             {
               "kind": "heading",
               "text": "知名艺人",
-              "group": 5
+              "group": 6,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "任意通告5",
-              "group": 6
+              "group": 7
             },
             {
               "kind": "heading",
               "text": "人气偶像",
-              "group": 7
+              "group": 8,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.仪态600.自信500.广告5",
-              "group": 8
+              "group": 9
             },
             {
               "kind": "heading",
               "text": "超级天后、天王巨星",
-              "group": 9
+              "group": 10,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气700/歌艺600/演技600/仪态500/自信700 演唱会两次(不论大小、个人或团体)",
-              "group": 10
+              "group": 11
             },
             {
               "kind": "heading",
               "text": "得奖",
-              "group": 11
+              "group": 12,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "要得到 金星奖最佳模特 金钟奖最佳男/女演员 金钟奖最佳主持人 金曲奖最佳歌手 金像奖最佳男/女主角 其中的两项（同一项得到两次也可以）",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "各有两种达成条件：",
               "group": 13
             },
             {
               "kind": "paragraph",
-              "text": "1.电影 7部(不论主角配角) ，唱片 4张，所有通告加起来总数超过20 (不论电影、唱片、广告、主持、电视剧)",
+              "text": "各有两种达成条件：",
               "group": 14
             },
             {
               "kind": "paragraph",
-              "text": "2.电影 4部(不论主角配角) ，唱片 7张，所有通告加起来总数超过20 (不论电影、唱片、广告、主持、电视剧)",
+              "text": "1.电影 7部(不论主角配角) ，唱片 4张，所有通告加起来总数超过20 (不论电影、唱片、广告、主持、电视剧)",
               "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.电影 4部(不论主角配角) ，唱片 7张，所有通告加起来总数超过20 (不论电影、唱片、广告、主持、电视剧)",
+              "group": 16
             },
             {
               "kind": "section",
               "text": "戏剧路线",
-              "group": 16,
+              "group": 17,
               "depth": 0
             },
             {
               "kind": "heading",
               "text": "电影新人",
-              "group": 17
+              "group": 18,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "电影1",
-              "group": 18
+              "group": 19
             },
             {
               "kind": "heading",
               "text": "电视新人",
-              "group": 19
+              "group": 20,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "电视剧1",
-              "group": 20
+              "group": 21
             },
             {
               "kind": "heading",
               "text": "演员",
-              "group": 21
+              "group": 22,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200 电视剧2.电影2",
-              "group": 22
+              "group": 23
             },
             {
               "kind": "heading",
               "text": "电视演员",
-              "group": 23
+              "group": 24,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200 电视剧4",
-              "group": 24
+              "group": 25
             },
             {
               "kind": "heading",
               "text": "电影演员",
-              "group": 25
+              "group": 26,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200 电影3",
-              "group": 26
+              "group": 27
             },
             {
               "kind": "heading",
               "text": "喜感演员",
-              "group": 27
+              "group": 28,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200 电视剧2.电影2",
-              "group": 28
+              "group": 29
             },
             {
               "kind": "heading",
               "text": "性感演员",
-              "group": 29
+              "group": 30,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.性感600 电视剧2.电影2 裸露1",
-              "group": 30
+              "group": 31
             },
             {
               "kind": "heading",
               "text": "反派演员",
-              "group": 31
+              "group": 32,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.叛逆600 电视剧2.电影2 暴力1.反派1",
-              "group": 32
+              "group": 33
             },
             {
               "kind": "heading",
               "text": "偶像演员",
-              "group": 33
+              "group": 34,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.仪态500.自信500.人气500 电视剧1或名气200.仪态500.自信500. 电影1",
-              "group": 34
+              "group": 35
             },
             {
               "kind": "heading",
               "text": "实力派演员",
-              "group": 35
+              "group": 36,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气500.演技600.自信500 电视剧5 或 名气500.演技600.自信500 电影5 或 名气500.演技600.自信500 电视剧3.电影3",
-              "group": 36
+              "group": 37
             },
             {
               "kind": "heading",
               "text": "戏剧天王(后)",
-              "group": 37
+              "group": 38,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气700 演技700 自信700 仪态500 电影7 总数10<=指接过的通告。或者电视剧5电影5",
-              "group": 38
+              "group": 39
             },
             {
               "kind": "note",
               "text": "要得到或最佳男(女)主角",
-              "group": 39
+              "group": 40
             },
             {
               "kind": "section",
               "text": "广告路线",
-              "group": 40,
+              "group": 41,
               "depth": 0
             },
             {
               "kind": "heading",
               "text": "广告新人",
-              "group": 41
+              "group": 42,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "广告1",
-              "group": 42
+              "group": 43
             },
             {
               "kind": "heading",
               "text": "模特儿",
-              "group": 43
+              "group": 44,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200 广告7",
-              "group": 44
+              "group": 45
             },
             {
               "kind": "heading",
               "text": "名模",
-              "group": 45
+              "group": 46,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气500.仪态500.自信500 广告10",
-              "group": 46
+              "group": 47
             },
             {
               "kind": "heading",
               "text": "超级名模",
-              "group": 47
+              "group": 48,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气700 仪态700 自信700  广告15",
-              "group": 48
-            },
-            {
-              "kind": "note",
-              "text": "要得到过最佳模特奖",
               "group": 49
             },
             {
               "kind": "note",
-              "text": "资料片中达到名模要求即显示为超级名模，得过最佳模特奖后显示为国际名模",
+              "text": "要得到过最佳模特奖",
               "group": 50
+            },
+            {
+              "kind": "note",
+              "text": "资料片中达到名模要求即显示为超级名模，得过最佳模特奖后显示为国际名模",
+              "group": 51
             },
             {
               "kind": "section",
               "text": "综艺路线",
-              "group": 51,
+              "group": 52,
               "depth": 0
             },
             {
               "kind": "heading",
               "text": "主持新人",
-              "group": 52
+              "group": 53,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "主持1",
-              "group": 53
+              "group": 54
             },
             {
               "kind": "heading",
               "text": "主持人",
-              "group": 54
+              "group": 55,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200 主持3",
-              "group": 55
+              "group": 56
             },
             {
               "kind": "heading",
               "text": "人气主持",
-              "group": 56
+              "group": 57,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.仪态400.自信500.主持3",
-              "group": 57
+              "group": 58
             },
             {
               "kind": "heading",
               "text": "主持名嘴",
-              "group": 58
+              "group": 59,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气500.口才600.自信500 主持5",
-              "group": 59
+              "group": 60
             },
             {
               "kind": "heading",
               "text": "综艺天王(后)",
-              "group": 60
+              "group": 61,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气700 自信700 仪态500 口才700 主持7 总数要10",
-              "group": 61
+              "group": 62
             },
             {
               "kind": "note",
               "text": "得到金钟奖最佳主持人",
-              "group": 62
+              "group": 63
             },
             {
               "kind": "section",
               "text": "歌唱路线",
-              "group": 63,
+              "group": 64,
               "depth": 0
             },
             {
               "kind": "heading",
               "text": "歌唱新人",
-              "group": 64
+              "group": 65,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "唱片1",
-              "group": 65
+              "group": 66
             },
             {
               "kind": "heading",
               "text": "歌手",
-              "group": 66
+              "group": 67,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200 唱片3",
-              "group": 67
+              "group": 68
             },
             {
               "kind": "heading",
               "text": "性感歌手",
-              "group": 68
+              "group": 69,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.性感600 唱片3",
-              "group": 69
+              "group": 70
             },
             {
               "kind": "heading",
               "text": "动感歌手",
-              "group": 70
+              "group": 71,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.动感400 唱片3",
-              "group": 71
+              "group": 72
             },
             {
               "kind": "heading",
               "text": "偶像歌手",
-              "group": 72
+              "group": 73,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气200.仪态400.自信500. 唱片1",
-              "group": 73
+              "group": 74
             },
             {
               "kind": "heading",
               "text": "唱匠",
-              "group": 74
+              "group": 75,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气500.歌艺500.自信500 唱片5",
-              "group": 75
+              "group": 76
             },
             {
               "kind": "heading",
               "text": "歌神(后)",
-              "group": 76
+              "group": 77,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "名气700 歌艺700 仪态500 自信700 演唱会2（不论大小、个人或团体） 唱片5 总通告数10",
-              "group": 77
+              "group": 78
             },
             {
               "kind": "note",
               "text": "金曲奖最佳演唱奖",
-              "group": 78
+              "group": 79
             },
             {
               "kind": "section",
               "text": "称号显示优先级",
-              "group": 79,
+              "group": 80,
               "depth": 0
             },
             {
               "kind": "paragraph",
               "text": "若同时满足实力派演员、唱匠、主持名嘴和名模的条件 显示优先顺序为：",
-              "group": 80
-            },
-            {
-              "kind": "paragraph",
-              "text": "实力派演员或唱匠 ＞  主持名嘴 ＞ 名模",
               "group": 81
             },
             {
               "kind": "paragraph",
-              "text": "实力派演员和唱匠的优先顺序，按艺人完成的戏剧数量与唱片数量中较多的一项为准；若同样多，将显示为唱匠。",
+              "text": "实力派演员或唱匠 ＞  主持名嘴 ＞ 名模",
               "group": 82
+            },
+            {
+              "kind": "paragraph",
+              "text": "实力派演员和唱匠的优先顺序，按艺人完成的戏剧数量与唱片数量中较多的一项为准；若同样多，将显示为唱匠。",
+              "group": 83
             },
             {
               "kind": "note",
               "text": "这里的戏剧数量是指电影和电视剧数量中较多的一项，而不是二者相加。",
-              "group": 83
-            },
-            {
-              "kind": "paragraph",
-              "text": "比如，电影6 电视剧7 唱片5  则戏剧数量为7 唱片为5 显示为实力派演员",
               "group": 84
             },
             {
               "kind": "paragraph",
-              "text": "电影5 电视剧0 唱片5  则戏剧数量为5 唱片为5 显示为唱匠",
+              "text": "比如，电影6 电视剧7 唱片5  则戏剧数量为7 唱片为5 显示为实力派演员",
               "group": 85
             },
             {
               "kind": "paragraph",
-              "text": "戏剧天王和歌神的优先原则基本类似，不过因为光是电视剧数量多不能达成戏剧天王，所以戏剧一项就看电影的数量了。",
+              "text": "电影5 电视剧0 唱片5  则戏剧数量为5 唱片为5 显示为唱匠",
               "group": 86
+            },
+            {
+              "kind": "paragraph",
+              "text": "戏剧天王和歌神的优先原则基本类似，不过因为光是电视剧数量多不能达成戏剧天王，所以戏剧一项就看电影的数量了。",
+              "group": 87
             }
           ],
           "children": []

@@ -1067,10 +1067,16 @@ def build_titles_blocks(path: Path) -> list[dict]:
     a line ending with a bare colon (`各有两种达成条件：`) is a lead-in, kept as
     a paragraph. The closing priority rules (`若同时满足…`) get their own
     section so they do not read as part of the last route.
+
+    The six fame-level titles at the top (未出道的新人 … 得奖) belong to no route
+    in the source. They get a `基本称号` section of their own so every title can
+    nest one level down (outline 1.1, 1.2 …) instead of reading level with the
+    routes.
     """
     lines = [raw.strip() for raw in _read_text(path).splitlines() if raw.strip()]
     blocks: list[dict] = []
     group = 0
+    has_section = False
 
     def add(kind: str, text: str, **extra) -> None:
         nonlocal group
@@ -1080,10 +1086,12 @@ def build_titles_blocks(path: Path) -> list[dict]:
     for line in lines:
         if line.endswith("--"):
             add("section", line.rstrip("-").strip(), depth=0)
+            has_section = True
             continue
         if line.startswith("若同时满足"):
             add("section", "称号显示优先级", depth=0)
             add("paragraph", line)
+            has_section = True
             continue
         if TITLE_NOTE_RE.match(line):
             add("note", TITLE_NOTE_RE.sub("", line))
@@ -1091,7 +1099,10 @@ def build_titles_blocks(path: Path) -> list[dict]:
         if not line.endswith(("：", ":")):
             pair = TITLE_PAIR_RE.match(line)
             if pair:
-                add("heading", pair.group(1).strip())
+                if not has_section:
+                    add("section", "基本称号", depth=0)
+                    has_section = True
+                add("heading", pair.group(1).strip(), depth=1)
                 add("paragraph", pair.group(2).strip())
                 continue
         add("paragraph", line)
