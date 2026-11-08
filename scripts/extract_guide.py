@@ -30,6 +30,7 @@ DEFAULT_TRAINING = SOURCES / "training.txt"
 DEFAULT_CERTIFICATES = SOURCES / "certificates.txt"
 DEFAULT_PRODUCERS = SOURCES / "producers.txt"
 DEFAULT_SELFMADE = SOURCES / "self-made.txt"
+DEFAULT_TITLES = SOURCES / "titles.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -767,6 +768,50 @@ def build_selfmade_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+TITLE_NOTE_RE = re.compile(r"^(PS|P\.S|注意|注)[：:，,]?\s*")
+TITLE_PAIR_RE = re.compile(r"^([^：:]{1,20})[：:]\s*(.+)$")
+
+
+def build_titles_blocks(path: Path) -> list[dict]:
+    """Turn the 明星称号详解 txt into blocks.
+
+    `xx路线--` lines are major sections (hairline above). A `称号：条件` line
+    splits into a diamond `heading` (the title) plus a `paragraph` (its
+    condition); `PS:` / `P.S：` / `注：` / `注意` lines become yellow notes;
+    a line ending with a bare colon (`各有两种达成条件：`) is a lead-in, kept as
+    a paragraph. The closing priority rules (`若同时满足…`) get their own
+    section so they do not read as part of the last route.
+    """
+    lines = [raw.strip() for raw in _read_text(path).splitlines() if raw.strip()]
+    blocks: list[dict] = []
+    group = 0
+
+    def add(kind: str, text: str, **extra) -> None:
+        nonlocal group
+        group += 1
+        blocks.append({"kind": kind, "text": _tidy(text), "group": group, **extra})
+
+    for line in lines:
+        if line.endswith("--"):
+            add("section", line.rstrip("-").strip(), depth=0)
+            continue
+        if line.startswith("若同时满足"):
+            add("section", "称号显示优先级", depth=0)
+            add("paragraph", line)
+            continue
+        if TITLE_NOTE_RE.match(line):
+            add("note", TITLE_NOTE_RE.sub("", line))
+            continue
+        if not line.endswith(("：", ":")):
+            pair = TITLE_PAIR_RE.match(line)
+            if pair:
+                add("heading", pair.group(1).strip())
+                add("paragraph", pair.group(2).strip())
+                continue
+        add("paragraph", line)
+    return blocks
+
+
 def build(
     docx: Path,
     questions: Path,
@@ -778,6 +823,7 @@ def build(
     certificates: Path,
     producers: Path,
     selfmade: Path,
+    titles: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -786,7 +832,7 @@ def build(
 
     required = [
         "角色攻略", "初始问题选项",
-        "艺人称号说明", "接手第一周细节", "小秘书相关事件（不涉艺人）",
+        "接手第一周细节", "小秘书相关事件（不涉艺人）",
         "蛮羊事件：", "史麦克的拜访", "美丽之星事件", "演艺圈前辈事件",
         "威尔相关事件", "六大传说级通告（99%获奖）", "老爸相关事件", "SD相关事件",
     ]
@@ -850,17 +896,17 @@ def build(
             "game-guide/scenes", "场景开启方法",
             blocks=build_scenes_blocks(scenes),
         ),
+        make_node(
+            "game-guide/titles", "明星称号详解",
+            source_title="明星称号详解.txt",
+            blocks=build_titles_blocks(titles),
+        ),
     ]
 
     game_items += [
         make_node("game-guide/items", "物品总览", status="missing"),
         make_node("game-guide/favorite-items", "艺人喜爱物品一览", status="missing"),
         make_node("game-guide/monopoly-answers", "大富翁B&B&B答案", status="missing"),
-        make_node(
-            "game-guide/titles", "明星称号详解",
-            source_title="艺人称号说明",
-            blocks=build_blocks(sections.intro("艺人称号说明")),
-        ),
         make_node(
             "game-guide/endings", "结局条件一览",
             blocks=build_blocks(ending_lines),
@@ -995,6 +1041,7 @@ def main() -> None:
     certificates = Path(sys.argv[8]) if len(sys.argv) > 8 else DEFAULT_CERTIFICATES
     producers = Path(sys.argv[9]) if len(sys.argv) > 9 else DEFAULT_PRODUCERS
     selfmade = Path(sys.argv[10]) if len(sys.argv) > 10 else DEFAULT_SELFMADE
+    titles = Path(sys.argv[11]) if len(sys.argv) > 11 else DEFAULT_TITLES
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1015,7 +1062,9 @@ def main() -> None:
         raise SystemExit(f"producers txt not found: {producers}")
     if not selfmade.exists():
         raise SystemExit(f"self-made txt not found: {selfmade}")
-    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade)
+    if not titles.exists():
+        raise SystemExit(f"titles txt not found: {titles}")
+    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade, titles)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
