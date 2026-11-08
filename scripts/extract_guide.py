@@ -42,6 +42,8 @@ DEFAULT_SD = SOURCES / "sd.txt"
 DEFAULT_LAOBA = SOURCES / "laoba.txt"
 DEFAULT_HOLLYWOOD = SOURCES / "hollywood.txt"
 DEFAULT_WILL = SOURCES / "will.txt"
+DEFAULT_EXPANSION = SOURCES / "expansion.txt"
+DEFAULT_SECRETARY = SOURCES / "secretary.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -66,6 +68,8 @@ EVENT_PLAIN_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?)[\.．]?\
 NUMBERED_ITEM_RE = re.compile(r"^（([0-9０-９]+)）(.+)$")
 # `第一次送药得到：…` — a round-dot list item (the four medicine rewards).
 MEDICINE_RE = re.compile(r"^第.+?次送药得到：")
+# `情况一：` / `条件二：` — a bulleted list item (the 大侠金牌的作用 choices).
+SUB_ITEM_RE = re.compile(r"^(?:情况|条件|方法|步骤)[一二三四五六七八九十０-９0-9]+[：:]")
 CHARACTER_OPTION_RE = re.compile(r"^旗下艺人为")
 QUESTION_RE = re.compile(r"^问题([0-9０-９]+)[：:]\s*(.+)$")
 QUESTION_OPTION_RE = re.compile(r"^([１２３123])[．.、]\s*(.+)$")
@@ -637,7 +641,7 @@ def build_sd_blocks(path: Path) -> list[dict]:
     """Turn the SD相关事件 txt into blocks.
 
     `★SD相关` only repeats the page title; `★提示：…` becomes the intro note.
-    `恩怨` / `跳槽` open a chapter (`heading`), and the bracket text glued to
+    `恩怨` / `跳槽` open a chapter (`section`, 大标题), and the bracket text glued to
     `恩怨` is that chapter's rule line, kept as the next paragraph. Numbered
     lines are `event` blocks whose bracket marker (新闻/场景/自动/跟随) survives
     as `tag`; the `A. / B.` cases under event 7 stay options of that event, and
@@ -663,7 +667,7 @@ def build_sd_blocks(path: Path) -> list[dict]:
             continue
         section = SD_SECTION_RE.match(line)
         if section:
-            add("heading", section.group(1))
+            add("section", section.group(1))
             if section.group("note"):
                 add("paragraph", f"（{section.group('note')}）")
             continue
@@ -691,85 +695,187 @@ def build_sd_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+def _append_event_like(
+    blocks: list[dict],
+    state: dict,
+    line: str,
+    next_line: str | None = None,
+    *,
+    skip_title: str | None = None,
+) -> None:
+    """Classify one source line and append a block to `blocks`, mutating `state`
+    (carrying `group` and `last_event_group`). Shared by the single-page event
+    builders and the multi-chapter 资料片新增事件 builder.
+
+    与六大特殊通告同一套事件渲染（`N （tag）正文` → 白底事件卡）。`★` / `☆`
+    章节标记是**大标题**（`section`）；非 `★` 的裸标题若下一行紧跟编号事件则也是
+    大标题章节，若下一行是 `情况/条件/方法/步骤…` 列表则降级为**副标题**
+    （`heading`）—— 例如 老爸相关事件 里 `大侠金牌的作用：` 挂在 `老爸的帮助`
+    之下，其下的 `情况一/二/三` 是项目圆点列表项。`提醒：` / `（提示` 是黄色提示；
+    `A.…` 选项与 `（N）` 条目归属上一个事件卡片内，不作副标题；`（有BUG：…）` 等
+    括号备注归进上一个事件的卡片作 note。"""
+
+    group = state["group"]
+    last_event_group = state["last_event_group"]
+    if not line:
+        return
+    tidied = line.lstrip("★☆").strip()
+    if skip_title is not None and tidied == skip_title:
+        return  # 页标题，不重复成块
+
+    if line.startswith(("★", "☆")):
+        if tidied.startswith(("提示", "注意", "PS", "特别", "如果")):
+            group += 1
+            blocks.append({"kind": "note", "text": tidied, "group": group})
+        else:
+            group += 1
+            blocks.append({"kind": "section", "text": tidied, "group": group})
+        state["group"] = group
+        state["last_event_group"] = None
+        return
+
+    event = EVENT_LINE_RE.match(line)
+    if event:
+        group += 1
+        blocks.append({
+            "kind": "event",
+            "text": _tidy(line[event.end():].strip()),
+            "label": event.group(1),
+            "tag": event.group(2),
+            "group": group,
+        })
+        state["group"] = group
+        state["last_event_group"] = group
+        return
+
+    plain = EVENT_PLAIN_RE.match(line)
+    if plain:
+        group += 1
+        blocks.append({
+            "kind": "event",
+            "text": _tidy(plain.group(2).strip()),
+            "label": plain.group(1),
+            "group": group,
+        })
+        state["group"] = group
+        state["last_event_group"] = group
+        return
+
+    if OPTION_RE.match(line):
+        # 事件之后的 A./B./C./D. 选项归入该事件卡片内。
+        if last_event_group is not None and blocks and blocks[-1]["group"] == last_event_group:
+            blocks.append({"kind": "option", "text": _tidy(line.strip()), "group": last_event_group})
+        else:
+            group += 1
+            blocks.append({"kind": "option", "text": _tidy(line.strip()), "group": group})
+            state["group"] = group
+        return
+
+    numbered = NUMBERED_ITEM_RE.match(line)
+    if numbered:
+        # 老爸 18/19/20 之后的 （1）（2）（3） 列表，归进事件卡片内，不作副标题。
+        if last_event_group is not None and blocks and blocks[-1]["group"] == last_event_group:
+            blocks.append({"kind": "paragraph", "text": tidied, "group": last_event_group})
+        else:
+            group += 1
+            blocks.append({"kind": "paragraph", "text": tidied, "group": group})
+            state["group"] = group
+        return
+
+    if MEDICINE_RE.match(line):
+        # `第一次送药得到：…` 等四条奖励，渲染成圆点列表项。
+        group += 1
+        blocks.append({"kind": "paragraph", "text": tidied, "group": group, "bullet": True})
+        state["group"] = group
+        return
+
+    # `情况一：` / `条件二：` 这类列表项，渲染成品牌色圆点。
+    if SUB_ITEM_RE.match(line):
+        group += 1
+        blocks.append({"kind": "paragraph", "text": tidied, "group": group, "bullet": True})
+        state["group"] = group
+        return
+
+    if tidied.startswith(("提醒：", "（提醒", "（提示", "（注意", "（PS", "（特别", "（如果")):
+        group += 1
+        blocks.append({"kind": "note", "text": tidied, "group": group})
+        state["group"] = group
+        return
+
+    if line.startswith("（"):
+        # `（有BUG：…）` 等括号备注，归进上一个事件的卡片作 note（如 方若绮事件）。
+        if last_event_group is not None and blocks and blocks[-1]["group"] == last_event_group:
+            blocks.append({"kind": "note", "text": line.strip("（）").strip(), "group": last_event_group})
+        else:
+            group += 1
+            blocks.append({"kind": "note", "text": line.strip("（）").strip(), "group": group})
+            state["group"] = group
+        return
+
+    if "CG" in line:
+        # `…陪伴的CG` 等结局 / CG 说明是陈述句，不是章节标题，避免被 classify 的
+        # 短行启发式误判成副标题（在没有任何 section 的平铺页上会被渲染成大标题）。
+        group += 1
+        blocks.append({"kind": "paragraph", "text": tidied, "group": group})
+        state["group"] = group
+        return
+
+    cls = classify(line)
+    if cls["kind"] == "heading":
+        # 裸标题：下一行紧跟编号事件 → 大标题章节；下一行是 情况/条件 列表 → 副标题。
+        follows_event = bool(next_line) and bool(
+            EVENT_LINE_RE.match(next_line) or EVENT_PLAIN_RE.match(next_line)
+        )
+        if follows_event:
+            group += 1
+            blocks.append({"kind": "section", "text": tidied, "group": group})
+        else:
+            group += 1
+            blocks.append({"kind": "heading", "text": tidied, "group": group})
+        state["group"] = group
+        return
+
+    group += 1
+    blocks.append({**cls, "group": group})
+    state["group"] = group
+    return
+
+
 def build_event_like_blocks(path: Path, *, page_title: str) -> list[dict]:
-    """其他事件章节（老爸 / 好莱坞 / 威尔）的通用构建器。
-
-    与六大特殊通告（build_event_blocks）同一套事件渲染：编号行 `N （tag）正文`
-    拆成 `event` 块，括号里的 tag（新闻 / 场景 / 自动 / 跟随…）单独抽出成 `tag`
-    字段、并从正文里剥掉，前端据此渲染成「编号徽章 + TypeTag + 白底卡片」。每个
-    事件独占一个 group，各自得到一张 EventCard。`N 正文`（无 tag，如老爸的
-    18/19/20）同样是事件，照样给白底卡片。
-
-    事件之后直接跟的 `A.…` 选项或 `（N）…` 条目，归属该事件、塞进同一张卡片内，
-    不会变成副标题；`第N次送药得到：…` 是圆点列表项；`★X` 是子章节大标题；
-    `提醒：` 是黄色提示。页标题 `★{page_title}` 跳过，不重复成块。"""
-
+    """其他事件章节（老爸 / 好莱坞 / 威尔）的通用构建器。"""
+    lines = [ln.strip() for ln in (line.rstrip("\r") for line in _read_text(path).split("\n")) if ln.strip()]
     blocks: list[dict] = []
-    group = 0
-    last_event_group: int | None = None
-    for raw in [line.rstrip("\r") for line in _read_text(path).split("\n")]:
+    state = {"group": 0, "last_event_group": None}
+    for i, line in enumerate(lines):
+        next_line = lines[i + 1] if i + 1 < len(lines) else None
+        _append_event_like(blocks, state, line, next_line, skip_title=page_title)
+    return blocks
+
+
+def build_expansion_pages(path: Path) -> list[dict]:
+    """资料片新增事件.txt 按 `★` 拆成多个章节页（方若绮 / 马智文 / 古芊菁）。"""
+    lines = [ln.rstrip("\r") for ln in _read_text(path).split("\n")]
+    pages: list[dict] = []
+    blocks: list[dict] | None = None
+    state: dict | None = None
+    title = ""
+    for raw in lines:
         line = raw.strip()
         if not line:
             continue
-        tidied = line.lstrip("★☆").strip()
-        if tidied == page_title:
-            continue  # 页标题，不重复成块
-        event = EVENT_LINE_RE.match(line)
-        if event:
-            group += 1
-            blocks.append({
-                "kind": "event",
-                "text": _tidy(line[event.end():].strip()),
-                "label": event.group(1),
-                "tag": event.group(2),
-                "group": group,
-            })
-            last_event_group = group
-            continue
-        plain = EVENT_PLAIN_RE.match(line)
-        if plain:
-            group += 1
-            blocks.append({
-                "kind": "event",
-                "text": _tidy(plain.group(2).strip()),
-                "label": plain.group(1),
-                "group": group,
-            })
-            last_event_group = group
-            continue
-        if OPTION_RE.match(line):
-            # 事件之后的 A./B./C./D. 选项归入该事件卡片内。
-            if last_event_group is not None and blocks and blocks[-1]["group"] == last_event_group:
-                blocks.append({"kind": "option", "text": _tidy(line.strip()), "group": last_event_group})
-            else:
-                group += 1
-                blocks.append({"kind": "option", "text": _tidy(line.strip()), "group": group})
-            continue
-        numbered = NUMBERED_ITEM_RE.match(line)
-        if numbered:
-            # 老爸 18/19/20 之后的 （1）（2）（3） 列表，归进事件卡片内，不作副标题。
-            if last_event_group is not None and blocks and blocks[-1]["group"] == last_event_group:
-                blocks.append({"kind": "paragraph", "text": tidied, "group": last_event_group})
-            else:
-                group += 1
-                blocks.append({"kind": "paragraph", "text": tidied, "group": group})
-            continue
-        if MEDICINE_RE.match(line):
-            # `第一次送药得到：…` 等四条奖励，渲染成圆点列表项。
-            group += 1
-            blocks.append({"kind": "paragraph", "text": tidied, "group": group, "bullet": True})
-            continue
-        if tidied.startswith(("提醒：", "（提醒")):
-            group += 1
-            blocks.append({"kind": "note", "text": tidied, "group": group})
-            continue
         if line.startswith(("★", "☆")):
-            group += 1
-            blocks.append({"kind": "heading", "text": tidied, "group": group})
+            if blocks is not None and state is not None:
+                pages.append({"title": title, "blocks": blocks})
+            title = line.lstrip("★☆").strip().rstrip("：:").strip()
+            blocks = []
+            state = {"group": 0, "last_event_group": None}
             continue
-        group += 1
-        blocks.append({**classify(line), "group": group})
-    return blocks
+        if blocks is None or state is None:
+            continue
+        _append_event_like(blocks, state, line)
+    if blocks is not None:
+        pages.append({"title": title, "blocks": blocks})
+    return pages
 
 
 def build_laoba_blocks(path: Path) -> list[dict]:
@@ -2045,6 +2151,8 @@ def build(
     laoba_events: Path,
     hollywood_events: Path,
     will_events: Path,
+    expansion_events: Path,
+    secretary_events: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -2178,7 +2286,7 @@ def build(
             blocks=build_easyshop_blocks(easyshop),
         ),
         make_node(
-            "other-events/golden-father", "老爸相关事件",
+            "other-events/laoba", "老爸相关事件",
             source_title="老爸相关事件.txt",
             blocks=build_laoba_blocks(laoba_events),
         ),
@@ -2203,11 +2311,24 @@ def build(
         ),
         make_node("other-events/president-he", "贺总相关事件", status="missing"),
         make_node(
-            "other-events/secretary", "小秘书莉铃相关事件",
-            source_title="小秘书相关事件（不涉艺人）",
-            blocks=build_blocks(sections.intro("小秘书相关事件（不涉艺人）")),
+            "other-events/secretary", "秘书莉铃事件",
+            source_title="秘书莉铃事件.txt",
+            blocks=build_event_like_blocks(secretary_events, page_title="莉玲相关"),
         ),
-        make_node("other-events/expansion", "资料片新增事件", status="missing"),
+        make_node(
+            "other-events/expansion", "资料片新增事件",
+            source_title="星光圆舞曲新增事件（方若绮、马智文、古芊菁事件）",
+            children=[
+                make_node(
+                    f"other-events/expansion/{slug}", page["title"],
+                    blocks=page["blocks"],
+                )
+                for slug, page in zip(
+                    ["fang-ruoqi-np", "ma-zhiwen", "gu-qianjing"],
+                    build_expansion_pages(expansion_events),
+                )
+            ],
+        ),
         make_node(
             "other-events/seniors", "演艺圈前辈事件",
             blocks=build_blocks(sections.intro("演艺圈前辈事件")),
@@ -2296,6 +2417,8 @@ def main() -> None:
     laoba_events = Path(sys.argv[20]) if len(sys.argv) > 20 else DEFAULT_LAOBA
     hollywood_events = Path(sys.argv[21]) if len(sys.argv) > 21 else DEFAULT_HOLLYWOOD
     will_events = Path(sys.argv[22]) if len(sys.argv) > 22 else DEFAULT_WILL
+    expansion_events = Path(sys.argv[23]) if len(sys.argv) > 23 else DEFAULT_EXPANSION
+    secretary_events = Path(sys.argv[24]) if len(sys.argv) > 24 else DEFAULT_SECRETARY
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -2340,10 +2463,14 @@ def main() -> None:
         raise SystemExit(f"hollywood events txt not found: {hollywood_events}")
     if not will_events.exists():
         raise SystemExit(f"will events txt not found: {will_events}")
+    if not expansion_events.exists():
+        raise SystemExit(f"expansion events txt not found: {expansion_events}")
+    if not secretary_events.exists():
+        raise SystemExit(f"secretary events txt not found: {secretary_events}")
     data = build(docx, questions, events, stats, scenes, work, training, certificates,
                  producers, selfmade, titles, monopoly, endings, items_src, favorites,
                  easyshop, notices, notices_intro, sd_events, laoba_events,
-                 hollywood_events, will_events)
+                 hollywood_events, will_events, expansion_events, secretary_events)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

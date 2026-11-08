@@ -95,7 +95,7 @@ function ItemCard({ block }: { block: IndexedBlock }) {
   );
 }
 
-function BlockView({ block }: { block: IndexedBlock }) {
+function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHeadings?: boolean }) {
   switch (block.kind) {
     case 'section':
       return (
@@ -107,6 +107,17 @@ function BlockView({ block }: { block: IndexedBlock }) {
         </h3>
       );
     case 'heading':
+      if (bigHeadings) {
+        // 平铺页面（无 section）的所有标题默认按大标题渲染，避免整页都是次级标题。
+        return (
+          <h3
+            id={block.id ?? `block-${block.index}`}
+            className="mt-7 mb-3 scroll-mt-[18px] text-ui-lg font-bold tracking-[0.01em] text-brand-strong"
+          >
+            {block.text}
+          </h3>
+        );
+      }
       return (
         <h3
           id={block.id ?? `block-${block.index}`}
@@ -209,6 +220,11 @@ export default function ContentBlockList({ blocks, onJump }: Props) {
   const groups = groupBlocks(blocks);
   if (!groups.length) return null;
 
+  // 一个页面若没有任何大标题(section)，其 heading 默认按大标题渲染，
+  // 避免整页都是次级标题。只有当页面确实存在 section + 子标题层级时，
+  // heading 才作为次级标题。
+  const flat = !blocks.some((b) => b.kind === 'section');
+
   return (
     <article>
       {groups.map((group, index) => {
@@ -234,14 +250,15 @@ export default function ContentBlockList({ blocks, onJump }: Props) {
         }
         // A long hairline above every major section (except the first) marks the
         // boundary between chapters — the section title alone read too weakly.
-        const sectionRule = first.kind === 'section' && index > 0 && (
+        // 平铺页面里的大标题(heading)同样加分隔线。
+        const sectionRule = (first.kind === 'section' || (flat && first.kind === 'heading')) && index > 0 && (
           <div className="mb-6 mt-7 border-t border-brand-line" />
         );
         return (
           <Fragment key={group.group}>
             {sectionRule}
             <section className="mb-4">
-              {group.blocks.map((block) => <BlockView key={block.index} block={block} />)}
+              {group.blocks.map((block) => <BlockView key={block.index} block={block} bigHeadings={flat} />)}
             </section>
           </Fragment>
         );
