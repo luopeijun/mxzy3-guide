@@ -267,9 +267,15 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
         const step = block.depth === 2 ? 'ml-[42px]' : block.depth === 1 ? 'ml-[19px]' : '';
         return (
           <p className={`relative mb-1 mt-2 pl-[19px] ${step} text-ui-md leading-[1.9] break-words text-ink`}>
+            {/* 特殊条目（源文本 `*` 前缀，如萧依莉「无价的相遇」仅能靠事件获得）
+                用金色菱形与普通圆点区分。 */}
             <span
               aria-hidden="true"
-              className="absolute left-[6px] top-[12px] h-[5px] w-[5px] rounded-full bg-brand"
+              className={`absolute top-[12px] ${
+                block.special
+                  ? 'left-[5px] h-[6px] w-[6px] rotate-45 bg-gold'
+                  : 'left-[6px] h-[5px] w-[5px] rounded-full bg-brand'
+              }`}
             />
             <HighlightText text={block.text} />
           </p>

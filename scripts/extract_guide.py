@@ -1042,10 +1042,19 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
         marker = _bullet_marker(line)
         if marker:
             state["group"] += 1
-            blocks.append({
-                "kind": "paragraph", "text": line[len(marker):].strip(),
+            text = line[len(marker):].strip()
+            # `*` 前缀 = 特殊条目（如萧依莉「*无价的相遇」仅能靠事件获得）：
+            # 展示时剥掉星号，块上打 special 标志，前端用金色菱形圆点区分。
+            special = text.startswith("*")
+            if special:
+                text = text.lstrip("*").strip()
+            entry = {
+                "kind": "paragraph", "text": text,
                 "group": state["group"], "bullet": True, "depth": min(indent // 2, 2),
-            })
+            }
+            if special:
+                entry["special"] = True
+            blocks.append(entry)
             method_step_pending = False
             continue
         event = EVENT_LINE_RE.match(line)

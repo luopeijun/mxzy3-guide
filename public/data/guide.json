@@ -8713,10 +8713,11 @@
             },
             {
               "kind": "paragraph",
-              "text": "*无价的相遇－第一轮萧依莉去世后选择公开笔记本，甄红会赠送",
+              "text": "无价的相遇－第一轮萧依莉去世后选择公开笔记本，甄红会赠送",
               "group": 8,
               "bullet": true,
-              "depth": 2
+              "depth": 2,
+              "special": true
             },
             {
               "kind": "paragraph",
@@ -8770,10 +8771,9 @@
               "cg": false
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "此外，台版即使完成过第一轮，有时也会没有“似曾相识”选项，可能是BUG。",
-              "group": 17,
-              "cg": false
+              "group": 17
             },
             {
               "kind": "heading",
@@ -8782,10 +8782,9 @@
               "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "（完整通过第一轮后，第二轮以上才能通过此方式签约）",
-              "group": 19,
-              "cg": false
+              "group": 19
             },
             {
               "kind": "event",
