@@ -20,8 +20,8 @@ function anchorFromHash(): string {
  * In-page anchor jumps for the current guide node.
  *
  * Clicking a link scrolls smoothly, flashes the target and rewrites the hash
- * as `#/node-id~anchor`, so refreshing or sharing the URL lands on the same
- * block. The hash is rewritten with `replaceState` to avoid a `hashchange`
+ * as `#/guide/node-id~anchor`, so refreshing or sharing the URL lands on the
+ * same block. The hash is rewritten with `replaceState` to avoid a `hashchange`
  * event, which would otherwise reset the selected node.
  */
 export function useAnchorJump(nodeId: string) {
@@ -32,7 +32,7 @@ export function useAnchorJump(nodeId: string) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       flash(el);
       if (nodeId) {
-        window.history.replaceState(null, '', `#/${nodeId}~${anchor}`);
+        window.history.replaceState(null, '', `#/guide/${nodeId}~${anchor}`);
       }
     },
     [nodeId],

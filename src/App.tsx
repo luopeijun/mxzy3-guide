@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GuideData } from './types/guide';
 import type { ReorderRequest } from './lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
-import { isTrackerRoute, readHash, useHashSelection } from './hooks/useHashSelection';
+import { isTrackerRoute, guideNodeId, useHashSelection } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
 import { useTreeOrder } from './hooks/useTreeOrder';
 import { HighlightProvider } from './hooks/useHighlightPref';
@@ -125,16 +125,16 @@ export default function App() {
   // Last guide node id, so closing the tracker lands back where the reader was.
   // Seeded from the URL, because the hashchange listener below only fires on
   // later navigations, not on the load that opened this very page.
-  const lastNodeRef = useRef<string>(isTrackerRoute() ? '' : readHash());
+  const lastNodeRef = useRef<string>(isTrackerRoute() ? '' : guideNodeId());
 
   useEffect(() => {
     const onChange = () => {
-      const hash = readHash();
-      if (hash === 'tracker') {
+      if (isTrackerRoute()) {
         setMode('tracker');
       } else {
         setMode('guide');
-        if (hash) lastNodeRef.current = hash;
+        const nodeId = guideNodeId();
+        if (nodeId) lastNodeRef.current = nodeId;
       }
     };
     window.addEventListener('hashchange', onChange);
@@ -160,7 +160,7 @@ export default function App() {
   };
 
   const closeTracker = () => {
-    window.location.hash = `/${lastNodeRef.current || firstNodeId()}`;
+    window.location.hash = `/guide/${lastNodeRef.current || firstNodeId()}`;
   };
 
   return (

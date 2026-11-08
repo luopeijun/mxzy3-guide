@@ -18,7 +18,7 @@ export default function TrackerHeader({ onClose }: Props) {
             onClick={onClose}
             className="rounded-full px-[13px] py-[7px] text-ui-xs text-brand-strong transition-colors hover:bg-surface"
           >
-            浏览
+            攻略
           </button>
           <span className="rounded-full bg-brand px-[13px] py-[7px] text-ui-xs font-semibold text-white">
             追踪
