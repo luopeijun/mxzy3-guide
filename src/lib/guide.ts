@@ -179,7 +179,8 @@ export function searchGuide(data: GuideData, keyword: string): SearchHit[] {
 export interface OutlineItem {
   id: string;
   text: string;
-  /** 0 = section, 1 = sub-title nested under the preceding section. */
+  /** 0 = section, 1 = sub-title nested under the preceding section,
+   *  2 = sub-sub-title (one level deeper again, e.g. 加入A under 签约方法). */
   depth: number;
 }
 
@@ -199,18 +200,27 @@ export interface NumberedOutlineItem extends OutlineItem {
   marker: string;
 }
 
-/** `2.` for sections, `2.1.` for sub-titles so the nesting reads at a glance. */
+/** `2.` for sections, `2.1.` for sub-titles and `2.1.1.` for sub-sub-titles,
+ *  so the nesting reads at a glance. */
 export function numberOutline(items: OutlineItem[]): NumberedOutlineItem[] {
   let section = 0;
   let subtitle = 0;
+  let subsubtitle = 0;
   return items.map((item) => {
     // A sub-title before any section has no parent to attach to; show it flat.
     if (item.depth > 0 && section > 0) {
+      // Third level (e.g. 加入A under 签约方法): `1.4.1.`
+      if (item.depth > 1 && subtitle > 0) {
+        subsubtitle += 1;
+        return { ...item, marker: `${section}.${subtitle}.${subsubtitle}.` };
+      }
       subtitle += 1;
+      subsubtitle = 0;
       return { ...item, marker: `${section}.${subtitle}.` };
     }
     section += 1;
     subtitle = 0;
+    subsubtitle = 0;
     return { ...item, marker: `${section}.` };
   });
 }
@@ -218,6 +228,7 @@ export function numberOutline(items: OutlineItem[]): NumberedOutlineItem[] {
 /** Fixed marker column so every title starts on the same x; `1.13.` needs more
  *  room than `1.`, and both outlines render markers at the same 12px size. */
 export function outlineMarkerWidth(marker: string): string {
+  if (marker.length > 5) return 'w-[38px]';
   if (marker.length > 3) return 'w-[30px]';
   return marker.length > 2 ? 'w-[25px]' : 'w-[21px]';
 }

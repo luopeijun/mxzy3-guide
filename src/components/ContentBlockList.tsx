@@ -186,6 +186,19 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
           </h3>
         );
       }
+      // 三级标题（depth 2，如 签约方法 → 加入A）比次级标题更低一级：不用菱形，
+      // 改用空心圆点 + 更浅的字色，避免与二级标题混淆。
+      if (block.depth === 2) {
+        return (
+          <h3
+            id={block.id ?? `block-${block.index}`}
+            className="mt-4 mb-2 flex scroll-mt-[18px] items-center gap-2 pl-[19px] text-ui-sm font-bold text-ink-muted"
+          >
+            <span aria-hidden className="inline-block h-[5px] w-[5px] shrink-0 rounded-full border border-brand bg-surface" />
+            {block.text}
+          </h3>
+        );
+      }
       return (
         <h3
           id={block.id ?? `block-${block.index}`}

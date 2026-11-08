@@ -1014,6 +1014,9 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
     # 是否处于「签约方法」字段之下；method_step_pending 标记「下一段落即事件」。
     in_sign_method = False
     method_step_pending = False
+    # 是否已出现大标题（section）。副标题（heading）必须标 depth:1，本页小节才会
+    # 把它缩进到大标题之下，而不是与 section 并列（其它构建器同样约定）。
+    seen_section = False
     for i, raw in enumerate(lines):
         indent = len(raw) - len(raw.lstrip(" "))
         line = raw.strip()
@@ -1028,6 +1031,7 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             state["last_event_group"] = None
             in_sign_method = False
             method_step_pending = False
+            seen_section = True
             continue
         # 提示 / 注意 / PS 等提醒行优先于任何事件/圆点判定，始终作黄底 note。
         if line.startswith(NOTE_PREFIXES):
@@ -1100,7 +1104,14 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
         cls = classify(line)
         if cls["kind"] == "heading" or is_title:
             state["group"] += 1
-            blocks.append({"kind": "heading", "text": line, "group": state["group"]})
+            # 标题层级：section=0；section 下的副标题=1；签约方法下的子步骤
+            # （加入A / 加入B）=2，比签约方法更低一级，前端用不同符号标记。
+            heading = {"kind": "heading", "text": line, "group": state["group"]}
+            if in_sign_method and line not in BASE_INFO_FIELDS:
+                heading["depth"] = 2
+            elif seen_section:
+                heading["depth"] = 1
+            blocks.append(heading)
             state["last_event_group"] = None
             if line == "签约方法":
                 in_sign_method = True

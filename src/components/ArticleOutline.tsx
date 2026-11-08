@@ -58,15 +58,15 @@ export default function ArticleOutline({ items, onJump }: Props) {
       </button>
 
       {open && (
-        <ol id={listId} className="max-h-[320px] overflow-y-auto border-t border-line px-[10px] py-2">
-          {numberOutline(items).map((item) => (
-            <li
-              key={item.id}
-              className={cn('relative', item.depth > 0 && 'ml-[7px] pl-[15px]')}
-            >
-              {item.depth > 0 && (
-                <span aria-hidden="true" className="absolute bottom-[8px] left-0 top-[8px] w-px bg-line" />
-              )}
+          <ol id={listId} className="max-h-[320px] overflow-y-auto border-t border-line px-[10px] py-2">
+            {numberOutline(items).map((item) => (
+              <li
+                key={item.id}
+                className={cn('relative', item.depth > 1 ? 'ml-[14px] pl-[15px]' : item.depth > 0 && 'ml-[7px] pl-[15px]')}
+              >
+                {item.depth > 0 && (
+                  <span aria-hidden="true" className="absolute bottom-[8px] left-0 top-[8px] w-px bg-line" />
+                )}
               <button
                 className="flex w-full items-start gap-2 rounded-ui-sm px-2 py-[7px] text-left text-ui-xs leading-[1.65] text-brand hover:bg-brand-soft hover:no-underline"
                 type="button"

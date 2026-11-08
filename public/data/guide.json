@@ -7738,7 +7738,8 @@
             {
               "kind": "heading",
               "text": "签约金",
-              "group": 2
+              "group": 2,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -7748,7 +7749,8 @@
             {
               "kind": "heading",
               "text": "比较喜欢的物品",
-              "group": 4
+              "group": 4,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -7758,7 +7760,8 @@
             {
               "kind": "heading",
               "text": "可创作作品",
-              "group": 6
+              "group": 6,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -7789,12 +7792,14 @@
             {
               "kind": "heading",
               "text": "签约方法",
-              "group": 11
+              "group": 11,
+              "depth": 1
             },
             {
               "kind": "heading",
               "text": "加入A",
-              "group": 12
+              "group": 12,
+              "depth": 2
             },
             {
               "kind": "event",
@@ -7805,7 +7810,8 @@
             {
               "kind": "heading",
               "text": "加入B",
-              "group": 14
+              "group": 14,
+              "depth": 2
             },
             {
               "kind": "event",
@@ -7834,7 +7840,8 @@
             {
               "kind": "heading",
               "text": "加入后续",
-              "group": 18
+              "group": 18,
+              "depth": 1
             },
             {
               "kind": "event",
@@ -7851,7 +7858,8 @@
             {
               "kind": "heading",
               "text": "与SD相关事件",
-              "group": 21
+              "group": 21,
+              "depth": 1
             },
             {
               "kind": "event",
@@ -8197,7 +8205,8 @@
             {
               "kind": "heading",
               "text": "出国后的恋情",
-              "group": 65
+              "group": 65,
+              "depth": 1
             },
             {
               "kind": "event",
@@ -8271,7 +8280,8 @@
             {
               "kind": "heading",
               "text": "与姚子奇相关事件（要触发最好不要引发出国事件）",
-              "group": 75
+              "group": 75,
+              "depth": 1
             },
             {
               "kind": "event",
@@ -8417,7 +8427,8 @@
             {
               "kind": "heading",
               "text": "和丹尼斯复合",
-              "group": 94
+              "group": 94,
+              "depth": 1
             },
             {
               "kind": "event",
@@ -8518,7 +8529,8 @@
             {
               "kind": "heading",
               "text": "与主角的感情结局达成条件",
-              "group": 107
+              "group": 107,
+              "depth": 1
             },
             {
               "kind": "paragraph",

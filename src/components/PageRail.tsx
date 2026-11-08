@@ -104,7 +104,7 @@ export default function PageRail({ items, onJump }: Props) {
             {numbered.map((item) => {
               const isActive = item.id === active;
               return (
-                <li key={item.id} className={cn('relative', item.depth > 0 && 'ml-[6px] pl-[11px]')}>
+                <li key={item.id} className={cn('relative', item.depth > 1 ? 'ml-[13px] pl-[11px]' : item.depth > 0 && 'ml-[6px] pl-[11px]')}>
                   {item.depth > 0 && (
                     <span
                       aria-hidden="true"
