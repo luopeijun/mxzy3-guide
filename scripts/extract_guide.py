@@ -932,6 +932,13 @@ def _append_event_like(
         state["group"] = group
         return
 
+    if not has_content:
+        # 前言区（第一个事件 / 章节 / 选项之前）的任何注解，包括普通段落形式的
+        # 路线规则（如「与路敏相关的事件…」「两人的探班事件…」），都合并进
+        # 那一个黄色提示框，不当白底正文，保证整段前言是同一个框。
+        group = _merge_intro_note(blocks, group, state, tidied)
+        return
+
     group += 1
     blocks.append({**cls, "group": group})
     state["group"] = group
