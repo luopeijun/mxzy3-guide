@@ -1100,17 +1100,24 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             j += 1
         next_line = lines[j].strip() if j < len(lines) else ""
         follows_event = bool(EVENT_LINE_RE.match(next_line) or EVENT_PLAIN_RE.match(next_line))
-        is_title = follows_event and "：" not in line and ":" not in line
+        is_title = (
+            follows_event
+            and "：" not in line
+            and ":" not in line
+            # 括号开头的行（如加入B 的限定说明）不是标题，落入正文/事件卡分支。
+            and not line.startswith(("（", "("))
+        )
         cls = classify(line)
         if cls["kind"] == "heading" or is_title:
             state["group"] += 1
-            # 标题层级：section=0；section 下的副标题=1；签约方法下的子步骤
-            # （加入A / 加入B）=2，比签约方法更低一级，前端用不同符号标记。
+            # 标题层级：section=0；section 下的副标题=1；再低一级=2（签约方法的
+            # 加入A / 加入B；或源文本里缩进 2 空格的分组标题，如萧依莉的
+            # 重要事件 / 泪洒片场），前端用不同符号标记。
             heading = {"kind": "heading", "text": line, "group": state["group"]}
             if in_sign_method and line not in BASE_INFO_FIELDS:
                 heading["depth"] = 2
             elif seen_section:
-                heading["depth"] = 1
+                heading["depth"] = 1 if indent < 2 else 2
             blocks.append(heading)
             state["last_event_group"] = None
             if line == "签约方法":
@@ -1125,8 +1132,9 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
                 # 并把该子步骤紧跟的纯说明文字标记为事件卡。
                 method_step_pending = in_sign_method and line != "签约方法"
             continue
-        # 签约方法 → 加入A / 加入B 子步骤紧跟的纯说明文字（非编号事件、非圆点列表）
-        # 渲染为白底事件卡，与编号事件统一样式。
+        # 签约方法 → 加入A / 加入B 子步骤下的纯说明文字（非编号事件、非圆点列表）
+        # 渲染为白底事件卡，与编号事件统一样式；连续多段说明都各自成卡（萧依莉
+        # 加入A 有四段），直到出现事件/标题/圆点/提示等其它块类型再复位。
         state["group"] += 1
         if method_step_pending and indent < 4:
             text = cls.get("text", line)
@@ -1136,7 +1144,7 @@ def build_character_blocks(path: Path, *, page_title: str, mark_cg: bool = False
             })
         else:
             blocks.append({**cls, "group": state["group"]})
-        method_step_pending = False
+            method_step_pending = False
     return blocks
 
 
