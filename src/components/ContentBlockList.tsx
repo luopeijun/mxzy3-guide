@@ -69,8 +69,9 @@ function BlockView({ block }: { block: IndexedBlock }) {
       return (
         <h3
           id={block.id ?? `block-${block.index}`}
-          className="mt-5 mb-2 scroll-mt-[18px] border-l-[3px] border-brand pl-[10px] text-ui-md font-bold text-brand-strong"
+          className="mt-5 mb-2 flex scroll-mt-[18px] items-center gap-2 text-ui-md font-bold text-brand-strong"
         >
+          <span aria-hidden className="inline-block h-2 w-2 shrink-0 rotate-45 bg-brand" />
           {block.text}
         </h3>
       );
