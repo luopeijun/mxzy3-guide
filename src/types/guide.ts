@@ -103,6 +103,10 @@ export interface GuideNode {
   aliases?: string[];
   sourceTitle?: string;
   description?: string;
+  /** Small portrait shown beside the sidebar tree row (character pages). */
+  avatar?: string;
+  /** Wide image shown at the top of the article content (character pages). */
+  cover?: string;
   status: 'ready' | 'missing';
   requirements?: NodeRequirements;
   blocks: ContentBlock[];

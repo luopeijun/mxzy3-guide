@@ -7727,6 +7727,8 @@
           "id": "characters/lin-fenfen",
           "title": "林芬芬",
           "status": "ready",
+          "avatar": "images/characters/lin-fenfen-logo.png",
+          "cover": "images/characters/lin-fenfen-cover.jpg",
           "blocks": [
             {
               "kind": "section",

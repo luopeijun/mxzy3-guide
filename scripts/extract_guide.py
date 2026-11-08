@@ -53,6 +53,20 @@ DEFAULT_LUOUSANG_LUFENG = SOURCES / "luousang-only-lufeng.txt"
 DEFAULT_LUOUSANG_LUFENG_SANGHEBEI = SOURCES / "luousang-lufeng-sanghebei.txt"
 DEFAULT_LUOUSANG_LUFENG_OUYIQING = SOURCES / "luousang-lufeng-ouyiqing.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
+# 角色头像 / 封面按约定命名放在 public/images/characters/：`<slug>-logo.*` 是侧栏
+# 树行的头像，`<slug>-cover.*` 是正文页顶部的封面。文件存在才写进节点字段。
+PUBLIC = ROOT / "public"
+CHARACTER_IMAGES = PUBLIC / "images" / "characters"
+IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp")
+
+
+def _character_image(slug: str, kind: str) -> str | None:
+    """Return the web path (relative to BASE_URL) of `<slug>-<kind>` image."""
+    for ext in IMAGE_EXTS:
+        path = CHARACTER_IMAGES / f"{slug}-{kind}{ext}"
+        if path.exists():
+            return f"images/characters/{slug}-{kind}{ext}"
+    return None
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
 # `A.xxx` in most paragraphs, but the docx also writes `C 关古威…` with a plain
@@ -1661,6 +1675,8 @@ def make_node(
     blocks: list[dict] | None = None,
     children: list[dict] | None = None,
     requirements: dict | None = None,
+    avatar: str | None = None,
+    cover: str | None = None,
     status: str = "ready",
 ) -> dict:
     node: dict = {"id": node_id, "title": title, "status": status}
@@ -1672,6 +1688,10 @@ def make_node(
         node["description"] = description
     if requirements:
         node["requirements"] = requirements
+    if avatar:
+        node["avatar"] = avatar
+    if cover:
+        node["cover"] = cover
     node["blocks"] = blocks or []
     node["children"] = children or []
     return node
@@ -2510,6 +2530,8 @@ def build(
         character_items.append(make_node(
             f"characters/{slug}", title,
             aliases=aliases or None,
+            avatar=_character_image(slug, "logo"),
+            cover=_character_image(slug, "cover"),
             blocks=blocks,
         ))
     unused = set(character_by_title) - {title for title, _, _ in CHARACTERS}

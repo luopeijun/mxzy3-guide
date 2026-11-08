@@ -164,6 +164,15 @@ function TreeNode({
         >
           {hasChildren ? (expanded ? '▾' : '▸') : '·'}
         </button>
+        {node.avatar && (
+          <img
+            src={`${import.meta.env.BASE_URL}${node.avatar}`}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="h-5 w-5 shrink-0 rounded-full border border-line-strong object-cover"
+          />
+        )}
         <button
           className="min-w-0 flex-1 truncate p-0 text-left"
           type="button"
