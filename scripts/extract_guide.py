@@ -31,6 +31,7 @@ DEFAULT_CERTIFICATES = SOURCES / "certificates.txt"
 DEFAULT_PRODUCERS = SOURCES / "producers.txt"
 DEFAULT_SELFMADE = SOURCES / "self-made.txt"
 DEFAULT_TITLES = SOURCES / "titles.txt"
+DEFAULT_MONOPOLY = SOURCES / "monopoly.txt"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 
 EVENT_RE = re.compile(r"^([0-9０-９]+(?:[－\-][0-9０-９]+)?(?:丵)?)\s*[（(]")
@@ -812,6 +813,73 @@ def build_titles_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+MONOPOLY_QUESTION_RE = re.compile(r"^([0-9]+)\)\s*(.+)$")
+MONOPOLY_ANSWER_RE = re.compile(r"^Ans[:：]\s*(.+)$")
+# `Ans: 斧头帮 1) 明星志愿三中，…` — the answer and the next question on one line.
+MONOPOLY_MERGED_RE = re.compile(r"^(Ans[:：]\s*.*?)\s+([0-9]+\)\s*.+)$")
+
+
+def build_monopoly_blocks(path: Path) -> list[dict]:
+    """Turn the 大富翁题目答案 txt into a per-question answer bank.
+
+    Every `N) 题目` line carries the same N for a whole batch, since each batch
+    is the set of questions that can be dealt at slot N; a change of N opens a
+    new `第N题` sub-heading and every `Ans: …` line under it becomes one `qa`
+    block (question + answer). The trailing `卡片功用` block is a section whose
+    `名称: 说明` lines are paragraphs.
+    """
+    raw = [line.strip() for line in _read_text(path).splitlines()]
+    lines: list[str] = []
+    for line in raw:
+        merged = MONOPOLY_MERGED_RE.match(line)
+        if merged:
+            lines.extend([merged.group(1).strip(), merged.group(2).strip()])
+        else:
+            lines.append(line)
+
+    blocks: list[dict] = []
+    group = 0
+    number: int | None = None
+    question = ""
+    in_cards = False
+    for line in lines:
+        if not line or line.startswith("★"):
+            continue
+        if line.startswith("卡片功用"):
+            in_cards = True
+            group += 1
+            blocks.append({"kind": "section", "text": "卡片功用", "depth": 0, "group": group})
+            continue
+        if in_cards:
+            blocks.append({
+                "kind": "paragraph",
+                "text": _tidy(re.sub(r"\s*[:：]\s*", "：", line, count=1)),
+                "group": group,
+            })
+            continue
+        ask = MONOPOLY_QUESTION_RE.match(line)
+        if ask:
+            current = int(ask.group(1))
+            question = ask.group(2).strip()
+            if current != number:
+                number = current
+                group += 1
+                blocks.append({"kind": "heading", "text": f"第{current}题", "group": group})
+            continue
+        ans = MONOPOLY_ANSWER_RE.match(line)
+        if ans:
+            blocks.append({
+                "kind": "qa",
+                "text": _tidy(question),
+                "answer": _tidy(ans.group(1).strip()),
+                "group": group,
+            })
+            continue
+        group += 1
+        blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+    return blocks
+
+
 def build(
     docx: Path,
     questions: Path,
@@ -824,6 +892,7 @@ def build(
     producers: Path,
     selfmade: Path,
     titles: Path,
+    monopoly: Path,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -906,7 +975,9 @@ def build(
     game_items += [
         make_node("game-guide/items", "物品总览", status="missing"),
         make_node("game-guide/favorite-items", "艺人喜爱物品一览", status="missing"),
-        make_node("game-guide/monopoly-answers", "大富翁B&B&B答案", status="missing"),
+        make_node("game-guide/monopoly-answers", "大富翁BaBaBa答案",
+                  source_title="大富翁题目答案.txt",
+                  blocks=build_monopoly_blocks(monopoly)),
         make_node(
             "game-guide/endings", "结局条件一览",
             blocks=build_blocks(ending_lines),
@@ -1042,6 +1113,7 @@ def main() -> None:
     producers = Path(sys.argv[9]) if len(sys.argv) > 9 else DEFAULT_PRODUCERS
     selfmade = Path(sys.argv[10]) if len(sys.argv) > 10 else DEFAULT_SELFMADE
     titles = Path(sys.argv[11]) if len(sys.argv) > 11 else DEFAULT_TITLES
+    monopoly = Path(sys.argv[12]) if len(sys.argv) > 12 else DEFAULT_MONOPOLY
     if not docx.exists():
         raise SystemExit(f"docx not found: {docx}")
     if not questions.exists():
@@ -1064,7 +1136,9 @@ def main() -> None:
         raise SystemExit(f"self-made txt not found: {selfmade}")
     if not titles.exists():
         raise SystemExit(f"titles txt not found: {titles}")
-    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade, titles)
+    if not monopoly.exists():
+        raise SystemExit(f"monopoly txt not found: {monopoly}")
+    data = build(docx, questions, events, stats, scenes, work, training, certificates, producers, selfmade, titles, monopoly)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

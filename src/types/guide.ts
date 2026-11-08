@@ -5,6 +5,7 @@ export type ContentBlockKind =
   | 'option'
   | 'note'
   | 'paragraph'
+  | 'qa'
   | 'table';
 
 export interface TableColumn {
@@ -45,6 +46,8 @@ export interface ContentBlock {
   hint?: string;
   /** Nesting level of a section (0) or a sub-title (1), used by the outline. */
   depth?: number;
+  /** Answer of a `qa` block, shown under the question. */
+  answer?: string;
   /** Tabular payload of a `table` block. */
   table?: TableData;
 }

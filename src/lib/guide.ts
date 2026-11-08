@@ -60,7 +60,9 @@ function tableText(block: ContentBlock): string {
 /** Characters in a node's own body text; whitespace is ignored, punctuation kept. */
 export function countChars(node: GuideNode): number {
   return node.blocks.reduce(
-    (sum, block) => sum + (block.text + tableCells(block).join('')).replace(/\s/g, '').length,
+    (sum, block) =>
+      sum +
+      (block.text + (block.answer ?? '') + tableCells(block).join('')).replace(/\s/g, '').length,
     0,
   );
 }
@@ -90,7 +92,15 @@ function snippetOf(text: string, query: string): string {
 
 /** Everything in a block that the search box should look at. */
 function searchableText(block: ContentBlock): string {
-  return [block.text, block.action, block.reward, block.label, block.targetLabel, tableText(block)]
+  return [
+    block.text,
+    block.answer,
+    block.action,
+    block.reward,
+    block.label,
+    block.targetLabel,
+    tableText(block),
+  ]
     .filter(Boolean)
     .join(' ');
 }
