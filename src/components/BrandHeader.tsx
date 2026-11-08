@@ -1,6 +1,7 @@
 import type { GuideNode, GuideSummary } from '../types/guide';
 import { formatCount } from '../lib/guide';
 import { cn } from '../lib/cn';
+import { HIGHLIGHT_ENABLED } from '../hooks/useHighlightPref';
 import HighlightSwitch from './HighlightSwitch';
 
 interface Props {
@@ -52,7 +53,7 @@ export default function BrandHeader({
             ))}
           </nav>
 
-          <HighlightSwitch />
+          {HIGHLIGHT_ENABLED && <HighlightSwitch />}
 
           <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
             {summary.items} 条目 · {formatCount(summary.chars)} 字

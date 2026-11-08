@@ -1,5 +1,5 @@
 import { parseInline, plainText } from '../lib/markup';
-import { useHighlightPref } from '../hooks/useHighlightPref';
+import { useHighlightPref, HIGHLIGHT_ENABLED } from '../hooks/useHighlightPref';
 
 /** Text with the inline markers rendered as highlights. One look for every
  *  category — soft tint, bold, deep tone — the same treatment the notice summary
@@ -8,7 +8,11 @@ import { useHighlightPref } from '../hooks/useHighlightPref';
  *
  *  The header switch can turn tints off for body copy: the markers are stripped
  *  rather than shown, so the sentence still reads normally. `persistent` opts a
- *  spot out of that switch (the 速览 card, where the tint carries the structure). */
+ *  spot out of that switch (the 速览 card, where the tint carries the structure).
+ *
+ *  When HIGHLIGHT_ENABLED is false the body-copy tints are parked (the header
+ *  toggle is hidden and non-persistent callers fall back to plain text), but
+ *  the 速览 card keeps its tint. The marker data is preserved for later. */
 
 interface Props {
   text: string;
@@ -24,6 +28,12 @@ const TONE_CLASS = {
 
 export default function HighlightText({ text, className, tone = 'brand', persistent }: Props) {
   const { enabled } = useHighlightPref();
+  // Parked: only body copy goes plain. The 速览 card (persistent) keeps its
+  // tint because there the tint *is* the structure the user wants preserved —
+  // hiding the body highlight must not strip the notice-condition quick view.
+  if (!HIGHLIGHT_ENABLED && !persistent) {
+    return <span className={className}>{plainText(text)}</span>;
+  }
   const segments = parseInline(text);
   if (!enabled && !persistent) {
     return <span className={className}>{plainText(text)}</span>;
