@@ -29,10 +29,7 @@ export default function BrandHeader({
             className="h-[26px] w-[26px] shrink-0 rotate-45 rounded-[7px] bg-[linear-gradient(135deg,#b0567a,#7a3550)] shadow-[0_3px_8px_rgba(122,53,80,0.32)]"
             aria-hidden="true"
           />
-          <span className="flex flex-col whitespace-nowrap leading-[1.25]">
-            <span className="text-ui-md font-bold tracking-[0.02em]">明星志愿3 · 攻略助手</span>
-            <span className="text-ui-2xs text-ink-faint">分级浏览 / 原片 + 资料集</span>
-          </span>
+          <span className="whitespace-nowrap text-ui-md font-bold tracking-[0.02em]">明星志愿3 · 攻略助手</span>
         </button>
 
         <nav className="ml-auto flex items-center gap-1 tab:gap-0 nav:hidden" aria-label="攻略分类">
