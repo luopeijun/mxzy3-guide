@@ -11,18 +11,23 @@ import TypeTag from './TypeTag';
 interface Props {
   blocks: ContentBlock[];
   onJump?: (anchor: string) => void;
+  /** 子事件（如 3-1 / 3-1-1）按其编号层级缩进，呈现父子关系。先只在路欧桑章节开启。 */
+  indentSubEvents?: boolean;
 }
 
 /**
  * One event line plus everything that belongs to it (options, follow-up text,
  * reminders) rendered inside a single card, so an event never gets split apart.
  */
-function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
+function EventCard({ blocks, indent }: { blocks: IndexedBlock[]; indent?: boolean }) {
   const [head, ...rest] = blocks;
   const cg = head.cg;
+  // 层级 = 编号里 `－`/`-` 的个数：3 → 0，3-1 → 1，3-1-1 → 2。
+  const depth = indent && head.label ? (head.label.match(/[-－]/g)?.length ?? 0) : 0;
+  const indentStyle = depth > 0 ? { marginLeft: depth * 22 } : undefined;
 
   return (
-    <div className={`mb-3 rounded-ui-sm border px-3 py-2.5 ${cg ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}>
+    <div style={indentStyle} className={`mb-3 rounded-ui-sm border px-3 py-2.5 ${cg ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}>
       <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
         {head.label && (
           <span className={`mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7] ${cg ? "bg-brand text-white" : "bg-brand-soft text-brand-strong"}`}>
@@ -220,7 +225,7 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
   }
 }
 
-export default function ContentBlockList({ blocks, onJump }: Props) {
+export default function ContentBlockList({ blocks, onJump, indentSubEvents }: Props) {
   const groups = groupBlocks(blocks);
   if (!groups.length) return null;
 
@@ -242,7 +247,7 @@ export default function ContentBlockList({ blocks, onJump }: Props) {
         }
         // Numbered events keep their options and reminders inside one card.
         if (first.kind === 'event') {
-          return <EventCard key={group.group} blocks={group.blocks} />;
+          return <EventCard key={group.group} blocks={group.blocks} indent={indentSubEvents} />;
         }
         // Catalogue entries are one card each, with no section wrapper around them.
         if (first.kind === 'item') {

@@ -45,7 +45,11 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
         <ArticleHeader node={node} />
         {node.requirements && <RequirementsCard requirements={node.requirements} />}
         {!wide && <ArticleOutline items={outline} onJump={jump} />}
-        <ContentBlockList blocks={node.blocks} onJump={jump} />
+        <ContentBlockList
+          blocks={node.blocks}
+          onJump={jump}
+          indentSubEvents={node.id.startsWith('other-events/luousang/')}
+        />
         {node.children.length > 0 && (
           <ChildLinks
             nodes={node.children}
