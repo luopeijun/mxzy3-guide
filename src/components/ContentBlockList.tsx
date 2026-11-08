@@ -11,40 +11,103 @@ import TypeTag from './TypeTag';
 interface Props {
   blocks: ContentBlock[];
   onJump?: (anchor: string) => void;
-  /** 子事件（如 3-1 / 3-1-1）按其编号层级缩进，呈现父子关系。先只在路欧桑章节开启。 */
+  /** 子事件（如 3-1 / 3-1-1）按其编号层级嵌套到父事件之下，呈现父子关系。先只在路欧桑章节开启。 */
   indentSubEvents?: boolean;
 }
 
-/**
- * One event line plus everything that belongs to it (options, follow-up text,
- * reminders) rendered inside a single card, so an event never gets split apart.
- */
-function EventCard({ blocks, indent }: { blocks: IndexedBlock[]; indent?: boolean }) {
-  const [head, ...rest] = blocks;
-  const cg = head.cg;
-  // 层级 = 编号里 `－`/`-` 的个数：3 → 0，3-1 → 1，3-1-1 → 2。
-  const depth = indent && head.label ? (head.label.match(/[-－]/g)?.length ?? 0) : 0;
-  const indentStyle = depth > 0 ? { marginLeft: depth * 22 } : undefined;
+type EventGroup = { group: number; blocks: IndexedBlock[] };
 
+/** 层级 = 编号里 `－`/`-` 的个数：3 → 0，3-1 → 1，3-1-1 → 2。 */
+function eventDepth(label?: string): number {
+  if (!label) return 0;
+  return label.match(/[-－]/g)?.length ?? 0;
+}
+
+interface EventNode {
+  group: EventGroup;
+  children: EventNode[];
+}
+
+/** 按事件编号层级把连续的事件分组组织成树：层级比前驱小 1 且紧跟其后的，就是它的子事件。 */
+function buildEventTree(groups: EventGroup[]): { roots: EventNode[]; byGroup: Map<number, EventNode> } {
+  const roots: EventNode[] = [];
+  const byGroup = new Map<number, EventNode>();
+  const stack: EventNode[] = [];
+  for (const g of groups) {
+    const depth = eventDepth(g.blocks[0]?.label);
+    const node: EventNode = { group: g, children: [] };
+    byGroup.set(g.group, node);
+    while (stack.length > depth) stack.pop();
+    if (stack.length === depth) {
+      const parent = stack[depth - 1];
+      if (parent) parent.children.push(node);
+      else roots.push(node);
+      stack.push(node);
+    } else {
+      // 编号层级出现断层（理论上不会出现）时，挂到最近的前驱或根，避免丢失。
+      if (stack.length > 0) stack[stack.length - 1].children.push(node);
+      else roots.push(node);
+      stack.push(node);
+    }
+  }
+  return { roots, byGroup };
+}
+
+/** 事件卡外壳：CG 事件用玫红描边 + 浅粉底，普通事件用浅灰描边 + 白底。 */
+function eventCardClasses(cg: boolean): string {
+  return `rounded-ui-sm border px-3 py-2.5 ${cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface'}`;
+}
+
+/** 事件卡首行：编号 pill + 类型 tag + CG 徽标 + 正文。 */
+function EventHead({ head }: { head: IndexedBlock }) {
+  const cg = head.cg;
   return (
-    <div style={indentStyle} className={`mb-3 rounded-ui-sm border px-3 py-2.5 ${cg ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}>
-      <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
-        {head.label && (
-          <span className={`mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7] ${cg ? "bg-brand text-white" : "bg-brand-soft text-brand-strong"}`}>
-            {head.label}
-          </span>
-        )}
-        <span className="min-w-0 flex-1 break-words">
-          {head.tag && <TypeTag label={head.tag} />}
-          {cg && (
-            <span className="mr-1.5 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-gold align-middle">CG</span>
-          )}
-          <HighlightText text={head.text} />
+    <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
+      {head.label && (
+        <span className={`mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7] ${cg ? 'bg-brand text-white' : 'bg-brand-soft text-brand-strong'}`}>
+          {head.label}
         </span>
-      </div>
+      )}
+      <span className="min-w-0 flex-1 break-words">
+        {head.tag && <TypeTag label={head.tag} />}
+        {cg && (
+          <span className="mr-1.5 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-gold align-middle">CG</span>
+        )}
+        <HighlightText text={head.text} />
+      </span>
+    </div>
+  );
+}
+
+/** 平铺（非嵌套）模式下的一张事件卡：自身内容 + 自己的选项/提醒。 */
+function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
+  const [head, ...rest] = blocks;
+  return (
+    <div className={`mb-3 ${eventCardClasses(!!head.cg)}`}>
+      <EventHead head={head} />
       {rest.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">
           {rest.map((block) => <EventDetail key={block.index} block={block} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 嵌套模式下的一张事件卡：自身内容 + 自己的选项/提醒 + 递归挂在它之下的子事件。 */
+function EventNode({ node }: { node: EventNode }) {
+  const [head, ...rest] = node.group.blocks;
+  return (
+    <div className={eventCardClasses(!!head.cg)}>
+      <EventHead head={head} />
+      {rest.length > 0 && (
+        <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">
+          {rest.map((block) => <EventDetail key={block.index} block={block} />)}
+        </div>
+      )}
+      {node.children.length > 0 && (
+        <div className="mt-2.5 flex flex-col gap-2.5 border-l-2 border-brand-line pl-3">
+          {node.children.map((child) => <EventNode key={child.group.group} node={child} />)}
         </div>
       )}
     </div>
@@ -234,11 +297,28 @@ export default function ContentBlockList({ blocks, onJump, indentSubEvents }: Pr
   // heading 才作为次级标题。
   const flat = !blocks.some((b) => b.kind === 'section');
 
+  // 嵌套模式（仅路欧桑）：把事件分组按编号层级组织成树，子事件挂在父事件之下。
+  const eventGroups = groups.filter((g) => g.blocks[0]?.kind === 'event');
+  const { roots, byGroup } = buildEventTree(eventGroups);
+  const rootIds = new Set(roots.map((r) => r.group.group));
+
   return (
     <article>
       {groups.map((group, index) => {
         const [first, ...rest] = group.blocks;
         const options = rest.filter((block) => block.kind === 'option');
+
+        // 嵌套模式下：子事件由父事件递归渲染，这里跳过；根事件渲染整棵子树。
+        if (first.kind === 'event' && indentSubEvents) {
+          if (!rootIds.has(group.group)) return null;
+          const node = byGroup.get(group.group)!;
+          return (
+            <div key={group.group} className="mb-3">
+              <EventNode node={node} />
+            </div>
+          );
+        }
+
         // A labelled heading with options is a question card (see QuestionCard).
         if (onJump && first.kind === 'heading' && first.id && options.length) {
           return (
@@ -247,7 +327,7 @@ export default function ContentBlockList({ blocks, onJump, indentSubEvents }: Pr
         }
         // Numbered events keep their options and reminders inside one card.
         if (first.kind === 'event') {
-          return <EventCard key={group.group} blocks={group.blocks} indent={indentSubEvents} />;
+          return <EventCard key={group.group} blocks={group.blocks} />;
         }
         // Catalogue entries are one card each, with no section wrapper around them.
         if (first.kind === 'item') {
