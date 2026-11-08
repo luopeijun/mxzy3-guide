@@ -32,7 +32,7 @@ function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
         <span className="min-w-0 flex-1 break-words">
           {head.tag && <TypeTag label={head.tag} />}
           {cg && (
-            <span className="ml-1.5 inline-flex items-center rounded-ui-xs bg-gold px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-white align-middle">CG</span>
+            <span className="mx-1 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-gold align-middle">CG</span>
           )}
           <HighlightText text={head.text} />
         </span>

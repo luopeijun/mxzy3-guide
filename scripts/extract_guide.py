@@ -2423,22 +2423,22 @@ def build(
                 make_node(
                     "other-events/luousang/only-ouyiqing", "只有欧怡青在旗下",
                     source_title="只有欧怡青在旗下.txt",
-                    blocks=build_event_like_blocks(luousang_ouyiqing_events, page_title="只有欧怡青在旗下"),
+                    blocks=build_event_like_blocks(luousang_ouyiqing_events, page_title="只有欧怡青在旗下", mark_cg=True),
                 ),
                 make_node(
                     "other-events/luousang/only-lufeng", "只有路风在旗下",
                     source_title="只有路风在旗下.txt",
-                    blocks=build_event_like_blocks(luousang_lufeng_events, page_title="只有路风在旗下"),
+                    blocks=build_event_like_blocks(luousang_lufeng_events, page_title="只有路风在旗下", mark_cg=True),
                 ),
                 make_node(
                     "other-events/luousang/lufeng-sanghebei", "路风和桑禾蓓都在旗下",
                     source_title="路风和桑禾蓓都在旗下.txt",
-                    blocks=build_event_like_blocks(luousang_lufeng_sanghebei_events, page_title="路风和桑禾蓓都在旗下"),
+                    blocks=build_event_like_blocks(luousang_lufeng_sanghebei_events, page_title="路风和桑禾蓓都在旗下", mark_cg=True),
                 ),
                 make_node(
                     "other-events/luousang/lufeng-ouyiqing", "路风和欧怡青都在旗下",
                     source_title="路风和欧怡青都在旗下.txt",
-                    blocks=build_event_like_blocks(luousang_lufeng_ouyiqing_events, page_title="路风和欧怡青都在旗下"),
+                    blocks=build_event_like_blocks(luousang_lufeng_ouyiqing_events, page_title="路风和欧怡青都在旗下", mark_cg=True),
                 ),
             ],
         ),
