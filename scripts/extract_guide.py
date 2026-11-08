@@ -258,6 +258,18 @@ NOTICE_MUTE: dict[str, tuple[str, ...]] = {
     "银河": ("贺总",),
 }
 
+# Precise, event-scoped highlights the generic pass would otherwise miss or
+# suppress. `上个事件一个月后` is rejected by _time_is_specific (no digit or
+# 半/两 anchor) and `王导` is not in PERSON_WORDS, yet on this page the reader
+# must see them — the timing of event 69 and the self-service rule of event 71.
+# Keyed by (chapter title, event label) so a phrase that recurs later on the
+# same page (event 73 also says `上个事件一个月后`) is left plain; and nothing
+# leaks to other chapters, so "highlight only what matters" still holds.
+NOTICE_FORCE: dict[tuple[str, str], list[tuple[str, str]]] = {
+    ("昆仑历险", "69"): [(r"上个事件一个月后", "时间")],
+    ("昆仑历险", "71"): [(r"（王导不会主动上门，需自己前去预约）", "条件")],
+}
+
 
 def read_paragraphs(docx: Path) -> list[tuple[str, str]]:
     """Return (style, text) for every paragraph, TOC paragraphs included."""
@@ -880,19 +892,45 @@ def mark_highlights(
     return "\n".join(out)
 
 
+def _apply_forced(text: str, forced: list[tuple[str, str]]) -> str:
+    """Inject page-scoped `{kind:…}` markers the generic pass does not reach.
+
+    Runs after `mark_highlights`, so any already-wrapped span is skipped and the
+    new marker is recorded so later patterns in the same block cannot overlap it.
+    One match per pattern per block is enough — these are deliberate, fixed
+    phrases, not a scan for every candidate.
+    """
+    if not forced:
+        return text
+    wrapped = [(m.start(), m.end()) for m in re.finditer(r"\{[^{}]*:[^{}]*\}", text)]
+    for pattern, kind in forced:
+        for match in re.compile(pattern).finditer(text):
+            start, end = match.start(), match.end()
+            if any(start < other_end and other_start < end for other_start, other_end in wrapped):
+                continue
+            token = f"{{{kind}:{match.group(0)}}}"
+            text = text[:start] + token + text[end:]
+            wrapped.append((start, start + len(token)))
+            break
+    return text
+
+
 def annotate_highlight_blocks(
     blocks: list[dict], title: str = "", mute: tuple[str, ...] = ()
 ) -> None:
     """Add highlights to prose blocks; headings and sections stay plain.
 
     One `taken` set per page, so a repeated prop or name is only tinted once,
-    and one `mute` list for names the page itself makes obvious.
+    and one `mute` list for names the page itself makes obvious. `NOTICE_FORCE`
+    then pins a few phrases the generic rules miss on this specific page.
     """
     taken: set[str] = set()
     muted = frozenset(mute)
     for block in blocks:
         if block["kind"] in {"event", "paragraph", "note", "option"}:
-            block["text"] = mark_highlights(block["text"], taken, title, muted)
+            text = mark_highlights(block["text"], taken, title, muted)
+            forced = NOTICE_FORCE.get((title, str(block.get("label", ""))), [])
+            block["text"] = _apply_forced(text, forced)
 
 
 def _split_preamble(line: str) -> tuple[str, str]:
