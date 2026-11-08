@@ -19401,15 +19401,16 @@
               "cg": true
             },
             {
-              "kind": "section",
+              "kind": "heading",
               "text": "与主角的感情（简体版需打上BL补丁）",
-              "group": 95
+              "group": 95,
+              "depth": 1
             },
             {
               "kind": "heading",
               "text": "达成结局条件",
               "group": 96,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "paragraph",
@@ -19467,7 +19468,7 @@
               "kind": "heading",
               "text": "同志传闻",
               "group": 105,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -19545,7 +19546,7 @@
               "kind": "heading",
               "text": "烟火",
               "group": 115,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
@@ -19583,7 +19584,7 @@
               "kind": "heading",
               "text": "表白",
               "group": 120,
-              "depth": 1
+              "depth": 2
             },
             {
               "kind": "event",
