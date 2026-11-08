@@ -1,15 +1,29 @@
 import { useMemo } from 'react';
 import type { GuideData } from '../../types/guide';
-import { buildPool, type LineKind, type TaskLine } from '../../lib/tracker';
+import { buildPool, type TaskLine } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
 import TaskLineCard from './TaskLineCard';
 
-const KIND_ORDER: LineKind[] = ['artist', 'luousang', 'non-artist'];
-const KIND_LABEL: Record<LineKind, string> = {
-  artist: '艺人任务线',
+/** Display groups, aligned to the guide's own top-level categories. The
+ *  non-artist pool from v2 is split into 经纪人事件簿 (game-guide) and 其他事件
+ *  (notices + other-events); 艺人事件簿 is the artist opt-in, and 路欧桑剧情
+ *  keeps its sign-off-dependent auto-branching. */
+type GroupKey = 'broker' | 'artist' | 'luousang' | 'other';
+
+const GROUP_ORDER: GroupKey[] = ['broker', 'other', 'artist', 'luousang'];
+const GROUP_LABEL: Record<GroupKey, string> = {
+  broker: '经纪人事件簿',
+  other: '其他事件',
+  artist: '艺人事件簿',
   luousang: '路欧桑剧情',
-  'non-artist': '其他事件',
 };
+
+function groupOf(line: TaskLine): GroupKey {
+  if (line.kind === 'artist') return 'artist';
+  if (line.kind === 'luousang') return 'luousang';
+  if (line.nodeId.startsWith('game-guide/')) return 'broker';
+  return 'other';
+}
 
 interface Props {
   data: GuideData;
@@ -26,9 +40,9 @@ export default function TrackerPool({ data }: Props) {
   const excludedCount = pool.length - visible.length;
 
   const groups = useMemo(() => {
-    const buckets: Record<LineKind, TaskLine[]> = { artist: [], luousang: [], 'non-artist': [] };
-    for (const line of visible) buckets[line.kind].push(line);
-    return KIND_ORDER.map((kind) => ({ kind, label: KIND_LABEL[kind], lines: buckets[kind] }));
+    const buckets: Record<GroupKey, TaskLine[]> = { broker: [], artist: [], luousang: [], other: [] };
+    for (const line of visible) buckets[groupOf(line)].push(line);
+    return GROUP_ORDER.map((key) => ({ key, label: GROUP_LABEL[key], lines: buckets[key] }));
   }, [visible]);
 
   return (
@@ -46,7 +60,7 @@ export default function TrackerPool({ data }: Props) {
         groups.map(
           (group) =>
             group.lines.length > 0 && (
-              <div key={group.kind} className="mb-6">
+              <div key={group.key} className="mb-6">
                 <h3 className="mb-2 text-ui-xs font-semibold text-ink-muted">
                   {group.label}
                   <span className="ml-1 text-ink-faint">（{group.lines.length}）</span>

@@ -54,7 +54,7 @@ export default function TrackerSetup({ data }: Props) {
         })}
       </div>
       <p className="mt-4 text-ui-2xs text-ink-faint">
-        已选 {selectedArtists.length} / {MAX_ARTISTS}。六大特殊通告、经纪人事件簿、其他事件（路欧桑除外）默认全部进入事件池，可在下方逐条「移出」或「放弃」。
+        已选 {selectedArtists.length} / {MAX_ARTISTS}。经纪人事件簿、其他事件（含六大特殊通告）默认全部进入事件池，可在下方逐条「移出」或「放弃」；路欧桑剧情会按你签约的组合自动挑选分支。
       </p>
     </section>
   );
