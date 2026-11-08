@@ -352,7 +352,7 @@ def classify(line: str) -> dict:
     return {"kind": "paragraph", "text": compact}
 
 
-def build_blocks(lines: list[str]) -> list[dict]:
+def build_blocks(lines: list[str], *, mark_cg: bool = False) -> list[dict]:
     """Split on blank paragraphs, keep group index for visual separation."""
     groups: list[list[str]] = []
     current: list[str] = []
@@ -368,7 +368,12 @@ def build_blocks(lines: list[str]) -> list[dict]:
     blocks: list[dict] = []
     for index, group in enumerate(groups):
         for line in group:
-            blocks.append({**classify(line), "group": index})
+            block = classify(line)
+            # 角色攻略（及其他用 build_blocks 的章节）里，事件正文含 "CG" 字样的
+            # 条目高亮该条事件：粉底卡片 + 浅金 CG 徽标。
+            if mark_cg and block["kind"] == "event":
+                block["cg"] = "CG" in block.get("text", "")
+            blocks.append({**block, "group": index})
     return blocks
 
 
@@ -621,7 +626,7 @@ def build_event_blocks(path: Path) -> list[dict]:
     return blocks
 
 
-def build_easyshop_blocks(path: Path) -> list[dict]:
+def build_easyshop_blocks(path: Path, *, mark_cg: bool = False) -> list[dict]:
     """Turn the Easyshop（ES 校园代言人）txt into blocks.
 
     The leading `★繁体版独有` line flags the whole chain as exclusive to the
@@ -646,12 +651,14 @@ def build_easyshop_blocks(path: Path) -> list[dict]:
         event = EVENT_LINE_RE.match(line)
         if event:
             group += 1
+            event_text = _tidy(line[event.end():].strip())
             blocks.append({
                 "kind": "event",
-                "text": _tidy(line[event.end():].strip()),
+                "text": event_text,
                 "label": event.group(1),
                 "tag": event.group(2),
                 "group": group,
+                "cg": bool(mark_cg and "CG" in event_text),
             })
             continue
         if OPTION_RE.match(line):
@@ -667,7 +674,7 @@ def build_easyshop_blocks(path: Path) -> list[dict]:
 SD_SECTION_RE = re.compile(r"^(恩怨|跳槽)(?:[（(](?P<note>[^）)]*)[）)])?$")
 
 
-def build_sd_blocks(path: Path) -> list[dict]:
+def build_sd_blocks(path: Path, *, mark_cg: bool = False) -> list[dict]:
     """Turn the SD相关事件 txt into blocks.
 
     `★SD相关` only repeats the page title; `★提示：…` becomes the intro note.
@@ -703,11 +710,13 @@ def build_sd_blocks(path: Path) -> list[dict]:
             continue
         event = EVENT_LINE_RE.match(line)
         if event:
+            event_text = _tidy(line[event.end():].strip())
             add(
                 "event",
-                line[event.end():].strip(),
+                event_text,
                 label=event.group(1),
                 tag=event.group(2),
+                cg=bool(mark_cg and "CG" in event_text),
             )
             continue
         if OPTION_RE.match(line):
@@ -915,7 +924,7 @@ def build_event_like_blocks(path: Path, *, page_title: str, mark_cg: bool = Fals
     return blocks
 
 
-def build_expansion_pages(path: Path) -> list[dict]:
+def build_expansion_pages(path: Path, *, mark_cg: bool = False) -> list[dict]:
     """资料片新增事件.txt 按 `★` 拆成多个章节页（方若绮 / 马智文 / 古芊菁）。"""
     lines = [ln.rstrip("\r") for ln in _read_text(path).split("\n")]
     pages: list[dict] = []
@@ -935,22 +944,22 @@ def build_expansion_pages(path: Path) -> list[dict]:
             continue
         if blocks is None or state is None:
             continue
-        _append_event_like(blocks, state, line)
+        _append_event_like(blocks, state, line, mark_cg=mark_cg)
     if blocks is not None:
         pages.append({"title": title, "blocks": blocks})
     return pages
 
 
-def build_father_blocks(path: Path) -> list[dict]:
-    return build_event_like_blocks(path, page_title="老爸相关")
+def build_father_blocks(path: Path, *, mark_cg: bool = False) -> list[dict]:
+    return build_event_like_blocks(path, page_title="老爸相关", mark_cg=mark_cg)
 
 
-def build_hollywood_blocks(path: Path) -> list[dict]:
-    return build_event_like_blocks(path, page_title="好莱坞")
+def build_hollywood_blocks(path: Path, *, mark_cg: bool = False) -> list[dict]:
+    return build_event_like_blocks(path, page_title="好莱坞", mark_cg=mark_cg)
 
 
-def build_will_blocks(path: Path) -> list[dict]:
-    return build_event_like_blocks(path, page_title="威尔相关")
+def build_will_blocks(path: Path, *, mark_cg: bool = False) -> list[dict]:
+    return build_event_like_blocks(path, page_title="威尔相关", mark_cg=mark_cg)
 
 
 NOTICE_TITLE_RE = re.compile(r"^★\s*(.+)$")
@@ -2328,7 +2337,7 @@ def build(
         character_items.append(make_node(
             f"characters/{slug}", title,
             aliases=aliases or None,
-            blocks=build_blocks(sections.texts[child["start"] + 1:child["end"]]),
+            blocks=build_blocks(sections.texts[child["start"] + 1:child["end"]], mark_cg=True),
         ))
     unused = set(character_by_title) - {title for title, _, _ in CHARACTERS}
     if unused:
@@ -2356,22 +2365,22 @@ def build(
     other_items = [
         make_node(
             "other-events/easyshop", "Easyshop事件",
-            blocks=build_easyshop_blocks(easyshop),
+            blocks=build_easyshop_blocks(easyshop, mark_cg=True),
         ),
         make_node(
             "other-events/sd", "SD相关事件",
             source_title="SD相关事件.txt",
-            blocks=build_sd_blocks(sd_events),
+            blocks=build_sd_blocks(sd_events, mark_cg=True),
         ),
         make_node(
             "other-events/father", "老爸相关事件",
             source_title="老爸相关事件.txt",
-            blocks=build_father_blocks(father_events),
+            blocks=build_father_blocks(father_events, mark_cg=True),
         ),
         make_node(
             "other-events/hollywood", "好莱坞相关",
             source_title="好莱坞相关.txt",
-            blocks=build_hollywood_blocks(hollywood_events),
+            blocks=build_hollywood_blocks(hollywood_events, mark_cg=True),
         ),
         make_node(
             "other-events/will", "威尔相关事件",
@@ -2388,29 +2397,29 @@ def build(
                 )
                 for slug, page in zip(
                     ["fang-ruoqi-np", "ma-zhiwen", "gu-qianjing"],
-                    build_expansion_pages(expansion_events),
+                    build_expansion_pages(expansion_events, mark_cg=True),
                 )
             ],
         ),
         make_node(
             "other-events/secretary", "秘书莉铃事件",
             source_title="秘书莉铃事件.txt",
-            blocks=build_event_like_blocks(secretary_events, page_title="莉玲相关"),
+            blocks=build_event_like_blocks(secretary_events, page_title="莉玲相关", mark_cg=True),
         ),
         make_node(
             "other-events/manyang", "蛮羊事件",
             source_title="蛮羊事件.txt",
-            blocks=build_event_like_blocks(manyang_events, page_title="蛮羊事件"),
+            blocks=build_event_like_blocks(manyang_events, page_title="蛮羊事件", mark_cg=True),
         ),
         make_node(
             "other-events/president-he", "贺总相关事件",
             source_title="贺总相关事件.txt",
-            blocks=build_event_like_blocks(president_he_events, page_title="贺总相关"),
+            blocks=build_event_like_blocks(president_he_events, page_title="贺总相关", mark_cg=True),
         ),
         make_node(
             "other-events/beauty-star", "美丽之星事件",
             source_title="银色幻想曲“美丽之星”事件.txt",
-            blocks=build_event_like_blocks(beauty_star_events, page_title="美丽之星"),
+            blocks=build_event_like_blocks(beauty_star_events, page_title="美丽之星", mark_cg=True),
         ),
         make_node(
             "other-events/luousang", "路欧桑剧情整理",
