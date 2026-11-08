@@ -399,6 +399,17 @@ def _vertical_day_note(text: str) -> str | None:
     return "\n".join([lead, *days])
 
 
+YEAR_COND_RE = re.compile(r"第[一二三四五六七八九十]+年：[^；]+")
+
+def _split_year_conditions(text: str) -> str:
+    """把「第一年：A；第二年：B；第三年：C」拆成每年一行，便于阅读。
+    只有出现 2 个及以上年份才拆；单行年份直接原样返回。"""
+    parts = YEAR_COND_RE.findall(text)
+    if len(parts) >= 2:
+        return "\n".join(parts)
+    return text
+
+
 def _parse_question_option(number: str, body: str) -> dict:
     """`１．爱的教育→林芬芬的友好度＋20，获得道具→接问题３` -> option block.
 
@@ -736,6 +747,17 @@ def _append_event_like(
     if skip_title is not None and tidied.rstrip("：:").strip() == skip_title:
         return  # 页标题，不重复成块
 
+    # 提醒框的续行（如「第一年：…；第二年：…」年份条件）并入上一个提醒，
+    # 让它留在黄底提示框内，且每年条件各占一行。
+    if state.get("reminder_open"):
+        if YEAR_COND_RE.match(tidied):
+            for b in reversed(blocks):
+                if b["kind"] == "note":
+                    b["text"] = b["text"] + "\n" + _split_year_conditions(tidied)
+                    break
+            return
+        state["reminder_open"] = False
+
     if line.startswith(("★", "☆")):
         chapter = tidied.rstrip("：:").strip()  # 去掉章节标题尾部的冒号（如「蛮羊事件：」）
         if chapter.startswith(("提示", "注意", "PS", "特别", "如果")):
@@ -814,6 +836,7 @@ def _append_event_like(
         group += 1
         blocks.append({"kind": "note", "text": _vertical_day_note(tidied) or tidied, "group": group})
         state["group"] = group
+        state["reminder_open"] = True
         return
 
     if line.startswith("（"):
@@ -861,7 +884,7 @@ def build_event_like_blocks(path: Path, *, page_title: str) -> list[dict]:
     """其他事件章节（老爸 / 好莱坞 / 威尔）的通用构建器。"""
     lines = [ln.strip() for ln in (line.rstrip("\r") for line in _read_text(path).split("\n")) if ln.strip()]
     blocks: list[dict] = []
-    state = {"group": 0, "last_event_group": None}
+    state = {"group": 0, "last_event_group": None, "reminder_open": False}
     for i, line in enumerate(lines):
         next_line = lines[i + 1] if i + 1 < len(lines) else None
         _append_event_like(blocks, state, line, next_line, skip_title=page_title)
@@ -884,7 +907,7 @@ def build_expansion_pages(path: Path) -> list[dict]:
                 pages.append({"title": title, "blocks": blocks})
             title = line.lstrip("★☆").strip().rstrip("：:").strip()
             blocks = []
-            state = {"group": 0, "last_event_group": None}
+            state = {"group": 0, "last_event_group": None, "reminder_open": False}
             continue
         if blocks is None or state is None:
             continue
