@@ -53,6 +53,8 @@ export interface ContentBlock {
   hint?: string;
   /** Nesting level of a section (0) or a sub-title (1), used by the outline. */
   depth?: number;
+  /** Marks a `paragraph` as a list item, rendered with a leading round dot. */
+  bullet?: boolean;
   /** Answer of a `qa` block, shown under the question. */
   answer?: string;
   /** Labelled lines of an `item` block (name in `text`). */

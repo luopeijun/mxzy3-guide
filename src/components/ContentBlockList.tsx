@@ -154,6 +154,19 @@ function BlockView({ block }: { block: IndexedBlock }) {
     case 'item':
       return <ItemCard block={block} />;
     default: {
+      // A list item carries a round dot in the gutter and a hanging indent, so
+      // a run of names/types reads as separate entries instead of one text wall.
+      if (block.bullet) {
+        return (
+          <p className="relative mb-1 mt-2 pl-[19px] text-ui-md leading-[1.9] break-words text-ink">
+            <span
+              aria-hidden="true"
+              className="absolute left-[6px] top-[12px] h-[5px] w-[5px] rounded-full bg-brand"
+            />
+            {block.text}
+          </p>
+        );
+      }
       // Nested lines (e.g. the a/b/c alternatives under a numbered condition)
       // step in once per level and fade a notch so the hierarchy reads at a glance.
       if (block.depth === 2) {

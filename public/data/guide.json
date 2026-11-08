@@ -1171,128 +1171,153 @@
             },
             {
               "kind": "paragraph",
-              "text": "林永育：",
-              "group": 2
+              "text": "林永育",
+              "group": 2,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－爵士",
-              "group": 3
+              "group": 3,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－游戏一开始即拥有",
-              "group": 4
+              "group": 4,
+              "depth": 2
             },
             {
               "kind": "paragraph",
-              "text": "季青平：",
-              "group": 5
+              "text": "季青平",
+              "group": 5,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－另类",
-              "group": 6
+              "group": 6,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－游戏一开始即拥有",
-              "group": 7
+              "group": 7,
+              "depth": 2
             },
             {
               "kind": "paragraph",
-              "text": "金妮：",
-              "group": 8
+              "text": "金妮",
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－抒情",
-              "group": 9
+              "group": 9,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－游戏一开始即拥有",
-              "group": 10
+              "group": 10,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "小熊：日月光音乐负责人",
-              "group": 11
+              "group": 11,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－摇滚",
-              "group": 12
+              "group": 12,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "讨厌类型－民歌",
-              "group": 13
+              "group": 13,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－小熊的友好度＞200",
-              "group": 14
+              "group": 14,
+              "depth": 2
             },
             {
               "kind": "paragraph",
-              "text": "迟浩：",
-              "group": 15
+              "text": "迟浩",
+              "group": 15,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－舞曲、节奏蓝调",
-              "group": 16
+              "group": 16,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－小熊的友好度＞200",
-              "group": 17
+              "group": 17,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "周映彤：EAMI唱片公司负责人",
-              "group": 18
+              "group": 18,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－抒情",
-              "group": 19
+              "group": 19,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－周映彤的友好度＞200",
-              "group": 20
+              "group": 20,
+              "depth": 2
             },
             {
               "kind": "paragraph",
-              "text": "林明扬：",
-              "group": 21
+              "text": "林明扬",
+              "group": 21,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－民歌",
-              "group": 22
+              "group": 22,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－周映彤的友好度＞200",
-              "group": 23
+              "group": 23,
+              "depth": 2
             },
             {
               "kind": "paragraph",
-              "text": "钱永富：",
-              "group": 24
+              "text": "钱永富",
+              "group": 24,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "擅长类型－抒情、儿歌",
-              "group": 25
+              "group": 25,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "出现条件－周映彤的友好度＞200",
-              "group": 26
+              "group": 26,
+              "depth": 2
             },
             {
               "kind": "note",
@@ -1307,52 +1332,62 @@
             {
               "kind": "paragraph",
               "text": "该唱片公司第一次预约唱片成功－>该唱片公司负责人的友好度－8",
-              "group": 29
+              "group": 29,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "除了第一次外，成功预约唱片－>该唱片公司负责人的友好度＋10",
-              "group": 30
+              "group": 30,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "个人唱片杀青－>该唱片公司负责人的友好度＋20",
-              "group": 31
+              "group": 31,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "个人拍摄1天的MTV－>该唱片公司负责人的友好度＋2",
-              "group": 32
+              "group": 32,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "个人参加1天的签唱会－>该唱片公司负责人的友好度＋2",
-              "group": 33
+              "group": 33,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "个人参加1天的唱片宣传－>该唱片公司负责人的友好度＋2",
-              "group": 34
+              "group": 34,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "团体唱片杀青－>该唱片公司负责人的友好度＋40",
-              "group": 35
+              "group": 35,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "团体拍摄1天的MTV－>该唱片公司负责人的友好度＋4",
-              "group": 36
+              "group": 36,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "团体参加1天的签唱会－>该唱片公司负责人的友好度＋4",
-              "group": 37
+              "group": 37,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "团体参加1天的唱片宣传－>该唱片公司负责人的友好度＋4",
-              "group": 38
+              "group": 38,
+              "depth": 1
             },
             {
               "kind": "heading",
@@ -1362,42 +1397,50 @@
             {
               "kind": "paragraph",
               "text": "温馨伦理剧：蔡筱韵",
-              "group": 40
+              "group": 40,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "爱情偶像剧：陈淑敏（最强） 李美静（第二强）",
-              "group": 41
+              "group": 41,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "冒险动作剧：魏冠霖",
-              "group": 42
+              "group": 42,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "轻松幽默剧：蔡昆隆",
-              "group": 43
+              "group": 43,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "社会乡土剧：龙少武",
-              "group": 44
+              "group": 44,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "侦探悬疑剧：红英",
-              "group": 45
+              "group": 45,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "古装宫廷剧：卫国强",
-              "group": 46
+              "group": 46,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "少年励志剧：白军羽",
-              "group": 47
+              "group": 47,
+              "bullet": true
             },
             {
               "kind": "heading",
@@ -1407,33 +1450,38 @@
             {
               "kind": "paragraph",
               "text": "爱情文艺：王瑞恩（最强）、孙凌香（此人作品量大，但有好有坏，依剧情慎选）",
-              "group": 49
+              "group": 49,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "动作冒险：李恩光",
-              "group": 50
+              "group": 50,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "侦探悬疑：范晓阳",
-              "group": 51
+              "group": 51,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "科幻未来片：张子轩",
-              "group": 52
+              "group": 52,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "剧情片：王金",
-              "group": 53
+              "group": 53,
+              "bullet": true
             },
             {
               "kind": "section",
               "text": "制作人放水情况",
-              "depth": 0,
-              "group": 54
+              "group": 54,
+              "depth": 0
             },
             {
               "kind": "paragraph",
@@ -1448,42 +1496,50 @@
             {
               "kind": "paragraph",
               "text": "周映彤，小熊：满足条件就能接，无论好感都会放水",
-              "group": 57
+              "group": 57,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "王瑞恩：好感度高才能接主角，好感度高配角才可以放水",
-              "group": 58
+              "group": 58,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "创意：条件满足就能接，好感够高才会放水",
-              "group": 59
+              "group": 59,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "追梦：好感度高才可以放水 好感度高才可以接S级case",
-              "group": 60
+              "group": 60,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "sosa：主持：条件满足就可以接，好感高并且艺人人气高才可以放水",
-              "group": 61
+              "group": 61,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "戏剧：好感度高才能接主角，好感度高配角才可以放水",
-              "group": 62
+              "group": 62,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "永振：主持：一定不放水，条件过了就可以接",
-              "group": 63
+              "group": 63,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "戏剧：好感度高才能接主角，好感度高才可以放水（主配角都可以）",
-              "group": 64
+              "group": 64,
+              "depth": 2
             }
           ],
           "children": []

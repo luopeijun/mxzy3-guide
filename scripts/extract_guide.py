@@ -698,44 +698,93 @@ def build_reference_blocks(path: Path) -> list[dict]:
     return blocks
 
 
+PRODUCER_ITEM_MAX = 8  # a name/type label ("林永育", "温馨伦理剧") is short
+
+
+def _producer_item_prefix(line: str) -> str | None:
+    """Text before the first colon when the line reads as `项目：内容`.
+
+    Every list item of this page is introduced by its label and a colon
+    (`林永育：`, `小熊：日月光音乐负责人`, `爱情偶像剧：陈淑敏（最强）`), while a
+    running sentence that merely contains a colon is much longer
+    (`周映彤与小熊的友好度增加的方法：`), so a length cap separates the two.
+    """
+    match = re.match(r"^([^：:]+)[：:]", line)
+    if not match:
+        return None
+    prefix = match.group(1).strip()
+    if not prefix or len(prefix) > PRODUCER_ITEM_MAX:
+        return None
+    return prefix
+
+
 def build_producers_blocks(path: Path) -> list[dict]:
     """Turn the 制作人相关 txt into blocks.
 
-    The leading `★` line is the page title and skipped. A second `★` marks a
-    major section (`制作人放水情况`, hairline above); `☆ …：` marks a diamond
-    sub-heading (唱片 / 电视剧 / 电影 制作人选择). `注意：` becomes a yellow
-    note; every other line is a paragraph — producer names (`林永育：`) and the
-    `擅长类型－…` / `出现条件－…` attributes are list items, not headings.
+    A second `★` marks a major section (`制作人放水情况`, hairline above);
+    `☆ …：` marks a diamond sub-heading (唱片 / 电视剧 / 电影 制作人选择),
+    `注意：` becomes a yellow note.
+
+    Everything else is a list: a flush-left line that reads as `项目：内容`
+    (`林永育：`, `小熊：日月光音乐负责人`, `爱情偶像剧：陈淑敏（最强）`) opens a
+    bulleted item, and the lines that follow it — the `擅长类型－…` /
+    `出现条件－…` attributes, or the source-indented `戏剧：…` follow-ups under
+    `sosa：` — become its indented details. A run of names therefore reads as
+    separate entries instead of one wall of text.
     """
-    lines = [raw.strip() for raw in _read_text(path).splitlines() if raw.strip()]
+    # The source mixes `\r\r\n` endings, which `splitlines()` would read as an
+    # extra blank line after every row and break the items apart.
+    raw_lines = [line.rstrip("\r") for line in _read_text(path).split("\n")]
+
     blocks: list[dict] = []
     group = 0
-    if not lines:
-        return blocks
-    start = 1 if lines[0].startswith(("★", "☆")) else 0
-    for line in lines[start:]:
-        if line.startswith("★"):
-            group += 1
-            blocks.append({
-                "kind": "section", "text": _tidy(line.lstrip("★").strip()),
-                "depth": 0, "group": group,
-            })
-            continue
-        if line.startswith("☆"):
-            group += 1
-            blocks.append({
-                "kind": "heading",
-                "text": _tidy(line.lstrip("☆").rstrip("：").strip()),
-                "group": group,
-            })
-            continue
-        if line.startswith(("提示", "提醒", "注意")):
-            group += 1
-            text = re.sub(r"^(提示|提醒|注意)[：:]?\s*", "", line)
-            blocks.append({"kind": "note", "text": _tidy(text), "group": group})
-            continue
+    # Nesting level for the lines below the current item; 0 means "no item".
+    detail_depth = 0
+
+    def add(kind: str, text: str, **extra) -> None:
+        nonlocal group
         group += 1
-        blocks.append({"kind": "paragraph", "text": _tidy(line), "group": group})
+        blocks.append({"kind": kind, "text": _tidy(text), "group": group, **extra})
+
+    for index, line in enumerate(raw_lines):
+        text = line.strip()
+        if not text:
+            continue
+        if index == 0 and text.startswith("★"):
+            # The opening `★制作人选择` is the page title, already shown above.
+            continue
+        if text.startswith("★"):
+            add("section", text.lstrip("★").strip(), depth=0)
+            detail_depth = 0
+            continue
+        if text.startswith("☆"):
+            add("heading", text.lstrip("☆").rstrip("：").strip())
+            detail_depth = 0
+            continue
+        if text.startswith(("提示", "提醒", "注意")):
+            add("note", re.sub(r"^(提示|提醒|注意)[：:]?\s*", "", text))
+            detail_depth = 0
+            continue
+
+        indent = len(line) - len(line.lstrip())
+        prefix = _producer_item_prefix(text) if indent == 0 else None
+        if prefix:
+            label = text[:-1].strip() if text.endswith(("：", ":")) else text
+            add("paragraph", label, bullet=True)
+            # Details step past the bulleted name, not level with it.
+            detail_depth = 2
+            continue
+        if indent == 0 and text.endswith(("：", ":")):
+            # A lead-in sentence (`周映彤与小熊的友好度增加的方法：`) keeps the
+            # lines beneath it indented, without a dot of its own.
+            add("paragraph", text)
+            detail_depth = 1
+            continue
+        if detail_depth or indent > 0:
+            add("paragraph", text, depth=detail_depth or 1)
+            continue
+        add("paragraph", text)
+
     return blocks
 
 
