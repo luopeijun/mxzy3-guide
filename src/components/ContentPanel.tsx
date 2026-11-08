@@ -48,7 +48,7 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
         <ContentBlockList
           blocks={node.blocks}
           onJump={jump}
-          indentSubEvents={node.id.startsWith('other-events/luousang/')}
+          nestSubEvents={node.id.startsWith('other-events/')}
         />
         {node.children.length > 0 && (
           <ChildLinks
