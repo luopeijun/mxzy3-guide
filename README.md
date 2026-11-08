@@ -119,3 +119,20 @@ npm run dev
 ```bash
 python scripts/extract_guide.py "E:/Downloads/明星志愿3攻略.docx"
 ```
+
+## 测试
+
+解析脚本积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页。回归测试套件 `scripts/test_extract.py`（零第三方依赖，标准库 `unittest`）分两层：
+
+- **纯函数单测**：`classify` / `_has_cg` / `_is_item_line` / `_split_letter_items` 等，不碰文件。
+- **集成冒烟**：重跑真实管线（读 docx + 全部 `sources/*.txt`），断言产物与已提交的 `public/data/guide.json` **逐字节一致**——任何解析改动若没同步重生成 JSON 都会立刻报错；并锁定你修过的一批层级（路风/天晴/关古威/纪翔/新名纱雪/欧怡青/克烈斯 的感情章节归属）。
+
+运行：
+
+```bash
+python -m unittest discover -s scripts -p "test_*.py" -v
+# 或 npm 入口：
+npm run test:guide
+```
+
+> 改完解析脚本后，先跑这条命令确认全绿，再 `python scripts/extract_guide.py ...` 重生成 `guide.json` 并一起提交。
