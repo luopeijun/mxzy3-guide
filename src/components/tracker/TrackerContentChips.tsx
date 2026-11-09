@@ -70,7 +70,9 @@ export default function TrackerContentChips({ value, onChange }: Props) {
             清除
           </button>
         )}
-        <span className="ml-auto shrink-0 text-ui-2xs text-ink-faint">CG / 触发类型</span>
+        <span className="ml-auto shrink-0 text-ui-2xs text-ink-faint">
+          {open ? '可多选 · 复合类型任一侧命中' : ''}
+        </span>
       </div>
 
       {open && (
