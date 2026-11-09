@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import type { NoticeData } from '../../types/notices';
 import { cn } from '../../lib/cn';
 import { CATEGORY_STYLE } from './categoryStyle';
 import { specialStyle } from './specialStyle';
+import NoteCard from '../NoteCard';
+import NotePage from '../NotePage';
 import {
   AWARD_ROWS,
   ALBUM_ROWS,
@@ -31,8 +33,6 @@ const SECTIONS = [
   { key: 'growth', label: '艺人成长率' },
   { key: 'notes', label: '原表说明' },
 ] as const;
-
-type SectionKey = (typeof SECTIONS)[number]['key'];
 
 /** 等级字母的配色：A 最紧（玫瑰）、D 最松（暖灰），一眼能看出要求高低。
  *  D 原来用 surface-soft，底色几乎和卡片同色，远看就是一团浅灰字，
@@ -63,43 +63,6 @@ function gainText(gains: Record<string, number> | undefined): string[] {
   return Object.entries(gains)
     .filter(([, value]) => value !== 0)
     .map(([ability, value]) => `${ability} ${value > 0 ? '+' : ''}${value}`);
-}
-
-/** 一张便签：顶部一条色带当作索引标记，标题旁再点一个同色圆点。 */
-function NoteCard({
-  name,
-  tone,
-  title,
-  hint,
-  className,
-  children,
-}: {
-  name: SectionKey;
-  tone: string;
-  title: string;
-  hint: string;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section
-      data-reference-card={name}
-      className={cn(
-        'relative overflow-hidden rounded-ui-md border border-line bg-surface shadow-soft',
-        className,
-      )}
-    >
-      <span className={cn('absolute inset-x-0 top-0 h-[3px]', tone)} aria-hidden="true" />
-      <div className="px-5 pb-4 pt-4">
-        <h2 className="flex items-center gap-1.5 text-ui-sm font-bold text-brand-strong">
-          <span className={cn('h-1.5 w-1.5 rounded-full', tone)} aria-hidden="true" />
-          {title}
-        </h2>
-        <p className="mt-1 text-ui-2xs leading-[1.7] text-ink-faint">{hint}</p>
-        {children}
-      </div>
-    </section>
-  );
 }
 
 /** 专辑明细表的合并单元格：被上方 rowSpan 覆盖的行该格缺省，直接跳过。
@@ -165,63 +128,8 @@ export default function ReferenceView({ data }: Props) {
     [hasNotes],
   );
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState<SectionKey>('scale');
-
-  // 滚动时高亮当前便签：取「顶部已经越过容器上沿的最后一块」。
-  useEffect(() => {
-    const box = scrollRef.current;
-    if (!box) return;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const base = box.getBoundingClientRect().top;
-      let current: SectionKey = sections[0]?.key ?? 'scale';
-      let best = -Infinity;
-      for (const section of sections) {
-        const card = box.querySelector<HTMLElement>(`[data-reference-card="${section.key}"]`);
-        if (!card) continue;
-        const top = card.getBoundingClientRect().top - base;
-        // 并排的两块会同时越线，取更贴近上沿的那块；相等时保留先出现的一块。
-        if (top <= 40 && top > best) {
-          best = top;
-          current = section.key;
-        }
-      }
-      // 滚到底时最后一块可能永远到不了上沿，直接把它点亮。
-      if (box.scrollTop + box.clientHeight >= box.scrollHeight - 4) {
-        current = sections[sections.length - 1]?.key ?? current;
-      }
-      setActive(current);
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    box.addEventListener('scroll', onScroll, { passive: true });
-    update();
-    return () => {
-      box.removeEventListener('scroll', onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, [sections]);
-
-  const jump = (key: SectionKey) => {
-    const box = scrollRef.current;
-    const card = box?.querySelector<HTMLElement>(`[data-reference-card="${key}"]`);
-    if (!box || !card) return;
-    const top = card.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 8;
-    box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    setActive(key);
-  };
-
   return (
-    <div className="flex min-h-0 flex-1">
-      <div
-        ref={scrollRef}
-        data-notice-reference
-        className="min-h-0 flex-1 overflow-y-auto px-6 py-5 [scrollbar-gutter:stable]"
-      >
-        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-4 min-[1240px]:grid-cols-2">
+    <NotePage sections={sections}>
           <NoteCard
             name="scale"
             tone="bg-brand"
@@ -652,45 +560,6 @@ export default function ReferenceView({ data }: Props) {
               </ul>
             </NoteCard>
           )}
-        </div>
-      </div>
-
-      <nav
-        data-reference-rail
-        aria-label="本页小结"
-        className="hidden w-[176px] shrink-0 border-l border-line px-3 py-5 min-[1120px]:block"
-      >
-        <p className="px-1 text-ui-2xs font-semibold text-ink-faint">本页小结</p>
-        <ul className="mt-2 flex flex-col gap-0.5">
-          {sections.map((section) => {
-            const current = active === section.key;
-            return (
-              <li key={section.key}>
-                <button
-                  type="button"
-                  data-reference-rail-item={section.key}
-                  aria-current={current ? 'true' : undefined}
-                  onClick={() => jump(section.key)}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-ui-xs px-2 py-1.5 text-left text-ui-2xs transition-colors',
-                    current
-                      ? 'bg-brand-soft font-semibold text-brand-strong'
-                      : 'text-ink-muted hover:bg-surface-soft hover:text-brand-strong',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'h-1.5 w-1.5 shrink-0 rounded-full',
-                      current ? 'bg-brand' : 'bg-line-strong',
-                    )}
-                  />
-                  {section.label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </div>
+    </NotePage>
   );
 }

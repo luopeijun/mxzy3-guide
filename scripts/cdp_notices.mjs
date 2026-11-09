@@ -292,11 +292,11 @@ async function main() {
   await sleep(500);
   const reference = await evaluate(`(() => {
     const root = ${SCOPE};
-    const box = root.querySelector('[data-notice-reference]');
+    const box = root.querySelector('[data-note-scroll]');
     if (!box) return JSON.stringify({ missing: true });
     return JSON.stringify({
       sections: [...box.querySelectorAll('section h2')].map(h => h.textContent.trim()),
-      keys: [...box.querySelectorAll('[data-reference-card]')].map(c => c.getAttribute('data-reference-card')),
+      keys: [...box.querySelectorAll('[data-note-card]')].map(c => c.getAttribute('data-note-card')),
       groups: [...box.querySelectorAll('[data-reference-group]')].map(g => g.getAttribute('data-reference-group')),
       gradeRows: box.querySelectorAll('[data-reference-group] tr').length,
       growthRows: box.querySelectorAll('[data-growth-table] tbody tr').length,
@@ -321,7 +321,7 @@ async function main() {
 
   // 7b. 七种特殊要求各用各的色相，不能退化成同一个灰 chip。
   const kindChips = await evaluate(`(() => {
-    const box = ${SCOPE}.querySelector('[data-notice-reference]');
+    const box = ${SCOPE}.querySelector('[data-note-scroll]');
     const table = box.querySelectorAll('section')[1];
     return JSON.stringify([...table.querySelectorAll('tbody tr')].map((tr) => {
       const chip = tr.querySelector('span');
@@ -337,11 +337,11 @@ async function main() {
   // 7c. 本页小结：点条目把对应便签滚到顶部，高亮跟着走。
   const railRaw = await evaluate(`(() => {
     const root = ${SCOPE};
-    const rail = root.querySelector('[data-reference-rail]');
+    const rail = root.querySelector('[data-note-rail]');
     return JSON.stringify({
       exists: !!rail,
-      items: [...root.querySelectorAll('[data-reference-rail-item]')].map((b) => b.getAttribute('data-reference-rail-item')),
-      active: rail?.querySelector('[aria-current="true"]')?.getAttribute('data-reference-rail-item') ?? null,
+      items: [...root.querySelectorAll('[data-note-rail-item]')].map((b) => b.getAttribute('data-note-rail-item')),
+      active: rail?.querySelector('[aria-current="true"]')?.getAttribute('data-note-rail-item') ?? null,
     });
   })()`);
   console.log('RAIL', railRaw);
@@ -350,17 +350,17 @@ async function main() {
   if (rail.items.length !== 11) fail('本页小结应有 11 条，实际 ' + rail.items.join('/'));
   if (rail.active !== 'scale') fail('初始高亮应是难度换算，实际 ' + rail.active);
 
-  await click('[data-reference-rail-item="growth"]');
+  await click('[data-note-rail-item="growth"]');
   // 11 张便签的页面更长，平滑滚动需要更久；轮询等高亮跟到成长率。
   let railJump = null;
   for (let i = 0; i < 16; i++) {
     await sleep(300);
     const railJumpRaw = await evaluate(`(() => {
     const root = ${SCOPE};
-    const box = root.querySelector('[data-notice-reference]');
-    const card = box.querySelector('[data-reference-card="growth"]');
+    const box = root.querySelector('[data-note-scroll]');
+    const card = box.querySelector('[data-note-card="growth"]');
     return JSON.stringify({
-      active: root.querySelector('[data-reference-rail-item][aria-current="true"]')?.getAttribute('data-reference-rail-item') ?? null,
+      active: root.querySelector('[data-note-rail-item][aria-current="true"]')?.getAttribute('data-note-rail-item') ?? null,
       top: Math.round(card.getBoundingClientRect().top - box.getBoundingClientRect().top),
     });
   })()`);
