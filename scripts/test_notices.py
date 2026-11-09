@@ -83,6 +83,16 @@ class NoticeDataTest(unittest.TestCase):
         for row in self.data["growth"]:
             self.assertEqual(len(row["values"]), len(ABILITIES), row["artist"])
 
+    def test_spreadsheet_notes_are_kept(self) -> None:
+        # 「说明」页里成句的段落要带出来：玩家得知道独家代理限制一年、难度怎么换算。
+        notes = self.data.get("notes") or []
+        self.assertGreaterEqual(len(notes), 2)
+        joined = "".join(notes)
+        self.assertIn("独家代理", joined)
+        self.assertIn("S/L", joined)
+        # 对着 Excel 说的那句跟玩家无关，不该出现在这里。
+        self.assertNotIn("取消隐藏", joined)
+
     def test_known_notice_shape(self) -> None:
         movie = self.by_id["MV001"]
         self.assertEqual(movie["name"], "舞动人生")

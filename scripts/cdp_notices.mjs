@@ -168,16 +168,19 @@ async function main() {
       gradeRows: box.querySelectorAll('[data-reference-group] tr').length,
       growthRows: box.querySelectorAll('[data-growth-table] tbody tr').length,
       highlighted: box.querySelectorAll('[data-growth-table] td.bg-brand-soft').length,
+      notes: box.querySelectorAll('[data-reference-notes] li').length,
     });
   })()`);
   console.log('REFERENCE', reference);
   const ref = JSON.parse(reference);
   if (ref.missing) fail('the 能力对照 view did not render');
-  if (ref.sections.length !== 4) fail('expected 4 reference sections, got ' + ref.sections.join('/'));
+  if (ref.sections.length !== 5) fail('expected 5 reference sections, got ' + ref.sections.join('/'));
+  if (!ref.sections.includes('原表说明')) fail('the source notes section is missing');
   if (ref.groups.join(',') !== 'movie,tv,music,ad,show') fail('reference groups: ' + ref.groups.join(','));
   if (ref.gradeRows !== 67) fail('expected 67 grade rows, got ' + ref.gradeRows);
   if (ref.growthRows !== 18) fail('expected 18 artists, got ' + ref.growthRows);
   if (ref.highlighted === 0) fail('the growth table has no highlighted maximum');
+  if (ref.notes < 2) fail('expected the spreadsheet notes, got ' + ref.notes);
   await click('[data-notice-view="list"]');
   await sleep(400);
 

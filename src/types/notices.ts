@@ -89,4 +89,6 @@ export interface NoticeData {
   scale: ScaleRow[];
   specialEffects: SpecialEffect[];
   growth: ArtistGrowth[];
+  /** 原表「说明」页里几段散文：难度换算的例子、独家代理的含义、数据来源。 */
+  notes?: string[];
 }

@@ -19,7 +19,8 @@
 - `sources/notices/requirements.xlsx`：只取其中的 `特殊要求影响` 表（搞笑 +2 亲和 / -2 叛逆 这类），其余 sheet 是「等级字母 × 星数 → 数值区间」的原始写法，和 `notices.xls` 里的 `说明` 表重复，因此不再解析。
 - `python scripts/extract_notices.py` → `public/data/notices.json`（约 900KB，运行时 fetch，进入「通告」tab 才加载）。这条管线需要 `pip install openpyxl xlrd`，只有重生成数据时才要，跑站点不需要。
 - 归一后的结构：`notices[]` 每条含 `cat / name / type / time / company / producer / brief`，外加 `roles[]`；唱片与主持没有角色表，用通告行本身合成唯一角色（`征求对象` 即角色名），电影/电视剧/广告的角色按 `通告编号` 回填。
-- 复合特殊要求（`暴力反派`、`反串搞笑丑化`）在脚本里拆成 `specialKinds[]`，前端再按 `specialEffects` 查每天的三项增减。
+- 复合特殊要求（`暴力反派`、`反串搞笑丑化`）在脚本里拆成 `specialKinds[]`，前端再按 `specialEffects` 查每天的三项增减。没给数值的（目前只有 `吻戏`）只显示要求本身，不加「无影响」之类的填充文案。
+- `说明` 表除难度对照外还有几段散文（独家代理限制、S/L 刷属性、数据来源），脚本按「整行只有一个非空单元格且够长」筛成 `notes[]`，在「能力对照」页末尾照录；`取消隐藏即可重新显示` 那句是对着 Excel 说的，直接跳过。
 - **能力要求不在数据里展开**：`grades`（类型 × 对象 → A/B/C/D）与 `scale`（星级 × 字母 → 区间）分开存，前端用 `requirementsFor()` 现算，换算法不用重生成 JSON。区间的正确性由 `scripts/test_notices.py` 兜底——它把 1100 多个「类型/对象/能力/星级」组合与原 xlsx 逐一比对，必须完全一致。
 
 ## 体量统计口径

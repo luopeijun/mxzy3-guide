@@ -1,11 +1,11 @@
 import http from 'node:http';
 import fs from 'node:fs';
 
-/* 通告页截图：node cdp_notices_shot.mjs <out.png> [query] [width] [height]
+/* 通告页截图：node cdp_notices_shot.mjs <out.png> [query] [width] [height] [view]
    有 query 时先填搜索框，等结果刷新后点第一张卡片，这样能稳定截到
-   指定通告的详情栏。 */
+   指定通告的详情栏；view=reference 时切到「能力对照」并滚到底。 */
 
-const [, , out = 'outputs/notices-shot.png', query = '', width = '1440', height = '900'] =
+const [, , out = 'outputs/notices-shot.png', query = '', width = '1440', height = '900', view = 'list'] =
   process.argv;
 
 const URL = 'http://localhost:5173/#/notices';
@@ -82,11 +82,27 @@ async function main() {
     await sleep(400);
   }
 
+  if (view === 'reference') {
+    await evaluate(`(() => {
+      document.querySelector('[data-notice-view="reference"]')?.click();
+      return true;
+    })()`);
+    await sleep(500);
+    await evaluate(`(() => {
+      const pane = document.querySelector('[data-notice-reference]');
+      if (pane) pane.scrollTop = pane.scrollHeight;
+      return true;
+    })()`);
+    await sleep(300);
+  }
+
   const info = await evaluate(`(() => {
     const detail = document.querySelector('[data-notice-detail]');
+    const notes = document.querySelector('[data-reference-notes]');
     return {
       title: detail?.querySelector('h2')?.textContent ?? null,
       chips: [...document.querySelectorAll('[data-notice-chip]')].map((s) => s.textContent),
+      notes: notes ? [...notes.querySelectorAll('li')].length : 0,
     };
   })()`);
   console.log(JSON.stringify(info, null, 1));

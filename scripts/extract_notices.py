@@ -254,6 +254,20 @@ def main() -> None:
                 ranges[grade] = value
         scale.append({"stars": row - 2, "label": label, "ranges": ranges})
 
+    # 「说明」表里难度对照之外还有几段散文（独家代理的含义、数据来源等）。
+    # 成句的说明都独占一格，所以只认「整行只有一个非空单元格且够长」，
+    # 难度对照那种一格一个数的行自然被排除，不用写死行号。
+    notes = []
+    for row in range(scale_sheet.nrows):
+        cells = [text(scale_sheet.cell_value(row, column))
+                 for column in range(scale_sheet.ncols)]
+        filled = [cell for cell in cells if cell]
+        if len(filled) == 1 and len(filled[0]) > 20:
+            # 「取消隐藏即可重新显示」那句是对着 Excel 说的，跟玩家无关。
+            if "取消隐藏" in filled[0]:
+                continue
+            notes.append(filled[0])
+
     # 艺人成长率
     growth = []
     growth_sheet = book.sheet_by_name("能力成长率")
@@ -310,6 +324,7 @@ def main() -> None:
         "scale": scale,
         "specialEffects": specials,
         "growth": growth,
+        "notes": notes,
     }
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

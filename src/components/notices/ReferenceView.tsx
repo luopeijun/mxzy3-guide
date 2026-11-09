@@ -246,6 +246,29 @@ export default function ReferenceView({ data }: Props) {
             </table>
           </div>
         </section>
+
+        {(data.notes ?? []).length > 0 && (
+          <section
+            data-reference-notes
+            className="rounded-ui-md border border-line bg-surface-soft p-4"
+          >
+            <h2 className="text-ui-sm font-bold text-brand-strong">原表说明</h2>
+            <p className="mt-1 text-ui-2xs leading-[1.8] text-ink-faint">
+              通告表的作者在「说明」页里留下的几段，按原文照录。
+            </p>
+            <ul className="mt-2 flex max-w-[760px] flex-col gap-1.5">
+              {(data.notes ?? []).map((note) => (
+                <li
+                  key={note}
+                  className="flex gap-2 text-ui-2xs leading-[1.9] text-ink-muted"
+                >
+                  <span className="shrink-0 text-ink-faint">·</span>
+                  <span className="min-w-0 flex-1">{note}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </div>
   );
