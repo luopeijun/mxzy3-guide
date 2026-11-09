@@ -133,7 +133,7 @@ export default function TrackerPool({ data }: Props) {
   };
 
   return (
-    <section>
+    <section className="pt-6 nav:pt-4 tab:pt-2">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-ui-lg font-bold text-brand-strong">事件池</h2>
         <span className="text-ui-2xs text-ink-faint">
@@ -143,7 +143,10 @@ export default function TrackerPool({ data }: Props) {
         </span>
       </div>
 
-      <div className="sticky top-0 z-10 bg-canvas pb-3">
+      {/* Opaque from the very top of the scrollport: the pt keeps a small gap
+          under the shared header, and the higher z-index keeps drag hints /
+          event rows from painting over the fixed search bar. */}
+      <div className="sticky top-0 z-20 bg-canvas pt-2 pb-3">
         <div className="flex items-center gap-2 rounded-ui-md border border-line bg-surface px-3 py-2 shadow-soft transition-colors focus-within:border-brand-line">
           <svg
             viewBox="0 0 16 16"

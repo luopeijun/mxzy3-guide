@@ -19,15 +19,22 @@ interface Props {
 export default function TrackerApp({ data }: Props) {
   return (
     <div data-tracker-app className="fixed inset-x-0 bottom-0 top-16 z-50 flex flex-col bg-canvas">
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="mx-auto flex h-full w-full gap-6 px-6 nav:gap-4 nav:px-4 tab:h-auto tab:flex-col tab:overflow-y-auto">
+      {/* On narrow screens the flex row stacks and grows past this box, so the
+          wrapper itself must scroll — otherwise overflow-hidden clips the
+          stacked columns and the page cannot be scrolled at all. */}
+      <div className="min-h-0 flex-1 overflow-hidden tab:overflow-y-auto">
+        <div className="mx-auto flex h-full w-full gap-6 px-6 nav:gap-4 nav:px-4 tab:h-auto tab:flex-col tab:overflow-visible">
           <aside className="w-[320px] shrink-0 overflow-y-auto py-6 pr-1 tab:w-full tab:overflow-visible tab:py-4">
             <div className="flex flex-col gap-4 pb-6">
               <TrackerSetup data={data} />
               <TrackerCategories data={data} />
             </div>
           </aside>
-          <main className="min-w-0 flex-1 overflow-y-auto py-6 nav:py-4 tab:py-2">
+          {/* No top padding on the scroll container: a sticky child can only
+              reach the padding edge, so any pt here would leave a transparent
+              strip where scrolled cards show above the search bar. The top
+              spacing lives on TrackerPool's section instead. */}
+          <main className="min-w-0 flex-1 overflow-y-auto pb-6 nav:pb-4 tab:overflow-visible tab:pb-2">
             <TrackerPool data={data} />
           </main>
           <aside className="w-[320px] shrink-0 overflow-y-auto py-6 pl-1 tab:w-full tab:overflow-visible tab:py-4">
