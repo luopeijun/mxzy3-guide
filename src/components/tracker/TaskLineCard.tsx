@@ -199,13 +199,22 @@ export default function TaskLineCard({
   // 让归档区保持紧凑。
   const defaultOpen = !inCompletedPool && (state?.done?.length ?? 0) > 0;
   const [open, setOpen] = useState(defaultOpen || forceOpen);
-  const steps = matched ? line.steps.filter((step) => matched.has(step.index)) : line.steps;
+  // 搜索只渲染命中的步骤，读不到前后文。这张卡可以临时切成「整条线」，搜索框
+  // 不用清空；换关键词时回到「只看命中」，否则下一轮搜索结果会莫名其妙全展开。
+  const [showAll, setShowAll] = useState(false);
+  const searching = query.trim().length > 0;
+  const hasHidden = matched !== null && matched.size < line.steps.length;
+  const steps = matched && !showAll ? line.steps.filter((step) => matched.has(step.index)) : line.steps;
 
   // 搜索 / 内容筛选时自动展开，让命中的事件直接可见；退出后回到默认态。
   useEffect(() => {
     if (query.trim() || forceOpen) setOpen(true);
     else setOpen(!inCompletedPool && (state?.done?.length ?? 0) > 0);
   }, [query, forceOpen]);
+
+  useEffect(() => {
+    setShowAll(false);
+  }, [query]);
 
   return (
     <div
@@ -326,7 +335,9 @@ export default function TaskLineCard({
               置顶
             </span>
           )}
-          {matched && showMatchBadge && (
+          {/* 只命中部分步骤时，命中数放在下方摘要行里（那里还有「看整条线」），
+              标题行不再重复，否则 1440 下会把任务线名字挤成一个字。 */}
+          {matched && showMatchBadge && !hasHidden && (
             <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs text-gold">
               命中 {matched.size} 个事件
             </span>
@@ -439,6 +450,39 @@ export default function TaskLineCard({
 
       {open && (
         <div className="border-t border-line px-4 py-3">
+          {/* 搜索时补一个「看整条线」：命中卡片默认只列命中步骤，读不到前后文，
+              而清空搜索又会丢掉这条线。这里就地把整条线摊开，搜索保持原样。 */}
+          {searching && matched && hasHidden && (
+            <div
+              data-steps-summary
+              className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
+            >
+              <span className="text-ui-2xs text-ink-faint">
+                {showAll
+                  ? `整条线 ${line.steps.length} 步 · 命中 ${matched.size} 个`
+                  : `命中 ${matched.size} 个事件 · 共 ${line.steps.length} 步`}
+              </span>
+              <button
+                type="button"
+                data-show-all-toggle
+                aria-pressed={showAll}
+                onClick={() => setShowAll((value) => !value)}
+                title={
+                  showAll
+                    ? '收起为只显示命中的事件'
+                    : '展开这条任务线的全部事件，命中处仍然高亮'
+                }
+                className={cn(
+                  'shrink-0 rounded-full border px-2 py-0.5 text-ui-2xs transition-colors',
+                  showAll
+                    ? 'border-gold-line bg-gold-soft font-semibold text-gold hover:border-gold'
+                    : 'border-line text-ink-muted hover:border-brand-line hover:bg-brand-soft hover:text-brand-strong',
+                )}
+              >
+                {showAll ? '只看命中' : '看整条线'}
+              </button>
+            </div>
+          )}
           <ul className="flex flex-col gap-2">
             {steps.map((step) => (
               <li key={step.index}>

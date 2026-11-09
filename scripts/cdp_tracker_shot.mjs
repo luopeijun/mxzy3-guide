@@ -2,10 +2,11 @@ import http from 'node:http';
 import fs from 'node:fs';
 
 /* Screenshot the tracker with the first N task lines expanded, or with a
-   search query applied (which auto-expands every matching line).
-   Usage: node cdp_tracker_shot.mjs <url> <out.png> [localStorageJson] [expandCount] [query] */
+   search query applied (which auto-expands every matching line). Pass
+   `showAll` to also expand the whole line of the first search hit.
+   Usage: node cdp_tracker_shot.mjs <url> <out.png> [localStorageJson] [expandCount] [query] [showAll] */
 
-const [, , url, out, lsJson, expandRaw, searchQuery] = process.argv;
+const [, , url, out, lsJson, expandRaw, searchQuery, showAll] = process.argv;
 const expandCount = Number(expandRaw ?? '1');
 
 function jsonPut(target, payload) {
@@ -72,6 +73,19 @@ async function main() {
     });
     await new Promise((r) => setTimeout(r, 700));
     console.log('query:', searchQuery);
+    if (showAll) {
+      const toggled = await send('Runtime.evaluate', {
+        expression: `(() => {
+          const btn = document.querySelector('[data-show-all-toggle]');
+          if (!btn) return 'no-toggle';
+          btn.click();
+          return btn.textContent.trim();
+        })()`,
+        returnByValue: true,
+      });
+      console.log('show-all:', toggled.result?.value);
+      await new Promise((r) => setTimeout(r, 500));
+    }
   } else {
     const click = await send('Runtime.evaluate', {
       expression: `(() => {
