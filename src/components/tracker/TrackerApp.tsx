@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import type { GuideData } from '../../types/guide';
+import { useWheelForward } from '../../hooks/useWheelForward';
 import TrackerSetup from './TrackerSetup';
 import TrackerCategories from './TrackerCategories';
 import TrackerOverview from './TrackerOverview';
@@ -17,6 +19,10 @@ interface Props {
  *  Three columns: selector on the left, event pool in the middle, progress /
  *  archive rail on the right; they stack on narrow screens. */
 export default function TrackerApp({ data }: Props) {
+  const poolRef = useRef<HTMLElement>(null);
+  // Columns scroll independently; forward wheels from the side rails / header
+  // into the event pool so the pointer does not have to stay in the middle.
+  useWheelForward(poolRef);
   return (
     <div data-tracker-app className="fixed inset-x-0 bottom-0 top-16 z-50 flex flex-col bg-canvas">
       {/* On narrow screens the flex row stacks and grows past this box, so the
@@ -37,7 +43,7 @@ export default function TrackerApp({ data }: Props) {
           {/* A stable scrollbar gutter keeps the middle column at a constant
               width: filtering down to one card must not make the scrollbar
               vanish and shift the whole filter-chip row sideways. */}
-          <main className="min-w-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto pb-6 nav:pb-4 tab:overflow-visible tab:pb-2">
+          <main ref={poolRef} className="min-w-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto pb-6 nav:pb-4 tab:overflow-visible tab:pb-2">
             <TrackerPool data={data} />
           </main>
           <aside className="w-[320px] shrink-0 overflow-y-auto py-6 pl-1 tab:w-full tab:overflow-visible tab:py-4">
