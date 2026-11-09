@@ -1553,9 +1553,9 @@
             },
             {
               "kind": "paragraph",
-              "text": "王瑞恩、陈革非（SOSA戏剧）：好感高才能接主角，且只给配角放水",
+              "text": "王瑞恩：好感度高才能接主角，好感度高配角才可以放水",
               "group": 58,
-              "depth": 2
+              "bullet": true
             },
             {
               "kind": "paragraph",
