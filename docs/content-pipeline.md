@@ -1,7 +1,7 @@
-# 内容管线与渲染细节
+# 开发备忘：内容管线与渲染细节
 
-`README.md` 的补充说明：数据是怎么从原始资料变成 `public/data/guide.json` 的、
-页面又是怎么把这些块渲染出来的。改解析脚本或改正文样式之前先读这一页。
+给要改这个仓库的人看的一页：数据是怎么从原始资料变成 `public/data/guide.json` 的、
+页面又是怎么把这些块渲染出来的，以及测试与提交相关的东西。改解析脚本或改正文样式之前先读这一页。
 
 ## 内容来源
 
@@ -56,3 +56,51 @@
 - 颜色、字号、圆角、阴影只在 `src/styles/global.css` 的 `@theme` 中定义，组件统一使用 `text-ink`、`bg-brand-soft`、`rounded-ui-md` 这类语义类，不写裸色值。
 - 响应式断点沿用原设计的向下阈值，用 `@custom-variant` 定义：`tab:`（≤980px）、`nav:`（≤860px，侧栏切换为抽屉）、`phone:`（≤520px）、`touch:`（`pointer: coarse`，触摸屏上的替代操作）。前三个是 **max-width** 变体，不是 Tailwind 默认的移动优先断点。
 - 卡片、栅格、版心等重复组合放在 `src/styles/patterns.ts` 的 `ui` 对象里；组件特有的类名就近写在 JSX 中，条件类用 `cn()` 拼接并尽量互斥，避免同属性类互相覆盖。
+
+## 命令与验证
+
+| 命令 | 作用 |
+| --- | --- |
+| `npm run dev` | 开发服务器 |
+| `npm run build` | 类型检查 + 生产构建到 `dist/` |
+| `npm run preview` | 预览构建产物 |
+| `npm run typecheck` | 只跑 `tsc` |
+| `npm run test:guide` | 攻略解析回归测试（29 项） |
+
+**解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
+
+```bash
+python scripts/extract_guide.py
+npm run test:guide
+```
+
+**界面回归**：`scripts/cdp_*.mjs` 通过 Chrome DevTools Protocol 跑真实交互（拖拽、筛选取舍、存档下载与导入、窄屏布局等）。先起开发服务器，再用桌面尺寸开一个调试实例：
+
+```bash
+# 终端 1
+npm run dev
+
+# 终端 2（--window-size 不能省，默认 800×600 会被脚本判成窄屏）
+chrome --remote-debugging-port=9339 --user-data-dir=/tmp/cdp-profile \
+       --headless=new --window-size=1440,900 about:blank
+
+node scripts/cdp_tracker_memo.mjs
+```
+
+## 目录结构
+
+```
+public/data/guide.json       生成的结构化攻略数据（运行时加载）
+sources/*.txt                补充攻略的纯文本来源（UTF-8，可重跑）
+scripts/extract_guide.py     docx + sources → guide.json（零第三方依赖）
+scripts/test_extract.py      解析回归测试
+scripts/cdp_*.mjs            浏览器端到端验证脚本
+src/components/              攻略阅读页组件
+src/components/tracker/      事件追踪器
+src/hooks/                   数据加载、选中态、进度存储、锚点跳转
+src/lib/                     纯逻辑：内容解析、统计、排序、筛选、存档
+```
+
+## 提交约定
+
+小步提交，每个可独立验证的功能点提交一次；提交信息用英文 `type: description`。
