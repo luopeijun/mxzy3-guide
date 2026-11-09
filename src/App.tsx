@@ -16,7 +16,20 @@ import LoadingScreen from './components/LoadingScreen';
 import Sidebar from './components/Sidebar';
 import NoticesApp from './components/notices/NoticesApp';
 import TrackerApp from './components/tracker/TrackerApp';
+import TipsView from './components/tips/TipsView';
 import type { ViewMode } from './components/ViewTabs';
+import type { GuideNode } from './types/guide';
+
+/** 攻略内的「小贴士」便签页：作为「经纪人事件簿」类目的一个子节点注入，
+ *  走普通节点路由，选中时整页渲染（而非塞进窄阅读栏）。 */
+const TIPS_NODE: GuideNode = {
+  id: 'game-guide/tips',
+  title: '小贴士',
+  status: 'ready',
+  description: '培养、比赛与关键事件的速查便签',
+  blocks: [],
+  children: [],
+};
 
 interface GuideAppProps {
   data: GuideData;
@@ -30,7 +43,17 @@ function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotice
   // The reader may drag levels of the tree around; everything below reads the
   // ordered copy so the header tabs, search and prev/next follow the new order.
   const { categories, move, reset, customized } = useTreeOrder(source.categories);
-  const data = useMemo<GuideData>(() => ({ ...source, categories }), [source, categories]);
+  const data = useMemo<GuideData>(
+    () => ({
+      ...source,
+      categories: categories.map((category) =>
+        category.id === 'game-guide'
+          ? { ...category, children: [...category.children, TIPS_NODE] }
+          : category,
+      ),
+    }),
+    [source, categories],
+  );
 
   const allNodes = useMemo(() => flattenNodes(data), [data]);
   const validIds = useMemo(() => new Set(allNodes.map((node) => node.id)), [allNodes]);
@@ -122,14 +145,18 @@ function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotice
         />
       )}
     >
-      <ContentPanel
-        data={data}
-        node={currentNode}
-        path={path}
-        prev={previousNode}
-        next={nextNode}
-        onSelect={handleSelect}
-      />
+      {currentNode?.id === 'game-guide/tips' ? (
+        <TipsView />
+      ) : (
+        <ContentPanel
+          data={data}
+          node={currentNode}
+          path={path}
+          prev={previousNode}
+          next={nextNode}
+          onSelect={handleSelect}
+        />
+      )}
     </AppShell>
   );
 }
