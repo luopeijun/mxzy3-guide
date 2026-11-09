@@ -4,6 +4,7 @@ import { buildPool } from '../../lib/tracker';
 import { computeGroups, GROUP_LABEL, type GroupKey } from '../../lib/trackerGroups';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
+import ArtistAvatar from './ArtistAvatar';
 
 interface Props {
   data: GuideData;
@@ -218,7 +219,18 @@ export default function TrackerCategories({ data }: Props) {
                         >
                           ✓
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-ui-2xs text-ink" title={line.name}>
+                        {/* 艺人线的章节名看不出属于谁，补一个头像；标题保持章节名。 */}
+                        {line.origin.tone === 'artist' && (
+                          <ArtistAvatar
+                            avatar={line.origin.avatar}
+                            label={line.origin.label}
+                            size="sm"
+                          />
+                        )}
+                        <span
+                          className="min-w-0 flex-1 truncate text-ui-2xs text-ink"
+                          title={`${line.origin.title} · ${line.name}`}
+                        >
                           {line.name}
                         </span>
                         <span className={cn('shrink-0 text-ui-2xs', STATUS_TONE[status])}>

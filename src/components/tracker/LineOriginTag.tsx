@@ -1,5 +1,6 @@
 import type { LineOrigin } from '../../lib/tracker';
 import { cn } from '../../lib/cn';
+import ArtistAvatar from './ArtistAvatar';
 
 /** One hue per source category, so a chip is recognised from its colour alone
  *  even in the flat pool. Artist lines additionally carry the artist portrait —
@@ -34,18 +35,9 @@ export default function LineOriginTag({ origin, query = '' }: Props) {
         hit && 'ring-2 ring-gold',
       )}
     >
-      {origin.tone === 'artist' &&
-        (origin.avatar ? (
-          <img
-            src={`${import.meta.env.BASE_URL}${origin.avatar}`}
-            alt=""
-            className="h-[16px] w-[16px] shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-brand text-[9px] leading-none text-white">
-            {origin.label.slice(0, 1)}
-          </span>
-        ))}
+      {origin.tone === 'artist' && (
+        <ArtistAvatar avatar={origin.avatar} label={origin.label} size="sm" />
+      )}
       <span>{origin.label}</span>
     </span>
   );
