@@ -12,7 +12,8 @@ interface Props {
   onSelect: () => void;
 }
 
-/** 元信息的一格：上面标签、下面值，类型后面再挂一行小字（剧种细分 / 广告篇名）。 */
+/** 元信息的一格：上面标签、下面值。剧种细分（连续剧 / 效果篇）缩成标签行里的一枚
+ *  小徽章——放在值下面会让这一格比旁边两格多一行，三格就对不齐了。 */
 function MetaCell({
   field,
   label,
@@ -26,16 +27,22 @@ function MetaCell({
 }) {
   return (
     <div data-notice-meta={field} className="min-w-0 bg-surface-soft px-2 py-1">
-      <dt className="text-ui-2xs text-ink-faint">{label}</dt>
+      <dt className="flex min-w-0 items-center gap-1 text-ui-2xs text-ink-faint">
+        <span className="shrink-0">{label}</span>
+        {sub && (
+          <span
+            data-notice-sub
+            className="truncate rounded-[4px] bg-tag-scene-soft px-1 py-px text-[10px] font-semibold leading-[1.5] text-tag-scene"
+            title={sub}
+          >
+            {sub}
+          </span>
+        )}
+      </dt>
       <dd className="mt-0.5 min-w-0">
         <span className="block truncate text-ui-xs font-semibold text-ink" title={value}>
           {value}
         </span>
-        {sub && (
-          <span className="mt-0.5 block truncate text-ui-2xs text-ink-faint" title={sub}>
-            {sub}
-          </span>
-        )}
       </dd>
     </div>
   );
@@ -50,8 +57,7 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
   const style = CATEGORY_STYLE[notice.cat];
   const range = difficultyRange(notice);
   const roles = notice.roles ?? [];
-  const pending = roles.filter((role) => !role.defaultArtist).length;
-  // 广告的「类型」是等级（演技B），篇名另挂一行；电视剧则把单本/连续剧挂在下面。
+  // 广告的「类型」是等级（演技B），篇名另挂；电视剧则把单本/连续剧挂在类型旁边。
   const typeSub = notice.series ?? notice.kindLabel;
 
   return (
@@ -108,44 +114,31 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
         )}
 
         {roles.length > 0 && (
-          <div className="mt-auto pt-2.5">
-            <div className="mb-1 flex items-baseline gap-2 text-ui-2xs">
-              <span className="text-ink-faint">角色 {roles.length}</span>
-              {pending > 0 ? (
-                <span data-notice-pending className="font-semibold text-brand-strong">
-                  待定 {pending}
+          <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-2.5">
+            {/* 同一个征求对象出现两次（特殊要求不同）就老老实实排两个，不并成 ×2。
+                有默认艺人的 chip 直接把艺人名写出来；没人接的就只有角色与星数，
+                虚线边框表示「表里没指定」，不再另起一行写「待定」。 */}
+            {roles.map((role, index) => {
+              const artist = role.defaultArtist;
+              return (
+                <span
+                  key={`${role.name}-${index}`}
+                  data-notice-role-chip
+                  data-role-state={artist ? 'defined' : 'open'}
+                  title={artist ? `${role.name}：默认 ${artist}` : `${role.name}：没有默认艺人`}
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-ui-xs border px-1.5 py-0.5 text-ui-2xs',
+                    artist
+                      ? 'border-brand-line bg-brand-soft text-brand-strong'
+                      : 'border-dashed border-line-strong bg-surface-soft text-ink-muted',
+                  )}
+                >
+                  <span className="font-medium">{role.name}</span>
+                  <StarBadge value={starsOf(role)} size="sm" />
+                  {artist && <span className="font-semibold text-brand">{artist}</span>}
                 </span>
-              ) : (
-                <span className="text-growth-strong">已全部指定</span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {/* 同一个征求对象出现两次（特殊要求不同）就老老实实排两个，不并成 ×2。 */}
-              {roles.map((role, index) => {
-                const defined = Boolean(role.defaultArtist);
-                return (
-                  <span
-                    key={`${role.name}-${index}`}
-                    data-notice-role-chip
-                    data-role-state={defined ? 'defined' : 'pending'}
-                    className={cn(
-                      'inline-flex items-center gap-1 rounded-ui-xs border px-1.5 py-0.5 text-ui-2xs',
-                      defined
-                        ? 'border-brand-line bg-brand-soft text-brand-strong'
-                        : 'border-dashed border-line-strong bg-surface-soft text-ink-muted',
-                    )}
-                  >
-                    <span className="font-medium">{role.name}</span>
-                    <span className="font-semibold tabular-nums text-gold">{starsOf(role)}★</span>
-                    {defined ? (
-                      <span className="font-semibold">{role.defaultArtist}</span>
-                    ) : (
-                      <span className="font-semibold text-missing">待定</span>
-                    )}
-                  </span>
-                );
-              })}
-            </div>
+              );
+            })}
           </div>
         )}
       </div>
