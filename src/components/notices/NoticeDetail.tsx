@@ -48,7 +48,7 @@ function MetaRow({
         <span
           className={cn(
             tag
-              ? 'inline-flex w-fit items-center rounded-[2px] px-1.5 py-0.5 text-[11px] font-bold leading-none'
+              ? 'inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-ui-xs font-bold -ml-1.5'
               : 'min-w-0 break-words',
             valueClass ?? 'text-ink',
           )}
