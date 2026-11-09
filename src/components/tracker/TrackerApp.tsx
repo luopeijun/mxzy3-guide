@@ -3,6 +3,7 @@ import type { GuideData } from '../../types/guide';
 import { useWheelForward } from '../../hooks/useWheelForward';
 import TrackerSetup from './TrackerSetup';
 import TrackerCategories from './TrackerCategories';
+import TrackerMemo from './TrackerMemo';
 import TrackerOverview from './TrackerOverview';
 import TrackerCategoryProgress from './TrackerCategoryProgress';
 import TrackerRecycle from './TrackerRecycle';
@@ -32,9 +33,18 @@ export default function TrackerApp({ data }: Props) {
       <div className="min-h-0 flex-1 overflow-hidden tab:[scrollbar-gutter:stable] tab:overflow-y-auto">
         <div className="mx-auto flex h-full w-full gap-6 px-6 nav:gap-4 nav:px-4 tab:h-auto tab:flex-col tab:overflow-visible">
           <aside className="w-[320px] shrink-0 overflow-x-hidden overflow-y-auto py-6 pr-1 tab:w-full tab:overflow-visible tab:py-4">
-            <div className="flex flex-col gap-4 pb-6">
+            {/* min-h-full + mt-auto on the last card pins the memo to the
+                bottom of the rail when the two panels above it are collapsed,
+                and lets it flow below them when they are open. */}
+            <div className="flex min-h-full flex-col gap-4 pb-6">
               <TrackerSetup data={data} />
               <TrackerCategories data={data} />
+              {/* Bottom of the left rail: a scratch list that has nothing to do
+                  with the event pool, deliberately last so it never pushes the
+                  two controls above it out of reach. */}
+              <div className="mt-auto">
+                <TrackerMemo />
+              </div>
             </div>
           </aside>
           {/* No top padding on the scroll container: a sticky child can only
