@@ -15,12 +15,16 @@ export interface TrackerData {
   version: 1;
   selectedArtists: string[];
   lines: Record<string, LineState>;
+  /** Manual drag order of event-pool line ids (full list, pinned included). */
+  order: string[];
+  /** Pinned line ids, in pin order — always rendered above the rest. */
+  pinned: string[];
 }
 
 const STORAGE_KEY = 'guide.progress.v1';
 
 function emptyData(): TrackerData {
-  return { version: 1, selectedArtists: [], lines: {} };
+  return { version: 1, selectedArtists: [], lines: {}, order: [], pinned: [] };
 }
 
 function readStorage(): TrackerData {
@@ -33,6 +37,9 @@ function readStorage(): TrackerData {
       version: 1,
       selectedArtists: Array.isArray(parsed.selectedArtists) ? parsed.selectedArtists : [],
       lines: parsed.lines && typeof parsed.lines === 'object' ? parsed.lines : {},
+      // v1 records written before drag/pin existed simply have no order yet.
+      order: Array.isArray(parsed.order) ? parsed.order : [],
+      pinned: Array.isArray(parsed.pinned) ? parsed.pinned : [],
     };
   } catch {
     return emptyData();
@@ -49,6 +56,10 @@ interface TrackerContextValue {
   setLineStatus: (lineId: string, status: LineStatus) => void;
   setManyStatus: (lineIds: string[], status: LineStatus) => void;
   restoreExcluded: () => void;
+  lineOrder: string[];
+  pinnedIds: string[];
+  togglePin: (lineId: string) => void;
+  reorderLines: (order: string[], pinned: string[]) => void;
   resetAll: () => void;
 }
 
@@ -62,6 +73,10 @@ const TrackerContext = createContext<TrackerContextValue>({
   setLineStatus: () => {},
   setManyStatus: () => {},
   restoreExcluded: () => {},
+  lineOrder: [],
+  pinnedIds: [],
+  togglePin: () => {},
+  reorderLines: () => {},
   resetAll: () => {},
 });
 
@@ -170,6 +185,21 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const togglePin = useCallback((lineId: string) => {
+    setData((previous) => ({
+      ...previous,
+      pinned: previous.pinned.includes(lineId)
+        ? previous.pinned.filter((id) => id !== lineId)
+        : [...previous.pinned, lineId],
+    }));
+  }, []);
+
+  /** One atomic write for a drag operation, so order and pin state never
+   *  disagree about which lines sit in the pinned block. */
+  const reorderLines = useCallback((order: string[], pinned: string[]) => {
+    setData((previous) => ({ ...previous, order, pinned }));
+  }, []);
+
   const resetAll = useCallback(() => setData(emptyData()), []);
 
   const value = useMemo<TrackerContextValue>(
@@ -183,10 +213,16 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       setLineStatus,
       setManyStatus,
       restoreExcluded,
+      lineOrder: data.order,
+      pinnedIds: data.pinned,
+      togglePin,
+      reorderLines,
       resetAll,
     }),
     [
       data.selectedArtists,
+      data.order,
+      data.pinned,
       setArtists,
       toggleArtist,
       getLine,
@@ -195,6 +231,8 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       setLineStatus,
       setManyStatus,
       restoreExcluded,
+      togglePin,
+      reorderLines,
       resetAll,
     ],
   );

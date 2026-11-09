@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { DragEvent } from 'react';
 import type { TaskLine, TaskStep } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
@@ -11,6 +12,14 @@ interface Props {
   matched?: Set<number> | null;
   /** Current search query, used for highlighting and auto-expanding. */
   query?: string;
+  pinned?: boolean;
+  onTogglePin?: () => void;
+  /** Drag is disabled while a search filter is active (a partial list cannot
+   *  define a global order). */
+  dragDisabled?: boolean;
+  isDragging?: boolean;
+  onDragStart?: (event: DragEvent<HTMLSpanElement>) => void;
+  onDragEnd?: () => void;
 }
 
 /** 子事件编号（3-1 / 3-1-1）的层级 = `－`/`-` 的个数，用来做缩进，和攻略正文一致。 */
@@ -80,7 +89,17 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
 
 /** One task line: a progress bar plus an expandable list of triggerable steps.
  *  The line itself can be 放弃 (kept but dimmed) or 移出池子 (hidden). */
-export default function TaskLineCard({ line, matched = null, query = '' }: Props) {
+export default function TaskLineCard({
+  line,
+  matched = null,
+  query = '',
+  pinned = false,
+  onTogglePin,
+  dragDisabled = false,
+  isDragging = false,
+  onDragStart,
+  onDragEnd,
+}: Props) {
   const { getLine, setLineStatus } = useTracker();
   const state = getLine(line.id);
   const abandoned = (state?.status ?? 'active') === 'abandoned';
@@ -100,12 +119,30 @@ export default function TaskLineCard({ line, matched = null, query = '' }: Props
 
   return (
     <div
+      data-line-card
       className={cn(
         'rounded-ui-md border bg-surface shadow-soft',
         abandoned ? 'border-line-strong opacity-70' : 'border-line',
+        pinned && 'ring-1 ring-gold-line',
+        isDragging && 'opacity-40',
       )}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+        <span
+          draggable={!dragDisabled}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          title={dragDisabled ? '搜索时不可拖拽排序' : '按住拖动排序'}
+          aria-label="拖拽排序"
+          className={cn(
+            'shrink-0 select-none px-1 text-ui-sm leading-none text-ink-faint',
+            dragDisabled
+              ? 'cursor-not-allowed opacity-30'
+              : 'cursor-grab hover:text-brand-strong active:cursor-grabbing',
+          )}
+        >
+          ⠿
+        </span>
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -125,6 +162,11 @@ export default function TaskLineCard({ line, matched = null, query = '' }: Props
           {abandoned && (
             <span className="shrink-0 rounded-full bg-missing-soft px-2 py-0.5 text-ui-2xs text-missing">
               已放弃
+            </span>
+          )}
+          {pinned && (
+            <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs font-semibold text-gold">
+              置顶
             </span>
           )}
           {matched && (
@@ -147,6 +189,18 @@ export default function TaskLineCard({ line, matched = null, query = '' }: Props
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onTogglePin}
+            className={cn(
+              'rounded-ui-sm border px-2.5 py-1 text-ui-2xs transition-colors',
+              pinned
+                ? 'border-gold-line bg-gold-soft text-gold hover:border-gold'
+                : 'border-line text-ink-muted hover:border-brand-line hover:text-brand-strong',
+            )}
+          >
+            {pinned ? '取消置顶' : '置顶'}
+          </button>
           <button
             type="button"
             onClick={() => setLineStatus(line.id, abandoned ? 'active' : 'abandoned')}
