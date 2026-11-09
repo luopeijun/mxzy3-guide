@@ -6,12 +6,13 @@
  *  令牌都在 `global.css @theme` 里，全部不与既有语义色重复（相似但不重复，
  *  统一明度/饱和度，色相按行业分组）。没登记的值回落墨色 / 灰点。 */
 
-/** 时间档位 → 值文字色。 */
-const TIME_CLASS: Record<string, string> = {
-  第一年: 'text-year-1',
-  第二年: 'text-year-2',
-  第三年: 'text-year-3',
-  特殊: 'text-year-x',
+/** 时间档位 → 实色白字药丸类。四档是顺序概念（第一年→第二年→第三年→特殊），
+ *  用四种明显不同的底色，扫一眼就能分清；与 growth 绿、alert 红都不撞色。 */
+const TIME_PILL: Record<string, string> = {
+  第一年: 'bg-year-1 text-white',
+  第二年: 'bg-year-2 text-white',
+  第三年: 'bg-year-3 text-white',
+  特殊: 'bg-year-x text-white',
 };
 
 /** 公司与它的圆点底色、文字色一一对应——圆点放大后色相才分得清，文字也同色
@@ -45,8 +46,8 @@ const COMPANY_TEXT: Record<string, string> = Object.fromEntries(
 /** 图例用：把全部公司连同色标一起导出。 */
 export const COMPANY_LEGEND = COMPANY_COLORS;
 
-export function timeText(time?: string | null): string {
-  return (time && TIME_CLASS[time]) || 'text-ink';
+export function timePill(time?: string | null): string {
+  return (time && TIME_PILL[time]) || 'text-ink';
 }
 
 export function companyDot(company?: string | null): string {
