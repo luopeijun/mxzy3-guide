@@ -55,7 +55,7 @@ function RoleBlock({
     <li data-notice-role className="rounded-ui-md border border-line bg-surface p-3">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-ui-sm font-semibold text-ink">{role.name}</span>
-        <StarBadge value={stars} size="sm" tone="soft" />
+        <StarBadge value={stars} size="md" />
         {role.defaultArtist && (
           <span className="rounded-full bg-brand-soft px-2 py-0.5 text-ui-2xs text-brand-strong">
             默认 {role.defaultArtist}

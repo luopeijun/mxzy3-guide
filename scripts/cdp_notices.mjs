@@ -66,8 +66,10 @@ const STATE = `(() => {
         size: box.querySelector('[data-notice-page-size]')?.value ?? null,
       };
     })(),
-    // 卡片上的关键信息：星级徽标 ×1、类型/时间/公司各一格、角色 chip 若干。
-    starBadges: root.querySelectorAll('[data-notice-card] [data-star-badge]').length,
+    // 卡片上的关键信息：右上角一套星级、类型/时间/公司各一格、角色 chip 若干。
+    // 角色 chip 里也各带一套星（难度跟着角色走），所以只要求「每张卡都有」。
+    starCards: cards.filter((c) => c.querySelector('[data-star-badge]')).length,
+    starFull: cards.every((c) => (c.querySelector('[data-star-badge]')?.textContent ?? '').length === 5),
     metaCells: cards.every((c) => c.querySelectorAll('[data-notice-meta]').length === 3),
     // 同页卡片必须等高，任何一组不同就说明撑高逻辑坏了。
     heights: [...new Set(cards.map((c) => Math.round(c.getBoundingClientRect().height)))],
@@ -138,8 +140,9 @@ async function main() {
   if (initial.pager.redundantEdges) fail('首页/末页按钮与页码重复，应删掉');
   if (!initial.pager.hasPagerJump) fail('分页器缺少跳页输入框');
   if (initial.heights.length !== 1) fail('card heights differ: ' + initial.heights.join('/'));
-  if (initial.starBadges !== initial.cards)
-    fail(`星级徽标 ${initial.starBadges}/${initial.cards} 张卡上缺失`);
+  if (initial.starCards !== initial.cards)
+    fail(`星级 ${initial.starCards}/${initial.cards} 张卡上缺失`);
+  if (!initial.starFull) fail('星级应该是五颗星的星条，不是只有数字');
   if (!initial.metaCells) fail('卡片缺少 类型/时间/公司 三格元信息');
   if (initial.catChips !== 5) fail('expected 5 category chips, got ' + initial.catChips);
   if (!initial.detail) fail('the detail panel did not render');
@@ -246,7 +249,7 @@ async function main() {
   console.log('STAR5', JSON.stringify({ count: five.countText, cards: five.cards }));
   const stars = await evaluate(`(() => {
     const cards = [...${SCOPE}.querySelectorAll('[data-notice-card]')];
-    return cards.filter(c => c.textContent.includes('5★')).length;
+    return cards.filter(c => c.querySelector('[data-notice-role-chip] [data-star-value="5"]')).length;
   })()`);
   if (stars !== five.cards) fail(`只有 ${stars}/${five.cards} 张卡含 5 星角色`);
 
