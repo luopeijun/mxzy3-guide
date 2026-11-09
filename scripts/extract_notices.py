@@ -107,6 +107,20 @@ def number(value):
     return int(parsed) if parsed.is_integer() else round(parsed, 2)
 
 
+# xls 里的「能力影响」是十位数量级（36 / 48），游戏内每天实际结算的是它的
+# 十分之一（3.6 / 4.8），已按实测口径确认。只有能力增减要换算；
+# 叛逆 / 性感 / 亲和 那三列是接演门槛，用原值。
+GAIN_SCALE = 0.1
+
+
+def daily(value):
+    """能力影响统一换算成游戏内的每日数值，保留一位小数。"""
+    parsed = number(value)
+    if parsed is None:
+        return None
+    return round(parsed * GAIN_SCALE, 1)
+
+
 def split_specials(raw: str) -> list[str]:
     """「暴力反派」「反串搞笑丑化」这类复合标签拆成基本项。"""
     found = []
@@ -138,7 +152,7 @@ def role_from_cells(cells: dict) -> dict:
         role["special"] = special
     gains = {}
     for ability, value in (cells.get("gains") or {}).items():
-        parsed = number(value)
+        parsed = daily(value)
         if parsed is not None:
             gains[ability] = parsed
     if gains:
@@ -233,7 +247,7 @@ def main() -> None:
             entry["grades"] = levels
         gains = {}
         for offset, ability in enumerate(ABILITIES):
-            value = number(grade_sheet.cell_value(row, 11 + offset))
+            value = daily(grade_sheet.cell_value(row, 11 + offset))
             if value is not None:
                 gains[ability] = value
         if gains:

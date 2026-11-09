@@ -104,6 +104,74 @@ class NoticeDataTest(unittest.TestCase):
         music = self.by_id["CD002"]
         self.assertEqual(music["roles"][0]["name"], "团体")
 
+    def test_gains_are_on_the_daily_scale(self) -> None:
+        # xls 的能力影响是十位数量级（36 / 48），游戏里每天结算的是 ÷10 之后的
+        # 值（3.6 / 4.8）。任何一格超过个位数都说明又用回了原表口径。
+        biggest = max(
+            abs(value)
+            for notice in self.notices
+            for role in notice["roles"]
+            for value in (role.get("gains") or {}).values()
+        )
+        self.assertLessEqual(biggest, 6, "每日成长应是个位数")
+        for row in self.data["grades"]:
+            for ability, value in (row.get("gains") or {}).items():
+                self.assertLessEqual(abs(value), 6, f"{row['type']}/{row['role']}/{ability}")
+
+    def test_daily_gains_match_the_spreadsheet(self) -> None:
+        # requirements.xlsx 的「能力影响（每天）」就是游戏内的每日数值，
+        # 类型表要跟它逐格相等。
+        try:
+            import openpyxl  # type: ignore
+        except ImportError:
+            self.skipTest("openpyxl 未安装，跳过与原表的交叉核对")
+
+        roles = ("主角", "配角", "主持人", "助理主持", "外景主持")
+        workbook = openpyxl.load_workbook(XLSX, data_only=True)
+        checked = 0
+        for sheet_name in ["电影", "电视剧", "唱片", "广告", "主持"]:
+            sheet = workbook[sheet_name]
+            # 表头有两个「演技」：前面那组是能力要求，后面那组才是能力影响。
+            starts = [
+                column
+                for column in range(1, sheet.max_column + 1)
+                if str(sheet.cell(row=3, column=column).value or "").strip() == "演技"
+            ]
+            self.assertEqual(len(starts), 2, sheet_name)
+            base = starts[-1]
+            for row in range(4, sheet.max_row + 1):
+                type_name = sheet.cell(row=row, column=2).value
+                if not type_name:
+                    continue
+                role = str(sheet.cell(row=row, column=3).value or "").strip()
+                if role not in roles:
+                    role = ""
+                grade_row = next(
+                    (
+                        item
+                        for item in self.data["grades"]
+                        if item["type"] == str(type_name).strip() and item["role"] == role
+                    ),
+                    None,
+                )
+                if grade_row is None:
+                    continue
+                for offset, ability in enumerate(ABILITIES):
+                    cell = sheet.cell(row=row, column=base + offset).value
+                    if cell in (None, ""):
+                        continue
+                    actual = (grade_row.get("gains") or {}).get(ability)
+                    if actual is None:
+                        continue
+                    checked += 1
+                    self.assertAlmostEqual(
+                        actual,
+                        float(cell),
+                        places=6,
+                        msg=f"{type_name}/{role}/{ability}",
+                    )
+        self.assertGreater(checked, 60)
+
     def test_derived_ranges_match_the_spreadsheet(self) -> None:
         try:
             import openpyxl  # type: ignore
