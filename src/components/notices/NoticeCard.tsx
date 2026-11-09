@@ -3,7 +3,7 @@ import { EXCLUSIVE_HINT, difficultyRange, starsOf } from '../../lib/notices';
 import { cn } from '../../lib/cn';
 import StarBadge from './StarBadge';
 import { CATEGORY_STYLE } from './categoryStyle';
-import { companyDot, companyText, timeMark } from './infoStyle';
+import { companyDot, companyText, timeDot, timeText } from './infoStyle';
 
 interface Props {
   notice: Notice;
@@ -15,7 +15,8 @@ interface Props {
 
 /** 元信息的一格：上面标签、下面值。剧种细分（连续剧 / 效果篇）缩成标签行里的一枚
  *  小徽章——放在值下面会让这一格比旁边两格多一行，三格就对不齐了。
- *  时间值按年份档位着色，公司值前面挂一颗同色索引点（infoStyle 的分工）。 */
+ *  时间档位和公司都用「同色形状 + 同色文字」：公司挂圆点、时间挂菱形块，
+ *  形状区分两套编码（infoStyle 的分工）。 */
 function MetaCell({
   field,
   label,
@@ -23,6 +24,7 @@ function MetaCell({
   sub,
   valueClass,
   dotClass,
+  diamond,
 }: {
   field: 'type' | 'time' | 'company';
   label: string;
@@ -30,9 +32,9 @@ function MetaCell({
   sub?: string;
   valueClass?: string;
   dotClass?: string;
+  /** 形状用菱形（旋转方块）而非圆点；时间档位用。 */
+  diamond?: boolean;
 }) {
-  // 时间档位用方角浅底标签（非圆角药丸），其余字段是普通文字。
-  const isTag = field === 'time';
   return (
     <div data-notice-meta={field} className="min-w-0 bg-surface-soft px-2 py-1">
       <dt className="flex min-w-0 items-center gap-1 text-ui-2xs text-ink-faint">
@@ -50,21 +52,17 @@ function MetaCell({
       <dd className="mt-0.5 flex min-w-0 items-center gap-1.5">
         {dotClass && (
           <span
-            data-notice-company-dot
+            {...(diamond ? { 'data-notice-time-diamond': '' } : { 'data-notice-company-dot': '' })}
             className={cn(
-              'h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-surface',
+              'shrink-0 ring-2 ring-surface',
+              diamond ? 'h-2 w-2 rotate-45' : 'h-2.5 w-2.5 rounded-full',
               dotClass,
             )}
-            title={`公司色标：${value}`}
+            title={diamond ? `时间档位：${value}` : `公司色标：${value}`}
           />
         )}
         <span
-          className={cn(
-            isTag
-              ? 'inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-ui-xs font-bold'
-              : 'min-w-0 truncate text-ui-xs font-bold',
-            valueClass ?? 'text-ink',
-          )}
+          className={cn('min-w-0 truncate text-ui-xs font-bold', valueClass ?? 'text-ink')}
           title={value}
         >
           {value}
@@ -129,7 +127,9 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
             field="time"
             label="时间"
             value={notice.time ?? '—'}
-            valueClass={timeMark(notice.time)}
+            valueClass={timeText(notice.time)}
+            dotClass={timeDot(notice.time)}
+            diamond
           />
           <MetaCell
             field="company"

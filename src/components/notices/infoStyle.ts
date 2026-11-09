@@ -6,15 +6,21 @@
  *  令牌都在 `global.css @theme` 里，全部不与既有语义色重复（相似但不重复，
  *  统一明度/饱和度，色相按行业分组）。没登记的值回落墨色 / 灰点。 */
 
-/** 时间档位 → 方角（直角）浅底标签：同色浅底 + 同色深字。四档是顺序概念
- *  （第一年→第二年→第三年→特殊），四色明显不同；用方角（非圆角）和页面上
- *  已有的圆角药丸（分类/独家/角色 chip）区分开，页面就不会全是圆角标签了；
- *  与 growth 绿、alert 红都不撞色。 */
-const TIME_MARK: Record<string, string> = {
-  第一年: 'bg-year-1-soft text-year-1',
-  第二年: 'bg-year-2-soft text-year-2',
-  第三年: 'bg-year-3-soft text-year-3',
-  特殊: 'bg-year-x-soft text-year-x',
+/** 时间档位 → 和公司圆点同族的「菱形块 + 同色文字」：年份有顺序性值得给文字色，
+ *  形状用菱形（旋转 45° 的方块）和公司圆点区分开，但配色逻辑一致——大块颜色
+ *  归时间，点缀形状归公司，两张卡扫一眼能认出同一时间和同一家公司；与 growth
+ *  绿、alert 红都不撞色。 */
+const TIME_DOT: Record<string, string> = {
+  第一年: 'bg-year-1',
+  第二年: 'bg-year-2',
+  第三年: 'bg-year-3',
+  特殊: 'bg-year-x',
+};
+const TIME_TEXT: Record<string, string> = {
+  第一年: 'text-year-1',
+  第二年: 'text-year-2',
+  第三年: 'text-year-3',
+  特殊: 'text-year-x',
 };
 
 /** 公司与它的圆点底色、文字色一一对应——圆点放大后色相才分得清，文字也同色
@@ -48,8 +54,12 @@ const COMPANY_TEXT: Record<string, string> = Object.fromEntries(
 /** 图例用：把全部公司连同色标一起导出。 */
 export const COMPANY_LEGEND = COMPANY_COLORS;
 
-export function timeMark(time?: string | null): string {
-  return (time && TIME_MARK[time]) || 'text-ink';
+export function timeDot(time?: string | null): string {
+  return (time && TIME_DOT[time]) || 'bg-ink-faint';
+}
+
+export function timeText(time?: string | null): string {
+  return (time && TIME_TEXT[time]) || 'text-ink';
 }
 
 export function companyDot(company?: string | null): string {
