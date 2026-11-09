@@ -108,7 +108,9 @@ export default function TaskLineCard({
 }: Props) {
   const { getLine, setLineStatus, setLineSteps } = useTracker();
   const state = getLine(line.id);
-  const abandoned = (state?.status ?? 'active') === 'abandoned';
+  const status = state?.status ?? 'active';
+  const abandoned = status === 'abandoned';
+  const excluded = status === 'excluded';
   const doneSet = new Set(state?.done ?? []);
   const doneCount = line.steps.filter((step) => doneSet.has(step.index)).length;
   const total = line.steps.length;
@@ -130,6 +132,7 @@ export default function TaskLineCard({
   return (
     <div
       data-line-card
+      data-line-id={line.id}
       className={cn(
         'rounded-ui-md border bg-surface shadow-soft',
         abandoned ? 'border-line-strong opacity-70' : 'border-line',
@@ -202,6 +205,14 @@ export default function TaskLineCard({
               已放弃
             </span>
           )}
+          {excluded && (
+            <span
+              data-excluded-badge
+              className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-faint ring-1 ring-line-strong"
+            >
+              已移出
+            </span>
+          )}
           {pinned && (
             <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs font-semibold text-gold">
               置顶
@@ -241,18 +252,34 @@ export default function TaskLineCard({
           </button>
           <button
             type="button"
+            disabled={excluded}
+            title={excluded ? '先恢复进池，再决定是否放弃' : undefined}
             onClick={() => setLineStatus(line.id, abandoned ? 'active' : 'abandoned')}
-            className="rounded-ui-sm border border-line px-2.5 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            className={cn(
+              'rounded-ui-sm border border-line px-2.5 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong',
+              excluded && 'cursor-not-allowed opacity-50 hover:border-line hover:text-ink-muted',
+            )}
           >
             {abandoned ? '恢复追踪' : '放弃'}
           </button>
-          <button
-            type="button"
-            onClick={() => setLineStatus(line.id, 'excluded')}
-            className="rounded-ui-sm border border-line px-2.5 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
-          >
-            移出池子
-          </button>
+          {excluded ? (
+            <button
+              type="button"
+              data-restore-line
+              onClick={() => setLineStatus(line.id, 'active')}
+              className="rounded-ui-sm border border-brand-line bg-brand-soft px-2.5 py-1 text-ui-2xs font-semibold text-brand-strong transition-colors hover:border-brand"
+            >
+              恢复进池
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setLineStatus(line.id, 'excluded')}
+              className="rounded-ui-sm border border-line px-2.5 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            >
+              移出池子
+            </button>
+          )}
         </div>
       </div>
 
