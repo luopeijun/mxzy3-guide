@@ -15,7 +15,6 @@ import {
   PR_NOTE,
   PRODUCER_GROUPS,
   PROP_ROWS,
-  SINGER_ROWS,
   TRAINING_ROWS,
 } from './tipsData';
 
@@ -23,7 +22,6 @@ import {
 const SECTIONS: NoteSection[] = [
   { key: 'jobs', label: '培训与打工' },
   { key: 'certs', label: '证书取得' },
-  { key: 'singer', label: '歌手培养要点' },
   { key: 'producers', label: '制作人擅长方向' },
   { key: 'props', label: '鱼缸与公关' },
   { key: 'beauty', label: '美丽之星' },
@@ -68,7 +66,6 @@ export default function TipsView() {
           name="jobs"
           tone="bg-tag-news"
           title="培训与打工"
-          hint="培训产出属性并换证书；打工产出属性与名气，少数会压低某项属性（红色）。"
           className="min-[1240px]:col-span-2"
         >
           <div className="mt-3 grid gap-x-10 gap-y-4 min-[900px]:grid-cols-2">
@@ -138,7 +135,6 @@ export default function TipsView() {
           name="certs"
           tone="bg-gold"
           title="证书取得"
-          hint="三项证书的属性门槛与对应海外课程，颜色与培训表一致。"
         >
           <ul className="mt-2.5 flex flex-col">
             {CERT_ROWS.map((row) => (
@@ -160,32 +156,6 @@ export default function TipsView() {
               </li>
             ))}
           </ul>
-        </NoteCard>
-
-        <NoteCard
-          name="singer"
-          tone="bg-tag-scene"
-          title="歌手培养要点"
-          hint="左侧是练属性要点，右侧是对应属性影响的数值状态。"
-        >
-          <table className="mt-2.5 w-full text-ui-2xs">
-            <thead>
-              <tr className="text-ink-faint">
-                <th className="py-1 text-left font-normal">要点</th>
-                <th className="py-1 text-right font-normal">属性与状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SINGER_ROWS.map((row) => (
-                <tr key={row.point} className="border-t border-line align-top">
-                  <td className="py-1.5 pr-6 text-ink">{row.point}</td>
-                  <td className="py-1.5 text-right text-ink-muted">
-                    {row.note || '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </NoteCard>
 
         <NoteCard

@@ -15,7 +15,7 @@ export default function NoteCard({
   name: string;
   tone: string;
   title: string;
-  hint: string;
+  hint?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -33,7 +33,7 @@ export default function NoteCard({
           <span className={cn('h-1.5 w-1.5 rounded-full', tone)} aria-hidden="true" />
           {title}
         </h2>
-        <p className="mt-1 text-ui-2xs leading-[1.7] text-ink-faint">{hint}</p>
+        {hint && <p className="mt-1 text-ui-2xs leading-[1.7] text-ink-faint">{hint}</p>}
         {children}
       </div>
     </section>

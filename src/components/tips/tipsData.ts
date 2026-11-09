@@ -58,19 +58,6 @@ export const CERT_ROWS: CertRow[] = [
   { name: '舞蹈证书', need: '仪态650，动感650，体能550', course: '夏威夷课程3次' },
 ];
 
-export interface SingerRow {
-  point: string;
-  note: string;
-}
-export const SINGER_ROWS: SingerRow[] = [
-  { point: '主练歌艺和自信', note: '自信影响压力增长率' },
-  { point: '另类要练口才', note: '体能影响疲劳增长率' },
-  { point: '除舞曲和另类以外，其他都要名气', note: '动感影响完美率' },
-  { point: '抒情、爵士和民歌需要练仪态', note: '' },
-  { point: '摇滚和舞曲需要练动感、体能', note: '' },
-  { point: '节奏蓝调、民歌、儿歌需要才智', note: '' },
-];
-
 export interface ProducerGroup {
   name: string;
   sub?: string;
