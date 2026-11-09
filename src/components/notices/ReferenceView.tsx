@@ -270,7 +270,7 @@ export default function ReferenceView({ data }: Props) {
             name="album"
             tone="bg-tag-follow"
             title="第一年个人/团体舞曲、另类通告数值要求"
-            hint="红字专辑为团体通告；「—」为原表留空记号（无要求）；合并格表示同档专辑共享同一区间。"
+            hint="带「团体」标签的专辑为团体通告；「—」为原表留空记号（无要求）；合并格表示同档专辑共享同一区间。"
             className="min-[1240px]:col-span-2"
           >
             <div className="mt-2.5 overflow-x-auto">
@@ -295,13 +295,21 @@ export default function ReferenceView({ data }: Props) {
                 <tbody>
                   {ALBUM_ROWS.map((row) => (
                     <tr key={row.name}>
-                      <td
-                        className={cn(
-                          'border border-line px-2 py-1.5 text-left align-middle text-ink',
-                          row.group && 'font-semibold text-alert',
-                        )}
-                      >
-                        {row.name}
+                      <td className="border border-line px-2 py-1.5 text-left align-middle text-ink">
+                        {/* 团体专辑靠「团体」小标签区分，不用红字：单元格里同时挂着
+                            text-ink 和 text-alert 时 Tailwind 的层内顺序会让 ink 胜出，
+                            红字本来就渲染不出来；标签也不受单一文字颜色限制。 */}
+                        <span className="flex items-center gap-1.5">
+                          <span className={cn('min-w-0', row.group && 'font-semibold')}>{row.name}</span>
+                          {row.group && (
+                            <span
+                              data-album-group-tag
+                              className="inline-flex shrink-0 items-center rounded-ui-xs bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-brand-strong"
+                            >
+                              团体
+                            </span>
+                          )}
+                        </span>
                       </td>
                       <AlbumTd cell={row.cat} />
                       <AlbumTd cell={row.diff} />
