@@ -31,7 +31,8 @@ function MetaCell({
   valueClass?: string;
   dotClass?: string;
 }) {
-  // 时间档位用彩色文字 + 同色下划线（非药丸），其余字段是普通文字。
+  // 时间档位用方角浅底标签（非圆角药丸），其余字段是普通文字。
+  const isTag = field === 'time';
   return (
     <div data-notice-meta={field} className="min-w-0 bg-surface-soft px-2 py-1">
       <dt className="flex min-w-0 items-center gap-1 text-ui-2xs text-ink-faint">
@@ -58,7 +59,12 @@ function MetaCell({
           />
         )}
         <span
-          className={cn('min-w-0 truncate text-ui-xs font-bold', valueClass ?? 'text-ink')}
+          className={cn(
+            isTag
+              ? 'inline-flex w-fit items-center rounded-[2px] px-1.5 py-0.5 text-[11px] font-bold leading-none'
+              : 'min-w-0 truncate text-ui-xs font-bold',
+            valueClass ?? 'text-ink',
+          )}
           title={value}
         >
           {value}

@@ -26,11 +26,13 @@ function MetaRow({
   value,
   valueClass,
   dotClass,
+  tag,
 }: {
   label: string;
   value?: string;
   valueClass?: string;
   dotClass?: string;
+  tag?: boolean;
 }) {
   if (!value) return null;
   return (
@@ -43,7 +45,16 @@ function MetaRow({
             title={`公司色标：${value}`}
           />
         )}
-        <span className={cn('min-w-0 break-words', valueClass ?? 'text-ink')}>{value}</span>
+        <span
+          className={cn(
+            tag
+              ? 'inline-flex w-fit items-center rounded-[2px] px-1.5 py-0.5 text-[11px] font-bold leading-none'
+              : 'min-w-0 break-words',
+            valueClass ?? 'text-ink',
+          )}
+        >
+          {value}
+        </span>
       </span>
     </div>
   );
@@ -264,7 +275,7 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
           <MetaRow label="类型" value={notice.type ?? notice.level} />
           <MetaRow label="系列" value={notice.series} />
           <MetaRow label="品类" value={notice.adType} />
-          <MetaRow label="时间" value={notice.time} valueClass={timeMark(notice.time)} />
+          <MetaRow label="时间" value={notice.time} valueClass={timeMark(notice.time)} tag />
           <MetaRow label="公司" value={notice.company} dotClass={companyDot(notice.company)} />
           <MetaRow label="制作人" value={notice.producer} />
         </div>
