@@ -12,8 +12,17 @@ import {
 } from '../../lib/trackerFilter';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
+import {
+  NO_CONTENT,
+  contentLabel,
+  isContentFilterActive,
+  lineMatchesContent,
+  matchingStepIndices,
+  type ContentFilter,
+} from '../../lib/trackerContent';
 import TaskLineCard from './TaskLineCard';
 import TrackerFilterChips from './TrackerFilterChips';
+import TrackerContentChips from './TrackerContentChips';
 
 interface Props {
   data: GuideData;
@@ -30,6 +39,19 @@ function matchEntries(lines: TaskLine[], needle: string): LineMatch[] {
     .filter((entry): entry is LineMatch => entry !== null);
 }
 
+/** Search hits ∩ content-filter hits. Either side may be absent, meaning "no
+ *  restriction from this side". */
+function mergeMatched(
+  search: Set<number> | null,
+  content: Set<number> | null | undefined,
+): Set<number> | null {
+  if (!content) return search;
+  if (!search) return content;
+  const both = new Set<number>();
+  for (const index of search) if (content.has(index)) both.add(index);
+  return both;
+}
+
 /** One flat, globally ordered pool. Categories stay visible in the left/right
  *  rails as filters and stats, but no longer split the list — otherwise a drag
  *  could never cross a category boundary and 置顶 would only be local.
@@ -43,6 +65,7 @@ export default function TrackerPool({ data }: Props) {
   const { selectedArtists, getLine, lineOrder, pinnedIds, togglePin, reorderLines } = useTracker();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<LineFilter>('all');
+  const [content, setContent] = useState<ContentFilter>(NO_CONTENT);
   const [completedOpen, setCompletedOpen] = useState(false);
   const [jumpRequested, setJumpRequested] = useState(false);
   const completedRef = useRef<HTMLDivElement>(null);
@@ -51,25 +74,43 @@ export default function TrackerPool({ data }: Props) {
   const needle = query.trim().toLowerCase();
   const searching = needle.length > 0;
   const filtering = filter !== 'all';
-  const dragDisabled = searching || filtering;
+  const contentFiltering = isContentFilterActive(content);
+  const dragDisabled = searching || filtering || contentFiltering;
   const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
+  // Content is a *view* over the pool: progress maths (overview, sticky bar)
+  // always uses the full pool so filtering never rewrites the totals.
+  const visiblePool = useMemo(
+    () => (contentFiltering ? pool.filter((line) => lineMatchesContent(line, content)) : pool),
+    [pool, content, contentFiltering],
+  );
+  // Which steps survive the content filter, per line — the card renders only
+  // those, exactly like a search hit list.
+  const contentSteps = useMemo(() => {
+    if (!contentFiltering) return null;
+    const map = new Map<string, Set<number>>();
+    for (const line of visiblePool) {
+      const indices = matchingStepIndices(line, content);
+      if (indices) map.set(line.id, indices);
+    }
+    return map;
+  }, [visiblePool, content, contentFiltering]);
 
   // Buckets exist in every view: they drive the chip counts and the filtered
   // list. The 全部 view still uses the original split so its ordering, archive
   // and drag behaviour are byte-for-byte unchanged.
-  const phases = useMemo(() => groupPhases(pool, getLine), [pool, getLine]);
+  const phases = useMemo(() => groupPhases(visiblePool, getLine), [visiblePool, getLine]);
   const stats = useMemo(() => summarisePool(pool, getLine), [pool, getLine]);
   const { activeLines, completedLines } = useMemo(() => {
     const activeLines: TaskLine[] = [];
     const completedLines: TaskLine[] = [];
-    for (const line of pool) {
+    for (const line of visiblePool) {
       const state = getLine(line.id);
       if ((state?.status ?? 'active') === 'excluded') continue;
       if (isLineComplete(line, state?.done ?? [], state?.skipped ?? [])) completedLines.push(line);
       else activeLines.push(line);
     }
     return { activeLines, completedLines };
-  }, [pool, getLine]);
+  }, [visiblePool, getLine]);
 
   const counts = useMemo<Record<LineFilter, number>>(
     () => ({
@@ -270,13 +311,23 @@ export default function TrackerPool({ data }: Props) {
         </div>
 
         <TrackerFilterChips value={filter} counts={counts} onChange={setFilter} />
+        <TrackerContentChips value={content} onChange={setContent} />
 
-        {(searching || filtering) && (
+        {(searching || filtering || contentFiltering) && (
           <p data-filter-hint className="mt-1.5 text-ui-2xs text-ink-faint">
             {searching
               ? `找到 ${foundLines} 条任务线 · ${matchedEvents} 个事件`
-              : `正在筛选「${FILTER_LABEL[filter]}」· ${ordered.length} 条任务线`}
-            {filtering && ' · 筛选时不可拖拽，状态改变会自动离开当前筛选'}
+              : `${[
+                  filtering ? `状态「${FILTER_LABEL[filter]}」` : null,
+                  contentFiltering ? `内容「${contentLabel(content)}」` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')} · ${ordered.length + orderedCompleted.length} 条任务线`}
+            {filtering
+              ? ' · 筛选时不可拖拽，状态改变会自动离开当前筛选'
+              : contentFiltering
+                ? ' · 内容筛选时不可拖拽排序'
+                : ''}
             {searching && ' · 按 Esc 或「清空」退出'}
           </p>
         )}
@@ -304,9 +355,11 @@ export default function TrackerPool({ data }: Props) {
 
       {totalVisible === 0 ? (
         <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-8 text-center text-ui-xs text-ink-faint">
-          {filtering
-            ? `当前没有「${FILTER_LABEL[filter]}」的任务线，点上方「全部」返回。`
-            : '事件池为空。勾选艺人，或把已移出的任务线恢复回来。'}
+          {contentFiltering
+            ? `没有内容为「${contentLabel(content)}」的任务线，点「内容」旁的清除回到全部。`
+            : filtering
+              ? `当前没有「${FILTER_LABEL[filter]}」的任务线，点上方「全部」返回。`
+              : '事件池为空。勾选艺人，或把已移出的任务线恢复回来。'}
         </p>
       ) : foundLines === 0 ? (
         <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-8 text-center text-ui-xs text-ink-faint">
@@ -345,7 +398,9 @@ export default function TrackerPool({ data }: Props) {
                       )}
                       <TaskLineCard
                         line={line}
-                        matched={entry.matched}
+                        matched={mergeMatched(entry.matched, contentSteps?.get(line.id))}
+                        forceOpen={contentFiltering}
+                        showMatchBadge={!contentFiltering}
                         query={query}
                         pinned={pinned}
                         onTogglePin={() => togglePin(line.id)}
@@ -400,7 +455,9 @@ export default function TrackerPool({ data }: Props) {
                     <li key={entry.line.id}>
                       <TaskLineCard
                         line={entry.line}
-                        matched={entry.matched}
+                        matched={mergeMatched(entry.matched, contentSteps?.get(entry.line.id))}
+                        forceOpen={contentFiltering}
+                        showMatchBadge={!contentFiltering}
                         query={query}
                         pinned={pinnedIds.includes(entry.line.id)}
                         onTogglePin={() => togglePin(entry.line.id)}

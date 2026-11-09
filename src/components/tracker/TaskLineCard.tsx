@@ -20,6 +20,12 @@ interface Props {
   dragDisabled?: boolean;
   /** Rendered inside the 已完成 pool: starts collapsed, shows a 已完成 badge. */
   inCompletedPool?: boolean;
+  /** Expand on mount and keep matching steps visible — used by the content
+   *  filter, where every visible card is already a hit list. */
+  forceOpen?: boolean;
+  /** Search shows 「命中 N 个事件」; the content filter must not, or the badge
+   *  eats the whole title on a 560px column. */
+  showMatchBadge?: boolean;
   isDragging?: boolean;
   onDragStart?: (event: DragEvent<HTMLSpanElement>) => void;
   onDragEnd?: () => void;
@@ -48,6 +54,8 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
   return (
     <div
       data-step-row
+      data-step-cg={step.cg ? 'yes' : undefined}
+      data-step-tag={step.tag || undefined}
       data-step-skipped={skipped ? 'yes' : undefined}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -155,6 +163,8 @@ export default function TaskLineCard({
   onTogglePin,
   dragDisabled = false,
   inCompletedPool = false,
+  forceOpen = false,
+  showMatchBadge = true,
   isDragging = false,
   onDragStart,
   onDragEnd,
@@ -177,14 +187,14 @@ export default function TaskLineCard({
   // 已有进度的线默认展开，回来接着上次的位置点；已完成池里的卡片默认收起，
   // 让归档区保持紧凑。
   const defaultOpen = !inCompletedPool && (state?.done?.length ?? 0) > 0;
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(defaultOpen || forceOpen);
   const steps = matched ? line.steps.filter((step) => matched.has(step.index)) : line.steps;
 
-  // 搜索时自动展开，让命中的事件直接可见；退出搜索后回到默认态。
+  // 搜索 / 内容筛选时自动展开，让命中的事件直接可见；退出后回到默认态。
   useEffect(() => {
-    if (query.trim()) setOpen(true);
+    if (query.trim() || forceOpen) setOpen(true);
     else setOpen(!inCompletedPool && (state?.done?.length ?? 0) > 0);
-  }, [query]);
+  }, [query, forceOpen]);
 
   return (
     <div
@@ -250,8 +260,13 @@ export default function TaskLineCard({
           aria-label={`${open ? '收起' : '展开'}事件：${line.origin.title} · ${line.name}`}
           // A zero flex-basis lets the title shrink to nothing on a phone
           // instead of wrapping the toolbar below it, which hid the event name
-          // completely. The floor forces the wrap.
-          className="flex min-w-[130px] flex-1 items-center gap-2 text-left"
+          // completely. The floor forces the wrap. Filtered/searching cards
+          // need the wider floor: otherwise the 命中 badge and the artist chip
+          // leave one character of the name, which was the whole bug.
+          className={cn(
+            'flex flex-1 items-center gap-2 text-left',
+            matched ? 'min-w-[200px]' : 'min-w-[130px]',
+          )}
         >
           <span
             className="shrink-0 text-ink-muted transition-transform duration-150"
@@ -295,7 +310,7 @@ export default function TaskLineCard({
               置顶
             </span>
           )}
-          {matched && (
+          {matched && showMatchBadge && (
             <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs text-gold">
               命中 {matched.size} 个事件
             </span>
