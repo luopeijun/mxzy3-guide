@@ -12,6 +12,7 @@ import {
 import { cn } from '../../lib/cn';
 import StarBadge from './StarBadge';
 import { CATEGORY_STYLE } from './categoryStyle';
+import { companyDot, timeDot, timeText } from './infoStyle';
 import { specialStyle } from './specialStyle';
 
 interface Props {
@@ -24,17 +25,36 @@ function MetaRow({
   label,
   value,
   valueClass,
+  dotClass,
+  diamond,
 }: {
   label: string;
   value?: string;
   valueClass?: string;
+  dotClass?: string;
+  diamond?: boolean;
 }) {
   if (!value) return null;
   return (
     <div className="flex gap-2 text-ui-2xs leading-[1.9]">
       <span className="w-[52px] shrink-0 text-ink-faint">{label}</span>
-      <span className={cn('min-w-0 break-words', valueClass ?? 'text-ink')}>
-        {value}
+      <span className="flex min-w-0 flex-1 items-center gap-1.5">
+        {dotClass && (
+          <span
+            {...(diamond ? { 'data-notice-time-diamond': '' } : { 'data-notice-company-dot': '' })}
+            className={cn(
+              'shrink-0 ring-2 ring-surface',
+              diamond ? 'h-2 w-2 rotate-45' : 'h-2.5 w-2.5 rounded-full',
+              dotClass,
+            )}
+            title={diamond ? `时间档位：${value}` : `公司色标：${value}`}
+          />
+        )}
+        <span
+          className={cn('min-w-0 break-words', valueClass ?? 'text-ink')}
+        >
+          {value}
+        </span>
       </span>
     </div>
   );
@@ -258,8 +278,11 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
           <MetaRow
             label="时间"
             value={notice.time}
+            valueClass={timeText(notice.time)}
+            dotClass={timeDot(notice.time)}
+            diamond
           />
-          <MetaRow label="公司" value={notice.company} />
+          <MetaRow label="公司" value={notice.company} dotClass={companyDot(notice.company)} />
           <MetaRow label="制作人" value={notice.producer} />
         </div>
       </div>
