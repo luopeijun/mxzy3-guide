@@ -53,6 +53,8 @@ interface TrackerContextValue {
   getLine: (lineId: string) => LineState | undefined;
   isDone: (lineId: string, stepIndex: number) => boolean;
   toggleStep: (lineId: string, stepIndex: number) => void;
+  /** Replace the whole done set of one line (master checkbox: all or none). */
+  setLineSteps: (lineId: string, done: number[]) => void;
   setLineStatus: (lineId: string, status: LineStatus) => void;
   setManyStatus: (lineIds: string[], status: LineStatus) => void;
   restoreExcluded: () => void;
@@ -70,6 +72,7 @@ const TrackerContext = createContext<TrackerContextValue>({
   getLine: () => undefined,
   isDone: () => false,
   toggleStep: () => {},
+  setLineSteps: () => {},
   setLineStatus: () => {},
   setManyStatus: () => {},
   restoreExcluded: () => {},
@@ -153,6 +156,16 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setLineSteps = useCallback((lineId: string, done: number[]) => {
+    setData((previous) => ({
+      ...previous,
+      lines: persistLine(previous.lines, lineId, {
+        status: previous.lines[lineId]?.status ?? 'active',
+        done,
+      }),
+    }));
+  }, []);
+
   const setLineStatus = useCallback((lineId: string, status: LineStatus) => {
     setData((previous) => {
       const current = previous.lines[lineId]?.done ?? [];
@@ -210,6 +223,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       getLine,
       isDone,
       toggleStep,
+      setLineSteps,
       setLineStatus,
       setManyStatus,
       restoreExcluded,
@@ -228,6 +242,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       getLine,
       isDone,
       toggleStep,
+      setLineSteps,
       setLineStatus,
       setManyStatus,
       restoreExcluded,

@@ -169,6 +169,21 @@ export function buildPool(data: GuideData, selectedArtists: string[]): TaskLine[
   });
 }
 
+/** How many of a line's steps are ticked. `done` holds **block-array indices**,
+ *  not 0-based step positions, so membership must be checked via `step.index`.
+ *  Comparing `i < line.steps.length` here used to under-count progress badly. */
+export function countDoneSteps(line: TaskLine, done: Iterable<number>): number {
+  const set = done instanceof Set ? done : new Set(done);
+  return line.steps.reduce((sum, step) => sum + (set.has(step.index) ? 1 : 0), 0);
+}
+
+/** A line counts as complete only when *every* one of its steps is ticked.
+ *  Empty lines and stale done indices (left over from an older data build)
+ *  never count, so a line can never be archived by accident. */
+export function isLineComplete(line: TaskLine, done: Iterable<number>): boolean {
+  return line.steps.length > 0 && countDoneSteps(line, done) === line.steps.length;
+}
+
 /** Leaf artist nodes under the 艺人事件簿 category, for the setup picker. */
 export function listArtists(data: GuideData): { id: string; title: string; avatar?: string }[] {
   const category = data.categories.find((c) => c.id === 'characters');

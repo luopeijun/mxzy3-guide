@@ -18,7 +18,7 @@ interface Props {
  *  archive rail on the right; they stack on narrow screens. */
 export default function TrackerApp({ data }: Props) {
   return (
-    <div className="fixed inset-x-0 bottom-0 top-16 z-50 flex flex-col bg-canvas">
+    <div data-tracker-app className="fixed inset-x-0 bottom-0 top-16 z-50 flex flex-col bg-canvas">
       <div className="min-h-0 flex-1 overflow-hidden">
         <div className="mx-auto flex h-full w-full gap-6 px-6 nav:gap-4 nav:px-4 tab:h-auto tab:flex-col tab:overflow-y-auto">
           <aside className="w-[320px] shrink-0 overflow-y-auto py-6 pr-1 tab:w-full tab:overflow-visible tab:py-4">

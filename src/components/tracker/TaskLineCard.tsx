@@ -15,8 +15,10 @@ interface Props {
   pinned?: boolean;
   onTogglePin?: () => void;
   /** Drag is disabled while a search filter is active (a partial list cannot
-   *  define a global order). */
+   *  define a global order) and inside the archived 已完成 pool. */
   dragDisabled?: boolean;
+  /** Rendered inside the 已完成 pool: starts collapsed, shows a 已完成 badge. */
+  inCompletedPool?: boolean;
   isDragging?: boolean;
   onDragStart?: (event: DragEvent<HTMLSpanElement>) => void;
   onDragEnd?: () => void;
@@ -87,8 +89,10 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
   );
 }
 
-/** One task line: a progress bar plus an expandable list of triggerable steps.
- *  The line itself can be 放弃 (kept but dimmed) or 移出池子 (hidden). */
+/** One task line: a master checkbox + progress bar + expandable step list.
+ *  The master checkbox ticks / clears every step at once, which is what moves
+ *  the line into (or back out of) the 已完成 pool. The line itself can also be
+ *  放弃 (kept but dimmed) or 移出池子 (hidden). */
 export default function TaskLineCard({
   line,
   matched = null,
@@ -96,25 +100,30 @@ export default function TaskLineCard({
   pinned = false,
   onTogglePin,
   dragDisabled = false,
+  inCompletedPool = false,
   isDragging = false,
   onDragStart,
   onDragEnd,
 }: Props) {
-  const { getLine, setLineStatus } = useTracker();
+  const { getLine, setLineStatus, setLineSteps } = useTracker();
   const state = getLine(line.id);
   const abandoned = (state?.status ?? 'active') === 'abandoned';
   const doneSet = new Set(state?.done ?? []);
   const doneCount = line.steps.filter((step) => doneSet.has(step.index)).length;
   const total = line.steps.length;
   const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
-  // 已有进度的线默认展开，回来接着上次的位置点。
-  const [open, setOpen] = useState(() => (state?.done?.length ?? 0) > 0);
+  const allDone = total > 0 && doneCount === total;
+  const someDone = doneCount > 0 && !allDone;
+  // 已有进度的线默认展开，回来接着上次的位置点；已完成池里的卡片默认收起，
+  // 让归档区保持紧凑。
+  const defaultOpen = !inCompletedPool && (state?.done?.length ?? 0) > 0;
+  const [open, setOpen] = useState(defaultOpen);
   const steps = matched ? line.steps.filter((step) => matched.has(step.index)) : line.steps;
 
-  // 搜索时自动展开，让命中的事件直接可见；退出搜索后回到「有进度才展开」的默认态。
+  // 搜索时自动展开，让命中的事件直接可见；退出搜索后回到默认态。
   useEffect(() => {
     if (query.trim()) setOpen(true);
-    else setOpen((state?.done?.length ?? 0) > 0);
+    else setOpen(!inCompletedPool && (state?.done?.length ?? 0) > 0);
   }, [query]);
 
   return (
@@ -123,6 +132,7 @@ export default function TaskLineCard({
       className={cn(
         'rounded-ui-md border bg-surface shadow-soft',
         abandoned ? 'border-line-strong opacity-70' : 'border-line',
+        inCompletedPool && 'border-gold-line bg-surface-soft',
         pinned && 'ring-1 ring-gold-line',
         isDragging && 'opacity-40',
       )}
@@ -132,7 +142,7 @@ export default function TaskLineCard({
           draggable={!dragDisabled}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
-          title={dragDisabled ? '搜索时不可拖拽排序' : '按住拖动排序'}
+          title={dragDisabled ? '当前不可拖拽排序' : '按住拖动排序'}
           aria-label="拖拽排序"
           className={cn(
             'shrink-0 select-none px-1 text-ui-sm leading-none text-ink-faint',
@@ -143,6 +153,27 @@ export default function TaskLineCard({
         >
           ⠿
         </span>
+        <button
+          type="button"
+          role="checkbox"
+          data-master-checkbox
+          aria-checked={allDone ? 'true' : someDone ? 'mixed' : 'false'}
+          aria-label={`${allDone ? '取消完成' : '完成整条'}任务线：${line.name}`}
+          title={allDone ? '取消整条完成' : '勾选框：一次勾选全部子任务'}
+          onClick={() =>
+            setLineSteps(line.id, allDone ? [] : line.steps.map((step) => step.index))
+          }
+          className={cn(
+            'flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[4px] border text-[11px] font-bold leading-none transition-colors',
+            allDone
+              ? 'border-brand bg-brand text-white'
+              : someDone
+                ? 'border-brand bg-brand-soft text-brand-strong'
+                : 'border-line-strong bg-surface text-transparent hover:border-brand',
+          )}
+        >
+          {someDone ? '−' : '✓'}
+        </button>
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -159,6 +190,11 @@ export default function TaskLineCard({
           <span className="min-w-0 truncate text-ui-sm font-semibold text-ink">
             <MarkText text={line.name} query={query} />
           </span>
+          {inCompletedPool && (
+            <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs font-semibold text-gold">
+              已完成
+            </span>
+          )}
           {abandoned && (
             <span className="shrink-0 rounded-full bg-missing-soft px-2 py-0.5 text-ui-2xs text-missing">
               已放弃
