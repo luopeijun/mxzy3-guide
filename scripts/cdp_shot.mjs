@@ -2,11 +2,12 @@ import http from 'node:http';
 import fs from 'node:fs';
 
 /* Headless screenshot via Chrome DevTools Protocol.
-   Usage: node cdp_shot.mjs <url> <out.png> [localStorageJson]
+   Usage: node cdp_shot.mjs <url> <out.png> [localStorageJson] [width] [height]
    If localStorageJson is given, it is applied then the page reloads before
-   the shot, so the tracker renders with a preset selection / progress. */
+   the shot, so the tracker renders with a preset selection / progress.
+   Width / height override the viewport (default keeps the browser window size). */
 
-const [, , url, out, lsJson] = process.argv;
+const [, , url, out, lsJson, width, height] = process.argv;
 
 function jsonPut(target, payload) {
   return new Promise((resolve, reject) => {
@@ -54,6 +55,14 @@ async function main() {
   };
   await new Promise((r) => (ws.onopen = r));
   await send('Page.enable');
+  if (width && height) {
+    await send('Emulation.setDeviceMetricsOverride', {
+      width: Number(width),
+      height: Number(height),
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+  }
   await send('Page.navigate', { url });
   await new Promise((r) => setTimeout(r, 4000));
 

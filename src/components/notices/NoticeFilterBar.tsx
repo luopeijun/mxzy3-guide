@@ -45,16 +45,24 @@ export default function NoticeFilterBar({
 
   return (
     <div data-notice-filters className="shrink-0 border-b border-line bg-canvas px-6 pb-3 pt-4">
-      <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="text-ui-lg font-bold text-brand-strong">通告库</h1>
         <span className="text-ui-2xs text-ink-faint">
           共 {data.meta.noticeCount} 个通告 · {data.meta.roleCount} 个角色
         </span>
-        <div
-          role="tablist"
-          aria-label="通告视图"
-          className="ml-auto flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface p-1"
-        >
+        {view === 'list' && (
+          <span
+            className="ml-auto text-ui-2xs tabular-nums text-ink-faint"
+            data-notice-count
+          >
+            当前 {resultCount} 条
+          </span>
+        )}
+      </div>
+
+      {/* 视图切换用下划线 tab：顶栏已经是胶囊 tab，页面内再用一颗胶囊会混淆层级。 */}
+      <div className="mb-3 flex items-end border-b border-line">
+        <div role="tablist" aria-label="通告视图" className="-mb-px flex items-end gap-1">
           {([
             ['list', '通告列表'],
             ['reference', '能力对照'],
@@ -67,21 +75,16 @@ export default function NoticeFilterBar({
               aria-selected={view === key}
               onClick={() => onViewChange(key)}
               className={cn(
-                'rounded-full px-2.5 py-1 text-ui-2xs transition-colors',
+                'shrink-0 border-b-2 px-2.5 pb-1.5 pt-1 text-ui-sm transition-colors',
                 view === key
-                  ? 'bg-brand font-semibold text-white'
-                  : 'text-ink-muted hover:text-brand-strong',
+                  ? 'border-brand font-semibold text-brand-strong'
+                  : 'border-transparent text-ink-muted hover:border-line-strong hover:text-brand-strong',
               )}
             >
               {label}
             </button>
           ))}
         </div>
-        {view === 'list' && (
-          <span className="text-ui-2xs tabular-nums text-ink-faint" data-notice-count>
-            当前 {resultCount} 条
-          </span>
-        )}
       </div>
 
       {view === 'list' && (
