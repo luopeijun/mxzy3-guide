@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { GuideData } from '../../types/guide';
-import { buildPool } from '../../lib/tracker';
+import { buildPool, countDoneSteps, isLineComplete } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
 
 interface Props {
@@ -19,23 +19,37 @@ export default function TrackerOverview({ data }: Props) {
     let abandoned = 0;
     let excluded = 0;
     let activeLines = 0;
+    let completedLines = 0;
     for (const line of pool) {
-      const status = getLine(line.id)?.status ?? 'active';
+      const state = getLine(line.id);
+      const status = state?.status ?? 'active';
       if (status === 'excluded') {
         excluded += 1;
         continue;
       }
+      const done = state?.done ?? [];
+      const complete = isLineComplete(line, done);
+      if (complete) completedLines += 1;
       if (status === 'abandoned') abandoned += 1;
-      else activeLines += 1;
+      else if (!complete) activeLines += 1;
       totalSteps += line.steps.length;
-      doneSteps += getLine(line.id)?.done.filter((i) => i < line.steps.length).length ?? 0;
+      doneSteps += countDoneSteps(line, done);
     }
     const pct = totalSteps > 0 ? Math.round((doneSteps / totalSteps) * 100) : 0;
-    return { totalLines: pool.length, activeLines, abandoned, excluded, totalSteps, doneSteps, pct };
+    return {
+      totalLines: pool.length,
+      activeLines,
+      completedLines,
+      abandoned,
+      excluded,
+      totalSteps,
+      doneSteps,
+      pct,
+    };
   }, [pool, getLine]);
 
   const rows: Array<[string, number, string]> = [
-    ['在池任务线', stats.activeLines, 'text-brand-strong'],
+    ['进行中', stats.activeLines, 'text-brand-strong'],
     ['放弃', stats.abandoned, 'text-ink-muted'],
     ['移出', stats.excluded, 'text-ink-faint'],
   ];
@@ -65,6 +79,7 @@ export default function TrackerOverview({ data }: Props) {
         </div>
         <p className="mt-1 text-ui-2xs text-ink-faint">
           已完成 {stats.doneSteps} / {stats.totalSteps} 个步骤
+          {stats.completedLines > 0 && ` · ${stats.completedLines} 条线已归档`}
         </p>
       </div>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-center">

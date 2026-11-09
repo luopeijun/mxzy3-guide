@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { GuideData } from '../../types/guide';
-import { buildPool } from '../../lib/tracker';
+import { buildPool, countDoneSteps } from '../../lib/tracker';
 import { computeGroups } from '../../lib/trackerGroups';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
@@ -29,7 +29,7 @@ export default function TrackerCategoryProgress({ data }: Props) {
             continue;
           }
           total += line.steps.length;
-          done += state?.done.filter((i) => i < line.steps.length).length ?? 0;
+          done += countDoneSteps(line, state?.done ?? []);
         }
         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
         return { key: group.key, label: group.label, done, total, pct, excluded };
