@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { TaskLine } from '../../lib/tracker';
+import type { TaskLine, TaskStep } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
 import TypeTag from '../TypeTag';
@@ -8,17 +8,74 @@ interface Props {
   line: TaskLine;
 }
 
+/** 子事件编号（3-1 / 3-1-1）的层级 = `－`/`-` 的个数，用来做缩进，和攻略正文一致。 */
+function stepDepth(label: string): number {
+  return label.match(/[-－]/g)?.length ?? 0;
+}
+
+/** 一条事件：勾选框 + 玫红编号 pill + 类型 tag + 正文，与攻略正文的事件卡同一套观感。
+ *  整行可点即切换完成，CG 事件用玫红描边 + 浅粉底。 */
+function StepRow({ lineId, step }: { lineId: string; step: TaskStep }) {
+  const { isDone, toggleStep } = useTracker();
+  const done = isDone(lineId, step.index);
+  const depth = stepDepth(step.label);
+
+  return (
+    <button
+      type="button"
+      onClick={() => toggleStep(lineId, step.index)}
+      aria-pressed={done}
+      className={cn(
+        'flex w-full items-start gap-2.5 rounded-ui-sm border px-3 py-2.5 text-left transition-colors',
+        step.cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface',
+        done ? 'opacity-55' : 'hover:border-brand-line hover:bg-surface-soft',
+        depth > 0 && 'border-l-2 border-l-brand-line',
+      )}
+      style={depth > 0 ? { marginLeft: depth * 20 } : undefined}
+    >
+      <span
+        className={cn(
+          'mt-[4px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[3px] text-[10px] leading-none transition-colors',
+          done ? 'bg-brand text-white' : 'border border-line-strong bg-surface text-transparent',
+        )}
+      >
+        ✓
+      </span>
+      {step.label && (
+        <span
+          className={cn(
+            'mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7]',
+            step.cg ? 'bg-brand text-white' : 'bg-brand-soft text-brand-strong',
+          )}
+        >
+          {step.label}
+        </span>
+      )}
+      <span className="min-w-0 flex-1 text-ui-sm leading-[1.85] break-words">
+        {step.tag && <TypeTag label={step.tag} />}
+        {step.cg && (
+          <span className="mr-1.5 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] align-middle text-ui-2xs font-bold leading-[1.6] text-gold">
+            CG
+          </span>
+        )}
+        <span className={done ? 'text-ink-faint line-through' : 'text-ink'}>{step.text}</span>
+      </span>
+    </button>
+  );
+}
+
 /** One task line: a progress bar plus an expandable list of triggerable steps.
  *  The line itself can be 放弃 (kept but dimmed) or 移出池子 (hidden). */
 export default function TaskLineCard({ line }: Props) {
-  const { getLine, isDone, toggleStep, setLineStatus } = useTracker();
+  const { getLine, setLineStatus } = useTracker();
   const state = getLine(line.id);
   const abandoned = (state?.status ?? 'active') === 'abandoned';
   const doneSet = new Set(state?.done ?? []);
   const doneCount = line.steps.filter((step) => doneSet.has(step.index)).length;
   const total = line.steps.length;
   const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
-  const [open, setOpen] = useState(false);
+  // 已有进度的线默认展开，回来接着上次的位置点。
+  const [open, setOpen] = useState(() => (state?.done?.length ?? 0) > 0);
 
   return (
     <div
@@ -27,52 +84,52 @@ export default function TaskLineCard({ line }: Props) {
         abandoned ? 'border-line-strong opacity-70' : 'border-line',
       )}
     >
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          <button
-            type="button"
-            onClick={() => setOpen((value) => !value)}
-            aria-label={open ? '收起步骤' : '展开步骤'}
-            className="mt-0.5 shrink-0 text-ink-muted transition-transform duration-150"
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-label={`${open ? '收起' : '展开'}事件：${line.name}`}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <span
+            className="shrink-0 text-ink-muted transition-transform duration-150"
             style={{ transform: open ? 'rotate(90deg)' : 'none' }}
           >
             ▸
-          </button>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h4 className="truncate text-ui-sm font-semibold text-ink">{line.name}</h4>
-              {abandoned && (
-                <span className="shrink-0 rounded-full bg-missing-soft px-2 py-0.5 text-ui-2xs text-missing">
-                  已放弃
-                </span>
-              )}
-            </div>
-            <div className="mt-2 flex items-center gap-3">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-brand-soft">
-                <div
-                  className={cn('h-full transition-all duration-300', pct === 100 ? 'bg-gold' : 'bg-brand')}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <span className="shrink-0 whitespace-nowrap text-ui-2xs text-ink-faint">
-                {doneCount}/{total}
-              </span>
-            </div>
+          </span>
+          <span className="min-w-0 truncate text-ui-sm font-semibold text-ink">{line.name}</span>
+          {abandoned && (
+            <span className="shrink-0 rounded-full bg-missing-soft px-2 py-0.5 text-ui-2xs text-missing">
+              已放弃
+            </span>
+          )}
+        </button>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="h-2 w-[110px] overflow-hidden rounded-full bg-brand-soft min-[1280px]:w-[200px]">
+            <div
+              className={cn('h-full transition-all duration-300', pct === 100 ? 'bg-gold' : 'bg-brand')}
+              style={{ width: `${pct}%` }}
+            />
           </div>
+          <span className="w-11 shrink-0 whitespace-nowrap text-right text-ui-2xs tabular-nums text-ink-faint">
+            {doneCount}/{total}
+          </span>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             onClick={() => setLineStatus(line.id, abandoned ? 'active' : 'abandoned')}
-            className="rounded-ui-sm border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            className="rounded-ui-sm border border-line px-2.5 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
           >
             {abandoned ? '恢复追踪' : '放弃'}
           </button>
           <button
             type="button"
             onClick={() => setLineStatus(line.id, 'excluded')}
-            className="rounded-ui-sm border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            className="rounded-ui-sm border border-line px-2.5 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
           >
             移出池子
           </button>
@@ -80,48 +137,15 @@ export default function TaskLineCard({ line }: Props) {
       </div>
 
       {open && (
-        <ul className="border-t border-line px-4 py-1">
-          {line.steps.map((step) => {
-            const done = isDone(line.id, step.index);
-            return (
+        <div className="border-t border-line px-4 py-3">
+          <ul className="flex flex-col gap-2">
+            {line.steps.map((step) => (
               <li key={step.index}>
-                <button
-                  type="button"
-                  onClick={() => toggleStep(line.id, step.index)}
-                  className="flex w-full items-start gap-2 py-2 text-left"
-                >
-                  <span
-                    className={cn(
-                      'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded text-[11px]',
-                      done ? 'bg-brand text-white' : 'border border-line-strong text-transparent',
-                    )}
-                  >
-                    ✓
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-1">
-                      <span className="text-ui-2xs font-medium text-ink-faint">{step.label}</span>
-                      {step.cg && (
-                        <span className="rounded bg-gold-soft px-1 text-ui-2xs font-semibold text-gold">
-                          CG
-                        </span>
-                      )}
-                      {step.tag && <TypeTag label={step.tag} />}
-                    </span>
-                    <span
-                      className={cn(
-                        'mt-0.5 block text-ui-xs leading-[1.6] line-clamp-2',
-                        done ? 'text-ink-faint line-through' : 'text-ink-muted',
-                      )}
-                    >
-                      {step.text}
-                    </span>
-                  </span>
-                </button>
+                <StepRow lineId={line.id} step={step} />
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

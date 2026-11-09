@@ -16,12 +16,12 @@ export default function TrackerSetup({ data }: Props) {
   const full = selectedArtists.length >= MAX_ARTISTS;
 
   return (
-    <section className="mb-8 rounded-ui-md border border-line bg-surface p-5 shadow-soft">
+    <section className="rounded-ui-md border border-line bg-surface p-5 shadow-soft">
       <h2 className="text-ui-lg font-bold text-brand-strong">选择追踪的艺人</h2>
       <p className="mt-2 text-ui-xs leading-[1.75] text-ink-muted">
         最多 4 位。所选艺人的全部任务线会自动进入事件池；路欧桑剧情会根据你签约的组合自动挑选对应分支。
       </p>
-      <div className="mt-4 grid grid-cols-3 gap-2 tab:grid-cols-2 phone:grid-cols-1">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         {artists.map((artist) => {
           const checked = selectedArtists.includes(artist.id);
           const disabled = !checked && full;

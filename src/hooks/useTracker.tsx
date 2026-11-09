@@ -47,6 +47,7 @@ interface TrackerContextValue {
   isDone: (lineId: string, stepIndex: number) => boolean;
   toggleStep: (lineId: string, stepIndex: number) => void;
   setLineStatus: (lineId: string, status: LineStatus) => void;
+  setManyStatus: (lineIds: string[], status: LineStatus) => void;
   restoreExcluded: () => void;
   resetAll: () => void;
 }
@@ -59,6 +60,7 @@ const TrackerContext = createContext<TrackerContextValue>({
   isDone: () => false,
   toggleStep: () => {},
   setLineStatus: () => {},
+  setManyStatus: () => {},
   restoreExcluded: () => {},
   resetAll: () => {},
 });
@@ -143,6 +145,17 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setManyStatus = useCallback((lineIds: string[], status: LineStatus) => {
+    setData((previous) => {
+      let lines = previous.lines;
+      for (const id of lineIds) {
+        const current = lines[id]?.done ?? [];
+        lines = persistLine(lines, id, { status, done: current });
+      }
+      return { ...previous, lines };
+    });
+  }, []);
+
   const restoreExcluded = useCallback(() => {
     setData((previous) => {
       const lines: Record<string, LineState> = {};
@@ -168,6 +181,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       isDone,
       toggleStep,
       setLineStatus,
+      setManyStatus,
       restoreExcluded,
       resetAll,
     }),
@@ -179,6 +193,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       isDone,
       toggleStep,
       setLineStatus,
+      setManyStatus,
       restoreExcluded,
       resetAll,
     ],
