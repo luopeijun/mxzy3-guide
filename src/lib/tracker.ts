@@ -221,19 +221,50 @@ export function buildPool(data: GuideData, selectedArtists: string[]): TaskLine[
   });
 }
 
-/** How many of a line's steps are ticked. `done` holds **block-array indices**,
- *  not 0-based step positions, so membership must be checked via `step.index`.
- *  Comparing `i < line.steps.length` here used to under-count progress badly. */
-export function countDoneSteps(line: TaskLine, done: Iterable<number>): number {
-  const set = done instanceof Set ? done : new Set(done);
-  return line.steps.reduce((sum, step) => sum + (set.has(step.index) ? 1 : 0), 0);
+/** Skip indices that still point at a real step. Stale indices left over from
+ *  an older data build are dropped so they can never skew the progress maths. */
+export function skippedIndices(line: TaskLine, skipped: Iterable<number> = []): Set<number> {
+  const raw = skipped instanceof Set ? skipped : new Set(skipped);
+  const valid = new Set<number>();
+  for (const step of line.steps) if (raw.has(step.index)) valid.add(step.index);
+  return valid;
 }
 
-/** A line counts as complete only when *every* one of its steps is ticked.
- *  Empty lines and stale done indices (left over from an older data build)
- *  never count, so a line can never be archived by accident. */
-export function isLineComplete(line: TaskLine, done: Iterable<number>): boolean {
-  return line.steps.length > 0 && countDoneSteps(line, done) === line.steps.length;
+/** The steps that still count towards completion — everything except the ones
+ *  the player gave up on. A skipped step never blocks the line from finishing. */
+export function countedSteps(line: TaskLine, skipped: Iterable<number> = []): TaskStep[] {
+  const skip = skippedIndices(line, skipped);
+  return line.steps.filter((step) => !skip.has(step.index));
+}
+
+/** How many of a line's steps are ticked. `done` holds **block-array indices**,
+ *  not 0-based step positions, so membership must be checked via `step.index`.
+ *  Comparing `i < line.steps.length` here used to under-count progress badly.
+ *  Skipped steps are not counted (they are removed from `done` on skip anyway). */
+export function countDoneSteps(
+  line: TaskLine,
+  done: Iterable<number>,
+  skipped: Iterable<number> = [],
+): number {
+  const set = done instanceof Set ? done : new Set(done);
+  const skip = skippedIndices(line, skipped);
+  return line.steps.reduce(
+    (sum, step) => sum + (!skip.has(step.index) && set.has(step.index) ? 1 : 0),
+    0,
+  );
+}
+
+/** A line counts as complete only when every step that still counts is ticked.
+ *  Lines with nothing left to do (empty, or everything skipped) never count, so
+ *  a line can never be archived by accident. */
+export function isLineComplete(
+  line: TaskLine,
+  done: Iterable<number>,
+  skipped: Iterable<number> = [],
+): boolean {
+  const counted = countedSteps(line, skipped);
+  const set = done instanceof Set ? done : new Set(done);
+  return counted.length > 0 && counted.every((step) => set.has(step.index));
 }
 
 /** Leaf artist nodes under the 艺人事件簿 category, for the setup picker. */

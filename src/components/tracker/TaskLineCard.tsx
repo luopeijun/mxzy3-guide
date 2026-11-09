@@ -31,10 +31,12 @@ function stepDepth(label: string): number {
 }
 
 /** 一条事件：勾选框 + 玫红编号 pill + 类型 tag + 正文，与攻略正文的事件卡同一套观感。
- *  整行可点即切换完成，CG 事件用玫红描边 + 浅粉底。 */
+ *  左侧勾选区即切换完成；右侧「⊘」按钮或右键可单独放弃这一步——被放弃的步骤
+ *  不再计入这条线的完成度，也不影响其它步骤。 */
 function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; query: string }) {
-  const { isDone, toggleStep } = useTracker();
+  const { isDone, isSkipped, toggleStep, toggleStepSkip } = useTracker();
   const done = isDone(lineId, step.index);
+  const skipped = isSkipped(lineId, step.index);
   const depth = stepDepth(step.label);
   // Indent by shrinking the row as well as offsetting it: `w-full` plus a
   // margin would push the right edge past the card and give the middle column
@@ -44,53 +46,100 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
   const hit = (value: string) => needle.length > 0 && value.toLowerCase().includes(needle);
 
   return (
-    <button
-      type="button"
-      onClick={() => toggleStep(lineId, step.index)}
-      aria-pressed={done}
+    <div
+      data-step-row
+      data-step-skipped={skipped ? 'yes' : undefined}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        toggleStepSkip(lineId, step.index);
+      }}
+      title={skipped ? '已放弃这一步 · 点右侧「恢复」或再次右键撤销' : '点勾选框完成 · 右键放弃这一步'}
       className={cn(
-        'flex w-full items-start gap-2.5 rounded-ui-sm border px-3 py-2.5 text-left transition-colors',
-        step.cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface',
-        done ? 'opacity-55' : 'hover:border-brand-line hover:bg-surface-soft',
+        'flex w-full items-start gap-2 rounded-ui-sm border px-3 py-2.5 transition-colors',
+        skipped
+          ? 'border-dashed border-line-strong bg-surface-soft'
+          : cn(step.cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface',
+            done ? 'opacity-55' : 'hover:border-brand-line hover:bg-surface-soft'),
         depth > 0 && 'border-l-2 border-l-brand-line',
       )}
       style={depth > 0 ? { marginLeft: indent, width: `calc(100% - ${indent}px)` } : undefined}
     >
-      <span
-        className={cn(
-          'mt-[4px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[3px] text-[10px] leading-none transition-colors',
-          done ? 'bg-brand text-white' : 'border border-line-strong bg-surface text-transparent',
-        )}
+      <button
+        type="button"
+        onClick={() => toggleStep(lineId, step.index)}
+        aria-pressed={done}
+        disabled={skipped}
+        aria-label={`${done ? '取消完成' : '标记完成'}：${step.label || step.text.slice(0, 18)}`}
+        className="flex min-w-0 flex-1 items-start gap-2.5 text-left disabled:cursor-not-allowed"
       >
-        ✓
-      </span>
-      {step.label && (
         <span
           className={cn(
-            'mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7]',
-            step.cg ? 'bg-brand text-white' : 'bg-brand-soft text-brand-strong',
-            hit(step.label) && 'ring-2 ring-gold',
+            'mt-[4px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[3px] text-[10px] leading-none transition-colors',
+            skipped
+              ? 'border border-dashed border-line-strong bg-surface text-transparent'
+              : done
+                ? 'bg-brand text-white'
+                : 'border border-line-strong bg-surface text-transparent',
           )}
         >
-          {step.label}
+          ✓
         </span>
-      )}
-      <span className="min-w-0 flex-1 text-ui-sm leading-[1.85] break-words">
-        {step.tag && (
-          <span className={cn(hit(step.tag) && 'rounded-full ring-2 ring-gold')}>
-            <TypeTag label={step.tag} />
+        {step.label && (
+          <span
+            className={cn(
+              'mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7]',
+              skipped
+                ? 'bg-surface text-ink-faint line-through'
+                : step.cg
+                  ? 'bg-brand text-white'
+                  : 'bg-brand-soft text-brand-strong',
+              hit(step.label) && 'ring-2 ring-gold',
+            )}
+          >
+            {step.label}
           </span>
         )}
-        {step.cg && (
-          <span className="mr-1.5 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] align-middle text-ui-2xs font-bold leading-[1.6] text-gold">
-            CG
+        <span className="min-w-0 flex-1 text-ui-sm leading-[1.85] break-words">
+          {step.tag && (
+            <span className={cn(hit(step.tag) && 'rounded-full ring-2 ring-gold')}>
+              <TypeTag label={step.tag} />
+            </span>
+          )}
+          {step.cg && !skipped && (
+            <span className="mr-1.5 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] align-middle text-ui-2xs font-bold leading-[1.6] text-gold">
+              CG
+            </span>
+          )}
+          <span className={done || skipped ? 'text-ink-faint line-through' : 'text-ink'}>
+            <MarkText text={step.text} query={query} />
           </span>
-        )}
-        <span className={done ? 'text-ink-faint line-through' : 'text-ink'}>
-          <MarkText text={step.text} query={query} />
+          {skipped && (
+            <span className="ml-1.5 inline-flex items-center rounded-full bg-surface px-1.5 py-px align-baseline text-ui-2xs text-ink-faint ring-1 ring-line-strong">
+              已放弃
+            </span>
+          )}
         </span>
-      </span>
-    </button>
+      </button>
+      <button
+        type="button"
+        data-step-skip
+        onClick={() => toggleStepSkip(lineId, step.index)}
+        aria-label={`${skipped ? '恢复' : '放弃'}步骤：${step.label || step.text.slice(0, 18)}`}
+        title={
+          skipped
+            ? '恢复这一步：重新计回这条线的完成度'
+            : '放弃这一步：不计入完成度，也不影响其它步骤'
+        }
+        className={cn(
+          'mt-[3px] flex h-[20px] shrink-0 items-center justify-center rounded-ui-xs border text-ui-2xs leading-none transition-colors',
+          skipped
+            ? 'border-brand-line bg-brand-soft px-1.5 font-semibold text-brand-strong hover:border-brand'
+            : 'w-[22px] border-transparent text-ink-faint opacity-55 hover:border-line-strong hover:bg-surface-soft hover:text-missing hover:opacity-100',
+        )}
+      >
+        {skipped ? '恢复' : '⊘'}
+      </button>
+    </div>
   );
 }
 
@@ -116,8 +165,12 @@ export default function TaskLineCard({
   const abandoned = status === 'abandoned';
   const excluded = status === 'excluded';
   const doneSet = new Set(state?.done ?? []);
-  const doneCount = line.steps.filter((step) => doneSet.has(step.index)).length;
-  const total = line.steps.length;
+  const skippedSet = new Set(state?.skipped ?? []);
+  // 被放弃的步骤不再参与完成度：它既不要求勾选，也不计入分母。
+  const counted = line.steps.filter((step) => !skippedSet.has(step.index));
+  const skippedCount = line.steps.length - counted.length;
+  const doneCount = counted.filter((step) => doneSet.has(step.index)).length;
+  const total = counted.length;
   const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
   const allDone = total > 0 && doneCount === total;
   const someDone = doneCount > 0 && !allDone;
@@ -167,9 +220,16 @@ export default function TaskLineCard({
           data-master-checkbox
           aria-checked={allDone ? 'true' : someDone ? 'mixed' : 'false'}
           aria-label={`${allDone ? '取消完成' : '完成整条'}任务线：${line.name}`}
-          title={allDone ? '取消整条完成' : '勾选框：一次勾选全部子任务'}
+          disabled={total === 0}
+          title={
+            total === 0
+              ? '这一条的所有步骤都已放弃'
+              : allDone
+                ? '取消整条完成（不含已放弃的步骤）'
+                : '勾选框：一次勾选全部未放弃的子任务'
+          }
           onClick={() =>
-            setLineSteps(line.id, allDone ? [] : line.steps.map((step) => step.index))
+            setLineSteps(line.id, allDone ? [] : counted.map((step) => step.index))
           }
           className={cn(
             'flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[4px] border text-[11px] font-bold leading-none transition-colors',
@@ -178,6 +238,7 @@ export default function TaskLineCard({
               : someDone
                 ? 'border-brand bg-brand-soft text-brand-strong'
                 : 'border-line-strong bg-surface text-transparent hover:border-brand',
+            total === 0 && 'cursor-not-allowed opacity-40',
           )}
         >
           {someDone ? '−' : '✓'}
@@ -217,6 +278,15 @@ export default function TaskLineCard({
               已移出
             </span>
           )}
+          {skippedCount > 0 && (
+            <span
+              data-skipped-badge
+              title="这条线里有步骤被单独放弃，它们不计入完成度"
+              className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-faint ring-1 ring-line-strong"
+            >
+              已放弃 {skippedCount} 步
+            </span>
+          )}
           {pinned && (
             <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs font-semibold text-gold">
               置顶
@@ -236,8 +306,13 @@ export default function TaskLineCard({
               style={{ width: `${pct}%` }}
             />
           </div>
-          <span className="w-11 shrink-0 whitespace-nowrap text-right text-ui-2xs tabular-nums text-ink-faint">
+          <span
+            data-line-progress
+            title={skippedCount > 0 ? `已放弃 ${skippedCount} 步，不计入完成度` : undefined}
+            className="w-14 shrink-0 whitespace-nowrap text-right text-ui-2xs tabular-nums text-ink-faint"
+          >
             {doneCount}/{total}
+            {skippedCount > 0 && <span className="ml-1 text-ink-faint/70">·弃{skippedCount}</span>}
           </span>
         </div>
 

@@ -45,8 +45,9 @@ const PROBE = `(() => {
   });
   const rowSizes = {};
   chips.forEach(c => { rowSizes[c.top] = (rowSizes[c.top] || 0) + 1; });
-  const indented = [...main.querySelectorAll('button[aria-pressed]')]
-    .filter(b => parseFloat(getComputedStyle(b).marginLeft) > 0).length;
+  // 子事件缩进落在整行容器上（勾选按钮已在行内），所以按行判断。
+  const indented = [...main.querySelectorAll('[data-step-row]')]
+    .filter(row => parseFloat(getComputedStyle(row).marginLeft) > 0).length;
   return JSON.stringify({
     w: innerWidth,
     mainSW: main.scrollWidth, mainCW: main.clientWidth, ox: cs.overflowX,

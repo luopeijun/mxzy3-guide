@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { GuideData } from '../../types/guide';
-import { buildPool, countDoneSteps, isLineComplete } from '../../lib/tracker';
+import { buildPool, countDoneSteps, countedSteps, isLineComplete } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
 
 interface Props {
@@ -16,6 +16,7 @@ export default function TrackerOverview({ data }: Props) {
   const stats = useMemo(() => {
     let totalSteps = 0;
     let doneSteps = 0;
+    let skippedSteps = 0;
     let abandoned = 0;
     let excluded = 0;
     let activeLines = 0;
@@ -28,12 +29,16 @@ export default function TrackerOverview({ data }: Props) {
         continue;
       }
       const done = state?.done ?? [];
-      const complete = isLineComplete(line, done);
+      const skipped = state?.skipped ?? [];
+      const complete = isLineComplete(line, done, skipped);
       if (complete) completedLines += 1;
       if (status === 'abandoned') abandoned += 1;
       else if (!complete) activeLines += 1;
-      totalSteps += line.steps.length;
-      doneSteps += countDoneSteps(line, done);
+      // 被放弃的步骤不计入分母，否则百分比永远到不了 100%。
+      const counted = countedSteps(line, skipped);
+      totalSteps += counted.length;
+      skippedSteps += line.steps.length - counted.length;
+      doneSteps += countDoneSteps(line, done, skipped);
     }
     const pct = totalSteps > 0 ? Math.round((doneSteps / totalSteps) * 100) : 0;
     return {
@@ -44,6 +49,7 @@ export default function TrackerOverview({ data }: Props) {
       excluded,
       totalSteps,
       doneSteps,
+      skippedSteps,
       pct,
     };
   }, [pool, getLine]);
@@ -79,6 +85,7 @@ export default function TrackerOverview({ data }: Props) {
         </div>
         <p className="mt-1 text-ui-2xs text-ink-faint">
           已完成 {stats.doneSteps} / {stats.totalSteps} 个步骤
+          {stats.skippedSteps > 0 && ` · 已放弃 ${stats.skippedSteps} 步`}
           {stats.completedLines > 0 && ` · ${stats.completedLines} 条线已归档`}
         </p>
       </div>

@@ -63,7 +63,7 @@ export default function TrackerPool({ data }: Props) {
     for (const line of pool) {
       const state = getLine(line.id);
       if ((state?.status ?? 'active') === 'excluded') continue;
-      if (isLineComplete(line, state?.done ?? [])) completedLines.push(line);
+      if (isLineComplete(line, state?.done ?? [], state?.skipped ?? [])) completedLines.push(line);
       else activeLines.push(line);
     }
     return { activeLines, completedLines };
@@ -369,7 +369,7 @@ export default function TrackerPool({ data }: Props) {
                   {orderedCompleted.length} 条
                 </span>
                 <span className="ml-auto text-ui-2xs text-ink-faint">
-                  子任务全勾的线自动归档 · 取消任一子任务可回到事件池
+                  未放弃的子任务全勾即归档 · 取消勾选可回到事件池
                 </span>
               </button>
               {completedOpen && (

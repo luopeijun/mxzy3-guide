@@ -31,7 +31,7 @@ export const FILTER_HINT: Record<LineFilter, string> = {
   all: '全部任务线（进行中的事件池 + 底部已完成区）',
   inProgress: '已勾选部分子任务、还没做完的线',
   notStarted: '一个子任务都没勾的线',
-  completed: '子任务全部勾选、已归档的线',
+  completed: '未放弃的子任务全部勾选、已归档的线',
   abandoned: '主动点了「放弃」的线',
   excluded: '点了「移出池子」的线，可在这里直接恢复',
 };
@@ -40,6 +40,7 @@ export const FILTER_HINT: Record<LineFilter, string> = {
 export interface PhaseState {
   status?: string;
   done?: number[];
+  skipped?: number[];
 }
 
 /** A line has "progress" when any *valid* step index is ticked. done stores
@@ -52,7 +53,7 @@ export function hasProgress(line: TaskLine, done: Iterable<number> = []): boolea
 
 export function phaseOf(line: TaskLine, state?: PhaseState): LinePhase {
   if (state?.status === 'excluded') return 'excluded';
-  if (isLineComplete(line, state?.done ?? [])) return 'completed';
+  if (isLineComplete(line, state?.done ?? [], state?.skipped ?? [])) return 'completed';
   if (state?.status === 'abandoned') return 'abandoned';
   return hasProgress(line, state?.done ?? []) ? 'inProgress' : 'notStarted';
 }

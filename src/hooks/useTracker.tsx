@@ -9,6 +9,9 @@ export interface LineState {
   status: LineStatus;
   /** Event array indices the user has marked done on this line. */
   done: number[];
+  /** Event array indices the user gave up on. A skipped step is removed from
+   *  `done` and no longer counts towards completing the line. */
+  skipped: number[];
 }
 
 export interface TrackerData {
@@ -27,6 +30,26 @@ function emptyData(): TrackerData {
   return { version: 1, selectedArtists: [], lines: {}, order: [], pinned: [] };
 }
 
+/** Older records predate step skipping (and were never validated at all): fill
+ *  in `skipped` and drop anything that is not a plain index array. */
+function normaliseLines(raw: unknown): Record<string, LineState> {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string, LineState> = {};
+  for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== 'object') continue;
+    const entry = value as Partial<LineState>;
+    const status: LineStatus =
+      entry.status === 'abandoned' || entry.status === 'excluded' ? entry.status : 'active';
+    const done = Array.isArray(entry.done) ? entry.done.filter((i) => typeof i === 'number') : [];
+    const skipped = Array.isArray(entry.skipped)
+      ? entry.skipped.filter((i) => typeof i === 'number')
+      : [];
+    if (status === 'active' && done.length === 0 && skipped.length === 0) continue;
+    out[id] = { status, done, skipped };
+  }
+  return out;
+}
+
 function readStorage(): TrackerData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -36,7 +59,7 @@ function readStorage(): TrackerData {
     return {
       version: 1,
       selectedArtists: Array.isArray(parsed.selectedArtists) ? parsed.selectedArtists : [],
-      lines: parsed.lines && typeof parsed.lines === 'object' ? parsed.lines : {},
+      lines: normaliseLines(parsed.lines),
       // v1 records written before drag/pin existed simply have no order yet.
       order: Array.isArray(parsed.order) ? parsed.order : [],
       pinned: Array.isArray(parsed.pinned) ? parsed.pinned : [],
@@ -53,6 +76,9 @@ interface TrackerContextValue {
   getLine: (lineId: string) => LineState | undefined;
   isDone: (lineId: string, stepIndex: number) => boolean;
   toggleStep: (lineId: string, stepIndex: number) => void;
+  /** Give up on a single step (or undo it). Only this step is affected. */
+  isSkipped: (lineId: string, stepIndex: number) => boolean;
+  toggleStepSkip: (lineId: string, stepIndex: number) => void;
   /** Replace the whole done set of one line (master checkbox: all or none). */
   setLineSteps: (lineId: string, done: number[]) => void;
   setLineStatus: (lineId: string, status: LineStatus) => void;
@@ -72,6 +98,8 @@ const TrackerContext = createContext<TrackerContextValue>({
   getLine: () => undefined,
   isDone: () => false,
   toggleStep: () => {},
+  isSkipped: () => false,
+  toggleStepSkip: () => {},
   setLineSteps: () => {},
   setLineStatus: () => {},
   setManyStatus: () => {},
@@ -91,12 +119,13 @@ function persistLine(
   patch: Partial<LineState>,
 ): Record<string, LineState> {
   const next = { ...lines };
-  const current = next[lineId] ?? { status: 'active' as LineStatus, done: [] };
+  const current = next[lineId] ?? { status: 'active' as LineStatus, done: [], skipped: [] };
   const merged: LineState = {
     status: patch.status ?? current.status,
     done: patch.done ?? current.done,
+    skipped: patch.skipped ?? current.skipped,
   };
-  if (merged.status === 'active' && merged.done.length === 0) {
+  if (merged.status === 'active' && merged.done.length === 0 && merged.skipped.length === 0) {
     delete next[lineId];
   } else {
     next[lineId] = merged;
@@ -142,6 +171,12 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     [data.lines],
   );
 
+  const isSkipped = useCallback(
+    (lineId: string, stepIndex: number) =>
+      (data.lines[lineId]?.skipped ?? []).includes(stepIndex),
+    [data.lines],
+  );
+
   const toggleStep = useCallback((lineId: string, stepIndex: number) => {
     setData((previous) => {
       const current = previous.lines[lineId]?.done ?? [];
@@ -151,6 +186,23 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       const lines = persistLine(previous.lines, lineId, {
         status: previous.lines[lineId]?.status ?? 'active',
         done,
+      });
+      return { ...previous, lines };
+    });
+  }, []);
+
+  /** Skipping touches exactly one step: it is dropped from `done` (a skipped
+   *  step is not "done") and added to `skipped`, where it stops counting
+   *  towards the line's completion. Undo simply removes it again. */
+  const toggleStepSkip = useCallback((lineId: string, stepIndex: number) => {
+    setData((previous) => {
+      const state = previous.lines[lineId];
+      const skipped = state?.skipped ?? [];
+      const skip = !skipped.includes(stepIndex);
+      const lines = persistLine(previous.lines, lineId, {
+        status: state?.status ?? 'active',
+        done: skip ? (state?.done ?? []).filter((i) => i !== stepIndex) : (state?.done ?? []),
+        skipped: skip ? [...skipped, stepIndex] : skipped.filter((i) => i !== stepIndex),
       });
       return { ...previous, lines };
     });
@@ -189,7 +241,9 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       const lines: Record<string, LineState> = {};
       for (const [id, state] of Object.entries(previous.lines)) {
         if (state.status === 'excluded') {
-          if (state.done.length > 0) lines[id] = { status: 'active', done: state.done };
+          if (state.done.length > 0 || state.skipped.length > 0) {
+            lines[id] = { status: 'active', done: state.done, skipped: state.skipped };
+          }
         } else {
           lines[id] = state;
         }
@@ -223,6 +277,8 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       getLine,
       isDone,
       toggleStep,
+      isSkipped,
+      toggleStepSkip,
       setLineSteps,
       setLineStatus,
       setManyStatus,
@@ -242,6 +298,8 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       getLine,
       isDone,
       toggleStep,
+      isSkipped,
+      toggleStepSkip,
       setLineSteps,
       setLineStatus,
       setManyStatus,
