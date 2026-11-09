@@ -101,6 +101,9 @@
 @custom-variant tab (@media (max-width: 980px));
 @custom-variant nav (@media (max-width: 860px));
 @custom-variant phone (@media (max-width: 520px));
+/* Between the stacked layout and ~1270px the three columns are still side by
+   side, leaving the middle one too narrow for six filter chips. */
+@custom-variant cramped (@media (min-width: 981px) and (max-width: 1270px));
 /* Touch screens cannot drag HTML5 elements, so rows expose ↑↓ buttons there. */
 @custom-variant touch (@media (pointer: coarse));
 

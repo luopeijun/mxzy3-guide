@@ -12,17 +12,18 @@ interface Props {
   onChange: (filter: LineFilter) => void;
 }
 
-/** A permanently six-cell grid: chips never appear/disappear or wrap when a
- *  count changes, so switching filters cannot reflow the sticky bar. Both the
- *  selected and idle states keep a 1px border (otherwise each chip would be
- *  2px wider and nudge the whole row). */
+/** Chips never appear/disappear or resize when a count changes, so switching
+ *  filters cannot reflow the sticky bar. Six columns normally; a neat 3×2 in
+ *  the cramped three-column desktop range (and on phones), so nothing ever
+ *  spills into a horizontal scrollbar. Both states keep a 1px border
+ *  (otherwise each chip would be 2px wider and nudge the whole row). */
 export default function TrackerFilterChips({ value, counts, onChange }: Props) {
   return (
     <div
       data-filter-chips
       role="group"
       aria-label="按任务线状态筛选"
-      className="mt-2 grid grid-cols-6 gap-1.5 phone:grid-cols-3"
+      className="mt-2 grid grid-cols-6 gap-1.5 cramped:grid-cols-3 phone:grid-cols-3"
     >
       {FILTER_ORDER.map((key) => {
         const selected = value === key;
