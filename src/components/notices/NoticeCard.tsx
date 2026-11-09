@@ -3,7 +3,7 @@ import { EXCLUSIVE_HINT, difficultyRange, starsOf } from '../../lib/notices';
 import { cn } from '../../lib/cn';
 import StarBadge from './StarBadge';
 import { CATEGORY_STYLE } from './categoryStyle';
-import { companyDot, timeText } from './infoStyle';
+import { companyDot, companyText, timeText } from './infoStyle';
 
 interface Props {
   notice: Notice;
@@ -45,16 +45,22 @@ function MetaCell({
           </span>
         )}
       </dt>
-      <dd className="mt-0.5 flex min-w-0 items-center gap-1">
+      <dd className="mt-0.5 flex min-w-0 items-center gap-1.5">
         {dotClass && (
           <span
             data-notice-company-dot
-            className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dotClass)}
+            className={cn(
+              'h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-surface',
+              dotClass,
+            )}
             title={`公司色标：${value}`}
           />
         )}
         <span
-          className={cn('min-w-0 truncate text-ui-xs font-semibold', valueClass ?? 'text-ink')}
+          className={cn(
+            'min-w-0 truncate text-ui-xs font-bold',
+            valueClass ?? 'text-ink',
+          )}
           title={value}
         >
           {value}
@@ -125,6 +131,7 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
             field="company"
             label="公司"
             value={notice.company ?? '—'}
+            valueClass={companyText(notice.company)}
             dotClass={companyDot(notice.company)}
           />
         </dl>

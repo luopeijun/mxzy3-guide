@@ -14,20 +14,36 @@ const TIME_CLASS: Record<string, string> = {
   特殊: 'text-year-x',
 };
 
-/** 公司 → 索引点底色。 */
-const COMPANY_DOT: Record<string, string> = {
-  SoSa电视: 'bg-dot-sosa',
-  永振电视: 'bg-dot-yongzhen',
-  日月光音乐: 'bg-dot-yueying',
-  EAMI音乐: 'bg-dot-eami',
-  京风唱片: 'bg-dot-jingfeng',
-  全球制片: 'bg-dot-quanqiu',
-  大宇宙影业: 'bg-dot-dazhou',
-  创意广告: 'bg-dot-chuangyi',
-  追梦广告: 'bg-dot-zhuimeng',
-  翱翔天际: 'bg-dot-aoxiang',
-  钜子娱乐: 'bg-dot-juzi',
-};
+/** 公司与它的圆点底色、文字色一一对应——圆点放大后色相才分得清，文字也同色
+ *  双保险，扫一眼就能认出同一家公司。单一数据源，下面两份映射都从它生成。 */
+interface CompanyColor {
+  name: string;
+  dot: string;
+  text: string;
+}
+const COMPANY_COLORS: CompanyColor[] = [
+  { name: 'SoSa电视', dot: 'bg-dot-sosa', text: 'text-dot-sosa' },
+  { name: '永振电视', dot: 'bg-dot-yongzhen', text: 'text-dot-yongzhen' },
+  { name: '日月光音乐', dot: 'bg-dot-yueying', text: 'text-dot-yueying' },
+  { name: 'EAMI音乐', dot: 'bg-dot-eami', text: 'text-dot-eami' },
+  { name: '京风唱片', dot: 'bg-dot-jingfeng', text: 'text-dot-jingfeng' },
+  { name: '全球制片', dot: 'bg-dot-quanqiu', text: 'text-dot-quanqiu' },
+  { name: '大宇宙影业', dot: 'bg-dot-dazhou', text: 'text-dot-dazhou' },
+  { name: '创意广告', dot: 'bg-dot-chuangyi', text: 'text-dot-chuangyi' },
+  { name: '追梦广告', dot: 'bg-dot-zhuimeng', text: 'text-dot-zhuimeng' },
+  { name: '翱翔天际', dot: 'bg-dot-aoxiang', text: 'text-dot-aoxiang' },
+  { name: '钜子娱乐', dot: 'bg-dot-juzi', text: 'text-dot-juzi' },
+];
+
+const COMPANY_DOT: Record<string, string> = Object.fromEntries(
+  COMPANY_COLORS.map((company) => [company.name, company.dot]),
+);
+const COMPANY_TEXT: Record<string, string> = Object.fromEntries(
+  COMPANY_COLORS.map((company) => [company.name, company.text]),
+);
+
+/** 图例用：把全部公司连同色标一起导出。 */
+export const COMPANY_LEGEND = COMPANY_COLORS;
 
 export function timeText(time?: string | null): string {
   return (time && TIME_CLASS[time]) || 'text-ink';
@@ -35,4 +51,8 @@ export function timeText(time?: string | null): string {
 
 export function companyDot(company?: string | null): string {
   return (company && COMPANY_DOT[company]) || 'bg-ink-faint';
+}
+
+export function companyText(company?: string | null): string {
+  return (company && COMPANY_TEXT[company]) || 'text-ink';
 }

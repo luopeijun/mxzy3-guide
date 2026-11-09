@@ -82,6 +82,14 @@ async function main() {
     await sleep(400);
   }
 
+  if (view === 'legend') {
+    await evaluate(`(() => {
+      document.querySelector('[data-notice-legend-toggle]')?.click();
+      return true;
+    })()`);
+    await sleep(400);
+  }
+
   if (view === 'reference' || view === 'reference-tail') {
     await evaluate(`(() => {
       document.querySelector('[data-notice-view="reference"]')?.click();
