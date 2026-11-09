@@ -172,7 +172,7 @@ export default function NoticePager({
           aria-label={`跳转到第几页，共 ${pageCount} 页`}
           placeholder=" " 
           title={`共 ${pageCount} 页`}
-          className="h-7 w-11 rounded-ui-xs border border-line bg-surface text-center text-ui-2xs tabular-nums text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-brand-line"
+          className="h-7 w-9 rounded-ui-xs border border-line bg-surface text-center text-ui-2xs tabular-nums text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-brand-line"
         />
         页
         <button

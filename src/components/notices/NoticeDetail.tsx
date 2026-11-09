@@ -55,7 +55,7 @@ function RoleBlock({
     <li data-notice-role className="rounded-ui-md border border-line bg-surface p-3">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-ui-sm font-semibold text-ink">{role.name}</span>
-        <StarBadge value={stars} size="md" />
+        <span className="text-ui-xs font-semibold tabular-nums text-gold">{stars}★</span>
         {role.defaultArtist && (
           <span className="rounded-full bg-brand-soft px-2 py-0.5 text-ui-2xs text-brand-strong">
             默认 {role.defaultArtist}
@@ -87,7 +87,7 @@ function RoleBlock({
             <span
               key={item.label}
               data-notice-chip="threshold"
-              className="rounded-ui-xs border border-line-strong bg-surface px-1.5 py-0.5 text-ui-2xs tabular-nums text-ink"
+              className="rounded-full bg-line/70 px-2 py-0.5 text-ui-2xs tabular-nums text-ink-muted"
               title="接这个角色需要的最低属性"
             >
               {item.label} ≥ {item.value}
