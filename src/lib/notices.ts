@@ -59,6 +59,7 @@ export function requirementsFor(
 
 export interface SpecialNote {
   kind: string;
+  /** 有数值时形如「亲和 +2，叛逆 -2 / 天」；表里没给数值的（例如「吻戏」）留空。 */
   text: string;
 }
 
@@ -77,7 +78,7 @@ export function specialNotes(data: NoticeData, role: NoticeRole): SpecialNote[] 
       if (value === undefined) return [];
       return [`${label} ${value > 0 ? '+' : ''}${value}`];
     });
-    return { kind, text: parts.length ? `${parts.join('，')} / 天` : '无属性影响' };
+    return { kind, text: parts.length ? `${parts.join('，')} / 天` : '' };
   });
 }
 

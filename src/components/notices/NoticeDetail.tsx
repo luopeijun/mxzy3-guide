@@ -60,7 +60,7 @@ function RoleBlock({
       {requirements.length > 0 ? (
         <div className="mt-2">
           <div className="text-ui-2xs text-ink-faint">能力要求 · {stars} 星</div>
-          <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 nav:grid-cols-1">
+          <div className="mt-1 grid max-w-[460px] grid-cols-2 gap-x-3 gap-y-1 nav:grid-cols-1">
             {requirements.map((row) => (
               <div key={row.ability} className="flex items-baseline gap-1.5 text-ui-2xs">
                 <span className="text-ink-muted">{row.ability}</span>
@@ -76,9 +76,11 @@ function RoleBlock({
 
       {(thresholds.length > 0 || effects.length > 0) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5" data-notice-special>
+          <span className="text-ui-2xs text-ink-faint">特殊要求</span>
           {thresholds.map((item) => (
             <span
               key={item.label}
+              data-notice-chip="threshold"
               className="rounded-ui-xs bg-gold-soft px-1.5 py-0.5 text-ui-2xs text-gold"
               title="接这个角色需要的最低属性"
             >
@@ -88,10 +90,15 @@ function RoleBlock({
           {effects.map((effect) => (
             <span
               key={effect.kind}
+              data-notice-chip="effect"
               className="rounded-ui-xs border border-line-strong bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-muted"
-              title={`特殊要求「${effect.kind}」每天的能力增减`}
+              title={
+                effect.text
+                  ? `特殊要求「${effect.kind}」每天的能力增减`
+                  : `特殊要求「${effect.kind}」，不增减亲和／叛逆／性感`
+              }
             >
-              {effect.kind} · {effect.text}
+              {effect.text ? `${effect.kind} · ${effect.text}` : effect.kind}
             </span>
           ))}
         </div>
