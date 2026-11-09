@@ -69,6 +69,7 @@ export default function TrackerPool({ data }: Props) {
   const [completedOpen, setCompletedOpen] = useState(false);
   const [jumpRequested, setJumpRequested] = useState(false);
   const completedRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<DropHint | null>(null);
   const needle = query.trim().toLowerCase();
@@ -209,9 +210,18 @@ export default function TrackerPool({ data }: Props) {
   // A jump has to expand the archive *before* measuring: otherwise the smooth
   // scroll lands where the collapsed row used to be. Wait for the render that
   // has the expanded body, then scroll to it.
+  //
+  // The offset is measured rather than hard-coded: the sticky bar grows a row
+  // whenever a search or filter is active, and a fixed scroll-mt left the
+  // archive tucked under it.
   useEffect(() => {
     if (!jumpRequested || !completedOpen) return;
-    completedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const target = completedRef.current;
+    if (target) {
+      const offset = (stickyRef.current?.getBoundingClientRect().height ?? 0) + 12;
+      target.style.scrollMarginTop = `${offset}px`;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     setJumpRequested(false);
   }, [jumpRequested, completedOpen]);
 
@@ -299,7 +309,7 @@ export default function TrackerPool({ data }: Props) {
       {/* Opaque from the very top of the scrollport: the pt keeps a small gap
           under the shared header, and the higher z-index keeps drag hints /
           event rows from painting over the fixed search bar. */}
-      <div className="sticky top-0 z-20 bg-canvas pt-2 pb-3">
+      <div ref={stickyRef} data-pool-sticky className="sticky top-0 z-20 bg-canvas pt-2 pb-3">
         <div className="flex items-center gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2 rounded-ui-md border border-line bg-surface px-3 py-2 shadow-soft transition-colors focus-within:border-brand-line">
             <svg
