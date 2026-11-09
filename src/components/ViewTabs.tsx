@@ -10,7 +10,10 @@ interface Props {
 }
 
 /** The one shared tab switch for every top-level view. Rendered by the single
- *  global header, so switching views never redraws the header itself. */
+ *  global header, so switching views never redraws the header itself.
+ *
+ *  文字底线式：没有容器底色——未选中是浅墨色文字，悬停提为品牌深色；激活项
+ *  品牌深色加粗，文字正下方压一条品牌色短下划线（伪元素画的，随文字走）。 */
 export default function ViewTabs({
   mode,
   onViewGuide,
@@ -19,17 +22,20 @@ export default function ViewTabs({
 }: Props) {
   const tabClass = (active: boolean) =>
     cn(
-      'rounded-full px-[13px] py-[7px] text-ui-xs transition-colors whitespace-nowrap',
+      'relative whitespace-nowrap px-0.5 pt-1 pb-[7px] text-ui-xs transition-colors',
       active
-        ? 'bg-brand font-semibold text-white'
-        : 'text-brand-strong hover:bg-surface',
+        ? cn(
+            'font-semibold text-brand-strong',
+            "after:absolute after:inset-x-0 after:bottom-0 after:h-[2.5px] after:rounded-full after:bg-brand after:content-['']",
+          )
+        : 'text-ink-faint hover:text-brand-strong',
     );
 
   return (
     <nav
       role="tablist"
       aria-label="视图切换"
-      className="flex shrink-0 items-center gap-1 rounded-full bg-brand-soft p-1"
+      className="flex shrink-0 items-center gap-6 nav:gap-4"
     >
       <button
         type="button"
