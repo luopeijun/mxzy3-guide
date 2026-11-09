@@ -36,6 +36,10 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
   const { isDone, toggleStep } = useTracker();
   const done = isDone(lineId, step.index);
   const depth = stepDepth(step.label);
+  // Indent by shrinking the row as well as offsetting it: `w-full` plus a
+  // margin would push the right edge past the card and give the middle column
+  // a horizontal scrollbar.
+  const indent = depth * 20;
   const needle = query.trim().toLowerCase();
   const hit = (value: string) => needle.length > 0 && value.toLowerCase().includes(needle);
 
@@ -50,7 +54,7 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
         done ? 'opacity-55' : 'hover:border-brand-line hover:bg-surface-soft',
         depth > 0 && 'border-l-2 border-l-brand-line',
       )}
-      style={depth > 0 ? { marginLeft: depth * 20 } : undefined}
+      style={depth > 0 ? { marginLeft: indent, width: `calc(100% - ${indent}px)` } : undefined}
     >
       <span
         className={cn(
