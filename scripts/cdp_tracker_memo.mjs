@@ -223,7 +223,7 @@ async function main() {
   }
 
   // 2. Enter adds; the ＋ button adds too.
-  await typeInto('[data-memo-input]', '周六前把方若绮好感刷到 60');
+  await typeInto('[data-memo-input]', '考表演证书前把演技练到 700');
   await pressEnter();
   let now = await visible();
   if (now.items.length !== 1) fail('Enter did not add a memo');
