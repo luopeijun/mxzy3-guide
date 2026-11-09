@@ -11,6 +11,17 @@
 - `sources/character-stats.txt`：18 位可签约艺人（含资料片新增）的初始属性，**以游戏内「初始属性(女)」「初始属性(男)」两张截图为准**。源文件保持截图的行列形状：一段以角色名开头，随后是属性行与紧跟其后的 `成长` 行；女、男两段合并成**一张表**（`table` 块）而不分性别——一人一行、一项一列，每个格子上面是初始值、下面一行小字是成长加成。姓名列在窄屏横向滑动时保持固定；每列最高的数值套浅粉胶囊，成长加成的最高值用金色，**并列第一不标**。
 - 文档里确实没有收录的条目（物品总览、贺总相关事件等）保留在树中并标注「待补充」，重跑脚本不会丢位置。
 
+## 通告数据
+
+通告库是**另一条独立管线**，和攻略正文互不影响：
+
+- `sources/notices/notices.xls`：通告主表 + 角色表 + 三张参照表。11 个 sheet，其中 `电影/电视剧/广告` 表头在第 0 行、`唱片/主持` 因上方多一行「特殊要求」分组，表头在第 1 行、数据从第 2 行开始，脚本里按 sheet 分别写死起始行（`SHEETS[*].first`）。
+- `sources/notices/requirements.xlsx`：只取其中的 `特殊要求影响` 表（搞笑 +2 亲和 / -2 叛逆 这类），其余 sheet 是「等级字母 × 星数 → 数值区间」的原始写法，和 `notices.xls` 里的 `说明` 表重复，因此不再解析。
+- `python scripts/extract_notices.py` → `public/data/notices.json`（约 900KB，运行时 fetch，进入「通告」tab 才加载）。这条管线需要 `pip install openpyxl xlrd`，只有重生成数据时才要，跑站点不需要。
+- 归一后的结构：`notices[]` 每条含 `cat / name / type / time / company / producer / brief`，外加 `roles[]`；唱片与主持没有角色表，用通告行本身合成唯一角色（`征求对象` 即角色名），电影/电视剧/广告的角色按 `通告编号` 回填。
+- 复合特殊要求（`暴力反派`、`反串搞笑丑化`）在脚本里拆成 `specialKinds[]`，前端再按 `specialEffects` 查每天的三项增减。
+- **能力要求不在数据里展开**：`grades`（类型 × 对象 → A/B/C/D）与 `scale`（星级 × 字母 → 区间）分开存，前端用 `requirementsFor()` 现算，换算法不用重生成 JSON。区间的正确性由 `scripts/test_notices.py` 兜底——它把 1100 多个「类型/对象/能力/星级」组合与原 xlsx 逐一比对，必须完全一致。
+
 ## 体量统计口径
 
 页面上显示的是**字数**，不再是段落数：「约 X 字」取正文非空白字符数（含标点），`table` 块的单元格也算在内，分类页按「自身 + 全部子条目」累计；叶子条目只显示字数，没有子条目时不再显示「0 个子条目」。超过 1 万字折算成「1.2 万」，由 `src/lib/guide.ts` 的 `countChars` / `countCharsDeep` / `formatCount` 统一处理。
@@ -65,13 +76,21 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | 攻略解析回归测试（29 项） |
+| `npm run test:guide` | Python 回归测试：攻略解析（29 项）+ 通告数据（10 项） |
+| `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 
 **解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
 
 ```bash
 python scripts/extract_guide.py
 npm run test:guide
+```
+
+**通告数据回归**：`test_notices.py` 只依赖标准库，检查编号唯一、每条都有角色、等级/星级表完整，装了 openpyxl 时还会把推导出来的区间与原始 xlsx 逐格比对（1100+ 组合）：
+
+```bash
+python scripts/extract_notices.py
+python -m unittest scripts.test_notices -v
 ```
 
 **界面回归**：`scripts/cdp_*.mjs` 通过 Chrome DevTools Protocol 跑真实交互（拖拽、筛选取舍、存档下载与导入、窄屏布局等）。先起开发服务器，再用桌面尺寸开一个调试实例：
@@ -91,11 +110,16 @@ node scripts/cdp_tracker_memo.mjs
 
 ```
 public/data/guide.json       生成的结构化攻略数据（运行时加载）
+public/data/notices.json     生成的通告数据（进入通告 tab 才加载）
 sources/*.txt                补充攻略的纯文本来源（UTF-8，可重跑）
+sources/notices/*.xls|xlsx   通告原始表格（重生成数据的输入）
 scripts/extract_guide.py     docx + sources → guide.json（零第三方依赖）
-scripts/test_extract.py      解析回归测试
+scripts/extract_notices.py   表格 → notices.json（需 openpyxl / xlrd）
+scripts/test_extract.py      攻略解析回归测试
+scripts/test_notices.py      通告数据回归测试
 scripts/cdp_*.mjs            浏览器端到端验证脚本
 src/components/              攻略阅读页组件
+src/components/notices/      通告库（筛选、详情、能力对照）
 src/components/tracker/      事件追踪器
 src/hooks/                   数据加载、选中态、进度存储、锚点跳转
 src/lib/                     纯逻辑：内容解析、统计、排序、筛选、存档
