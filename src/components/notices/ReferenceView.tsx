@@ -117,15 +117,16 @@ export default function ReferenceView({ data }: Props) {
         <section className="rounded-ui-md border border-line bg-surface p-4 shadow-soft">
           <h2 className="text-ui-sm font-bold text-brand-strong">特殊要求影响</h2>
           <p className="mt-1 text-ui-2xs leading-[1.8] text-ink-faint">
-            角色带「搞笑」「反派」这类特殊要求时，拍摄期间每天对三项属性造成的增减。
+            角色带「搞笑」「反派」这类特殊要求时，拍摄期间<strong className="font-semibold text-ink-muted">每天</strong>对三项属性造成的增减，
+            与「能力影响」一样按天结算；下表每格都是每天的数值。
           </p>
           <table className="mt-3 w-full max-w-[440px] text-ui-2xs">
             <thead>
               <tr className="text-ink-faint">
                 <th className="py-1 text-left font-normal">特殊要求</th>
-                <th className="py-1 text-right font-normal">亲和</th>
-                <th className="py-1 text-right font-normal">叛逆</th>
-                <th className="py-1 text-right font-normal">性感</th>
+                <th className="py-1 text-right font-normal">亲和 / 天</th>
+                <th className="py-1 text-right font-normal">叛逆 / 天</th>
+                <th className="py-1 text-right font-normal">性感 / 天</th>
               </tr>
             </thead>
             <tbody>
@@ -154,12 +155,16 @@ export default function ReferenceView({ data }: Props) {
               ))}
             </tbody>
           </table>
+          <p className="mt-2 text-ui-2xs leading-[1.8] text-ink-faint">
+            「—」表示该项不增不减，例如「吻戏」只是题材限制，不带属性变化。
+          </p>
         </section>
 
         <section className="rounded-ui-md border border-line bg-surface p-4 shadow-soft">
           <h2 className="text-ui-sm font-bold text-brand-strong">类型能力要求</h2>
           <p className="mt-1 text-ui-2xs leading-[1.8] text-ink-faint">
-            按「类型 × 征求对象」列出每项能力的等级要求与每日成长；没有列出的能力不作要求。
+            按「类型 × 征求对象」列出每项能力的等级要求，以及拍摄期间每天的能力增减；
+            没有列出的能力不作要求。
           </p>
           <div className="mt-3 flex flex-col gap-4">
             {groups.map((group) => (
