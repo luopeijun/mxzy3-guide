@@ -6,12 +6,9 @@ import { CATEGORY_STYLE } from './categoryStyle';
 interface Props {
   data: NoticeData;
   filter: NoticeFilter;
-  resultCount: number;
   companies: string[];
-  view: 'list' | 'reference';
   onChange: (patch: Partial<NoticeFilter>) => void;
   onReset: () => void;
-  onViewChange: (view: 'list' | 'reference') => void;
 }
 
 const TIMES = ['第一年', '第二年', '第三年', '特殊'] as const;
@@ -25,17 +22,9 @@ function chipClass(active: boolean) {
   );
 }
 
-/** 通告库的筛选条：搜索 + 公司 + 分类 / 时间 / 难度。三种筛选互相独立，结果取交集。 */
-export default function NoticeFilterBar({
-  data,
-  filter,
-  resultCount,
-  companies,
-  view,
-  onChange,
-  onReset,
-  onViewChange,
-}: Props) {
+/** 通告库的筛选条：搜索 + 公司 + 分类 / 时间 / 难度。三种筛选互相独立，结果取交集。
+ *  只负责条件本身，标题与视图页签在 `NoticesApp` 里，这样面板可以从页签底部开始围。 */
+export default function NoticeFilterBar({ data, filter, companies, onChange, onReset }: Props) {
   const dirty =
     filter.cat !== 'all' ||
     filter.time !== 'all' ||
@@ -44,51 +33,7 @@ export default function NoticeFilterBar({
     filter.query.trim() !== '';
 
   return (
-    <div data-notice-filters className="shrink-0 border-b border-line bg-canvas px-6 pb-3 pt-4">
-      <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 className="text-ui-lg font-bold text-brand-strong">通告库</h1>
-        <span className="text-ui-2xs text-ink-faint">
-          共 {data.meta.noticeCount} 个通告 · {data.meta.roleCount} 个角色
-        </span>
-        {view === 'list' && (
-          <span
-            className="ml-auto text-ui-2xs tabular-nums text-ink-faint"
-            data-notice-count
-          >
-            当前 {resultCount} 条
-          </span>
-        )}
-      </div>
-
-      {/* 视图切换用下划线 tab：顶栏已经是胶囊 tab，页面内再用一颗胶囊会混淆层级。 */}
-      <div className="mb-3 flex items-end border-b border-line">
-        <div role="tablist" aria-label="通告视图" className="-mb-px flex items-end gap-1">
-          {([
-            ['list', '通告列表'],
-            ['reference', '能力对照'],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              data-notice-view={key}
-              aria-selected={view === key}
-              onClick={() => onViewChange(key)}
-              className={cn(
-                'shrink-0 border-b-2 px-2.5 pb-1.5 pt-1 text-ui-sm transition-colors',
-                view === key
-                  ? 'border-brand font-semibold text-brand-strong'
-                  : 'border-transparent text-ink-muted hover:border-line-strong hover:text-brand-strong',
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {view === 'list' && (
-        <>
+    <div data-notice-filters className="shrink-0 border-b border-line px-5 py-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex min-w-[220px] flex-1 items-center gap-2 rounded-ui-md border border-line bg-surface px-3 py-2 transition-colors focus-within:border-brand-line">
           <svg
@@ -177,7 +122,12 @@ export default function NoticeFilterBar({
                   : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
               )}
             >
-              <span className={cn('h-1.5 w-1.5 rounded-full', active ? 'bg-white' : CATEGORY_STYLE[category.key].bar)} />
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full',
+                  active ? 'bg-white' : CATEGORY_STYLE[category.key].bar,
+                )}
+              />
               <span className="whitespace-nowrap">{category.name}</span>
               <span className={cn('tabular-nums', active ? 'text-white/80' : 'text-ink-faint')}>
                 {category.count}
@@ -237,8 +187,6 @@ export default function NoticeFilterBar({
           ))}
         </div>
       </div>
-        </>
-      )}
     </div>
   );
 }

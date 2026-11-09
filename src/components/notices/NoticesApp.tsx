@@ -4,6 +4,7 @@ import { companiesOf, filterNotices, type NoticeFilter } from '../../lib/notices
 import NoticeCard from './NoticeCard';
 import NoticeDetail from './NoticeDetail';
 import NoticeFilterBar from './NoticeFilterBar';
+import NoticeViewTabs from './NoticeViewTabs';
 import ReferenceView from './ReferenceView';
 
 const PAGE = 60;
@@ -63,68 +64,89 @@ export default function NoticesApp({ data }: Props) {
 
   return (
     <div data-notices-app className="fixed inset-x-0 bottom-0 top-16 z-40 flex bg-canvas">
-      <div className="flex min-w-0 flex-1 flex-col">
-        <NoticeFilterBar
-          data={data}
-          filter={filter}
-          resultCount={results.length}
-          companies={companies}
-          view={view}
-          onChange={patch}
-          onReset={() => {
-            setFilter(EMPTY_FILTER);
-            setLimit(PAGE);
-          }}
-          onViewChange={setView}
-        />
-
-        {view === 'reference' ? (
-          <ReferenceView data={data} />
-        ) : (
-        <div
-          data-notice-list
-          className="min-h-0 flex-1 overflow-y-auto px-6 py-4 [scrollbar-gutter:stable]"
-        >
-          {results.length === 0 ? (
-            <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-10 text-center text-ui-xs text-ink-faint">
-              没有符合条件的通告，改一下筛选或清空搜索试试。
-            </p>
-          ) : (
-            <>
-              <ul className="grid gap-3 min-[1280px]:grid-cols-2">
-                {visible.map((notice) => (
-                  <li key={notice.id}>
-                    <NoticeCard
-                      notice={notice}
-                      active={notice.id === selectedId}
-                      onSelect={() => pick(notice.id)}
-                    />
-                  </li>
-                ))}
-              </ul>
-              {results.length > visible.length && (
-                <div className="mt-4 flex justify-center">
-                  <button
-                    type="button"
-                    data-notice-more
-                    onClick={() => setLimit((value) => value + PAGE)}
-                    className="rounded-full border border-line bg-surface px-4 py-1.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
-                  >
-                    还有 {results.length - visible.length} 条 · 加载更多
-                  </button>
-                </div>
-              )}
-            </>
+      <div className="flex min-w-0 flex-1 flex-col px-6 pb-4 pt-3 tab:px-4 tab:pt-2">
+        <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-ui-lg font-bold text-brand-strong">通告库</h1>
+          <span className="text-ui-2xs text-ink-faint">
+            共 {data.meta.noticeCount} 个通告 · {data.meta.roleCount} 个角色
+          </span>
+          {view === 'list' && (
+            <span className="ml-auto text-ui-2xs tabular-nums text-ink-faint" data-notice-count>
+              当前 {results.length} 条
+            </span>
           )}
         </div>
-        )}
-      </div>
 
-      {view === 'list' && (
-        <aside className="hidden w-[380px] shrink-0 flex-col border-l border-line bg-surface min-[1120px]:flex">
-          <NoticeDetail data={data} notice={selected} />
-        </aside>
-      )}
+        <NoticeViewTabs view={view} onChange={setView} />
+
+        <div className="flex min-h-0 flex-1 gap-6">
+          {/* 页签与这块面板连成一体：面板去掉上边框，靠选中页签的下移把页签行那条线盖掉。 */}
+          <div
+            data-notice-panel
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-b-ui-md border border-t-0 border-line bg-surface"
+          >
+            {view === 'list' && (
+              <NoticeFilterBar
+                data={data}
+                filter={filter}
+                companies={companies}
+                onChange={patch}
+                onReset={() => {
+                  setFilter(EMPTY_FILTER);
+                  setLimit(PAGE);
+                }}
+              />
+            )}
+
+            {view === 'reference' ? (
+              <ReferenceView data={data} />
+            ) : (
+              <div
+                data-notice-list
+                className="min-h-0 flex-1 overflow-y-auto px-5 py-4 [scrollbar-gutter:stable]"
+              >
+                {results.length === 0 ? (
+                  <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-10 text-center text-ui-xs text-ink-faint">
+                    没有符合条件的通告，改一下筛选或清空搜索试试。
+                  </p>
+                ) : (
+                  <>
+                    <ul className="grid gap-3 min-[1280px]:grid-cols-2">
+                      {visible.map((notice) => (
+                        <li key={notice.id}>
+                          <NoticeCard
+                            notice={notice}
+                            active={notice.id === selectedId}
+                            onSelect={() => pick(notice.id)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                    {results.length > visible.length && (
+                      <div className="mt-4 flex justify-center">
+                        <button
+                          type="button"
+                          data-notice-more
+                          onClick={() => setLimit((value) => value + PAGE)}
+                          className="rounded-full border border-line bg-surface px-4 py-1.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+                        >
+                          还有 {results.length - visible.length} 条 · 加载更多
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {view === 'list' && (
+            <aside className="hidden w-[380px] shrink-0 flex-col overflow-hidden rounded-ui-md border border-line bg-surface min-[1120px]:flex">
+              <NoticeDetail data={data} notice={selected} />
+            </aside>
+          )}
+        </div>
+      </div>
 
       {view === 'list' && drawerOpen && (
         <div
