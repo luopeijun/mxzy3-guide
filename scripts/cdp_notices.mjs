@@ -296,6 +296,7 @@ async function main() {
     if (!box) return JSON.stringify({ missing: true });
     return JSON.stringify({
       sections: [...box.querySelectorAll('section h2')].map(h => h.textContent.trim()),
+      keys: [...box.querySelectorAll('[data-reference-card]')].map(c => c.getAttribute('data-reference-card')),
       groups: [...box.querySelectorAll('[data-reference-group]')].map(g => g.getAttribute('data-reference-group')),
       gradeRows: box.querySelectorAll('[data-reference-group] tr').length,
       growthRows: box.querySelectorAll('[data-growth-table] tbody tr').length,
@@ -307,8 +308,10 @@ async function main() {
   console.log('REFERENCE', reference);
   const ref = JSON.parse(reference);
   if (ref.missing) fail('the 能力对照 view did not render');
-  if (ref.sections.length !== 5) fail('expected 5 reference sections, got ' + ref.sections.join('/'));
-  if (!ref.sections.includes('原表说明')) fail('the source notes section is missing');
+  if (ref.keys.length !== 11) fail('expected 11 reference sections, got ' + ref.keys.length);
+  for (const key of ['debut', 'album', 'penalty', 'schedule', 'leniency', 'awards']) {
+    if (!ref.keys.includes(key)) fail('missing reference section: ' + key);
+  }
   if (ref.groups.join(',') !== 'movie,tv,music,ad,show') fail('reference groups: ' + ref.groups.join(','));
   if (ref.gradeRows !== 67) fail('expected 67 grade rows, got ' + ref.gradeRows);
   if (ref.growthRows !== 18) fail('expected 18 artists, got ' + ref.growthRows);
@@ -344,12 +347,15 @@ async function main() {
   console.log('RAIL', railRaw);
   const rail = JSON.parse(railRaw);
   if (!rail.exists) fail('本页小结没有渲染');
-  if (rail.items.length !== 5) fail('本页小结应有 5 条，实际 ' + rail.items.join('/'));
+  if (rail.items.length !== 11) fail('本页小结应有 11 条，实际 ' + rail.items.join('/'));
   if (rail.active !== 'scale') fail('初始高亮应是难度换算，实际 ' + rail.active);
 
   await click('[data-reference-rail-item="growth"]');
-  await sleep(900);
-  const railJumpRaw = await evaluate(`(() => {
+  // 11 张便签的页面更长，平滑滚动需要更久；轮询等高亮跟到成长率。
+  let railJump = null;
+  for (let i = 0; i < 16; i++) {
+    await sleep(300);
+    const railJumpRaw = await evaluate(`(() => {
     const root = ${SCOPE};
     const box = root.querySelector('[data-notice-reference]');
     const card = box.querySelector('[data-reference-card="growth"]');
@@ -358,8 +364,10 @@ async function main() {
       top: Math.round(card.getBoundingClientRect().top - box.getBoundingClientRect().top),
     });
   })()`);
-  console.log('RAIL_JUMP', railJumpRaw);
-  const railJump = JSON.parse(railJumpRaw);
+    railJump = JSON.parse(railJumpRaw);
+    if (railJump.active === 'growth') break;
+  }
+  console.log('RAIL_JUMP', JSON.stringify(railJump));
   if (railJump.active !== 'growth') fail('点小结后高亮没有跟到成长率：' + railJump.active);
   if (railJump.top < -4 || railJump.top > 48)
     fail('点小结后成长率没有滚到顶部，top=' + railJump.top);

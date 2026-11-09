@@ -44,7 +44,7 @@ function MetaRow({
             {...(diamond ? { 'data-notice-time-diamond': '' } : { 'data-notice-company-dot': '' })}
             className={cn(
               'shrink-0 ring-2 ring-surface',
-              diamond ? 'h-2 w-2 rotate-45' : 'h-1.5 w-1.5 rounded-full',
+              diamond ? 'h-2 w-2 rotate-45' : 'h-2.5 w-2.5 rounded-full',
               dotClass,
             )}
             title={diamond ? `时间档位：${value}` : `公司色标：${value}`}

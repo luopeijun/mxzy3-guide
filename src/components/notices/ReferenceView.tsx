@@ -3,6 +3,15 @@ import type { NoticeData } from '../../types/notices';
 import { cn } from '../../lib/cn';
 import { CATEGORY_STYLE } from './categoryStyle';
 import { specialStyle } from './specialStyle';
+import {
+  AWARD_ROWS,
+  ALBUM_ROWS,
+  DEBUT_GROUPS,
+  LENIENCY_ROWS,
+  PENALTY_ROWS,
+  SCHEDULE_GROUPS,
+  type AlbumCell,
+} from './referenceTables';
 
 interface Props {
   data: NoticeData;
@@ -12,7 +21,13 @@ interface Props {
 const SECTIONS = [
   { key: 'scale', label: '难度换算' },
   { key: 'special', label: '特殊要求影响' },
+  { key: 'debut', label: '出道简单通告' },
+  { key: 'album', label: '第一年唱片数值' },
   { key: 'grades', label: '类型能力要求' },
+  { key: 'penalty', label: '数值负面影响' },
+  { key: 'schedule', label: '特殊日程影响' },
+  { key: 'leniency', label: '放水情况' },
+  { key: 'awards', label: '颁奖典礼' },
   { key: 'growth', label: '艺人成长率' },
   { key: 'notes', label: '原表说明' },
 ] as const;
@@ -84,6 +99,20 @@ function NoteCard({
         {children}
       </div>
     </section>
+  );
+}
+
+/** 专辑明细表的合并单元格：被上方 rowSpan 覆盖的行该格缺省，直接跳过。
+ *  这张表合并块多，用完整网格线（而非只画横线）才读得清哪个区间属于哪几行。 */
+function AlbumTd({ cell }: { cell?: AlbumCell }) {
+  if (!cell) return null;
+  return (
+    <td
+      rowSpan={cell.span ?? 1}
+      className="border border-line px-2 py-1.5 text-center align-middle text-ink-muted"
+    >
+      {cell.v}
+    </td>
   );
 }
 
@@ -288,6 +317,104 @@ export default function ReferenceView({ data }: Props) {
           </NoteCard>
 
           <NoteCard
+            name="debut"
+            tone="bg-tag-news"
+            title="适合出道的简单通告（无需名气）"
+            hint="名气不足时的起步选择：按剧种、广告、唱片、主持分组，列出基础属性、是否吃自信与其他属性；「—」表示不吃自信。"
+            className="min-[1240px]:col-span-2"
+          >
+            <div className="mt-3 grid gap-x-10 gap-y-4 min-[900px]:grid-cols-2">
+              {DEBUT_GROUPS.map((group) => (
+                <div key={group.name}>
+                  <h3 className="text-ui-2xs font-semibold text-ink-muted">
+                    {group.name}
+                    <span className="ml-2 font-normal text-ink-faint">基础属性 {group.base}</span>
+                  </h3>
+                  <table className="mt-1.5 w-full text-ui-2xs">
+                    <thead>
+                      <tr className="text-ink-faint">
+                        <th className="py-1 text-left font-normal">通告</th>
+                        <th className="py-1 text-center font-normal">自信</th>
+                        <th className="py-1 text-right font-normal">其他属性</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.rows.map((row) => (
+                        <tr key={row.name} className="border-t border-line">
+                          <td className="py-1 pr-4 text-ink">{row.name}</td>
+                          <td className="py-1 text-center text-ink-muted">
+                            {row.conf ? '自信' : '—'}
+                          </td>
+                          <td className="py-1 text-right text-ink-muted">
+                            {row.others.join('、') || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          </NoteCard>
+
+          <NoteCard
+            name="album"
+            tone="bg-tag-follow"
+            title="第一年个人/团体舞曲、另类数值要求"
+            hint="红字与「团体」徽章为团体通告；合并格表示同档专辑共享同一区间，动感与体能两列在原表共用一格。"
+            className="min-[1240px]:col-span-2"
+          >
+            <div className="mt-2.5 overflow-x-auto">
+              <table data-album-table className="w-full min-w-[720px] text-ui-2xs">
+                <thead>
+                  <tr>
+                    {['专辑', '类别', '难度', '特殊', '公司', '歌艺', '口才', '动感/体能', '自信'].map(
+                      (label, index) => (
+                        <th
+                          key={label}
+                          className={cn(
+                            'border border-line bg-surface-soft px-2 py-1.5 font-semibold text-ink-muted',
+                            index === 0 ? 'text-left' : 'text-center',
+                          )}
+                        >
+                          {label}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ALBUM_ROWS.map((row) => (
+                    <tr key={row.name}>
+                      <td
+                        className={cn(
+                          'border border-line px-2 py-1.5 text-left align-middle text-ink',
+                          row.group && 'font-semibold text-alert',
+                        )}
+                      >
+                        {row.name}
+                        {row.group && (
+                          <span className="ml-1.5 inline-flex items-center rounded-[3px] bg-alert-soft px-1 py-px align-middle text-[10px] font-semibold leading-[1.5] text-alert">
+                            团体
+                          </span>
+                        )}
+                      </td>
+                      <AlbumTd cell={row.cat} />
+                      <AlbumTd cell={row.diff} />
+                      <AlbumTd cell={row.special} />
+                      <AlbumTd cell={row.company} />
+                      <AlbumTd cell={row.sing} />
+                      <AlbumTd cell={row.mouth} />
+                      <AlbumTd cell={row.move} />
+                      <AlbumTd cell={row.conf} />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </NoteCard>
+
+          <NoteCard
             name="grades"
             tone="bg-tag-scene"
             title="类型能力要求"
@@ -336,6 +463,121 @@ export default function ReferenceView({ data }: Props) {
                 </div>
               ))}
             </div>
+          </NoteCard>
+
+          <NoteCard
+            name="penalty"
+            tone="bg-alert"
+            title="通告数值负面影响"
+            hint="接这些类型的通告会压低对应属性，规划艺人属性时尽量避开。"
+          >
+            <table className="mt-2.5 w-full max-w-[420px] text-ui-2xs">
+              <tbody>
+                {PENALTY_ROWS.map((row) => (
+                  <tr key={row.ability} className="border-t border-line first:border-0">
+                    <td className="w-[1%] whitespace-nowrap py-1.5 pr-4 font-semibold text-alert">
+                      {row.ability}↓
+                    </td>
+                    <td className="py-1.5 text-ink-muted">{row.types.join('、')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </NoteCard>
+
+          <NoteCard
+            name="schedule"
+            tone="bg-growth"
+            title="特殊日程的数值影响"
+            hint="宣传与旅游日程对属性的增减，↑ 表示提升；「其他」列出同步提升的能力。"
+          >
+            <div className="mt-2.5 flex flex-col gap-3">
+              {SCHEDULE_GROUPS.map((group) => (
+                <div key={group.name}>
+                  <h3 className="text-ui-2xs font-semibold text-ink-muted">{group.name}</h3>
+                  <table className="mt-1 w-full max-w-[460px] text-ui-2xs">
+                    <thead>
+                      <tr className="text-ink-faint">
+                        <th className="py-1 text-left font-normal">日程</th>
+                        <th className="py-1 text-center font-normal">自信</th>
+                        <th className="py-1 text-center font-normal">名气</th>
+                        <th className="py-1 text-right font-normal">其他</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.rows.map((row) => (
+                        <tr key={row.name} className="border-t border-line">
+                          <td className="py-1 pr-3 text-ink">{row.name}</td>
+                          <td className="py-1 text-center">
+                            {row.conf ? <span className="text-growth-strong">↑</span> : '—'}
+                          </td>
+                          <td className="py-1 text-center">
+                            {row.fame ? <span className="text-growth-strong">↑</span> : '—'}
+                          </td>
+                          <td className="py-1 text-right text-ink-muted">
+                            {row.others.join('、') || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          </NoteCard>
+
+          <NoteCard
+            name="leniency"
+            tone="bg-tag-talk"
+            title="通告放水情况一览"
+            hint="「放水」指制作人放宽接演门槛；是否放水取决于好感度等条件，按原表照录。"
+          >
+            <ul className="mt-2.5 flex flex-col">
+              {LENIENCY_ROWS.map((row) => (
+                <li
+                  key={row.who}
+                  className="flex gap-2 border-t border-line py-1.5 text-ui-2xs first:border-0"
+                >
+                  <span className="w-[44%] shrink-0 font-semibold text-ink">{row.who}</span>
+                  <span className="min-w-0 flex-1 text-ink-muted">{row.note}</span>
+                </li>
+              ))}
+            </ul>
+          </NoteCard>
+
+          <NoteCard
+            name="awards"
+            tone="bg-series"
+            title="颁奖典礼日程"
+            hint="四大奖的举办月份与三年日程，数字为 入围|颁奖（日）。"
+          >
+            <table className="mt-2.5 w-full max-w-[440px] text-ui-2xs">
+              <thead>
+                <tr className="text-ink-faint">
+                  <th className="py-1 text-left font-normal">奖项</th>
+                  <th className="py-1 text-left font-normal">月份</th>
+                  <th className="py-1 text-right font-normal">第一年</th>
+                  <th className="py-1 text-right font-normal">第二年</th>
+                  <th className="py-1 text-right font-normal">第三年</th>
+                </tr>
+              </thead>
+              <tbody>
+                {AWARD_ROWS.map((row) => (
+                  <tr key={row.name} className="border-t border-line">
+                    <td className="py-1 pr-3 font-semibold text-ink">{row.name}</td>
+                    <td className="py-1 pr-3 text-ink-muted">{row.month}</td>
+                    {row.dates.map((date, index) => (
+                      <td
+                        key={index}
+                        className="py-1 text-right tabular-nums text-ink-muted"
+                      >
+                        {date}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </NoteCard>
 
           <NoteCard
