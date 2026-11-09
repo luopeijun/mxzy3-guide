@@ -336,8 +336,10 @@ export default function TaskLineCard({
         <div className="flex shrink-0 items-center gap-2">
           {/* The bar is the first thing to go on a narrow card: with it the
               title gets squeezed to zero width and the card becomes unreadable.
-              The 1/5 readout stays, so no information is lost. */}
-          <div className="block h-2 w-[110px] overflow-hidden rounded-full bg-brand-soft tab:hidden min-[1280px]:w-[200px]">
+              The 1/5 readout stays, so no information is lost. It only grows on
+              genuinely wide cards — at 1280–1440 the extra 90px came straight
+              out of the line name and left 初始… instead of 初始剧情. */}
+          <div className="block h-2 w-[110px] overflow-hidden rounded-full bg-brand-soft tab:hidden min-[1600px]:w-[200px]">
             <div
               className={cn('h-full transition-all duration-300', pct === 100 ? 'bg-gold' : 'bg-brand')}
               style={{ width: `${pct}%` }}
