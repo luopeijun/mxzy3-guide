@@ -29,6 +29,13 @@ interface Props {
   isDragging?: boolean;
   onDragStart?: (event: DragEvent<HTMLSpanElement>) => void;
   onDragEnd?: () => void;
+  /** Nudge the line one slot up/down. HTML5 drag does not work in iOS Safari,
+   *  so narrow viewports get buttons instead of the ⠿ handle. */
+  onMove?: (delta: -1 | 1) => void;
+  moveUpDisabled?: boolean;
+  moveDownDisabled?: boolean;
+  /** Sorting is off while a search/filter shows a partial list. */
+  moveDisabled?: boolean;
 }
 
 /** 子事件编号（3-1 / 3-1-1）的层级 = `－`/`-` 的个数，用来做缩进，和攻略正文一致。 */
@@ -168,6 +175,10 @@ export default function TaskLineCard({
   isDragging = false,
   onDragStart,
   onDragEnd,
+  onMove,
+  moveUpDisabled = true,
+  moveDownDisabled = true,
+  moveDisabled = false,
 }: Props) {
   const { getLine, setLineStatus, setLineSteps } = useTracker();
   const state = getLine(line.id);
@@ -216,7 +227,7 @@ export default function TaskLineCard({
           title={dragDisabled ? '当前不可拖拽排序' : '按住拖动排序'}
           aria-label="拖拽排序"
           className={cn(
-            'shrink-0 select-none px-1 text-ui-sm leading-none text-ink-faint',
+            'shrink-0 select-none px-1 text-ui-sm leading-none text-ink-faint tab:hidden',
             dragDisabled
               ? 'cursor-not-allowed opacity-30'
               : 'cursor-grab hover:text-brand-strong active:cursor-grabbing',
@@ -275,7 +286,12 @@ export default function TaskLineCard({
             ▸
           </span>
           <LineOriginTag origin={line.origin} query={query} />
-          <span data-line-name className="min-w-0 truncate text-ui-sm font-semibold text-ink">
+          <span
+            data-line-name
+            // Two lines on a phone: the reorder buttons eat the width that
+            // used to fit 「女艺人的疑惑」 vs 「女艺人的请求」 apart.
+            className="min-w-0 truncate text-ui-sm font-semibold text-ink tab:line-clamp-2 tab:whitespace-normal"
+          >
             <MarkText text={line.name} query={query} />
           </span>
           {inCompletedPool && (
@@ -338,6 +354,42 @@ export default function TaskLineCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
+          {onMove && (
+            <span data-move-group className="hidden shrink-0 items-center gap-1 tab:flex">
+              {([-1, 1] as const).map((delta) => {
+                const disabled = moveDisabled || (delta === -1 ? moveUpDisabled : moveDownDisabled);
+                return (
+                  <button
+                    key={delta}
+                    type="button"
+                    data-move={delta === -1 ? 'up' : 'down'}
+                    disabled={disabled}
+                    onClick={() => onMove(delta)}
+                    aria-label={delta === -1 ? '上移一位' : '下移一位'}
+                    title={
+                      moveDisabled
+                        ? '筛选时不可排序'
+                        : disabled
+                          ? delta === -1
+                            ? '已经在最前面'
+                            : '已经在最后面'
+                          : delta === -1
+                            ? '上移一位'
+                            : '下移一位'
+                    }
+                    className={cn(
+                      'flex h-[22px] w-[22px] items-center justify-center rounded-ui-xs border text-ui-2xs leading-none transition-colors',
+                      disabled
+                        ? 'cursor-not-allowed border-line text-ink-faint opacity-40'
+                        : 'border-line text-ink-muted hover:border-brand-line hover:bg-brand-soft hover:text-brand-strong',
+                    )}
+                  >
+                    {delta === -1 ? '↑' : '↓'}
+                  </button>
+                );
+              })}
+            </span>
+          )}
           <button
             type="button"
             onClick={onTogglePin}

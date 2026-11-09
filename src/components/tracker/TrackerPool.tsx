@@ -141,6 +141,57 @@ export default function TrackerPool({ data }: Props) {
   );
 
   const pinnedVisible = ordered.filter((entry) => pinnedIds.includes(entry.line.id)).length;
+  // Whole visible list in render order (working + archived): both drag-and-drop
+  // and the narrow-viewport ↑↓ buttons move items inside it.
+  const globalIds = useMemo(
+    () =>
+      applyLineOrder(
+        [...ordered, ...orderedCompleted],
+        (entry) => entry.line.id,
+        lineOrder,
+        pinnedIds,
+      ).map((entry) => entry.line.id),
+    [ordered, orderedCompleted, lineOrder, pinnedIds],
+  );
+
+  /** Which directions are possible for each line. Pinned and ordinary lines
+   *  move inside their own block only — crossing the pin boundary would be
+   *  undone by the next render, so the button would look broken. */
+  const moveBounds = useMemo(() => {
+    const bounds = new Map<string, { up: boolean; down: boolean }>();
+    pinnedIds.forEach((id, index) =>
+      bounds.set(id, { up: index > 0, down: index < pinnedIds.length - 1 }),
+    );
+    const unpinned = globalIds.filter((id) => !pinnedIds.includes(id));
+    unpinned.forEach((id, index) =>
+      bounds.set(id, { up: index > 0, down: index < unpinned.length - 1 }),
+    );
+    return bounds;
+  }, [globalIds, pinnedIds]);
+
+  const moveLine = (id: string, delta: -1 | 1) => {
+    if (dragDisabled) return;
+    if (pinnedIds.includes(id)) {
+      const index = pinnedIds.indexOf(id);
+      const target = index + delta;
+      if (index < 0 || target < 0 || target >= pinnedIds.length) return;
+      const nextPinned = [...pinnedIds];
+      [nextPinned[index], nextPinned[target]] = [nextPinned[target], nextPinned[index]];
+      reorderLines(lineOrder, nextPinned);
+      return;
+    }
+    const ids = globalIds.filter((item) => !pinnedIds.includes(item));
+    const index = ids.indexOf(id);
+    const target = index + delta;
+    if (index < 0 || target < 0 || target >= ids.length) return;
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    // Ids the pool no longer renders (excluded lines) are kept at the tail so
+    // restoring one does not lose the position it was saved at.
+    const known = new Set([...pinnedIds, ...ids]);
+    const rest = lineOrder.filter((item) => !known.has(item));
+    reorderLines([...pinnedIds, ...ids, ...rest], pinnedIds);
+  };
+
   const foundLines = ordered.length + orderedCompleted.length;
   const matchedEvents =
     ordered.reduce((sum, entry) => sum + visibleStepCount(entry), 0) +
@@ -408,6 +459,10 @@ export default function TrackerPool({ data }: Props) {
                         isDragging={dragId === line.id}
                         onDragStart={handleDragStart(line.id)}
                         onDragEnd={clearDrag}
+                        onMove={(delta) => moveLine(line.id, delta)}
+                        moveUpDisabled={!moveBounds.get(line.id)?.up}
+                        moveDownDisabled={!moveBounds.get(line.id)?.down}
+                        moveDisabled={dragDisabled}
                       />
                     </li>
                   </Fragment>
