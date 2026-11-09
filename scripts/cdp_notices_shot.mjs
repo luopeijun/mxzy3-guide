@@ -82,18 +82,20 @@ async function main() {
     await sleep(400);
   }
 
-  if (view === 'reference') {
+  if (view === 'reference' || view === 'reference-tail') {
     await evaluate(`(() => {
       document.querySelector('[data-notice-view="reference"]')?.click();
       return true;
     })()`);
     await sleep(500);
-    await evaluate(`(() => {
-      const pane = document.querySelector('[data-notice-reference]');
-      if (pane) pane.scrollTop = pane.scrollHeight;
-      return true;
-    })()`);
-    await sleep(300);
+    if (view === 'reference-tail') {
+      await evaluate(`(() => {
+        const pane = document.querySelector('[data-notice-reference]');
+        if (pane) pane.scrollTop = pane.scrollHeight;
+        return true;
+      })()`);
+      await sleep(300);
+    }
   }
 
   const info = await evaluate(`(() => {
