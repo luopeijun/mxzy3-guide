@@ -9,9 +9,12 @@ import {
   type LineStatus,
   type TrackerData,
 } from './trackerData';
+import { normaliseStepRefs, type StepRefMap } from './trackerReanchor';
 
 export const ARCHIVE_FORMAT = 'stardom3-tracker-save';
-export const ARCHIVE_VERSION = 1;
+/** v2 adds the per-line step snapshot (`steps`) used to re-anchor progress
+ *  after the guide data is rebuilt. v1 files are still accepted verbatim. */
+export const ARCHIVE_VERSION = 2;
 
 export interface ArchiveSummary {
   artists: number;
@@ -26,6 +29,8 @@ export interface TrackerArchive {
   exportedAt: string;
   /** Human-readable size, so an import can be judged before applying it. */
   summary: ArchiveSummary;
+  /** Which event every saved index pointed at. Absent in v1 archives. */
+  steps?: StepRefMap;
   data: TrackerData;
 }
 
@@ -37,18 +42,29 @@ function summarise(data: TrackerData): ArchiveSummary {
   };
 }
 
-export function createArchive(data: TrackerData, now: Date = new Date()): TrackerArchive {
-  return {
+export function createArchive(
+  data: TrackerData,
+  refs?: StepRefMap,
+  now: Date = new Date(),
+): TrackerArchive {
+  const archive: TrackerArchive = {
     format: ARCHIVE_FORMAT,
     version: ARCHIVE_VERSION,
     exportedAt: now.toISOString(),
     summary: summarise(data),
     data,
   };
+  if (refs && Object.keys(refs).length > 0) archive.steps = refs;
+  return archive;
 }
 
-export function serialiseArchive(data: TrackerData, now?: Date, pretty = true): string {
-  return JSON.stringify(createArchive(data, now), null, pretty ? 2 : undefined);
+export function serialiseArchive(
+  data: TrackerData,
+  refs?: StepRefMap,
+  now?: Date,
+  pretty = true,
+): string {
+  return JSON.stringify(createArchive(data, refs, now), null, pretty ? 2 : undefined);
 }
 
 /** `MXZY3-进度-20261109-1420.json` — sorts chronologically in a folder. */
@@ -87,15 +103,18 @@ export function parseArchive(text: string): TrackerArchive {
     };
   }
   if (record.format !== ARCHIVE_FORMAT) throw new Error(BAD_INPUT);
-  if (record.version !== ARCHIVE_VERSION) {
+  // v1 had no step snapshot; its progress is taken at face value.
+  if (record.version !== 1 && record.version !== 2) {
     throw new Error(`不认识的存档版本（v${String(record.version)}），请更新页面后再试。`);
   }
   const data = sanitiseData(record.data);
+  const steps = normaliseStepRefs(record.steps);
   return {
     format: ARCHIVE_FORMAT,
     version: ARCHIVE_VERSION,
     exportedAt: typeof record.exportedAt === 'string' ? record.exportedAt : '',
     summary: summarise(data),
+    ...(steps ? { steps } : {}),
     data,
   };
 }

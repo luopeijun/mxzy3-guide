@@ -1,5 +1,13 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import type { GuideData } from '../../types/guide';
 import { useTracker } from '../../hooks/useTracker';
+import { extractLines } from '../../lib/tracker';
+import {
+  captureStepRefs,
+  describeReport,
+  reanchorProgress,
+  type ReanchorReport,
+} from '../../lib/trackerReanchor';
 import {
   archiveFileName,
   describeSummary,
@@ -10,6 +18,15 @@ import {
 } from '../../lib/trackerTransfer';
 
 type Notice = { tone: 'ok' | 'error'; text: string };
+
+/** An archive plus what re-anchoring it against the current guide data found. */
+interface PendingImport {
+  archive: TrackerArchive;
+  /** `null` when the archive predates step snapshots and cannot be checked. */
+  report: ReanchorReport | null;
+  /** Progress after indices were re-pointed at the right events. */
+  data: TrackerArchive['data'];
+}
 
 function downloadText(text: string, fileName: string) {
   const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
@@ -27,17 +44,22 @@ function downloadText(text: string, fileName: string) {
 /** Local progress lives in this browser only. This panel moves it between
  *  devices: export a JSON save, then import it elsewhere — either merged into
  *  what is already there, or replacing it outright. */
-export default function TrackerTransfer() {
+export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
   const { snapshot, importProgress, backup, undoBackup, dismissBackup } = useTracker();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [pending, setPending] = useState<TrackerArchive | null>(null);
+  const [pending, setPending] = useState<PendingImport | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [confirmReplace, setConfirmReplace] = useState(false);
 
+  // Every task line in the guide (not just the selected artists' pool): an
+  // imported save can legitimately mention artists this device has not picked.
+  const allLines = useMemo(() => extractLines(guide), [guide]);
+
   const applyArchive = (archive: TrackerArchive) => {
-    setPending(archive);
+    const { data, report } = reanchorProgress(archive.data, archive.steps, allLines);
+    setPending({ archive, data, report: archive.steps ? report : null });
     setNotice(null);
     setConfirmReplace(false);
     setPasteOpen(false);
@@ -54,13 +76,17 @@ export default function TrackerTransfer() {
 
   const handleExport = () => {
     const now = new Date();
-    downloadText(serialiseArchive(snapshot(), now), archiveFileName(now));
+    const save = snapshot();
+    downloadText(serialiseArchive(save, captureStepRefs(allLines, save), now), archiveFileName(now));
     setNotice({ tone: 'ok', text: '存档文件已下载，把它传到另一台设备后导入即可。' });
   };
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(serialiseArchive(snapshot(), new Date(), false));
+      const save = snapshot();
+      await navigator.clipboard.writeText(
+        serialiseArchive(save, captureStepRefs(allLines, save), new Date(), false),
+      );
       setNotice({ tone: 'ok', text: '存档内容已复制到剪贴板，可直接粘贴到另一台设备。' });
     } catch {
       setNotice({
@@ -86,13 +112,12 @@ export default function TrackerTransfer() {
       return;
     }
     importProgress(pending.data, mode);
-    setNotice({
-      tone: 'ok',
-      text:
-        mode === 'merge'
-          ? `已合并 ${pending.summary.lines} 条有记录的线，本机原有进度都保留着。`
-          : '已用存档覆盖本机进度。',
-    });
+    const base =
+      mode === 'merge'
+        ? `已合并 ${pending.archive.summary.lines} 条有记录的线，本机原有进度都保留着。`
+        : '已用存档覆盖本机进度。';
+    const extra = describeReport(pending.report);
+    setNotice({ tone: 'ok', text: extra ? `${base} ${extra}。` : base });
     setPending(null);
     setConfirmReplace(false);
     setPasteText('');
@@ -186,11 +211,30 @@ export default function TrackerTransfer() {
         >
           <p className="text-ui-2xs font-medium text-brand-strong">准备导入的存档</p>
           <p className="mt-1 text-ui-2xs text-ink-muted">
-            {pending.exportedAt
-              ? `${formatArchiveTime(pending.exportedAt)} 导出`
+            {pending.archive.exportedAt
+              ? `${formatArchiveTime(pending.archive.exportedAt)} 导出`
               : '存档未标注导出时间'}
           </p>
-          <p className="mt-0.5 text-ui-2xs text-ink-faint">{describeSummary(pending.summary)}</p>
+          <p className="mt-0.5 text-ui-2xs text-ink-faint">
+            {describeSummary(pending.archive.summary)}
+          </p>
+          {pending.report === null ? (
+            <p
+              data-transfer-legacy
+              className="mt-1.5 rounded-ui-xs bg-gold-soft px-2 py-1 text-ui-2xs leading-[1.6] text-gold"
+            >
+              这份存档来自旧版本，没有步骤指纹，无法校验位置。若攻略数据更新过，个别勾选可能错位。
+            </p>
+          ) : (
+            describeReport(pending.report) && (
+              <p
+                data-transfer-report
+                className="mt-1.5 rounded-ui-xs bg-gold-soft px-2 py-1 text-ui-2xs leading-[1.6] text-gold"
+              >
+                {describeReport(pending.report)}
+              </p>
+            )
+          )}
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               type="button"

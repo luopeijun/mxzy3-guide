@@ -276,9 +276,10 @@ async function main() {
     exportedAt: archive.exportedAt, summary: archive.summary,
   }));
   if (archive.format !== 'stardom3-tracker-save') fail('archive format marker is wrong');
-  if (archive.version !== 1) fail('archive version is wrong');
+  if (archive.version !== 2) fail('archive version is wrong: ' + archive.version);
   if (!archive.exportedAt || Number.isNaN(Date.parse(archive.exportedAt))) fail('archive has no export time');
   if (!archive.data?.lines?.[lineId]) fail('archive lost the ticked line');
+  if (!archive.steps?.[lineId]?.length) fail('archive has no step snapshot for the ticked line');
   if (archive.data.lines[lineId].done.length !== 2) {
     fail('archive done set is ' + JSON.stringify(archive.data.lines[lineId].done));
   }
