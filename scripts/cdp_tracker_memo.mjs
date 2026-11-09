@@ -52,9 +52,19 @@ const STATE = `(() => {
     strike: (getComputedStyle(row.querySelector('[data-memo-text]') || row).textDecorationLine || '').includes('line-through'),
   }));
   const box = panel.querySelector('[data-memo-input]');
+  // The memo belongs directly under the 分类批量操作 panel, in normal flow —
+  // not pushed to the bottom of the rail when that panel collapses.
+  const batch = root.querySelector('[data-batch-panel]');
+  const afterBatch = !!batch && panel.previousElementSibling === batch;
+  const gapFromBatch = batch
+    ? Math.round(panel.getBoundingClientRect().top - batch.getBoundingClientRect().bottom)
+    : null;
   return JSON.stringify({
     found: true,
     lastInRail: rail.lastElementChild === panel,
+    afterBatch,
+    gapFromBatch,
+    top: Math.round(panel.getBoundingClientRect().top),
     hint: panel.querySelector('[data-memo-hint]')?.textContent?.trim() ?? '',
     empty: !!panel.querySelector('[data-memo-empty]'),
     addDisabled: panel.querySelector('[data-memo-add]')?.disabled ?? null,
@@ -177,11 +187,40 @@ async function main() {
 
   // 1. Placement + empty state.
   const start = await visible();
-  console.log('START', JSON.stringify({ lastInRail: start.lastInRail, empty: start.empty, hint: start.hint, addDisabled: start.addDisabled }));
+  console.log(
+    'START',
+    JSON.stringify({
+      afterBatch: start.afterBatch,
+      gapFromBatch: start.gapFromBatch,
+      empty: start.empty,
+      hint: start.hint,
+      addDisabled: start.addDisabled,
+    }),
+  );
   if (!start.found) fail('memo panel is missing');
-  if (!start.lastInRail) fail('memo panel is not the last card in the left rail');
+  if (!start.afterBatch) fail('memo panel should sit directly under the 分类批量操作 panel');
+  if (start.gapFromBatch === null || Math.abs(start.gapFromBatch - 16) > 2) {
+    fail('memo should keep the normal 16px gap under the batch panel, got ' + start.gapFromBatch);
+  }
   if (!start.empty) fail('a fresh panel should show the empty hint');
   if (start.addDisabled !== true) fail('the ＋ button should be disabled while the box is empty');
+
+  // 1b. The panel starts collapsed; opening it must push the memo down and
+  // closing it must pull it back — it is part of the column flow, not pinned
+  // to the bottom of the rail.
+  await click('[data-batch-toggle]');
+  const expanded = await visible();
+  console.log('AFTER_BATCH_EXPAND', JSON.stringify({ gapFromBatch: expanded.gapFromBatch, top: expanded.top }));
+  if (Math.abs(expanded.gapFromBatch - 16) > 2) {
+    fail('memo drifted away from the batch panel when it expanded, gap = ' + expanded.gapFromBatch);
+  }
+  if (!(expanded.top > start.top)) fail('memo did not move down with the expanded batch panel');
+  await click('[data-batch-toggle]');
+  const collapsed = await visible();
+  console.log('AFTER_BATCH_COLLAPSE', JSON.stringify({ gapFromBatch: collapsed.gapFromBatch, top: collapsed.top }));
+  if (Math.abs(collapsed.top - start.top) > 2) {
+    fail('memo did not follow the batch panel back up, top = ' + collapsed.top + ' vs ' + start.top);
+  }
 
   // 2. Enter adds; the ＋ button adds too.
   await typeInto('[data-memo-input]', '周六前把方若绮好感刷到 60');

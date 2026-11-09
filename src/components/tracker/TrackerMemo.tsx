@@ -10,10 +10,11 @@ import {
   type MemoItem,
 } from '../../lib/memo';
 
-/** Free-form scratch list pinned to the bottom of the left rail. It is
- *  completely independent of the event pool: no link to a task line, no
- *  progress maths, and it survives 重置进度 / 覆盖导入 because it lives in its
- *  own storage key. Add with Enter, tick to finish, ✎ to edit, × to delete. */
+/** Free-form scratch list that sits directly under the 分类批量操作 panel in
+ *  the left rail. It is completely independent of the event pool: no link to a
+ *  task line, no progress maths, and it survives 重置进度 / save imports because
+ *  it lives in its own storage key. Add with Enter, tick to finish, ✎ to edit,
+ *  × to delete. */
 export default function TrackerMemo() {
   const [items, setItems] = useState<MemoItem[]>(readMemos);
   const [open, setOpen] = useState(true);
