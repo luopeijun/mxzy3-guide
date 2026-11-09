@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { GuideData } from '../../types/guide';
-import { buildPool, countDoneSteps, countedSteps, isLineComplete } from '../../lib/tracker';
+import { buildPool } from '../../lib/tracker';
+import { summarisePool } from '../../lib/trackerStats';
 import { useTracker } from '../../hooks/useTracker';
 
 interface Props {
@@ -11,48 +12,9 @@ interface Props {
  *  are in the pool, how many steps are done, and what was abandoned/excluded. */
 export default function TrackerOverview({ data }: Props) {
   const { selectedArtists, getLine, resetAll } = useTracker();
+  const [confirmReset, setConfirmReset] = useState(false);
   const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
-
-  const stats = useMemo(() => {
-    let totalSteps = 0;
-    let doneSteps = 0;
-    let skippedSteps = 0;
-    let abandoned = 0;
-    let excluded = 0;
-    let activeLines = 0;
-    let completedLines = 0;
-    for (const line of pool) {
-      const state = getLine(line.id);
-      const status = state?.status ?? 'active';
-      if (status === 'excluded') {
-        excluded += 1;
-        continue;
-      }
-      const done = state?.done ?? [];
-      const skipped = state?.skipped ?? [];
-      const complete = isLineComplete(line, done, skipped);
-      if (complete) completedLines += 1;
-      if (status === 'abandoned') abandoned += 1;
-      else if (!complete) activeLines += 1;
-      // 被放弃的步骤不计入分母，否则百分比永远到不了 100%。
-      const counted = countedSteps(line, skipped);
-      totalSteps += counted.length;
-      skippedSteps += line.steps.length - counted.length;
-      doneSteps += countDoneSteps(line, done, skipped);
-    }
-    const pct = totalSteps > 0 ? Math.round((doneSteps / totalSteps) * 100) : 0;
-    return {
-      totalLines: pool.length,
-      activeLines,
-      completedLines,
-      abandoned,
-      excluded,
-      totalSteps,
-      doneSteps,
-      skippedSteps,
-      pct,
-    };
-  }, [pool, getLine]);
+  const stats = useMemo(() => summarisePool(pool, getLine), [pool, getLine]);
 
   const rows: Array<[string, number, string]> = [
     ['进行中', stats.activeLines, 'text-brand-strong'],
@@ -64,18 +26,61 @@ export default function TrackerOverview({ data }: Props) {
     <section className="rounded-ui-md border border-line bg-surface p-5 shadow-soft">
       <div className="flex items-baseline justify-between">
         <h2 className="text-ui-sm font-bold text-brand-strong">进度概览</h2>
-        <button
-          type="button"
-          onClick={resetAll}
-          className="text-ui-2xs text-ink-faint transition-colors hover:text-brand-strong"
-        >
-          重置进度
-        </button>
+        {confirmReset ? (
+          <button
+            type="button"
+            onClick={() => setConfirmReset(false)}
+            className="text-ui-2xs text-ink-faint transition-colors hover:text-brand-strong"
+          >
+            取消
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-reset-request
+            onClick={() => setConfirmReset(true)}
+            className="text-ui-2xs text-ink-faint transition-colors hover:text-brand-strong"
+          >
+            重置进度
+          </button>
+        )}
       </div>
+
+      {confirmReset && (
+        <div
+          data-reset-confirm
+          className="mt-3 rounded-ui-sm border border-line-strong bg-surface-soft p-2.5"
+        >
+          <p className="text-ui-2xs leading-[1.7] text-ink-muted">
+            重置会清空全部勾选、放弃与排序记录。想留底的话，先在下方「进度存档」导出；重置后也可以在那里撤销这一次。
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              data-reset-confirm-button
+              onClick={() => {
+                resetAll();
+                setConfirmReset(false);
+              }}
+              className="flex-1 rounded-ui-sm border border-missing bg-missing-soft px-2.5 py-1.5 text-ui-2xs font-semibold text-missing transition-colors hover:border-missing"
+            >
+              确认重置
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmReset(false)}
+              className="flex-1 rounded-ui-sm border border-line px-2.5 py-1.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-3">
         <div className="flex items-baseline justify-between">
           <span className="text-ui-2xs text-ink-muted">步骤完成度</span>
-          <span className="text-ui-sm font-semibold text-brand-strong">{stats.pct}%</span>
+          <span className="text-ui-sm font-semibold text-brand-strong">{stats.pctLabel}%</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-brand-soft">
           <div

@@ -4,6 +4,7 @@ import type { GuideData } from '../../types/guide';
 import { buildPool, isLineComplete, type TaskLine } from '../../lib/tracker';
 import { matchLine, visibleStepCount, type LineMatch } from '../../lib/trackerSearch';
 import { applyLineOrder, moveId } from '../../lib/trackerOrder';
+import { summarisePool } from '../../lib/trackerStats';
 import {
   FILTER_LABEL,
   groupPhases,
@@ -57,6 +58,7 @@ export default function TrackerPool({ data }: Props) {
   // list. The 全部 view still uses the original split so its ordering, archive
   // and drag behaviour are byte-for-byte unchanged.
   const phases = useMemo(() => groupPhases(pool, getLine), [pool, getLine]);
+  const stats = useMemo(() => summarisePool(pool, getLine), [pool, getLine]);
   const { activeLines, completedLines } = useMemo(() => {
     const activeLines: TaskLine[] = [];
     const completedLines: TaskLine[] = [];
@@ -277,6 +279,26 @@ export default function TrackerPool({ data }: Props) {
             {filtering && ' · 筛选时不可拖拽，状态改变会自动离开当前筛选'}
             {searching && ' · 按 Esc 或「清空」退出'}
           </p>
+        )}
+        {/* On a phone the three columns stack, which puts the 进度概览 rail
+            thousands of pixels below the pool. This mirrors it into the sticky
+            bar — only where the clue would otherwise be unreachable, and only
+            while no search hint is occupying the row. */}
+        {!searching && !filtering && (
+          <div data-narrow-progress className="mt-1.5 hidden items-center gap-2 tab:flex">
+            <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-brand-soft">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-[width] duration-300',
+                  stats.pct === 100 ? 'bg-gold' : 'bg-brand',
+                )}
+                style={{ width: `${stats.pct}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-ui-2xs tabular-nums text-ink-faint">
+              总进度 {stats.pctLabel}% · {stats.doneSteps}/{stats.totalSteps} 步
+            </span>
+          </div>
         )}
       </div>
 

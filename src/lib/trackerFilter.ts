@@ -1,4 +1,4 @@
-import { isLineComplete, type TaskLine } from './tracker';
+import { isLineComplete, skippedIndices, type TaskLine } from './tracker';
 
 /** The five mutually exclusive states a task line can be in. Priority is
  *  excluded > completed > abandoned > inProgress > notStarted, which matches
@@ -30,7 +30,7 @@ export const FILTER_LABEL: Record<LineFilter, string> = {
 export const FILTER_HINT: Record<LineFilter, string> = {
   all: '全部任务线（进行中的事件池 + 底部已完成区）',
   inProgress: '已勾选部分子任务、还没做完的线',
-  notStarted: '一个子任务都没勾的线',
+  notStarted: '一个子任务都没勾、也没放弃步骤的线',
   completed: '未放弃的子任务全部勾选、已归档的线',
   abandoned: '主动点了「放弃」的线',
   excluded: '点了「移出池子」的线，可在这里直接恢复',
@@ -55,7 +55,10 @@ export function phaseOf(line: TaskLine, state?: PhaseState): LinePhase {
   if (state?.status === 'excluded') return 'excluded';
   if (isLineComplete(line, state?.done ?? [], state?.skipped ?? [])) return 'completed';
   if (state?.status === 'abandoned') return 'abandoned';
-  return hasProgress(line, state?.done ?? []) ? 'inProgress' : 'notStarted';
+  // Giving up on a step is still work done on the line: without this a line
+  // whose only record is a skipped step would hide under 未开始.
+  const skipped = skippedIndices(line, state?.skipped ?? []).size > 0;
+  return hasProgress(line, state?.done ?? []) || skipped ? 'inProgress' : 'notStarted';
 }
 
 /** Bucket every line once, preserving the incoming order inside each bucket. */

@@ -128,8 +128,10 @@ async function main() {
   };
   const reset = () => evaluate(`(() => { ${ROOT}.querySelector('main').scrollTop = 0; return 1; })()`);
 
-  // A wheel over any of the three columns must move the event pool.
-  for (const key of ['main', 'left', 'right']) {
+  // A wheel over a short column must move the event pool. The right rail is no
+  // longer short — it holds the 进度存档 panel and now scrolls itself — so it is
+  // checked separately below.
+  for (const key of ['main', 'left']) {
     await reset();
     const after = await wheelAt(points[key]);
     console.log(`WHEEL_${key.toUpperCase()}`, JSON.stringify(after));
@@ -143,6 +145,18 @@ async function main() {
       fs.writeFileSync(argOut, Buffer.from(shot.data, 'base64'));
       console.log('SHOT', argOut);
     }
+  }
+
+  // The right rail has its own scrollbar now: it must own the wheel, and the
+  // pool must stay exactly where it was.
+  await evaluate(`(() => { ${ROOT}.querySelectorAll('aside')[1].scrollTop = 0; return 1; })()`);
+  await sleep(250);
+  const beforeRight = JSON.parse(await evaluate(SCROLL));
+  const afterRight = await wheelAt(points.right);
+  console.log('WHEEL_RIGHT_OWN', JSON.stringify({ before: beforeRight.right, after: afterRight.right, main: afterRight.main }));
+  if (afterRight.right <= 20) throw new Error('scrollable right rail did not scroll itself');
+  if (afterRight.main !== beforeRight.main) {
+    throw new Error('wheel over the scrollable right rail also moved the event pool');
   }
 
   // Scrolling by wheel must keep the sticky search bar pinned to the
@@ -159,8 +173,9 @@ async function main() {
   console.log('WHEEL_HEADER', JSON.stringify(afterHeader));
   if (afterHeader.main <= 20) throw new Error('wheel over the global header did not scroll the pool');
 
-  // Upward wheels must scroll the pool back, not just downward ones.
-  const up = await wheelAt(points.right, -150);
+  // Upward wheels must scroll the pool back, not just downward ones. Probe the
+  // short left rail, since the right one now scrolls itself.
+  const up = await wheelAt(points.left, -150);
   console.log('WHEEL_UP', JSON.stringify(up));
   if (up.main >= afterHeader.main - 20) throw new Error('upward wheel did not scroll the pool back');
 

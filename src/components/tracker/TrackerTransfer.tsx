@@ -28,7 +28,7 @@ function downloadText(text: string, fileName: string) {
  *  devices: export a JSON save, then import it elsewhere — either merged into
  *  what is already there, or replacing it outright. */
 export default function TrackerTransfer() {
-  const { snapshot, importProgress } = useTracker();
+  const { snapshot, importProgress, backup, undoBackup, dismissBackup } = useTracker();
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<TrackerArchive | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -239,6 +239,36 @@ export default function TrackerTransfer() {
         >
           {notice.text}
         </p>
+      )}
+
+      {backup && (
+        <div
+          data-transfer-backup
+          className="mt-2 rounded-ui-sm border border-gold-line bg-gold-soft px-2.5 py-2"
+        >
+          <p className="text-ui-2xs leading-[1.6] text-gold">
+            已保留{backup.reason === 'replace' ? '覆盖' : '重置'}前的进度（
+            {formatArchiveTime(backup.at)}）
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <button
+              type="button"
+              data-transfer-undo
+              onClick={undoBackup}
+              className="rounded-ui-xs border border-gold-line bg-surface px-2 py-1 text-ui-2xs font-semibold text-gold transition-colors hover:border-gold"
+            >
+              撤销，恢复回去
+            </button>
+            <button
+              type="button"
+              data-transfer-dismiss-backup
+              onClick={dismissBackup}
+              className="text-ui-2xs text-gold/80 underline-offset-2 transition-colors hover:text-gold hover:underline"
+            >
+              不用了
+            </button>
+          </div>
+        </div>
       )}
     </section>
   );

@@ -248,7 +248,10 @@ export default function TaskLineCard({
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-label={`${open ? '收起' : '展开'}事件：${line.origin.title} · ${line.name}`}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          // A zero flex-basis lets the title shrink to nothing on a phone
+          // instead of wrapping the toolbar below it, which hid the event name
+          // completely. The floor forces the wrap.
+          className="flex min-w-[130px] flex-1 items-center gap-2 text-left"
         >
           <span
             className="shrink-0 text-ink-muted transition-transform duration-150"
@@ -300,7 +303,10 @@ export default function TaskLineCard({
         </button>
 
         <div className="flex shrink-0 items-center gap-2">
-          <div className="h-2 w-[110px] overflow-hidden rounded-full bg-brand-soft min-[1280px]:w-[200px]">
+          {/* The bar is the first thing to go on a narrow card: with it the
+              title gets squeezed to zero width and the card becomes unreadable.
+              The 1/5 readout stays, so no information is lost. */}
+          <div className="block h-2 w-[110px] overflow-hidden rounded-full bg-brand-soft tab:hidden min-[1280px]:w-[200px]">
             <div
               className={cn('h-full transition-all duration-300', pct === 100 ? 'bg-gold' : 'bg-brand')}
               style={{ width: `${pct}%` }}

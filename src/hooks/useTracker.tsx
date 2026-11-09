@@ -4,6 +4,7 @@ import {
   MAX_ARTISTS,
   emptyData,
   normaliseLines,
+  sanitiseData,
   type LineState,
   type LineStatus,
   type TrackerData,
@@ -14,6 +15,42 @@ export { MAX_ARTISTS };
 export type { LineState, LineStatus, TrackerData } from '../lib/trackerData';
 
 const STORAGE_KEY = 'guide.progress.v1';
+
+/** One-shot snapshot taken right before a destructive action (reset / overwrite
+ *  import), so an accidental wipe can be undone instead of re-typed. */
+const BACKUP_KEY = 'guide.progress.backup.v1';
+
+export interface ProgressBackup {
+  at: string;
+  reason: 'reset' | 'replace';
+  data: TrackerData;
+}
+
+function readBackup(): ProgressBackup | null {
+  try {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ProgressBackup>;
+    if (!parsed || (parsed.reason !== 'reset' && parsed.reason !== 'replace')) return null;
+    return {
+      at: typeof parsed.at === 'string' ? parsed.at : '',
+      reason: parsed.reason,
+      data: sanitiseData(parsed.data),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Is there anything worth preserving? An empty save has nothing to undo. */
+function hasContent(data: TrackerData): boolean {
+  return (
+    data.selectedArtists.length > 0 ||
+    data.order.length > 0 ||
+    data.pinned.length > 0 ||
+    Object.keys(data.lines).length > 0
+  );
+}
 
 function readStorage(): TrackerData {
   try {
@@ -57,6 +94,10 @@ interface TrackerContextValue {
   snapshot: () => TrackerData;
   /** Apply an imported save: merge into local progress, or replace it whole. */
   importProgress: (next: TrackerData, mode: 'merge' | 'replace') => void;
+  /** Snapshot kept from the last reset / overwrite, so it can be rolled back. */
+  backup: ProgressBackup | null;
+  undoBackup: () => void;
+  dismissBackup: () => void;
   resetAll: () => void;
 }
 
@@ -79,6 +120,9 @@ const TrackerContext = createContext<TrackerContextValue>({
   reorderLines: () => {},
   snapshot: emptyData,
   importProgress: () => {},
+  backup: null,
+  undoBackup: () => {},
+  dismissBackup: () => {},
   resetAll: () => {},
 });
 
@@ -106,6 +150,7 @@ function persistLine(
 
 export function TrackerProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<TrackerData>(readStorage);
+  const [backup, setBackup] = useState<ProgressBackup | null>(readBackup);
 
   useEffect(() => {
     try {
@@ -114,6 +159,17 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       // Private mode / quota: progress simply will not persist.
     }
   }, [data]);
+
+  // The backup outlives a reload: a user who wiped progress by mistake may well
+  // refresh the page before noticing.
+  useEffect(() => {
+    try {
+      if (backup) localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
+      else localStorage.removeItem(BACKUP_KEY);
+    } catch {
+      // Ignore: no backup is a degraded but working state.
+    }
+  }, [backup]);
 
   const setArtists = useCallback((ids: string[]) => {
     const trimmed = ids.slice(0, MAX_ARTISTS);
@@ -238,13 +294,36 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     setData((previous) => ({ ...previous, order, pinned }));
   }, []);
 
-  const resetAll = useCallback(() => setData(emptyData()), []);
+  const resetAll = useCallback(() => {
+    if (!hasContent(data)) {
+      setData(emptyData());
+      return;
+    }
+    setBackup({ at: new Date().toISOString(), reason: 'reset', data });
+    setData(emptyData());
+  }, [data]);
 
   const snapshot = useCallback(() => data, [data]);
 
-  const importProgress = useCallback((next: TrackerData, mode: 'merge' | 'replace') => {
-    setData((previous) => applyProgress(mode, previous, next));
-  }, []);
+  const importProgress = useCallback(
+    (next: TrackerData, mode: 'merge' | 'replace') => {
+      // Merging is additive and safe; replacing throws the local save away, so
+      // keep a one-shot snapshot to roll back to.
+      if (mode === 'replace' && hasContent(data)) {
+        setBackup({ at: new Date().toISOString(), reason: 'replace', data });
+      }
+      setData((previous) => applyProgress(mode, previous, next));
+    },
+    [data],
+  );
+
+  const undoBackup = useCallback(() => {
+    if (!backup) return;
+    setData(backup.data);
+    setBackup(null);
+  }, [backup]);
+
+  const dismissBackup = useCallback(() => setBackup(null), []);
 
   const value = useMemo<TrackerContextValue>(
     () => ({
@@ -266,6 +345,9 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       reorderLines,
       snapshot,
       importProgress,
+      backup,
+      undoBackup,
+      dismissBackup,
       resetAll,
     }),
     [
@@ -287,6 +369,9 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       reorderLines,
       snapshot,
       importProgress,
+      backup,
+      undoBackup,
+      dismissBackup,
       resetAll,
     ],
   );
