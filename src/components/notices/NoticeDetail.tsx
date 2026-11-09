@@ -28,8 +28,8 @@ function MetaRow({ label, value }: { label: string; value?: string }) {
   );
 }
 
-/** 一个角色：难度、能力要求区间、特殊要求、每日能力影响。角色表里的简介只在
- *  有内容时展开，避免详情面板被大段剧本占满。 */
+/** 一个角色：难度、能力要求（接演条件）、特殊要求（门槛与标签），以及拍摄期间
+ *  每天结算的能力影响。角色表里的简介只在有内容时展开，避免详情面板被大段剧本占满。 */
 function RoleBlock({
   data,
   notice,
@@ -41,10 +41,13 @@ function RoleBlock({
 }) {
   const stars = starsOf(role);
   const requirements = useMemo(() => requirementsFor(data, notice, role), [data, notice, role]);
-  const effects = specialNotes(data, role);
+  const notes = specialNotes(data, role);
   const thresholds = thresholdsFor(role);
   const gains = gainsFor(data, notice, role);
   const gainEntries = Object.entries(gains).filter(([, value]) => value !== 0);
+  // 只有带数值的特殊要求才进「每天影响」，没有数值的（目前只有「吻戏」）
+  // 只作为接演条件留在上面一行，不占每日增减的位置。
+  const dailyNotes = notes.filter((note) => note.deltas.length > 0);
 
   return (
     <li data-notice-role className="rounded-ui-md border border-line bg-surface p-3">
@@ -75,7 +78,7 @@ function RoleBlock({
         <p className="mt-2 text-ui-2xs text-ink-faint">这类通告在表里没有能力等级对照。</p>
       )}
 
-      {(thresholds.length > 0 || effects.length > 0) && (
+      {(thresholds.length > 0 || notes.length > 0) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5" data-notice-special>
           <span className="text-ui-2xs text-ink-faint">特殊要求</span>
           {thresholds.map((item) => (
@@ -88,38 +91,71 @@ function RoleBlock({
               {item.label} ≥ {item.value}
             </span>
           ))}
-          {effects.map((effect) => (
+          {notes.map((note) => (
             <span
-              key={effect.kind}
-              data-notice-chip="effect"
+              key={note.kind}
+              data-notice-chip="tag"
               className="rounded-ui-xs border border-line-strong bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-muted"
               title={
-                effect.text
-                  ? `特殊要求「${effect.kind}」每天的能力增减`
-                  : `特殊要求「${effect.kind}」，不增减亲和／叛逆／性感`
+                note.deltas.length
+                  ? `「${note.kind}」每天对${note.deltas.map((item) => item.label).join('、')}造成增减，见下方每天影响`
+                  : `「${note.kind}」，不增减亲和／叛逆／性感`
               }
             >
-              {effect.text ? `${effect.kind} · ${effect.text}` : effect.kind}
+              {note.kind}
             </span>
           ))}
         </div>
       )}
 
-      {gainEntries.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-ui-2xs text-ink-faint">每日影响</span>
-          {gainEntries.map(([ability, value]) => (
-            <span
-              key={ability}
-              className={cn(
-                'rounded-full px-1.5 py-px text-ui-2xs tabular-nums',
-                value > 0 ? 'bg-growth-soft text-growth-strong' : 'bg-missing-soft text-missing',
-              )}
-            >
-              {ability} {value > 0 ? '+' : ''}
-              {value}
-            </span>
-          ))}
+      {(gainEntries.length > 0 || dailyNotes.length > 0) && (
+        <div data-notice-daily className="mt-2 rounded-ui-sm bg-surface-soft px-2.5 py-2">
+          <div className="flex flex-wrap items-baseline gap-x-1.5">
+            <span className="text-ui-2xs font-semibold text-ink-muted">每天影响</span>
+            <span className="text-ui-2xs text-ink-faint">拍摄期间每天结算一次</span>
+          </div>
+          <div className="mt-1 flex flex-col gap-1">
+            {gainEntries.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {gainEntries.map(([ability, value]) => (
+                  <span
+                    key={ability}
+                    data-notice-chip="gain"
+                    className={cn(
+                      'rounded-full px-1.5 py-px text-ui-2xs tabular-nums',
+                      value > 0 ? 'bg-growth-soft text-growth-strong' : 'bg-missing-soft text-missing',
+                    )}
+                  >
+                    {ability} {value > 0 ? '+' : ''}
+                    {value}
+                  </span>
+                ))}
+              </div>
+            )}
+            {dailyNotes.map((note) => (
+              <div
+                key={note.kind}
+                data-notice-daily-special={note.kind}
+                className="flex flex-wrap items-center gap-1.5"
+              >
+                <span className="text-ui-2xs text-ink-faint">特殊要求「{note.kind}」</span>
+                {note.deltas.map((item) => (
+                  <span
+                    key={item.label}
+                    className={cn(
+                      'rounded-full px-1.5 py-px text-ui-2xs tabular-nums',
+                      item.value > 0
+                        ? 'bg-growth-soft text-growth-strong'
+                        : 'bg-missing-soft text-missing',
+                    )}
+                  >
+                    {item.label} {item.value > 0 ? '+' : ''}
+                    {item.value}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -138,7 +174,7 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
       <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
         <p className="text-ui-sm font-semibold text-ink-muted">选一条通告查看详情</p>
         <p className="text-ui-2xs leading-[1.8] text-ink-faint">
-          左侧列表点任意一张卡片，这里会列出它的角色、能力要求、特殊要求与每日影响。
+          左侧列表点任意一张卡片，这里会列出它的角色、能力要求、特殊要求与每天影响。
         </p>
       </div>
     );
@@ -214,7 +250,8 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
         </section>
 
         <p className="mt-4 text-ui-2xs leading-[1.8] text-ink-faint">
-          能力要求来自「难度对照表」：等级字母 × 星数换算成具体区间，S/L 会在区间内随机。
+          能力要求由「难度对照表」按 等级字母 × 星数 换算，S/L 会在区间内随机。
+          「每天影响」指拍摄期间每天结算一次：拍多少天就结算多少次；特殊要求自带的增减也按同样方式每天结算。
         </p>
       </div>
     </div>

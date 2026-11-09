@@ -60,10 +60,15 @@ export function requirementsFor(
   return rows;
 }
 
+export interface SpecialDelta {
+  label: string;
+  value: number;
+}
+
 export interface SpecialNote {
   kind: string;
-  /** 有数值时形如「亲和 +2，叛逆 -2 / 天」；表里没给数值的（例如「吻戏」）留空。 */
-  text: string;
+  /** 每天对亲和／叛逆／性感的增减；表里没给数值的（例如「吻戏」）为空数组。 */
+  deltas: SpecialDelta[];
 }
 
 const TONE_FIELDS: { key: 'affinity' | 'rebellion' | 'sexy'; label: string }[] = [
@@ -72,16 +77,15 @@ const TONE_FIELDS: { key: 'affinity' | 'rebellion' | 'sexy'; label: string }[] =
   { key: 'sexy', label: '性感' },
 ];
 
-/** 「搞笑」这类特殊要求每天对三项属性造成的增减。 */
+/** 「搞笑」这类特殊要求每天对三项属性造成的增减；和「能力影响」一样按天结算。 */
 export function specialNotes(data: NoticeData, role: NoticeRole): SpecialNote[] {
   return (role.specialKinds ?? []).map((kind) => {
     const effect = data.specialEffects.find((item) => item.kind === kind);
-    const parts = TONE_FIELDS.flatMap(({ key, label }) => {
+    const deltas = TONE_FIELDS.flatMap(({ key, label }) => {
       const value = effect?.[key];
-      if (value === undefined) return [];
-      return [`${label} ${value > 0 ? '+' : ''}${value}`];
+      return value === undefined ? [] : [{ label, value }];
     });
-    return { kind, text: parts.length ? `${parts.join('，')} / 天` : '' };
+    return { kind, deltas };
   });
 }
 
