@@ -61,7 +61,7 @@ function MetaCell({
         <span
           className={cn(
             isTag
-              ? 'inline-flex w-fit items-center rounded-md pl-0 pr-1.5 py-0.5 text-ui-xs font-bold'
+              ? 'inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-ui-xs font-bold'
               : 'min-w-0 truncate text-ui-xs font-bold',
             valueClass ?? 'text-ink',
           )}
