@@ -12,7 +12,7 @@ import {
 import { cn } from '../../lib/cn';
 import StarBadge from './StarBadge';
 import { CATEGORY_STYLE } from './categoryStyle';
-import { companyDot, timeDot, timeText } from './infoStyle';
+import { timeDot, timeText } from './infoStyle';
 import { specialStyle } from './specialStyle';
 
 interface Props {
@@ -282,7 +282,7 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
             dotClass={timeDot(notice.time)}
             diamond
           />
-          <MetaRow label="公司" value={notice.company} dotClass={companyDot(notice.company)} />
+          <MetaRow label="公司" value={notice.company} />
           <MetaRow label="制作人" value={notice.producer} />
         </div>
       </div>

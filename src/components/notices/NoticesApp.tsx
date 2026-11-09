@@ -1,14 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { NoticeData } from '../../types/notices';
 import { companiesOf, filterNotices, type NoticeFilter } from '../../lib/notices';
-import { cn } from '../../lib/cn';
 import NoticeCard from './NoticeCard';
 import NoticeDetail from './NoticeDetail';
 import NoticeFilterBar from './NoticeFilterBar';
 import NoticePager, { DEFAULT_PAGE_SIZE } from './NoticePager';
 import NoticeViewTabs from './NoticeViewTabs';
 import ReferenceView from './ReferenceView';
-import CompanyLegend from './CompanyLegend';
 
 const EMPTY_FILTER: NoticeFilter = {
   cat: 'all',
@@ -33,8 +31,6 @@ export default function NoticesApp({ data }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
-  /** 公司色标图例：默认收起，点标题行的开关才展开。 */
-  const [legendOpen, setLegendOpen] = useState(false);
   /** 当前页里最高那张卡的高度：其余卡片都撑到同一高度，网格才不会参差。 */
   const [cardHeight, setCardHeight] = useState(0);
   /** 窗口尺寸变了要重新量一遍高度（列宽变化会让简介换行数变化）。 */
@@ -138,24 +134,12 @@ export default function NoticesApp({ data }: Props) {
           </span>
           {view === 'list' && (
             <span className="ml-auto flex items-center gap-3 text-ui-2xs tabular-nums text-ink-faint">
-              <button
-                type="button"
-                data-notice-legend-toggle
-                aria-expanded={legendOpen}
-                onClick={() => setLegendOpen((value) => !value)}
-                className="inline-flex items-center gap-1 rounded-ui-xs border border-line px-1.5 py-0.5 font-semibold text-ink-muted transition hover:border-brand-line hover:text-brand-strong"
-              >
-                公司色标
-                <span className={cn('transition-transform', legendOpen && 'rotate-90')}>▸</span>
-              </button>
               <span data-notice-count>当前 {results.length} 条</span>
             </span>
           )}
         </div>
 
         <NoticeViewTabs view={view} onChange={setView} />
-
-        {view === 'list' && legendOpen && <CompanyLegend />}
 
         <div className="flex min-h-0 flex-1 gap-6">
           {/* 页签与这块面板连成一体：面板去掉上边框，靠选中页签的下移把页签行那条线盖掉。 */}
