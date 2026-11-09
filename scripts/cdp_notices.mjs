@@ -315,6 +315,39 @@ async function main() {
   if (kinds.length !== 7) fail('特殊要求影响应有 7 行，实际 ' + kinds.length);
   if (new Set(kinds.map((k) => k.cls)).size !== 7) fail('七种特殊要求的样式没有区分开');
   if (kinds.some((k) => !/bg-[a-z-]+-soft/.test(k.cls))) fail('特殊要求标签缺少底色');
+
+  // 7c. 本页小结：点条目把对应便签滚到顶部，高亮跟着走。
+  const railRaw = await evaluate(`(() => {
+    const root = ${SCOPE};
+    const rail = root.querySelector('[data-reference-rail]');
+    return JSON.stringify({
+      exists: !!rail,
+      items: [...root.querySelectorAll('[data-reference-rail-item]')].map((b) => b.getAttribute('data-reference-rail-item')),
+      active: rail?.querySelector('[aria-current="true"]')?.getAttribute('data-reference-rail-item') ?? null,
+    });
+  })()`);
+  console.log('RAIL', railRaw);
+  const rail = JSON.parse(railRaw);
+  if (!rail.exists) fail('本页小结没有渲染');
+  if (rail.items.length !== 5) fail('本页小结应有 5 条，实际 ' + rail.items.join('/'));
+  if (rail.active !== 'scale') fail('初始高亮应是难度换算，实际 ' + rail.active);
+
+  await click('[data-reference-rail-item="growth"]');
+  await sleep(900);
+  const railJumpRaw = await evaluate(`(() => {
+    const root = ${SCOPE};
+    const box = root.querySelector('[data-notice-reference]');
+    const card = box.querySelector('[data-reference-card="growth"]');
+    return JSON.stringify({
+      active: root.querySelector('[data-reference-rail-item][aria-current="true"]')?.getAttribute('data-reference-rail-item') ?? null,
+      top: Math.round(card.getBoundingClientRect().top - box.getBoundingClientRect().top),
+    });
+  })()`);
+  console.log('RAIL_JUMP', railJumpRaw);
+  const railJump = JSON.parse(railJumpRaw);
+  if (railJump.active !== 'growth') fail('点小结后高亮没有跟到成长率：' + railJump.active);
+  if (railJump.top < -4 || railJump.top > 48)
+    fail('点小结后成长率没有滚到顶部，top=' + railJump.top);
   await click('[data-notice-view="list"]');
   await sleep(400);
 
