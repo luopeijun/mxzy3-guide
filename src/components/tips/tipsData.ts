@@ -156,59 +156,6 @@ export const EVENT_TIPS: EventTip[] = [
   },
 ];
 
-export interface ArtistTitle {
-  name: string;
-  /** 属性门槛；未要求的属性不写。 */
-  attrs: Partial<Record<'演技' | '歌艺' | '口才' | '仪态', number>>;
-  award: string;
-  /** 通告总数；空表示该称号无总数要求。 */
-  notices: string;
-  noticeReq: string;
-  extra?: string;
-}
-export const ARTIST_TITLES: ArtistTitle[] = [
-  {
-    name: '戏剧天王',
-    attrs: { 演技: 700, 仪态: 500 },
-    award: '金钟奖最佳演员或金像奖最佳主角1次',
-    notices: '通告10',
-    noticeReq: '电影7 或 视5影5',
-  },
-  {
-    name: '歌神',
-    attrs: { 歌艺: 700, 仪态: 500 },
-    award: '最佳演唱人1次',
-    notices: '通告10',
-    noticeReq: '唱片5',
-    extra: '演唱会2',
-  },
-  {
-    name: '综艺天王',
-    attrs: { 口才: 700, 仪态: 500 },
-    award: '最佳主持人1次',
-    notices: '通告10',
-    noticeReq: '主持7',
-  },
-  {
-    name: '国际名模',
-    attrs: { 仪态: 700 },
-    award: '最佳模特儿1次',
-    notices: '',
-    noticeReq: '广告15',
-  },
-  {
-    name: '天王巨星',
-    attrs: { 演技: 600, 歌艺: 600, 仪态: 500 },
-    award: '前述主要奖项任意2个可重复',
-    notices: '通告20',
-    noticeReq: '影/唱 4/7 或 7/4',
-    extra: '演唱会2',
-  },
-];
-export const TITLE_ATTRS = ['演技', '歌艺', '口才', '仪态'] as const;
-export const TITLE_COMMON = '自信、名气700，人气5';
-export const TITLE_NOTE = '除《银河》外，其他国际通告均不参与国内各主要奖项评选。';
-
 export interface GroupEnding {
   name: string;
   award: boolean;

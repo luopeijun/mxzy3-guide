@@ -3,7 +3,6 @@ import NoteCard from '../NoteCard';
 import NotePage, { type NoteSection } from '../NotePage';
 import { AWARD_ROWS } from '../notices/referenceTables';
 import {
-  ARTIST_TITLES,
   BEAUTY_NOTE,
   BEAUTY_ROWS,
   CERT_ROWS,
@@ -16,11 +15,7 @@ import {
   PR_NOTE,
   PRODUCER_GROUPS,
   PROP_ROWS,
-  TITLE_ATTRS,
-  TITLE_COMMON,
-  TITLE_NOTE,
   TRAINING_ROWS,
-  type ArtistTitle,
 } from './tipsData';
 
 /** 右侧「本页小结」的顺序即页面顺序。 */
@@ -31,7 +26,6 @@ const SECTIONS: NoteSection[] = [
   { key: 'props', label: '鱼缸与公关' },
   { key: 'beauty', label: '美丽之星' },
   { key: 'awards', label: '颁奖典礼日程' },
-  { key: 'titles', label: '艺人称号' },
   { key: 'easyshop', label: 'EasyShop代言' },
   { key: 'events', label: '关键事件提示' },
   { key: 'group', label: '团体结局' },
@@ -281,76 +275,6 @@ export default function TipsView() {
               ))}
             </tbody>
           </table>
-        </NoteCard>
-
-        <NoteCard
-          name="titles"
-          tone="bg-tag-scene"
-          title="艺人称号"
-          hint="五项称号的属性、得奖与通告要求需同时满足；共同条件见金底一行。"
-          className="min-[1240px]:col-span-2"
-        >
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[620px] text-ui-2xs">
-              <thead>
-                <tr className="text-ink-faint">
-                  <th className="py-1 pr-3 text-left font-normal">称号条件</th>
-                  {ARTIST_TITLES.map((title) => (
-                    <th key={title.name} className="px-2 py-1 text-left font-semibold text-ink">
-                      {title.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {TITLE_ATTRS.map((attr) => (
-                  <tr key={attr} className="border-t border-line">
-                    <td className="py-1 pr-3 text-ink-muted">{attr}</td>
-                    {ARTIST_TITLES.map((title) => (
-                      <td key={title.name} className="px-2 py-1 tabular-nums text-ink">
-                        {title.attrs[attr] ?? '—'}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                <tr className="border-t border-line">
-                  <td className="py-1 pr-3 align-middle text-ink-muted">共同</td>
-                  <td colSpan={ARTIST_TITLES.length} className="px-2 py-1.5">
-                    <span className="inline-flex items-center rounded-ui-xs bg-gold-soft px-1.5 py-0.5 font-semibold text-gold">
-                      {TITLE_COMMON}
-                    </span>
-                  </td>
-                </tr>
-                {(
-                  [
-                    { label: '得奖要求', get: (title: ArtistTitle) => title.award },
-                    { label: '通告总数', get: (title: ArtistTitle) => title.notices },
-                    { label: '通告要求', get: (title: ArtistTitle) => title.noticeReq },
-                    { label: '其他', get: (title: ArtistTitle) => title.extra ?? '' },
-                  ] as const
-                ).map((row) => (
-                  <tr key={row.label} className="border-t border-line">
-                    <td className="py-1 pr-3 align-top text-ink-muted">{row.label}</td>
-                    {ARTIST_TITLES.map((title) => {
-                      const value = row.get(title);
-                      return (
-                        <td
-                          key={title.name}
-                          className={cn(
-                            'px-2 py-1 leading-[1.6]',
-                            value ? 'text-ink-muted' : 'text-ink-faint',
-                          )}
-                        >
-                          {value || '—'}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-2 text-ui-2xs leading-[1.7] text-ink-faint">{TITLE_NOTE}</p>
         </NoteCard>
 
         <NoteCard
