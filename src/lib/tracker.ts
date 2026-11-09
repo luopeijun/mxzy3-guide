@@ -14,12 +14,28 @@ export interface TaskStep {
 
 export type LineKind = 'artist' | 'luousang' | 'non-artist';
 
+/** Where a task line comes from, shown as a chip in front of its name. Artist
+ *  lines name the artist (and carry their portrait); the rest name the guide
+ *  category, so the flat pool still tells you what kind of event you are
+ *  looking at. */
+export type OriginTone = 'artist' | 'broker' | 'notice' | 'luousang' | 'other';
+
+export interface LineOrigin {
+  /** Short chip text. */
+  label: string;
+  /** Full provenance for the tooltip / screen readers: `类别 · 页面标题`. */
+  title: string;
+  tone: OriginTone;
+  avatar?: string;
+}
+
 export interface TaskLine {
   /** Stable id: `节点id::线序号::名称`. */
   id: string;
   nodeId: string;
   name: string;
   kind: LineKind;
+  origin: LineOrigin;
   steps: TaskStep[];
 }
 
@@ -35,6 +51,38 @@ function kindOf(nodeId: string): LineKind {
   if (nodeId.startsWith('characters/')) return 'artist';
   if (nodeId.startsWith('other-events/luousang/')) return 'luousang';
   return 'non-artist';
+}
+
+interface CategoryMeta {
+  label: string;
+  full: string;
+  tone: OriginTone;
+}
+
+const CATEGORY_META: Record<string, CategoryMeta> = {
+  'game-guide': { label: '经纪人', full: '经纪人事件簿', tone: 'broker' },
+  characters: { label: '艺人', full: '艺人事件簿', tone: 'artist' },
+  notices: { label: '通告', full: '六大特殊通告', tone: 'notice' },
+  'other-events': { label: '其他', full: '其他事件', tone: 'other' },
+};
+
+/** Derive the chip from the owning node + its top-level category. Artist pages
+ *  are leaves named after the artist, so their title (and portrait) is exactly
+ *  the "哪个艺人" answer the chip needs. */
+function originOf(node: GuideNode, categoryId: string): LineOrigin {
+  if (node.id.startsWith('characters/')) {
+    return {
+      label: node.title,
+      title: `艺人事件簿 · ${node.title}`,
+      tone: 'artist',
+      avatar: node.avatar,
+    };
+  }
+  if (node.id.startsWith('other-events/luousang/')) {
+    return { label: '路欧桑', title: `路欧桑剧情 · ${node.title}`, tone: 'luousang' };
+  }
+  const meta = CATEGORY_META[categoryId] ?? CATEGORY_META['other-events'];
+  return { label: meta.label, title: `${meta.full} · ${node.title}`, tone: meta.tone };
 }
 
 /** Event blocks of a node, tagged with their original array index. */
@@ -64,6 +112,7 @@ function makeLine(
   seq: number,
   name: string,
   events: { block: ContentBlock; index: number }[],
+  origin: LineOrigin,
 ): TaskLine {
   const steps: TaskStep[] = events.map(({ block, index }) => ({
     index,
@@ -77,12 +126,13 @@ function makeLine(
     nodeId: node.id,
     name,
     kind: kindOf(node.id),
+    origin,
     steps,
   };
 }
 
 /** One node → zero or more task lines. A node with no events yields nothing. */
-function linesFromNode(node: GuideNode): TaskLine[] {
+function linesFromNode(node: GuideNode, origin: LineOrigin): TaskLine[] {
   if (node.status === 'missing') return [];
   const events = eventEntries(node);
   if (events.length === 0) return [];
@@ -90,7 +140,7 @@ function linesFromNode(node: GuideNode): TaskLine[] {
   const boundaries = boundaryIndices(node);
   // No usable heading → the whole page is one task line.
   if (boundaries.length === 0) {
-    return [makeLine(node, 0, node.title, events)];
+    return [makeLine(node, 0, node.title, events, origin)];
   }
 
   const lines: TaskLine[] = [];
@@ -100,7 +150,7 @@ function linesFromNode(node: GuideNode): TaskLine[] {
   // consumed as the page title, so without this they would be silently dropped.
   const preEvents = events.filter((e) => e.index < boundaries[0]);
   if (preEvents.length > 0) {
-    lines.push(makeLine(node, seq, node.title, preEvents));
+    lines.push(makeLine(node, seq, node.title, preEvents, origin));
     seq += 1;
   }
   for (let b = 0; b < boundaries.length; b += 1) {
@@ -108,7 +158,7 @@ function linesFromNode(node: GuideNode): TaskLine[] {
     const end = b + 1 < boundaries.length ? boundaries[b + 1] : node.blocks.length;
     const rangeEvents = events.filter((e) => e.index >= start && e.index < end);
     if (rangeEvents.length === 0) continue; // container heading with no events
-    lines.push(makeLine(node, seq, headingText(node.blocks[start]), rangeEvents));
+    lines.push(makeLine(node, seq, headingText(node.blocks[start]), rangeEvents, origin));
     seq += 1;
   }
   return lines;
@@ -117,11 +167,13 @@ function linesFromNode(node: GuideNode): TaskLine[] {
 /** Every task line across the whole guide, before artist / 路欧桑 filtering. */
 export function extractLines(data: GuideData): TaskLine[] {
   const result: TaskLine[] = [];
-  const walk = (node: GuideNode) => {
-    result.push(...linesFromNode(node));
-    node.children.forEach(walk);
-  };
-  data.categories.forEach(walk);
+  for (const category of data.categories) {
+    const walk = (node: GuideNode) => {
+      result.push(...linesFromNode(node, originOf(node, category.id)));
+      node.children.forEach(walk);
+    };
+    walk(category);
+  }
   return result;
 }
 

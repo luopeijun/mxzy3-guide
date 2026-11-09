@@ -5,6 +5,7 @@ import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
 import TypeTag from '../TypeTag';
 import MarkText from './MarkText';
+import LineOriginTag from './LineOriginTag';
 
 interface Props {
   line: TaskLine;
@@ -178,7 +179,7 @@ export default function TaskLineCard({
           type="button"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
-          aria-label={`${open ? '收起' : '展开'}事件：${line.name}`}
+          aria-label={`${open ? '收起' : '展开'}事件：${line.origin.title} · ${line.name}`}
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
           <span
@@ -187,7 +188,8 @@ export default function TaskLineCard({
           >
             ▸
           </span>
-          <span className="min-w-0 truncate text-ui-sm font-semibold text-ink">
+          <LineOriginTag origin={line.origin} />
+          <span data-line-name className="min-w-0 truncate text-ui-sm font-semibold text-ink">
             <MarkText text={line.name} query={query} />
           </span>
           {inCompletedPool && (
