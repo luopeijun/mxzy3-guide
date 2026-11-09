@@ -303,12 +303,11 @@ export default function TipsView() {
           name="events"
           tone="bg-alert"
           title="关键事件提示"
-          hint="几个能赚大钱或拿五星奖励的事件，附触发与完成要点。"
           className="min-[1240px]:col-span-2"
         >
           <div className="mt-3 grid gap-x-10 gap-y-4 min-[900px]:grid-cols-2">
             {EVENT_TIPS.map((event) => (
-              <div key={event.title} className="border-t border-line pt-3 first:border-0 min-[900px]:first:border-0">
+              <div key={event.title} className="border-t border-line pt-3 first:border-0 min-[900px]:[&:nth-child(2)]:border-0 min-[900px]:[&:nth-child(2)]:pt-0">
                 <h3 className="flex flex-wrap items-center gap-2 text-ui-2xs font-semibold text-ink-muted">
                   {event.title}
                   {event.tag && (
