@@ -1,5 +1,4 @@
-import type { GuideNode, GuideSummary } from '../types/guide';
-import { formatCount } from '../lib/guide';
+import type { GuideNode } from '../types/guide';
 import { cn } from '../lib/cn';
 import { HIGHLIGHT_ENABLED } from '../hooks/useHighlightPref';
 import HighlightSwitch from './HighlightSwitch';
@@ -8,7 +7,6 @@ import ViewTabs, { type ViewMode } from './ViewTabs';
 interface Props {
   categories: GuideNode[];
   activeCategoryId: string;
-  summary: GuideSummary;
   mode: ViewMode;
   onViewGuide: () => void;
   onViewTracker: () => void;
@@ -18,7 +16,7 @@ interface Props {
 }
 
 export default function BrandHeader({
-  categories, activeCategoryId, summary, mode, onViewGuide, onViewTracker, onViewNotices,
+  categories, activeCategoryId, mode, onViewGuide, onViewTracker, onViewNotices,
   onSelect, onMenuClick,
 }: Props) {
   return (
@@ -73,12 +71,6 @@ export default function BrandHeader({
           )}
 
           {HIGHLIGHT_ENABLED && <HighlightSwitch />}
-
-          {mode === 'guide' && (
-            <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
-              {summary.items} 条目 · {formatCount(summary.chars)} 字
-            </div>
-          )}
         </div>
       </div>
     </header>

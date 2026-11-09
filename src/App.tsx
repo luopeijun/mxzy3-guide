@@ -96,7 +96,6 @@ function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotice
         <BrandHeader
           categories={data.categories}
           activeCategoryId={activeCategoryId}
-          summary={summary}
           mode={mode}
           onViewGuide={onViewGuide}
           onViewTracker={onViewTracker}
