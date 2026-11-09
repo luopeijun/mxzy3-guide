@@ -24,6 +24,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const SNAPSHOT = `(() => {
   const root = ${ROOT};
   const chips = root.querySelector('[data-batch-chips]');
+  if (!chips) return null;
   const box = chips.getBoundingClientRect();
   const items = [...chips.querySelectorAll('[data-chip-key]')].map((b) => {
     const r = b.getBoundingClientRect();
@@ -77,7 +78,6 @@ async function main() {
       if (ex) throw new Error('CDP exception: ' + (ex.exception?.description || ex.text));
       return r.result?.value;
     });
-  const snap = () => evaluate(SNAPSHOT).then(JSON.parse);
   // Chips only exist while the batch panel is expanded (it is collapsed by
   // default). Re-open after every reload so chip geometry stays comparable.
   const expand = () => evaluate(`(() => {
@@ -85,6 +85,18 @@ async function main() {
     if (t && t.getAttribute('aria-expanded') === 'false') t.click();
     return 1;
   })()`);
+  // A hot reload (or a slow mount) can reset the panel to collapsed mid-run;
+  // re-expand and retry instead of failing the whole regression chain.
+  const snap = async () => {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const raw = await evaluate(SNAPSHOT);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed) return parsed;
+      await expand();
+      await sleep(350);
+    }
+    throw new Error('category chips never appeared (batch panel collapsed?)');
+  };
   const setState = (artists) => evaluate(
     `localStorage.setItem('guide.progress.v1', ${JSON.stringify(JSON.stringify({
       version: 1, selectedArtists: artists, lines: {}, order: [], pinned: [],
@@ -112,8 +124,9 @@ async function main() {
     const baseline = geometry(first);
 
     for (const key of ['broker', 'other', 'artist', 'luousang', 'all']) {
-      await evaluate(`(() => { ${ROOT}.querySelector('[data-chip-key="${key}"]').click(); return 1; })()`);
-      await sleep(180);
+      await expand();
+      await evaluate(`(() => { const c = ${ROOT}.querySelector('[data-chip-key="${key}"]'); if (c) c.click(); return 1; })()`);
+      await sleep(250);
       const current = await snap();
       console.log(round.name + '_' + key.toUpperCase(), JSON.stringify(current));
       if (geometry(current) !== baseline) {

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import type { GuideData } from '../../types/guide';
 import { buildPool, isLineComplete, type TaskLine } from '../../lib/tracker';
@@ -33,6 +33,8 @@ export default function TrackerPool({ data }: Props) {
   const { selectedArtists, getLine, lineOrder, pinnedIds, togglePin, reorderLines } = useTracker();
   const [query, setQuery] = useState('');
   const [completedOpen, setCompletedOpen] = useState(false);
+  const [jumpRequested, setJumpRequested] = useState(false);
+  const completedRef = useRef<HTMLDivElement>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<DropHint | null>(null);
   const needle = query.trim().toLowerCase();
@@ -77,6 +79,21 @@ export default function TrackerPool({ data }: Props) {
   useEffect(() => {
     setCompletedOpen(searching);
   }, [searching]);
+
+  // A jump has to expand the archive *before* measuring: otherwise the smooth
+  // scroll lands where the collapsed row used to be. Wait for the render that
+  // has the expanded body, then scroll to it.
+  useEffect(() => {
+    if (!jumpRequested || !completedOpen) return;
+    completedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setJumpRequested(false);
+  }, [jumpRequested, completedOpen]);
+
+  const jumpToCompleted = () => {
+    if (orderedCompleted.length === 0) return;
+    setCompletedOpen(true);
+    setJumpRequested(true);
+  };
 
   const handleDragStart = (id: string) => (event: DragEvent<HTMLSpanElement>) => {
     if (searching) {
@@ -147,40 +164,63 @@ export default function TrackerPool({ data }: Props) {
           under the shared header, and the higher z-index keeps drag hints /
           event rows from painting over the fixed search bar. */}
       <div className="sticky top-0 z-20 bg-canvas pt-2 pb-3">
-        <div className="flex items-center gap-2 rounded-ui-md border border-line bg-surface px-3 py-2 shadow-soft transition-colors focus-within:border-brand-line">
-          <svg
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            aria-hidden="true"
-            className="h-4 w-4 shrink-0 text-ink-faint"
-          >
-            <circle cx="7" cy="7" r="4.5" />
-            <path d="M10.5 10.5 14 14" strokeLinecap="round" />
-          </svg>
-          <input
-            type="text"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') setQuery('');
-            }}
-            placeholder="搜索任务线、事件编号、类型或正文"
-            aria-label="搜索事件池"
-            autoComplete="off"
-            spellCheck={false}
-            className="min-w-0 flex-1 bg-transparent text-ui-sm text-ink outline-none placeholder:text-ink-faint"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              className="shrink-0 rounded-full px-2 py-0.5 text-ui-2xs text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+        <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-ui-md border border-line bg-surface px-3 py-2 shadow-soft transition-colors focus-within:border-brand-line">
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-ink-faint"
             >
-              清空
-            </button>
-          )}
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="M10.5 10.5 14 14" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setQuery('');
+              }}
+              placeholder="搜索任务线、事件编号、类型或正文"
+              aria-label="搜索事件池"
+              autoComplete="off"
+              spellCheck={false}
+              className="min-w-0 flex-1 bg-transparent text-ui-sm text-ink outline-none placeholder:text-ink-faint"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="shrink-0 rounded-full px-2 py-0.5 text-ui-2xs text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+              >
+                清空
+              </button>
+            )}
+          </div>
+          {/* Always rendered (disabled when empty) so the sticky bar never
+              reflows as lines get completed — one click expands + scrolls. */}
+          <button
+            type="button"
+            data-jump-completed
+            onClick={jumpToCompleted}
+            disabled={orderedCompleted.length === 0}
+            title={
+              orderedCompleted.length === 0
+                ? '还没有已完成的任务线'
+                : '展开并跳转到事件池底部的已完成区'
+            }
+            className={cn(
+              'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-ui-md border px-3 py-2 text-ui-2xs font-semibold transition-colors',
+              orderedCompleted.length === 0
+                ? 'cursor-not-allowed border-line bg-surface-soft text-ink-faint'
+                : 'border-gold-line bg-gold-soft text-gold hover:border-gold',
+            )}
+          >
+            已完成 {orderedCompleted.length} <span aria-hidden="true">↓</span>
+          </button>
         </div>
         {searching && (
           <p className="mt-1.5 text-ui-2xs text-ink-faint">
@@ -248,10 +288,12 @@ export default function TrackerPool({ data }: Props) {
             </p>
           )}
 
+          {/* scroll-mt keeps the archive below the sticky search bar. */}
           {orderedCompleted.length > 0 && (
             <div
               data-completed-pool
-              className="mt-5 overflow-hidden rounded-ui-md border border-gold-line bg-surface-soft"
+              ref={completedRef}
+              className="mt-5 scroll-mt-28 overflow-hidden rounded-ui-md border border-gold-line bg-surface-soft"
             >
               <button
                 type="button"
@@ -292,6 +334,12 @@ export default function TrackerPool({ data }: Props) {
                 </ul>
               )}
             </div>
+          )}
+          {/* Tail space only when an archive exists: without scrollable room
+              below it, scrollIntoView hits the bottom and leaves the archive
+              half off-screen. 45vh is enough to park it under the sticky bar. */}
+          {orderedCompleted.length > 0 && (
+            <div data-completed-tail aria-hidden="true" className="h-[45vh]" />
           )}
         </>
       )}
