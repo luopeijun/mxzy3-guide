@@ -2,8 +2,9 @@ import http from 'node:http';
 import fs from 'node:fs';
 
 /* Screenshot the event pool with source chips + artist portraits visible.
-   Usage: node cdp_tracker_origin_shot.mjs <out.png> [url] */
-const [, , out, argUrl] = process.argv;
+   An optional query shows the search state (chip highlight + whole-line hits).
+   Usage: node cdp_tracker_origin_shot.mjs <out.png> [url] [query] */
+const [, , out, argUrl, argQuery = ''] = process.argv;
 const url = argUrl || 'http://localhost:5173/#/tracker';
 const SCOPE = `document.querySelector('[data-tracker-app]') || document`;
 
@@ -58,6 +59,17 @@ async function main() {
   await send('Page.reload');
   await sleep(3800);
 
+  if (argQuery) {
+    await evaluate(`(() => {
+      const i = document.querySelector('input[aria-label="搜索事件池"]');
+      const s = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      s.call(i, ${JSON.stringify(argQuery)});
+      i.dispatchEvent(new Event('input', { bubbles: true }));
+      return 1;
+    })()`);
+    await sleep(600);
+  }
+
   // Show the first artist line (and one ordinary line) opened, then scroll to
   // where the artist chips sit in the flat list.
   await evaluate(`(() => {
@@ -66,7 +78,7 @@ async function main() {
     const idx = cards.findIndex(c => c.querySelector('[data-origin-tone="artist"]'));
     if (idx >= 0) cards[idx].querySelector('button[aria-expanded]').click();
     const m = root.querySelector('main');
-    m.scrollTop = Math.max(0, (idx - 1) * 76);
+    m.scrollTop = ${argQuery ? '0' : 'Math.max(0, (idx - 1) * 76)'};
     return idx;
   })()`);
   await sleep(600);

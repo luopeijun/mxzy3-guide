@@ -14,17 +14,24 @@ const TONE_CLASS: Record<LineOrigin['tone'], string> = {
 
 interface Props {
   origin: LineOrigin;
+  /** Highlight the chip when the search hits its label (e.g. an artist name). */
+  query?: string;
 }
 
-export default function LineOriginTag({ origin }: Props) {
+export default function LineOriginTag({ origin, query = '' }: Props) {
+  const needle = query.trim().toLowerCase();
+  const hit = needle.length > 0 && origin.label.toLowerCase().includes(needle);
+
   return (
     <span
       data-origin-tag
       data-origin-tone={origin.tone}
+      data-origin-hit={hit ? 'yes' : undefined}
       title={origin.title}
       className={cn(
         'inline-flex shrink-0 items-center gap-1 rounded-full border px-[6px] py-[2px] text-ui-2xs font-semibold leading-[1.6] whitespace-nowrap',
         TONE_CLASS[origin.tone],
+        hit && 'ring-2 ring-gold',
       )}
     >
       {origin.tone === 'artist' &&

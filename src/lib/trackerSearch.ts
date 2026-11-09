@@ -8,11 +8,16 @@ export interface LineMatch {
   matched: Set<number> | null;
 }
 
-/** Case-insensitive substring match over line name, event number, trigger tag
- *  and event body. Returns null when nothing in the line matches. */
+/** Case-insensitive substring match over line name, source chip (artist name /
+ *  category), event number, trigger tag and event body. A source hit shows the
+ *  whole line, just like a name hit — searching 林芬芬 finds all her lines.
+ *  Returns null when nothing in the line matches. */
 export function matchLine(line: TaskLine, needle: string): LineMatch | null {
   if (!needle) return { line, matched: null };
-  if (line.name.toLowerCase().includes(needle)) return { line, matched: null };
+  const source = `${line.origin.label} ${line.origin.title}`.toLowerCase();
+  if (line.name.toLowerCase().includes(needle) || source.includes(needle)) {
+    return { line, matched: null };
+  }
 
   const matched = new Set<number>();
   for (const step of line.steps) {

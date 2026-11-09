@@ -188,7 +188,7 @@ export default function TaskLineCard({
           >
             ▸
           </span>
-          <LineOriginTag origin={line.origin} />
+          <LineOriginTag origin={line.origin} query={query} />
           <span data-line-name className="min-w-0 truncate text-ui-sm font-semibold text-ink">
             <MarkText text={line.name} query={query} />
           </span>
