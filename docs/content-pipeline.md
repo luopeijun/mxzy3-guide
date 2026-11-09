@@ -78,7 +78,7 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（29 项）+ 通告数据（10 项） |
+| `npm run test:guide` | Python 回归测试：攻略解析（29 项）+ 通告数据（11 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 
 **解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
