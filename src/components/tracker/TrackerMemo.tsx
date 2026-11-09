@@ -146,7 +146,7 @@ export default function TrackerMemo() {
 
           {items.length === 0 ? (
             <p data-memo-empty className="mt-2.5 text-ui-2xs leading-[1.7] text-ink-faint">
-              想起什么就随手记在这里，比如「报考表演证书前先把演技练到 700」。它不进事件池，也不会被重置进度清掉。
+              想起什么就随手记在这里，比如「偶遇 SD 目前 3 次」。它不进事件池，也不会被重置进度清掉。
             </p>
           ) : (
             <ul className="mt-2.5 flex flex-col gap-1">

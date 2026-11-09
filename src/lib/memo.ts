@@ -1,6 +1,6 @@
 /** Standalone scratch list for the tracker's left rail. It is deliberately
  *  kept out of `guide.progress.v1`: memos are free text about whatever the
- *  player still has to do ("报考表演证书前先把演技练到 700"), unrelated to the
+ *  player still has to do ("偶遇 SD 目前 3 次"), unrelated to the
  *  event pool. Resetting progress or importing a save must never touch them. */
 export interface MemoItem {
   id: string;
