@@ -3,21 +3,22 @@ import { formatCount } from '../lib/guide';
 import { cn } from '../lib/cn';
 import { HIGHLIGHT_ENABLED } from '../hooks/useHighlightPref';
 import HighlightSwitch from './HighlightSwitch';
-import ViewTabs from './ViewTabs';
+import ViewTabs, { type ViewMode } from './ViewTabs';
 
 interface Props {
   categories: GuideNode[];
   activeCategoryId: string;
   summary: GuideSummary;
-  mode: 'guide' | 'tracker';
+  mode: ViewMode;
   onViewGuide: () => void;
   onViewTracker: () => void;
+  onViewNotices: () => void;
   onSelect: (id: string) => void;
   onMenuClick: () => void;
 }
 
 export default function BrandHeader({
-  categories, activeCategoryId, summary, mode, onViewGuide, onViewTracker,
+  categories, activeCategoryId, summary, mode, onViewGuide, onViewTracker, onViewNotices,
   onSelect, onMenuClick,
 }: Props) {
   return (
@@ -43,7 +44,12 @@ export default function BrandHeader({
           <span className="whitespace-nowrap text-ui-md font-bold tracking-[0.02em]">明星志愿3 · 攻略助手</span>
         </button>
 
-        <ViewTabs mode={mode} onViewGuide={onViewGuide} onViewTracker={onViewTracker} />
+        <ViewTabs
+          mode={mode}
+          onViewGuide={onViewGuide}
+          onViewTracker={onViewTracker}
+          onViewNotices={onViewNotices}
+        />
 
         <div className="ml-auto flex items-center gap-4 nav:gap-3">
           {mode === 'guide' && (
@@ -68,9 +74,11 @@ export default function BrandHeader({
 
           {HIGHLIGHT_ENABLED && <HighlightSwitch />}
 
-          <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
-            {summary.items} 条目 · {formatCount(summary.chars)} 字
-          </div>
+          {mode === 'guide' && (
+            <div className="whitespace-nowrap border-l border-line pl-[18px] text-ui-2xs text-ink-faint tab:hidden">
+              {summary.items} 条目 · {formatCount(summary.chars)} 字
+            </div>
+          )}
         </div>
       </div>
     </header>
