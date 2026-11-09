@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { NoticeData } from '../../types/notices';
 import { cn } from '../../lib/cn';
 import { CATEGORY_STYLE } from './categoryStyle';
+import { specialStyle } from './specialStyle';
 
 interface Props {
   data: NoticeData;
@@ -130,29 +131,45 @@ export default function ReferenceView({ data }: Props) {
               </tr>
             </thead>
             <tbody>
-              {data.specialEffects.map((row) => (
-                <tr key={row.kind} className="border-t border-line">
-                  <td className="py-1.5 text-ink">{row.kind}</td>
-                  {(['affinity', 'rebellion', 'sexy'] as const).map((field) => {
-                    const value = row[field];
-                    return (
-                      <td
-                        key={field}
+              {data.specialEffects.map((row) => {
+                const tone = specialStyle(row.kind);
+                return (
+                  <tr key={row.kind} className="border-t border-line">
+                    <td className="py-1.5">
+                      <span
                         className={cn(
-                          'py-1.5 text-right tabular-nums',
-                          value === undefined
-                            ? 'text-ink-faint'
-                            : value > 0
-                              ? 'text-growth-strong'
-                              : 'text-missing',
+                          'inline-flex items-center gap-1 rounded-ui-xs border px-1.5 py-0.5 font-semibold',
+                          tone.chip,
                         )}
                       >
-                        {value === undefined ? '—' : `${value > 0 ? '+' : ''}${value}`}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                        <span
+                          className={cn('h-1.5 w-1.5 rounded-full', tone.dot)}
+                          aria-hidden="true"
+                        />
+                        {row.kind}
+                      </span>
+                    </td>
+                    {(['affinity', 'rebellion', 'sexy'] as const).map((field) => {
+                      const value = row[field];
+                      return (
+                        <td
+                          key={field}
+                          className={cn(
+                            'py-1.5 text-right tabular-nums',
+                            value === undefined
+                              ? 'text-ink-faint'
+                              : value > 0
+                                ? 'text-growth-strong'
+                                : 'text-missing',
+                          )}
+                        >
+                          {value === undefined ? '—' : `${value > 0 ? '+' : ''}${value}`}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <p className="mt-2 text-ui-2xs leading-[1.8] text-ink-faint">

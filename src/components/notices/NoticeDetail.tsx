@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Notice, NoticeData, NoticeRole } from '../../types/notices';
 import {
   EXCLUSIVE_HINT,
+  difficultyRange,
   gainsFor,
   requirementsFor,
   specialNotes,
@@ -9,8 +10,9 @@ import {
   thresholdsFor,
 } from '../../lib/notices';
 import { cn } from '../../lib/cn';
-import Stars from './Stars';
+import StarBadge from './StarBadge';
 import { CATEGORY_STYLE } from './categoryStyle';
+import { specialStyle } from './specialStyle';
 
 interface Props {
   data: NoticeData;
@@ -53,7 +55,7 @@ function RoleBlock({
     <li data-notice-role className="rounded-ui-md border border-line bg-surface p-3">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-ui-sm font-semibold text-ink">{role.name}</span>
-        <Stars value={stars} />
+        <StarBadge value={stars} size="sm" tone="soft" />
         {role.defaultArtist && (
           <span className="rounded-full bg-brand-soft px-2 py-0.5 text-ui-2xs text-brand-strong">
             默认 {role.defaultArtist}
@@ -85,26 +87,34 @@ function RoleBlock({
             <span
               key={item.label}
               data-notice-chip="threshold"
-              className="rounded-ui-xs bg-gold-soft px-1.5 py-0.5 text-ui-2xs text-gold"
+              className="rounded-ui-xs border border-line-strong bg-surface px-1.5 py-0.5 text-ui-2xs tabular-nums text-ink"
               title="接这个角色需要的最低属性"
             >
               {item.label} ≥ {item.value}
             </span>
           ))}
-          {notes.map((note) => (
-            <span
-              key={note.kind}
-              data-notice-chip="tag"
-              className="rounded-ui-xs border border-line-strong bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-muted"
-              title={
-                note.deltas.length
-                  ? `「${note.kind}」每天对${note.deltas.map((item) => item.label).join('、')}造成增减，见下方每天影响`
-                  : `「${note.kind}」，不增减亲和／叛逆／性感`
-              }
-            >
-              {note.kind}
-            </span>
-          ))}
+          {notes.map((note) => {
+            const tone = specialStyle(note.kind);
+            return (
+              <span
+                key={note.kind}
+                data-notice-chip="tag"
+                data-notice-kind={note.kind}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-ui-xs border px-1.5 py-0.5 text-ui-2xs font-semibold',
+                  tone.chip,
+                )}
+                title={
+                  note.deltas.length
+                    ? `「${note.kind}」每天对${note.deltas.map((item) => item.label).join('、')}造成增减，见下方每天影响`
+                    : `「${note.kind}」，不增减亲和／叛逆／性感`
+                }
+              >
+                <span className={cn('h-1.5 w-1.5 rounded-full', tone.dot)} aria-hidden="true" />
+                {note.kind}
+              </span>
+            );
+          })}
         </div>
       )}
 
@@ -132,29 +142,44 @@ function RoleBlock({
                 ))}
               </div>
             )}
-            {dailyNotes.map((note) => (
-              <div
-                key={note.kind}
-                data-notice-daily-special={note.kind}
-                className="flex flex-wrap items-center gap-1.5"
-              >
-                <span className="text-ui-2xs text-ink-faint">特殊要求「{note.kind}」</span>
-                {note.deltas.map((item) => (
+            {dailyNotes.map((note) => {
+              const tone = specialStyle(note.kind);
+              return (
+                <div
+                  key={note.kind}
+                  data-notice-daily-special={note.kind}
+                  className="flex flex-wrap items-center gap-1.5"
+                >
+                  <span className="text-ui-2xs text-ink-faint">特殊要求</span>
                   <span
-                    key={item.label}
                     className={cn(
-                      'rounded-full px-1.5 py-px text-ui-2xs tabular-nums',
-                      item.value > 0
-                        ? 'bg-growth-soft text-growth-strong'
-                        : 'bg-missing-soft text-missing',
+                      'inline-flex items-center gap-1 rounded-ui-xs border px-1.5 py-px text-ui-2xs font-semibold',
+                      tone.chip,
                     )}
                   >
-                    {item.label} {item.value > 0 ? '+' : ''}
-                    {item.value}
+                    <span
+                      className={cn('h-1.5 w-1.5 rounded-full', tone.dot)}
+                      aria-hidden="true"
+                    />
+                    {note.kind}
                   </span>
-                ))}
-              </div>
-            ))}
+                  {note.deltas.map((item) => (
+                    <span
+                      key={item.label}
+                      className={cn(
+                        'rounded-full px-1.5 py-px text-ui-2xs tabular-nums',
+                        item.value > 0
+                          ? 'bg-growth-soft text-growth-strong'
+                          : 'bg-missing-soft text-missing',
+                      )}
+                    >
+                      {item.label} {item.value > 0 ? '+' : ''}
+                      {item.value}
+                    </span>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -181,6 +206,7 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
   }
 
   const style = CATEGORY_STYLE[notice.cat];
+  const range = difficultyRange(notice);
   return (
     <div data-notice-detail className="flex h-full flex-col">
       <div className="shrink-0 border-b border-line px-5 pb-3 pt-4">
@@ -190,6 +216,7 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
               {style.label}
             </span>
             <span className="text-ui-2xs tabular-nums text-ink-faint">{notice.id}</span>
+            {range && <StarBadge value={range} size="md" />}
             {notice.exclusive && (
               <span
                 className="rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs text-gold"

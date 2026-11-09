@@ -38,6 +38,7 @@ const STATE = `(() => {
     countText,
     cards: cards.length,
     ids: cards.slice(0, 8).map(c => c.getAttribute('data-notice-id')),
+    firstTitle: cards[0]?.querySelector('h3')?.textContent?.trim() ?? null,
     pills: cards.slice(0, 4).map(c => c.querySelector('span')?.textContent?.trim() ?? ''),
     detail: detail ? {
       title: detail.querySelector('h2')?.textContent?.trim() ?? null,
@@ -51,7 +52,25 @@ const STATE = `(() => {
       staleDailyWording: /\\d\\s*\\/\\s*天/.test(detail.textContent),
     } : null,
     catChips: root.querySelectorAll('[data-notice-cat]').length,
-    more: !!root.querySelector('[data-notice-more]'),
+    pager: (() => {
+      const box = root.querySelector('[data-notice-pager]');
+      if (!box) return null;
+      return {
+        page: box.querySelector('[data-notice-page-num][aria-current="page"]')?.textContent?.trim() ?? null,
+        prevDisabled: !!box.querySelector('[data-notice-page="prev"]')?.disabled,
+        nextDisabled: !!box.querySelector('[data-notice-page="next"]')?.disabled,
+        // 首页/末页已经在页码序列里，分页器不再单独放这两个按钮。
+        redundantEdges: !!box.querySelector('[data-notice-page="first"], [data-notice-page="last"]'),
+        hasPagerJump: !!box.querySelector('[data-notice-jump]'),
+        range: box.querySelector('[data-notice-range]')?.textContent?.replace(/\\s+/g, ' ').trim() ?? null,
+        size: box.querySelector('[data-notice-page-size]')?.value ?? null,
+      };
+    })(),
+    // 卡片上的关键信息：星级徽标 ×1、类型/时间/公司各一格、角色 chip 若干。
+    starBadges: root.querySelectorAll('[data-notice-card] [data-star-badge]').length,
+    metaCells: cards.every((c) => c.querySelectorAll('[data-notice-meta]').length === 3),
+    // 同页卡片必须等高，任何一组不同就说明撑高逻辑坏了。
+    heights: [...new Set(cards.map((c) => Math.round(c.getBoundingClientRect().height)))],
     panel: !!root.querySelector('[data-notice-panel]'),
     activeTab: root.querySelector('[data-notice-view][aria-selected="true"]')?.textContent?.trim() ?? null,
   });
@@ -108,13 +127,99 @@ async function main() {
   const initial = await state();
   console.log('INITIAL', JSON.stringify(initial));
   if (!/当前 1587 条/.test(initial.countText ?? '')) fail('unexpected initial count: ' + initial.countText);
-  if (initial.cards !== 60) fail('first page should be 60 cards, got ' + initial.cards);
-  if (!initial.more) fail('the 加载更多 button is missing for 1587 notices');
+  if (initial.cards !== 24) fail('first page should hold 24 cards, got ' + initial.cards);
+  if (!initial.pager) fail('the pager is missing for 1587 notices');
+  if (initial.pager.page !== '1') fail('the pager should start on page 1, got ' + initial.pager.page);
+  if (initial.pager.size !== '24') fail('the default page size should be 24, got ' + initial.pager.size);
+  if (!/第 1–24 条 · 共 1587 条/.test(initial.pager.range ?? ''))
+    fail('unexpected pager range: ' + initial.pager.range);
+  if (!initial.pager.prevDisabled) fail('上一页 should be disabled on page 1');
+  if (initial.pager.nextDisabled) fail('下一页 should be enabled on page 1');
+  if (initial.pager.redundantEdges) fail('首页/末页按钮与页码重复，应删掉');
+  if (!initial.pager.hasPagerJump) fail('分页器缺少跳页输入框');
+  if (initial.heights.length !== 1) fail('card heights differ: ' + initial.heights.join('/'));
+  if (initial.starBadges !== initial.cards)
+    fail(`星级徽标 ${initial.starBadges}/${initial.cards} 张卡上缺失`);
+  if (!initial.metaCells) fail('卡片缺少 类型/时间/公司 三格元信息');
   if (initial.catChips !== 5) fail('expected 5 category chips, got ' + initial.catChips);
   if (!initial.detail) fail('the detail panel did not render');
   if (initial.detail.title !== '舞动人生') fail('detail should default to the first notice, got ' + initial.detail.title);
   if (!initial.panel) fail('the notice panel is missing');
   if (initial.activeTab !== '通告列表') fail('unexpected active tab: ' + initial.activeTab);
+
+  // 1b. 同一个征求对象出现两次时不要并成「×2」，老老实实排两个。
+  const dup = await evaluate(`(() => {
+    const card = ${SCOPE}.querySelector('[data-notice-card][data-notice-id="MV003"]');
+    if (!card) return null;
+    return JSON.stringify({
+      chips: [...card.querySelectorAll('[data-notice-role-chip]')].map((c) => c.textContent.replace(/\\s+/g, '')),
+      merged: /×\\d/.test(card.textContent),
+    });
+  })()`);
+  console.log('DUP_ROLES', dup);
+  if (!dup) fail('MV003 did not render on page 1');
+  const dupRoles = JSON.parse(dup);
+  if (dupRoles.merged) fail('重复的征求对象仍被并成了 ×N：' + dupRoles.chips.join('|'));
+  if (dupRoles.chips.filter((chip) => chip.startsWith('男主角')).length !== 2)
+    fail('MV003 应排两条男主角，实际 ' + dupRoles.chips.join('|'));
+
+  // 1c. 分页器：末页 / 首页 / 跳页 / 每页条数。
+  await click('[data-notice-page-num="67"]');
+  await sleep(400);
+  const last = await state();
+  console.log('PAGER_LAST', JSON.stringify({ page: last.pager.page, cards: last.cards }));
+  if (last.pager.page !== '67') fail('最后一页应是 67，实际 ' + last.pager.page);
+  if (last.cards !== 3) fail('最后一页应只剩 3 张卡，实际 ' + last.cards);
+  if (!last.pager.nextDisabled) fail('最后一页应禁用下一页');
+
+  await click('[data-notice-page-num="1"]');
+  await sleep(400);
+  const first = await state();
+  if (first.pager.page !== '1' || first.cards !== 24)
+    fail(`回到首页失败：page=${first.pager.page} cards=${first.cards}`);
+
+  await evaluate(`(() => {
+    const input = ${SCOPE}.querySelector('[data-notice-jump]');
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    setter.call(input, '10');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    return input.value;
+  })()`);
+  await sleep(200);
+  await click('[data-notice-jump-go]');
+  await sleep(400);
+  const jumped = await state();
+  console.log('PAGER_JUMP', JSON.stringify({ page: jumped.pager.page, cards: jumped.cards }));
+  if (jumped.pager.page !== '10') fail('跳至第 10 页失败，当前 ' + jumped.pager.page);
+  if (jumped.cards !== 24) fail('第 10 页应有 24 张卡，实际 ' + jumped.cards);
+  // 右栏详情跟着翻页走，不能还停在第 1 页选中的那一条。
+  if (jumped.detail?.title !== jumped.firstTitle)
+    fail(`翻页后详情没跟上：${jumped.detail?.title} vs ${jumped.firstTitle}`);
+
+  await evaluate(`(() => {
+    const select = ${SCOPE}.querySelector('[data-notice-page-size]');
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set;
+    setter.call(select, '48');
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    return select.value;
+  })()`);
+  await sleep(500);
+  const sized = await state();
+  console.log('PAGER_SIZE', JSON.stringify({ page: sized.pager.page, cards: sized.cards, size: sized.pager.size }));
+  if (sized.pager.size !== '48') fail('每页条数没有切到 48，实际 ' + sized.pager.size);
+  if (sized.cards !== 48) fail('每页 48 条时应有 48 张卡，实际 ' + sized.cards);
+
+  // 切回 24 条并回到首页，后面的断言继续按默认页长算。
+  await evaluate(`(() => {
+    const select = ${SCOPE}.querySelector('[data-notice-page-size]');
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set;
+    setter.call(select, '24');
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    return select.value;
+  })()`);
+  await sleep(400);
+  await click('[data-notice-page-num="1"]');
+  await sleep(400);
 
   // 2. Category filter.
   if (!(await click('[data-notice-cat="tv"]'))) fail('category chip is missing');
@@ -123,6 +228,8 @@ async function main() {
   console.log('TV', JSON.stringify({ count: tv.countText, cards: tv.cards, pills: tv.pills, ids: tv.ids.slice(0, 3) }));
   if (!tv.ids.every((id) => id.startsWith('TV'))) fail('non-TV notice leaked into the TV filter: ' + tv.ids);
   if (!/当前 367 条/.test(tv.countText ?? '')) fail('TV count should be 367, got ' + tv.countText);
+  if (tv.pager?.page !== '1') fail('筛选后应回到第 1 页，当前 ' + tv.pager?.page);
+  if (tv.heights.length !== 1) fail('TV 页卡片高度不一致：' + tv.heights.join('/'));
 
   // 3. Time filter on top of the category.
   await click('[data-notice-time="第三年"]');
@@ -193,6 +300,21 @@ async function main() {
   if (ref.highlighted === 0) fail('the growth table has no highlighted maximum');
   if (ref.notes < 2) fail('expected the spreadsheet notes, got ' + ref.notes);
   if (ref.tab !== '能力对照') fail('the active tab did not follow the switch: ' + ref.tab);
+
+  // 7b. 七种特殊要求各用各的色相，不能退化成同一个灰 chip。
+  const kindChips = await evaluate(`(() => {
+    const box = ${SCOPE}.querySelector('[data-notice-reference]');
+    const table = box.querySelectorAll('section')[1];
+    return JSON.stringify([...table.querySelectorAll('tbody tr')].map((tr) => {
+      const chip = tr.querySelector('span');
+      return { kind: chip?.textContent?.trim() ?? null, cls: chip?.className ?? '' };
+    }));
+  })()`);
+  const kinds = JSON.parse(kindChips);
+  console.log('KINDS', JSON.stringify(kinds.map((k) => k.kind)));
+  if (kinds.length !== 7) fail('特殊要求影响应有 7 行，实际 ' + kinds.length);
+  if (new Set(kinds.map((k) => k.cls)).size !== 7) fail('七种特殊要求的样式没有区分开');
+  if (kinds.some((k) => !/bg-[a-z-]+-soft/.test(k.cls))) fail('特殊要求标签缺少底色');
   await click('[data-notice-view="list"]');
   await sleep(400);
 

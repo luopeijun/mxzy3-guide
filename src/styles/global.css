@@ -54,6 +54,11 @@
   --color-tag-manual-soft: #e0d2f0;
   --color-tag-talk: #8f3358;
   --color-tag-talk-soft: #f8c8d8;
+  /* Alerts that must not read as brand rose — 「暴力」这类特殊要求用它，
+     免得和「吻戏」的粉色、品牌色混成一团。 */
+  --color-alert: #97351f;
+  --color-alert-soft: #fbe4dc;
+  --color-alert-line: #efc6b9;
   /* Choices (A. / B. / C. …) — neutral grey so a list of options reads as a
      block of its own instead of one more line of event text. */
   --color-choice: #494048;
