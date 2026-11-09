@@ -26,6 +26,13 @@ export default function TrackerSetup({ data }: Props) {
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-label={open ? '收起艺人选择' : '展开艺人选择'}
+          title={
+            open
+              ? '收起艺人列表'
+              : selected.length > 0
+                ? '展开艺人列表；点右侧头像可直接取消追踪'
+                : '展开选择要追踪的艺人'
+          }
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
           <span
@@ -35,10 +42,11 @@ export default function TrackerSetup({ data }: Props) {
             ▸
           </span>
           <span className="shrink-0 text-ui-sm font-bold text-brand-strong">追踪艺人</span>
-          <span className="min-w-0 truncate text-ui-2xs text-ink-faint">
+          {/* 折叠行空间有限：只放短计数，不 truncate。长提示放到展开区完整表述。 */}
+          <span data-setup-hint className="shrink-0 whitespace-nowrap text-ui-2xs text-ink-faint">
             {selected.length === 0
               ? `点击选择 · 最多 ${MAX_ARTISTS} 位`
-              : `${selected.length}/${MAX_ARTISTS} 位 · 点头像可取消`}
+              : `${selected.length}/${MAX_ARTISTS} 位`}
           </span>
         </button>
 
@@ -73,7 +81,7 @@ export default function TrackerSetup({ data }: Props) {
       {open && (
         <div className="border-t border-line px-4 pb-4 pt-3">
           <p className="text-ui-2xs leading-[1.7] text-ink-muted">
-            最多 {MAX_ARTISTS} 位。所选艺人的全部任务线会自动进入事件池；路欧桑剧情按你签约的组合自动挑选分支。
+            最多 {MAX_ARTISTS} 位。所选艺人的全部任务线会自动进入事件池；路欧桑剧情按你签约的组合自动挑选分支。收起后点右侧头像可直接取消追踪。
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             {artists.map((artist) => {
