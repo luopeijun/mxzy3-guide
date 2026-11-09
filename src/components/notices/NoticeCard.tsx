@@ -18,6 +18,17 @@ export default function NoticeCard({ notice, active, onSelect }: Props) {
     .filter(Boolean)
     .join(' · ');
 
+  // 表里同一个征求对象常有两行（例如两个「男主角 5★」只是特殊要求不同），
+  // 卡片上并成「男主角 5★ ×2」，详情里仍然分开列出。
+  const roleChips: { key: string; name: string; stars?: number; count: number }[] = [];
+  for (const role of notice.roles ?? []) {
+    const stars = role.difficulty !== undefined ? starsOf(role) : undefined;
+    const key = `${role.name}-${stars ?? ''}`;
+    const existed = roleChips.find((chip) => chip.key === key);
+    if (existed) existed.count += 1;
+    else roleChips.push({ key, name: role.name, stars, count: 1 });
+  }
+
   return (
     <button
       type="button"
@@ -58,16 +69,19 @@ export default function NoticeCard({ notice, active, onSelect }: Props) {
         <p className="mt-2 line-clamp-2 text-ui-xs leading-[1.8] text-ink-muted">{notice.brief}</p>
       )}
 
-      {(notice.roles ?? []).length > 0 && (
+      {roleChips.length > 0 && (
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          {(notice.roles ?? []).map((role, index) => (
+          {roleChips.map((chip) => (
             <span
-              key={`${role.id ?? role.name}-${index}`}
+              key={chip.key}
               className="inline-flex items-center gap-1 rounded-ui-xs border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-muted"
             >
-              {role.name}
-              {role.difficulty !== undefined && (
-                <span className="tabular-nums text-gold">{starsOf(role)}★</span>
+              {chip.name}
+              {chip.stars !== undefined && (
+                <span className="tabular-nums text-gold">{chip.stars}★</span>
+              )}
+              {chip.count > 1 && (
+                <span className="tabular-nums text-ink-faint">×{chip.count}</span>
               )}
             </span>
           ))}
