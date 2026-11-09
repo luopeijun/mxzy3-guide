@@ -3,7 +3,7 @@ import { EXCLUSIVE_HINT, difficultyRange, starsOf } from '../../lib/notices';
 import { cn } from '../../lib/cn';
 import StarBadge from './StarBadge';
 import { CATEGORY_STYLE } from './categoryStyle';
-import { timeDot, timeText } from './infoStyle';
+import { companyDot, companyText, timeDot, timeText } from './infoStyle';
 
 interface Props {
   notice: Notice;
@@ -135,6 +135,8 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
             field="company"
             label="公司"
             value={notice.company ?? '—'}
+            valueClass={companyText(notice.company)}
+            dotClass={companyDot(notice.company)}
           />
         </dl>
 
