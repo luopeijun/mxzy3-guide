@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Notice, NoticeData, NoticeRole } from '../../types/notices';
 import {
+  EXCLUSIVE_HINT,
   gainsFor,
   requirementsFor,
   specialNotes,
@@ -154,7 +155,10 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
             </span>
             <span className="text-ui-2xs tabular-nums text-ink-faint">{notice.id}</span>
             {notice.exclusive && (
-              <span className="rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs text-gold">
+              <span
+                className="rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs text-gold"
+                title={`独家代理：${EXCLUSIVE_HINT}`}
+              >
                 独家代理
               </span>
             )}

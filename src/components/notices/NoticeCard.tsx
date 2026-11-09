@@ -1,5 +1,5 @@
 import type { Notice } from '../../types/notices';
-import { difficultyRange, starsOf } from '../../lib/notices';
+import { EXCLUSIVE_HINT, difficultyRange, starsOf } from '../../lib/notices';
 import { cn } from '../../lib/cn';
 import Stars from './Stars';
 import { CATEGORY_STYLE } from './categoryStyle';
@@ -48,7 +48,10 @@ export default function NoticeCard({ notice, active, onSelect }: Props) {
           </span>
           <span className="text-ui-2xs tabular-nums text-ink-faint">{notice.id}</span>
           {notice.exclusive && (
-            <span className="rounded-full bg-gold-soft px-1.5 py-0.5 text-ui-2xs text-gold">
+            <span
+              className="rounded-full bg-gold-soft px-1.5 py-0.5 text-ui-2xs text-gold"
+              title={`独家代理：${EXCLUSIVE_HINT}`}
+            >
               独家
             </span>
           )}

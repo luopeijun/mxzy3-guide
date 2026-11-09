@@ -32,6 +32,9 @@ export function starsOf(role: NoticeRole): number {
   return Math.min(5, Math.max(1, Math.round(raw)));
 }
 
+/** 原表「说明」里对独家代理的解释，用作徽标的悬浮提示。 */
+export const EXCLUSIVE_HINT = '一年内不能接其它厂家的同类型广告';
+
 export interface RequirementRow {
   ability: string;
   grade: string;
