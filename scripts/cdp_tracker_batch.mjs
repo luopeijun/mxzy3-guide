@@ -60,13 +60,12 @@ async function main() {
     const list = sec.querySelector('[data-batch-list]');
     const rows = [...list.querySelectorAll('li button[aria-pressed]')];
     const chip = text => [...sec.querySelectorAll('button')].find(b => b.textContent.trim().startsWith(text));
-    const btns = [...sec.querySelectorAll('button')];
     return JSON.stringify({
       scrollBox: !!list && getComputedStyle(list).overflowY === 'auto',
       scrollHeight: list.clientHeight,
       rows: rows.length,
       checkedRows: rows.filter(r => r.getAttribute('aria-pressed') === 'true').length,
-      chips: btns.filter(b => /^(全部|经纪人|其他|艺人|路欧桑) /.test(b.textContent.trim())).map(b => b.textContent.trim()),
+      chips: [...sec.querySelectorAll('[data-chip-key]')].map(b => b.textContent.trim()),
       selectedLabel: sec.textContent.match(/已选 \\d+ 条/)?.[0] ?? null,
       outDisabled: chip('批量移出')?.disabled,
       addDisabled: chip('批量添加')?.disabled,

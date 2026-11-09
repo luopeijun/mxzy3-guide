@@ -84,25 +84,42 @@ export default function TrackerCategories({ data }: Props) {
         勾选下方任务线（可跨分类），一次批量移出或添加；「添加」会把已移出、已放弃的线放回事件池。
       </p>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {(['all', ...groups.filter((g) => g.lines.length > 0).map((g) => g.key)] as Filter[]).map((key) => {
+      {/* Fixed 3-column grid, always all five chips. A flex-wrap row reflowed
+          whenever a group became empty (or the active chip lost its border),
+          making the whole panel jump between 3+1 / 2+2 layouts. Equal-width
+          cells and a 1px border on BOTH states keep every chip pinned. */}
+      <div data-batch-chips className="mt-3 grid grid-cols-3 gap-1.5">
+        {(['all', ...groups.map((g) => g.key)] as Filter[]).map((key) => {
           const lines = key === 'all' ? pool : (groups.find((g) => g.key === key)?.lines ?? []);
           const inPool = lines.filter((l) => (getLine(l.id)?.status ?? 'active') !== 'excluded').length;
           const label = key === 'all' ? '全部' : SHORT_LABEL[key];
+          const active = filter === key;
           return (
             <button
               key={key}
               type="button"
+              data-chip-key={key}
+              aria-pressed={active}
               onClick={() => setFilter(key)}
-              title={key === 'all' ? '全部任务线' : GROUP_LABEL[key]}
+              title={
+                key === 'all'
+                  ? '全部任务线'
+                  : lines.length === 0
+                    ? `${GROUP_LABEL[key]}（暂无任务线）`
+                    : GROUP_LABEL[key]
+              }
               className={cn(
-                'rounded-full px-2.5 py-1 text-ui-2xs transition-colors',
-                filter === key
-                  ? 'bg-brand text-white'
-                  : 'border border-line bg-surface-soft text-ink-muted hover:border-brand-line hover:text-brand-strong',
+                'flex min-w-0 items-center justify-center gap-1 rounded-full border px-1 py-1 text-ui-2xs tabular-nums transition-colors',
+                active
+                  ? 'border-brand bg-brand text-white'
+                  : 'border-line bg-surface-soft text-ink-muted hover:border-brand-line hover:text-brand-strong',
+                lines.length === 0 && 'opacity-50',
               )}
             >
-              {label} {inPool}/{lines.length}
+              <span className="shrink-0">{label}</span>
+              <span className="shrink-0 opacity-80">
+                {inPool}/{lines.length}
+              </span>
             </button>
           );
         })}
