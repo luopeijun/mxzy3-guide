@@ -78,6 +78,13 @@ async function main() {
       return r.result?.value;
     });
   const snap = () => evaluate(SNAPSHOT).then(JSON.parse);
+  // Chips only exist while the batch panel is expanded (it is collapsed by
+  // default). Re-open after every reload so chip geometry stays comparable.
+  const expand = () => evaluate(`(() => {
+    const t = document.querySelector('[data-batch-toggle]');
+    if (t && t.getAttribute('aria-expanded') === 'false') t.click();
+    return 1;
+  })()`);
   const setState = (artists) => evaluate(
     `localStorage.setItem('guide.progress.v1', ${JSON.stringify(JSON.stringify({
       version: 1, selectedArtists: artists, lines: {}, order: [], pinned: [],
@@ -94,6 +101,8 @@ async function main() {
     await setState(round.artists);
     await send('Page.reload');
     await sleep(3500);
+    await expand();
+    await sleep(250);
 
     const first = await snap();
     console.log(round.name + '_INITIAL', JSON.stringify(first));

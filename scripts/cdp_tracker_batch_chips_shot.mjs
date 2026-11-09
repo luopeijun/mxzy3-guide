@@ -52,6 +52,13 @@ async function main() {
   await evaluate(`localStorage.setItem('guide.progress.v1', ${JSON.stringify(state)}); 1`);
   await send('Page.reload');
   await sleep(3500);
+  // The chip grid lives inside the collapsible batch panel.
+  await evaluate(`(() => {
+    const t = document.querySelector('[data-batch-toggle]');
+    if (t && t.getAttribute('aria-expanded') === 'false') t.click();
+    return 1;
+  })()`);
+  await sleep(250);
 
   if (chipKey !== 'all') {
     await evaluate(`${ROOT}.querySelector('[data-chip-key="${chipKey}"]').click(); 1`);

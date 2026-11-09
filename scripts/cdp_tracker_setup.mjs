@@ -44,10 +44,22 @@ async function main() {
   await sleep(4000);
   if (lsJson) {
     await send('Runtime.evaluate', {
-      expression: `localStorage.setItem('guide.progress.v1', ${JSON.stringify(lsJson)}); location.reload();`,
+      expression: `localStorage.setItem('guide.progress.v1', ${JSON.stringify(lsJson)}); 1`,
     });
+    await send('Page.reload');
     await sleep(3800);
   }
+
+  // Open the (now collapsible) batch panel so batchFullyVisible still measures
+  // the full editor rather than its 50px summary row.
+  await send('Runtime.evaluate', {
+    expression: `(() => {
+      const t = document.querySelector('[data-batch-toggle]');
+      if (t && t.getAttribute('aria-expanded') === 'false') t.click();
+      return 1;
+    })()`,
+  });
+  await sleep(250);
 
   const evaluate = async (expression) => {
     const { result } = await send('Runtime.evaluate', { expression, returnByValue: true });

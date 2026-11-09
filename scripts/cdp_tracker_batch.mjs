@@ -44,10 +44,23 @@ async function main() {
   await sleep(4000);
   if (lsJson) {
     await send('Runtime.evaluate', {
-      expression: `localStorage.setItem('guide.progress.v1', ${JSON.stringify(lsJson)}); location.reload();`,
+      expression: `localStorage.setItem('guide.progress.v1', ${JSON.stringify(lsJson)}); 1`,
     });
+    await send('Page.reload');
     await sleep(3800);
   }
+
+  // The batch panel is collapsed by default; open it before exercising the
+  // multi-select list. Re-run after every reload.
+  const expandBatch = () => send('Runtime.evaluate', {
+    expression: `(() => {
+      const t = document.querySelector('[data-batch-toggle]');
+      if (t && t.getAttribute('aria-expanded') === 'false') t.click();
+      return 1;
+    })()`,
+  });
+  await expandBatch();
+  await sleep(250);
 
   const evaluate = async (expression) => {
     const { result } = await send('Runtime.evaluate', { expression, returnByValue: true });
@@ -142,8 +155,10 @@ async function main() {
   await sleep(400);
   console.log('AFTER_CROSS_EXCLUDE', await snapshot());
 
-  await evaluate(`location.reload(); 1`);
+  await send('Page.reload');
   await sleep(3600);
+  await expandBatch();
+  await sleep(250);
   console.log('AFTER_RELOAD', await snapshot());
 
   process.exit(0);
