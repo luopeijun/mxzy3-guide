@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { NoticeData } from '../../types/notices';
 import { companiesOf, filterNotices, type NoticeFilter } from '../../lib/notices';
 import NoticeCard from './NoticeCard';
 import NoticeDetail from './NoticeDetail';
 import NoticeFilterBar from './NoticeFilterBar';
+import NoticePager, { DEFAULT_PAGE_SIZE } from './NoticePager';
 import NoticeViewTabs from './NoticeViewTabs';
 import ReferenceView from './ReferenceView';
 
-const PAGE = 60;
 const EMPTY_FILTER: NoticeFilter = {
   cat: 'all',
   time: 'all',
@@ -22,39 +22,93 @@ interface Props {
 
 /** 通告库：顶部筛选 + 中间卡片列表 + 右侧详情。
  *
- *  列表一次只渲染 60 条（全量 1500+），翻到底再点「加载更多」——避免一次性挂上
- *  几千张卡片。窄屏没有右侧栏，点卡片会从底部盖一层全屏详情。 */
+ *  列表按页渲染（全量 1500+，一页 24 张），翻页由底部分页器控制——避免一次性
+ *  挂上几千张卡片。窄屏没有右侧栏，点卡片会从底部盖一层全屏详情。 */
 export default function NoticesApp({ data }: Props) {
   const [view, setView] = useState<'list' | 'reference'>('list');
   const [filter, setFilter] = useState<NoticeFilter>(EMPTY_FILTER);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [limit, setLimit] = useState(PAGE);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  /** 当前页里最高那张卡的高度：其余卡片都撑到同一高度，网格才不会参差。 */
+  const [cardHeight, setCardHeight] = useState(0);
+  /** 窗口尺寸变了要重新量一遍高度（列宽变化会让简介换行数变化）。 */
+  const [measureTick, setMeasureTick] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const companies = useMemo(() => companiesOf(data.notices), [data]);
   const results = useMemo(() => filterNotices(data.notices, filter), [data, filter]);
-  const visible = results.slice(0, limit);
+  const pageCount = Math.max(1, Math.ceil(results.length / pageSize));
+  const visible = useMemo(
+    () => results.slice((page - 1) * pageSize, page * pageSize),
+    [results, page, pageSize],
+  );
   const selected = useMemo(
     () => data.notices.find((notice) => notice.id === selectedId) ?? null,
     [data.notices, selectedId],
   );
 
-  // 宽屏右栏默认展示第一条，避免一进来就是一整块空白提示。筛选后如果原来选中的
-  // 通告已经不在结果里，也跟着落到第一条——详情不能展示被筛掉的内容。窄屏不受
-  // 影响：抽屉只在主动点卡片时打开。
+  // 宽屏右栏默认展示本页第一条，避免一进来就是一整块空白提示。筛选或翻页后如果
+  // 原来选中的通告不在当前页，也跟着落到这一页的第一条——详情不展示看不见的内容。
   useEffect(() => {
-    if (results.length === 0) {
+    if (visible.length === 0) {
       if (selectedId !== null) setSelectedId(null);
       return;
     }
-    if (!selectedId || !results.some((notice) => notice.id === selectedId)) {
-      setSelectedId(results[0].id);
+    if (!selectedId || !visible.some((notice) => notice.id === selectedId)) {
+      setSelectedId(visible[0].id);
     }
-  }, [results, selectedId]);
+  }, [visible, selectedId]);
+
+  // 换页或改筛选条件后回到顶部，否则会停在上一次滚到的位置。
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 });
+  }, [page, pageSize, filter]);
+
+  // 结果变少时把页码夹回最后一页（例如筛到只剩 3 条，却还停在第 9 页）。
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
+
+  // 量当前页所有卡片的自然高度取最大值，再统一设成最小高度。量的是内层内容块
+  // 而不是按钮本身：按钮在网格里已经被拉伸过，量它只会量到上一轮的结果。
+  useLayoutEffect(() => {
+    if (view !== 'list') return;
+    const box = listRef.current;
+    if (!box) return;
+    let tallest = 0;
+    for (const card of box.querySelectorAll<HTMLElement>('[data-notice-card]')) {
+      const inner = card.querySelector<HTMLElement>('[data-notice-card-inner]');
+      if (!inner) continue;
+      const style = window.getComputedStyle(card);
+      const chrome = [
+        'paddingTop',
+        'paddingBottom',
+        'borderTopWidth',
+        'borderBottomWidth',
+      ].reduce((sum, key) => sum + (Number.parseFloat(style[key as 'paddingTop']) || 0), 0);
+      tallest = Math.max(tallest, inner.getBoundingClientRect().height + chrome);
+    }
+    if (tallest > 0) setCardHeight(Math.ceil(tallest));
+  }, [visible, view, measureTick]);
+
+  useEffect(() => {
+    const onResize = () => setMeasureTick((value) => value + 1);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const patch = (next: Partial<NoticeFilter>) => {
     setFilter((previous) => ({ ...previous, ...next }));
-    setLimit(PAGE);
+    setPage(1);
+  };
+
+  const changePageSize = (size: number) => {
+    if (size === pageSize) return;
+    // 尽量停在同一批数据上：当前页首条在新页码里的位置。
+    setPage(Math.floor(((page - 1) * pageSize) / size) + 1);
+    setPageSize(size);
   };
 
   const pick = (id: string) => {
@@ -93,7 +147,7 @@ export default function NoticesApp({ data }: Props) {
                 onChange={patch}
                 onReset={() => {
                   setFilter(EMPTY_FILTER);
-                  setLimit(PAGE);
+                  setPage(1);
                 }}
               />
             )}
@@ -101,42 +155,43 @@ export default function NoticesApp({ data }: Props) {
             {view === 'reference' ? (
               <ReferenceView data={data} />
             ) : (
-              <div
-                data-notice-list
-                className="min-h-0 flex-1 overflow-y-auto px-5 py-4 [scrollbar-gutter:stable]"
-              >
-                {results.length === 0 ? (
-                  <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-10 text-center text-ui-xs text-ink-faint">
-                    没有符合条件的通告，改一下筛选或清空搜索试试。
-                  </p>
-                ) : (
-                  <>
-                    <ul className="grid gap-3 min-[1280px]:grid-cols-2">
+              <>
+                <div
+                  ref={listRef}
+                  data-notice-list
+                  className="min-h-0 flex-1 overflow-y-auto px-5 py-4 [scrollbar-gutter:stable]"
+                >
+                  {results.length === 0 ? (
+                    <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-10 text-center text-ui-xs text-ink-faint">
+                      没有符合条件的通告，改一下筛选或清空搜索试试。
+                    </p>
+                  ) : (
+                    <ul className="grid items-start gap-3 min-[1280px]:grid-cols-2">
                       {visible.map((notice) => (
                         <li key={notice.id}>
                           <NoticeCard
                             notice={notice}
                             active={notice.id === selectedId}
+                            minHeight={cardHeight}
                             onSelect={() => pick(notice.id)}
                           />
                         </li>
                       ))}
                     </ul>
-                    {results.length > visible.length && (
-                      <div className="mt-4 flex justify-center">
-                        <button
-                          type="button"
-                          data-notice-more
-                          onClick={() => setLimit((value) => value + PAGE)}
-                          className="rounded-full border border-line bg-surface px-4 py-1.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
-                        >
-                          还有 {results.length - visible.length} 条 · 加载更多
-                        </button>
-                      </div>
-                    )}
-                  </>
+                  )}
+                </div>
+
+                {results.length > 0 && (
+                  <NoticePager
+                    page={page}
+                    pageCount={pageCount}
+                    pageSize={pageSize}
+                    total={results.length}
+                    onPage={setPage}
+                    onPageSize={changePageSize}
+                  />
                 )}
-              </div>
+              </>
             )}
           </div>
 
