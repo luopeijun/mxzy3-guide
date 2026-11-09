@@ -166,7 +166,9 @@ export default function NoticesApp({ data }: Props) {
                       没有符合条件的通告，改一下筛选或清空搜索试试。
                     </p>
                   ) : (
-                    <ul className="grid items-start gap-3 min-[1280px]:grid-cols-2">
+                    <ul className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))]">
+                      {/* 列数跟着列表容器宽度走，不绑视口断点：右栏出现把列表压窄时
+                          会自动退回一列，900 这种「没有右栏但也不宽」的尺寸才排得下两列。 */}
                       {visible.map((notice) => (
                         <li key={notice.id}>
                           <NoticeCard

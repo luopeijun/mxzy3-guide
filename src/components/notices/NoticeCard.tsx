@@ -25,7 +25,7 @@ function MetaCell({
   sub?: string;
 }) {
   return (
-    <div data-notice-meta={field} className="min-w-0 bg-surface-soft px-2 py-1.5">
+    <div data-notice-meta={field} className="min-w-0 bg-surface-soft px-2 py-1">
       <dt className="text-ui-2xs text-ink-faint">{label}</dt>
       <dd className="mt-0.5 min-w-0">
         <span className="block truncate text-ui-xs font-semibold text-ink" title={value}>
@@ -63,7 +63,7 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
       onClick={onSelect}
       style={minHeight ? { minHeight } : undefined}
       className={cn(
-        'group relative flex w-full flex-col rounded-ui-md border bg-surface p-4 text-left shadow-soft transition duration-150 hover:-translate-y-0.5 hover:border-brand-line hover:shadow-card',
+        'group relative flex w-full flex-col rounded-ui-md border bg-surface p-3.5 text-left shadow-soft transition duration-150 hover:-translate-y-0.5 hover:border-brand-line hover:shadow-card',
         active ? 'border-brand ring-1 ring-brand-line' : 'border-line',
       )}
     >
@@ -87,23 +87,29 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
           {range && <StarBadge value={range} size="lg" />}
         </div>
 
-        <h3 className="mt-2 text-ui-lg font-bold leading-snug text-ink group-hover:text-brand-strong">
+        <h3 className="mt-1.5 text-ui-lg font-bold leading-snug text-ink group-hover:text-brand-strong">
           {notice.name}
         </h3>
 
-        <dl className="mt-2.5 grid grid-cols-3 gap-px overflow-hidden rounded-ui-sm border border-line bg-line">
+        <dl className="mt-2 grid grid-cols-3 gap-px overflow-hidden rounded-ui-sm border border-line bg-line">
           <MetaCell field="type" label="类型" value={notice.type ?? notice.level ?? '—'} sub={typeSub} />
           <MetaCell field="time" label="时间" value={notice.time ?? '—'} />
           <MetaCell field="company" label="公司" value={notice.company ?? '—'} />
         </dl>
 
         {notice.brief && (
-          <p className="mt-2.5 text-ui-xs leading-[1.8] text-ink-muted">{notice.brief}</p>
+          // 列表只留两行摘要，全文在右侧详情里；鼠标悬停也能看到整段。
+          <p
+            className="mt-2 line-clamp-2 text-ui-xs leading-[1.75] text-ink-muted"
+            title={notice.brief}
+          >
+            {notice.brief}
+          </p>
         )}
 
         {roles.length > 0 && (
-          <div className="mt-auto pt-3">
-            <div className="mb-1.5 flex items-baseline gap-2 text-ui-2xs">
+          <div className="mt-auto pt-2.5">
+            <div className="mb-1 flex items-baseline gap-2 text-ui-2xs">
               <span className="text-ink-faint">角色 {roles.length}</span>
               {pending > 0 ? (
                 <span data-notice-pending className="font-semibold text-brand-strong">
