@@ -14,7 +14,14 @@ import LoadingScreen from './components/LoadingScreen';
 import Sidebar from './components/Sidebar';
 import TrackerApp from './components/tracker/TrackerApp';
 
-function GuideApp({ data: source }: { data: GuideData }) {
+interface GuideAppProps {
+  data: GuideData;
+  mode: 'guide' | 'tracker';
+  onViewGuide: () => void;
+  onViewTracker: () => void;
+}
+
+function GuideApp({ data: source, mode, onViewGuide, onViewTracker }: GuideAppProps) {
   // The reader may drag levels of the tree around; everything below reads the
   // ordered copy so the header tabs, search and prev/next follow the new order.
   const { categories, move, reset, customized } = useTreeOrder(source.categories);
@@ -85,6 +92,9 @@ function GuideApp({ data: source }: { data: GuideData }) {
           categories={data.categories}
           activeCategoryId={activeCategoryId}
           summary={summary}
+          mode={mode}
+          onViewGuide={onViewGuide}
+          onViewTracker={onViewTracker}
           onSelect={handleSelect}
           onMenuClick={() => setSidebarOpen(true)}
         />
@@ -163,11 +173,20 @@ export default function App() {
     window.location.hash = `/guide/${lastNodeRef.current || firstNodeId()}`;
   };
 
+  const openTracker = () => {
+    window.location.hash = '/tracker';
+  };
+
   return (
     <TrackerProvider>
       <HighlightProvider>
-        <GuideApp data={data} />
-        {mode === 'tracker' && <TrackerApp data={data} onClose={closeTracker} />}
+        <GuideApp
+          data={data}
+          mode={mode}
+          onViewGuide={closeTracker}
+          onViewTracker={openTracker}
+        />
+        {mode === 'tracker' && <TrackerApp data={data} />}
       </HighlightProvider>
     </TrackerProvider>
   );

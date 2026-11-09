@@ -10,7 +10,7 @@ interface Props {
 /** Compact progress summary that rounds out the selector panel: how many lines
  *  are in the pool, how many steps are done, and what was abandoned/excluded. */
 export default function TrackerOverview({ data }: Props) {
-  const { selectedArtists, getLine } = useTracker();
+  const { selectedArtists, getLine, resetAll } = useTracker();
   const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
 
   const stats = useMemo(() => {
@@ -42,7 +42,16 @@ export default function TrackerOverview({ data }: Props) {
 
   return (
     <section className="rounded-ui-md border border-line bg-surface p-5 shadow-soft">
-      <h2 className="text-ui-sm font-bold text-brand-strong">进度概览</h2>
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-ui-sm font-bold text-brand-strong">进度概览</h2>
+        <button
+          type="button"
+          onClick={resetAll}
+          className="text-ui-2xs text-ink-faint transition-colors hover:text-brand-strong"
+        >
+          重置进度
+        </button>
+      </div>
       <div className="mt-3">
         <div className="flex items-baseline justify-between">
           <span className="text-ui-2xs text-ink-muted">步骤完成度</span>
