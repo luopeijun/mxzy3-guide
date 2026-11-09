@@ -94,6 +94,12 @@
   --color-year-2: #b45309;
   --color-year-3: #be123c;
   --color-year-x: #6d28d9;
+  /* 时间档位的反转色：浅色底 + 同色深字，轻量不抢眼（沿用 growth 那种
+     soft 底 + 实色字 的画法）。实色字落在自己的 soft 底上对比 ≥5:1。 */
+  --color-year-1-soft: #d6eef3;
+  --color-year-2-soft: #f6e3c8;
+  --color-year-3-soft: #fadbe1;
+  --color-year-x-soft: #e7defb;
   /* 剧种细分徽章 (连续剧 / 单元剧 / 效果篇) — neutral slate, deliberately off
      every category pill hue; the old tag-scene teal collided with 电视剧. */
   --color-series: #53596e;

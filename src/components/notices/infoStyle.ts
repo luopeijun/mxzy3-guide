@@ -6,13 +6,14 @@
  *  令牌都在 `global.css @theme` 里，全部不与既有语义色重复（相似但不重复，
  *  统一明度/饱和度，色相按行业分组）。没登记的值回落墨色 / 灰点。 */
 
-/** 时间档位 → 实色白字药丸类。四档是顺序概念（第一年→第二年→第三年→特殊），
- *  用四种明显不同的底色，扫一眼就能分清；与 growth 绿、alert 红都不撞色。 */
+/** 时间档位 → 反转色药丸（浅底 + 同色深字）。四档是顺序概念
+ *  （第一年→第二年→第三年→特殊），四种底色明显不同，扫一眼能分清；
+ *  与 growth 绿、alert 红都不撞色。 */
 const TIME_PILL: Record<string, string> = {
-  第一年: 'bg-year-1 text-white',
-  第二年: 'bg-year-2 text-white',
-  第三年: 'bg-year-3 text-white',
-  特殊: 'bg-year-x text-white',
+  第一年: 'bg-year-1-soft text-year-1',
+  第二年: 'bg-year-2-soft text-year-2',
+  第三年: 'bg-year-3-soft text-year-3',
+  特殊: 'bg-year-x-soft text-year-x',
 };
 
 /** 公司与它的圆点底色、文字色一一对应——圆点放大后色相才分得清，文字也同色
