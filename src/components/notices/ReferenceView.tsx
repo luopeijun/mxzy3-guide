@@ -19,12 +19,14 @@ const SECTIONS = [
 
 type SectionKey = (typeof SECTIONS)[number]['key'];
 
-/** 等级字母的配色：A 最紧（玫瑰）、D 最松（灰），一眼能看出要求高低。 */
+/** 等级字母的配色：A 最紧（玫瑰）、D 最松（暖灰），一眼能看出要求高低。
+ *  D 原来用 surface-soft，底色几乎和卡片同色，远看就是一团浅灰字，
+ *  换成 tag-auto 这组暖灰后底色能立起来，又不至于抢 A/B/C 的彩。 */
 const GRADE_STYLE: Record<string, string> = {
   A: 'bg-brand-soft text-brand-strong',
   B: 'bg-tag-scene-soft text-tag-scene',
   C: 'bg-gold-soft text-gold',
-  D: 'bg-surface-soft text-ink-faint',
+  D: 'bg-tag-auto-soft text-tag-auto',
 };
 
 function GradeChip({ ability, grade }: { ability: string; grade: string }) {
