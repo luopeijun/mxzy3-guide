@@ -52,6 +52,8 @@ const STATE = `(() => {
     } : null,
     catChips: root.querySelectorAll('[data-notice-cat]').length,
     more: !!root.querySelector('[data-notice-more]'),
+    panel: !!root.querySelector('[data-notice-panel]'),
+    activeTab: root.querySelector('[data-notice-view][aria-selected="true"]')?.textContent?.trim() ?? null,
   });
 })()`;
 
@@ -111,6 +113,8 @@ async function main() {
   if (initial.catChips !== 5) fail('expected 5 category chips, got ' + initial.catChips);
   if (!initial.detail) fail('the detail panel did not render');
   if (initial.detail.title !== '舞动人生') fail('detail should default to the first notice, got ' + initial.detail.title);
+  if (!initial.panel) fail('the notice panel is missing');
+  if (initial.activeTab !== '通告列表') fail('unexpected active tab: ' + initial.activeTab);
 
   // 2. Category filter.
   if (!(await click('[data-notice-cat="tv"]'))) fail('category chip is missing');
@@ -175,6 +179,7 @@ async function main() {
       growthRows: box.querySelectorAll('[data-growth-table] tbody tr').length,
       highlighted: box.querySelectorAll('[data-growth-table] td.bg-brand-soft').length,
       notes: box.querySelectorAll('[data-reference-notes] li').length,
+      tab: root.querySelector('[data-notice-view][aria-selected="true"]')?.textContent?.trim() ?? null,
     });
   })()`);
   console.log('REFERENCE', reference);
@@ -187,6 +192,7 @@ async function main() {
   if (ref.growthRows !== 18) fail('expected 18 artists, got ' + ref.growthRows);
   if (ref.highlighted === 0) fail('the growth table has no highlighted maximum');
   if (ref.notes < 2) fail('expected the spreadsheet notes, got ' + ref.notes);
+  if (ref.tab !== '能力对照') fail('the active tab did not follow the switch: ' + ref.tab);
   await click('[data-notice-view="list"]');
   await sleep(400);
 
