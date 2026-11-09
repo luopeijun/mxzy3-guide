@@ -4,6 +4,7 @@ import { companiesOf, filterNotices, type NoticeFilter } from '../../lib/notices
 import NoticeCard from './NoticeCard';
 import NoticeDetail from './NoticeDetail';
 import NoticeFilterBar from './NoticeFilterBar';
+import ReferenceView from './ReferenceView';
 
 const PAGE = 60;
 const EMPTY_FILTER: NoticeFilter = {
@@ -23,6 +24,7 @@ interface Props {
  *  列表一次只渲染 60 条（全量 1500+），翻到底再点「加载更多」——避免一次性挂上
  *  几千张卡片。窄屏没有右侧栏，点卡片会从底部盖一层全屏详情。 */
 export default function NoticesApp({ data }: Props) {
+  const [view, setView] = useState<'list' | 'reference'>('list');
   const [filter, setFilter] = useState<NoticeFilter>(EMPTY_FILTER);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -67,13 +69,18 @@ export default function NoticesApp({ data }: Props) {
           filter={filter}
           resultCount={results.length}
           companies={companies}
+          view={view}
           onChange={patch}
           onReset={() => {
             setFilter(EMPTY_FILTER);
             setLimit(PAGE);
           }}
+          onViewChange={setView}
         />
 
+        {view === 'reference' ? (
+          <ReferenceView data={data} />
+        ) : (
         <div
           data-notice-list
           className="min-h-0 flex-1 overflow-y-auto px-6 py-4 [scrollbar-gutter:stable]"
@@ -110,13 +117,16 @@ export default function NoticesApp({ data }: Props) {
             </>
           )}
         </div>
+        )}
       </div>
 
-      <aside className="hidden w-[380px] shrink-0 flex-col border-l border-line bg-surface min-[1120px]:flex">
-        <NoticeDetail data={data} notice={selected} />
-      </aside>
+      {view === 'list' && (
+        <aside className="hidden w-[380px] shrink-0 flex-col border-l border-line bg-surface min-[1120px]:flex">
+          <NoticeDetail data={data} notice={selected} />
+        </aside>
+      )}
 
-      {drawerOpen && (
+      {view === 'list' && drawerOpen && (
         <div
           data-notice-drawer
           className="absolute inset-0 z-50 flex flex-col bg-canvas min-[1120px]:hidden"

@@ -155,7 +155,33 @@ async function main() {
   console.log('RESET', JSON.stringify({ count: reset.countText, cards: reset.cards }));
   if (!/当前 1587 条/.test(reset.countText ?? '')) fail('reset did not restore the full list: ' + reset.countText);
 
-  // 7. Narrow viewport: the card opens the drawer, 关闭 sends it away.
+  // 7. 能力对照：四块参照表都要渲染出来。
+  await click('[data-notice-view="reference"]');
+  await sleep(500);
+  const reference = await evaluate(`(() => {
+    const root = ${SCOPE};
+    const box = root.querySelector('[data-notice-reference]');
+    if (!box) return JSON.stringify({ missing: true });
+    return JSON.stringify({
+      sections: [...box.querySelectorAll('section h2')].map(h => h.textContent.trim()),
+      groups: [...box.querySelectorAll('[data-reference-group]')].map(g => g.getAttribute('data-reference-group')),
+      gradeRows: box.querySelectorAll('[data-reference-group] tr').length,
+      growthRows: box.querySelectorAll('[data-growth-table] tbody tr').length,
+      highlighted: box.querySelectorAll('[data-growth-table] td.bg-brand-soft').length,
+    });
+  })()`);
+  console.log('REFERENCE', reference);
+  const ref = JSON.parse(reference);
+  if (ref.missing) fail('the 能力对照 view did not render');
+  if (ref.sections.length !== 4) fail('expected 4 reference sections, got ' + ref.sections.join('/'));
+  if (ref.groups.join(',') !== 'movie,tv,music,ad,show') fail('reference groups: ' + ref.groups.join(','));
+  if (ref.gradeRows !== 67) fail('expected 67 grade rows, got ' + ref.gradeRows);
+  if (ref.growthRows !== 18) fail('expected 18 artists, got ' + ref.growthRows);
+  if (ref.highlighted === 0) fail('the growth table has no highlighted maximum');
+  await click('[data-notice-view="list"]');
+  await sleep(400);
+
+  // 8. Narrow viewport: the card opens the drawer, 关闭 sends it away.
   await send('Emulation.setDeviceMetricsOverride', {
     width: 900, height: 800, deviceScaleFactor: 1, mobile: false,
   });
