@@ -55,7 +55,7 @@ async function main() {
   };
 
   const snapshot = () => evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const aside = o.querySelector('aside');
     const setup = [...aside.querySelectorAll('section')].find(s => s.textContent.includes('追踪艺人'));
     const batch = [...aside.querySelectorAll('section')].find(s => s.querySelector('h2')?.textContent.includes('分类批量操作'));
@@ -78,7 +78,7 @@ async function main() {
   console.log('CLOSED', await snapshot());
 
   await evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     [...o.querySelectorAll('aside button')].find(b => b.getAttribute('aria-expanded') === 'false').click();
     return 1;
   })()`);
@@ -87,7 +87,7 @@ async function main() {
 
   // Select a third artist from the grid.
   const added = await evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const grid = o.querySelector('aside .grid');
     const b = [...grid.querySelectorAll('button')].find(x => !x.disabled && !x.className.includes('bg-brand-soft'));
     if (!b) return 'none';
@@ -99,13 +99,13 @@ async function main() {
 
   // Collapse again, then remove one artist via its portrait.
   await evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     [...o.querySelectorAll('aside button')].find(b => b.getAttribute('aria-expanded') === 'true').click();
     return 1;
   })()`);
   await sleep(300);
   const removed = await evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const p = o.querySelector('aside button[aria-label^="取消追踪"]');
     if (!p) return 'none';
     const name = p.getAttribute('aria-label'); p.click(); return name;

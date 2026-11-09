@@ -34,7 +34,7 @@ const SNAPSHOT = `(() => {
   const archive = root.querySelector('[data-completed-pool]');
   const activeCards = [...(active?.querySelectorAll('[data-line-card]') ?? [])];
   const doneCards = [...(archive?.querySelectorAll('[data-line-card]') ?? [])];
-  const name = c => c.querySelector('button[aria-expanded] span:nth-of-type(2)')?.textContent?.trim() ?? '?';
+  const name = c => c.querySelector('[data-line-name]')?.textContent?.trim() ?? '?';
   const box = c => c.querySelector('[data-master-checkbox]');
   const steps = c => [...c.querySelectorAll('button[aria-pressed]')];
   const overview = [...root.querySelectorAll('section')].find(s => s.querySelector('h2')?.textContent?.includes('进度概览'));
@@ -130,7 +130,7 @@ async function main() {
   // 1) master checkbox ticks every step and archives the line.
   const firstName = await evaluate(`(() => {
     const card = (${SCOPE}).querySelector('[data-active-pool] [data-line-card]');
-    const name = card.querySelector('button[aria-expanded] span:nth-of-type(2)').textContent.trim();
+    const name = card.querySelector('[data-line-name]').textContent.trim();
     card.querySelector('[data-master-checkbox]').click();
     return name;
   })()`);
@@ -215,7 +215,7 @@ async function main() {
   await sleep(250);
   const manualName = await evaluate(`(() => {
     const card = (${SCOPE}).querySelector('[data-active-pool] [data-line-card]');
-    const name = card.querySelector('button[aria-expanded] span:nth-of-type(2)').textContent.trim();
+    const name = card.querySelector('[data-line-name]').textContent.trim();
     const expand = card.querySelector('button[aria-expanded]');
     if (expand.getAttribute('aria-expanded') === 'false') expand.click();
     return name;

@@ -55,7 +55,7 @@ async function main() {
   };
 
   const snapshot = () => evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const sec = [...o.querySelectorAll('aside section')].find(s => s.querySelector('h2')?.textContent.includes('分类批量操作'));
     const list = sec.querySelector('[data-batch-list]');
     const rows = [...list.querySelectorAll('li button[aria-pressed]')];
@@ -76,7 +76,7 @@ async function main() {
   })()`);
 
   const click = (text) => evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const sec = [...o.querySelectorAll('aside section')].find(s => s.querySelector('h2')?.textContent.includes('分类批量操作'));
     const b = [...sec.querySelectorAll('button')].find(x => x.textContent.trim().startsWith(${JSON.stringify(text)}));
     if (!b) return 'not-found';
@@ -84,7 +84,7 @@ async function main() {
   })()`);
 
   const clickRow = (index) => evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const sec = [...o.querySelectorAll('aside section')].find(s => s.querySelector('h2')?.textContent.includes('分类批量操作'));
     const rows = [...sec.querySelectorAll('[data-batch-list] li button[aria-pressed]')];
     if (!rows[${index}]) return 'no-row';

@@ -65,7 +65,7 @@ async function main() {
   const dump = async (label) => {
     const { result } = await send('Runtime.evaluate', {
       expression: `(() => {
-        const overlay = document.querySelector('div.fixed.inset-0.z-50');
+        const overlay = document.querySelector('[data-tracker-app]');
         const input = overlay.querySelector('input[aria-label="搜索事件池"]');
         const status = [...overlay.querySelectorAll('main p')].find(p => p.textContent.includes('找到') || p.textContent.includes('没有匹配'));
         const cards = [...overlay.querySelectorAll('main [aria-expanded]')];

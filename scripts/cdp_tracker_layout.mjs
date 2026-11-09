@@ -51,7 +51,7 @@ async function main() {
   const dump = async (label) => {
     const { result } = await send('Runtime.evaluate', {
       expression: `(() => {
-        const overlay = document.querySelector('div.fixed.inset-0.z-50');
+        const overlay = document.querySelector('[data-tracker-app]');
         const row = overlay.querySelector('main').parentElement;
         const cols = [...row.children].map(c => {
           const r = c.getBoundingClientRect();
@@ -79,7 +79,7 @@ async function main() {
   // Abandon the first line, exclude the second.
   const acted = await send('Runtime.evaluate', {
     expression: `(() => {
-      const overlay = document.querySelector('div.fixed.inset-0.z-50');
+      const overlay = document.querySelector('[data-tracker-app]');
       const cards = [...overlay.querySelectorAll('main [aria-expanded]')].map(b => b.parentElement.parentElement);
       const clickByText = (card, text) => [...card.querySelectorAll('button')].find(b => b.textContent.trim() === text)?.click();
       clickByText(cards[0], '放弃');
@@ -95,7 +95,7 @@ async function main() {
   // Restore the abandoned line from the right rail.
   const restored = await send('Runtime.evaluate', {
     expression: `(() => {
-      const overlay = document.querySelector('div.fixed.inset-0.z-50');
+      const overlay = document.querySelector('[data-tracker-app]');
       const sec = [...overlay.querySelectorAll('aside section')]
         .find(s => s.querySelector('h2')?.textContent.includes('已放弃'));
       const li = [...sec.querySelectorAll('li')].find(l => l.textContent.includes('放弃'));

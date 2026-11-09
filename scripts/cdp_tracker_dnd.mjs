@@ -59,10 +59,10 @@ async function main() {
   };
 
   const snapshot = () => evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const main = o.querySelector('main');
     const cards = [...main.querySelectorAll('[data-line-card]')];
-    const names = cards.map(c => c.querySelector('button[aria-expanded] span:nth-of-type(2)')?.textContent?.trim() ?? '?');
+    const names = cards.map(c => c.querySelector('[data-line-name]')?.textContent?.trim() ?? '?');
     return JSON.stringify({
       groupHeadings: main.querySelectorAll('h3').length,
       lines: cards.length,
@@ -79,9 +79,9 @@ async function main() {
 
   // Pin the third line via its 置顶 button.
   const pinnedName = await evaluate(`(() => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const cards = [...o.querySelectorAll('main [data-line-card]')];
-    const name = cards[2].querySelector('button[aria-expanded] span:nth-of-type(2)').textContent.trim();
+    const name = cards[2].querySelector('[data-line-name]').textContent.trim();
     const btn = [...cards[2].querySelectorAll('button')].find(b => b.textContent.trim() === '置顶');
     btn.click();
     return name;
@@ -97,7 +97,7 @@ async function main() {
 
   // Drag line #4 onto line #1 area (before it) by dispatching real DragEvents.
   const dragInfo = await evaluate(`(async () => {
-    const o = document.querySelector('div.fixed.inset-0.z-50');
+    const o = document.querySelector('[data-tracker-app]');
     const lis = [...o.querySelectorAll('main li')].filter(li => li.querySelector('[data-line-card]'));
     const src = lis[3], dst = lis[0];
     const handle = src.querySelector('[aria-label="拖拽排序"]');

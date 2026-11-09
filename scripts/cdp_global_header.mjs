@@ -54,7 +54,7 @@ async function main() {
   const snapshot = () => evaluate(`(() => {
     const header = document.querySelector('header');
     const tabs = header ? [...header.querySelectorAll('[role="tab"]')] : [];
-    const overlay = document.querySelector('div.fixed.inset-x-0.bottom-0.top-16');
+    const overlay = document.querySelector('[data-tracker-app]');
     return JSON.stringify({
       hash: location.hash,
       sameHeader: header?.dataset.sharedHeader === 'yes',
@@ -64,8 +64,8 @@ async function main() {
       standaloneTrackerButton: [...(header?.querySelectorAll('button') || [])].some(b => b.textContent.trim() === '事件追踪' && b.getAttribute('role') !== 'tab'),
       overlayTop: overlay ? Math.round(overlay.getBoundingClientRect().top) : null,
       h1: [...document.querySelectorAll('h1')].map(h => h.textContent.trim()).slice(0, 1),
-      trackerVisible: !!document.querySelector('div.fixed.inset-x-0.bottom-0.top-16 main'),
-      resetInContent: !!document.querySelector('div.fixed.inset-x-0.bottom-0.top-16 button') &&
+      trackerVisible: !!document.querySelector('[data-tracker-app] main'),
+      resetInContent: !!document.querySelector('[data-tracker-app] button') &&
         [...document.querySelectorAll('div.fixed.inset-x-0.bottom-0.top-16 button')].some(b => b.textContent.trim() === '重置进度'),
     });
   })()`);
