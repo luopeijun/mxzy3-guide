@@ -7,3 +7,6 @@ dist/
 .DS_Store
 *.log
 .tmp/
+
+# 外部 CG 图鉴素材（136MB 二进制），只在本地参考，不进仓库
+outputs/
