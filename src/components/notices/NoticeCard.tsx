@@ -104,13 +104,9 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
         </dl>
 
         {notice.brief && (
-          // 列表只留两行摘要，全文在右侧详情里；鼠标悬停也能看到整段。
-          <p
-            className="mt-2 line-clamp-2 text-ui-xs leading-[1.75] text-ink-muted"
-            title={notice.brief}
-          >
-            {notice.brief}
-          </p>
+          // 简介整段展开。同页卡片统一高度由 NoticesApp 量完最高的一张传进来，
+          // 短简介的卡片底部留白，角色行靠下的 mt-auto 对齐。
+          <p className="mt-2 text-ui-xs leading-[1.8] text-ink-muted">{notice.brief}</p>
         )}
 
         {roles.length > 0 && (
@@ -134,7 +130,8 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
                   )}
                 >
                   <span className="font-medium">{role.name}</span>
-                  <StarBadge value={starsOf(role)} size="sm" />
+                  {/* 角色行沿用「4★」这种简短写法：五颗星在这里太占宽，一排芯片会被撑开。 */}
+                  <span className="font-semibold tabular-nums text-gold">{starsOf(role)}★</span>
                   {artist && <span className="font-semibold text-brand">{artist}</span>}
                 </span>
               );

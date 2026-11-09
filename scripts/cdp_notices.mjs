@@ -249,7 +249,8 @@ async function main() {
   console.log('STAR5', JSON.stringify({ count: five.countText, cards: five.cards }));
   const stars = await evaluate(`(() => {
     const cards = [...${SCOPE}.querySelectorAll('[data-notice-card]')];
-    return cards.filter(c => c.querySelector('[data-notice-role-chip] [data-star-value="5"]')).length;
+    return cards.filter(c => [...c.querySelectorAll('[data-notice-role-chip]')]
+      .some(chip => (chip.textContent ?? '').includes('5★'))).length;
   })()`);
   if (stars !== five.cards) fail(`只有 ${stars}/${five.cards} 张卡含 5 星角色`);
 

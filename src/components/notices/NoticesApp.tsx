@@ -73,12 +73,17 @@ export default function NoticesApp({ data }: Props) {
 
   // 量当前页所有卡片的自然高度取最大值，再统一设成最小高度。量的是内层内容块
   // 而不是按钮本身：按钮在网格里已经被拉伸过，量它只会量到上一轮的结果。
+  // 量之前先把上一轮写上去的 minHeight 摘掉（同步量、同步还原，不会看到跳动），
+  // 否则量到的是「撑过之后」的高度，翻到简介更短的一页时卡片也缩不回去。
   useLayoutEffect(() => {
     if (view !== 'list') return;
     const box = listRef.current;
     if (!box) return;
+    const cards = [...box.querySelectorAll<HTMLElement>('[data-notice-card]')];
+    const saved = cards.map((card) => card.style.minHeight);
+    for (const card of cards) card.style.minHeight = '0px';
     let tallest = 0;
-    for (const card of box.querySelectorAll<HTMLElement>('[data-notice-card]')) {
+    for (const card of cards) {
       const inner = card.querySelector<HTMLElement>('[data-notice-card-inner]');
       if (!inner) continue;
       const style = window.getComputedStyle(card);
@@ -90,6 +95,9 @@ export default function NoticesApp({ data }: Props) {
       ].reduce((sum, key) => sum + (Number.parseFloat(style[key as 'paddingTop']) || 0), 0);
       tallest = Math.max(tallest, inner.getBoundingClientRect().height + chrome);
     }
+    cards.forEach((card, index) => {
+      card.style.minHeight = saved[index];
+    });
     if (tallest > 0) setCardHeight(Math.ceil(tallest));
   }, [visible, view, measureTick]);
 
