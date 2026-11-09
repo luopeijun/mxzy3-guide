@@ -3,7 +3,7 @@ import { EXCLUSIVE_HINT, difficultyRange, starsOf } from '../../lib/notices';
 import { cn } from '../../lib/cn';
 import StarBadge from './StarBadge';
 import { CATEGORY_STYLE } from './categoryStyle';
-import { companyDot, companyText, timePill } from './infoStyle';
+import { companyDot, companyText, timeMark } from './infoStyle';
 
 interface Props {
   notice: Notice;
@@ -31,8 +31,7 @@ function MetaCell({
   valueClass?: string;
   dotClass?: string;
 }) {
-  // 时间档位用实色白字药丸，四档色相拉开、顺序一眼可辨；其余字段是普通文字。
-  const pill = field === 'time';
+  // 时间档位用彩色文字 + 同色下划线（非药丸），其余字段是普通文字。
   return (
     <div data-notice-meta={field} className="min-w-0 bg-surface-soft px-2 py-1">
       <dt className="flex min-w-0 items-center gap-1 text-ui-2xs text-ink-faint">
@@ -59,12 +58,7 @@ function MetaCell({
           />
         )}
         <span
-          className={cn(
-            pill
-              ? 'inline-flex w-fit items-center rounded-full px-2 py-0.5 text-ui-2xs font-bold'
-              : 'min-w-0 truncate text-ui-xs font-bold',
-            valueClass ?? 'text-ink',
-          )}
+          className={cn('min-w-0 truncate text-ui-xs font-bold', valueClass ?? 'text-ink')}
           title={value}
         >
           {value}
@@ -129,7 +123,7 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
             field="time"
             label="时间"
             value={notice.time ?? '—'}
-            valueClass={timePill(notice.time)}
+            valueClass={timeMark(notice.time)}
           />
           <MetaCell
             field="company"

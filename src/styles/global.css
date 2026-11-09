@@ -74,11 +74,12 @@
   /* Notice metadata — a second family beside the semantic tokens above, so the
      eleven company dots and four time tiers never repeat an existing hue
      (相似但不重复). Company dots sit at S42/L36–44 so the set reads as a single
-     muted palette, hues grouped by industry. The four time tiers are solid
-     pills (white text) — they carry ordinal meaning (第一年→第二年→第三年→特殊),
-     so they get four clearly separated hues that read at a glance and do not
-     collide with the growth-green / alert-red semantic colours. White-on-fill
-     contrast: 4.8 / 4.9 / 5.4 / 6.3. */
+     muted palette, hues grouped by industry. The four time tiers are coloured
+     text + a same-colour underline (no pill — the page already has plenty of
+     pills) carrying ordinal meaning (第一年→第二年→第三年→特殊); they get four
+     clearly separated hues that read at a glance and do not collide with the
+     growth-green / alert-red semantic colours. Text-on-surface contrast: 4.8 /
+     4.9 / 5.4 / 6.3. */
   --color-dot-sosa: #3e6b98;
   --color-dot-yongzhen: #3e8298;
   --color-dot-yueying: #6b3e98;
@@ -94,12 +95,6 @@
   --color-year-2: #b45309;
   --color-year-3: #be123c;
   --color-year-x: #6d28d9;
-  /* 时间档位的反转色：浅色底 + 同色深字，轻量不抢眼（沿用 growth 那种
-     soft 底 + 实色字 的画法）。实色字落在自己的 soft 底上对比 ≥5:1。 */
-  --color-year-1-soft: #d6eef3;
-  --color-year-2-soft: #f6e3c8;
-  --color-year-3-soft: #fadbe1;
-  --color-year-x-soft: #e7defb;
   /* 剧种细分徽章 (连续剧 / 单元剧 / 效果篇) — neutral slate, deliberately off
      every category pill hue; the old tag-scene teal collided with 电视剧. */
   --color-series: #53596e;

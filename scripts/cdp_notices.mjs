@@ -69,9 +69,9 @@ const STATE = `(() => {
     // 卡片上的关键信息：右上角一套星级、类型/时间/公司各一格、角色 chip 若干。
     // 角色 chip 里也各带一套星（难度跟着角色走），所以只要求「每张卡都有」。
     starCards: cards.filter((c) => c.querySelector('[data-star-badge]')).length,
-    // 时间档位用实色药丸着色、公司带索引点、细分徽章用 series 色不再撞电视剧。
+    // 时间档位用彩色文字 + 同色下划线着色、公司带索引点、细分徽章用 series 色不再撞电视剧。
     timeColored: cards.filter((c) =>
-      (c.querySelector('[data-notice-meta="time"] dd span')?.className ?? '').includes('bg-year-'),
+      (c.querySelector('[data-notice-meta="time"] dd span')?.className ?? '').includes('text-year-'),
     ).length,
     companyDots: root.querySelectorAll('[data-notice-company-dot]').length,
     subsOnScene: [...root.querySelectorAll('[data-notice-sub]')].filter((el) =>
