@@ -20,7 +20,7 @@
 - `python scripts/extract_notices.py` → `public/data/notices.json`（约 900KB，运行时 fetch，进入「通告」tab 才加载）。这条管线需要 `pip install openpyxl xlrd`，只有重生成数据时才要，跑站点不需要。
 - 归一后的结构：`notices[]` 每条含 `cat / name / type / time / company / producer / brief`，外加 `roles[]`；唱片与主持没有角色表，用通告行本身合成唯一角色（`征求对象` 即角色名），电影/电视剧/广告的角色按 `通告编号` 回填。
 - 复合特殊要求（`暴力反派`、`反串搞笑丑化`）在脚本里拆成 `specialKinds[]`，前端再按 `specialEffects` 查每天的三项增减。没给数值的（目前只有 `吻戏`）只显示要求本身，不加「无影响」之类的填充文案。
-- **「能力影响」和「特殊要求影响」都是按天结算**：拍摄期间每天各结算一次，拍多少天就结算多少次，所以页面统一用「每天影响」表述，不做总量换算（表里没有天数）。角色表里的 `gains` 优先，缺失时回落到 `grades` 按类型给的数值。注意 `requirements.xlsx` 的「能力影响（每天）」列正好是 `notices.xls` 原值的 1/10（36 → 3.6），两表口径不一致；页面沿用 `notices.xls` 原值，因为它和角色表的几十量级一致。
+- **「能力影响」和「特殊要求影响」都是按天结算**：拍摄期间每天各结算一次，拍多少天就结算多少次，所以页面统一用「每天影响」表述，不做总量换算（表里没有天数）。角色表里的 `gains` 优先，缺失时回落到 `grades` 按类型给的数值。**数值口径**：`notices.xls` 的能力影响是十位数量级（36 / 48），游戏内每天实际结算的是它的 1/10（3.6 / 4.8），与 `requirements.xlsx` 的「能力影响（每天）」列逐格相符（203 格全是精确 ÷10）。所以 `extract_notices.py` 用 `daily()` 统一乘以 `GAIN_SCALE = 0.1` 再落盘，JSON 里存的就是游戏内数值；`叛逆 / 性感 / 亲和` 三列是接演门槛，不参与换算。改口径只需动这一个常量。
 - `说明` 表除难度对照外还有几段散文（独家代理限制、S/L 刷属性、数据来源），脚本按「整行只有一个非空单元格且够长」筛成 `notes[]`，在「能力对照」页末尾照录；`取消隐藏即可重新显示` 那句是对着 Excel 说的，直接跳过。
 - **能力要求不在数据里展开**：`grades`（类型 × 对象 → A/B/C/D）与 `scale`（星级 × 字母 → 区间）分开存，前端用 `requirementsFor()` 现算，换算法不用重生成 JSON。区间的正确性由 `scripts/test_notices.py` 兜底——它把 1100 多个「类型/对象/能力/星级」组合与原 xlsx 逐一比对，必须完全一致。
 
@@ -78,7 +78,7 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（29 项）+ 通告数据（11 项） |
+| `npm run test:guide` | Python 回归测试：攻略解析（29 项）+ 通告数据（13 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 
 **解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
