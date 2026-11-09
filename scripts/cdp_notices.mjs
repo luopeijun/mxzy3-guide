@@ -43,8 +43,12 @@ const STATE = `(() => {
       title: detail.querySelector('h2')?.textContent?.trim() ?? null,
       roles: detail.querySelectorAll('[data-notice-role]').length,
       hasRequirements: detail.textContent.includes('能力要求'),
-      hasGains: detail.textContent.includes('每日影响'),
+      hasGains: detail.textContent.includes('每天影响'),
       hasSpecial: !!detail.querySelector('[data-notice-special]'),
+      dailyBlocks: detail.querySelectorAll('[data-notice-daily]').length,
+      dailySpecial: detail.querySelectorAll('[data-notice-daily-special]').length,
+      // 「每天影响」里不许再出现按天打折的旧文案（「/ 天」挂在数字后面读着像比率）。
+      staleDailyWording: /\\d\\s*\\/\\s*天/.test(detail.textContent),
     } : null,
     catChips: root.querySelectorAll('[data-notice-cat]').length,
     more: !!root.querySelector('[data-notice-more]'),
@@ -145,8 +149,10 @@ async function main() {
   console.log('AD_SEARCH', JSON.stringify(ad.detail));
   if (ad.detail?.title !== '我冰棒') fail('search did not land on 我冰棒, got ' + ad.detail?.title);
   if (!ad.detail.hasRequirements) fail('advert detail is missing 能力要求');
-  if (!ad.detail.hasGains) fail('advert detail is missing 每日影响 (reference-table fallback)');
+  if (!ad.detail.hasGains) fail('advert detail is missing 每天影响 (reference-table fallback)');
   if (!(ad.detail.roles >= 1)) fail('advert detail rendered no roles');
+  if (!(ad.detail.dailyBlocks >= 1)) fail('no 每天影响 block rendered');
+  if (ad.detail.staleDailyWording) fail('每天影响里还留着「/ 天」的旧写法');
 
   // 6. Reset restores everything.
   await click('[data-notice-reset]');
