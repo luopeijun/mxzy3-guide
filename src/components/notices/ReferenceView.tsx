@@ -67,14 +67,15 @@ function gainText(gains: Record<string, number> | undefined): string[] {
 
 /** 专辑明细表的合并单元格：被上方 rowSpan 覆盖的行该格缺省，直接跳过。
  *  这张表合并块多，用完整网格线（而非只画横线）才读得清哪个区间属于哪几行。 */
-function AlbumTd({ cell }: { cell?: AlbumCell }) {
+function AlbumTd({ cell, colSpan }: { cell?: AlbumCell; colSpan?: number }) {
   if (!cell) return null;
   return (
     <td
       rowSpan={cell.span ?? 1}
+      colSpan={colSpan}
       className="border border-line px-2 py-1.5 text-center align-middle text-ink-muted"
     >
-      {cell.v}
+      {cell.v || null}
     </td>
   );
 }
@@ -268,15 +269,15 @@ export default function ReferenceView({ data }: Props) {
           <NoteCard
             name="album"
             tone="bg-tag-follow"
-            title="第一年个人/团体舞曲、另类数值要求"
-            hint="红字与「团体」徽章为团体通告；合并格表示同档专辑共享同一区间，动感与体能两列在原表共用一格。"
+            title="第一年个人/团体舞曲、另类通告数值要求"
+            hint="红字专辑为团体通告；「—」为原表留空记号（无要求）；合并格表示同档专辑共享同一区间。"
             className="min-[1240px]:col-span-2"
           >
             <div className="mt-2.5 overflow-x-auto">
-              <table data-album-table className="w-full min-w-[720px] text-ui-2xs">
+              <table data-album-table className="w-full min-w-[780px] text-ui-2xs">
                 <thead>
                   <tr>
-                    {['专辑', '类别', '难度', '特殊', '公司', '歌艺', '口才', '动感/体能', '自信'].map(
+                    {['专辑名称', '类别', '难度', '特殊', '公司', '歌艺', '口才', '动感', '体能', '自信'].map(
                       (label, index) => (
                         <th
                           key={label}
@@ -301,11 +302,6 @@ export default function ReferenceView({ data }: Props) {
                         )}
                       >
                         {row.name}
-                        {row.group && (
-                          <span className="ml-1.5 inline-flex items-center rounded-[3px] bg-alert-soft px-1 py-px align-middle text-[10px] font-semibold leading-[1.5] text-alert">
-                            团体
-                          </span>
-                        )}
                       </td>
                       <AlbumTd cell={row.cat} />
                       <AlbumTd cell={row.diff} />
@@ -313,7 +309,7 @@ export default function ReferenceView({ data }: Props) {
                       <AlbumTd cell={row.company} />
                       <AlbumTd cell={row.sing} />
                       <AlbumTd cell={row.mouth} />
-                      <AlbumTd cell={row.move} />
+                      <AlbumTd cell={row.move} colSpan={2} />
                       <AlbumTd cell={row.conf} />
                     </tr>
                   ))}

@@ -55,8 +55,10 @@ export const DEBUT_GROUPS: DebutGroup[] = [
   },
 ];
 
-/** 第一年个人/团体舞曲、另类通告数值要求。合并单元格按原表用 rowSpan 还原：
- *  带 span 的格在后续 span-1 行缺省（渲染时跳过），v 为区间或文字。 */
+/** 第一年个人/团体舞曲、另类通告数值要求（按原表逐格还原）。合并单元格用
+ *  rowSpan 表达：带 span 的格在其后 span-1 行缺省（渲染时跳过）；`v: ''` 表示
+ *  原表留空（渲染空格子），`v: '—'` 是原表的破折号记号。动感/体能两列数值恒
+ *  相同，渲染成 colSpan=2 的一格。每列的 span 合计必须等于总行数（22），否则串行。 */
 export interface AlbumCell {
   v: string;
   span?: number;
@@ -71,31 +73,36 @@ export interface AlbumRow {
   company?: AlbumCell;
   sing?: AlbumCell;
   mouth?: AlbumCell;
-  /** 动感/体能两列在原表共享同一区间，合并成一格。 */
+  /** 动感+体能：原表两列共享同一区间，渲染时 colSpan=2。 */
   move?: AlbumCell;
   conf?: AlbumCell;
 }
 
 export const ALBUM_ROWS: AlbumRow[] = [
-  { name: '现在开始', cat: { v: '舞曲', span: 2 }, diff: { v: '1', span: 2 }, company: { v: 'EAMI', span: 2 }, sing: { v: '150-250' }, move: { v: '180-300', span: 2 }, conf: { v: '150-250' } },
-  { name: '信与不信', group: true, mouth: { v: '120-200' }, conf: { v: '180-300' } },
-  { name: '我就是浑，怎样?', cat: { v: '舞曲', span: 2 }, diff: { v: '2', span: 2 }, special: { v: '叛逆' }, company: { v: '日月光' }, sing: { v: '280-360', span: 2 }, move: { v: '320-400', span: 2 }, conf: { v: '280-360', span: 2 } },
-  { name: 'Song for you', group: true, company: { v: 'EAMI' } },
-  { name: '一千零一夜', cat: { v: '另类', span: 6 }, diff: { v: '3', span: 12 }, company: { v: '日月光', span: 9 }, sing: { v: '360-420', span: 6 }, mouth: { v: '270-330', span: 6 }, conf: { v: '420-480', span: 6 } },
-  { name: '鸡心绝对' },
-  { name: '流氓英雄', special: { v: '叛逆' } },
-  { name: '顶港尚出名' },
-  { name: '永恒的爱', group: true },
-  { name: '说比唱好听', group: true },
-  { name: '卖造', cat: { v: '舞曲', span: 6 }, move: { v: '420-480', span: 6 }, conf: { v: '360-420', span: 6 } },
+  // 难度 1
+  { name: '现在开始', cat: { v: '舞曲' }, diff: { v: '1', span: 2 }, special: { v: '—', span: 2 }, company: { v: 'EAMI', span: 2 }, sing: { v: '150-250', span: 2 }, mouth: { v: '' }, move: { v: '180-300' }, conf: { v: '150-250' } },
+  { name: '信与不信', group: true, cat: { v: '另类' }, mouth: { v: '120-200' }, move: { v: '—' }, conf: { v: '180-300' } },
+  // 难度 2
+  { name: '我就是浑，怎样?', cat: { v: '舞曲', span: 2 }, diff: { v: '2', span: 2 }, special: { v: '叛逆' }, company: { v: '日月光' }, sing: { v: '280-360', span: 2 }, mouth: { v: '—', span: 2 }, move: { v: '320-400', span: 2 }, conf: { v: '280-360', span: 2 } },
+  { name: 'Song for you', group: true, special: { v: '—', span: 3 }, company: { v: 'EAMI' } },
+  // 难度 3 · 另类（歌艺/口才/自信成组，动感/体能留空）
+  { name: '一千零一夜', cat: { v: '另类', span: 6 }, diff: { v: '3', span: 13 }, company: { v: '日月光', span: 9 }, sing: { v: '360-420', span: 13 }, mouth: { v: '270-330', span: 6 }, move: { v: '' }, conf: { v: '420-480', span: 6 } },
+  { name: '鸡心绝对', move: { v: '' } },
+  { name: '流氓英雄', special: { v: '叛逆' }, move: { v: '' } },
+  { name: '顶港尚出名', special: { v: '—', span: 15 }, move: { v: '' } },
+  { name: '永恒的爱', group: true, move: { v: '' } },
+  { name: '说比唱好听', group: true, move: { v: '' } },
+  // 难度 3 · 舞曲
+  { name: '卖造', cat: { v: '舞曲', span: 6 }, mouth: { v: '—', span: 6 }, move: { v: '420-480', span: 6 }, conf: { v: '360-420', span: 6 } },
   { name: '馒头夹蛋' },
   { name: '算了吧', group: true },
   { name: '世纪赌徒', company: { v: 'EAMI', span: 2 } },
   { name: '难耐的妩媚' },
   { name: '糗事一箩筐', group: true, company: { v: '京风' } },
-  { name: '超级口水歌', cat: { v: '另类', span: 1 }, diff: { v: '4', span: 6 }, company: { v: '日月光', span: 2 }, mouth: { v: '400-450' }, conf: { v: '500-600' } },
-  { name: '我的妈妈呀!', group: true, cat: { v: '舞曲', span: 5 } },
-  { name: '冷酷的灵魂', company: { v: '京风', span: 4 }, sing: { v: '450-520', span: 5 }, move: { v: '500-600', span: 5 }, conf: { v: '450-520', span: 5 } },
+  { name: '超级口水歌', cat: { v: '另类' }, company: { v: '日月光', span: 2 }, mouth: { v: '400-450' }, move: { v: '' }, conf: { v: '500-600' } },
+  // 难度 4 · 舞曲
+  { name: '我的妈妈呀!', group: true, cat: { v: '舞曲', span: 5 }, diff: { v: '4', span: 5 }, sing: { v: '450-520', span: 5 }, mouth: { v: '—', span: 5 }, move: { v: '500-600', span: 5 }, conf: { v: '450-520', span: 5 } },
+  { name: '冷酷的灵魂', company: { v: '京风', span: 4 } },
   { name: '蛇蝎女子' },
   { name: '跳舞吧!' },
   { name: '抢抢滚' },
