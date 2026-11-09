@@ -71,6 +71,34 @@
   --color-growth-soft: #eef8f2;
   --color-growth-line: #c2e0d0;
 
+  /* Notice metadata — a second family beside the semantic tokens above, so the
+     eleven company dots and four time tiers never repeat an existing hue
+     (相似但不重复). All of them share one muted formula — company dots sit at
+     S42/L36–44 so the set reads as a single palette; hues are grouped by
+     industry (TV cool blues, music purples, film reds, ads gold-browns,
+     agencies green/violet). Dots are 6px markers, so contrast rules do not
+     apply to them; the time tiers are 12.5px text and sit at L21–30 to clear
+     4.5:1 on the card surface (4.6 / 4.6 / 5.0 / 4.8 measured). */
+  --color-dot-sosa: #3e6b98;
+  --color-dot-yongzhen: #3e8298;
+  --color-dot-yueying: #6b3e98;
+  --color-dot-eami: #983e98;
+  --color-dot-jingfeng: #983e6b;
+  --color-dot-quanqiu: #8a3848;
+  --color-dot-dazhou: #984a3e;
+  --color-dot-chuangyi: #98913e;
+  --color-dot-zhuimeng: #825935;
+  --color-dot-aoxiang: #3e985c;
+  --color-dot-juzi: #615a87;
+  --color-year-1: #1d4e3f;
+  --color-year-2: #594318;
+  --color-year-3: #712832;
+  --color-year-x: #464054;
+  /* 剧种细分徽章 (连续剧 / 单元剧 / 效果篇) — neutral slate, deliberately off
+     every category pill hue; the old tag-scene teal collided with 电视剧. */
+  --color-series: #53596e;
+  --color-series-soft: #e8eaf3;
+
   /* Type scale — one step larger than before for comfortable reading */
   --text-ui-2xs: 12px;
   --text-ui-xs: 13px;

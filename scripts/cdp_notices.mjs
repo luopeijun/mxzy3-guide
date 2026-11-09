@@ -69,6 +69,14 @@ const STATE = `(() => {
     // 卡片上的关键信息：右上角一套星级、类型/时间/公司各一格、角色 chip 若干。
     // 角色 chip 里也各带一套星（难度跟着角色走），所以只要求「每张卡都有」。
     starCards: cards.filter((c) => c.querySelector('[data-star-badge]')).length,
+    // 时间按档位着色、公司带索引点、细分徽章用 series 色不再撞电视剧。
+    timeColored: cards.filter((c) =>
+      (c.querySelector('[data-notice-meta="time"] dd span')?.className ?? '').includes('text-year-'),
+    ).length,
+    companyDots: root.querySelectorAll('[data-notice-company-dot]').length,
+    subsOnScene: [...root.querySelectorAll('[data-notice-sub]')].filter((el) =>
+      /text-tag-scene/.test(el.className),
+    ).length,
     starFull: cards.every((c) => (c.querySelector('[data-star-badge]')?.textContent ?? '').length === 5),
     metaCells: cards.every((c) => c.querySelectorAll('[data-notice-meta]').length === 3),
     // 同页卡片必须等高，任何一组不同就说明撑高逻辑坏了。
@@ -144,6 +152,11 @@ async function main() {
     fail(`星级 ${initial.starCards}/${initial.cards} 张卡上缺失`);
   if (!initial.starFull) fail('星级应该是五颗星的星条，不是只有数字');
   if (!initial.metaCells) fail('卡片缺少 类型/时间/公司 三格元信息');
+  if (initial.timeColored !== initial.cards)
+    fail(`时间档位色 ${initial.timeColored}/${initial.cards} 张卡缺失`);
+  if (initial.companyDots !== initial.cards)
+    fail(`公司索引点 ${initial.companyDots}/${initial.cards} 张卡缺失`);
+  if (initial.subsOnScene > 0) fail('剧种细分徽章还在用电视剧的 scene 色');
   if (initial.catChips !== 5) fail('expected 5 category chips, got ' + initial.catChips);
   if (!initial.detail) fail('the detail panel did not render');
   if (initial.detail.title !== '舞动人生') fail('detail should default to the first notice, got ' + initial.detail.title);
