@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { TaskLine, TaskStep } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
 import TypeTag from '../TypeTag';
+import MarkText from './MarkText';
 
 interface Props {
   line: TaskLine;
+  /** Step indices that hit the search; null = show every step. */
+  matched?: Set<number> | null;
+  /** Current search query, used for highlighting and auto-expanding. */
+  query?: string;
 }
 
 /** 子事件编号（3-1 / 3-1-1）的层级 = `－`/`-` 的个数，用来做缩进，和攻略正文一致。 */
@@ -15,10 +20,12 @@ function stepDepth(label: string): number {
 
 /** 一条事件：勾选框 + 玫红编号 pill + 类型 tag + 正文，与攻略正文的事件卡同一套观感。
  *  整行可点即切换完成，CG 事件用玫红描边 + 浅粉底。 */
-function StepRow({ lineId, step }: { lineId: string; step: TaskStep }) {
+function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; query: string }) {
   const { isDone, toggleStep } = useTracker();
   const done = isDone(lineId, step.index);
   const depth = stepDepth(step.label);
+  const needle = query.trim().toLowerCase();
+  const hit = (value: string) => needle.length > 0 && value.toLowerCase().includes(needle);
 
   return (
     <button
@@ -46,19 +53,26 @@ function StepRow({ lineId, step }: { lineId: string; step: TaskStep }) {
           className={cn(
             'mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7]',
             step.cg ? 'bg-brand text-white' : 'bg-brand-soft text-brand-strong',
+            hit(step.label) && 'ring-2 ring-gold',
           )}
         >
           {step.label}
         </span>
       )}
       <span className="min-w-0 flex-1 text-ui-sm leading-[1.85] break-words">
-        {step.tag && <TypeTag label={step.tag} />}
+        {step.tag && (
+          <span className={cn(hit(step.tag) && 'rounded-full ring-2 ring-gold')}>
+            <TypeTag label={step.tag} />
+          </span>
+        )}
         {step.cg && (
           <span className="mr-1.5 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] align-middle text-ui-2xs font-bold leading-[1.6] text-gold">
             CG
           </span>
         )}
-        <span className={done ? 'text-ink-faint line-through' : 'text-ink'}>{step.text}</span>
+        <span className={done ? 'text-ink-faint line-through' : 'text-ink'}>
+          <MarkText text={step.text} query={query} />
+        </span>
       </span>
     </button>
   );
@@ -66,7 +80,7 @@ function StepRow({ lineId, step }: { lineId: string; step: TaskStep }) {
 
 /** One task line: a progress bar plus an expandable list of triggerable steps.
  *  The line itself can be 放弃 (kept but dimmed) or 移出池子 (hidden). */
-export default function TaskLineCard({ line }: Props) {
+export default function TaskLineCard({ line, matched = null, query = '' }: Props) {
   const { getLine, setLineStatus } = useTracker();
   const state = getLine(line.id);
   const abandoned = (state?.status ?? 'active') === 'abandoned';
@@ -76,6 +90,13 @@ export default function TaskLineCard({ line }: Props) {
   const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
   // 已有进度的线默认展开，回来接着上次的位置点。
   const [open, setOpen] = useState(() => (state?.done?.length ?? 0) > 0);
+  const steps = matched ? line.steps.filter((step) => matched.has(step.index)) : line.steps;
+
+  // 搜索时自动展开，让命中的事件直接可见；退出搜索后回到「有进度才展开」的默认态。
+  useEffect(() => {
+    if (query.trim()) setOpen(true);
+    else setOpen((state?.done?.length ?? 0) > 0);
+  }, [query]);
 
   return (
     <div
@@ -98,10 +119,17 @@ export default function TaskLineCard({ line }: Props) {
           >
             ▸
           </span>
-          <span className="min-w-0 truncate text-ui-sm font-semibold text-ink">{line.name}</span>
+          <span className="min-w-0 truncate text-ui-sm font-semibold text-ink">
+            <MarkText text={line.name} query={query} />
+          </span>
           {abandoned && (
             <span className="shrink-0 rounded-full bg-missing-soft px-2 py-0.5 text-ui-2xs text-missing">
               已放弃
+            </span>
+          )}
+          {matched && (
+            <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs text-gold">
+              命中 {matched.size} 个事件
             </span>
           )}
         </button>
@@ -139,9 +167,9 @@ export default function TaskLineCard({ line }: Props) {
       {open && (
         <div className="border-t border-line px-4 py-3">
           <ul className="flex flex-col gap-2">
-            {line.steps.map((step) => (
+            {steps.map((step) => (
               <li key={step.index}>
-                <StepRow lineId={line.id} step={step} />
+                <StepRow lineId={line.id} step={step} query={query} />
               </li>
             ))}
           </ul>
