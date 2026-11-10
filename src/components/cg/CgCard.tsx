@@ -52,11 +52,29 @@ export default function CgCard({ item, collected, group, onToggle, onOpen }: Pro
             </span>
           )}
         </button>
+        <button
+          type="button"
+          data-cg-toggle
+          aria-pressed={collected}
+          aria-label={`${collected ? '取消收集' : '标记已收集'} ${item.code} ${item.name}`}
+          title={collected ? '取消收集' : '标记已收集'}
+          onClick={onToggle}
+          className={cn(
+            'absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full text-ui-sm ring-2 ring-surface transition-colors',
+            collected
+              ? 'bg-brand text-white'
+              : 'border-2 border-ink-faint bg-surface/95 hover:border-brand',
+          )}
+        >
+          {collected ? '✓' : ''}
+        </button>
+      </div>
+      <div className="flex min-w-0 items-center gap-1.5 px-2.5 py-2.5">
         {group && (
           <span
             data-cg-group-tag
             data-cg-group-name={group.name}
-            className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[calc(100%-3.25rem)] items-center gap-1 rounded-full border border-line bg-surface/90 py-0.5 pl-0.5 pr-2 shadow-soft"
+            className="pointer-events-none inline-flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-2"
           >
             {group.avatar ? (
               <img
@@ -78,24 +96,6 @@ export default function CgCard({ item, collected, group, onToggle, onOpen }: Pro
             <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
           </span>
         )}
-        <button
-          type="button"
-          data-cg-toggle
-          aria-pressed={collected}
-          aria-label={`${collected ? '取消收集' : '标记已收集'} ${item.code} ${item.name}`}
-          title={collected ? '取消收集' : '标记已收集'}
-          onClick={onToggle}
-          className={cn(
-            'absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full text-ui-sm ring-2 ring-surface transition-colors',
-            collected
-              ? 'bg-brand text-white'
-              : 'border-2 border-ink-faint bg-surface/95 hover:border-brand',
-          )}
-        >
-          {collected ? '✓' : ''}
-        </button>
-      </div>
-      <div className="flex min-w-0 items-baseline gap-1.5 px-2.5 py-2.5">
         <span className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
         <span className="truncate text-ui-2xs text-ink" title={item.name}>{item.name}</span>
       </div>
