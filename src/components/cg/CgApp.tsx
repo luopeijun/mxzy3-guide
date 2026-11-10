@@ -3,7 +3,7 @@ import { cn } from '../../lib/cn';
 import { readCg, writeCg, CG_CHANGED_EVENT } from '../../lib/cg';
 import { buildCgGuideLinks, cgGuideHref, cgGuideTitle } from '../../lib/cgLinks';
 import type { CgGuideLink } from '../../lib/cgLinks';
-import { cgItemId } from '../../hooks/useHashSelection';
+import { cgGroupId, cgItemId, rememberCgGroup, writeCgGroupHash } from '../../hooks/useHashSelection';
 import { useGuideContext } from '../../hooks/useGuideContext';
 import type { CgData, CgItem } from '../../types/cg';
 import CgCard from './CgCard';
@@ -97,7 +97,8 @@ function GroupAvatar(
 export default function CgApp({ data }: Props) {
   const validIds = useMemo(() => new Set(data.items.map((item) => item.id)), [data.items]);
   const [collected, setCollected] = useState<Set<string>>(() => readCg(validIds));
-  const [groupId, setGroupId] = useState('all');
+  /** 分组记在 URL 里（`#/cg/group/<id>`），刷新、复制链接回来还是同一个人物。 */
+  const [groupId, setGroupId] = useState(() => cgGroupId() || 'all');
   const [onlyMissing, setOnlyMissing] = useState(false);
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
@@ -213,12 +214,43 @@ export default function CgApp({ data }: Props) {
     return flashCard(item.id);
   }, [focusId, data.items]);
 
-  // 从攻略点另一张 CG 回来时组件不会重新挂载，靠 hashchange 更新落点。
+  // 从攻略点另一张 CG 回来时组件不会重新挂载，靠 hashchange 更新落点；
+  // 手改 / 粘贴 `#/cg/group/<id>` 也走这条同步，不必刷新。
   useEffect(() => {
-    const onChange = () => setFocusId(cgItemId());
+    const onChange = () => {
+      const id = cgItemId();
+      const group = cgGroupId();
+      setFocusId(id);
+      if (group) {
+        setGroupId(group);
+        setOnlyMissing(false);
+        return;
+      }
+      if (!id) {
+        setGroupId('all');
+        return;
+      }
+      const item = data.items.find((entry) => entry.id === id);
+      if (item) {
+        setGroupId(item.groupId);
+        setOnlyMissing(false);
+      }
+    };
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
-  }, []);
+  }, [data.items]);
+
+  // 记住这次看的分组：切去攻略再点「CG 图鉴」回来，还是这一个人物。
+  useEffect(() => {
+    rememberCgGroup(groupId);
+  }, [groupId]);
+
+  // 分组 id 认不出来（手改坏 / 旧链接）就退回「全部」，别让侧栏一个都不高亮。
+  useEffect(() => {
+    if (groupId === 'all' || data.groups.some((group) => group.id === groupId)) return;
+    setGroupId('all');
+    writeCgGroupHash('all');
+  }, [groupId, data.groups]);
 
   const groupById = useMemo(
     () => new Map(data.groups.map((group) => [group.id, group])),
@@ -262,6 +294,12 @@ export default function CgApp({ data }: Props) {
     ? Math.round((collected.size / data.items.length) * 100)
     : 0;
 
+  /** 切分组：状态与 URL 一起改，刷新后仍停在这一组。 */
+  const selectGroup = (id: string) => {
+    setGroupId(id);
+    writeCgGroupHash(id);
+  };
+
   const groupButton = (
     id: string, name: string, total: number, done: number,
     avatar?: string, aggregate?: boolean,
@@ -274,7 +312,7 @@ export default function CgApp({ data }: Props) {
         data-cg-group
         data-cg-group-id={id}
         aria-pressed={active}
-        onClick={() => setGroupId(id)}
+        onClick={() => selectGroup(id)}
         className={cn(
           'flex w-full items-center justify-between gap-2 rounded-ui-sm px-2.5 py-1.5 text-ui-xs transition-colors',
           'tab:w-auto tab:shrink-0 tab:whitespace-nowrap',

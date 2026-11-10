@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GuideData } from './types/guide';
 import type { ReorderRequest } from './lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
-import { isCgRoute, isNoticesRoute, isTrackerRoute, guideNodeId, useHashSelection } from './hooks/useHashSelection';
+import { isCgRoute, isNoticesRoute, isTrackerRoute, guideNodeId, useHashSelection, cgTabHash } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
 import { useNoticeData } from './hooks/useNoticeData';
 import { useCgData } from './hooks/useCgData';
@@ -289,7 +289,8 @@ export default function App() {
   };
 
   const openCg = () => {
-    window.location.hash = '/cg';
+    // 带上上次看的分组，别每次都复位到「全部」。
+    window.location.hash = cgTabHash();
   };
 
   return (
