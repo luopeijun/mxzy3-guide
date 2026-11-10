@@ -56,6 +56,9 @@ export default function CgApp({ data }: Props) {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
+  /** 清空前的快照：误点一次不用先导出也能退回来，仅存活在本次页面会话里。 */
+  const [clearedSnapshot, setClearedSnapshot] = useState<Set<string> | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   // A save import writes the CG collection straight to localStorage and fires
@@ -67,13 +70,15 @@ export default function CgApp({ data }: Props) {
   }, [validIds]);
 
   useEffect(() => {
-    if (!archiveOpen) return;
+    if (!archiveOpen && !clearOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setArchiveOpen(false);
+      if (event.key !== 'Escape') return;
+      setArchiveOpen(false);
+      setClearOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [archiveOpen]);
+  }, [archiveOpen, clearOpen]);
 
   const toggle = (id: string) => {
     setCollected((previous) => {
@@ -83,6 +88,24 @@ export default function CgApp({ data }: Props) {
       writeCg(next);
       return next;
     });
+  };
+
+  /** 只清空 CG 收集：`guide.progress.v1`（事件追踪）与 `guide.memo.v1`（备忘录）
+   *  都各自独立存储，这里不碰，重置追踪进度也不会反过来清掉 CG。 */
+  const clearAll = () => {
+    const previous = collected;
+    const empty = new Set<string>();
+    writeCg(empty);
+    setCollected(empty);
+    setClearedSnapshot(previous.size > 0 ? previous : null);
+    setClearOpen(false);
+  };
+
+  const undoClear = () => {
+    if (!clearedSnapshot) return;
+    writeCg(clearedSnapshot);
+    setCollected(clearedSnapshot);
+    setClearedSnapshot(null);
   };
 
   const openLightbox = (id: string, ids: string[], trigger: HTMLButtonElement) => {
@@ -197,9 +220,11 @@ export default function CgApp({ data }: Props) {
           共 {data.meta.itemCount} 张 · {data.meta.groupCount} 个分组
           {data.meta.missingImageCount > 0 && ` · ${data.meta.missingImageCount} 张站点未提供图片`}
         </span>
-        <div className="ml-auto flex items-center gap-2.5 text-ui-2xs tabular-nums text-ink-faint">
-          <span data-cg-progress>已收集 {collected.size} / {data.items.length}</span>
-          <span className="h-1.5 w-28 overflow-hidden rounded-full bg-line">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1.5 text-ui-2xs tabular-nums text-ink-faint">
+          <span data-cg-progress className="shrink-0 whitespace-nowrap">
+            已收集 {collected.size} / {data.items.length}
+          </span>
+          <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-line phone:hidden">
             <span
               className="block h-full rounded-full bg-brand transition-[width] duration-200"
               style={{ width: `${percent}%` }}
@@ -209,9 +234,23 @@ export default function CgApp({ data }: Props) {
             type="button"
             data-cg-archive
             onClick={() => setArchiveOpen(true)}
-            className="rounded-full border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            className="shrink-0 whitespace-nowrap rounded-full border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
           >
             全部存档
+          </button>
+          <button
+            type="button"
+            data-cg-clear
+            disabled={collected.size === 0}
+            onClick={() => setClearOpen(true)}
+            className={cn(
+              'shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-ui-2xs transition-colors',
+              collected.size === 0
+                ? 'cursor-not-allowed border-line/60 text-ink-faint/60'
+                : 'border-line text-ink-muted hover:border-missing hover:text-missing',
+            )}
+          >
+            清除已收集
           </button>
         </div>
       </div>
@@ -328,6 +367,76 @@ export default function CgApp({ data }: Props) {
           >
             <SaveArchivePanel />
           </div>
+        </div>
+      )}
+
+      {clearOpen && (
+        <div
+          data-cg-clear-modal
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 py-6"
+          onClick={() => setClearOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cg-clear-title"
+            className="w-full max-w-[420px] rounded-ui-md border border-line bg-surface p-5 shadow-soft"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="cg-clear-title" className="text-ui-md font-bold text-ink">
+              清除全部已收集？
+            </h2>
+            <p className="mt-2.5 text-ui-xs leading-[1.8] text-ink-muted">
+              会取消当前已收集的 {collected.size} 张（共 {data.items.length} 张）的勾选。
+              只清空 CG 收集，事件追踪进度与备忘录都不受影响；想留底的话，先在「全部存档」导出。
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                data-cg-clear-confirm
+                onClick={clearAll}
+                className="flex-1 rounded-ui-sm border border-missing bg-missing-soft px-3 py-2 text-ui-xs font-semibold text-missing transition-colors hover:border-missing"
+              >
+                确认清除
+              </button>
+              <button
+                type="button"
+                data-cg-clear-cancel
+                onClick={() => setClearOpen(false)}
+                className="flex-1 rounded-ui-sm border border-line px-3 py-2 text-ui-xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {clearedSnapshot && (
+        <div
+          data-cg-clear-undo-toast
+          className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border border-gold-line bg-gold-soft px-4 py-2 shadow-soft"
+        >
+          <span className="text-ui-xs text-gold">
+            已清除 {clearedSnapshot.size} 张收集记录
+          </span>
+          <button
+            type="button"
+            data-cg-clear-undo
+            onClick={undoClear}
+            className="rounded-ui-xs border border-gold-line bg-surface px-2.5 py-1 text-ui-xs font-semibold text-gold transition-colors hover:border-gold"
+          >
+            撤销
+          </button>
+          <button
+            type="button"
+            data-cg-clear-undo-dismiss
+            onClick={() => setClearedSnapshot(null)}
+            aria-label="关闭"
+            className="text-ui-2xs text-gold/70 transition-colors hover:text-gold"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>
