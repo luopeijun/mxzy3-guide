@@ -72,7 +72,7 @@ export default function Sidebar({
               恢复默认顺序
             </button>
           ) : (
-            <span className="text-ui-2xs text-ink-faint">4 大类</span>
+            <span className="text-ui-2xs text-ink-faint">{categories.length} 大类</span>
           )}
         </div>
         <SearchBox value={query} onChange={onQueryChange} />

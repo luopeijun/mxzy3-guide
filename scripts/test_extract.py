@@ -185,8 +185,38 @@ class TestParserBuild(unittest.TestCase):
         return None
 
     # --- structural invariants -------------------------------------------- #
-    def test_four_categories(self):
-        self.assertEqual(len(self.data["categories"]), 4)
+    def test_category_order(self):
+        # 「路欧桑剧情整理」提升成独立类目：夹在「艺人事件簿」和「六大特殊通告」之间。
+        self.assertEqual(
+            [(c["id"], c["title"]) for c in self.data["categories"]],
+            [
+                ("game-guide", "经纪人事件簿"),
+                ("characters", "艺人事件簿"),
+                ("other-events/luousang", "路欧桑剧情整理"),
+                ("notices", "六大特殊通告"),
+                ("other-events", "其他事件"),
+            ],
+        )
+
+    def test_luousang_moved_out_of_other_events(self):
+        by_id = {c["id"]: c for c in self.data["categories"]}
+        other = by_id["other-events"]
+        self.assertNotIn(
+            "other-events/luousang", [n["id"] for n in other["children"]],
+            msg="路欧桑剧情整理还留在「其他事件」里",
+        )
+        luousang = by_id["other-events/luousang"]
+        self.assertEqual(
+            [n["id"] for n in luousang["children"]],
+            [
+                "other-events/luousang/only-sanghebei",
+                "other-events/luousang/only-ouyiqing",
+                "other-events/luousang/only-lufeng",
+                "other-events/luousang/lufeng-sanghebei",
+                "other-events/luousang/lufeng-ouyiqing",
+            ],
+            msg="五条分支的 id 不能跟着搬家改掉（追踪器与 CG 落点都按它们找）",
+        )
 
     def test_unique_node_ids(self):
         ids = [n.get("id") for n in self._walk(self.data["categories"])]

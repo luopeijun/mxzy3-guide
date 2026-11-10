@@ -2762,6 +2762,14 @@ def build(
         ),
     ]
 
+    # 「路欧桑剧情整理」不再是「其他事件」的最后一条：五条分支覆盖三位艺人的全部
+    # 感情线，是三线交叉判定的主入口，埋在「其他事件」末尾太难找。改成独立类目、
+    # 排在「艺人事件簿」下面（见 categories）。id / 子节点 id 都保持原样，
+    # 老书签、CG 页面级落点、追踪器的分支 id 都不用动。
+    luousang_item = other_items.pop(
+        next(i for i, item in enumerate(other_items) if item["id"] == "other-events/luousang")
+    )
+
     categories = [
         make_node(
             "game-guide", "经纪人事件簿",
@@ -2773,6 +2781,8 @@ def build(
             source_title="全角色事件攻略",
             children=character_items,
         ),
+        # 提升成类目：排在艺人之后、六大通告之前。
+        luousang_item,
         make_node(
             "notices", "六大特殊通告",
             source_title="六大特殊国际通告",

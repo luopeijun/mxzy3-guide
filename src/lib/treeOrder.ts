@@ -31,12 +31,28 @@ function isOrderMap(value: unknown): value is OrderMap {
   );
 }
 
+/** 「路欧桑剧情整理」在 2026-11 从「其他事件」的最后一条提升成独立类目。
+ *  老顺序表里没有这个 id，`sortSiblings` 会把新节点排到末尾（落到「其他事件」之后），
+ *  所以读出来时补到「艺人事件簿」后面——位置跟脚本生成的默认顺序一致。 */
+const HOISTED_CATEGORY = 'other-events/luousang';
+const HOISTED_AFTER = 'characters';
+
+function withHoistedCategory(order: OrderMap): OrderMap {
+  const root = order[ROOT_KEY];
+  if (!root || root.includes(HOISTED_CATEGORY)) return order;
+  const at = root.indexOf(HOISTED_AFTER);
+  const next = at >= 0
+    ? [...root.slice(0, at + 1), HOISTED_CATEGORY, ...root.slice(at + 1)]
+    : [...root, HOISTED_CATEGORY];
+  return { ...order, [ROOT_KEY]: next };
+}
+
 export function readOrder(): OrderMap {
   try {
     const raw = storage()?.getItem(STORAGE_KEY);
     if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
-    return isOrderMap(parsed) ? parsed : {};
+    return isOrderMap(parsed) ? withHoistedCategory(parsed) : {};
   } catch {
     return {};
   }
