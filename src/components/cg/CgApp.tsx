@@ -94,7 +94,8 @@ function GroupAvatar(
 /** CG 图鉴：左侧按人物分组（经纪人 + 18 位艺人），右侧一面缩略图墙。
  *
  *  分组是原表天然切好的 19 组，每组 6–13 张，比 204 张一次铺完更好查漏；
- *  「全部」才需要分页。点图片看大图、点右上角圆勾改收集状态，两条路径互不干扰。 */
+ *  「全部」才需要分页。收集开关在卡片底部信息栏，和「点图片看大图」互不干扰；
+ *  右上角只留一个不点击的已收状态点，方便一眼扫过去。 */
 export default function CgApp({ data }: Props) {
   const validIds = useMemo(() => new Set(data.items.map((item) => item.id)), [data.items]);
   const [collected, setCollected] = useState<Set<string>>(() => readCg(validIds));
@@ -107,6 +108,8 @@ export default function CgApp({ data }: Props) {
   const [clearOpen, setClearOpen] = useState(false);
   /** 清空前的快照：误点一次不用先导出也能退回来，仅存活在本次页面会话里。 */
   const [clearedSnapshot, setClearedSnapshot] = useState<Set<string> | null>(null);
+  /** 一键「全部收集」前的快照与本次新增张数：同样可撤销，仅存活于本次页面会话。 */
+  const [collectUndo, setCollectUndo] = useState<{ prev: Set<string>; added: number } | null>(null);
   /** 攻略里点 CG 徽标进来的 `#/cg/<id>`：切到对应分组、滚到那张卡并闪一下。 */
   const [focusId, setFocusId] = useState(() => cgItemId());
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -189,12 +192,42 @@ export default function CgApp({ data }: Props) {
     setClearedSnapshot(null);
   };
 
+  /** 一键收集当前分组（「全部」页就是全部 204 张）里还没收的 CG；已收的不重复加。 */
+  const collectAll = () => {
+    if (groupItems.length - groupDone <= 0) return;
+    const next = new Set(collected);
+    let added = 0;
+    for (const item of groupItems) {
+      if (!next.has(item.id)) {
+        next.add(item.id);
+        added += 1;
+      }
+    }
+    writeCg(next);
+    setCollected(next);
+    setCollectUndo({ prev: collected, added });
+  };
+
+  const undoCollect = () => {
+    if (!collectUndo) return;
+    writeCg(collectUndo.prev);
+    setCollected(collectUndo.prev);
+    setCollectUndo(null);
+  };
+
   // 撤销条到点自动收起；点撤销 / 关闭都会把 snapshot 置空，从而清掉定时器。
   useEffect(() => {
     if (!clearedSnapshot) return;
     const timer = window.setTimeout(() => setClearedSnapshot(null), UNDO_TOAST_MS);
     return () => window.clearTimeout(timer);
   }, [clearedSnapshot]);
+
+  // 「全部收集」的撤销条同样到点自动收起。
+  useEffect(() => {
+    if (!collectUndo) return;
+    const timer = window.setTimeout(() => setCollectUndo(null), UNDO_TOAST_MS);
+    return () => window.clearTimeout(timer);
+  }, [collectUndo]);
 
   const openLightbox = (id: string, ids: string[], trigger: HTMLButtonElement) => {
     triggerRef.current = trigger;
@@ -380,6 +413,21 @@ export default function CgApp({ data }: Props) {
             className="shrink-0 whitespace-nowrap rounded-full border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
           >
             全部存档
+          </button>
+          <button
+            type="button"
+            data-cg-collect-all
+            disabled={groupItems.length - groupDone <= 0}
+            onClick={collectAll}
+            title={`收集「${activeName}」分组里所有未收集的 CG`}
+            className={cn(
+              'shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-ui-2xs transition-colors',
+              groupItems.length - groupDone <= 0
+                ? 'cursor-not-allowed border-line/60 text-ink-faint/60'
+                : 'border-brand text-brand-strong hover:bg-brand-soft',
+            )}
+          >
+            全部收集
           </button>
           <button
             type="button"
@@ -588,6 +636,36 @@ export default function CgApp({ data }: Props) {
             onClick={() => setClearedSnapshot(null)}
             aria-label="关闭"
             className="text-ui-2xs text-gold/70 transition-colors hover:text-gold"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {collectUndo && (
+        <div
+          data-cg-collect-undo-toast
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border border-brand-line bg-brand-soft px-4 py-2 shadow-soft"
+        >
+          <span className="text-ui-xs text-brand-strong">
+            已收集 {collectUndo.added} 张 CG
+          </span>
+          <button
+            type="button"
+            data-cg-collect-undo
+            onClick={undoCollect}
+            className="rounded-ui-xs border border-brand-line bg-surface px-2.5 py-1 text-ui-xs font-semibold text-brand-strong transition-colors hover:border-brand"
+          >
+            撤销
+          </button>
+          <button
+            type="button"
+            data-cg-collect-undo-dismiss
+            onClick={() => setCollectUndo(null)}
+            aria-label="关闭"
+            className="text-ui-2xs text-brand-strong/70 transition-colors hover:text-brand-strong"
           >
             ✕
           </button>
