@@ -18,8 +18,8 @@ interface Props {
   onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡：图片占主体，左上角浮「归属标签 + CG 序号」两个徽标（纯展示、不挡点击）；
- *  底部一行只放收集芯片 + 名称 + 攻略入口，同一尺寸下所有卡片等高。
+/** 一张 CG 卡：图片占主体，图片浮层（纯展示、不挡点击）左上=归属标签、右上=CG 序号，
+ *  对角分布互不抢位；底部一行只放收集芯片 + 名称 + 攻略入口，同一尺寸下所有卡片等高。
  *  CG 序号移到图片上后，底栏名称拿到最多横向空间，单行即可完整显示（不再换行）。
  *  中/大档（≥380px 列宽）字号 14px、信息条 56px；小档（300px 列宽）整体缩小：
  *  字号 12px、信息条 44px、收集按钮更小，名称仍是单行（最长 12 字也放得下）。
@@ -65,50 +65,49 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
             </span>
           )}
         </button>
-        {/* 左上角浮层：归属标签（仅「全部」页）+ CG 序号，纯展示不挡点击。小档缩一圈。 */}
-        <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1">
-          {group && (
-            <span
-              data-cg-group-tag
-              data-cg-group-name={group.name}
-              className={cn(
-                'flex items-center gap-1 rounded-full bg-white/80 py-0.5 pl-0.5 pr-2 shadow-soft backdrop-blur-sm',
-                isSm ? 'gap-0.5 pr-1.5' : '',
-              )}
-            >
-              {group.avatar ? (
-                <img
-                  src={`${import.meta.env.BASE_URL}${group.avatar}`}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  className={cn('shrink-0 rounded-full border border-line-strong object-cover', isSm ? 'h-4 w-4' : 'h-5 w-5')}
-                />
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'flex shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft font-semibold text-brand-strong',
-                    isSm ? 'h-4 w-4 text-[10px]' : 'h-5 w-5 text-ui-2xs',
-                  )}
-                >
-                  {group.name.slice(0, 1)}
-                </span>
-              )}
-              <span className={cn('truncate font-medium text-ink', isSm ? 'text-[11px]' : 'text-ui-2xs')}>{group.name}</span>
-            </span>
-          )}
+        {/* 图片浮层（纯展示、不挡点击）：左上=归属标签（仅「全部」页），右上=CG 序号，
+            对角分布互不抢位。小档都缩一圈。 */}
+        {group && (
           <span
-            data-cg-code
+            data-cg-group-tag
+            data-cg-group-name={group.name}
             className={cn(
-              'w-fit rounded-full bg-white/80 px-1.5 py-0.5 font-semibold text-brand-strong shadow-soft backdrop-blur-sm',
-              isSm ? 'text-[10px]' : 'text-[11px]',
+              'pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full bg-white/80 py-0.5 pl-0.5 pr-2 shadow-soft backdrop-blur-sm',
+              isSm ? 'gap-0.5 pr-1.5' : '',
             )}
           >
-            {item.code}
+            {group.avatar ? (
+              <img
+                src={`${import.meta.env.BASE_URL}${group.avatar}`}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                className={cn('shrink-0 rounded-full border border-line-strong object-cover', isSm ? 'h-4 w-4' : 'h-5 w-5')}
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'flex shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft font-semibold text-brand-strong',
+                  isSm ? 'h-4 w-4 text-[10px]' : 'h-5 w-5 text-ui-2xs',
+                )}
+              >
+                {group.name.slice(0, 1)}
+              </span>
+            )}
+            <span className={cn('truncate font-medium text-ink', isSm ? 'text-[11px]' : 'text-ui-2xs')}>{group.name}</span>
           </span>
-        </div>
+        )}
+        <span
+          data-cg-code
+          className={cn(
+            'pointer-events-none absolute right-2 top-2 z-10 w-fit rounded-full bg-white/80 px-1.5 py-0.5 font-semibold text-brand-strong shadow-soft backdrop-blur-sm',
+            isSm ? 'text-[10px]' : 'text-[11px]',
+          )}
+        >
+          {item.code}
+        </span>
       </div>
       {/* 固定行高：底栏与图片之间不画分隔线（图片边缘 + 白底已足够区分）；
           高度固定（中/大档 h-14、小档 h-11）保住同尺寸等高。CG 序号已移到图上，
