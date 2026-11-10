@@ -16,6 +16,11 @@ const PAGE_SIZE = 60;
 const UNDO_TOAST_MS = 1500;
 const FLASH_CLASS = 'anchor-flash';
 
+/** 卡片尺寸：大/中/小对应网格最小列宽。中即原默认 380px；
+ *  小档列宽收窄到 220px，名称允许换行两行（见 CgCard），密度更高。 */
+type CgSize = 'sm' | 'md' | 'lg';
+const SIZE_MIN_WIDTH: Record<CgSize, number> = { sm: 220, md: 380, lg: 520 };
+
 /** 深链落地时把目标卡片滚到视野中央并闪一下，跟攻略里的锚点跳同一套观感。 */
 function flashCard(id: string) {
   let tries = 0;
@@ -106,6 +111,8 @@ export default function CgApp({ data }: Props) {
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
+  /** 卡片尺寸：纯本地面板状态，不持久化（刷新回默认「中」），也不进进度存档。 */
+  const [size, setSize] = useState<CgSize>('md');
   /** 清空前的快照：误点一次不用先导出也能退回来，仅存活在本次页面会话里。 */
   const [clearedSnapshot, setClearedSnapshot] = useState<Set<string> | null>(null);
   /** 一键「全部收集」前的快照与本次新增张数：同样可撤销，仅存活于本次页面会话。 */
@@ -406,6 +413,29 @@ export default function CgApp({ data }: Props) {
               style={{ width: `${percent}%` }}
             />
           </span>
+          <div
+            data-cg-size
+            className="flex shrink-0 items-center rounded-full border border-line p-0.5"
+          >
+            {(['lg', 'md', 'sm'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                data-cg-size-btn={value}
+                aria-pressed={size === value}
+                aria-label={`卡片尺寸：${value === 'lg' ? '大' : value === 'md' ? '中' : '小'}`}
+                onClick={() => setSize(value)}
+                className={cn(
+                  'rounded-full px-2.5 py-1 text-ui-2xs font-medium leading-none transition-colors',
+                  size === value
+                    ? 'bg-brand text-white'
+                    : 'text-ink-muted hover:text-brand-strong',
+                )}
+              >
+                {value === 'lg' ? '大' : value === 'md' ? '中' : '小'}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             data-cg-archive
@@ -498,7 +528,11 @@ export default function CgApp({ data }: Props) {
                 <ul
                   data-cg-grid
                   data-cg-count={visible.length}
-                  className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(380px,100%),1fr))]"
+                  data-cg-size={size}
+                  style={{
+                    gridTemplateColumns: `repeat(auto-fill, minmax(min(${SIZE_MIN_WIDTH[size]}px, 100%), 1fr))`,
+                  }}
+                  className="grid items-start gap-3"
                 >
                   {visible.map((item) => {
                     const link = linkFor(item);
@@ -507,6 +541,7 @@ export default function CgApp({ data }: Props) {
                         <CgCard
                           item={item}
                           collected={collected.has(item.id)}
+                          size={size}
                           group={groupId === 'all' ? groupById.get(item.groupId) : undefined}
                           guideHref={link ? cgGuideHref(link) : undefined}
                           guideTitle={link ? cgGuideTitle(link) : undefined}
