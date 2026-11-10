@@ -98,9 +98,9 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
           </span>
         )}
       </div>
-      {/* 固定行高 + 顶部细线：底栏成为一条干净的横向信息条，和图片分隔开；
-          高度固定（中/大档 h-14、小档 h-11）保住同一尺寸下所有卡片等高。小档字号整体降到 12px。 */}
-      <div className={cn('flex min-w-0 items-center gap-1.5 border-t border-line px-2.5', isSm ? 'h-11 gap-1' : 'h-14')}>
+      {/* 固定行高：底栏与图片之间不再画分隔线（图片边缘 + 白底已足够区分，
+          多一条线反而像黑线）；高度固定（中/大档 h-14、小档 h-11）保住同尺寸等高。 */}
+      <div className={cn('flex min-w-0 items-center gap-1.5 px-2.5', isSm ? 'h-11 gap-1' : 'h-14')}>
         <button
           type="button"
           data-cg-toggle
