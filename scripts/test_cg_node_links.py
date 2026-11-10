@@ -49,7 +49,7 @@ class TestCgNodeLinks(unittest.TestCase):
         self.assertIn(LUOUSANG, titles)
 
         linked = [it for it in json.loads(CG.read_text(encoding="utf-8"))["items"] if it.get("guide")]
-        self.assertGreaterEqual(len(linked), 33, "多对一的落点不该被整段丢掉")
+        self.assertGreaterEqual(len(linked), 35, "多对一的落点不该被整段丢掉")
         for item in linked:
             node_id = item["guide"]["nodeId"]
             self.assertIn(node_id, titles, f"{item['id']} 指向不存在的节点 {node_id}")
@@ -61,6 +61,18 @@ class TestCgNodeLinks(unittest.TestCase):
         )
         # 告别演唱会核对后锚到了欧怡青「告别 #7」，应当已从页面级移出。
         self.assertNotIn("ou-8", {item["id"] for item in linked})
+
+    def test_luousang_pairs_from_both_sides(self):
+        """同一张图在两个人名下各列一次，两侧都得有入口，否则总有一边点不进攻略。"""
+        items = {it["id"]: it for it in json.loads(CG.read_text(encoding="utf-8"))["items"]}
+        for pair in (("sang-4", "lu-4"), ("ou-5", "lu-9"), ("sang-5", "lu-5"), ("sang-6", "lu-6"),
+                     ("ou-3", "lu-7"), ("ou-4", "lu-8"), ("ou-6", "lu-10")):
+            for cg in pair:
+                guide = items[cg].get("guide") or {}
+                self.assertEqual(guide.get("nodeId"), LUOUSANG, f"{cg} 少了路欧桑整页入口")
+        # 路桑侧还有只有桑禾蓓页才有的事件（记者逼问、SOSA 安慰）。
+        for cg in ("sang-3", "sang-7"):
+            self.assertEqual(items[cg]["guide"]["nodeId"], LUOUSANG, f"{cg} 少了路欧桑整页入口")
 
     def test_beauty_star_shared_event_anchor(self):
         """18 张写真集都锚到美丽之星 #14，且那个块真的是「写真集」事件。"""

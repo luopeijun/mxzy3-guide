@@ -234,6 +234,21 @@ async function main() {
   `);
   console.log('page-level link:', pageLevel);
 
+  // 同一张图在两个人名下各列一次：两侧都得整页跳，不然总有一边点不进攻略。
+  const bothSides = {};
+  for (const cg of ['sang-4', 'ou-5']) {
+    await evaluate(`location.hash = '#/cg/${cg}'; 'ok'`);
+    await sleep(1300);
+    bothSides[cg] = await evaluate(`
+      document.querySelector('#cg-card-${cg} [data-cg-guide-link]')?.getAttribute('href') ?? ''
+    `);
+  }
+  console.log('both sides:', JSON.stringify(bothSides));
+
+  // 下面要点 sang-5 的「攻略›」，先切回去。
+  await evaluate(`location.hash = '#/cg/sang-5'; 'ok'`);
+  await sleep(1300);
+
   await evaluate(`document.querySelector('#cg-card-sang-5 [data-cg-guide-link]').click(); 'ok'`);
   await sleep(1600);
   const landed = await evaluate(`
@@ -512,6 +527,8 @@ async function main() {
     'personal cg stays unlinked': pl.personalHasLink === false,
     'sang-8 now links to its event': pl.cardAtEvent === true,
     'page-level click lands on luousang': landedView.hash === '#/guide/other-events/luousang' && landedView.cgApp === false,
+    'sang-4 also links to luousang': bothSides['sang-4'] === '#/guide/other-events/luousang',
+    'ou-5 also links to luousang': bothSides['ou-5'] === '#/guide/other-events/luousang',
     'luousang page shows the four branches': landedView.branches === 4,
     'lu-feng tip links to luousang': tips.lufeng === 1,
     'ou-yiqing tips link to luousang': tips.ou === 2,
