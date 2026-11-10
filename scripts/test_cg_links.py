@@ -3,7 +3,7 @@
 这份手写映射把攻略事件和 CG 图鉴里的条目连起来：写错一个事件号，界面上
 就是一条死链，而且不会有任何报错——所以这里把它锁住：
 
-  * 提交的 `guide.json` 里每张被映射的 CG 只有一个攻略落点，anchor 不重复；
+  * 提交的 `guide.json` 里每张被映射的 CG 都有攻略落点，anchor 在节点内不重复；
   * 映射到的 CG id 必须在 `cg.json` 里真实存在；
   * 写错的行（节点不存在 / 事件号对不上 / 命中多条）必须让生成直接失败。
 """
@@ -38,7 +38,7 @@ class TestCgLinkMapping(unittest.TestCase):
         cg_ids = {item["id"] for item in json.loads(CG.read_text(encoding="utf-8"))["items"]}
 
         seen_cg: dict[str, str] = {}
-        seen_anchor: set[str] = set()
+        seen_anchor: set[tuple[str, str]] = set()
         for category in data["categories"]:
             for node in _walk(category):
                 for block in node["blocks"]:
@@ -46,20 +46,29 @@ class TestCgLinkMapping(unittest.TestCase):
                         continue
                     anchor = block.get("anchor")
                     self.assertTrue(anchor, f"{node['id']} #{block.get('label')} 有 cgIds 却没有 anchor")
-                    self.assertNotIn(anchor, seen_anchor, f"anchor 重复: {anchor}")
-                    seen_anchor.add(anchor)
+                    # anchor 是「节点内块下标」，同一页里唯一就行：一次只渲染一个节点，
+                    # 不同角色的 ev12 互不影响。
+                    self.assertNotIn(
+                        (node["id"], anchor), seen_anchor,
+                        f"anchor 重复: {node['id']} {anchor}",
+                    )
+                    seen_anchor.add((node["id"], anchor))
                     for cg_id in block["cgIds"]:
                         self.assertIn(cg_id, cg_ids, f"{cg_id} 不在 cg.json 里")
-                        self.assertNotIn(
-                            cg_id, seen_cg,
-                            f"{cg_id} 被多个事件指向（{seen_cg.get(cg_id)} 与 {node['id']}）："
-                            "这种应当只做 CG→事件单向，不该写进 cg-links.tsv",
-                        )
-                        seen_cg[cg_id] = f"{node['id']} #{block.get('label')}"
+                        where = f"{node['id']} #{block.get('label')}"
+                        if cg_id in seen_cg:
+                            # 允许同一张 CG 在同一个角色的两个事件里出现（苏嫚君 CG05
+                            # 圣诞布置第二年、第三年各一次），反跳取第一条即可；
+                            # 跨角色重复说明该做成单向，得挪去 cg-node-links.tsv。
+                            self.assertEqual(
+                                seen_cg[cg_id].split(" ")[0], node["id"],
+                                f"{cg_id} 被多个事件指向（{seen_cg[cg_id]} 与 {where}）："
+                                "这种应当只做 CG→事件单向，不该写进 cg-links.tsv",
+                            )
+                        seen_cg.setdefault(cg_id, where)
 
-        # 映射是逐块长出来的，至少要覆盖已经核对过的两组（林芬芬 / 萧依莉），
-        # 防止某次重构把整段映射悄悄丢掉。
-        self.assertGreaterEqual(len(seen_cg), 14)
+        # 映射是逐块长出来的，至少要覆盖已经核对过的几组，防止某次重构把整段映射悄悄丢掉。
+        self.assertGreaterEqual(len(seen_cg), 34)
 
     def test_unknown_event_fails_loudly(self):
         categories = [{

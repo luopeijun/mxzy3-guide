@@ -169,12 +169,19 @@ async function main() {
   // --- 5. 深链进 CG 页 + 大图里的「看攻略」 ---
   await goto(`${HOST}/#/cg/xiao-3`);
   const deep = await evaluate(`
-    (() => {
-      const card = document.getElementById('cg-card-xiao-3');
+    (async () => {
+      // 闪动只有 1.8s，加载稍慢就会错过，所以在页面里轮询着抓。
+      const t0 = Date.now();
+      let flash = false;
+      while (Date.now() - t0 < 2500) {
+        const el = document.getElementById('cg-card-xiao-3');
+        if (el && el.classList.contains('anchor-flash')) { flash = true; break; }
+        await new Promise((r) => setTimeout(r, 80));
+      }
       const active = document.querySelector('[data-cg-group][aria-pressed="true"]');
       return JSON.stringify({
         group: active?.textContent?.trim() ?? '',
-        cardFlash: !!card && card.classList.contains('anchor-flash'),
+        cardFlash: flash,
         hash: location.hash,
       });
     })()
@@ -202,7 +209,9 @@ async function main() {
         href: link?.getAttribute('href') ?? '',
         title: link?.getAttribute('title') ?? '',
         hasLink: !!link,
-        personalHasLink: !!document.querySelector('#cg-card-sang-8 [data-cg-guide-link]'),
+        personalHasLink: !!document.querySelector('#cg-card-sang-9 [data-cg-guide-link]'),
+        cardAtEvent: (document.querySelector('#cg-card-sang-8 [data-cg-guide-link]')?.getAttribute('href') ?? '')
+          .startsWith('#/guide/characters/sang-hebei~ev'),
         cardInView: !!rect && rect.top < innerHeight && rect.bottom > 64,
       });
     })()
@@ -238,6 +247,52 @@ async function main() {
   }
   console.log('tip links:', JSON.stringify(tipLinks));
 
+  // 已核对过的五个人：每页可点的 CG 徽标数量与指向都要对得上。
+  const pageBadges = {};
+  for (const [node, key] of [
+    ['characters/sang-hebei', 'sang'],
+    ['characters/su-manjun', 'su'],
+    ['characters/ou-yiqing', 'ou'],
+    ['characters/lu-min', 'lum'],
+    ['characters/lu-feng', 'lu'],
+  ]) {
+    await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
+    await sleep(1500);
+    pageBadges[key] = await evaluate(`
+      [...document.querySelectorAll('main a[data-cg-link]')].map((a) => a.getAttribute('href'))
+    `);
+  }
+  console.log('page badges:', JSON.stringify(pageBadges));
+
+  // 苏嫚君 CG05 圣诞布置第二年、第三年各出一次：反跳取第一次（事件 40）。
+  await evaluate(`location.hash = '#/cg/su-5'; 'ok'`);
+  await sleep(1500);
+  const suHref = await evaluate(`
+    document.querySelector('#cg-card-su-5 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  await evaluate(`document.querySelector('#cg-card-su-5 [data-cg-guide-link]').click(); 'ok'`);
+  await sleep(1500);
+  const suLanding = await evaluate(`
+    (() => {
+      const m = location.hash.match(/~(.+)$/);
+      const target = m ? document.getElementById(m[1]) : null;
+      return JSON.stringify({
+        hash: location.hash,
+        label: (target?.textContent ?? '').replace(/\\s+/g, ' ').slice(0, 2),
+        text: target?.textContent?.replace(/\\s+/g, ' ').slice(0, 24) ?? '',
+      });
+    })()
+  `);
+  console.log('su-5 reverse:', suHref, suLanding);
+
+  // 欧怡青告别演唱会核对后从「页面级」改成了事件级。
+  await evaluate(`location.hash = '#/cg/ou-8'; 'ok'`);
+  await sleep(1500);
+  const ou8Href = await evaluate(`
+    document.querySelector('#cg-card-ou-8 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  console.log('ou-8 href:', ou8Href);
+
   const b = badgeState;
   const back = JSON.parse(afterBack);
   const d = JSON.parse(deep);
@@ -245,6 +300,8 @@ async function main() {
   const pl = JSON.parse(pageLevel);
   const landedView = JSON.parse(landed);
   const tips = tipLinks;
+  const su = JSON.parse(suLanding);
+  const sameSet = (a, b) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
   const checks = {
     'badge links to cg': b !== null && badge.href === '#/cg/lin-4',
     'badge click goes to cg': b.hash === '#/cg/lin-4',
@@ -274,10 +331,24 @@ async function main() {
     'page-level link is the node page': pl.href === '#/guide/other-events/luousang',
     'page-level title says 完整剧情': pl.title.includes('完整剧情整理'),
     'personal cg stays unlinked': pl.personalHasLink === false,
+    'sang-8 now links to its event': pl.cardAtEvent === true,
     'page-level click lands on luousang': landedView.hash === '#/guide/other-events/luousang' && landedView.cgApp === false,
     'luousang page shows the four branches': landedView.branches === 4,
     'lu-feng tip links to luousang': tips.lufeng === 1,
     'ou-yiqing tips link to luousang': tips.ou === 2,
+    // 已核对的五人：徽标数量与指向逐页对得上。
+    'sang-hebei badges': sameSet(pageBadges.sang, ['#/cg/sang-1', '#/cg/sang-8', '#/cg/sang-11']),
+    'su-manjun badges': sameSet(pageBadges.su, [
+      '#/cg/su-1', '#/cg/su-4', '#/cg/su-5', '#/cg/su-3', '#/cg/su-6', '#/cg/su-5', '#/cg/su-12',
+    ]),
+    'ou-yiqing badges': sameSet(pageBadges.ou, ['#/cg/ou-1', '#/cg/ou-8', '#/cg/ou-9']),
+    'lu-min badges': sameSet(pageBadges.lum, [
+      '#/cg/lum-1', '#/cg/lum-3', '#/cg/lum-4', '#/cg/lum-5',
+      '#/cg/lum-8', '#/cg/lum-9', '#/cg/lum-10', '#/cg/lum-6',
+    ]),
+    'lu-feng badges': sameSet(pageBadges.lu, ['#/cg/lu-1']),
+    'su-5 reverse goes to first event': suHref.startsWith('#/guide/characters/su-manjun~ev') && su.label === '40',
+    'ou-8 is event-level now': ou8Href.startsWith('#/guide/characters/ou-yiqing~ev'),
   };
 
   let pass = true;

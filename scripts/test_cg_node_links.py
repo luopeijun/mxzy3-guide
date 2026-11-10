@@ -42,13 +42,15 @@ class TestCgNodeLinks(unittest.TestCase):
         self.assertIn(LUOUSANG, titles)
 
         linked = [it for it in json.loads(CG.read_text(encoding="utf-8"))["items"] if it.get("guide")]
-        self.assertGreaterEqual(len(linked), 16, "路欧桑的页面级落点不该被整段丢掉")
+        self.assertGreaterEqual(len(linked), 15, "路欧桑的页面级落点不该被整段丢掉")
         for item in linked:
             node_id = item["guide"]["nodeId"]
             self.assertIn(node_id, titles, f"{item['id']} 指向不存在的节点 {node_id}")
             self.assertEqual(item["guide"]["title"], titles[node_id])
         # 这一批全是路欧桑的感情线，混进别的页面说明 tsv 写串了行。
         self.assertEqual({item["guide"]["nodeId"] for item in linked}, {LUOUSANG})
+        # 告别演唱会核对后锚到了欧怡青「告别 #7」，应当已从页面级移出。
+        self.assertNotIn("ou-8", {item["id"] for item in linked})
 
     def test_no_item_has_both_kinds_of_link(self):
         guide = json.loads(GUIDE.read_text(encoding="utf-8"))
