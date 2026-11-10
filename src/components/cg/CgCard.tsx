@@ -98,10 +98,10 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
           </a>
         )}
       </div>
-      {/* 第二行：名称独占主角位（最多两行）+ 收集按钮。固定高度保住等高。 */}
-      <div className="flex h-[40px] items-start justify-between gap-2 px-2.5 pb-1.5">
+      {/* 第二行：名称独占主角位（放大、最多两行）+ 收集按钮，两者垂直居中。固定高度保住等高。 */}
+      <div className="flex h-[44px] items-center justify-between gap-2 px-2.5 pb-1.5">
         <span
-          className="min-w-0 flex-1 overflow-hidden text-[13px] font-semibold leading-snug text-ink line-clamp-2"
+          className="min-w-0 flex-1 overflow-hidden text-[15px] font-semibold leading-snug text-ink line-clamp-2"
           title={item.name}
         >
           {item.name}
@@ -114,7 +114,7 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
           title={collected ? '取消收集' : '标记已收集'}
           onClick={onToggle}
           className={cn(
-            'mt-0.5 flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-ui-2xs font-medium leading-none transition-colors',
+            'flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-ui-2xs font-medium leading-none transition-colors',
             collected
               ? 'bg-brand text-white'
               : 'border border-ink-faint text-ink-muted hover:border-brand hover:text-brand-strong',
