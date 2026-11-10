@@ -9,6 +9,7 @@ import {
   type LineStatus,
   type TrackerData,
 } from '../lib/trackerData';
+import { ORDER_EPOCH, hoistLuosangLines } from '../lib/trackerOrder';
 import { applyProgress } from '../lib/trackerTransfer';
 
 export { MAX_ARTISTS };
@@ -58,13 +59,17 @@ function readStorage(): TrackerData {
     if (!raw) return emptyData();
     const parsed = JSON.parse(raw) as Partial<TrackerData>;
     if (!parsed || parsed.version !== 1) return emptyData();
+    const order = Array.isArray(parsed.order) ? parsed.order : [];
+    const epoch = typeof parsed.orderEpoch === 'number' ? parsed.orderEpoch : 0;
     return {
       version: 1,
       selectedArtists: Array.isArray(parsed.selectedArtists) ? parsed.selectedArtists : [],
       lines: normaliseLines(parsed.lines),
       // v1 records written before drag/pin existed simply have no order yet.
-      order: Array.isArray(parsed.order) ? parsed.order : [],
+      // 老存档的路欧桑线排在最后，按新顺序挪到「艺人事件」后面（只迁一次）。
+      order: epoch < ORDER_EPOCH ? hoistLuosangLines(order) : order,
       pinned: Array.isArray(parsed.pinned) ? parsed.pinned : [],
+      orderEpoch: ORDER_EPOCH,
     };
   } catch {
     return emptyData();

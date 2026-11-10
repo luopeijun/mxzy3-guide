@@ -2,6 +2,8 @@
  *  import/export layer can validate external input with exactly the same rules
  *  that localStorage reads use. */
 
+import { ORDER_EPOCH, hoistLuosangLines } from './trackerOrder';
+
 export const MAX_ARTISTS = 4;
 
 export type LineStatus = 'active' | 'abandoned' | 'excluded';
@@ -23,10 +25,20 @@ export interface TrackerData {
   order: string[];
   /** Pinned line ids, in pin order — always rendered above the rest. */
   pinned: string[];
+  /** Which generation of池子顺序 the `order` was dragged in; old saves get their
+   *  路欧桑 lines hoisted once (see `hoistLuosangLines`). */
+  orderEpoch: number;
 }
 
 export function emptyData(): TrackerData {
-  return { version: 1, selectedArtists: [], lines: {}, order: [], pinned: [] };
+  return {
+    version: 1,
+    selectedArtists: [],
+    lines: {},
+    order: [],
+    pinned: [],
+    orderEpoch: ORDER_EPOCH,
+  };
 }
 
 function indexList(raw: unknown): number[] {
@@ -77,12 +89,16 @@ export function sanitiseData(raw: unknown): TrackerData {
   if (!parsed.lines || typeof parsed.lines !== 'object') {
     throw new Error('存档里没有进度记录，可能选错了文件。');
   }
+  const order = stringList(parsed.order);
+  const epoch = typeof parsed.orderEpoch === 'number' ? parsed.orderEpoch : 0;
   return {
     version: 1,
     selectedArtists: stringList(parsed.selectedArtists).slice(0, MAX_ARTISTS),
     lines: normaliseLines(parsed.lines),
-    order: stringList(parsed.order),
+    // 老存档把路欧桑线拖在最后，读进来先按新顺序挪一次；之后顺序归用户。
+    order: epoch < ORDER_EPOCH ? hoistLuosangLines(order) : order,
     pinned: stringList(parsed.pinned),
+    orderEpoch: ORDER_EPOCH,
   };
 }
 

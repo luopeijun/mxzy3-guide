@@ -10,6 +10,7 @@ import {
   type TrackerData,
 } from './trackerData';
 import { normaliseStepRefs, type StepRefMap } from './trackerReanchor';
+import { ORDER_EPOCH } from './trackerOrder';
 
 export const ARCHIVE_FORMAT = 'stardom3-tracker-save';
 /** v2 adds the per-line step snapshot (`steps`) used to re-anchor progress
@@ -151,7 +152,14 @@ export function mergeProgress(local: TrackerData, incoming: TrackerData): Tracke
   );
   const order = Array.from(new Set([...local.order, ...incoming.order]));
   const pinned = Array.from(new Set([...local.pinned, ...incoming.pinned]));
-  return { version: 1, selectedArtists: artists, lines, order, pinned };
+  return {
+    version: 1,
+    selectedArtists: artists,
+    lines,
+    order,
+    pinned,
+    orderEpoch: ORDER_EPOCH,
+  };
 }
 
 /** Replace is "use the file exactly as it is", except that `order`/`pinned`
