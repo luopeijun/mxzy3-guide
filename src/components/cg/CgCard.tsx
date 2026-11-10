@@ -13,10 +13,10 @@ interface Props {
   onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡保持所有卡片等高：图片按比例占位，底部一行固定高。
- *  图片本身是「查看大图」的按钮（整块可点）；编号与「全部」页的分组归属做成图片上
- *  的浮层（不响应点击，pure 指示），这样底部信息栏只放「收集芯片 + 名称 + 攻略入口」，
- *  名称能占满剩余宽度，长名也只优雅省略而不再挤掉。已收集的图恢复彩色即表示已收。 */
+/** 一张 CG 卡保持所有卡片等高：图片按比例占位，底部信息栏固定两行。
+ *  第一行：收集芯片 + 名称（占满整行宽度，长名只优雅省略而不被挤掉）；
+ *  第二行：编号 + 「全部」页的分组归属 + 攻略入口（meta 信息）。
+ *  图片本身是「查看大图」的按钮，整块可点，不叠任何收集控件，避免误触。 */
 export default function CgCard({ item, collected, group, guideHref, guideTitle, onToggle, onOpen }: Props) {
   return (
     <article
@@ -55,71 +55,68 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
             </span>
           )}
         </button>
-        {/* 分组归属浮层：只在「全部」页出现，纯指示、不挡点击。 */}
-        {group && (
-          <span
-            data-cg-group-tag
-            data-cg-group-name={group.name}
-            className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full border border-white/40 bg-black/45 px-1.5 py-0.5 backdrop-blur-sm"
-          >
-            {group.avatar ? (
-              <img
-                src={`${import.meta.env.BASE_URL}${group.avatar}`}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                className="h-5 w-5 shrink-0 rounded-full border border-white/60 object-cover"
-              />
-            ) : (
-              <span
-                aria-hidden="true"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/25 text-[10px] font-semibold text-white"
-              >
-                {group.name.slice(0, 1)}
-              </span>
-            )}
-            <span className="truncate text-[10px] font-medium text-white">{group.name}</span>
-          </span>
-        )}
-        {/* 编号浮层：左下角小徽标，纯指示。 */}
-        <span
-          data-cg-code
-          className="pointer-events-none absolute bottom-2 left-2 z-10 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white"
-        >
-          {item.code}
-        </span>
       </div>
-      {/* 固定行高：有「攻略」入口的卡片不能被这一行撑高，否则整面墙高低不齐。 */}
-      <div className="flex h-10 min-w-0 items-center gap-1.5 px-2.5">
-        <button
-          type="button"
-          data-cg-toggle
-          aria-pressed={collected}
-          aria-label={`${collected ? '取消收集' : '标记已收集'} ${item.code} ${item.name}`}
-          title={collected ? '取消收集' : '标记已收集'}
-          onClick={onToggle}
-          className={cn(
-            'flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-ui-2xs font-medium leading-none transition-colors',
-            collected
-              ? 'bg-brand text-white'
-              : 'border border-ink-faint text-ink-muted hover:border-brand hover:text-brand-strong',
-          )}
-        >
-          <span aria-hidden className="text-[11px] leading-none">{collected ? '✓' : '○'}</span>
-          {collected ? '已收集' : '收集'}
-        </button>
-        <span className="min-w-0 flex-1 truncate text-ui-2xs text-ink" title={item.name}>{item.name}</span>
-        {guideHref && (
-          <a
-            data-cg-guide-link
-            href={guideHref}
-            title={guideTitle ?? '查看对应攻略事件'}
-            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+      {/* 固定两行：有「攻略」入口的卡片不能被撑高，否则整面墙高低不齐。 */}
+      <div className="flex flex-col gap-1 px-2.5 py-1.5">
+        <div className="flex h-5 min-w-0 items-center gap-1.5">
+          <button
+            type="button"
+            data-cg-toggle
+            aria-pressed={collected}
+            aria-label={`${collected ? '取消收集' : '标记已收集'} ${item.code} ${item.name}`}
+            title={collected ? '取消收集' : '标记已收集'}
+            onClick={onToggle}
+            className={cn(
+              'flex h-5 shrink-0 items-center gap-1 rounded-full px-2 text-ui-2xs font-medium leading-none transition-colors',
+              collected
+                ? 'bg-brand text-white'
+                : 'border border-ink-faint text-ink-muted hover:border-brand hover:text-brand-strong',
+            )}
           >
-            攻略<span aria-hidden className="ml-0.5">›</span>
-          </a>
-        )}
+            <span aria-hidden className="text-[11px] leading-none">{collected ? '✓' : '○'}</span>
+            {collected ? '已收集' : '收集'}
+          </button>
+          <span className="min-w-0 flex-1 truncate text-ui-2xs font-medium text-ink" title={item.name}>{item.name}</span>
+        </div>
+        <div className="flex h-5 min-w-0 items-center gap-1.5">
+          <span data-cg-code className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
+          {group && (
+            <span
+              data-cg-group-tag
+              data-cg-group-name={group.name}
+              className="flex min-w-0 flex-1 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-1.5"
+            >
+              {group.avatar ? (
+                <img
+                  src={`${import.meta.env.BASE_URL}${group.avatar}`}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-4 w-4 shrink-0 rounded-full border border-line-strong object-cover"
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
+                >
+                  {group.name.slice(0, 1)}
+                </span>
+              )}
+              <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
+            </span>
+          )}
+          {guideHref && (
+            <a
+              data-cg-guide-link
+              href={guideHref}
+              title={guideTitle ?? '查看对应攻略事件'}
+              className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+            >
+              攻略<span aria-hidden className="ml-0.5">›</span>
+            </a>
+          )}
+        </div>
       </div>
     </article>
   );
