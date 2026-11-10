@@ -1,0 +1,239 @@
+import http from 'node:http';
+
+/* End-to-end check of the two-way 攻略 ⇄ CG links:
+
+   1. 林芬芬页：事件 21（SD 演唱会嘉宾）的 CG 徽标是指向 #/cg/lin-4 的链接。
+   2. 点它 -> 进 CG 图鉴、分组自动切到林芬芬、那张卡滚到视野并闪一下。
+   3. 卡片上的「攻略」入口指回 #/guide/characters/lin-fenfen~ev<n>，点回去后
+      目标事件卡闪一下并落在视口里。
+   4. 没有映射的 CG（lin-2 芬芬演唱会）不渲染入口，避免死链。
+   5. 萧依莉页：泪洒片场 #35 / #39 经核对无 CG，正文不再有「CG」字样、
+      也不再是可点徽标；出国开刀 #45 仍指向 #/cg/xiao-3。
+   6. 大图里也有「看攻略」入口。 */
+
+const PORT = '9339';
+const BASE = `http://127.0.0.1:${PORT}`;
+const HOST = 'http://localhost:5173';
+const URL_LIN = `${HOST}/#/guide/characters/lin-fenfen`;
+const URL_XIAO = `${HOST}/#/guide/characters/xiao-yili`;
+
+function jsonPut(target, payload) {
+  return new Promise((resolve, reject) => {
+    const body = payload ? JSON.stringify(payload) : undefined;
+    const req = http.request(target, {
+      method: 'PUT',
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    }, (res) => {
+      let d = '';
+      res.on('data', (c) => (d += c));
+      res.on('end', () => { try { resolve(d ? JSON.parse(d) : {}); } catch { resolve({}); } });
+    });
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function main() {
+  const target = await jsonPut(`${BASE}/json/new?` + encodeURIComponent(URL_LIN));
+  const ws = new WebSocket(target.webSocketDebuggerUrl);
+  let id = 0;
+  const pending = new Map();
+  const send = (method, params = {}) =>
+    new Promise((resolve, reject) => {
+      const msgId = ++id;
+      pending.set(msgId, { resolve, reject });
+      ws.send(JSON.stringify({ id: msgId, method, params }));
+    });
+
+  await new Promise((resolve, reject) => {
+    ws.addEventListener('open', resolve, { once: true });
+    ws.addEventListener('error', reject, { once: true });
+  });
+  ws.addEventListener('message', (event) => {
+    const msg = JSON.parse(event.data);
+    const entry = pending.get(msg.id);
+    if (!entry) return;
+    pending.delete(msg.id);
+    if (msg.error) entry.reject(new Error(msg.error.message));
+    else entry.resolve(msg.result);
+  });
+
+  const evaluate = async (expression) => {
+    const res = await send('Runtime.evaluate', {
+      expression,
+      returnByValue: true,
+      awaitPromise: true,
+    });
+    if (res.exceptionDetails) {
+      throw new Error('eval failed: ' + JSON.stringify(res.exceptionDetails.exception?.description ?? res.exceptionDetails));
+    }
+    return res.result.value;
+  };
+
+  const hash = () => evaluate('location.hash');
+  const goto = async (url) => {
+    await send('Page.navigate', { url });
+    await sleep(1100);
+  };
+
+  await send('Page.enable');
+  await send('Runtime.enable');
+  await send('Emulation.setDeviceMetricsOverride', {
+    width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
+  });
+  await sleep(1400);
+
+  // --- 1. 攻略页的 CG 徽标是可点的 ---
+  const badge = await evaluate(`
+    (() => {
+      const a = document.querySelector('a[data-cg-link][href="#/cg/lin-4"]');
+      return a ? { text: a.textContent.trim(), href: a.getAttribute('href') } : null;
+    })()
+  `);
+  console.log('lin-fenfen badge:', badge);
+
+  // --- 2. 点徽标 -> CG 图鉴定位 ---
+  await evaluate(`document.querySelector('a[data-cg-link][href="#/cg/lin-4"]').click(); 'ok'`);
+  await sleep(900);
+  const afterBadgeClick = await evaluate(`
+    (() => {
+      const card = document.getElementById('cg-card-lin-4');
+      const active = document.querySelector('[data-cg-group][aria-pressed="true"]');
+      const hit = document.querySelector('[data-cg-card][data-cg-id="lin-4"]');
+      const guideLink = hit?.querySelector('[data-cg-guide-link]');
+      const rect = card?.getBoundingClientRect();
+      return JSON.stringify({
+        hash: location.hash,
+        cgApp: !!document.querySelector('[data-cg-app]'),
+        group: active?.textContent?.trim() ?? '',
+        cardPresent: !!card,
+        cardFlash: !!card && card.classList.contains('anchor-flash'),
+        cardInView: !!rect && rect.top < innerHeight && rect.bottom > 64,
+        guideHref: guideLink?.getAttribute('href') ?? '',
+        unmappedHasLink: !!document.querySelector('#cg-card-lin-2 [data-cg-guide-link]'),
+        heights: [...document.querySelectorAll('[data-cg-card]')]
+          .map((el) => Math.round(el.getBoundingClientRect().height)),
+        withLink: document.querySelectorAll('[data-cg-card] [data-cg-guide-link]').length,
+        withoutLink: document.querySelectorAll('[data-cg-card]:not(:has([data-cg-guide-link]))').length,
+      });
+    })()
+  `);
+  console.log('after badge click:', afterBadgeClick);
+  const badgeState = JSON.parse(afterBadgeClick);
+
+  // --- 3. 卡片上的「攻略」入口回到原事件 ---
+  const backHref = badgeState.guideHref;
+  const anchor = backHref.includes('~') ? backHref.split('~')[1] : '';
+  await evaluate(`document.querySelector('#cg-card-lin-4 [data-cg-guide-link]').click(); 'ok'`);
+  await sleep(1000);
+  const afterBack = await evaluate(`
+    (() => {
+      const el = document.getElementById(${JSON.stringify(anchor)});
+      const rect = el?.getBoundingClientRect();
+      const main = document.querySelector('main');
+      return JSON.stringify({
+        hash: location.hash,
+        cgApp: !!document.querySelector('[data-cg-app]'),
+        targetPresent: !!el,
+        targetFlash: !!el && el.classList.contains('anchor-flash'),
+        targetTop: rect ? Math.round(rect.top) : -1,
+        scrollTop: main ? Math.round(main.scrollTop) : -1,
+        targetText: el?.textContent?.replace(/\\s+/g, ' ').slice(0, 40) ?? '',
+      });
+    })()
+  `);
+  console.log('after guide link click:', afterBack);
+
+  // --- 4. 泪洒片场两处已无 CG，出国开刀仍有 ---
+  await goto(URL_XIAO);
+  const xiaoState = await evaluate(`
+    (() => {
+      const find = (label) => document.querySelector('[data-event-label="' + label + '"]');
+      const e35 = find('35');
+      const e39 = find('39');
+      const e45 = document.querySelector('a[data-cg-link][href="#/cg/xiao-3"]');
+      return JSON.stringify({
+        e35: e35 ? { cgText: /CG/.test(e35.textContent), link: !!e35.querySelector('[data-cg-link]') } : null,
+        e39: e39 ? { cgText: /CG/.test(e39.textContent), link: !!e39.querySelector('[data-cg-link]') } : null,
+        e45Link: !!e45,
+        e45Text: e45 ? e45.parentElement.textContent.replace(/\\s+/g, ' ').slice(0, 30) : '',
+      });
+    })()
+  `);
+  console.log('xiao-yili state:', xiaoState);
+  const xiao = JSON.parse(xiaoState);
+
+  // --- 5. 深链进 CG 页 + 大图里的「看攻略」 ---
+  await goto(`${HOST}/#/cg/xiao-3`);
+  const deep = await evaluate(`
+    (() => {
+      const card = document.getElementById('cg-card-xiao-3');
+      const active = document.querySelector('[data-cg-group][aria-pressed="true"]');
+      return JSON.stringify({
+        group: active?.textContent?.trim() ?? '',
+        cardFlash: !!card && card.classList.contains('anchor-flash'),
+        hash: location.hash,
+      });
+    })()
+  `);
+  console.log('cg deep link:', deep);
+  await evaluate(`document.querySelector('#cg-card-xiao-3 [data-cg-open]').click(); 'ok'`);
+  await sleep(500);
+  const lightbox = await evaluate(`
+    JSON.stringify({
+      open: !!document.querySelector('[data-cg-lightbox]'),
+      guide: document.querySelector('[data-cg-lightbox-guide]')?.getAttribute('href') ?? '',
+    })
+  `);
+  console.log('lightbox:', lightbox);
+
+  const b = badgeState;
+  const back = JSON.parse(afterBack);
+  const d = JSON.parse(deep);
+  const lb = JSON.parse(lightbox);
+  const checks = {
+    'badge links to cg': b !== null && badge.href === '#/cg/lin-4',
+    'badge click goes to cg': b.hash === '#/cg/lin-4',
+    'cg view rendered': b.cgApp === true,
+    'group switched to 林芬芬': b.group.startsWith('林芬芬'),
+    'target card exists': b.cardPresent === true,
+    'target card flashes': b.cardFlash === true,
+    'target card in view': b.cardInView === true,
+    'card links back to guide': b.guideHref.startsWith('#/guide/characters/lin-fenfen~ev'),
+    'unmapped cg has no link': b.unmappedHasLink === false,
+    'cards are equal height': new Set(b.heights).size === 1 && b.heights.length >= 10,
+    'both kinds of card rendered': b.withLink > 0 && b.withoutLink > 0,
+    'back lands on guide': back.hash.startsWith('#/guide/characters/lin-fenfen~ev') && back.cgApp === false,
+    'back target exists': back.targetPresent === true,
+    'back target flashes': back.targetFlash === true,
+    'back target sits near top': back.targetTop >= 60 && back.targetTop < 220,
+    'back did not land on page top': back.scrollTop > 100,
+    'back target text is the event': back.targetText.startsWith('21'),
+    'xiao 35 has no cg marker': xiao.e35 !== null && xiao.e35.cgText === false && xiao.e35.link === false,
+    'xiao 39 has no cg marker': xiao.e39 !== null && xiao.e39.cgText === false && xiao.e39.link === false,
+    'xiao 45 still links': xiao.e45Link === true,
+    'deep link switches group': d.group.startsWith('萧依莉'),
+    'deep link flashes card': d.cardFlash === true,
+    'lightbox opens': lb.open === true,
+    'lightbox has guide link': lb.guide.startsWith('#/guide/characters/xiao-yili~ev'),
+  };
+
+  let pass = true;
+  for (const [name, ok] of Object.entries(checks)) {
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}`);
+    if (!ok) pass = false;
+  }
+  console.log(pass ? 'ALL CHECKS PASSED' : 'SOME CHECKS FAILED');
+
+  await jsonPut(`${BASE}/json/close/${target.id}`);
+  ws.close();
+  process.exit(pass ? 0 : 1);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
