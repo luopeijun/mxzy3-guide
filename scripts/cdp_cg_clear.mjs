@@ -5,7 +5,9 @@ import http from 'node:http';
    2. Click 清除已收集 -> confirm dialog appears; cancel keeps everything.
    3. Confirm -> collected emptied, progress reads 0 / 204, tracker key untouched.
    4. Undo from the toast -> collection restored.
-   5. Clear again, dismiss the toast -> button becomes disabled. */
+   5. Clear again, dismiss the toast -> button becomes disabled.
+   6. Clear once more without touching anything -> toast auto-dismisses after ~1.5s
+      and the cleared state sticks (auto-dismiss must never restore the data). */
 
 const PORT = '9339';
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -156,6 +158,28 @@ async function main() {
   `);
   console.log('final:', await progressText(), finalState);
 
+  // --- toast auto-dismisses on its own (no click) ---
+  await evaluate(`
+    localStorage.setItem('guide.cg.v1', JSON.stringify({version:1, collected:['ji-5','ou-9']}));
+    'seed2';
+  `);
+  await send('Page.reload', { ignoreCache: true });
+  await sleep(1400);
+  await evaluate(`document.querySelector('[data-cg-clear]').click(); 'ok'`);
+  await sleep(200);
+  await evaluate(`document.querySelector('[data-cg-clear-confirm]').click(); 'ok'`);
+  await sleep(400);
+  const toastEarly = await evaluate(`!!document.querySelector('[data-cg-clear-undo-toast]')`);
+  await sleep(1600);
+  const toastLate = await evaluate(`
+    JSON.stringify({
+      toast: !!document.querySelector('[data-cg-clear-undo-toast]'),
+      collected: JSON.parse(localStorage.getItem('guide.cg.v1')).collected,
+      clearBtnDisabled: document.querySelector('[data-cg-clear]')?.disabled,
+    });
+  `);
+  console.log('toast auto-dismiss:', toastEarly, toastLate);
+
   const trackerOk = (s) => JSON.parse(s).trackerUntouched === TRACKER_SEED;
   const checks = {
     'dialog opens': dialogOpen === true,
@@ -172,6 +196,10 @@ async function main() {
     'tracker untouched (final)': trackerOk(finalState),
     'cards still render': JSON.parse(finalState).gridCount > 0,
     'progress reads 0': (await progressText()).includes('已收集 0'),
+    'toast shown before timeout': toastEarly === true,
+    'toast auto-dismisses': JSON.parse(toastLate).toast === false,
+    'auto dismiss keeps clear': JSON.parse(toastLate).collected.length === 0
+      && JSON.parse(toastLate).clearBtnDisabled === true,
   };
 
   let pass = true;
