@@ -30,8 +30,12 @@ HEADER = """# 攻略 ⇄ CG 映射表
 - 要关联就写 CG 编号，例：`CG01`；同一事件出两张写 `CG01+CG05`。
 - 只想纠错也行：只填我建议错的行，正确的留空即可。
 - 「建议 CG」是我按正文与 CG 条件的字面相似度自动猜的，`?` / `??` 的基本不可靠，**以你的回复为准**。
+- **同一个事件出多张不同 CG 时不做双向**：典型是「美丽之星写真集」——18 位艺人各一张，都出自「美丽之星事件 #14」。
+  这种只做 **CG → 事件单向**（CG 卡片能跳到那个事件，事件卡片上不出跳转入口，因为点过去不知道要开哪张图）。
+  主表里这种行我标成 `—（共用事件，见下节）`，你在下面对应的 CG 节里确认落点就行。
 
 填完我会据此生成跳转数据：攻略里的金色 CG 徽标 → 对应 CG 卡片，CG 卡片 / 大图 → 对应攻略事件。
+反向入口只在「该事件唯一对应一张 CG」时出现。
 
 """
 
@@ -102,16 +106,67 @@ def biz_section() -> str:
     return "\n".join(lines) + "\n"
 
 
+BEAUTY_NOTE = """## 美丽之星写真集（18 张共用同一个事件）
+
+> 18 位艺人各有一张「美丽之星写真集」，全部出自**其他事件 · 美丽之星事件 #14**（排行程时艺人把写真集送给主角一本）。
+> 因为一个事件对应 18 张不同的图，这组**只做 CG → 事件单向**：CG 卡片 / 大图能跳到美丽之星事件 #14，
+> 事件卡片上不出跳转入口。落点如果不对，在回复列写正确的事件号；**留空 = 认可这条单向关系**。
+
+| # | CG（分组） | 获得条件 | 攻略落点 | 我的回复 |
+|---|---|---|---|---|
+"""
+
+BEAUTY_EVENT = "其他事件 · 美丽之星事件 #14"
+SHARED_ROW_MARK = "艺人把写真集送给主角一本"
+SHARED_SUGGEST = "—（共用事件，见下节）"
+
+
+def load_shared() -> list[tuple[str, dict]]:
+    """返回 (分组名, CG item) —— 多角色共用同一事件的 CG，按分组表顺序。"""
+    data = json.loads(CG_JSON.read_text(encoding="utf-8"))
+    order = {g["id"]: i for i, g in enumerate(data["groups"])}
+    groups = {g["id"]: g["name"] for g in data["groups"]}
+    items = [it for it in data["items"] if it["name"] == "美丽之星写真集"]
+    items.sort(key=lambda it: (order.get(it["groupId"], 99), it.get("order") or 0))
+    return [(groups.get(it["groupId"], it["groupId"]), it) for it in items]
+
+
+def beauty_section() -> str:
+    lines = [BEAUTY_NOTE.rstrip("\n")]
+    for i, (gname, it) in enumerate(load_shared(), 1):
+        lines.append(f"| {i} | {gname} · {it['code']} | {it['condition']} | {BEAUTY_EVENT} | |")
+    return "\n".join(lines) + "\n"
+
+
+def mark_shared_rows(text: str) -> str:
+    """把主表里「共用同一事件」那行的建议 CG 改成指向下节（不覆盖人工填写）。"""
+    out: list[str] = []
+    for line in text.splitlines():
+        if SHARED_ROW_MARK in line and line.startswith("|"):
+            cells = line.rstrip().rstrip("|").split("|")
+            if len(cells) >= 7:
+                cells[6] = f" {SHARED_SUGGEST} "
+                line = "|".join(cells) + "|"
+        out.append(line)
+    return "\n".join(out) + "\n"
+
+
 def main() -> None:
     text = OUT.read_text(encoding="utf-8")
     if not BAK.exists():
         shutil.copy2(OUT, BAK)
 
     tables = "## " + text.split("\n## ", 1)[1]
-    tables = tables.split("## 经纪人", 1)[0].rstrip() + "\n"
+    for sep in ("## 经纪人", "## 美丽之星写真集"):
+        tables = tables.split(sep, 1)[0]
+    tables = tables.rstrip() + "\n"
     tables, added = pad_tables(tables)
+    tables = mark_shared_rows(tables)
 
-    OUT.write_text(HEADER + tables + "\n" + biz_section(), encoding="utf-8")
+    OUT.write_text(
+        HEADER + tables + "\n" + biz_section() + "\n" + beauty_section(),
+        encoding="utf-8",
+    )
     print(f"reply column added to {added} table(s) -> {OUT}")
 
 
