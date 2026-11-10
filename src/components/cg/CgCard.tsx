@@ -56,47 +56,47 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
           )}
         </button>
       </div>
-      {/* 第一行：归属 tag + 编号（左） · 攻略入口（右），都是小字 meta。 */}
+      {/* 第一行：归属 tag（左） · 编号 + 攻略入口（右，归为一组的小字 meta）。 */}
       <div className="flex h-5 min-w-0 items-center gap-2 px-2.5 pt-1.5">
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          {group && (
-            <span
-              data-cg-group-tag
-              data-cg-group-name={group.name}
-              className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-1.5"
-            >
-              {group.avatar ? (
-                <img
-                  src={`${import.meta.env.BASE_URL}${group.avatar}`}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  className="h-4 w-4 shrink-0 rounded-full border border-line-strong object-cover"
-                />
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
-                >
-                  {group.name.slice(0, 1)}
-                </span>
-              )}
-              <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
-            </span>
-          )}
-          <span data-cg-code className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
-        </div>
-        {guideHref && (
-          <a
-            data-cg-guide-link
-            href={guideHref}
-            title={guideTitle ?? '查看对应攻略事件'}
-            className="shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+        {group && (
+          <span
+            data-cg-group-tag
+            data-cg-group-name={group.name}
+            className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-1.5"
           >
-            攻略<span aria-hidden className="ml-0.5">›</span>
-          </a>
+            {group.avatar ? (
+              <img
+                src={`${import.meta.env.BASE_URL}${group.avatar}`}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                className="h-4 w-4 shrink-0 rounded-full border border-line-strong object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
+              >
+                {group.name.slice(0, 1)}
+              </span>
+            )}
+            <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
+          </span>
         )}
+        <div className="ml-auto flex min-w-0 items-center gap-1.5">
+          <span data-cg-code className="shrink-0 text-ui-2xs font-semibold tracking-wide text-brand-strong">{item.code}</span>
+          {guideHref && (
+            <a
+              data-cg-guide-link
+              href={guideHref}
+              title={guideTitle ?? '查看对应攻略事件'}
+              className="shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-muted transition-colors hover:bg-brand-soft hover:text-brand-strong"
+            >
+              攻略<span aria-hidden className="ml-0.5">›</span>
+            </a>
+          )}
+        </div>
       </div>
       {/* 第二行：名称独占主角位（放大、最多两行）+ 收集按钮，两者垂直居中。固定高度保住等高。 */}
       <div className="flex h-[44px] items-center justify-between gap-2 px-2.5 pb-1.5">
