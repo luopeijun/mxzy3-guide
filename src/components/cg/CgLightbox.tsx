@@ -55,6 +55,7 @@ export default function CgLightbox({
   return (
     <div
       data-cg-lightbox
+      data-cg-lightbox-id={item.id}
       role="dialog"
       aria-modal="true"
       aria-label={`${item.code} ${item.name} 大图`}
@@ -116,13 +117,21 @@ export default function CgLightbox({
       <div className="shrink-0 border-t border-white/15 px-6 py-4">
         <div className="mx-auto flex max-w-[900px] flex-wrap items-start gap-x-6 gap-y-3">
           <div className="min-w-0 flex-1">
-            <h2 className="text-ui-sm font-semibold">
-              <span className="mr-2 text-brand-line">{item.code}</span>
-              <span data-cg-lightbox-title>{item.name}</span>
-            </h2>
-            <p className="mt-1 text-ui-2xs leading-relaxed text-white/70" data-cg-lightbox-condition>
-              获得条件：{item.condition || '—'}
-            </p>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-ui-xs font-semibold text-brand-line">{item.code}</span>
+              <h2 className="text-ui-sm font-semibold" data-cg-lightbox-title>{item.name}</h2>
+            </div>
+            {/* 说明文字只在这里出现，完整保留；极长的条件最多占 7 行，
+                再长就在这一块内部滚动，不会把大图挤没。 */}
+            <div className="mt-2 flex items-start gap-2">
+              <span className="shrink-0 pt-0.5 text-ui-2xs text-white/50">获得条件</span>
+              <p
+                data-cg-lightbox-condition
+                className="cg-condition-scroll max-h-28 min-w-0 flex-1 overflow-y-auto text-ui-xs leading-relaxed text-white/80"
+              >
+                {item.condition || '—'}
+              </p>
+            </div>
           </div>
           <button
             type="button"

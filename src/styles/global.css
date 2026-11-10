@@ -210,3 +210,8 @@
     background: transparent;
   }
 }
+
+/* 详情页「获得条件」限高后在块内滚动；全局 8px 滚动条对这块文字太粗，收细。 */
+.cg-condition-scroll::-webkit-scrollbar {
+  width: 4px;
+}

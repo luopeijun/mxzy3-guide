@@ -8,8 +8,10 @@ interface Props {
   onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡。图片本身是「查看大图」的按钮，右上角圆勾只管收集状态，两者
- *  互不干扰：没收集的图也能打开看全彩大图，看大图不会偷偷改记录。
+/** 一张 CG 卡只放编号和名字，保持一行、所有卡片等高；获得条件之类的说明
+ *  全放在详情页（灯箱）里，网格里不再挤长文本。
+ *  图片本身是「查看大图」的按钮，右上角圆勾只管收集状态，两者互不干扰：
+ *  没收集的图也能打开看全彩大图，看大图不会偷偷改记录。
  *  未收集只用灰度区分，不再盖面纱或问号，整面墙保持干净。 */
 export default function CgCard({ item, collected, onToggle, onOpen }: Props) {
   return (
@@ -65,14 +67,9 @@ export default function CgCard({ item, collected, onToggle, onOpen }: Props) {
           {collected ? '✓' : ''}
         </button>
       </div>
-      <div className="px-2.5 py-2">
-        <div className="flex min-w-0 items-baseline gap-1.5">
-          <span className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
-          <span className="truncate text-ui-2xs text-ink" title={item.name}>{item.name}</span>
-        </div>
-        <p className="mt-0.5 truncate text-ui-2xs text-ink-faint" title={item.condition}>
-          {item.condition || '—'}
-        </p>
+      <div className="flex min-w-0 items-baseline gap-1.5 px-2.5 py-2.5">
+        <span className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
+        <span className="truncate text-ui-2xs text-ink" title={item.name}>{item.name}</span>
       </div>
     </article>
   );
