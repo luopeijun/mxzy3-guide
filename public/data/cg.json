@@ -440,7 +440,7 @@
       "order": 1,
       "code": "CG 01",
       "name": "欧堡逛街",
-      "condition": "伊莉非初始艺人，第一年2月1日前往欧堡，遇到萧依莉和保镖",
+      "condition": "依莉非初始艺人，第一年2月1日前往欧堡，遇到萧依莉和保镖",
       "image": "images/cg/xiao-1.webp",
       "width": 1100,
       "height": 816
@@ -451,7 +451,7 @@
       "order": 2,
       "code": "CG 02",
       "name": "演唱会",
-      "condition": "给萧伊莉举办个人演唱会，当天跟随可得",
+      "condition": "给萧依莉举办个人演唱会，当天跟随可得",
       "image": "images/cg/xiao-2.webp",
       "width": 1100,
       "height": 825
@@ -462,7 +462,7 @@
       "order": 3,
       "code": "CG 03",
       "name": "拍戏身体不适",
-      "condition": "（需萧伊莉第二轮）第二年3月后，甄红来找依莉，依莉有接戏剧通告时，前往依莉工作场所，看到她靠着墙抽气的样子（详情请看萧伊莉出国开刀攻略）",
+      "condition": "（需萧依莉第二轮）第二年3月后，甄红来找依莉，依莉有接戏剧通告时，前往依莉工作场所，看到她靠着墙抽气的样子（详情请看萧依莉出国开刀攻略）",
       "image": "images/cg/xiao-3.webp",
       "width": 1100,
       "height": 817
@@ -495,7 +495,7 @@
       "order": 6,
       "code": "CG 06",
       "name": "依莉第二轮花开",
-      "condition": "依莉住院期间，前往公园樱花树下，见到依莉，选择“你手上的娃娃是哪来的？”，进入下层选项，再选择“我们的相遇也是前世注定的”（详情请看萧伊莉第二轮事件攻略）",
+      "condition": "依莉住院期间，前往公园樱花树下，见到依莉，选择“你手上的娃娃是哪来的？”，进入下层选项，再选择“我们的相遇也是前世注定的”（详情请看萧依莉第二轮事件攻略）",
       "image": "images/cg/xiao-6.webp",
       "width": 1100,
       "height": 817
@@ -528,7 +528,7 @@
       "order": 9,
       "code": "CG 09",
       "name": "一起去吃夜市",
-      "condition": "伊莉回国后跟随大于120天，依莉主动提出和主角去吃饭，选择“那有什么问题？”可得",
+      "condition": "依莉回国后跟随大于120天，依莉主动提出和主角去吃饭，选择“那有什么问题？”可得",
       "image": "images/cg/xiao-9.webp",
       "width": 1100,
       "height": 823
@@ -539,7 +539,7 @@
       "order": 10,
       "code": "CG 10",
       "name": "与威尔合作",
-      "condition": "与萧伊莉达成情感结局，且与威尔合作可得庆祝图",
+      "condition": "与萧依莉达成情感结局，且与威尔合作可得庆祝图",
       "image": "images/cg/xiao-10.webp",
       "width": 1100,
       "height": 823
@@ -550,7 +550,7 @@
       "order": 11,
       "code": "CG 11",
       "name": "国外度假",
-      "condition": "与萧伊莉达成情感结局，且超越威尔去海外度假可得沙滩图",
+      "condition": "与萧依莉达成情感结局，且超越威尔去海外度假可得沙滩图",
       "image": "images/cg/xiao-11.webp",
       "width": 1100,
       "height": 823
@@ -561,7 +561,7 @@
       "order": 12,
       "code": "CG 12",
       "name": "依莉感情结局",
-      "condition": "与萧伊莉达成情感结局后，结尾可看到剧情",
+      "condition": "与萧依莉达成情感结局后，结尾可看到剧情",
       "image": "images/cg/xiao-12.webp",
       "width": 1100,
       "height": 823
@@ -572,7 +572,7 @@
       "order": 13,
       "code": "CG 13",
       "name": "美丽之星写真集",
-      "condition": "萧伊莉完成美丽之星任务（详情看美丽之星任务攻略）",
+      "condition": "萧依莉完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/xiao-13.webp",
       "width": 1100,
       "height": 823
@@ -836,7 +836,7 @@
       "order": 11,
       "code": "CG 11",
       "name": "与陈奕夫约会",
-      "condition": "陈亦夫在旗下时跟随得知要和嫚君约会，约会当天，点选育幼院，看到小夫参加育幼院的篮球赛（详细请看陈亦夫攻略）",
+      "condition": "陈奕夫在旗下时跟随得知要和嫚君约会，约会当天，点选育幼院，看到小夫参加育幼院的篮球赛（详细请看陈奕夫攻略）",
       "image": "images/cg/su-11.webp",
       "width": 1100,
       "height": 817
@@ -1463,7 +1463,7 @@
       "order": 2,
       "code": "CG 02",
       "name": "演唱会",
-      "condition": "给关谷威举办个人演唱会，当天跟随可得",
+      "condition": "给关古威举办个人演唱会，当天跟随可得",
       "image": "images/cg/guan-2.webp",
       "width": 1100,
       "height": 816
@@ -1540,7 +1540,7 @@
       "order": 9,
       "code": "CG 09",
       "name": "美丽之星写真集",
-      "condition": "关谷威完成美丽之星任务（详情看美丽之星任务攻略）",
+      "condition": "关古威完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/guan-9.webp",
       "width": 800,
       "height": 600
@@ -1562,7 +1562,7 @@
       "order": 2,
       "code": "CG 02",
       "name": "演唱会",
-      "condition": "给陈亦夫举办个人演唱会，当天跟随可得",
+      "condition": "给陈奕夫举办个人演唱会，当天跟随可得",
       "image": "images/cg/chen-2.webp",
       "width": 1100,
       "height": 817
@@ -1606,7 +1606,7 @@
       "order": 6,
       "code": "CG 06",
       "name": "美丽之星写真集",
-      "condition": "陈亦夫完成美丽之星任务（详情看美丽之星任务攻略）",
+      "condition": "陈奕夫完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/chen-6.webp",
       "width": 1100,
       "height": 816
@@ -1716,7 +1716,7 @@
       "order": 10,
       "code": "CG 10",
       "name": "继承家业",
-      "condition": "克烈斯决斗当天，前往维也纳，兄弟两人的决斗（详情请看克列斯攻略）",
+      "condition": "克烈斯决斗当天，前往维也纳，兄弟两人的决斗（详情请看克烈斯攻略）",
       "image": "images/cg/ji-10.webp",
       "width": 1100,
       "height": 817
