@@ -16,8 +16,8 @@ interface Props {
 /** 一张 CG 卡只放编号和名字，保持一行、所有卡片等高；获得条件之类的说明
  *  全放在详情页（灯箱）里，网格里不再挤长文本。
  *  图片本身是「查看大图」的按钮，整块可点；收集开关放在底部信息栏里，**不再浮在
- *  图片上**，这样点图片永远只是看大图、不会再误触到收集圆点。右上角只留一个不响应
- *  点击的小状态点，方便一眼扫过去看哪些已收。未收集只用灰度区分，整面墙保持干净。 */
+ *  图片上**，这样点图片永远只是看大图、不会再误触到收集圆点。已收集与否完全由底部
+ *  信息栏的「✓ 已收集 / ○ 收集」芯片表达（已收的图同时转为彩色），整面墙保持干净。 */
 export default function CgCard({ item, collected, group, guideHref, guideTitle, onToggle, onOpen }: Props) {
   return (
     <article
@@ -56,15 +56,6 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
             </span>
           )}
         </button>
-        {/* 不响应点击的状态点：已收才显示，纯指示用。 */}
-        {collected && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute right-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold leading-none text-white shadow-soft"
-          >
-            ✓
-          </span>
-        )}
       </div>
       {/* 固定行高：有「攻略」入口的卡片不能被这一行撑高，否则整面墙高低不齐。 */}
       <div className="flex h-10 min-w-0 items-center gap-1.5 px-2.5">
