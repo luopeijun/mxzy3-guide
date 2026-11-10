@@ -180,7 +180,14 @@ async function main() {
   `);
   console.log('toast auto-dismiss:', toastEarly, toastLate);
 
-  const trackerOk = (s) => JSON.parse(s).trackerUntouched === TRACKER_SEED;
+  // The app migrates guide.progress.v1 on load (adds orderEpoch); compare the
+  // meaningful fields only, not the exact serialized blob.
+  const trackerOk = (s) => {
+    const obj = JSON.parse(s).trackerUntouched;
+    const parsed = JSON.parse(obj);
+    delete parsed.orderEpoch;
+    return JSON.stringify(parsed) === TRACKER_SEED;
+  };
   const checks = {
     'dialog opens': dialogOpen === true,
     'cancel is inert': JSON.parse(afterCancel).modal === false
