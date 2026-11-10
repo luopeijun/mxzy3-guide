@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
-import { readCg, writeCg } from '../../lib/cg';
+import { readCg, writeCg, CG_CHANGED_EVENT } from '../../lib/cg';
 import type { CgData } from '../../types/cg';
 import CgCard from './CgCard';
 import CgLightbox from './CgLightbox';
+import SaveArchivePanel from '../tracker/SaveArchivePanel';
 
 const PAGE_SIZE = 60;
 
@@ -54,7 +55,25 @@ export default function CgApp({ data }: Props) {
   const [onlyMissing, setOnlyMissing] = useState(false);
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  // A save import writes the CG collection straight to localStorage and fires
+  // this event, so re-read instead of requiring a reload.
+  useEffect(() => {
+    const onChanged = () => setCollected(readCg(validIds));
+    window.addEventListener(CG_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(CG_CHANGED_EVENT, onChanged);
+  }, [validIds]);
+
+  useEffect(() => {
+    if (!archiveOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setArchiveOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [archiveOpen]);
 
   const toggle = (id: string) => {
     setCollected((previous) => {
@@ -186,6 +205,14 @@ export default function CgApp({ data }: Props) {
               style={{ width: `${percent}%` }}
             />
           </span>
+          <button
+            type="button"
+            data-cg-archive
+            onClick={() => setArchiveOpen(true)}
+            className="rounded-full border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+          >
+            全部存档
+          </button>
         </div>
       </div>
 
@@ -241,7 +268,7 @@ export default function CgApp({ data }: Props) {
                 <ul
                   data-cg-grid
                   data-cg-count={visible.length}
-                  className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr))]"
+                  className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr))]"
                 >
                   {visible.map((item) => (
                     <li key={item.id}>
@@ -287,6 +314,21 @@ export default function CgApp({ data }: Props) {
           onToggle={() => toggle(lightboxItem.id)}
           onClose={closeLightbox}
         />
+      )}
+
+      {archiveOpen && (
+        <div
+          data-cg-archive-modal
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 py-6"
+          onClick={() => setArchiveOpen(false)}
+        >
+          <div
+            className="max-h-full w-full max-w-[440px] overflow-y-auto"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <SaveArchivePanel />
+          </div>
+        </div>
       )}
     </div>
   );

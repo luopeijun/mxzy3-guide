@@ -7,6 +7,7 @@ import { useGuideData } from './hooks/useGuideData';
 import { useNoticeData } from './hooks/useNoticeData';
 import { useCgData } from './hooks/useCgData';
 import { useTreeOrder } from './hooks/useTreeOrder';
+import { GuideDataContext } from './hooks/useGuideContext';
 import { HighlightProvider } from './hooks/useHighlightPref';
 import { TrackerProvider } from './hooks/useTracker';
 import AppShell from './components/AppShell';
@@ -292,20 +293,22 @@ export default function App() {
   };
 
   return (
-    <TrackerProvider>
-      <HighlightProvider>
-        <GuideApp
-          data={data}
-          mode={mode}
-          onViewGuide={closeTracker}
-          onViewTracker={openTracker}
-          onViewNotices={openNotices}
-          onViewCg={openCg}
-        />
-        {mode === 'tracker' && <TrackerApp data={data} />}
-        {mode === 'notices' && <NoticesView />}
-        {mode === 'cg' && <CgView />}
-      </HighlightProvider>
-    </TrackerProvider>
+    <GuideDataContext.Provider value={data}>
+      <TrackerProvider>
+        <HighlightProvider>
+          <GuideApp
+            data={data}
+            mode={mode}
+            onViewGuide={closeTracker}
+            onViewTracker={openTracker}
+            onViewNotices={openNotices}
+            onViewCg={openCg}
+          />
+          {mode === 'tracker' && <TrackerApp data={data} />}
+          {mode === 'notices' && <NoticesView />}
+          {mode === 'cg' && <CgView />}
+        </HighlightProvider>
+      </TrackerProvider>
+    </GuideDataContext.Provider>
   );
 }

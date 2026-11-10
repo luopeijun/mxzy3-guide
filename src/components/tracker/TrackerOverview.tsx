@@ -52,7 +52,7 @@ export default function TrackerOverview({ data }: Props) {
           className="mt-3 rounded-ui-sm border border-line-strong bg-surface-soft p-2.5"
         >
           <p className="text-ui-2xs leading-[1.7] text-ink-muted">
-            重置会清空全部勾选、放弃与排序记录。想留底的话，先在下方「进度存档」导出；重置后也可以在那里撤销这一次。
+            重置会清空全部勾选、放弃与排序记录。想留底的话，先在下方「全部存档」导出；重置后也可以在那里撤销这一次。
           </p>
           <div className="mt-2 flex gap-2">
             <button

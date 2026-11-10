@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
-import type { GuideData } from '../../types/guide';
 import { useTracker } from '../../hooks/useTracker';
+import { useGuideContext } from '../../hooks/useGuideContext';
 import { extractLines } from '../../lib/tracker';
 import {
   captureStepRefs,
@@ -9,23 +9,31 @@ import {
   type ReanchorReport,
 } from '../../lib/trackerReanchor';
 import {
-  archiveFileName,
+  createArchive,
   describeSummary,
   formatArchiveTime,
-  parseArchive,
-  serialiseArchive,
   type TrackerArchive,
 } from '../../lib/trackerTransfer';
+import {
+  applyCgToLocal,
+  createSaveArchive,
+  describeSaveSummary,
+  parseSaveArchive,
+  saveArchiveFileName,
+  serialiseSaveArchive,
+  type SaveArchive,
+} from '../../lib/saveArchive';
+import { readCgRaw } from '../../lib/cg';
 
 type Notice = { tone: 'ok' | 'error'; text: string };
 
-/** An archive plus what re-anchoring it against the current guide data found. */
 interface PendingImport {
-  archive: TrackerArchive;
+  /** The whole unified save, so the preview can show both halves' summaries. */
+  archive: SaveArchive;
+  /** Tracker progress after indices were re-pointed at the right events. */
+  trackerData: TrackerArchive['data'] | null;
   /** `null` when the archive predates step snapshots and cannot be checked. */
   report: ReanchorReport | null;
-  /** Progress after indices were re-pointed at the right events. */
-  data: TrackerArchive['data'];
 }
 
 function downloadText(text: string, fileName: string) {
@@ -37,15 +45,16 @@ function downloadText(text: string, fileName: string) {
   document.body.append(link);
   link.click();
   link.remove();
-  // Give the browser a tick to start the download before revoking.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** Local progress lives in this browser only. This panel moves it between
- *  devices: export a JSON save, then import it elsewhere — either merged into
- *  what is already there, or replacing it outright. */
-export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
+/** A single backup file carrying both the event-tracker progress and the CG
+ *  collection, so one export/import moves every local save between devices.
+ *  The tracker half keeps its re-anchor + merge/replace machinery; the CG half
+ *  is always merged (never replaced) so a ticked CG can never be dropped. */
+export default function SaveArchivePanel() {
   const { snapshot, importProgress, backup, undoBackup, dismissBackup } = useTracker();
+  const guide = useGuideContext();
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -53,13 +62,21 @@ export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
   const [pasteText, setPasteText] = useState('');
   const [confirmReplace, setConfirmReplace] = useState(false);
 
-  // Every task line in the guide (not just the selected artists' pool): an
-  // imported save can legitimately mention artists this device has not picked.
-  const allLines = useMemo(() => extractLines(guide), [guide]);
+  // Every task line in the guide: an imported save can mention other artists.
+  const allLines = useMemo(() => (guide ? extractLines(guide) : []), [guide]);
 
-  const applyArchive = (archive: TrackerArchive) => {
-    const { data, report } = reanchorProgress(archive.data, archive.steps, allLines);
-    setPending({ archive, data, report: archive.steps ? report : null });
+  const buildTrackerArchive = (now: Date): TrackerArchive => {
+    const save = snapshot();
+    return createArchive(save, captureStepRefs(allLines, save), now);
+  };
+
+  const buildCgPart = () => ({ version: 1 as const, collected: readCgRaw() });
+
+  const applyArchive = (archive: SaveArchive) => {
+    const { data, report } = archive.tracker
+      ? reanchorProgress(archive.tracker.data, archive.tracker.steps, allLines)
+      : { data: null, report: null };
+    setPending({ archive, trackerData: data, report });
     setNotice(null);
     setConfirmReplace(false);
     setPasteOpen(false);
@@ -67,7 +84,7 @@ export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
 
   const readText = (text: string) => {
     try {
-      applyArchive(parseArchive(text));
+      applyArchive(parseSaveArchive(text));
     } catch (error) {
       setPending(null);
       setNotice({ tone: 'error', text: error instanceof Error ? error.message : '存档读取失败。' });
@@ -76,16 +93,18 @@ export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
 
   const handleExport = () => {
     const now = new Date();
-    const save = snapshot();
-    downloadText(serialiseArchive(save, captureStepRefs(allLines, save), now), archiveFileName(now));
-    setNotice({ tone: 'ok', text: '存档文件已下载，把它传到另一台设备后导入即可。' });
+    downloadText(
+      serialiseSaveArchive(createSaveArchive(buildTrackerArchive(now), buildCgPart(), now)),
+      saveArchiveFileName(now),
+    );
+    setNotice({ tone: 'ok', text: '存档文件已下载，传到另一台设备后导入即可（含进度与 CG 收集）。' });
   };
 
   const handleCopy = async () => {
     try {
-      const save = snapshot();
+      const now = new Date();
       await navigator.clipboard.writeText(
-        serialiseArchive(save, captureStepRefs(allLines, save), new Date(), false),
+        serialiseSaveArchive(createSaveArchive(buildTrackerArchive(now), buildCgPart(), now), false),
       );
       setNotice({ tone: 'ok', text: '存档内容已复制到剪贴板，可直接粘贴到另一台设备。' });
     } catch {
@@ -111,12 +130,13 @@ export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
       setConfirmReplace(true);
       return;
     }
-    importProgress(pending.data, mode);
+    if (pending.trackerData) importProgress(pending.trackerData, mode);
+    if (pending.archive?.cg) applyCgToLocal(pending.archive.cg.collected);
     const base =
       mode === 'merge'
-        ? `已合并 ${pending.archive.summary.lines} 条有记录的线，本机原有进度都保留着。`
-        : '已用存档覆盖本机进度。';
-    const extra = describeReport(pending.report);
+        ? '已合并存档，本机原有进度与 CG 收集都保留着。'
+        : '已用存档覆盖本机进度（CG 收集仍按合并处理，不会丢失）。';
+    const extra = pending.report ? describeReport(pending.report) : '';
     setNotice({ tone: 'ok', text: extra ? `${base} ${extra}。` : base });
     setPending(null);
     setConfirmReplace(false);
@@ -134,11 +154,11 @@ export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
       className="rounded-ui-md border border-line bg-surface p-5 shadow-soft"
     >
       <div className="flex items-baseline justify-between">
-        <h2 className="text-ui-sm font-bold text-brand-strong">进度存档</h2>
+        <h2 className="text-ui-sm font-bold text-brand-strong">全部存档</h2>
         <span className="text-ui-2xs text-ink-faint">多端同步</span>
       </div>
       <p className="mt-2 text-ui-2xs leading-[1.7] text-ink-faint">
-        进度只保存在本机浏览器。导出存档后在另一台设备导入，就能接着之前的记录继续。
+        进度与 CG 收藏只保存在本机浏览器。导出存档后在另一台设备导入，就能接着之前的记录继续。
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -177,7 +197,6 @@ export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
           onChange={(event) => {
             const file = event.target.files?.[0];
             void handleFile(file);
-            // Reset so picking the same file twice still fires onChange.
             event.target.value = '';
           }}
         />
@@ -211,13 +230,20 @@ export default function TrackerTransfer({ data: guide }: { data: GuideData }) {
         >
           <p className="text-ui-2xs font-medium text-brand-strong">准备导入的存档</p>
           <p className="mt-1 text-ui-2xs text-ink-muted">
-            {pending.archive.exportedAt
+            {pending.archive?.exportedAt
               ? `${formatArchiveTime(pending.archive.exportedAt)} 导出`
               : '存档未标注导出时间'}
           </p>
-          <p className="mt-0.5 text-ui-2xs text-ink-faint">
-            {describeSummary(pending.archive.summary)}
-          </p>
+          {pending.archive && (
+            <p className="mt-0.5 text-ui-2xs text-ink-faint">
+              {describeSaveSummary(pending.archive.summary)}
+            </p>
+          )}
+          {pending.archive?.tracker && (
+            <p className="mt-0.5 text-ui-2xs text-ink-faint">
+              {describeSummary(pending.archive.tracker.summary)}
+            </p>
+          )}
           {pending.report === null ? (
             <p
               data-transfer-legacy
