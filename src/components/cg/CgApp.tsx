@@ -7,6 +7,8 @@ import CgLightbox from './CgLightbox';
 import SaveArchivePanel from '../tracker/SaveArchivePanel';
 
 const PAGE_SIZE = 60;
+/** 撤销条停留时长：1.5s 内没点就自己收起，免得一直悬在底部挡住最后一行卡片。 */
+const UNDO_TOAST_MS = 1500;
 
 interface Props {
   data: CgData;
@@ -107,6 +109,13 @@ export default function CgApp({ data }: Props) {
     setCollected(clearedSnapshot);
     setClearedSnapshot(null);
   };
+
+  // 撤销条到点自动收起；点撤销 / 关闭都会把 snapshot 置空，从而清掉定时器。
+  useEffect(() => {
+    if (!clearedSnapshot) return;
+    const timer = window.setTimeout(() => setClearedSnapshot(null), UNDO_TOAST_MS);
+    return () => window.clearTimeout(timer);
+  }, [clearedSnapshot]);
 
   const openLightbox = (id: string, ids: string[], trigger: HTMLButtonElement) => {
     triggerRef.current = trigger;
@@ -415,6 +424,8 @@ export default function CgApp({ data }: Props) {
       {clearedSnapshot && (
         <div
           data-cg-clear-undo-toast
+          role="status"
+          aria-live="polite"
           className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border border-gold-line bg-gold-soft px-4 py-2 shadow-soft"
         >
           <span className="text-ui-xs text-gold">
