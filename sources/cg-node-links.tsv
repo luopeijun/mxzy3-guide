@@ -12,11 +12,13 @@
 # 一对一、能锚到具体事件的关系写在 sources/cg-links.tsv，不走这里。
 
 sang-3	other-events/luousang	路桑恋：记者逼问桑禾蓓（路风和欧怡青都在旗下 #11）
+sang-4	other-events/luousang	路桑恋：路风指导禾蓓演技（= lu-4 的另一侧；#7 / #11）
 sang-5	other-events/luousang	路桑恋：公园问路风对自己的态度
 sang-6	other-events/luousang	路桑恋：结局两人结婚
 sang-7	other-events/luousang	路桑恋：SOSA 里不能公开交往
 ou-3	other-events/luousang	路欧恋：路敏把怡青介绍给路风（#3）
 ou-4	other-events/luousang	路欧恋：19号酒馆相谈甚欢（#8）
+ou-5	other-events/luousang	路欧恋：买冰水给怡青（= lu-9 的另一侧；#51）
 ou-6	other-events/luousang	路欧恋：怡青生日派对（#23）
 lu-4	other-events/luousang	路桑恋：与禾蓓陪练剧本（只有路风 #7 / 两人都在 #11）
 lu-5	other-events/luousang	路桑恋：与禾蓓公园讨论（#18 / #29）

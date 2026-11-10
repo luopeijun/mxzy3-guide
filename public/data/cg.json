@@ -633,7 +633,11 @@
       "condition": "于沟通时希望看到路风演出后前往小桑戏剧工作地点",
       "image": "images/cg/sang-4.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "sang-5",
@@ -960,7 +964,11 @@
       "condition": "路风、怡青公布恋情，一个月内跟随路风，路风会投饮料冰怡青",
       "image": "images/cg/ou-5.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "ou-6",
