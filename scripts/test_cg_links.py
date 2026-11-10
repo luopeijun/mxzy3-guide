@@ -70,7 +70,7 @@ class TestCgLinkMapping(unittest.TestCase):
                         seen_cg.setdefault(cg_id, where)
 
         # 映射是逐块长出来的，至少要覆盖已经核对过的几组，防止某次重构把整段映射悄悄丢掉。
-        self.assertGreaterEqual(len(seen_cg), 62)
+        self.assertGreaterEqual(len(seen_cg), 98)
 
         # 每个已经核对完的角色各锁一个下限：漏掉一整段（比如改 tsv 时误删）会立刻红。
         expected = {
@@ -86,6 +86,13 @@ class TestCgLinkMapping(unittest.TestCase):
             "characters/guan-guwei": 6,
             "characters/chen-yifu": 3,
             "characters/ji-xiang": 6,
+            "characters/xinming-shaxue": 9,
+            "characters/yao-ziying": 5,
+            "characters/ling-xiang": 5,
+            "characters/ke-liesi": 7,
+            "characters/wei-ya": 5,
+            "characters/yuan-shaowei": 5,
+            "other-events/secretary": 1,
         }
         for node_id, least in expected.items():
             self.assertGreaterEqual(

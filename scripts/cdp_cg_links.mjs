@@ -9,7 +9,9 @@ import http from 'node:http';
    4. 没有映射的 CG（lin-2 芬芬演唱会）不渲染入口，避免死链。
    5. 萧依莉页：泪洒片场 #35 / #39 经核对无 CG，正文不再有「CG」字样、
       也不再是可点徽标；出国开刀 #45 仍指向 #/cg/xiao-3。
-   6. 大图里也有「看攻略」入口。 */
+   6. 大图里也有「看攻略」入口。
+   7. 多对一：美丽之星写真集 18 张锚到同一个事件（#14）；秘书莉铃的 CG 在「主线」组
+      但落点是「其他事件 · 秘书莉铃事件 #3」；原少纬事件 54 的两张图都回到同一个事件。 */
 
 const PORT = '9339';
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -74,6 +76,15 @@ async function main() {
   };
 
   const hash = () => evaluate('location.hash');
+  // 图鉴页切分组、滚到目标卡都是异步的，固定 sleep 在机器忙的时候会抢跑。
+  const waitFor = async (expression, timeout = 5000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < timeout) {
+      if (await evaluate(expression)) return true;
+      await sleep(80);
+    }
+    return false;
+  };
   const goto = async (url) => {
     await send('Page.navigate', { url });
     await sleep(1100);
@@ -265,6 +276,13 @@ async function main() {
     ['characters/guan-guwei', 'guan'],
     ['characters/chen-yifu', 'chen'],
     ['characters/ji-xiang', 'ji'],
+    ['characters/xinming-shaxue', 'xin'],
+    ['characters/yao-ziying', 'yaom'],
+    ['characters/ling-xiang', 'ling'],
+    ['characters/ke-liesi', 'ke'],
+    ['characters/wei-ya', 'wei'],
+    ['characters/yuan-shaowei', 'yuan'],
+    ['other-events/secretary', 'sec'],
   ]) {
     await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
     await sleep(1500);
@@ -292,6 +310,119 @@ async function main() {
     `);
   }
   console.log('no-cg events:', JSON.stringify(noCgEvents));
+
+  // 新名纱雪「与律师的事件 #5」与聆香「温泉事件 #22」也是「原文不该有 CG」：
+  // 纱雪的 #5 在「签约方法」里还有一个（那个真有 CG），所以取同 label 的第二个；
+  // 其余 6 个删标记的事件 label 在各自页面里唯一，已在上面的 noCgEvents 里断言。
+  await evaluate(`location.hash = '#/guide/characters/xinming-shaxue'; 'ok'`);
+  await sleep(1500);
+  const xinNoCg = await evaluate(`
+    (() => {
+      const all = [...document.querySelectorAll('[data-event-label="5"]')];
+      const el = all[1];
+      return JSON.stringify({
+        count: all.length,
+        cgText: el ? /CG/.test(el.textContent) : null,
+        link: el ? !!el.querySelector('[data-cg-link]') : null,
+      });
+    })()
+  `);
+  console.log('xin 5 (与律师的事件):', xinNoCg);
+
+  await evaluate(`location.hash = '#/guide/characters/ling-xiang'; 'ok'`);
+  await sleep(1500);
+  const lingNoCg = await evaluate(`
+    (() => {
+      // 22－1 是 22 的子事件，会嵌在这张卡里；只看卡首行，别把子事件的 CG 算进来。
+      const el = document.querySelector('[data-event-label="22"]');
+      const head = el?.firstElementChild;
+      return JSON.stringify({
+        cgText: head ? /CG/.test(head.textContent) : null,
+        link: head ? !!head.querySelector('[data-cg-link]') : null,
+      });
+    })()
+  `);
+  console.log('ling 22 (温泉事件):', lingNoCg);
+
+  // 秘书莉铃：CG 在「主线」组，但落点是「其他事件 · 秘书莉铃事件 #3」。
+  await evaluate(`location.hash = '#/cg/main-4'; 'ok'`);
+  await sleep(1500);
+  await waitFor("!!document.querySelector('#cg-card-main-4 [data-cg-guide-link]')");
+  const secHref = await evaluate(`
+    document.querySelector('#cg-card-main-4 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  await evaluate(`document.querySelector('#cg-card-main-4 [data-cg-guide-link]')?.click(); 'ok'`);
+  await sleep(1600);
+  const secLanding = await evaluate(`
+    (() => {
+      const m = location.hash.match(/~(.+)$/);
+      const target = m ? document.getElementById(m[1]) : null;
+      return JSON.stringify({
+        hash: location.hash,
+        label: target?.getAttribute('data-event-label') ?? '',
+        text: target?.textContent?.replace(/\\s+/g, ' ').slice(0, 24) ?? '',
+      });
+    })()
+  `);
+  console.log('main-4 reverse:', secHref, secLanding);
+
+  // 美丽之星写真集：18 张都锚到同一个事件（#14），不做整页落点。
+  await evaluate(`location.hash = '#/cg/lin-13'; 'ok'`);
+  await sleep(1500);
+  await waitFor("!!document.querySelector('#cg-card-lin-13 [data-cg-guide-link]')");
+  const beautyHref = await evaluate(`
+    document.querySelector('#cg-card-lin-13 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  await evaluate(`document.querySelector('#cg-card-lin-13 [data-cg-guide-link]')?.click(); 'ok'`);
+  await sleep(1600);
+  const beautyLanding = await evaluate(`
+    (() => {
+      const m = location.hash.match(/~(.+)$/);
+      const target = m ? document.getElementById(m[1]) : null;
+      const rect = target?.getBoundingClientRect();
+      return JSON.stringify({
+        hash: location.hash,
+        label: target?.getAttribute('data-event-label') ?? '',
+        text: target?.textContent?.replace(/\\s+/g, ' ').slice(0, 26) ?? '',
+        inView: !!rect && rect.top >= 0 && rect.top < innerHeight,
+      });
+    })()
+  `);
+  console.log('lin-13 reverse:', beautyHref, beautyLanding);
+
+  // 原少纬事件 54 出两张图：徽标只给第一张（yuan-7），但两张都要能反跳回同一个事件。
+  const yuanHrefs = {};
+  for (const cg of ['yuan-7', 'yuan-8']) {
+    await evaluate(`location.hash = '#/cg/${cg}'; 'ok'`);
+    await sleep(1300);
+    await waitFor(`!!document.querySelector('#cg-card-${cg} [data-cg-guide-link]')`);
+    yuanHrefs[cg] = await evaluate(`
+      document.querySelector('#cg-card-${cg} [data-cg-guide-link]')?.getAttribute('href') ?? ''
+    `);
+  }
+  console.log('yuan 7/8 hrefs:', JSON.stringify(yuanHrefs));
+
+  // 共用一张图的两个事件：反跳取最先出现的那个（纱雪念书 → 事件 33 那一处）。
+  await evaluate(`location.hash = '#/cg/xin-10'; 'ok'`);
+  await sleep(1500);
+  await waitFor("!!document.querySelector('#cg-card-xin-10 [data-cg-guide-link]')");
+  const xin10Href = await evaluate(`
+    document.querySelector('#cg-card-xin-10 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  await evaluate(`document.querySelector('#cg-card-xin-10 [data-cg-guide-link]')?.click(); 'ok'`);
+  await sleep(1600);
+  const xin10Landing = await evaluate(`
+    (() => {
+      const m = location.hash.match(/~(.+)$/);
+      const target = m ? document.getElementById(m[1]) : null;
+      return JSON.stringify({
+        hash: location.hash,
+        label: target?.getAttribute('data-event-label') ?? '',
+        text: target?.textContent?.replace(/\\s+/g, ' ').slice(0, 22) ?? '',
+      });
+    })()
+  `);
+  console.log('xin-10 reverse:', xin10Href, xin10Landing);
 
   // 反向：天晴 CG04（被路敏告白）应跳回「与路敏的感情」事件 38。
   await evaluate(`location.hash = '#/cg/tian-4'; 'ok'`);
@@ -408,6 +539,26 @@ async function main() {
     'ji-xiang badges': sameSet(pageBadges.ji, [
       '#/cg/ji-1', '#/cg/ji-7', '#/cg/ji-8', '#/cg/ji-9', '#/cg/ji-3', '#/cg/ji-4',
     ]),
+    'xinming-shaxue badges': sameSet(pageBadges.xin, [
+      '#/cg/xin-1', '#/cg/xin-6', '#/cg/xin-4', '#/cg/xin-9', '#/cg/xin-10',
+      '#/cg/xin-13', '#/cg/xin-3', '#/cg/xin-10', '#/cg/xin-10',
+    ]),
+    'yao-ziying badges': sameSet(pageBadges.yaom, [
+      '#/cg/yaom-1', '#/cg/yaom-6', '#/cg/yaom-3', '#/cg/yaom-4', '#/cg/yaom-5',
+    ]),
+    'ling-xiang badges': sameSet(pageBadges.ling, [
+      '#/cg/ling-1', '#/cg/ling-4', '#/cg/ling-3', '#/cg/ling-5', '#/cg/ling-6',
+    ]),
+    'ke-liesi badges': sameSet(pageBadges.ke, [
+      '#/cg/ke-1', '#/cg/ke-3', '#/cg/ke-5', '#/cg/ke-7', '#/cg/ke-4', '#/cg/ke-8', '#/cg/ke-6',
+    ]),
+    'wei-ya badges': sameSet(pageBadges.wei, [
+      '#/cg/wei-1', '#/cg/wei-4', '#/cg/wei-7', '#/cg/wei-3', '#/cg/wei-5',
+    ]),
+    'yuan-shaowei badges': sameSet(pageBadges.yuan, [
+      '#/cg/yuan-1', '#/cg/yuan-4', '#/cg/yuan-5', '#/cg/yuan-7', '#/cg/yuan-9',
+    ]),
+    'secretary badges': sameSet(pageBadges.sec, ['#/cg/main-4']),
     'dropped cg marks have no badge': Object.values(noCgEvents)
       .flat()
       .every((e) => !e.missing && e.cgText === false && e.link === false),
@@ -415,6 +566,21 @@ async function main() {
       && JSON.parse(tianLanding).label === '38',
     'su-5 reverse goes to first event': suHref.startsWith('#/guide/characters/su-manjun~ev') && su.label === '40',
     'ou-8 is event-level now': ou8Href.startsWith('#/guide/characters/ou-yiqing~ev'),
+    // 这两个事件只删了 CG 标记，不像别的角色那样有个可点的徽标。
+    'xin 5 (与律师) has no cg marker': JSON.parse(xinNoCg).count === 2
+      && JSON.parse(xinNoCg).cgText === false && JSON.parse(xinNoCg).link === false,
+    'ling 22 has no cg marker': JSON.parse(lingNoCg).cgText === false && JSON.parse(lingNoCg).link === false,
+    'main-4 lands on secretary event 3': secHref === '#/guide/other-events/secretary~ev2'
+      && JSON.parse(secLanding).label === '3',
+    // 18 张写真集共用一个事件：必须锚到 #14，而不是退回美丽之星页顶部。
+    'beauty star cg anchors the shared event': beautyHref === '#/guide/other-events/beauty-star~ev18',
+    'beauty star lands on event 14': JSON.parse(beautyLanding).label === '14'
+      && JSON.parse(beautyLanding).text.includes('写真集')
+      && JSON.parse(beautyLanding).inView === true,
+    'yuan 7 and 8 both land on event 54': yuanHrefs['yuan-7'] === '#/guide/characters/yuan-shaowei~ev96'
+      && yuanHrefs['yuan-8'] === '#/guide/characters/yuan-shaowei~ev96',
+    'xin-10 reverse takes the first event': xin10Href === '#/guide/characters/xinming-shaxue~ev77'
+      && JSON.parse(xin10Landing).label === '33',
   };
 
   let pass = true;

@@ -1,11 +1,17 @@
 """`sources/cg-node-links.tsv` 的守护测试。
 
-路欧桑那一段感情线在攻略里按「情况1~5」写了五遍，同一张 CG 会落在三四个分支的
-同名事件上，所以这些 CG 不锚事件、整组跳「其他事件 · 路欧桑剧情整理」这一页。
-这份映射同样是一条死链就静默失败的东西，这里把它锁住：
+两份「多对一」映射都写在这张表里：
+
+  * 路欧桑那一段感情线在攻略里按「情况1~5」写了五遍，同一张 CG 会落在三四个分支的
+    同名事件上，所以这些 CG 不锚事件、整组跳「其他事件 · 路欧桑剧情整理」这一页；
+  * 美丽之星写真集是 18 个角色各一张 CG，但出图的是同一个事件（#14），落点唯一，
+    所以带事件锚点。
+
+这里把它锁住：
 
   * `cg.json` 里带 `guide` 的条目，节点必须真的存在、标题抄对；
   * 一张 CG 不能同时有事件级落点和页面级落点（否则按钮指哪条得靠猜）；
+  * 写了事件号的行，锚点必须真的指到那个事件（块存在、正文对得上）；
   * 写错的行必须让生成直接失败。
 """
 
@@ -27,6 +33,7 @@ ROOT = HERE.parent
 GUIDE = ROOT / "public" / "data" / "guide.json"
 CG = ROOT / "public" / "data" / "cg.json"
 LUOUSANG = "other-events/luousang"
+BEAUTY_STAR = "other-events/beauty-star"
 
 
 def _walk(node: dict):
@@ -42,15 +49,45 @@ class TestCgNodeLinks(unittest.TestCase):
         self.assertIn(LUOUSANG, titles)
 
         linked = [it for it in json.loads(CG.read_text(encoding="utf-8"))["items"] if it.get("guide")]
-        self.assertGreaterEqual(len(linked), 15, "路欧桑的页面级落点不该被整段丢掉")
+        self.assertGreaterEqual(len(linked), 33, "多对一的落点不该被整段丢掉")
         for item in linked:
             node_id = item["guide"]["nodeId"]
             self.assertIn(node_id, titles, f"{item['id']} 指向不存在的节点 {node_id}")
             self.assertEqual(item["guide"]["title"], titles[node_id])
-        # 这一批全是路欧桑的感情线，混进别的页面说明 tsv 写串了行。
-        self.assertEqual({item["guide"]["nodeId"] for item in linked}, {LUOUSANG})
+        # 只有这两组「多对一」：路欧桑感情线（整页）+ 美丽之星写真集（同一事件）。
+        self.assertEqual(
+            {item["guide"]["nodeId"] for item in linked},
+            {LUOUSANG, BEAUTY_STAR},
+        )
         # 告别演唱会核对后锚到了欧怡青「告别 #7」，应当已从页面级移出。
         self.assertNotIn("ou-8", {item["id"] for item in linked})
+
+    def test_beauty_star_shared_event_anchor(self):
+        """18 张写真集都锚到美丽之星 #14，且那个块真的是「写真集」事件。"""
+        guide = json.loads(GUIDE.read_text(encoding="utf-8"))
+        node = next(
+            node for category in guide["categories"] for node in _walk(category)
+            if node["id"] == BEAUTY_STAR
+        )
+        items = json.loads(CG.read_text(encoding="utf-8"))["items"]
+        photos = [it for it in items if it["name"] == "美丽之星写真集"]
+        self.assertEqual(len(photos), 18)
+        for item in photos:
+            self.assertEqual(item["guide"]["nodeId"], BEAUTY_STAR)
+            anchor = item["guide"].get("anchor")
+            self.assertTrue(anchor, f"{item['id']} 少了事件锚点，会退回整页顶部")
+            index = int(anchor.removeprefix("ev"))
+            block = node["blocks"][index]
+            self.assertEqual(block["kind"], "event")
+            self.assertEqual(block.get("label"), "14")
+            self.assertIn("写真集", block["text"])
+
+    def test_luousang_rows_have_no_anchor(self):
+        """路欧桑那几个事件在情况1~5 里各有一遍，锚哪个都不对——不能带锚点。"""
+        items = json.loads(CG.read_text(encoding="utf-8"))["items"]
+        for item in items:
+            if item.get("guide", {}).get("nodeId") == LUOUSANG:
+                self.assertNotIn("anchor", item["guide"], f"{item['id']} 不该锚到具体事件")
 
     def test_no_item_has_both_kinds_of_link(self):
         guide = json.loads(GUIDE.read_text(encoding="utf-8"))
@@ -85,6 +122,11 @@ class TestCgNodeLinks(unittest.TestCase):
                     xc.apply_node_links(items, titles)
 
                 links.write_text("sang-5\tother-events/nope\n", encoding="utf-8")
+                with self.assertRaises(SystemExit):
+                    xc.apply_node_links(items, titles)
+
+                # 写了事件号却对不上：宁可让生成失败，也不要静默退回整页顶部。
+                links.write_text(f"sang-5\t{LUOUSANG}\t备注\t9999\n", encoding="utf-8")
                 with self.assertRaises(SystemExit):
                     xc.apply_node_links(items, titles)
 
