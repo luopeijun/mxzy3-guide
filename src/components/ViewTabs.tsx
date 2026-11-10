@@ -1,12 +1,13 @@
 import { cn } from '../lib/cn';
 
-export type ViewMode = 'guide' | 'tracker' | 'notices';
+export type ViewMode = 'guide' | 'tracker' | 'notices' | 'cg';
 
 interface Props {
   mode: ViewMode;
   onViewGuide: () => void;
   onViewTracker: () => void;
   onViewNotices: () => void;
+  onViewCg: () => void;
 }
 
 /** The one shared tab switch for every top-level view. Rendered by the single
@@ -19,6 +20,7 @@ export default function ViewTabs({
   onViewGuide,
   onViewTracker,
   onViewNotices,
+  onViewCg,
 }: Props) {
   const tabClass = (active: boolean) =>
     cn(
@@ -35,7 +37,7 @@ export default function ViewTabs({
     <nav
       role="tablist"
       aria-label="视图切换"
-      className="flex shrink-0 items-center gap-6 nav:gap-4"
+      className="flex shrink-0 items-center gap-6 nav:gap-4 phone:gap-3"
     >
       <button
         type="button"
@@ -64,6 +66,16 @@ export default function ViewTabs({
         className={tabClass(mode === 'tracker')}
       >
         事件追踪
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === 'cg'}
+        data-tab="cg"
+        onClick={onViewCg}
+        className={tabClass(mode === 'cg')}
+      >
+        CG 图鉴
       </button>
     </nav>
   );

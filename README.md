@@ -53,6 +53,7 @@
 
 - 攻略：`sources/` 下的正文与补充文本 → `scripts/extract_guide.py` → `guide.json`
 - 通告：`sources/notices/` 下的原表 → `scripts/extract_notices.py` → `notices.json`
+- CG 图鉴：`outputs/明星志愿3_CG图鉴/`（本地素材，不入库）→ `scripts/extract_cg.py`（需 Pillow）→ `cg.json` 与 `public/images/cg/*.webp`
 - 校验：`npm run test:guide`（Python unittest，交叉核对抽取结果与原表）
 - 界面验证：`scripts/cdp_*.mjs`（需 dev server 与 Chrome 调试端口）
 
@@ -71,4 +72,4 @@ npm run test:guide  # 数据校验
 
 ## 说明
 
-攻略文字与游戏素材版权归原作者与游戏厂商所有，本仓库仅改善阅读体验与个人进度管理，不含游戏本体资源。
+攻略文字与 CG 图片版权归原作者与游戏厂商所有。本仓库仅改善阅读体验与个人进度管理，不含游戏本体程序；`public/images/cg/` 收录的是网上公开流传的 CG 整理图的压缩副本，供个人收集对照使用。

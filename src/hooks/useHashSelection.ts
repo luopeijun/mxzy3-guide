@@ -20,12 +20,17 @@ export function isNoticesRoute(): boolean {
   return readHash() === 'notices';
 }
 
-/** The guide node id implied by the current hash, or '' on the tracker route or
+/** True when the URL points at the CG 图鉴 tab. */
+export function isCgRoute(): boolean {
+  return readHash() === 'cg';
+}
+
+/** The guide node id implied by the current hash, or '' on a standalone view or
  *  with nothing selected. Understands both the explicit `#/guide/...` prefix and
  *  legacy bookmarks that lack it, so old deep links keep working. */
 export function guideNodeId(): string {
   const h = readHash();
-  if (h === 'tracker' || h === 'notices') return '';
+  if (h === 'tracker' || h === 'notices' || h === 'cg') return '';
   if (h.startsWith('guide/')) return h.slice('guide/'.length);
   return h; // legacy: node id without the `guide/` prefix
 }

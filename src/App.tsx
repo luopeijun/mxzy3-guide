@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GuideData } from './types/guide';
 import type { ReorderRequest } from './lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
-import { isNoticesRoute, isTrackerRoute, guideNodeId, useHashSelection } from './hooks/useHashSelection';
+import { isCgRoute, isNoticesRoute, isTrackerRoute, guideNodeId, useHashSelection } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
 import { useNoticeData } from './hooks/useNoticeData';
+import { useCgData } from './hooks/useCgData';
 import { useTreeOrder } from './hooks/useTreeOrder';
 import { HighlightProvider } from './hooks/useHighlightPref';
 import { TrackerProvider } from './hooks/useTracker';
@@ -14,6 +15,7 @@ import ContentPanel from './components/ContentPanel';
 import EmptyState from './components/EmptyState';
 import LoadingScreen from './components/LoadingScreen';
 import Sidebar from './components/Sidebar';
+import CgApp from './components/cg/CgApp';
 import NoticesApp from './components/notices/NoticesApp';
 import TrackerApp from './components/tracker/TrackerApp';
 import TipsView from './components/tips/TipsView';
@@ -37,9 +39,10 @@ interface GuideAppProps {
   onViewGuide: () => void;
   onViewTracker: () => void;
   onViewNotices: () => void;
+  onViewCg: () => void;
 }
 
-function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotices }: GuideAppProps) {
+function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg }: GuideAppProps) {
   // The reader may drag levels of the tree around; everything below reads the
   // ordered copy so the header tabs, search and prev/next follow the new order.
   const { categories, move, reset, customized } = useTreeOrder(source.categories);
@@ -123,6 +126,7 @@ function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotice
           onViewGuide={onViewGuide}
           onViewTracker={onViewTracker}
           onViewNotices={onViewNotices}
+          onViewCg={onViewCg}
           onSelect={handleSelect}
           onMenuClick={() => setSidebarOpen(true)}
         />
@@ -192,16 +196,47 @@ function NoticesView() {
   return <NoticesApp data={data} />;
 }
 
+/** CG 清单同样只在进入图鉴时才请求，不拖慢攻略首屏。 */
+function CgView() {
+  const { data, error } = useCgData(true);
+  const shell = 'fixed inset-x-0 bottom-0 top-16 z-40 flex items-center justify-center bg-canvas p-6';
+
+  if (error) {
+    return (
+      <div className={shell}>
+        <div className="w-full max-w-[520px]">
+          <EmptyState
+            title="CG 数据加载失败"
+            text={`无法读取 public/data/cg.json（${error}）。请确认已运行 python scripts/extract_cg.py 生成数据。`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className={shell}>
+        <div className="w-full max-w-[520px]">
+          <EmptyState title="正在载入 CG 图鉴" text="正在读取 CG 清单与收集进度…" />
+        </div>
+      </div>
+    );
+  }
+
+  return <CgApp data={data} />;
+}
+
 export default function App() {
   const { data, error } = useGuideData();
   const [mode, setMode] = useState<ViewMode>(() =>
-    isNoticesRoute() ? 'notices' : isTrackerRoute() ? 'tracker' : 'guide',
+    isCgRoute() ? 'cg' : isNoticesRoute() ? 'notices' : isTrackerRoute() ? 'tracker' : 'guide',
   );
   // Last guide node id, so closing the tracker lands back where the reader was.
   // Seeded from the URL, because the hashchange listener below only fires on
   // later navigations, not on the load that opened this very page.
   const lastNodeRef = useRef<string>(
-    isTrackerRoute() || isNoticesRoute() ? '' : guideNodeId(),
+    isTrackerRoute() || isNoticesRoute() || isCgRoute() ? '' : guideNodeId(),
   );
 
   useEffect(() => {
@@ -210,6 +245,8 @@ export default function App() {
         setMode('tracker');
       } else if (isNoticesRoute()) {
         setMode('notices');
+      } else if (isCgRoute()) {
+        setMode('cg');
       } else {
         setMode('guide');
         const nodeId = guideNodeId();
@@ -250,6 +287,10 @@ export default function App() {
     window.location.hash = '/notices';
   };
 
+  const openCg = () => {
+    window.location.hash = '/cg';
+  };
+
   return (
     <TrackerProvider>
       <HighlightProvider>
@@ -259,9 +300,11 @@ export default function App() {
           onViewGuide={closeTracker}
           onViewTracker={openTracker}
           onViewNotices={openNotices}
+          onViewCg={openCg}
         />
         {mode === 'tracker' && <TrackerApp data={data} />}
         {mode === 'notices' && <NoticesView />}
+        {mode === 'cg' && <CgView />}
       </HighlightProvider>
     </TrackerProvider>
   );
