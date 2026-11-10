@@ -3,7 +3,7 @@
   "meta": {
     "itemCount": 204,
     "groupCount": 19,
-    "missingImageCount": 18
+    "missingImageCount": 15
   },
   "groups": [
     {
@@ -958,9 +958,9 @@
       "code": "CG 09",
       "name": "与黎华相识",
       "condition": "第三年2月前，怡青录制下一张自己创作的唱片时，前往工作场所，看到黎华向怡青邀歌，怡青自由活动达6天以上，安排自由活动时，前往EMAI公司，看到怡青和黎华讨论新歌",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ou-9.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ou-10",
@@ -969,9 +969,9 @@
       "code": "CG 10",
       "name": "庆祝图",
       "condition": "与欧怡青达成情感结局，且与威尔合作可得",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ou-10.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ou-11",
@@ -980,9 +980,9 @@
       "code": "CG 11",
       "name": "海滩图",
       "condition": "与欧怡青达成情感结局，且超越威尔去海滩度假可得",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ou-11.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ou-12",
