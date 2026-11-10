@@ -498,7 +498,7 @@ export default function CgApp({ data }: Props) {
                 <ul
                   data-cg-grid
                   data-cg-count={visible.length}
-                  className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr))]"
+                  className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(370px,100%),1fr))]"
                 >
                   {visible.map((item) => {
                     const link = linkFor(item);

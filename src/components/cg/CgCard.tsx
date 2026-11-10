@@ -13,10 +13,11 @@ interface Props {
   onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡保持所有卡片等高：图片按比例占位，底部信息栏固定两行。
- *  第一行（小字 meta）：归属 tag + 编号 + 攻略入口；
- *  第二行（主角）：CG 名称独占整行宽度（最多两行，不再被挤掉），右侧放收集按钮。
- *  图片本身是「查看大图」的按钮，整块可点，不叠任何收集控件，避免误触。 */
+/** 一张 CG 卡只放一行信息，所有卡片等高：收集芯片 + 归属 tag + 编号 + 名称 + 攻略入口。
+ *  名称**永不截断**（shrink-0 + nowrap）——网格最小卡宽（CgApp 里的 370px）就是按
+ *  「最长 12 字名称 + 全部固定元素」算出来的，保证一行能看完所有元素；空间富余时
+ *  攻略靠 ml-auto 靠右。万一将来出现更长的文案，归属 tag 会先收缩让位（头像仍在）。
+ *  图片本身是「查看大图」的按钮，整块可点，不叠任何控件，避免误触。 */
 export default function CgCard({ item, collected, group, guideHref, guideTitle, onToggle, onOpen }: Props) {
   return (
     <article
@@ -56,56 +57,8 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
           )}
         </button>
       </div>
-      {/* 第一行：归属 tag（左） · 编号 + 攻略入口（右，归为一组的小字 meta）。 */}
-      <div className="flex h-5 min-w-0 items-center gap-2 px-2.5 pt-1.5">
-        {group && (
-          <span
-            data-cg-group-tag
-            data-cg-group-name={group.name}
-            className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-1.5"
-          >
-            {group.avatar ? (
-              <img
-                src={`${import.meta.env.BASE_URL}${group.avatar}`}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                className="h-4 w-4 shrink-0 rounded-full border border-line-strong object-cover"
-              />
-            ) : (
-              <span
-                aria-hidden="true"
-                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
-              >
-                {group.name.slice(0, 1)}
-              </span>
-            )}
-            <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
-          </span>
-        )}
-        <div className="ml-auto flex min-w-0 items-center gap-1.5">
-          <span data-cg-code className="shrink-0 text-ui-2xs font-semibold tracking-wide text-brand-strong">{item.code}</span>
-          {guideHref && (
-            <a
-              data-cg-guide-link
-              href={guideHref}
-              title={guideTitle ?? '查看对应攻略事件'}
-              className="shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-muted transition-colors hover:bg-brand-soft hover:text-brand-strong"
-            >
-              攻略<span aria-hidden className="ml-0.5">›</span>
-            </a>
-          )}
-        </div>
-      </div>
-      {/* 第二行：名称独占主角位（放大、最多两行）+ 收集按钮，两者垂直居中。固定高度保住等高。 */}
-      <div className="flex h-[44px] items-center justify-between gap-2 px-2.5 pb-1.5">
-        <span
-          className="min-w-0 flex-1 overflow-hidden text-[15px] font-semibold leading-snug text-ink line-clamp-2"
-          title={item.name}
-        >
-          {item.name}
-        </span>
+      {/* 固定行高：有「攻略」入口的卡片不能被这一行撑高，否则整面墙高低不齐。 */}
+      <div className="flex h-10 min-w-0 items-center gap-1.5 px-2.5">
         <button
           type="button"
           data-cg-toggle
@@ -114,7 +67,7 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
           title={collected ? '取消收集' : '标记已收集'}
           onClick={onToggle}
           className={cn(
-            'flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-ui-2xs font-medium leading-none transition-colors',
+            'flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-ui-2xs font-medium leading-none transition-colors',
             collected
               ? 'bg-brand text-white'
               : 'border border-ink-faint text-ink-muted hover:border-brand hover:text-brand-strong',
@@ -123,6 +76,44 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
           <span aria-hidden className="text-[11px] leading-none">{collected ? '✓' : '○'}</span>
           {collected ? '已收集' : '收集'}
         </button>
+        {group && (
+          <span
+            data-cg-group-tag
+            data-cg-group-name={group.name}
+            className="pointer-events-none inline-flex min-w-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-2"
+          >
+            {group.avatar ? (
+              <img
+                src={`${import.meta.env.BASE_URL}${group.avatar}`}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                className="h-5 w-5 shrink-0 rounded-full border border-line-strong object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
+              >
+                {group.name.slice(0, 1)}
+              </span>
+            )}
+            <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
+          </span>
+        )}
+        <span className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
+        <span className="shrink-0 whitespace-nowrap text-ui-2xs text-ink" title={item.name}>{item.name}</span>
+        {guideHref && (
+          <a
+            data-cg-guide-link
+            href={guideHref}
+            title={guideTitle ?? '查看对应攻略事件'}
+            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+          >
+            攻略<span aria-hidden className="ml-0.5">›</span>
+          </a>
+        )}
       </div>
     </article>
   );
