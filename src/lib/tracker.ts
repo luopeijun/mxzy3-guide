@@ -103,6 +103,30 @@ function boundaryIndices(node: GuideNode): number[] {
   return indices;
 }
 
+/** 只有攻略页该读、不该进池的章节。
+ *
+ *  路欧桑这三条感情线在角色页里按「情况1~5」各写了一遍，而「其他事件 · 路欧桑剧情整理」
+ *  已经把同样五个情况拆成了独立分支节点（`other-events/luousang/*`，按签约组合进池）。
+ *  角色页这一份再进池，等于同一批事件在列表里重复两遍、每条几十上百步，纯噪音。
+ *  所以按「节点 id + 章节名」把这几条线挡在池外：攻略页照常可读，池子里只留自己的剧情。
+ *
+ *  删掉的是**线**，不是内容：`seq` 仍然递增，保留下来的线 id 不变，老存档不会失效。 */
+const POOL_SKIP: Record<string, { sections?: string[]; headings?: string[] }> = {
+  // 路风的「事件」整节就是路桑恋 / 路欧恋分支。
+  'characters/lu-feng': { sections: ['事件'] },
+  // 桑禾蓓同理；「与主角的感情」不在此列，照常进池。
+  'characters/sang-hebei': { sections: ['事件'] },
+  // 欧怡青只去掉「路欧恋」一章，纪翔 / 告别 / 黎华那几章照常。
+  'characters/ou-yiqing': { headings: ['路欧恋'] },
+};
+
+function skipFromPool(nodeId: string, section: string, name: string): boolean {
+  const rule = POOL_SKIP[nodeId];
+  if (!rule) return false;
+  if (rule.sections?.includes(section)) return true;
+  return Boolean(rule.headings?.some((heading) => name.startsWith(heading)));
+}
+
 function headingText(block: ContentBlock): string {
   return (block.label ?? block.text ?? '').trim() || '未命名章节';
 }
@@ -153,13 +177,20 @@ function linesFromNode(node: GuideNode, origin: LineOrigin): TaskLine[] {
     lines.push(makeLine(node, seq, node.title, preEvents, origin));
     seq += 1;
   }
+  /** 当前所属的大章节（★ 那一层），用来判断这一条线该不该进池。 */
+  let section = '';
   for (let b = 0; b < boundaries.length; b += 1) {
     const start = boundaries[b];
+    const boundary = node.blocks[start];
+    if (boundary.kind === 'section') section = headingText(boundary);
     const end = b + 1 < boundaries.length ? boundaries[b + 1] : node.blocks.length;
     const rangeEvents = events.filter((e) => e.index >= start && e.index < end);
     if (rangeEvents.length === 0) continue; // container heading with no events
-    lines.push(makeLine(node, seq, headingText(node.blocks[start]), rangeEvents, origin));
+    const name = headingText(boundary);
+    // `seq` 照常递增：被挡掉的线也占着自己的序号，别的线 id 才不会整体前移。
+    const line = makeLine(node, seq, name, rangeEvents, origin);
     seq += 1;
+    if (!skipFromPool(node.id, section, name)) lines.push(line);
   }
   return lines;
 }
