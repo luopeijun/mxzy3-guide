@@ -20,7 +20,7 @@ export default function CgCard({ item, collected, onToggle, onOpen }: Props) {
       data-cg-id={item.id}
       data-cg-collected={collected ? 'true' : 'false'}
       className={cn(
-        'overflow-hidden rounded-ui-md border bg-surface transition-all duration-200',
+        'overflow-hidden rounded-ui-md border bg-surface transition-all duration-200 hover:border-brand-line',
         collected ? 'border-brand-line shadow-soft' : 'border-line',
       )}
     >
@@ -31,7 +31,7 @@ export default function CgCard({ item, collected, onToggle, onOpen }: Props) {
           aria-label={`查看大图 ${item.code} ${item.name}`}
           title="查看大图"
           onClick={(event) => onOpen(event.currentTarget)}
-          className="absolute inset-0 z-0 block h-full w-full cursor-zoom-in"
+          className="absolute inset-0 z-0 block h-full w-full cursor-pointer"
         >
           {item.image ? (
             <img
