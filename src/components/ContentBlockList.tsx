@@ -89,12 +89,20 @@ function EventHead({ head }: { head: IndexedBlock }) {
   );
 }
 
+/** 事件卡的 DOM id：映射里有锚点就用它，否则按块下标兜底。
+ *  兜底让**任意**事件都能被深链命中（如美丽之星 #14 这种「一张图对应多个艺人」的
+ *  落点，不需要在事件卡上挂 CG 徽标，但仍要能滚到位）。与 `extract_guide.py` 的
+ *  `ev<块下标>` 同一套编号，所以两边不会打架。 */
+function eventDomId(head: IndexedBlock): string {
+  return head.anchor ?? `ev${head.index}`;
+}
+
 /** 平铺（非嵌套）模式下的一张事件卡：自身内容 + 自己的选项/提醒。 */
 function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
   const [head, ...rest] = blocks;
   return (
     <div
-      id={head.anchor}
+      id={eventDomId(head)}
       data-event-label={head.label}
       className={`mb-3 scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
     >
@@ -113,7 +121,7 @@ function EventNode({ node }: { node: EventNode }) {
   const [head, ...rest] = node.group.blocks;
   return (
     <div
-      id={head.anchor}
+      id={eventDomId(head)}
       data-event-label={head.label}
       className={`scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
     >

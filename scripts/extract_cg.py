@@ -103,28 +103,64 @@ def guide_characters() -> list[dict]:
 def guide_node_titles() -> dict[str, str]:
     """全部攻略节点 id → 标题，用来校验 / 展开 CG 的页面级跳转。"""
     titles: dict[str, str] = {}
+    for node_id, node in guide_nodes().items():
+        titles[node_id] = node["title"]
+    return titles
+
+
+def guide_nodes() -> dict[str, dict]:
+    """全部攻略节点 id → 节点（带 blocks），用来把「事件号 + 章节」解析成锚点。"""
+    nodes: dict[str, dict] = {}
+    guide = json.loads(read_text(GUIDE_DATA))
 
     def walk(value: object) -> None:
         if isinstance(value, dict):
-            if value.get("id") and value.get("title"):
-                titles[value["id"]] = value["title"]
+            if value.get("id") and value.get("blocks") is not None:
+                nodes[value["id"]] = value
             for child in value.values():
                 walk(child)
         elif isinstance(value, list):
             for child in value:
                 walk(child)
 
-    walk(json.loads(read_text(GUIDE_DATA)))
-    return titles
+    walk(guide)
+    return nodes
+
+
+def event_anchor(node: dict, label: str, chapter: str, where: str) -> str:
+    """按「事件号 + 章节」定位事件块，返回 `ev<块下标>`。
+
+    章节取**最内层标题**（section / heading，含 ☆ 子标题）：同一个事件号在一个节点里
+    会重号（纱雪「事件5」在「签约方法」和「与律师的事件」各有一个），不写章节就没法定位。
+    """
+    chapter_now = ""
+    hits: list[int] = []
+    for index, block in enumerate(node["blocks"]):
+        if block["kind"] in ("section", "heading"):
+            chapter_now = block["text"]
+        if block["kind"] != "event" or block.get("label") != label:
+            continue
+        if chapter and chapter_now != chapter:
+            continue
+        hits.append(index)
+    if not hits:
+        raise SystemExit(f"{where}: no such event #{label}" + (f" @ {chapter}" if chapter else ""))
+    if len(hits) > 1:
+        raise SystemExit(f"{where}: ambiguous #{label}, add the chapter column")
+    return f"ev{hits[0]}"
 
 
 def apply_node_links(items: list[dict], titles: dict[str, str]) -> int:
     """把 ``sources/cg-node-links.tsv`` 的「CG → 攻略页面」写进 items。
 
-    这里不带事件锚点：路欧桑剧情整理把同一段感情线按情况1~5 各写了一遍，
-    一张 CG 往往对应三四个分支里的同一个事件，锚到哪个都不对，所以整组跳页面。
+    默认整组跳页面、不带事件锚点：路欧桑剧情整理把同一段感情线按情况1~5 各写了一遍，
+    一张 CG 往往对应三四个分支里的同一个事件，锚到哪个都不对。
+
+    但「美丽之星写真集」这类是 18 张不同的图共用**同一个**事件（#14），落点唯一，
+    所以第 4、5 列可以写事件号 + 章节（章节可省），锚到那个事件上。
     """
     by_id = {item["id"]: item for item in items}
+    nodes = guide_nodes()
     count = 0
     if not NODE_LINKS.is_file():
         return count
@@ -136,11 +172,17 @@ def apply_node_links(items: list[dict], titles: dict[str, str]) -> int:
         if len(fields) < 2 or not fields[0] or not fields[1]:
             raise SystemExit(f"cg-node-links.tsv:{number}: expected cg id + node id")
         cg_id, node_id = fields[0], fields[1]
+        label = fields[3] if len(fields) > 3 else ""
+        chapter = fields[4] if len(fields) > 4 else ""
+        where = f"cg-node-links.tsv:{number}"
         if cg_id not in by_id:
-            raise SystemExit(f"cg-node-links.tsv:{number}: unknown cg {cg_id}")
+            raise SystemExit(f"{where}: unknown cg {cg_id}")
         if node_id not in titles:
-            raise SystemExit(f"cg-node-links.tsv:{number}: unknown guide node {node_id}")
-        by_id[cg_id]["guide"] = {"nodeId": node_id, "title": titles[node_id]}
+            raise SystemExit(f"{where}: unknown guide node {node_id}")
+        link: dict[str, str] = {"nodeId": node_id, "title": titles[node_id]}
+        if label:
+            link["anchor"] = event_anchor(nodes[node_id], label, chapter, where)
+        by_id[cg_id]["guide"] = link
         count += 1
     return count
 

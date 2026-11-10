@@ -102,3 +102,54 @@ characters/ji-xiang	40	ji-8	同志电影
 characters/ji-xiang	49	ji-9	受伤事件
 characters/ji-xiang	51	ji-3	同志传闻
 characters/ji-xiang	61	ji-4	烟火
+
+# ---- 新名纱雪（9 条；「与律师的事件」#5 经核对无 CG，已从正文删掉 CG 标记） ----
+characters/xinming-shaxue	5	xin-1	签约方法
+characters/xinming-shaxue	4	xin-6	与律师的事件
+characters/xinming-shaxue	24	xin-4	父亲再婚
+characters/xinming-shaxue	27	xin-9	七夕邀约
+characters/xinming-shaxue	33	xin-10	考大学
+characters/xinming-shaxue	48－2－1	xin-13	国际走秀
+characters/xinming-shaxue	50－1	xin-3	国际走秀
+characters/xinming-shaxue	71	xin-10	考大学
+characters/xinming-shaxue	72－1－4	xin-10	考大学
+
+# ---- 姚子莹（5 条） ----
+characters/yao-ziying	1	yaom-1	加入B
+characters/yao-ziying	10	yaom-6	被鬼附身
+characters/yao-ziying	40	yaom-3	与主角感情结局达成条件
+characters/yao-ziying	44	yaom-4	与主角感情结局达成条件
+characters/yao-ziying	50	yaom-5	与主角感情结局达成条件
+
+# ---- 聆香（5 条；温泉事件 #22 经核对无 CG，已从正文删掉 CG 标记） ----
+characters/ling-xiang	1	ling-1	签约方法
+characters/ling-xiang	15	ling-4	歧视
+characters/ling-xiang	22－1	ling-3	温泉事件
+characters/ling-xiang	41－1－1	ling-5	裸照事件
+characters/ling-xiang	54	ling-6	相亲事件
+
+# ---- 克烈斯（7 条） ----
+characters/ke-liesi	2	ke-1	签约方法
+characters/ke-liesi	4	ke-3	初识
+characters/ke-liesi	23	ke-5	舞会
+characters/ke-liesi	38	ke-7	感情结果
+characters/ke-liesi	38－1	ke-4	感情结果
+characters/ke-liesi	58	ke-8	决斗
+characters/ke-liesi	68	ke-6	与史蒂芬的事件
+
+# ---- 卫亚（5 条；音乐盒 #60 按核对结果对 CG 05，不是建议里的 04） ----
+characters/wei-ya	1	wei-1	加入A
+characters/wei-ya	25	wei-4	变身
+characters/wei-ya	39	wei-7	街头卖艺（解决此事件前，卫亚不能开歌友会或演唱会）
+characters/wei-ya	49	wei-3	与原少纬的事件（原少纬同在旗下时触发；原少纬遭到袭击后，本事件将会中止）
+characters/wei-ya	60	wei-5	音乐盒
+
+# ---- 原少纬（5 条；事件 54 一次给两张图，生存 yuan-7 / 死亡 yuan-8 都挂这个事件） ----
+characters/yuan-shaowei	1	yuan-1	签约方法
+characters/yuan-shaowei	26	yuan-4	与桑禾蓓的事件
+characters/yuan-shaowei	42	yuan-5	黑社会
+characters/yuan-shaowei	54	yuan-7,yuan-8	黑社会
+characters/yuan-shaowei	79	yuan-9	养猫事件
+
+# ---- 秘书莉铃（1 条，CG 属「主线」组） ----
+other-events/secretary	3	main-4	

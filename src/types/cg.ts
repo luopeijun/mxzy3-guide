@@ -25,11 +25,13 @@ export interface CgItem {
   image: string | null;
   width: number;
   height: number;
-  /** 页面级攻略落点（不带事件锚点）：一张 CG 散落在多个分支里时整组跳这一页。 */
+  /** 攻略落点。`anchor` 缺省表示整页落点（一张 CG 散落在多个分支里时，锚到哪个都不对）。 */
   guide?: {
     nodeId: string;
     /** 节点标题，用在按钮 title 上。 */
     title: string;
+    /** 事件块的 DOM id，形如 `ev18`：落点明确到一个事件时才有。 */
+    anchor?: string;
   };
 }
 

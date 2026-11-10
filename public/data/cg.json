@@ -432,7 +432,12 @@
       "condition": "美丽之星事件",
       "image": "images/cg/lin-13.webp",
       "width": 800,
-      "height": 600
+      "height": 600,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "xiao-1",
@@ -575,7 +580,12 @@
       "condition": "萧依莉完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/xiao-13.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "sang-1",
@@ -734,7 +744,12 @@
       "condition": "美丽之星事件",
       "image": "images/cg/sang-13.webp",
       "width": 1100,
-      "height": 815
+      "height": 815,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "su-1",
@@ -877,7 +892,12 @@
       "condition": "嫚君完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/su-13.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "ou-1",
@@ -1021,7 +1041,12 @@
       "condition": "欧怡青完成美丽之星任务（详情看美丽之星任务攻略）。因时间因素，仅2007年能取得，请注意！",
       "image": "images/cg/ou-12.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "lum-1",
@@ -1142,7 +1167,12 @@
       "condition": "路敏完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/lum-11.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "lu-1",
@@ -1306,7 +1336,12 @@
       "condition": "路风完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/lu-12.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "yao-1",
@@ -1405,7 +1440,12 @@
       "condition": "姚子奇完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/yao-9.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "tian-1",
@@ -1504,7 +1544,12 @@
       "condition": "天晴完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/tian-9.webp",
       "width": 1100,
-      "height": 816
+      "height": 816,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "guan-1",
@@ -1603,7 +1648,12 @@
       "condition": "关古威完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/guan-9.webp",
       "width": 800,
-      "height": 600
+      "height": 600,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "chen-1",
@@ -1669,7 +1719,12 @@
       "condition": "陈奕夫完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/chen-6.webp",
       "width": 1100,
-      "height": 816
+      "height": 816,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "ji-1",
@@ -1790,7 +1845,12 @@
       "condition": "纪翔完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/ji-11.webp",
       "width": 800,
-      "height": 600
+      "height": 600,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "xin-1",
@@ -1922,7 +1982,12 @@
       "condition": "新名纱雪完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/xin-12.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "xin-13",
@@ -2065,7 +2130,12 @@
       "condition": "姚子莹完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/yaom-12.webp",
       "width": 800,
-      "height": 600
+      "height": 600,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "ling-1",
@@ -2175,7 +2245,12 @@
       "condition": "聆香完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/ling-10.webp",
       "width": 1100,
-      "height": 816
+      "height": 816,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "ke-1",
@@ -2285,7 +2360,12 @@
       "condition": "克烈斯完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/ke-10.webp",
       "width": 1100,
-      "height": 816
+      "height": 816,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "wei-1",
@@ -2351,7 +2431,12 @@
       "condition": "卫亚完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/wei-6.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "wei-7",
@@ -2428,7 +2513,12 @@
       "condition": "原少纬完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/yuan-6.webp",
       "width": 1100,
-      "height": 815
+      "height": 815,
+      "guide": {
+        "nodeId": "other-events/beauty-star",
+        "title": "美丽之星事件",
+        "anchor": "ev18"
+      }
     },
     {
       "id": "yuan-7",

@@ -20058,7 +20058,11 @@
               "label": "5",
               "tag": "场景",
               "group": 18,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-1"
+              ],
+              "anchor": "ev17"
             },
             {
               "kind": "event",
@@ -20147,15 +20151,19 @@
               "label": "4",
               "tag": "探班",
               "group": 30,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-6"
+              ],
+              "anchor": "ev29"
             },
             {
               "kind": "event",
-              "text": "纱雪获得任一奖项后，律师出现祝贺纱雪得奖（得奖五次以上且与翔太相认后可看到CG图）。",
+              "text": "纱雪获得任一奖项后，律师出现祝贺纱雪得奖（得奖五次以上且与翔太相认）。",
               "label": "5",
               "tag": "自动",
               "group": 31,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -20321,7 +20329,11 @@
               "label": "24",
               "tag": "自动",
               "group": 52,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-4"
+              ],
+              "anchor": "ev51"
             },
             {
               "kind": "event",
@@ -20407,7 +20419,11 @@
               "label": "27",
               "tag": "自动",
               "group": 63,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-9"
+              ],
+              "anchor": "ev62"
             },
             {
               "kind": "event",
@@ -20525,7 +20541,11 @@
               "label": "33",
               "tag": "探班",
               "group": 78,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-10"
+              ],
+              "anchor": "ev77"
             },
             {
               "kind": "event",
@@ -20762,7 +20782,11 @@
               "label": "48－2－1",
               "tag": "场景",
               "group": 109,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-13"
+              ],
+              "anchor": "ev108"
             },
             {
               "kind": "event",
@@ -20786,7 +20810,11 @@
               "label": "50－1",
               "tag": "手动",
               "group": 112,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-3"
+              ],
+              "anchor": "ev111"
             },
             {
               "kind": "heading",
@@ -20978,7 +21006,11 @@
               "label": "71",
               "tag": "场景",
               "group": 137,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-10"
+              ],
+              "anchor": "ev136"
             },
             {
               "kind": "event",
@@ -21026,7 +21058,11 @@
               "label": "72－1－4",
               "tag": "场景",
               "group": 143,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xin-10"
+              ],
+              "anchor": "ev142"
             },
             {
               "kind": "event",
@@ -21177,7 +21213,11 @@
               "label": "1",
               "tag": "场景",
               "group": 17,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yaom-1"
+              ],
+              "anchor": "ev16"
             },
             {
               "kind": "event",
@@ -21322,7 +21362,11 @@
               "label": "10",
               "tag": "探班",
               "group": 36,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yaom-6"
+              ],
+              "anchor": "ev35"
             },
             {
               "kind": "event",
@@ -21681,7 +21725,11 @@
               "label": "40",
               "tag": "跟随",
               "group": 82,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yaom-3"
+              ],
+              "anchor": "ev81"
             },
             {
               "kind": "event",
@@ -21713,7 +21761,11 @@
               "label": "44",
               "tag": "场景",
               "group": 86,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yaom-4"
+              ],
+              "anchor": "ev85"
             },
             {
               "kind": "event",
@@ -21777,7 +21829,11 @@
               "label": "50",
               "tag": "跟随",
               "group": 94,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yaom-5"
+              ],
+              "anchor": "ev93"
             },
             {
               "kind": "event",
@@ -21990,7 +22046,11 @@
               "label": "1",
               "tag": "场景",
               "group": 15,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ling-1"
+              ],
+              "anchor": "ev14"
             },
             {
               "kind": "event",
@@ -22217,7 +22277,11 @@
               "label": "15",
               "tag": "跟随",
               "group": 44,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ling-4"
+              ],
+              "anchor": "ev43"
             },
             {
               "kind": "event",
@@ -22299,11 +22363,11 @@
             },
             {
               "kind": "event",
-              "text": "上个事件中选择答应后，通告拍摄期间，聆香说制作人要她穿泳衣泡温泉，选择“勉强配合……”，动感上升，可看到CG图；选择“马上提出抗议！”，则友好度、才智上升。",
+              "text": "上个事件中选择答应后，通告拍摄期间，聆香说制作人要她穿泳衣泡温泉，选择“勉强配合……”，动感上升；选择“马上提出抗议！”，则友好度、才智上升。",
               "label": "22",
               "tag": "跟随",
               "group": 55,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -22311,7 +22375,11 @@
               "label": "22－1",
               "tag": "跟随",
               "group": 56,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ling-3"
+              ],
+              "anchor": "ev55"
             },
             {
               "kind": "event",
@@ -22547,7 +22615,11 @@
               "label": "41－1－1",
               "tag": "跟随",
               "group": 86,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ling-5"
+              ],
+              "anchor": "ev85"
             },
             {
               "kind": "event",
@@ -22751,7 +22823,11 @@
               "label": "54",
               "tag": "场景",
               "group": 113,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ling-6"
+              ],
+              "anchor": "ev112"
             },
             {
               "kind": "event",
@@ -22947,7 +23023,11 @@
               "label": "2",
               "tag": "场景",
               "group": 18,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ke-1"
+              ],
+              "anchor": "ev17"
             },
             {
               "kind": "event",
@@ -23031,7 +23111,11 @@
               "label": "4",
               "tag": "跟随",
               "group": 30,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ke-3"
+              ],
+              "anchor": "ev29"
             },
             {
               "kind": "event",
@@ -23205,7 +23289,11 @@
               "label": "23",
               "tag": "场景",
               "group": 52,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ke-5"
+              ],
+              "anchor": "ev51"
             },
             {
               "kind": "event",
@@ -23339,7 +23427,11 @@
               "label": "38",
               "tag": "场景",
               "group": 69,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ke-7"
+              ],
+              "anchor": "ev68"
             },
             {
               "kind": "event",
@@ -23347,7 +23439,11 @@
               "label": "38－1",
               "tag": "场景",
               "group": 70,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ke-4"
+              ],
+              "anchor": "ev69"
             },
             {
               "kind": "heading",
@@ -23519,7 +23615,11 @@
               "label": "58",
               "tag": "场景",
               "group": 92,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ke-8"
+              ],
+              "anchor": "ev91"
             },
             {
               "kind": "paragraph",
@@ -23693,7 +23793,11 @@
               "label": "68",
               "tag": "跟随",
               "group": 115,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ke-6"
+              ],
+              "anchor": "ev114"
             },
             {
               "kind": "event",
@@ -23894,7 +23998,11 @@
               "label": "1",
               "tag": "场景",
               "group": 17,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "wei-1"
+              ],
+              "anchor": "ev16"
             },
             {
               "kind": "event",
@@ -24202,7 +24310,11 @@
               "label": "25",
               "tag": "自动",
               "group": 57,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "wei-4"
+              ],
+              "anchor": "ev56"
             },
             {
               "kind": "event",
@@ -24320,7 +24432,11 @@
               "label": "39",
               "tag": "场景",
               "group": 72,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "wei-7"
+              ],
+              "anchor": "ev71"
             },
             {
               "kind": "event",
@@ -24414,7 +24530,11 @@
               "label": "49",
               "tag": "跟随",
               "group": 84,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "wei-3"
+              ],
+              "anchor": "ev83"
             },
             {
               "kind": "event",
@@ -24564,7 +24684,11 @@
               "label": "60",
               "tag": "跟随",
               "group": 103,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "wei-5"
+              ],
+              "anchor": "ev102"
             },
             {
               "kind": "event",
@@ -24761,7 +24885,11 @@
               "label": "1",
               "tag": "场景",
               "group": 12,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yuan-1"
+              ],
+              "anchor": "ev11"
             },
             {
               "kind": "event",
@@ -25162,7 +25290,11 @@
               "label": "26",
               "tag": "跟随",
               "group": 64,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yuan-4"
+              ],
+              "anchor": "ev63"
             },
             {
               "kind": "event",
@@ -25326,7 +25458,11 @@
               "label": "42",
               "tag": "跟随",
               "group": 85,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yuan-5"
+              ],
+              "anchor": "ev84"
             },
             {
               "kind": "event",
@@ -25422,7 +25558,12 @@
               "label": "54",
               "tag": "跟随",
               "group": 97,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yuan-7",
+                "yuan-8"
+              ],
+              "anchor": "ev96"
             },
             {
               "kind": "event",
@@ -25658,7 +25799,11 @@
               "label": "79",
               "tag": "跟随",
               "group": 127,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yuan-9"
+              ],
+              "anchor": "ev126"
             },
             {
               "kind": "event",
@@ -28268,7 +28413,11 @@
               "label": "3",
               "tag": "场景",
               "group": 3,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "main-4"
+              ],
+              "anchor": "ev2"
             },
             {
               "kind": "event",

@@ -118,13 +118,16 @@ export default function CgApp({ data }: Props) {
 
   /**
    * 先认事件级映射（`cgIds` 反查），再退到页面级落点（`cg.json` 的 `guide`）。
-   * 路欧桑那 16 张感情 CG 属于后者：同一段剧情写了五个分支，锚哪一条都不对。
+   * 路欧桑那批感情 CG 属于后者：同一段剧情写了五个分支，锚哪一条都不对，整页落点；
+   * 美丽之星写真集也走后者，但落点唯一（同一个事件），所以带上 `anchor`。
    */
   const linkFor = useCallback(
     (item: CgItem): CgGuideLink | undefined => {
       const eventLink = guideLinks.get(item.id);
       if (eventLink) return eventLink;
-      return item.guide ? { nodeId: item.guide.nodeId, nodeTitle: item.guide.title } : undefined;
+      return item.guide
+        ? { nodeId: item.guide.nodeId, nodeTitle: item.guide.title, anchor: item.guide.anchor }
+        : undefined;
     },
     [guideLinks],
   );
