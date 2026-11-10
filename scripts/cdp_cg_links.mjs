@@ -547,6 +547,28 @@ async function main() {
   `);
   console.log('ou-8 href:', ou8Href);
 
+  // ou-7「路风感情线」（成功撮合路欧的结局图）图鉴文案没写具体事件，按结局挂到路欧结局 #69。
+  await evaluate(`location.hash = '#/cg/ou-7'; 'ok'`);
+  await sleep(1500);
+  const ou7Href = await evaluate(`
+    document.querySelector('#cg-card-ou-7 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  await evaluate(`document.querySelector('#cg-card-ou-7 [data-cg-guide-link]')?.click(); 'ok'`);
+  await sleep(1700);
+  const ou7Landing = await evaluate(`
+    (() => {
+      const card = document.querySelector('[data-event-label="69"]');
+      const rect = card?.getBoundingClientRect();
+      return JSON.stringify({
+        hash: location.hash,
+        cardPresent: !!card,
+        cgApp: !!document.querySelector('[data-cg-app]'),
+        cardInView: !!rect && rect.top < innerHeight && rect.bottom > 64,
+      });
+    })()
+  `);
+  console.log('ou-7 reverse:', ou7Href, ou7Landing);
+
   const b = badgeState;
   const back = JSON.parse(afterBack);
   const d = JSON.parse(deep);
@@ -555,6 +577,7 @@ async function main() {
   const landedView = JSON.parse(landed);
   const tips = tipLinks;
   const su = JSON.parse(suLanding);
+  const ou7l = JSON.parse(ou7Landing);
   const sameSet = (a, b) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
   const checks = {
     'badge links to cg': b !== null && badge.href === '#/cg/lin-4',
@@ -660,6 +683,10 @@ async function main() {
     // 欧怡青的个人页和路欧桑整理页都写了「告别演唱会」：图鉴点「攻略」统一回整理页，
     // 不把人带到艺人事件簿里（三人恋情只在艺人页浏览）。
     'ou-8 goes to luousang not the artist page': ou8Href === '#/guide/other-events/luousang/lufeng-ouyiqing~ev66',
+    'ou-7 links to the luousang ending event': ou7Href === '#/guide/other-events/luousang/lufeng-ouyiqing~ev74',
+    'ou-7 lands on event 69': ou7l.hash === '#/guide/other-events/luousang/lufeng-ouyiqing~ev74'
+      && ou7l.cardPresent === true && ou7l.cgApp === false,
+    'ou-7 lands with the card in view': ou7l.cardInView === true,
     // 这两个事件只删了 CG 标记，不像别的角色那样有个可点的徽标。
     'xin 5 (与律师) has no cg marker': JSON.parse(xinNoCg).count === 2
       && JSON.parse(xinNoCg).cgText === false && JSON.parse(xinNoCg).link === false,
