@@ -3,7 +3,7 @@
   "meta": {
     "itemCount": 204,
     "groupCount": 19,
-    "missingImageCount": 11
+    "missingImageCount": 7
   },
   "groups": [
     {
@@ -1475,9 +1475,9 @@
       "code": "CG 03",
       "name": "黎华方若绮",
       "condition": "第三年3月底前，前往全球制片，看到方若绮和黎华在争吵。第三年4月初到6月底，前往全球制片或EMAI公司，点选黎华，选择“勇敢面对自己的感情吧！”或“方若绮现在一定在等你～”，则黎华会前往巴黎，安排阿威去欧洲时，点选巴黎，看到阿威远远看着黎华和若绮在一起。（详情请看在巴黎事件攻略）",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/guan-3.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "guan-4",
@@ -1541,9 +1541,9 @@
       "code": "CG 09",
       "name": "美丽之星",
       "condition": "关谷威完成美丽之星任务（详情看美丽之星任务攻略）",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/guan-9.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "chen-1",
@@ -1970,9 +1970,9 @@
       "code": "CG 09",
       "name": "沙滩图",
       "condition": "与姚子莹达成情感结局，且超越威尔去海外度假可得沙滩图",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/yaom-9.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "yaom-10",
@@ -2003,9 +2003,9 @@
       "code": "CG 12",
       "name": "美丽之星",
       "condition": "姚子莹完成美丽之星任务（详情看美丽之星任务攻略）",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/yaom-12.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ling-1",
