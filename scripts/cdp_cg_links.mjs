@@ -89,6 +89,20 @@ async function main() {
     await send('Page.navigate', { url });
     await sleep(1100);
   };
+  /** 切到某个攻略节点并等它真的渲染完。
+   *  `location.hash = …` 之后 React 的渲染是异步的，固定 sleep 在页面很大时会抢跑
+   *  （表现为读到上一页的徽标 / 空列表），所以盯 h1 变化 + 事件卡出现再往下走。 */
+  const gotoNode = async (nodeId) => {
+    const before = await evaluate(`document.querySelector('main h1')?.textContent ?? ''`);
+    await evaluate(`location.hash = '#/guide/${nodeId}'; 'ok'`);
+    const ok = await waitFor(
+      `(document.querySelector('main h1')?.textContent ?? '') !== ${JSON.stringify(before)}`
+      + " && !!document.querySelector('main [data-event-label]')",
+      8000,
+    );
+    if (!ok) throw new Error(`node did not render: ${nodeId}`);
+    await sleep(120);
+  };
 
   await send('Page.enable');
   await send('Runtime.enable');
@@ -213,9 +227,12 @@ async function main() {
   `);
   console.log('lightbox:', lightbox);
 
-  // 路欧桑那批感情 CG 走「页面级」落点：不锚事件，整组跳剧情整理页。
+  // 路欧桑那批感情 CG：从「整页落点」升级成「具体事件落点」，正反两个方向都能点。
+  // 先清掉来源记忆，才能测到「直接开深链」时的默认落点。
+  await evaluate(`sessionStorage.removeItem('guide.cg-origin.v1'); 'ok'`);
   await evaluate(`location.hash = '#/cg/sang-5'; 'ok'`);
   await sleep(1400);
+  await waitFor("!!document.querySelector('#cg-card-sang-5 [data-cg-guide-link]')");
   const pageLevel = await evaluate(`
     (() => {
       const link = document.querySelector('#cg-card-sang-5 [data-cg-guide-link]');
@@ -234,11 +251,12 @@ async function main() {
   `);
   console.log('page-level link:', pageLevel);
 
-  // 同一张图在两个人名下各列一次：两侧都得整页跳，不然总有一边点不进攻略。
+  // 同一张图在两个人名下各列一次：两侧都要有入口，且各自锚到自己那一页的事件。
   const bothSides = {};
   for (const cg of ['sang-4', 'ou-5']) {
     await evaluate(`location.hash = '#/cg/${cg}'; 'ok'`);
     await sleep(1300);
+    await waitFor(`!!document.querySelector('#cg-card-${cg} [data-cg-guide-link]')`);
     bothSides[cg] = await evaluate(`
       document.querySelector('#cg-card-${cg} [data-cg-guide-link]')?.getAttribute('href') ?? ''
     `);
@@ -253,24 +271,53 @@ async function main() {
   await sleep(1600);
   const landed = await evaluate(`
     (() => {
+      const m = location.hash.match(/~(.+)$/);
+      const target = m ? document.getElementById(m[1]) : null;
+      const rect = target?.getBoundingClientRect();
       const main = document.querySelector('main');
-      const text = main ? main.innerText.replace(/\\s+/g, ' ') : '';
       return JSON.stringify({
         hash: location.hash,
         cgApp: !!document.querySelector('[data-cg-app]'),
-        title: text.slice(0, 90),
-        branches: ['只有桑禾蓓在旗下', '只有路风在旗下', '路风和桑禾蓓都在旗下', '路风和欧怡青都在旗下']
-          .filter((name) => text.includes(name)).length,
+        label: target?.getAttribute('data-event-label') ?? '',
+        flash: !!target && target.classList.contains('anchor-flash'),
+        inView: !!rect && rect.top >= 60 && rect.top < innerHeight,
+        scrollTop: main ? Math.round(main.scrollTop) : -1,
       });
     })()
   `);
+
+  // 从攻略页点进图鉴再返回：要回到「刚才那一页的同一条事件」，而不是默认分支。
+  await evaluate(`sessionStorage.removeItem('guide.cg-origin.v1'); 'ok'`);
+  await gotoNode('other-events/luousang/lufeng-sanghebei');
+  await evaluate(`
+    document.querySelector('main a[data-cg-link][href="#/cg/sang-5"]')?.click(); 'ok'
+  `);
+  await sleep(1400);
+  const fromPageHash = await evaluate('location.hash');
+  await waitFor("!!document.querySelector('#cg-card-sang-5 [data-cg-guide-link]')");
+  const originHref = await evaluate(`
+    document.querySelector('#cg-card-sang-5 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  await evaluate(`document.querySelector('#cg-card-sang-5 [data-cg-guide-link]').click(); 'ok'`);
+  await sleep(1600);
+  const originLanding = await evaluate(`
+    (() => {
+      const m = location.hash.match(/~(.+)$/);
+      const target = m ? document.getElementById(m[1]) : null;
+      return JSON.stringify({
+        hash: location.hash,
+        label: target?.getAttribute('data-event-label') ?? '',
+        flash: !!target && target.classList.contains('anchor-flash'),
+      });
+    })()
+  `);
+  console.log('origin round-trip:', fromPageHash, originHref, originLanding);
   console.log('page-level landed:', landed);
 
   // 攻略侧的指引也要能跳回来（路风 1 处、欧怡青 2 处）。
   const tipLinks = {};
   for (const [node, key] of [['characters/lu-feng', 'lufeng'], ['characters/ou-yiqing', 'ou']]) {
-    await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
-    await sleep(1500);
+    await gotoNode(node);
     tipLinks[key] = await evaluate(`
       [...document.querySelectorAll('main a')]
         .filter((a) => a.getAttribute('href') === '#/other-events/luousang').length
@@ -299,13 +346,28 @@ async function main() {
     ['characters/yuan-shaowei', 'yuan'],
     ['other-events/secretary', 'sec'],
   ]) {
-    await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
-    await sleep(1500);
+    await gotoNode(node);
     pageBadges[key] = await evaluate(`
       [...document.querySelectorAll('main a[data-cg-link]')].map((a) => a.getAttribute('href'))
     `);
   }
   console.log('page badges:', JSON.stringify(pageBadges));
+
+  // 路欧桑五个分支页：标了 CG 的卡都要能点进图鉴（之前这 16 处点了没反应）。
+  const luousangBadges = {};
+  for (const [node, key] of [
+    ['other-events/luousang/only-sanghebei', 'gan'],
+    ['other-events/luousang/only-ouyiqing', 'qing'],
+    ['other-events/luousang/only-lufeng', 'feng'],
+    ['other-events/luousang/lufeng-sanghebei', 'bothSang'],
+    ['other-events/luousang/lufeng-ouyiqing', 'bothOu'],
+  ]) {
+    await gotoNode(node);
+    luousangBadges[key] = await evaluate(`
+      [...document.querySelectorAll('main a[data-cg-link]')].map((a) => a.getAttribute('href'))
+    `);
+  }
+  console.log('luousang badges:', JSON.stringify(luousangBadges));
 
   // 这几位里「原文不该有 CG」的事件：正文不再出现 CG 字样，也没有可点徽标。
   const noCgEvents = {};
@@ -315,8 +377,7 @@ async function main() {
     ['characters/chen-yifu', 'chen', ['14']],
     ['characters/ji-xiang', 'ji', ['50']],
   ]) {
-    await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
-    await sleep(1500);
+    await gotoNode(node);
     noCgEvents[key] = await evaluate(`
       ${JSON.stringify(labels)}.map((label) => {
         const el = document.querySelector('[data-event-label="' + label + '"]');
@@ -329,8 +390,7 @@ async function main() {
   // 新名纱雪「与律师的事件 #5」与聆香「温泉事件 #22」也是「原文不该有 CG」：
   // 纱雪的 #5 在「签约方法」里还有一个（那个真有 CG），所以取同 label 的第二个；
   // 其余 6 个删标记的事件 label 在各自页面里唯一，已在上面的 noCgEvents 里断言。
-  await evaluate(`location.hash = '#/guide/characters/xinming-shaxue'; 'ok'`);
-  await sleep(1500);
+  await gotoNode('characters/xinming-shaxue');
   const xinNoCg = await evaluate(`
     (() => {
       const all = [...document.querySelectorAll('[data-event-label="5"]')];
@@ -344,8 +404,7 @@ async function main() {
   `);
   console.log('xin 5 (与律师的事件):', xinNoCg);
 
-  await evaluate(`location.hash = '#/guide/characters/ling-xiang'; 'ok'`);
-  await sleep(1500);
+  await gotoNode('characters/ling-xiang');
   const lingNoCg = await evaluate(`
     (() => {
       // 22－1 是 22 的子事件，会嵌在这张卡里；只看卡首行，别把子事件的 CG 算进来。
@@ -442,6 +501,7 @@ async function main() {
   // 反向：天晴 CG04（被路敏告白）应跳回「与路敏的感情」事件 38。
   await evaluate(`location.hash = '#/cg/tian-4'; 'ok'`);
   await sleep(1500);
+  await waitFor("!!document.querySelector('#cg-card-tian-4 [data-cg-guide-link]')");
   const tianHref = await evaluate(`
     document.querySelector('#cg-card-tian-4 [data-cg-guide-link]')?.getAttribute('href') ?? ''
   `);
@@ -521,15 +581,18 @@ async function main() {
     'deep link flashes card': d.cardFlash === true,
     'lightbox opens': lb.open === true,
     'lightbox has guide link': lb.guide.startsWith('#/guide/characters/xiao-yili~ev'),
-    // 路欧桑：感情 CG 整页跳，不带事件锚点；个人剧情 CG 不挂入口。
-    'page-level link is the node page': pl.href === '#/guide/other-events/luousang',
-    'page-level title says 完整剧情': pl.title.includes('完整剧情整理'),
+    // 路欧桑：感情 CG 锚到具体事件，双向都能点；个人剧情 CG 不挂入口。
+    'luousang cg links to its event': pl.href === '#/guide/other-events/luousang/only-sanghebei~ev24',
+    'luousang title says 对应攻略事件': pl.title.includes('对应攻略事件'),
     'personal cg stays unlinked': pl.personalHasLink === false,
     'sang-8 now links to its event': pl.cardAtEvent === true,
-    'page-level click lands on luousang': landedView.hash === '#/guide/other-events/luousang' && landedView.cgApp === false,
-    'sang-4 also links to luousang': bothSides['sang-4'] === '#/guide/other-events/luousang',
-    'ou-5 also links to luousang': bothSides['ou-5'] === '#/guide/other-events/luousang',
-    'luousang page shows the four branches': landedView.branches === 4,
+    'luousang click lands on the event': landedView.hash === '#/guide/other-events/luousang/only-sanghebei~ev24'
+      && landedView.cgApp === false && landedView.label === '23' && landedView.inView === true
+      && landedView.scrollTop > 100,
+    'sang-4 links to only-lufeng 7': bothSides['sang-4'] === '#/guide/other-events/luousang/only-lufeng~ev8',
+    'ou-5 links to lufeng-ouyiqing 51': bothSides['ou-5'] === '#/guide/other-events/luousang/lufeng-ouyiqing~ev53',
+    'origin round trip keeps the source page': originHref === '#/guide/other-events/luousang/lufeng-sanghebei~ev30'
+      && JSON.parse(originLanding).label === '29' && JSON.parse(originLanding).flash === true,
     'lu-feng tip links to luousang': tips.lufeng === 1,
     'ou-yiqing tips link to luousang': tips.ou === 2,
     // 已核对的五人：徽标数量与指向逐页对得上。
@@ -576,13 +639,27 @@ async function main() {
       '#/cg/yuan-1', '#/cg/yuan-4', '#/cg/yuan-5', '#/cg/yuan-7', '#/cg/yuan-9',
     ]),
     'secretary badges': sameSet(pageBadges.sec, ['#/cg/main-4']),
+    // 路欧桑五个分支页：谁在旗下都行，标了 CG 的卡一律可点。
+    'luousang only-sanghebei badges': sameSet(luousangBadges.gan, [
+      '#/cg/sang-5', '#/cg/sang-7', '#/cg/sang-6',
+    ]),
+    'luousang only-ouyiqing has no cg': sameSet(luousangBadges.qing, []),
+    'luousang only-lufeng badges': sameSet(luousangBadges.feng, ['#/cg/lu-4', '#/cg/sang-5']),
+    'luousang both-sanghebei badges': sameSet(luousangBadges.bothSang, [
+      '#/cg/sang-4', '#/cg/sang-5', '#/cg/sang-7', '#/cg/sang-6',
+    ]),
+    'luousang both-ouyiqing badges': sameSet(luousangBadges.bothOu, [
+      '#/cg/ou-3', '#/cg/ou-4', '#/cg/sang-3', '#/cg/ou-6', '#/cg/ou-5', '#/cg/ou-8', '#/cg/lu-11',
+    ]),
     'dropped cg marks have no badge': Object.values(noCgEvents)
       .flat()
       .every((e) => !e.missing && e.cgText === false && e.link === false),
     'tian-4 reverse goes to event 38': tianHref.startsWith('#/guide/characters/tian-qing~ev')
       && JSON.parse(tianLanding).label === '38',
     'su-5 reverse goes to first event': suHref.startsWith('#/guide/characters/su-manjun~ev') && su.label === '40',
-    'ou-8 is event-level now': ou8Href.startsWith('#/guide/characters/ou-yiqing~ev'),
+    // 欧怡青的个人页和路欧桑整理页都写了「告别演唱会」：图鉴点「攻略」统一回整理页，
+    // 不把人带到艺人事件簿里（三人恋情只在艺人页浏览）。
+    'ou-8 goes to luousang not the artist page': ou8Href === '#/guide/other-events/luousang/lufeng-ouyiqing~ev66',
     // 这两个事件只删了 CG 标记，不像别的角色那样有个可点的徽标。
     'xin 5 (与律师) has no cg marker': JSON.parse(xinNoCg).count === 2
       && JSON.parse(xinNoCg).cgText === false && JSON.parse(xinNoCg).link === false,
