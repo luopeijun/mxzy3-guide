@@ -3,7 +3,7 @@
   "meta": {
     "itemCount": 204,
     "groupCount": 19,
-    "missingImageCount": 15
+    "missingImageCount": 11
   },
   "groups": [
     {
@@ -1530,9 +1530,9 @@
       "code": "CG 08",
       "name": "同志电影杀青",
       "condition": "第三年，旗下同时有纪翔，纪翔能力达到要求时，王瑞恩上门邀请纪翔出演同志影片。纪翔和关古威拍摄的同志电影在同一天杀青时，杀青当天，关古威邀请主角和他们一起庆祝，选择“有什么好怕的”（详情请看纪翔攻略）",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/guan-8.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "guan-9",
@@ -1662,9 +1662,9 @@
       "code": "CG 05",
       "name": "沙滩图",
       "condition": "与纪翔达成情感结局后，且超越威尔去海外度假可得沙滩图",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-5.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-6",
@@ -1695,9 +1695,9 @@
       "code": "CG 08",
       "name": "同志电影",
       "condition": "第三年，旗下同时有关古威，纪翔能力达到要求时，王瑞恩上门邀请纪翔出演同志影片，纪翔和关古威拍摄的同志电影在同一天杀青时，杀青当天跟随，关古威邀请主角和他们一起庆祝，选择“有什么好怕的”",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-8.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-9",
@@ -1728,9 +1728,9 @@
       "code": "CG 11",
       "name": "美丽之星",
       "condition": "纪翔完成美丽之星任务（详情看美丽之星任务攻略）",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-11.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "xin-1",
