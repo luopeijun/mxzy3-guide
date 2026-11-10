@@ -8,8 +8,8 @@
   "groups": [
     {
       "id": "main",
-      "name": "男主",
-      "kind": "male",
+      "name": "经纪人",
+      "kind": "agent",
       "count": 12
     },
     {

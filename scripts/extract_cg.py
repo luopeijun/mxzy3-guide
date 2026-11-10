@@ -29,8 +29,8 @@ OUT_DATA = ROOT / "public" / "data" / "cg.json"
 MAX_EDGE = 1100
 QUALITY = 76
 
-# 「主线」是男主角本人的 CG，不是剧情线；画廊里按人物分组显示成「男主」。
-GROUP_LABELS = {"主线": "男主"}
+# 「主线」是玩家扮演的经纪人本人的 CG，不是剧情线；画廊里按人物分组显示成「经纪人」。
+GROUP_LABELS = {"主线": "经纪人"}
 
 
 def read_text(path: Path) -> str:
@@ -71,7 +71,7 @@ def main() -> None:
             groups[group_id] = {
                 "id": group_id,
                 "name": GROUP_LABELS.get(group_name, group_name),
-                "kind": "male" if group_name == "主线" else "artist",
+                "kind": "agent" if group_name == "主线" else "artist",
                 "count": 0,
             }
         groups[group_id]["count"] += 1

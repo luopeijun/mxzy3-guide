@@ -1,8 +1,8 @@
 export interface CgGroup {
   id: string;
   name: string;
-  /** 「主线」即男主角本人的 CG，与艺人分组并列。 */
-  kind: 'male' | 'artist';
+  /** 「主线」即玩家扮演的经纪人本人的 CG，与艺人分组并列。 */
+  kind: 'agent' | 'artist';
   count: number;
 }
 
