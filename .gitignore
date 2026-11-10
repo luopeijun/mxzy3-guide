@@ -8,5 +8,6 @@ dist/
 *.log
 .tmp/
 
-# 外部 CG 图鉴素材（136MB 二进制），只在本地参考，不进仓库
+# 外部 CG 图鉴原始素材（136MB 二进制），只在本地参考，不进仓库；
+# 压缩后的缩略图由 scripts/extract_cg.py 输出到 public/images/cg/，随仓库发布
 outputs/
