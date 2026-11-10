@@ -3,7 +3,7 @@
   "meta": {
     "itemCount": 204,
     "groupCount": 19,
-    "missingImageCount": 7
+    "missingImageCount": 0
   },
   "groups": [
     {
@@ -518,9 +518,9 @@
       "code": "CG 08",
       "name": "休息一下",
       "condition": "依莉参演《透明的微笑》时，前往依莉工作场所，与依莉交谈，选择“要不要到旁边休息一下？”进入下层选项选择“靠着我的肩膀休息一会吧～”可获得",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/xiao-8.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "xiao-9",
@@ -1629,9 +1629,9 @@
       "code": "CG 02",
       "name": "演唱会",
       "condition": "给纪翔举办个人演唱会，当天跟随可得",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-2.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-3",
@@ -1640,9 +1640,9 @@
       "code": "CG 03",
       "name": "情人节",
       "condition": "第三年2月14日，友好度够高时，纪翔邀请主角去酒吧，选择“孤家寡人，哪有安排……”",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-3.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-4",
@@ -1651,9 +1651,9 @@
       "code": "CG 04",
       "name": "烟火",
       "condition": "第三年8月1日到15日，友好度够高时，纪翔约主角8月31日去看烟火，当天，选择“河滨公园”，和纪翔一起看烟火",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-4.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-5",
@@ -1673,9 +1673,9 @@
       "code": "CG 06",
       "name": "与主角感情结局",
       "condition": "与纪翔达成情感结局后，结尾可看到剧情",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-6.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-7",
@@ -1684,9 +1684,9 @@
       "code": "CG 07",
       "name": "酒吧偷拍",
       "condition": "第一年6月到第二年7月，纪翔人气大于3，除周三外，安排纪翔自由活动时前往19号酒馆，看到纪翔和一个女孩子在一起，一旁记者在偷拍",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-7.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-8",
@@ -1706,9 +1706,9 @@
       "code": "CG 09",
       "name": "受伤",
       "condition": "纪翔接拍动作片期间疲劳度高，且没有跟随时，“纪翔拍片被殴重伤，疲劳过渡躲闪不及”，一个月后，接拍动作片期间，友好度够高，且触发两次询问伤势时，前往工作场所，看到纪翔受伤",
-      "image": null,
-      "width": 0,
-      "height": 0
+      "image": "images/cg/ji-9.webp",
+      "width": 800,
+      "height": 600
     },
     {
       "id": "ji-10",
