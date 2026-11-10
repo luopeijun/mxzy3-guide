@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { readCg, writeCg } from '../../lib/cg';
 import type { CgData } from '../../types/cg';
 import CgCard from './CgCard';
+import CgLightbox from './CgLightbox';
 
 const PAGE_SIZE = 60;
 
@@ -10,16 +11,50 @@ interface Props {
   data: CgData;
 }
 
+interface LightboxState {
+  /** 打开那一刻的可见列表快照：翻页不因勾选 / 筛选变化而跳位。 */
+  ids: string[];
+  activeId: string;
+}
+
+/** 与攻略侧栏同一套圆形小头像；「全部」和经纪人没有图片，用首字占位，
+ *  这样 19 行的左边缘是对齐的。 */
+function GroupAvatar({ avatar, name }: { avatar?: string; name: string }) {
+  if (avatar) {
+    return (
+      <img
+        data-cg-group-avatar
+        src={`${import.meta.env.BASE_URL}${avatar}`}
+        alt=""
+        aria-hidden="true"
+        className="h-6 w-6 shrink-0 rounded-full border border-line-strong object-cover"
+      />
+    );
+  }
+  return (
+    <span
+      data-cg-group-avatar
+      data-avatar-fallback
+      aria-hidden="true"
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
+    >
+      {name.slice(0, 1)}
+    </span>
+  );
+}
+
 /** CG 图鉴：左侧按人物分组（经纪人 + 18 位艺人），右侧一面缩略图墙。
  *
  *  分组是原表天然切好的 19 组，每组 6–13 张，比 204 张一次铺完更好查漏；
- *  「全部」才需要分页。收集状态只由卡片右上角的圆勾改变，点图片不会误记。 */
+ *  「全部」才需要分页。点图片看大图、点右上角圆勾改收集状态，两条路径互不干扰。 */
 export default function CgApp({ data }: Props) {
   const validIds = useMemo(() => new Set(data.items.map((item) => item.id)), [data.items]);
   const [collected, setCollected] = useState<Set<string>>(() => readCg(validIds));
   const [groupId, setGroupId] = useState('all');
   const [onlyMissing, setOnlyMissing] = useState(false);
   const [limit, setLimit] = useState(PAGE_SIZE);
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   const toggle = (id: string) => {
     setCollected((previous) => {
@@ -28,6 +63,19 @@ export default function CgApp({ data }: Props) {
       else next.add(id);
       writeCg(next);
       return next;
+    });
+  };
+
+  const openLightbox = (id: string, ids: string[], trigger: HTMLButtonElement) => {
+    triggerRef.current = trigger;
+    setLightbox({ ids, activeId: id });
+  };
+
+  const closeLightbox = () => {
+    setLightbox(null);
+    const trigger = triggerRef.current;
+    requestAnimationFrame(() => {
+      if (trigger?.isConnected) trigger.focus();
     });
   };
 
@@ -63,6 +111,7 @@ export default function CgApp({ data }: Props) {
     [groupItems, onlyMissing, collected],
   );
   const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
+  const visibleIds = useMemo(() => visible.map((item) => item.id), [visible]);
 
   const activeName = groupId === 'all'
     ? '全部'
@@ -71,7 +120,9 @@ export default function CgApp({ data }: Props) {
     ? Math.round((collected.size / data.items.length) * 100)
     : 0;
 
-  const groupButton = (id: string, name: string, total: number, done: number) => {
+  const groupButton = (
+    id: string, name: string, total: number, done: number, avatar?: string,
+  ) => {
     const active = groupId === id;
     return (
       <button
@@ -89,10 +140,26 @@ export default function CgApp({ data }: Props) {
             : 'text-ink-muted hover:bg-surface-soft hover:text-ink',
         )}
       >
-        <span>{name}</span>
-        <span className="text-ui-2xs tabular-nums text-ink-faint">{done}/{total}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <GroupAvatar avatar={avatar} name={name} />
+          <span className="truncate">{name}</span>
+        </span>
+        <span className="shrink-0 text-ui-2xs tabular-nums text-ink-faint">{done}/{total}</span>
       </button>
     );
+  };
+
+  const lightboxItem = lightbox
+    ? data.items.find((item) => item.id === lightbox.activeId)
+    : null;
+  const lightboxIndex = lightbox ? lightbox.ids.indexOf(lightbox.activeId) : -1;
+  const stepLightbox = (delta: number) => {
+    setLightbox((current) => {
+      if (!current) return null;
+      const index = current.ids.indexOf(current.activeId);
+      const nextId = current.ids[index + delta];
+      return nextId ? { ...current, activeId: nextId } : current;
+    });
   };
 
   return (
@@ -103,7 +170,7 @@ export default function CgApp({ data }: Props) {
       <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="text-ui-lg font-bold text-brand-strong">CG 图鉴</h1>
         <span className="text-ui-2xs text-ink-faint">
-          共 {data.meta.itemCount} 张 · {data.meta.groupCount} 位角色
+          共 {data.meta.itemCount} 张 · {data.meta.groupCount} 个分组
           {data.meta.missingImageCount > 0 && ` · ${data.meta.missingImageCount} 张站点未提供图片`}
         </span>
         <div className="ml-auto flex items-center gap-2.5 text-ui-2xs tabular-nums text-ink-faint">
@@ -120,13 +187,13 @@ export default function CgApp({ data }: Props) {
       <div className="flex min-h-0 flex-1 gap-5 tab:flex-col tab:gap-3">
         <aside
           data-cg-groups
-          className="flex w-[190px] shrink-0 flex-col overflow-y-auto rounded-ui-md border border-line bg-surface p-2 [scrollbar-gutter:stable] tab:w-full tab:overflow-x-auto tab:p-1.5"
+          className="flex w-[210px] shrink-0 flex-col overflow-y-auto rounded-ui-md border border-line bg-surface p-2 [scrollbar-gutter:stable] tab:w-full tab:overflow-x-auto tab:p-1.5"
         >
           <div className="flex flex-col gap-0.5 tab:flex-row tab:gap-1.5">
             {groupButton('all', '全部', data.items.length, collected.size)}
             {data.groups.map((group) => {
               const count = groupCounts.get(group.id) ?? { total: group.count, done: 0 };
-              return groupButton(group.id, group.name, count.total, count.done);
+              return groupButton(group.id, group.name, count.total, count.done, group.avatar);
             })}
           </div>
         </aside>
@@ -177,6 +244,7 @@ export default function CgApp({ data }: Props) {
                         item={item}
                         collected={collected.has(item.id)}
                         onToggle={() => toggle(item.id)}
+                        onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
                       />
                     </li>
                   ))}
@@ -198,6 +266,22 @@ export default function CgApp({ data }: Props) {
           </div>
         </div>
       </div>
+
+      {lightbox && lightboxItem && (
+        <CgLightbox
+          item={lightboxItem}
+          groupName={data.groups.find((group) => group.id === lightboxItem.groupId)?.name ?? '全部'}
+          collected={collected.has(lightboxItem.id)}
+          position={lightboxIndex + 1}
+          total={lightbox.ids.length}
+          hasPrev={lightboxIndex > 0}
+          hasNext={lightboxIndex >= 0 && lightboxIndex < lightbox.ids.length - 1}
+          onPrev={() => stepLightbox(-1)}
+          onNext={() => stepLightbox(1)}
+          onToggle={() => toggle(lightboxItem.id)}
+          onClose={closeLightbox}
+        />
+      )}
     </div>
   );
 }

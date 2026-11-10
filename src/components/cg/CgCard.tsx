@@ -5,12 +5,13 @@ interface Props {
   item: CgItem;
   collected: boolean;
   onToggle: () => void;
+  onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡。未收集用「灰 + 提亮 + 面纱 + 问号」，不是压暗：整墙浅色才不会
- *  像图片加载失败，也仍然看得出轮廓方便查漏。已收集恢复全彩并加品牌色边框，
- *  圆勾是唯一的点击目标，点图片本身不会误改记录（灯箱后续再接）。 */
-export default function CgCard({ item, collected, onToggle }: Props) {
+/** 一张 CG 卡。图片本身是「查看大图」的按钮，右上角圆勾只管收集状态，两者
+ *  互不干扰：没收集的图也能打开看全彩大图，看大图不会偷偷改记录。
+ *  未收集只用灰度区分，不再盖面纱或问号，整面墙保持干净。 */
+export default function CgCard({ item, collected, onToggle, onOpen }: Props) {
   return (
     <article
       data-cg-card
@@ -22,33 +23,31 @@ export default function CgCard({ item, collected, onToggle }: Props) {
       )}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-soft">
-        {item.image ? (
-          <img
-            src={`${import.meta.env.BASE_URL}${item.image}`}
-            alt={`${item.code} ${item.name}`}
-            loading="lazy"
-            decoding="async"
-            className={cn(
-              'h-full w-full object-cover transition-all duration-200',
-              !collected && 'grayscale opacity-85',
-            )}
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-surface-soft text-ink-faint">
-            <span className="text-ui-2xl leading-none" aria-hidden="true">?</span>
-            <span className="text-ui-2xs">站点未提供图片</span>
-          </div>
-        )}
-        {item.image && !collected && (
-          <>
-            <div className="pointer-events-none absolute inset-0 bg-surface/10" />
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong bg-surface/85 text-ui-lg font-semibold text-ink-faint">
-                ?
-              </span>
+        <button
+          type="button"
+          data-cg-open
+          aria-label={`查看大图 ${item.code} ${item.name}`}
+          title="查看大图"
+          onClick={(event) => onOpen(event.currentTarget)}
+          className="absolute inset-0 z-0 block h-full w-full cursor-zoom-in"
+        >
+          {item.image ? (
+            <img
+              src={`${import.meta.env.BASE_URL}${item.image}`}
+              alt={`${item.code} ${item.name}`}
+              loading="lazy"
+              decoding="async"
+              className={cn(
+                'h-full w-full object-cover transition-all duration-200',
+                !collected && 'grayscale',
+              )}
+            />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center px-2 text-center text-ui-2xs text-ink-faint">
+              站点未提供图片
             </span>
-          </>
-        )}
+          )}
+        </button>
         <button
           type="button"
           data-cg-toggle
@@ -57,7 +56,7 @@ export default function CgCard({ item, collected, onToggle }: Props) {
           title={collected ? '取消收集' : '标记已收集'}
           onClick={onToggle}
           className={cn(
-            'absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-ui-sm ring-2 ring-surface transition-colors',
+            'absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full text-ui-sm ring-2 ring-surface transition-colors',
             collected
               ? 'bg-brand text-white'
               : 'border-2 border-ink-faint bg-surface/95 hover:border-brand',
