@@ -153,3 +153,25 @@ characters/yuan-shaowei	79	yuan-9	养猫事件
 
 # ---- 秘书莉铃（1 条，CG 属「主线」组） ----
 other-events/secretary	3	main-4	
+
+# ---- 路欧桑感情线（16 条；五个分支页各写了一遍同一段剧情，同一张图会出现两三次，
+#      正反两个方向都挂上：攻略页每张 CG 卡都能点进图鉴，图鉴反跳落在遍历到的第一条。
+#      顺序：路桑 4 条 ×2 分支 + 结婚/SOSA 各 2 处；路欧恋 6 条只在「路风和欧怡青都在旗下」）
+#      桑5/lu5 公园问态度、桑6/lu6 结婚、桑7 SOSA 三张在「只有桑禾蓓在旗下」也拿得到；
+#      桑4/lu4 讨论剧本只在「只有路风在旗下」和「两人都在旗下」两页（桑禾蓓那页明确拿不到）。 ----
+other-events/luousang/only-lufeng	7	lu-4,sang-4
+other-events/luousang/only-lufeng	18	sang-5,lu-5
+other-events/luousang/only-sanghebei	23	sang-5,lu-5
+other-events/luousang/only-sanghebei	37	sang-7
+other-events/luousang/only-sanghebei	43	sang-6,lu-6
+other-events/luousang/lufeng-sanghebei	11	sang-4,lu-4
+other-events/luousang/lufeng-sanghebei	29	sang-5,lu-5
+other-events/luousang/lufeng-sanghebei	48	sang-7
+other-events/luousang/lufeng-sanghebei	54	sang-6,lu-6
+other-events/luousang/lufeng-ouyiqing	3	ou-3,lu-7
+other-events/luousang/lufeng-ouyiqing	8	ou-4,lu-8
+other-events/luousang/lufeng-ouyiqing	11	sang-3
+other-events/luousang/lufeng-ouyiqing	23	ou-6,lu-10
+other-events/luousang/lufeng-ouyiqing	51	ou-5,lu-9
+other-events/luousang/lufeng-ouyiqing	63	ou-8
+other-events/luousang/lufeng-ouyiqing	69	lu-11

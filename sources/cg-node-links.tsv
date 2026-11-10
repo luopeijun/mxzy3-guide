@@ -1,33 +1,14 @@
 # CG → 攻略页面（多对一：多张 CG 共用一个落点）的跳转表。
 #
-# 两种用法：
-#   1. 整页落点（路欧桑剧情整理）：一张 CG 的获得条件散落在「情况1~5」的多个分支里，
-#      锚到哪个都不对，所以整组跳这一页的顶部。
-#   2. 事件落点（美丽之星写真集）：18 个角色各有一张写真集 CG，但出图的是**同一个**
-#      事件（#14），落点唯一，第 4 列写事件号就锚到那个事件（章节可选，放第 5 列）。
+# 现在只剩一种用法：事件落点。18 个角色各有一张「美丽之星写真集」CG，但出图的是
+# **同一个**事件（#14），落点唯一，第 4 列写事件号就锚到那个事件（章节可选，放第 5 列）。
 #
 # 格式：CG id <TAB> 攻略节点 id <TAB> 备注 <TAB> 事件号（可选） <TAB> 章节（可选）
 #       备注只给人看、不参与校验；事件号留空 = 整页落点。
 #
-# 一对一、能锚到具体事件的关系写在 sources/cg-links.tsv，不走这里。
-
-sang-3	other-events/luousang	路桑恋：记者逼问桑禾蓓（路风和欧怡青都在旗下 #11）
-sang-4	other-events/luousang	路桑恋：路风指导禾蓓演技（= lu-4 的另一侧；#7 / #11）
-sang-5	other-events/luousang	路桑恋：公园问路风对自己的态度
-sang-6	other-events/luousang	路桑恋：结局两人结婚
-sang-7	other-events/luousang	路桑恋：SOSA 里不能公开交往
-ou-3	other-events/luousang	路欧恋：路敏把怡青介绍给路风（#3）
-ou-4	other-events/luousang	路欧恋：19号酒馆相谈甚欢（#8）
-ou-5	other-events/luousang	路欧恋：买冰水给怡青（= lu-9 的另一侧；#51）
-ou-6	other-events/luousang	路欧恋：怡青生日派对（#23）
-lu-4	other-events/luousang	路桑恋：与禾蓓陪练剧本（只有路风 #7 / 两人都在 #11）
-lu-5	other-events/luousang	路桑恋：与禾蓓公园讨论（#18 / #29）
-lu-6	other-events/luousang	路桑恋：与禾蓓结婚照（#43 / #54）
-lu-7	other-events/luousang	路欧恋：认识欧怡青（#3）
-lu-8	other-events/luousang	路欧恋：三角关系（#8）
-lu-9	other-events/luousang	路欧恋：与欧怡青嬉戏（#51）
-lu-10	other-events/luousang	路欧恋：庆祝欧怡青生日（#23）
-lu-11	other-events/luousang	路欧恋：与欧怡青结婚（#69）
+# 一对一、能锚到具体事件的关系写在 sources/cg-links.tsv，不走这里。路欧桑感情线原先
+# 是整页落点（一张图散在情况1~5 的多个分支里），现已逐个对应到「路风和某某都在旗下」
+# 那两页的具体事件上，改走 cg-links.tsv，双向都可点。
 
 # ---- 美丽之星写真集（18 张共用事件 #14「艺人把写真集送给主角一本」）----
 lin-13	other-events/beauty-star	林芬芬·美丽之星写真集	14

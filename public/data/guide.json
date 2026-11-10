@@ -26065,7 +26065,12 @@
               "label": "23",
               "tag": "场景",
               "group": 25,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-5",
+                "lu-5"
+              ],
+              "anchor": "ev24"
             },
             {
               "kind": "event",
@@ -26193,7 +26198,11 @@
               "label": "37",
               "tag": "场景",
               "group": 41,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-7"
+              ],
+              "anchor": "ev40"
             },
             {
               "kind": "event",
@@ -26241,7 +26250,12 @@
               "label": "43",
               "tag": "跟随",
               "group": 47,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-6",
+                "lu-6"
+              ],
+              "anchor": "ev46"
             }
           ],
           "children": []
@@ -26605,7 +26619,12 @@
               "label": "7",
               "tag": "场景",
               "group": 9,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lu-4",
+                "sang-4"
+              ],
+              "anchor": "ev8"
             },
             {
               "kind": "event",
@@ -26693,7 +26712,12 @@
               "label": "18",
               "tag": "场景",
               "group": 20,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-5",
+                "lu-5"
+              ],
+              "anchor": "ev19"
             },
             {
               "kind": "event",
@@ -26939,7 +26963,12 @@
               "label": "11",
               "tag": "场景",
               "group": 13,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-4",
+                "lu-4"
+              ],
+              "anchor": "ev12"
             },
             {
               "kind": "event",
@@ -27083,7 +27112,12 @@
               "label": "29",
               "tag": "场景",
               "group": 31,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-5",
+                "lu-5"
+              ],
+              "anchor": "ev30"
             },
             {
               "kind": "event",
@@ -27251,7 +27285,11 @@
               "label": "48",
               "tag": "场景",
               "group": 52,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-7"
+              ],
+              "anchor": "ev51"
             },
             {
               "kind": "event",
@@ -27299,7 +27337,12 @@
               "label": "54",
               "tag": "跟随",
               "group": 58,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-6",
+                "lu-6"
+              ],
+              "anchor": "ev57"
             }
           ],
           "children": []
@@ -27337,7 +27380,12 @@
               "label": "3",
               "tag": "场景",
               "group": 4,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ou-3",
+                "lu-7"
+              ],
+              "anchor": "ev3"
             },
             {
               "kind": "event",
@@ -27377,7 +27425,12 @@
               "label": "8",
               "tag": "场景",
               "group": 9,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ou-4",
+                "lu-8"
+              ],
+              "anchor": "ev8"
             },
             {
               "kind": "event",
@@ -27401,7 +27454,11 @@
               "label": "11",
               "tag": "场景",
               "group": 12,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "sang-3"
+              ],
+              "anchor": "ev11"
             },
             {
               "kind": "event",
@@ -27513,7 +27570,12 @@
               "label": "23",
               "tag": "自动",
               "group": 26,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ou-6",
+                "lu-10"
+              ],
+              "anchor": "ev25"
             },
             {
               "kind": "event",
@@ -27737,7 +27799,12 @@
               "label": "51",
               "tag": "跟随",
               "group": 54,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ou-5",
+                "lu-9"
+              ],
+              "anchor": "ev53"
             },
             {
               "kind": "event",
@@ -27841,7 +27908,11 @@
               "label": "63",
               "tag": "跟随",
               "group": 67,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ou-8"
+              ],
+              "anchor": "ev66"
             },
             {
               "kind": "event",
@@ -27905,7 +27976,11 @@
               "label": "69",
               "tag": "沟通",
               "group": 75,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lu-11"
+              ],
+              "anchor": "ev74"
             },
             {
               "kind": "section",

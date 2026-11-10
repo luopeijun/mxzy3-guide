@@ -24,6 +24,11 @@ import extract_guide as eg  # noqa: E402
 ROOT = HERE.parent
 GUIDE = ROOT / "public" / "data" / "guide.json"
 CG = ROOT / "public" / "data" / "cg.json"
+# 路欧桑五个分支页：同一段剧情各写一遍，跨页重复的 CG 只在这组节点之间才允许。
+LUOUSANG = "other-events/luousang/"
+# 同一张图在「角色页」和「路欧桑分支页」各写了一遍、两处都值得留入口的已知例外：
+# ou-8 告别演唱会在欧怡青「告别 #7」和「路风和欧怡青都在旗下 #63」都有详细步骤。
+DUPLICATED_ACROSS_NODES = {"ou-8"}
 
 
 def _walk(node: dict):
@@ -59,14 +64,19 @@ class TestCgLinkMapping(unittest.TestCase):
                         self.assertIn(cg_id, cg_ids, f"{cg_id} 不在 cg.json 里")
                         where = f"{node['id']} #{block.get('label')}"
                         if cg_id in seen_cg:
-                            # 允许同一张 CG 在同一个角色的两个事件里出现（苏嫚君 CG05
-                            # 圣诞布置第二年、第三年各一次），反跳取第一条即可；
-                            # 跨角色重复说明该做成单向，得挪去 cg-node-links.tsv。
-                            self.assertEqual(
-                                seen_cg[cg_id].split(" ")[0], node["id"],
-                                f"{cg_id} 被多个事件指向（{seen_cg[cg_id]} 与 {where}）："
-                                "这种应当只做 CG→事件单向，不该写进 cg-links.tsv",
-                            )
+                            # 允许同一张 CG 在同一节点的两个事件里出现（苏嫚君 CG05
+                            # 圣诞布置第二年、第三年各一次），反跳取第一条即可。
+                            # 路欧桑感情线是另一回事：五个分支页各写了一遍同一段剧情，
+                            # 同一张图在「只有 X 在旗下」和「两人都在旗下」都拿得到，
+                            # 跨分支重复是数据本身的样子（回跳按来源页走，见 cgOrigin）。
+                            # 其余跨节点重复说明该做成单向，得挪去 cg-node-links.tsv。
+                            first = seen_cg[cg_id].split(" ")[0]
+                            if first != node["id"] and cg_id not in DUPLICATED_ACROSS_NODES:
+                                self.assertTrue(
+                                    first.startswith(LUOUSANG) and node["id"].startswith(LUOUSANG),
+                                    f"{cg_id} 被多个事件指向（{seen_cg[cg_id]} 与 {where}）："
+                                    "这种应当只做 CG→事件单向，不该写进 cg-links.tsv",
+                                )
                         seen_cg.setdefault(cg_id, where)
 
         # 映射是逐块长出来的，至少要覆盖已经核对过的几组，防止某次重构把整段映射悄悄丢掉。
@@ -93,6 +103,11 @@ class TestCgLinkMapping(unittest.TestCase):
             "characters/wei-ya": 5,
             "characters/yuan-shaowei": 5,
             "other-events/secretary": 1,
+            # 路欧桑感情线：五个分支页各写了一遍同一段剧情，能拿到 CG 的三页都要有映射。
+            "other-events/luousang/only-lufeng": 2,
+            "other-events/luousang/only-sanghebei": 3,
+            "other-events/luousang/lufeng-sanghebei": 4,
+            "other-events/luousang/lufeng-ouyiqing": 7,
         }
         for node_id, least in expected.items():
             self.assertGreaterEqual(
