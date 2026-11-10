@@ -20,9 +20,11 @@ interface LightboxState {
   activeId: string;
 }
 
-/** 与攻略侧栏同一套圆形小头像；只有「全部」是汇总项、没有对应人物，用首字占位，
- *  其余 19 组（经纪人 + 18 位艺人）都用真实头像，左边缘对齐。 */
-function GroupAvatar({ avatar, name }: { avatar?: string; name: string }) {
+/** 与攻略侧栏同一套圆形小头像；「全部」是汇总项、没有对应人物，
+ *  用 2×2 汇总图标占位（比硬取「全」字更像图标，尺寸与真实头像一致、左边缘对齐）。 */
+function GroupAvatar(
+  { avatar, name, aggregate }: { avatar?: string; name: string; aggregate?: boolean },
+) {
   if (avatar) {
     return (
       <img
@@ -32,6 +34,23 @@ function GroupAvatar({ avatar, name }: { avatar?: string; name: string }) {
         aria-hidden="true"
         className="h-6 w-6 shrink-0 rounded-full border border-line-strong object-cover"
       />
+    );
+  }
+  if (aggregate) {
+    return (
+      <span
+        data-cg-group-avatar
+        data-avatar-aggregate
+        aria-hidden="true"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-brand-line bg-brand-soft text-brand-strong"
+      >
+        <svg viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor">
+          <rect x="0.5" y="0.5" width="6.2" height="6.2" rx="1.7" />
+          <rect x="9.3" y="0.5" width="6.2" height="6.2" rx="1.7" />
+          <rect x="0.5" y="9.3" width="6.2" height="6.2" rx="1.7" />
+          <rect x="9.3" y="9.3" width="6.2" height="6.2" rx="1.7" />
+        </svg>
+      </span>
     );
   }
   return (
@@ -177,7 +196,8 @@ export default function CgApp({ data }: Props) {
     : 0;
 
   const groupButton = (
-    id: string, name: string, total: number, done: number, avatar?: string,
+    id: string, name: string, total: number, done: number,
+    avatar?: string, aggregate?: boolean,
   ) => {
     const active = groupId === id;
     return (
@@ -197,7 +217,7 @@ export default function CgApp({ data }: Props) {
         )}
       >
         <span className="flex min-w-0 items-center gap-2">
-          <GroupAvatar avatar={avatar} name={name} />
+          <GroupAvatar avatar={avatar} name={name} aggregate={aggregate} />
           <span className="truncate">{name}</span>
         </span>
         <span className="shrink-0 text-ui-2xs tabular-nums text-ink-faint">{done}/{total}</span>
@@ -270,7 +290,7 @@ export default function CgApp({ data }: Props) {
           className="flex w-[210px] shrink-0 flex-col overflow-y-auto rounded-ui-md border border-line bg-surface p-2 [scrollbar-gutter:stable] tab:w-full tab:overflow-x-auto tab:p-1.5"
         >
           <div className="flex flex-col gap-0.5 tab:flex-row tab:gap-1.5">
-            {groupButton('all', '全部', data.items.length, collected.size)}
+            {groupButton('all', '全部', data.items.length, collected.size, undefined, true)}
             {data.groups.map((group) => {
               const count = groupCounts.get(group.id) ?? { total: group.count, done: 0 };
               return groupButton(group.id, group.name, count.total, count.done, group.avatar);
