@@ -50,6 +50,17 @@ NAME_FIXES = {
     "原少伟": "原少纬",
 }
 
+# 原表把「原少纬」误写成「原少伟」，连简称「少伟」也错；攻略里统一是「原少纬」
+# （guide.json 出现 59 次、零次错字）。只纠正输出文案，不改源文件，
+# 也不影响 CSV / manifest 之间逐行一致性的校验。
+TEXT_FIXES = {"少伟": "少纬"}
+
+
+def fix_text(value: str) -> str:
+    for wrong, right in TEXT_FIXES.items():
+        value = value.replace(wrong, right)
+    return value
+
 
 def read_text(path: Path) -> str:
     return path.read_bytes().decode("utf-8-sig")
@@ -170,8 +181,8 @@ def main() -> None:
                 "groupId": group_id,
                 "order": meta["order"],
                 "code": meta["title"],
-                "name": meta["desc"],
-                "condition": meta["condition"],
+                "name": fix_text(meta["desc"]),
+                "condition": fix_text(meta["condition"]),
                 "image": image_url,
                 "width": width,
                 "height": height,

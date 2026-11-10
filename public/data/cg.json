@@ -703,8 +703,8 @@
       "groupId": "sang",
       "order": 12,
       "code": "CG 12",
-      "name": "与原少伟吵架",
-      "condition": "少伟在旗下，桑不在旗下，少纬让言颢绑来桑禾蓓，宣布看上她了，被桑禾蓓一口回绝（详细请看原少伟攻略）",
+      "name": "与原少纬吵架",
+      "condition": "少纬在旗下，桑不在旗下，少纬让言颢绑来桑禾蓓，宣布看上她了，被桑禾蓓一口回绝（详细请看原少纬攻略）",
       "image": "images/cg/sang-12.webp",
       "width": 1100,
       "height": 817
@@ -2309,7 +2309,7 @@
       "groupId": "yuan",
       "order": 1,
       "code": "CG 01",
-      "name": "原少伟初登场",
+      "name": "原少纬初登场",
       "condition": "第一年年底前，前往广告公司，撞到原少纬，幸好耿言颢出面解围",
       "image": "images/cg/yuan-1.webp",
       "width": 1100,
@@ -2321,7 +2321,7 @@
       "order": 2,
       "code": "CG 02",
       "name": "演唱会",
-      "condition": "给原少伟举办个人演唱会，当天跟随可得",
+      "condition": "给原少纬举办个人演唱会，当天跟随可得",
       "image": "images/cg/yuan-2.webp",
       "width": 1100,
       "height": 817
@@ -2365,7 +2365,7 @@
       "order": 6,
       "code": "CG 06",
       "name": "美丽之星",
-      "condition": "原少伟完成美丽之星任务（详情看美丽之星任务攻略）",
+      "condition": "原少纬完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/yuan-6.webp",
       "width": 1100,
       "height": 815
