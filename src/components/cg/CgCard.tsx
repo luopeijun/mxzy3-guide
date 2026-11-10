@@ -13,11 +13,10 @@ interface Props {
   onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡只放编号和名字，保持一行、所有卡片等高；获得条件之类的说明
- *  全放在详情页（灯箱）里，网格里不再挤长文本。
- *  图片本身是「查看大图」的按钮，整块可点；收集开关放在底部信息栏里，**不再浮在
- *  图片上**，这样点图片永远只是看大图、不会再误触到收集圆点。已收集与否完全由底部
- *  信息栏的「✓ 已收集 / ○ 收集」芯片表达（已收的图同时转为彩色），整面墙保持干净。 */
+/** 一张 CG 卡保持所有卡片等高：图片按比例占位，底部一行固定高。
+ *  图片本身是「查看大图」的按钮（整块可点）；编号与「全部」页的分组归属做成图片上
+ *  的浮层（不响应点击，pure 指示），这样底部信息栏只放「收集芯片 + 名称 + 攻略入口」，
+ *  名称能占满剩余宽度，长名也只优雅省略而不再挤掉。已收集的图恢复彩色即表示已收。 */
 export default function CgCard({ item, collected, group, guideHref, guideTitle, onToggle, onOpen }: Props) {
   return (
     <article
@@ -56,6 +55,40 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
             </span>
           )}
         </button>
+        {/* 分组归属浮层：只在「全部」页出现，纯指示、不挡点击。 */}
+        {group && (
+          <span
+            data-cg-group-tag
+            data-cg-group-name={group.name}
+            className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full border border-white/40 bg-black/45 px-1.5 py-0.5 backdrop-blur-sm"
+          >
+            {group.avatar ? (
+              <img
+                src={`${import.meta.env.BASE_URL}${group.avatar}`}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                className="h-5 w-5 shrink-0 rounded-full border border-white/60 object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/25 text-[10px] font-semibold text-white"
+              >
+                {group.name.slice(0, 1)}
+              </span>
+            )}
+            <span className="truncate text-[10px] font-medium text-white">{group.name}</span>
+          </span>
+        )}
+        {/* 编号浮层：左下角小徽标，纯指示。 */}
+        <span
+          data-cg-code
+          className="pointer-events-none absolute bottom-2 left-2 z-10 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white"
+        >
+          {item.code}
+        </span>
       </div>
       {/* 固定行高：有「攻略」入口的卡片不能被这一行撑高，否则整面墙高低不齐。 */}
       <div className="flex h-10 min-w-0 items-center gap-1.5 px-2.5">
@@ -76,34 +109,7 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
           <span aria-hidden className="text-[11px] leading-none">{collected ? '✓' : '○'}</span>
           {collected ? '已收集' : '收集'}
         </button>
-        {group && (
-          <span
-            data-cg-group-tag
-            data-cg-group-name={group.name}
-            className="pointer-events-none inline-flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-2"
-          >
-            {group.avatar ? (
-              <img
-                src={`${import.meta.env.BASE_URL}${group.avatar}`}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                className="h-5 w-5 shrink-0 rounded-full border border-line-strong object-cover"
-              />
-            ) : (
-              <span
-                aria-hidden="true"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
-              >
-                {group.name.slice(0, 1)}
-              </span>
-            )}
-            <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
-          </span>
-        )}
-        <span className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
-        <span className="truncate text-ui-2xs text-ink" title={item.name}>{item.name}</span>
+        <span className="min-w-0 flex-1 truncate text-ui-2xs text-ink" title={item.name}>{item.name}</span>
         {guideHref && (
           <a
             data-cg-guide-link
