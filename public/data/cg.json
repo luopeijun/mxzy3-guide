@@ -10,6 +10,7 @@
       "id": "main",
       "name": "经纪人",
       "kind": "agent",
+      "avatar": "images/characters/agent-logo.png",
       "count": 12
     },
     {

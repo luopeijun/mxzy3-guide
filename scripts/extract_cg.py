@@ -37,6 +37,10 @@ QUALITY = 76
 # 「主线」是玩家扮演的经纪人本人的 CG，不是剧情线；画廊里按人物分组显示成「经纪人」。
 GROUP_LABELS = {"主线": "经纪人"}
 
+# 经纪人不是可签约艺人，攻略里没有对应的角色节点，所以头像不在 guide.json 里。
+# 由用户提供的头像框素材裁成与其他角色一致的 145×145 后单独放这里。
+AGENT_AVATAR = "images/characters/agent-logo.png"
+
 # CG 原表有 4 个人名与攻略写法不同；分组名、头像、顺序一律以 guide.json
 # 的角色节点为准，这里只做「原表名 → 攻略名」的桥接。
 NAME_FIXES = {
@@ -79,6 +83,8 @@ def main() -> None:
     rows = list(csv.DictReader(io.StringIO(read_text(SRC / "CG清单.csv"))))
     if len(manifest) != len(rows):
         raise SystemExit(f"manifest {len(manifest)} rows != csv {len(rows)} rows")
+    if not (ROOT / "public" / AGENT_AVATAR).is_file():
+        raise SystemExit(f"missing agent portrait: {AGENT_AVATAR}")
 
     characters = guide_characters()
     by_name = {entry["name"]: entry for entry in characters}
@@ -115,6 +121,7 @@ def main() -> None:
                     "id": group_id,
                     "name": GROUP_LABELS[group_name],
                     "kind": "agent",
+                    "avatar": AGENT_AVATAR,
                     "count": 0,
                 }
             else:

@@ -17,8 +17,8 @@ interface LightboxState {
   activeId: string;
 }
 
-/** 与攻略侧栏同一套圆形小头像；「全部」和经纪人没有图片，用首字占位，
- *  这样 19 行的左边缘是对齐的。 */
+/** 与攻略侧栏同一套圆形小头像；只有「全部」是汇总项、没有对应人物，用首字占位，
+ *  其余 19 组（经纪人 + 18 位艺人）都用真实头像，左边缘对齐。 */
 function GroupAvatar({ avatar, name }: { avatar?: string; name: string }) {
   if (avatar) {
     return (
