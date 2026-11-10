@@ -113,13 +113,14 @@ async function main() {
   p = await pressed();
   check('「中」被选中 (1 个 pressed)', p.filter(Boolean).length === 1 && p[1] === true, JSON.stringify(p));
 
-  // 小档名称应允许换行（line-clamp-2），不该再是 truncate 单行。
+  // 小档名称应单行显示（不再换行）：序号已移到图上，底栏只剩「收集+名称+攻略」，
+  // 列宽放宽到 300px 让最长名称也能一行放得下，故名称类里不应再有 line-clamp-2。
   await clickSize('sm');
   const wraps = await evaluate(`(() => {
     const name = document.querySelector('[data-cg-name]');
     return name.classList.contains('line-clamp-2');
   })()`);
-  check('小档名称启用换行 (line-clamp-2)', wraps === true);
+  check('小档名称单行不换行 (无 line-clamp-2)', wraps === false);
 
   await jsonPut(`http://127.0.0.1:${PORT}/json/close/${target.id}`);
   console.log(`\n${FAIL === 0 ? 'ALL CHECKS PASSED' : 'SOME CHECKS FAILED'} — ${PASS} passed, ${FAIL} failed`);

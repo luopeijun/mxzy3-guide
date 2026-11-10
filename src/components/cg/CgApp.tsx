@@ -17,9 +17,10 @@ const UNDO_TOAST_MS = 1500;
 const FLASH_CLASS = 'anchor-flash';
 
 /** 卡片尺寸：大/中/小对应网格最小列宽。中即原默认 380px；
- *  小档列宽收窄到 220px，名称允许换行两行（见 CgCard），密度更高。 */
+ *  小档列宽收窄到 300px，CG 序号移到图片上后底栏只剩「收集+名称+攻略」，
+ *  名称单行即可完整显示（不再换行），密度仍比中档高。 */
 type CgSize = 'sm' | 'md' | 'lg';
-const SIZE_MIN_WIDTH: Record<CgSize, number> = { sm: 220, md: 380, lg: 520 };
+const SIZE_MIN_WIDTH: Record<CgSize, number> = { sm: 300, md: 380, lg: 520 };
 
 /** 深链落地时把目标卡片滚到视野中央并闪一下，跟攻略里的锚点跳同一套观感。 */
 function flashCard(id: string) {
