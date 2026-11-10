@@ -1,8 +1,13 @@
 export interface CgGroup {
   id: string;
+  /** 与 guide.json 的角色节点标题一致，不用 CG 原表的写法。 */
   name: string;
   /** 「主线」即玩家扮演的经纪人本人的 CG，与艺人分组并列。 */
   kind: 'agent' | 'artist';
+  /** 攻略侧栏同一张头像；经纪人没有头像。 */
+  avatar?: string;
+  /** 对应攻略角色节点 id，留给以后「查看攻略」跳转。 */
+  guideId?: string;
   count: number;
 }
 
