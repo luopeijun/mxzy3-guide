@@ -15724,7 +15724,11 @@
               "label": "2",
               "tag": "场景",
               "group": 22,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yao-1"
+              ],
+              "anchor": "ev21"
             },
             {
               "kind": "event",
@@ -15827,7 +15831,11 @@
               "label": "6",
               "tag": "场景",
               "group": 36,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yao-3"
+              ],
+              "anchor": "ev35"
             },
             {
               "kind": "event",
@@ -15859,7 +15867,11 @@
               "label": "10",
               "tag": "场景",
               "group": 40,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yao-4"
+              ],
+              "anchor": "ev39"
             },
             {
               "kind": "event",
@@ -15939,7 +15951,11 @@
               "label": "19",
               "tag": "跟随",
               "group": 50,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yao-5"
+              ],
+              "anchor": "ev49"
             },
             {
               "kind": "heading",
@@ -16182,7 +16198,11 @@
               "label": "45",
               "tag": "场景",
               "group": 82,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yao-6"
+              ],
+              "anchor": "ev81"
             },
             {
               "kind": "event",
@@ -16500,11 +16520,11 @@
             },
             {
               "kind": "event",
-              "text": "上个事件后隔天，兄妹二人之一来跟主角说出国玩的事，让主角安排。（之后系统会自动安排一周旅游，且只有这周才能看到CG，不用手动安排）",
+              "text": "上个事件后隔天，兄妹二人之一来跟主角说出国玩的事，让主角安排。（之后系统会自动安排一周旅游，不用手动安排）",
               "label": "79",
               "tag": "自动",
               "group": 123,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -16516,11 +16536,11 @@
             },
             {
               "kind": "event",
-              "text": "林芬芬在旗下，事件78后一个月内，周末排行程时，芬芬说要陪子莹一起去玩，选择“好吧！去度假吧！”，友好度上升，可看到CG。（不同意也会去，也会有CG）",
+              "text": "林芬芬在旗下，事件78后一个月内，周末排行程时，芬芬说要陪子莹一起去玩，选择“好吧！去度假吧！”，友好度上升。（不同意也会去）",
               "label": "80",
               "tag": "沟通",
               "group": 125,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -16552,7 +16572,11 @@
               "label": "84",
               "tag": "场景",
               "group": 129,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yao-7"
+              ],
+              "anchor": "ev128"
             },
             {
               "kind": "event",
@@ -16715,7 +16739,11 @@
               "label": "1",
               "tag": "场景",
               "group": 17,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "tian-1"
+              ],
+              "anchor": "ev16"
             },
             {
               "kind": "event",
@@ -16892,11 +16920,11 @@
             },
             {
               "kind": "event",
-              "text": "事件6后三到四个月内，天晴说凌玮翎生日要到了，想送礼物，任一选项都能提升友好度，选择“你送的她应该都喜欢！”或“你不是说感情要低调吗？”，则有机会看到CG图。",
+              "text": "事件6后三到四个月内，天晴说凌玮翎生日要到了，想送礼物，任一选项都能提升友好度，选择“你送的她应该都喜欢！”或“你不是说感情要低调吗？”。",
               "label": "14",
               "tag": "跟随",
               "group": 41,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -16912,7 +16940,11 @@
               "label": "15",
               "tag": "场景",
               "group": 43,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "tian-3"
+              ],
+              "anchor": "ev42"
             },
             {
               "kind": "event",
@@ -17096,11 +17128,11 @@
             },
             {
               "kind": "event",
-              "text": "上个事件5天后，路敏不在旗下时，路敏拜托主角帮她约天晴，任选一项都可触发后续，选择“没问题”可看到告白CG。",
+              "text": "上个事件5天后，路敏不在旗下时，路敏拜托主角帮她约天晴，任选一项都可触发后续，选择“没问题”可继续后续。",
               "label": "36",
               "tag": "自动",
               "group": 67,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -17116,7 +17148,11 @@
               "label": "38",
               "tag": "场景",
               "group": 69,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "tian-4"
+              ],
+              "anchor": "ev68"
             },
             {
               "kind": "event",
@@ -17172,7 +17208,11 @@
               "label": "42",
               "tag": "探班",
               "group": 76,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "tian-5"
+              ],
+              "anchor": "ev75"
             },
             {
               "kind": "event",
@@ -17228,7 +17268,11 @@
               "label": "49",
               "tag": "场景",
               "group": 83,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "tian-6"
+              ],
+              "anchor": "ev82"
             },
             {
               "kind": "event",
@@ -17266,7 +17310,11 @@
               "label": "53",
               "tag": "跟随",
               "group": 88,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "tian-7"
+              ],
+              "anchor": "ev87"
             }
           ],
           "children": []
@@ -17406,7 +17454,11 @@
               "label": "7",
               "tag": "场景",
               "group": 19,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "guan-1"
+              ],
+              "anchor": "ev18"
             },
             {
               "kind": "event",
@@ -17874,7 +17926,11 @@
               "label": "38",
               "tag": "场景",
               "group": 80,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "guan-4"
+              ],
+              "anchor": "ev79"
             },
             {
               "kind": "event",
@@ -17920,7 +17976,11 @@
               "label": "43",
               "tag": "场景",
               "group": 86,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "guan-3"
+              ],
+              "anchor": "ev85"
             },
             {
               "kind": "event",
@@ -18076,7 +18136,11 @@
               "label": "60",
               "tag": "场景",
               "group": 106,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "guan-5"
+              ],
+              "anchor": "ev105"
             },
             {
               "kind": "event",
@@ -18167,7 +18231,11 @@
               "label": "68",
               "tag": "场景",
               "group": 118,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "guan-6"
+              ],
+              "anchor": "ev117"
             },
             {
               "kind": "event",
@@ -18223,7 +18291,11 @@
               "label": "74",
               "tag": "跟随",
               "group": 125,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "guan-7"
+              ],
+              "anchor": "ev124"
             },
             {
               "kind": "event",
@@ -18318,7 +18390,11 @@
               "label": "1",
               "tag": "场景",
               "group": 12,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "chen-1"
+              ],
+              "anchor": "ev11"
             },
             {
               "kind": "event",
@@ -18478,11 +18554,11 @@
             },
             {
               "kind": "event",
-              "text": "事件12或13后，出现小夫和嫚君的绯闻前，且嫚君非旗下艺人时，小夫说要和嫚君约会了，选择“当然没问题！”，友好度上升，可看到之后的CG图。",
+              "text": "事件12或13后，出现小夫和嫚君的绯闻前，且嫚君非旗下艺人时，小夫说要和嫚君约会了，选择“当然没问题！”，友好度上升。",
               "label": "14",
               "tag": "跟随",
               "group": 34,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -18490,7 +18566,11 @@
               "label": "15",
               "tag": "场景",
               "group": 35,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "chen-4"
+              ],
+              "anchor": "ev34"
             },
             {
               "kind": "event",
@@ -18842,7 +18922,11 @@
               "label": "52",
               "tag": "自动",
               "group": 80,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "chen-3"
+              ],
+              "anchor": "ev79"
             },
             {
               "kind": "event",
@@ -18965,7 +19049,11 @@
               "label": "1",
               "tag": "场景",
               "group": 16,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-1"
+              ],
+              "anchor": "ev15"
             },
             {
               "kind": "event",
@@ -19398,7 +19486,11 @@
               "label": "31",
               "tag": "场景",
               "group": 73,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-7"
+              ],
+              "anchor": "ev72"
             },
             {
               "kind": "event",
@@ -19473,7 +19565,11 @@
               "label": "40",
               "tag": "跟随",
               "group": 83,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-8"
+              ],
+              "anchor": "ev82"
             },
             {
               "kind": "event",
@@ -19551,15 +19647,19 @@
               "label": "49",
               "tag": "探班",
               "group": 93,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-9"
+              ],
+              "anchor": "ev92"
             },
             {
               "kind": "event",
-              "text": "上个事件后，且有拿到CG时，“导演夸赞纪翔专业，不用替身的好演员”。",
+              "text": "上个事件后，“导演夸赞纪翔专业，不用替身的好演员”。",
               "label": "50",
               "tag": "新闻",
               "group": 94,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "heading",
@@ -19637,7 +19737,11 @@
               "label": "51",
               "tag": "跟随",
               "group": 106,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-3"
+              ],
+              "anchor": "ev105"
             },
             {
               "kind": "event",
@@ -19723,7 +19827,11 @@
               "label": "61",
               "tag": "自动",
               "group": 117,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-4"
+              ],
+              "anchor": "ev116"
             },
             {
               "kind": "event",

@@ -64,3 +64,41 @@ characters/lu-min	52	lum-6	祈雨
 
 # ---- 路风（1 条；桑禾蓓/欧怡青两条感情线走页面级）----
 characters/lu-feng	2	lu-1	签约方法
+
+
+# ---- 姚子奇（6 条；度假事件 #79 / #80 经核对无 CG，已从正文删掉 CG 标记）----
+characters/yao-ziqi	2	yao-1	签约方法
+characters/yao-ziqi	6	yao-3	与林芬芬的感情（林芬芬在旗下时，最好不要触发出国事件）
+characters/yao-ziqi	10	yao-4	与林芬芬的感情（林芬芬在旗下时，最好不要触发出国事件）
+characters/yao-ziqi	19	yao-5	与林芬芬的感情（林芬芬在旗下时，最好不要触发出国事件）
+characters/yao-ziqi	45	yao-6	女鬼事件
+characters/yao-ziqi	84	yao-7	度假事件（需安装资料片“星光圆舞曲”，姚子莹在旗下也可触发）
+
+# ---- 天晴（6 条；拒绝 #14 / 与路敏的感情 #36 经核对无 CG，已从正文删掉 CG 标记）----
+characters/tian-qing	1	tian-1	签约方法
+characters/tian-qing	15	tian-3	拒绝
+characters/tian-qing	38	tian-4	与路敏的感情
+characters/tian-qing	42	tian-5	与路敏的感情
+characters/tian-qing	49	tian-6	与路敏的感情
+characters/tian-qing	53	tian-7	路边摊
+
+# ---- 关古威（6 条）----
+characters/guan-guwei	7	guan-1	签约方法
+characters/guan-guwei	38	guan-4	在巴黎
+characters/guan-guwei	43	guan-3	在巴黎
+characters/guan-guwei	60	guan-5	感情结果
+characters/guan-guwei	68	guan-6	音乐剧
+characters/guan-guwei	74	guan-7	音乐剧
+
+# ---- 陈奕夫（3 条；小夫告白成功的条件 #14 经核对无 CG，已从正文删掉 CG 标记）----
+characters/chen-yifu	1	chen-1	签约方法
+characters/chen-yifu	15	chen-4	小夫告白成功的条件
+characters/chen-yifu	52	chen-3	与贺总的事件
+
+# ---- 纪翔（6 条；受伤事件 #50 经核对无 CG，已从正文删掉 CG 标记）----
+characters/ji-xiang	1	ji-1	签约方法
+characters/ji-xiang	31	ji-7	酒吧聚会
+characters/ji-xiang	40	ji-8	同志电影
+characters/ji-xiang	49	ji-9	受伤事件
+characters/ji-xiang	51	ji-3	同志传闻
+characters/ji-xiang	61	ji-4	烟火
