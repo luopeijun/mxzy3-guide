@@ -81,6 +81,8 @@ async function main() {
 
   await send('Page.enable');
   await send('Runtime.enable');
+  // 后台标签页里 requestAnimationFrame 会被节流，锚点闪动（rAF 里加类名）就抓不到。
+  await send('Page.bringToFront');
   await send('Emulation.setDeviceMetricsOverride', {
     width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
   });
@@ -167,21 +169,24 @@ async function main() {
   const xiao = JSON.parse(xiaoState);
 
   // --- 5. 深链进 CG 页 + 大图里的「看攻略」 ---
-  await goto(`${HOST}/#/cg/xiao-3`);
+  // 闪动类名只挂 1.8s，所以导航后立刻在页面里轮询着抓；标签页已 bringToFront，
+  // rAF 不会被节流。
+  await send('Page.navigate', { url: `${HOST}/#/cg/xiao-3` });
+  await sleep(120);
   const deep = await evaluate(`
     (async () => {
-      // 闪动只有 1.8s，加载稍慢就会错过，所以在页面里轮询着抓。
       const t0 = Date.now();
       let flash = false;
-      while (Date.now() - t0 < 2500) {
+      while (Date.now() - t0 < 4000) {
         const el = document.getElementById('cg-card-xiao-3');
         if (el && el.classList.contains('anchor-flash')) { flash = true; break; }
-        await new Promise((r) => setTimeout(r, 80));
+        await new Promise((r) => setTimeout(r, 50));
       }
       const active = document.querySelector('[data-cg-group][aria-pressed="true"]');
       return JSON.stringify({
         group: active?.textContent?.trim() ?? '',
         cardFlash: flash,
+        cardPresent: !!document.getElementById('cg-card-xiao-3'),
         hash: location.hash,
       });
     })()
@@ -255,6 +260,11 @@ async function main() {
     ['characters/ou-yiqing', 'ou'],
     ['characters/lu-min', 'lum'],
     ['characters/lu-feng', 'lu'],
+    ['characters/yao-ziqi', 'yao'],
+    ['characters/tian-qing', 'tian'],
+    ['characters/guan-guwei', 'guan'],
+    ['characters/chen-yifu', 'chen'],
+    ['characters/ji-xiang', 'ji'],
   ]) {
     await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
     await sleep(1500);
@@ -263,6 +273,44 @@ async function main() {
     `);
   }
   console.log('page badges:', JSON.stringify(pageBadges));
+
+  // 这几位里「原文不该有 CG」的事件：正文不再出现 CG 字样，也没有可点徽标。
+  const noCgEvents = {};
+  for (const [node, key, labels] of [
+    ['characters/yao-ziqi', 'yao', ['79', '80']],
+    ['characters/tian-qing', 'tian', ['14', '36']],
+    ['characters/chen-yifu', 'chen', ['14']],
+    ['characters/ji-xiang', 'ji', ['50']],
+  ]) {
+    await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
+    await sleep(1500);
+    noCgEvents[key] = await evaluate(`
+      ${JSON.stringify(labels)}.map((label) => {
+        const el = document.querySelector('[data-event-label="' + label + '"]');
+        return el ? { label, cgText: /CG/.test(el.textContent), link: !!el.querySelector('[data-cg-link]') } : { label, missing: true };
+      })
+    `);
+  }
+  console.log('no-cg events:', JSON.stringify(noCgEvents));
+
+  // 反向：天晴 CG04（被路敏告白）应跳回「与路敏的感情」事件 38。
+  await evaluate(`location.hash = '#/cg/tian-4'; 'ok'`);
+  await sleep(1500);
+  const tianHref = await evaluate(`
+    document.querySelector('#cg-card-tian-4 [data-cg-guide-link]')?.getAttribute('href') ?? ''
+  `);
+  await evaluate(`document.querySelector('#cg-card-tian-4 [data-cg-guide-link]')?.click(); 'ok'`);
+  await sleep(1500);
+  const tianLanding = await evaluate(`
+    (() => {
+      const m = location.hash.match(/~(.+)$/);
+      const target = m ? document.getElementById(m[1]) : null;
+      // 卡片根节点自己带 data-event-label；子事件（38－1…）嵌在里面，不能 querySelector。
+      const lab = target?.getAttribute('data-event-label') ?? '';
+      return JSON.stringify({ hash: location.hash, label: lab });
+    })()
+  `);
+  console.log('tian-4 reverse:', tianHref, tianLanding);
 
   // 苏嫚君 CG05 圣诞布置第二年、第三年各出一次：反跳取第一次（事件 40）。
   await evaluate(`location.hash = '#/cg/su-5'; 'ok'`);
@@ -347,6 +395,24 @@ async function main() {
       '#/cg/lum-8', '#/cg/lum-9', '#/cg/lum-10', '#/cg/lum-6',
     ]),
     'lu-feng badges': sameSet(pageBadges.lu, ['#/cg/lu-1']),
+    'yao-ziqi badges': sameSet(pageBadges.yao, [
+      '#/cg/yao-1', '#/cg/yao-3', '#/cg/yao-4', '#/cg/yao-5', '#/cg/yao-6', '#/cg/yao-7',
+    ]),
+    'tian-qing badges': sameSet(pageBadges.tian, [
+      '#/cg/tian-1', '#/cg/tian-3', '#/cg/tian-4', '#/cg/tian-5', '#/cg/tian-6', '#/cg/tian-7',
+    ]),
+    'guan-guwei badges': sameSet(pageBadges.guan, [
+      '#/cg/guan-1', '#/cg/guan-4', '#/cg/guan-3', '#/cg/guan-5', '#/cg/guan-6', '#/cg/guan-7',
+    ]),
+    'chen-yifu badges': sameSet(pageBadges.chen, ['#/cg/chen-1', '#/cg/chen-4', '#/cg/chen-3']),
+    'ji-xiang badges': sameSet(pageBadges.ji, [
+      '#/cg/ji-1', '#/cg/ji-7', '#/cg/ji-8', '#/cg/ji-9', '#/cg/ji-3', '#/cg/ji-4',
+    ]),
+    'dropped cg marks have no badge': Object.values(noCgEvents)
+      .flat()
+      .every((e) => !e.missing && e.cgText === false && e.link === false),
+    'tian-4 reverse goes to event 38': tianHref.startsWith('#/guide/characters/tian-qing~ev')
+      && JSON.parse(tianLanding).label === '38',
     'su-5 reverse goes to first event': suHref.startsWith('#/guide/characters/su-manjun~ev') && su.label === '40',
     'ou-8 is event-level now': ou8Href.startsWith('#/guide/characters/ou-yiqing~ev'),
   };

@@ -39,11 +39,13 @@ class TestCgLinkMapping(unittest.TestCase):
 
         seen_cg: dict[str, str] = {}
         seen_anchor: set[tuple[str, str]] = set()
+        per_node: dict[str, int] = {}
         for category in data["categories"]:
             for node in _walk(category):
                 for block in node["blocks"]:
                     if not block.get("cgIds"):
                         continue
+                    per_node[node["id"]] = per_node.get(node["id"], 0) + 1
                     anchor = block.get("anchor")
                     self.assertTrue(anchor, f"{node['id']} #{block.get('label')} 有 cgIds 却没有 anchor")
                     # anchor 是「节点内块下标」，同一页里唯一就行：一次只渲染一个节点，
@@ -68,7 +70,28 @@ class TestCgLinkMapping(unittest.TestCase):
                         seen_cg.setdefault(cg_id, where)
 
         # 映射是逐块长出来的，至少要覆盖已经核对过的几组，防止某次重构把整段映射悄悄丢掉。
-        self.assertGreaterEqual(len(seen_cg), 34)
+        self.assertGreaterEqual(len(seen_cg), 62)
+
+        # 每个已经核对完的角色各锁一个下限：漏掉一整段（比如改 tsv 时误删）会立刻红。
+        expected = {
+            "characters/lin-fenfen": 7,
+            "characters/xiao-yili": 7,
+            "characters/sang-hebei": 3,
+            "characters/su-manjun": 7,
+            "characters/ou-yiqing": 3,
+            "characters/lu-min": 8,
+            "characters/lu-feng": 1,
+            "characters/yao-ziqi": 6,
+            "characters/tian-qing": 6,
+            "characters/guan-guwei": 6,
+            "characters/chen-yifu": 3,
+            "characters/ji-xiang": 6,
+        }
+        for node_id, least in expected.items():
+            self.assertGreaterEqual(
+                per_node.get(node_id, 0), least,
+                f"{node_id} 的 CG 映射只剩 {per_node.get(node_id, 0)} 条，少于核对过的 {least} 条",
+            )
 
     def test_unknown_event_fails_loudly(self):
         categories = [{
