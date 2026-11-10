@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { readCg, writeCg, CG_CHANGED_EVENT } from '../../lib/cg';
-import { buildCgGuideLinks, cgGuideHref, cgGuideTitle } from '../../lib/cgLinks';
+import { buildCgGuideLinks, cgGuideHref, cgGuideTitle, LUOUSANG_PREFIX } from '../../lib/cgLinks';
 import type { CgGuideLink } from '../../lib/cgLinks';
+import { readCgOrigin } from '../../lib/cgOrigin';
 import { cgGroupId, cgItemId, rememberCgGroup, writeCgGroupHash } from '../../hooks/useHashSelection';
 import { useGuideContext } from '../../hooks/useGuideContext';
 import type { CgData, CgItem } from '../../types/cg';
@@ -113,19 +114,27 @@ export default function CgApp({ data }: Props) {
   // 攻略 → CG 的落点索引（事件块的 cgIds 是数据来源，这里只是反查表）。
   const guideData = useGuideContext();
   const guideLinks = useMemo(
-    () => (guideData ? buildCgGuideLinks(guideData) : new Map<string, CgGuideLink>()),
+    () => (guideData ? buildCgGuideLinks(guideData) : new Map<string, CgGuideLink[]>()),
     [guideData],
   );
 
   /**
    * 先认事件级映射（`cgIds` 反查），再退到页面级落点（`cg.json` 的 `guide`）。
-   * 路欧桑那批感情 CG 属于后者：同一段剧情写了五个分支，锚哪一条都不对，整页落点；
-   * 美丽之星写真集也走后者，但落点唯一（同一个事件），所以带上 `anchor`。
+   * 一张 CG 有好几个事件都成立时（路欧桑五个分支页各写了一遍同一段剧情），
+   * 优先回到刚才点进来的那一页；直接从深链进来则先挑「路欧桑剧情整理」的落点
+   * （三人恋情只在艺人页浏览，跳转统一走整理页），都没有才用第一个。
+   * 美丽之星写真集走页面级，但落点唯一（同一个事件），所以带上 `anchor`。
    */
   const linkFor = useCallback(
     (item: CgItem): CgGuideLink | undefined => {
-      const eventLink = guideLinks.get(item.id);
-      if (eventLink) return eventLink;
+      const candidates = guideLinks.get(item.id);
+      if (candidates?.length) {
+        const origin = readCgOrigin(item.id);
+        const home = origin
+          && candidates.find((c) => c.nodeId === origin.nodeId && c.anchor === origin.anchor);
+        if (home) return home;
+        return candidates.find((c) => c.nodeId.startsWith(LUOUSANG_PREFIX)) ?? candidates[0];
+      }
       return item.guide
         ? { nodeId: item.guide.nodeId, nodeTitle: item.guide.title, anchor: item.guide.anchor }
         : undefined;

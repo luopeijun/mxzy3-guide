@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { ContentBlock } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
+import { rememberCgOrigin } from '../lib/cgOrigin';
 import DataTable from './DataTable';
 import HighlightText from './HighlightText';
 import OptionLine from './OptionLine';
@@ -57,10 +58,12 @@ function eventCardClasses(cg: boolean): string {
 
 /** 事件卡首行：编号 pill + 类型 tag + CG 徽标 + 正文。
  *  有映射的 CG 徽标直接是去图鉴的链接（`#/cg/<id>`）；没映射的仍是不带链接的标记，
- *  因为那张图可能不是这个事件出的，不能给人一条死路。 */
+ *  因为那张图可能不是这个事件出的，不能给人一条死路。
+ *  点徽标时顺手记下来源（哪个节点、哪条事件），图鉴返回时回到同一条。 */
 function EventHead({ head }: { head: IndexedBlock }) {
   const cg = head.cg;
-  const cgHref = head.cgIds?.length ? `#/cg/${head.cgIds[0]}` : undefined;
+  const firstCg = head.cgIds?.[0];
+  const cgHref = firstCg ? `#/cg/${firstCg}` : undefined;
   const badge = 'mr-1.5 inline-flex items-center gap-0.5 rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-gold align-middle';
   return (
     <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
@@ -75,6 +78,7 @@ function EventHead({ head }: { head: IndexedBlock }) {
           <a
             data-cg-link
             href={cgHref}
+            onClick={() => rememberCgOrigin(firstCg!, eventDomId(head))}
             title="在图鉴里看这张 CG"
             className={`${badge} transition-colors hover:border-gold hover:bg-gold hover:text-white`}
           >
