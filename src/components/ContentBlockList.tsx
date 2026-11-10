@@ -55,9 +55,13 @@ function eventCardClasses(cg: boolean): string {
   return `rounded-ui-sm border px-3 py-2.5 ${cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface'}`;
 }
 
-/** 事件卡首行：编号 pill + 类型 tag + CG 徽标 + 正文。 */
+/** 事件卡首行：编号 pill + 类型 tag + CG 徽标 + 正文。
+ *  有映射的 CG 徽标直接是去图鉴的链接（`#/cg/<id>`）；没映射的仍是不带链接的标记，
+ *  因为那张图可能不是这个事件出的，不能给人一条死路。 */
 function EventHead({ head }: { head: IndexedBlock }) {
   const cg = head.cg;
+  const cgHref = head.cgIds?.length ? `#/cg/${head.cgIds[0]}` : undefined;
+  const badge = 'mr-1.5 inline-flex items-center gap-0.5 rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-gold align-middle';
   return (
     <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
       {head.label && (
@@ -67,9 +71,18 @@ function EventHead({ head }: { head: IndexedBlock }) {
       )}
       <span className="min-w-0 flex-1 break-words">
         {head.tag && <TypeTag label={head.tag} />}
-        {cg && (
-          <span className="mr-1.5 inline-flex items-center rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-gold align-middle">CG</span>
-        )}
+        {cg && (cgHref ? (
+          <a
+            data-cg-link
+            href={cgHref}
+            title="在图鉴里看这张 CG"
+            className={`${badge} transition-colors hover:border-gold hover:bg-gold hover:text-white`}
+          >
+            CG<span aria-hidden className="text-[0.9em] leading-none">›</span>
+          </a>
+        ) : (
+          <span className={badge}>CG</span>
+        ))}
         <HighlightText text={head.text} />
       </span>
     </div>
@@ -80,7 +93,11 @@ function EventHead({ head }: { head: IndexedBlock }) {
 function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
   const [head, ...rest] = blocks;
   return (
-    <div className={`mb-3 ${eventCardClasses(!!head.cg)}`}>
+    <div
+      id={head.anchor}
+      data-event-label={head.label}
+      className={`mb-3 scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
+    >
       <EventHead head={head} />
       {rest.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">
@@ -95,7 +112,11 @@ function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
 function EventNode({ node }: { node: EventNode }) {
   const [head, ...rest] = node.group.blocks;
   return (
-    <div className={eventCardClasses(!!head.cg)}>
+    <div
+      id={head.anchor}
+      data-event-label={head.label}
+      className={`scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
+    >
       <EventHead head={head} />
       {rest.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">

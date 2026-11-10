@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { readCg, writeCg, CG_CHANGED_EVENT } from '../../lib/cg';
+import { buildCgGuideLinks, cgGuideHref } from '../../lib/cgLinks';
+import type { CgGuideLink } from '../../lib/cgLinks';
+import { cgItemId } from '../../hooks/useHashSelection';
+import { useGuideContext } from '../../hooks/useGuideContext';
 import type { CgData } from '../../types/cg';
 import CgCard from './CgCard';
 import CgLightbox from './CgLightbox';
@@ -9,6 +13,27 @@ import SaveArchivePanel from '../tracker/SaveArchivePanel';
 const PAGE_SIZE = 60;
 /** 撤销条停留时长：1.5s 内没点就自己收起，免得一直悬在底部挡住最后一行卡片。 */
 const UNDO_TOAST_MS = 1500;
+const FLASH_CLASS = 'anchor-flash';
+
+/** 深链落地时把目标卡片滚到视野中央并闪一下，跟攻略里的锚点跳同一套观感。 */
+function flashCard(id: string) {
+  let tries = 0;
+  let frame = 0;
+  const tick = () => {
+    const el = document.getElementById(`cg-card-${id}`);
+    if (el) {
+      el.scrollIntoView({ block: 'center' });
+      el.classList.remove(FLASH_CLASS);
+      void el.offsetWidth;
+      el.classList.add(FLASH_CLASS);
+      window.setTimeout(() => el.classList.remove(FLASH_CLASS), 1800);
+      return;
+    }
+    if (tries++ < 60) frame = requestAnimationFrame(tick);
+  };
+  frame = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(frame);
+}
 
 interface Props {
   data: CgData;
@@ -80,7 +105,16 @@ export default function CgApp({ data }: Props) {
   const [clearOpen, setClearOpen] = useState(false);
   /** 清空前的快照：误点一次不用先导出也能退回来，仅存活在本次页面会话里。 */
   const [clearedSnapshot, setClearedSnapshot] = useState<Set<string> | null>(null);
+  /** 攻略里点 CG 徽标进来的 `#/cg/<id>`：切到对应分组、滚到那张卡并闪一下。 */
+  const [focusId, setFocusId] = useState(() => cgItemId());
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  // 攻略 → CG 的落点索引（事件块的 cgIds 是数据来源，这里只是反查表）。
+  const guideData = useGuideContext();
+  const guideLinks = useMemo(
+    () => (guideData ? buildCgGuideLinks(guideData) : new Map<string, CgGuideLink>()),
+    [guideData],
+  );
 
   // A save import writes the CG collection straight to localStorage and fires
   // this event, so re-read instead of requiring a reload.
@@ -152,6 +186,23 @@ export default function CgApp({ data }: Props) {
   useEffect(() => {
     setLimit(PAGE_SIZE);
   }, [groupId, onlyMissing]);
+
+  // 深链落点：切到这张 CG 所在分组、关掉「只看未收集」，再滚到卡片并闪一下。
+  useEffect(() => {
+    if (!focusId) return;
+    const item = data.items.find((entry) => entry.id === focusId);
+    if (!item) return;
+    setGroupId(item.groupId);
+    setOnlyMissing(false);
+    return flashCard(item.id);
+  }, [focusId, data.items]);
+
+  // 从攻略点另一张 CG 回来时组件不会重新挂载，靠 hashchange 更新落点。
+  useEffect(() => {
+    const onChange = () => setFocusId(cgItemId());
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
 
   const groupById = useMemo(
     () => new Map(data.groups.map((group) => [group.id, group])),
@@ -338,17 +389,22 @@ export default function CgApp({ data }: Props) {
                   data-cg-count={visible.length}
                   className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr))]"
                 >
-                  {visible.map((item) => (
-                    <li key={item.id}>
-                      <CgCard
-                        item={item}
-                        collected={collected.has(item.id)}
-                        group={groupId === 'all' ? groupById.get(item.groupId) : undefined}
-                        onToggle={() => toggle(item.id)}
-                        onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
-                      />
-                    </li>
-                  ))}
+                  {visible.map((item) => {
+                    const link = guideLinks.get(item.id);
+                    return (
+                      <li key={item.id}>
+                        <CgCard
+                          item={item}
+                          collected={collected.has(item.id)}
+                          group={groupId === 'all' ? groupById.get(item.groupId) : undefined}
+                          guideHref={link ? cgGuideHref(link) : undefined}
+                          guideTitle={link ? `${link.nodeTitle} · 对应攻略事件` : undefined}
+                          onToggle={() => toggle(item.id)}
+                          onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
+                        />
+                      </li>
+                    );
+                  })}
                 </ul>
                 {visible.length < filtered.length && (
                   <div className="mt-4 text-center">
@@ -377,6 +433,9 @@ export default function CgApp({ data }: Props) {
           total={lightbox.ids.length}
           hasPrev={lightboxIndex > 0}
           hasNext={lightboxIndex >= 0 && lightboxIndex < lightbox.ids.length - 1}
+          guideHref={
+            guideLinks.has(lightboxItem.id) ? cgGuideHref(guideLinks.get(lightboxItem.id)!) : undefined
+          }
           onPrev={() => stepLightbox(-1)}
           onNext={() => stepLightbox(1)}
           onToggle={() => toggle(lightboxItem.id)}

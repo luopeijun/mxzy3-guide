@@ -52,6 +52,8 @@ DEFAULT_LUOUSANG_OUYIQING = SOURCES / "luousang-only-ouyiqing.txt"
 DEFAULT_LUOUSANG_LUFENG = SOURCES / "luousang-only-lufeng.txt"
 DEFAULT_LUOUSANG_LUFENG_SANGHEBEI = SOURCES / "luousang-lufeng-sanghebei.txt"
 DEFAULT_LUOUSANG_LUFENG_OUYIQING = SOURCES / "luousang-lufeng-ouyiqing.txt"
+# 攻略事件 → CG 的手写映射（跑完 build 后写到块上的 cgIds / anchor）。
+DEFAULT_CG_LINKS = SOURCES / "cg-links.tsv"
 OUTPUT = ROOT / "public" / "data" / "guide.json"
 # 角色头像 / 封面按约定命名放在 public/images/characters/：`<slug>-logo.*` 是侧栏
 # 树行的头像，`<slug>-cover.*` 是正文页顶部的封面。文件存在才写进节点字段。
@@ -2806,7 +2808,73 @@ def build(
             "sourceParagraphs": len(rows) - sections.body_start,
         },
     }
+    # 攻略事件 ⇄ CG 的映射最后落到块上（手写表，缺失就跳过），
+    # 放在 build 里而不是 main 里，单测才能拿同一份结果和提交的 JSON 对比。
+    apply_cg_links(categories, DEFAULT_CG_LINKS)
     return {"meta": meta, "categories": categories}
+
+
+def apply_cg_links(categories: list[dict], path: Path) -> int:
+    """把 ``sources/cg-links.tsv`` 的「攻略事件 → CG」映射落到块上。
+
+    每行 ``nodeId<TAB>事件号<TAB>cgIds<TAB>章节?``。命中的块拿到 ``cgIds``（前端据此
+    渲染可点的 CG 徽标）和 ``anchor``（``ev<块下标>``，CG 页反跳时用它定位）。
+    章节可选，用于节点内重号（桑禾蓓跨「情况1/3/5」）；给了就要求精确匹配。
+
+    任何一行对不上（节点不存在 / 事件号+章节没命中 / 命中多条）都直接报错，
+    宁可让生成失败，也不要静默生成一堆断链。
+    """
+    if not path.exists():
+        return 0
+
+    rows: list[tuple[str, str, list[str], str]] = []
+    for number, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 3:
+            raise ValueError(f"cg-links.tsv:{number}: expected >=3 columns, got {raw!r}")
+        node_id, label, codes = (part.strip() for part in parts[:3])
+        chapter = parts[3].strip() if len(parts) > 3 else ""
+        ids = [code.strip() for code in codes.split(",") if code.strip()]
+        if not node_id or not label or not ids:
+            raise ValueError(f"cg-links.tsv:{number}: empty field in {raw!r}")
+        rows.append((node_id, label, ids, chapter))
+
+    nodes: dict[str, dict] = {}
+
+    def walk(node: dict) -> None:
+        nodes[node["id"]] = node
+        for child in node["children"]:
+            walk(child)
+
+    for category in categories:
+        walk(category)
+
+    for node_id, label, ids, chapter in rows:
+        node = nodes.get(node_id)
+        if node is None:
+            raise ValueError(f"cg-links: unknown node {node_id}")
+        chapter_now = ""
+        hits: list[tuple[int, dict]] = []
+        for index, block in enumerate(node["blocks"]):
+            if block["kind"] in ("section", "heading"):
+                chapter_now = block["text"]
+            if block["kind"] != "event" or block.get("label") != label:
+                continue
+            if chapter and chapter_now != chapter:
+                continue
+            hits.append((index, block))
+        if not hits:
+            where = f"{node_id} #{label}" + (f" @ {chapter}" if chapter else "")
+            raise ValueError(f"cg-links: no such event {where}")
+        if len(hits) > 1:
+            raise ValueError(f"cg-links: ambiguous {node_id} #{label}, add the chapter column")
+        index, block = hits[0]
+        block["cgIds"] = ids
+        block["anchor"] = f"ev{index}"
+    return len(rows)
 
 
 def main() -> None:
@@ -2921,6 +2989,15 @@ def main() -> None:
         encoding="utf-8",
     )
     print(f"written: {OUTPUT}")
+
+    def count_links(nodes: list[dict]) -> int:
+        return sum(
+            sum(1 for block in node["blocks"] if block.get("cgIds"))
+            + count_links(node["children"])
+            for node in nodes
+        )
+
+    print(f"cg links: {count_links(data['categories'])} events")
     print(json.dumps(data["meta"]["stats"], ensure_ascii=False))
 
 

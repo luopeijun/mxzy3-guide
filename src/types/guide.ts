@@ -61,6 +61,11 @@ export interface ContentBlock {
   special?: boolean;
   /** Marks an `event` that yields a CG, rendered with a brand highlight + 标签. */
   cg?: boolean;
+  /** CG 图鉴里的 item id（`lin-1` 这种）。只有「事件 ⇄ CG 一一对应」才有，
+   *  映射写在 `sources/cg-links.tsv`，由 `extract_guide.py` 落到块上。 */
+  cgIds?: string[];
+  /** 事件块的锚点 id（`ev<块下标>`），CG 图鉴反跳时用 `#/guide/<nodeId>~<anchor>` 定位。 */
+  anchor?: string;
   /** Answer of a `qa` block, shown under the question. */
   answer?: string;
   /** Labelled lines of an `item` block (name in `text`). */

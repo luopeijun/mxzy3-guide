@@ -26,6 +26,9 @@ export default function AppShell({
   const [wide, setWide] = useState(estimateWide);
 
   useEffect(() => {
+    // 带锚点进来（CG 图鉴点「攻略」反跳）时不要置顶：目标位置由 useAnchorJump
+    // 负责滚过去，这里再 scrollTo(0) 会把刚定位好的事件顶出视野。
+    if (window.location.hash.includes('~')) return;
     mainRef.current?.scrollTo({ top: 0 });
   }, [scrollKey]);
 

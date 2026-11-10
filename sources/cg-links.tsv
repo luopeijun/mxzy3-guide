@@ -1,0 +1,32 @@
+﻿# 攻略事件 → CG 映射（由 scripts/extract_guide.py 读取，写入块级 cgIds + anchor）
+#
+# 每行 4 列，TAB 分隔：
+#   nodeId   事件号 label   目标 CG（多个用逗号）   章节（可选，同号事件消歧用）
+#
+# 约定：
+#   * 只有「事件与 CG 一一对应」才登记，双向跳转都成立；
+#     一个事件对应多张 CG（如美丽之星写真集，18 个角色各一张）不写这里，
+#     那种只做 CG → 事件单向，映射见前端 cgLinks 的 shared 表。
+#   * 章节列留空表示节点内该事件号唯一；桑禾蓓那种跨「情况1/3/5」重号的必须写。
+#   * 写错（节点/事件号/章节对不上、或有多条命中）会让 extract_guide.py 直接报错，
+#     不静默断链。
+#
+# 数据来源：outputs/cg-event-mapping.md 里填好的「我的回复」列。
+
+# ---- 林芬芬（7 条）----
+characters/lin-fenfen	2	lin-1	加入B
+characters/lin-fenfen	1	lin-3	与SD相关事件
+characters/lin-fenfen	21	lin-4	与SD相关事件
+characters/lin-fenfen	43	lin-6	与姚子奇相关事件（要触发最好不要引发出国事件）
+characters/lin-fenfen	60	lin-5	和丹尼斯复合
+characters/lin-fenfen	70－1	lin-8	与主角的感情结局达成条件
+characters/lin-fenfen	71	lin-7	与主角的感情结局达成条件
+
+# ---- 萧依莉（7 条；泪洒片场 #35 / #39 经核对无 CG，已从正文删掉 CG 标记）----
+characters/xiao-yili	1	xiao-1	加入B
+characters/xiao-yili	6	xiao-4	第一轮事件
+characters/xiao-yili	18	xiao-5	第一轮事件
+characters/xiao-yili	45	xiao-3	出国开刀
+characters/xiao-yili	64	xiao-8	康复归来
+characters/xiao-yili	67	xiao-7	与主角达成感情结局的条件
+characters/xiao-yili	69	xiao-9	与主角达成感情结局的条件

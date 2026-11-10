@@ -20,9 +20,17 @@ export function isNoticesRoute(): boolean {
   return readHash() === 'notices';
 }
 
-/** True when the URL points at the CG 图鉴 tab. */
+/** True when the URL points at the CG 图鉴 tab, including the deep link
+ *  `#/cg/<cgId>` that the guide's CG badge produces. */
 export function isCgRoute(): boolean {
-  return readHash() === 'cg';
+  const h = readHash();
+  return h === 'cg' || h.startsWith('cg/');
+}
+
+/** The CG id in `#/cg/<cgId>`, or '' when the tab was opened without one. */
+export function cgItemId(): string {
+  const h = readHash();
+  return h.startsWith('cg/') ? h.slice('cg/'.length) : '';
 }
 
 /** The guide node id implied by the current hash, or '' on a standalone view or
@@ -30,7 +38,8 @@ export function isCgRoute(): boolean {
  *  legacy bookmarks that lack it, so old deep links keep working. */
 export function guideNodeId(): string {
   const h = readHash();
-  if (h === 'tracker' || h === 'notices' || h === 'cg') return '';
+  if (h === 'tracker' || h === 'notices') return '';
+  if (isCgRoute()) return '';
   if (h.startsWith('guide/')) return h.slice('guide/'.length);
   return h; // legacy: node id without the `guide/` prefix
 }

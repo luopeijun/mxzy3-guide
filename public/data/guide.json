@@ -7827,7 +7827,11 @@
               "label": "2",
               "tag": "场景",
               "group": 16,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lin-1"
+              ],
+              "anchor": "ev15"
             },
             {
               "kind": "event",
@@ -7875,7 +7879,11 @@
               "label": "1",
               "tag": "探班",
               "group": 23,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lin-3"
+              ],
+              "anchor": "ev22"
             },
             {
               "kind": "event",
@@ -8056,7 +8064,11 @@
               "label": "21",
               "tag": "跟随",
               "group": 46,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lin-4"
+              ],
+              "anchor": "ev45"
             },
             {
               "kind": "event",
@@ -8289,7 +8301,11 @@
               "label": "43",
               "tag": "场景",
               "group": 76,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lin-6"
+              ],
+              "anchor": "ev75"
             },
             {
               "kind": "event",
@@ -8484,7 +8500,11 @@
               "label": "60",
               "tag": "场景",
               "group": 101,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lin-5"
+              ],
+              "anchor": "ev100"
             },
             {
               "kind": "event",
@@ -8611,7 +8631,11 @@
               "label": "70－1",
               "tag": "自动",
               "group": 118,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lin-8"
+              ],
+              "anchor": "ev117"
             },
             {
               "kind": "event",
@@ -8627,7 +8651,11 @@
               "label": "71",
               "tag": "自动",
               "group": 120,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "lin-7"
+              ],
+              "anchor": "ev119"
             },
             {
               "kind": "event",
@@ -8792,7 +8820,11 @@
               "label": "1",
               "tag": "场景",
               "group": 20,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xiao-1"
+              ],
+              "anchor": "ev19"
             },
             {
               "kind": "event",
@@ -8880,7 +8912,11 @@
               "label": "6",
               "tag": "场景",
               "group": 32,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xiao-4"
+              ],
+              "anchor": "ev31"
             },
             {
               "kind": "event",
@@ -9000,7 +9036,11 @@
               "label": "18",
               "tag": "场景",
               "group": 47,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xiao-5"
+              ],
+              "anchor": "ev46"
             },
             {
               "kind": "event",
@@ -9174,11 +9214,11 @@
             },
             {
               "kind": "event",
-              "text": "第一年6月后，第二年1月前，依莉有接戏剧通告时，前往工作场所，主角看到依莉很不舒服的样子（CG），选择“好，我不告诉别人就是了”，友好度上升。",
+              "text": "第一年6月后，第二年1月前，依莉有接戏剧通告时，前往工作场所，主角看到依莉很不舒服的样子，选择“好，我不告诉别人就是了”，友好度上升。",
               "label": "35",
               "tag": "探班",
               "group": 70,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -9206,11 +9246,11 @@
             },
             {
               "kind": "event",
-              "text": "依莉拍摄最后一天通告时，看到依莉在排演心脏病发作（CG），出现选项，选择“抱歉没办法帮你争取更多权益”，友好度上升。",
+              "text": "依莉拍摄最后一天通告时，看到依莉在排演心脏病发作，出现选项，选择“抱歉没办法帮你争取更多权益”，友好度上升。",
               "label": "39",
               "tag": "探班",
               "group": 74,
-              "cg": true
+              "cg": false
             },
             {
               "kind": "event",
@@ -9264,7 +9304,11 @@
               "label": "45",
               "tag": "探班",
               "group": 81,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xiao-3"
+              ],
+              "anchor": "ev80"
             },
             {
               "kind": "event",
@@ -9462,7 +9506,11 @@
               "label": "64",
               "tag": "探班",
               "group": 106,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xiao-8"
+              ],
+              "anchor": "ev105"
             },
             {
               "kind": "event",
@@ -9518,7 +9566,11 @@
               "label": "67",
               "tag": "场景",
               "group": 114,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xiao-7"
+              ],
+              "anchor": "ev113"
             },
             {
               "kind": "note",
@@ -9539,7 +9591,11 @@
               "label": "69",
               "tag": "跟随",
               "group": 117,
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "xiao-9"
+              ],
+              "anchor": "ev116"
             },
             {
               "kind": "event",

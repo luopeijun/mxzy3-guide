@@ -6,6 +6,9 @@ interface Props {
   collected: boolean;
   /** 「全部」页各人物的 CG 混在一起，用一张头像徽标标明归属；分组页不传。 */
   group?: { name: string; avatar?: string };
+  /** 有对应攻略事件时给出深链（`#/guide/<nodeId>~<anchor>`），否则不渲染入口。 */
+  guideHref?: string;
+  guideTitle?: string;
   onToggle: () => void;
   onOpen: (trigger: HTMLButtonElement) => void;
 }
@@ -15,14 +18,15 @@ interface Props {
  *  图片本身是「查看大图」的按钮，右上角圆勾只管收集状态，两者互不干扰：
  *  没收集的图也能打开看全彩大图，看大图不会偷偷改记录。
  *  未收集只用灰度区分，不再盖面纱或问号，整面墙保持干净。 */
-export default function CgCard({ item, collected, group, onToggle, onOpen }: Props) {
+export default function CgCard({ item, collected, group, guideHref, guideTitle, onToggle, onOpen }: Props) {
   return (
     <article
+      id={`cg-card-${item.id}`}
       data-cg-card
       data-cg-id={item.id}
       data-cg-collected={collected ? 'true' : 'false'}
       className={cn(
-        'overflow-hidden rounded-ui-md border bg-surface transition-all duration-200 hover:border-brand-line',
+        'scroll-mt-[88px] overflow-hidden rounded-ui-md border bg-surface transition-all duration-200 hover:border-brand-line',
         collected ? 'border-brand-line shadow-soft' : 'border-line',
       )}
     >
@@ -69,7 +73,8 @@ export default function CgCard({ item, collected, group, onToggle, onOpen }: Pro
           {collected ? '✓' : ''}
         </button>
       </div>
-      <div className="flex min-w-0 items-center gap-1.5 px-2.5 py-2.5">
+      {/* 固定行高：有「攻略」入口的卡片不能被这一行撑高，否则整面墙高低不齐。 */}
+      <div className="flex h-10 min-w-0 items-center gap-1.5 px-2.5">
         {group && (
           <span
             data-cg-group-tag
@@ -98,6 +103,16 @@ export default function CgCard({ item, collected, group, onToggle, onOpen }: Pro
         )}
         <span className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
         <span className="truncate text-ui-2xs text-ink" title={item.name}>{item.name}</span>
+        {guideHref && (
+          <a
+            data-cg-guide-link
+            href={guideHref}
+            title={guideTitle ?? '查看对应攻略事件'}
+            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+          >
+            攻略<span aria-hidden className="ml-0.5">›</span>
+          </a>
+        )}
       </div>
     </article>
   );

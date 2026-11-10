@@ -11,6 +11,8 @@ interface Props {
   total: number;
   hasPrev: boolean;
   hasNext: boolean;
+  /** 有对应攻略事件时的深链；没有就不渲染这个入口。 */
+  guideHref?: string;
   onPrev: () => void;
   onNext: () => void;
   onToggle: () => void;
@@ -22,7 +24,7 @@ interface Props {
  *  收集按钮自己立刻变「已收集」，因为点亮动画发生在被遮住的网格上，看不见。 */
 export default function CgLightbox({
   item, groupName, collected, position, total,
-  hasPrev, hasNext, onPrev, onNext, onToggle, onClose,
+  hasPrev, hasNext, guideHref, onPrev, onNext, onToggle, onClose,
 }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -133,20 +135,31 @@ export default function CgLightbox({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            data-cg-lightbox-toggle
-            aria-pressed={collected}
-            onClick={onToggle}
-            className={cn(
-              'shrink-0 rounded-full border px-4 py-1.5 text-ui-2xs font-semibold transition-colors',
-              collected
-                ? 'border-brand-line bg-brand text-white'
-                : 'border-white/40 text-white hover:bg-white/15',
+          <div className="flex shrink-0 items-center gap-2">
+            {guideHref && (
+              <a
+                data-cg-lightbox-guide
+                href={guideHref}
+                className="rounded-full border border-white/40 px-4 py-1.5 text-ui-2xs font-semibold text-white transition-colors hover:bg-white/15"
+              >
+                看攻略 ↗
+              </a>
             )}
-          >
-            {collected ? '✓ 已收集' : '标记已收集'}
-          </button>
+            <button
+              type="button"
+              data-cg-lightbox-toggle
+              aria-pressed={collected}
+              onClick={onToggle}
+              className={cn(
+                'shrink-0 rounded-full border px-4 py-1.5 text-ui-2xs font-semibold transition-colors',
+                collected
+                  ? 'border-brand-line bg-brand text-white'
+                  : 'border-white/40 text-white hover:bg-white/15',
+              )}
+            >
+              {collected ? '✓ 已收集' : '标记已收集'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
