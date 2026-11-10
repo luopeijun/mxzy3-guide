@@ -431,8 +431,8 @@
       "name": "美丽之星",
       "condition": "芬芬完成美丽之星任务（详情看美丽之星任务攻略）",
       "image": "images/cg/lin-13.webp",
-      "width": 1100,
-      "height": 842
+      "width": 800,
+      "height": 600
     },
     {
       "id": "xiao-1",
