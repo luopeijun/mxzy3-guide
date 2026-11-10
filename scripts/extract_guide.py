@@ -2713,7 +2713,7 @@ def build(
         make_node(
             "other-events/secretary", "秘书莉铃事件",
             source_title="秘书莉铃事件.txt",
-            blocks=build_event_like_blocks(secretary_events, page_title="莉玲相关", mark_cg=True),
+            blocks=build_event_like_blocks(secretary_events, page_title="莉铃相关", mark_cg=True),
         ),
         make_node(
             "other-events/manyang", "蛮羊事件",
