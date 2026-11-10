@@ -4,6 +4,8 @@ import type { CgItem } from '../../types/cg';
 interface Props {
   item: CgItem;
   collected: boolean;
+  /** 「全部」页各人物的 CG 混在一起，用一张头像徽标标明归属；分组页不传。 */
+  group?: { name: string; avatar?: string };
   onToggle: () => void;
   onOpen: (trigger: HTMLButtonElement) => void;
 }
@@ -13,7 +15,7 @@ interface Props {
  *  图片本身是「查看大图」的按钮，右上角圆勾只管收集状态，两者互不干扰：
  *  没收集的图也能打开看全彩大图，看大图不会偷偷改记录。
  *  未收集只用灰度区分，不再盖面纱或问号，整面墙保持干净。 */
-export default function CgCard({ item, collected, onToggle, onOpen }: Props) {
+export default function CgCard({ item, collected, group, onToggle, onOpen }: Props) {
   return (
     <article
       data-cg-card
@@ -50,6 +52,32 @@ export default function CgCard({ item, collected, onToggle, onOpen }: Props) {
             </span>
           )}
         </button>
+        {group && (
+          <span
+            data-cg-group-tag
+            data-cg-group-name={group.name}
+            className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[calc(100%-3.25rem)] items-center gap-1 rounded-full border border-line bg-surface/90 py-0.5 pl-0.5 pr-2 shadow-soft"
+          >
+            {group.avatar ? (
+              <img
+                src={`${import.meta.env.BASE_URL}${group.avatar}`}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                className="h-5 w-5 shrink-0 rounded-full border border-line-strong object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
+              >
+                {group.name.slice(0, 1)}
+              </span>
+            )}
+            <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
+          </span>
+        )}
         <button
           type="button"
           data-cg-toggle

@@ -4,7 +4,7 @@ export interface CgGroup {
   name: string;
   /** 「主线」即玩家扮演的经纪人本人的 CG，与艺人分组并列。 */
   kind: 'agent' | 'artist';
-  /** 攻略侧栏同一张头像；经纪人没有头像。 */
+  /** 攻略侧栏同一张头像；19 组（含经纪人）都有。 */
   avatar?: string;
   /** 对应攻略角色节点 id，留给以后「查看攻略」跳转。 */
   guideId?: string;

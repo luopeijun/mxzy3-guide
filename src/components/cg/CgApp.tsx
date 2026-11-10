@@ -83,6 +83,11 @@ export default function CgApp({ data }: Props) {
     setLimit(PAGE_SIZE);
   }, [groupId, onlyMissing]);
 
+  const groupById = useMemo(
+    () => new Map(data.groups.map((group) => [group.id, group])),
+    [data.groups],
+  );
+
   const groupCounts = useMemo(() => {
     const counts = new Map<string, { total: number; done: number }>();
     for (const item of data.items) {
@@ -243,6 +248,7 @@ export default function CgApp({ data }: Props) {
                       <CgCard
                         item={item}
                         collected={collected.has(item.id)}
+                        group={groupId === 'all' ? groupById.get(item.groupId) : undefined}
                         onToggle={() => toggle(item.id)}
                         onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
                       />
