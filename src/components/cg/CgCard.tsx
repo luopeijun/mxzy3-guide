@@ -7,9 +7,12 @@ export type CgCardSize = 'sm' | 'md' | 'lg';
 interface Props {
   item: CgItem;
   collected: boolean;
-  /** 小档（300px 列宽）整体更紧凑：字号与信息条都缩小、名称单行；中/大档 14px、信息条 56px。 */
+  /** 尺寸档位决定元素落点：
+   *  - 大档（520px）：底栏一行放下 收集 + 经纪人 + 序号 + 名称 + 攻略，图片干净；
+   *  - 中档（380px）：底栏放 收集 + 序号 + 名称 + 攻略，经纪人浮到图片左上角（一行放不下）；
+   *  - 小档（300px）：序号+经纪人都浮到图片（左上经纪人 / 右上序号），底栏只留 收集 + 名称 + 攻略，名称单行。 */
   size?: CgCardSize;
-  /** 「全部」页各人物的 CG 混在一起，用左上角头像徽标标明归属；分组页不传。 */
+  /** 「全部」页各人物的 CG 混在一起，用归属标签标明人物；分组页不传。 */
   group?: { name: string; avatar?: string };
   /** 有对应攻略事件时给出深链（`#/guide/<nodeId>~<anchor>`），否则不渲染入口。 */
   guideHref?: string;
@@ -18,16 +21,45 @@ interface Props {
   onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡：图片占主体，图片浮层（纯展示、不挡点击）左上=归属标签、右上=CG 序号，
- *  对角分布互不抢位；底部一行只放收集芯片 + 名称 + 攻略入口，同一尺寸下所有卡片等高。
- *  CG 序号移到图片上后，底栏名称拿到最多横向空间，单行即可完整显示（不再换行）。
- *  中/大档（≥380px 列宽）字号 14px、信息条 56px；小档（300px 列宽）整体缩小：
- *  字号 12px、信息条 44px、收集按钮更小，名称仍是单行（最长 12 字也放得下）。
- *  图片本身是「查看大图」按钮，整块可点，图上徽标是 pointer-events-none 不误触。 */
+/** 一张 CG 卡：图片占主体，底部一行收集 + 名称 + 攻略（同一尺寸下所有卡片等高）。
+ *  序号 / 归属标签按尺寸档位在「图片浮层」与「底栏」之间挪动，详见 Props.size 说明。
+ *  图片本身是「查看大图」按钮，整块可点，图上浮层是 pointer-events-none 不误触。 */
 export default function CgCard({ item, collected, size = 'md', group, guideHref, guideTitle, onToggle, onOpen }: Props) {
   const isSm = size === 'sm';
+  const isLg = size === 'lg';
   const fontPx = isSm ? 'text-[12px]' : 'text-[14px]';
   const btnH = isSm ? 'h-5' : 'h-6';
+  // 归属标签：大档底栏一行放得下，留在底栏；小/中档浮到图片左上角（分组视图 group 为空则都不显示）。
+  const groupOnImage = !!group && !isLg;
+  // 序号：仅小档浮到图片右上角；中/大档在底栏一行。
+  const codeOnImage = isSm;
+
+  const groupTagInner = group ? (
+    <>
+      {group.avatar ? (
+        <img
+          src={`${import.meta.env.BASE_URL}${group.avatar}`}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className={cn('shrink-0 rounded-full border border-line-strong object-cover', isSm ? 'h-4 w-4' : 'h-5 w-5')}
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft font-semibold text-brand-strong',
+            isSm ? 'h-4 w-4 text-[10px]' : 'h-5 w-5 text-ui-2xs',
+          )}
+        >
+          {group.name.slice(0, 1)}
+        </span>
+      )}
+      <span className={cn('truncate font-medium text-ink', isSm ? 'text-[11px]' : 'text-ui-2xs')}>{group.name}</span>
+    </>
+  ) : null;
+
   return (
     <article
       id={`cg-card-${item.id}`}
@@ -65,53 +97,33 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
             </span>
           )}
         </button>
-        {/* 图片浮层（纯展示、不挡点击）：左上=归属标签（仅「全部」页），右上=CG 序号，
-            对角分布互不抢位。小档都缩一圈。 */}
-        {group && (
+        {/* 图片浮层（纯展示、不挡点击）：仅小/中档的归属标签浮左上；仅小档的序号浮右上。 */}
+        {groupOnImage && (
           <span
             data-cg-group-tag
-            data-cg-group-name={group.name}
+            data-cg-group-name={group!.name}
             className={cn(
               'pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full bg-white/80 py-0.5 pl-0.5 pr-2 shadow-soft backdrop-blur-sm',
               isSm ? 'gap-0.5 pr-1.5' : '',
             )}
           >
-            {group.avatar ? (
-              <img
-                src={`${import.meta.env.BASE_URL}${group.avatar}`}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                className={cn('shrink-0 rounded-full border border-line-strong object-cover', isSm ? 'h-4 w-4' : 'h-5 w-5')}
-              />
-            ) : (
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'flex shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft font-semibold text-brand-strong',
-                  isSm ? 'h-4 w-4 text-[10px]' : 'h-5 w-5 text-ui-2xs',
-                )}
-              >
-                {group.name.slice(0, 1)}
-              </span>
-            )}
-            <span className={cn('truncate font-medium text-ink', isSm ? 'text-[11px]' : 'text-ui-2xs')}>{group.name}</span>
+            {groupTagInner}
           </span>
         )}
-        <span
-          data-cg-code
-          className={cn(
-            'pointer-events-none absolute right-2 top-2 z-10 w-fit rounded-full bg-white/80 px-1.5 py-0.5 font-semibold text-brand-strong shadow-soft backdrop-blur-sm',
-            isSm ? 'text-[10px]' : 'text-[11px]',
-          )}
-        >
-          {item.code}
-        </span>
+        {codeOnImage && (
+          <span
+            data-cg-code
+            className={cn(
+              'pointer-events-none absolute right-2 top-2 z-10 w-fit rounded-full bg-white/80 px-1.5 py-0.5 font-semibold text-brand-strong shadow-soft backdrop-blur-sm',
+              isSm ? 'text-[10px]' : 'text-[11px]',
+            )}
+          >
+            {item.code}
+          </span>
+        )}
       </div>
-      {/* 固定行高：底栏与图片之间不画分隔线（图片边缘 + 白底已足够区分）；
-          高度固定（中/大档 h-14、小档 h-11）保住同尺寸等高。CG 序号已移到图上，
-          所以底栏只剩「收集 + 名称 + 攻略」，名称独占一行完整显示、不再换行。 */}
+      {/* 底栏：固定行高（中/大档 h-14、小档 h-11）保住同尺寸等高。元素按尺寸档位出现——
+          大档含归属标签，中/小档归属浮到图上；序号中/大档在底栏、小档在图上。名称单行不换行。 */}
       <div className={cn('flex min-w-0 items-center gap-1.5 px-2.5', isSm ? 'h-11 gap-1' : 'h-14')}>
         <button
           type="button"
@@ -132,6 +144,21 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
           <span aria-hidden className={cn('leading-none', fontPx)}>{collected ? '✓' : '○'}</span>
           {collected ? '已收集' : '收集'}
         </button>
+        {!groupOnImage && group && (
+          <span
+            data-cg-group-tag
+            data-cg-group-name={group.name}
+            className={cn(
+              'flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-2',
+              isSm ? 'gap-0.5 pr-1.5' : '',
+            )}
+          >
+            {groupTagInner}
+          </span>
+        )}
+        {!codeOnImage && (
+          <span data-cg-code className={cn('shrink-0 font-semibold text-brand-strong', fontPx)}>{item.code}</span>
+        )}
         <span
           data-cg-name
           className={cn('min-w-0 truncate font-medium text-ink', fontPx)}
