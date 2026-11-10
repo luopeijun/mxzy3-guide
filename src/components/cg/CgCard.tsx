@@ -4,7 +4,7 @@ import type { CgItem } from '../../types/cg';
 interface Props {
   item: CgItem;
   collected: boolean;
-  /** 「全部」页各人物的 CG 混在一起，用一张头像徽标标明归属；分组页不传。 */
+  /** 「全部」页各人物的 CG 混在一起，用左上角头像徽标标明归属；分组页不传。 */
   group?: { name: string; avatar?: string };
   /** 有对应攻略事件时给出深链（`#/guide/<nodeId>~<anchor>`），否则不渲染入口。 */
   guideHref?: string;
@@ -13,11 +13,11 @@ interface Props {
   onOpen: (trigger: HTMLButtonElement) => void;
 }
 
-/** 一张 CG 卡只放一行信息，所有卡片等高：收集芯片 + 归属 tag + 编号 + 名称 + 攻略入口。
- *  名称**永不截断**（shrink-0 + nowrap）——网格最小卡宽（CgApp 里的 370px）就是按
- *  「最长 12 字名称 + 全部固定元素」算出来的，保证一行能看完所有元素；空间富余时
- *  攻略靠 ml-auto 靠右。万一将来出现更长的文案，归属 tag 会先收缩让位（头像仍在）。
- *  图片本身是「查看大图」的按钮，整块可点，不叠任何控件，避免误触。 */
+/** 一张 CG 卡：图片占主体，左上角浮一个归属标签（头像+名称，纯展示、不挡点击）；
+ *  底部一行只放收集芯片 + 序号 + 名称 + 攻略入口，所有卡片等高。
+ *  名称用 truncate 兜底（窄屏不溢出），网格最小卡宽（CgApp 里的 380px）按
+ *  「最长 12 字名称(14px) + 全部固定元素（不含图上 tag）」算出来，桌面宽度下保证一行看完所有元素。
+ *  图片本身是「查看大图」按钮，整块可点，图上 tag 是 pointer-events-none 不误触。 */
 export default function CgCard({ item, collected, group, guideHref, guideTitle, onToggle, onOpen }: Props) {
   return (
     <article
@@ -56,31 +56,12 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
             </span>
           )}
         </button>
-      </div>
-      {/* 固定行高：有「攻略」入口的卡片不能被这一行撑高，否则整面墙高低不齐。 */}
-      <div className="flex h-10 min-w-0 items-center gap-1.5 px-2.5">
-        <button
-          type="button"
-          data-cg-toggle
-          aria-pressed={collected}
-          aria-label={`${collected ? '取消收集' : '标记已收集'} ${item.code} ${item.name}`}
-          title={collected ? '取消收集' : '标记已收集'}
-          onClick={onToggle}
-          className={cn(
-            'flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-ui-2xs font-medium leading-none transition-colors',
-            collected
-              ? 'bg-brand text-white'
-              : 'border border-ink-faint text-ink-muted hover:border-brand hover:text-brand-strong',
-          )}
-        >
-          <span aria-hidden className="text-[11px] leading-none">{collected ? '✓' : '○'}</span>
-          {collected ? '已收集' : '收集'}
-        </button>
+        {/* 归属标签浮在图片左上角，纯展示不挡点击（分组页不传 group，故不显示）。 */}
         {group && (
           <span
             data-cg-group-tag
             data-cg-group-name={group.name}
-            className="pointer-events-none inline-flex min-w-0 items-center gap-1 rounded-full border border-line bg-surface-soft py-0.5 pl-0.5 pr-2"
+            className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full bg-white/80 py-0.5 pl-0.5 pr-2 shadow-soft backdrop-blur-sm"
           >
             {group.avatar ? (
               <img
@@ -102,14 +83,35 @@ export default function CgCard({ item, collected, group, guideHref, guideTitle, 
             <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
           </span>
         )}
-        <span className="shrink-0 text-ui-2xs font-semibold text-brand-strong">{item.code}</span>
-        <span className="shrink-0 whitespace-nowrap text-ui-2xs text-ink" title={item.name}>{item.name}</span>
+      </div>
+      {/* 固定行高 + 顶部细线：底栏成为一条干净的横向信息条，和图片分隔开；
+          高度固定（h-14）让 14px 文字有呼吸空间，也保住所有卡片等高。 */}
+      <div className="flex h-14 min-w-0 items-center gap-1.5 border-t border-line px-2.5">
+        <button
+          type="button"
+          data-cg-toggle
+          aria-pressed={collected}
+          aria-label={`${collected ? '取消收集' : '标记已收集'} ${item.code} ${item.name}`}
+          title={collected ? '取消收集' : '标记已收集'}
+          onClick={onToggle}
+          className={cn(
+            'flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[14px] font-medium leading-none transition-colors',
+            collected
+              ? 'bg-brand text-white'
+              : 'border border-ink-faint text-ink-muted hover:border-brand hover:text-brand-strong',
+          )}
+        >
+          <span aria-hidden className="text-[14px] leading-none">{collected ? '✓' : '○'}</span>
+          {collected ? '已收集' : '收集'}
+        </button>
+        <span className="shrink-0 text-[14px] font-semibold text-brand-strong">{item.code}</span>
+        <span data-cg-name className="min-w-0 truncate text-[14px] font-medium text-ink" title={item.name}>{item.name}</span>
         {guideHref && (
           <a
             data-cg-guide-link
             href={guideHref}
             title={guideTitle ?? '查看对应攻略事件'}
-            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[14px] leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
           >
             攻略<span aria-hidden className="ml-0.5">›</span>
           </a>
