@@ -190,10 +190,61 @@ async function main() {
   `);
   console.log('lightbox:', lightbox);
 
+  // 路欧桑那批感情 CG 走「页面级」落点：不锚事件，整组跳剧情整理页。
+  await evaluate(`location.hash = '#/cg/sang-5'; 'ok'`);
+  await sleep(1400);
+  const pageLevel = await evaluate(`
+    (() => {
+      const link = document.querySelector('#cg-card-sang-5 [data-cg-guide-link]');
+      const card = document.querySelector('#cg-card-sang-5');
+      const rect = card?.getBoundingClientRect();
+      return JSON.stringify({
+        href: link?.getAttribute('href') ?? '',
+        title: link?.getAttribute('title') ?? '',
+        hasLink: !!link,
+        personalHasLink: !!document.querySelector('#cg-card-sang-8 [data-cg-guide-link]'),
+        cardInView: !!rect && rect.top < innerHeight && rect.bottom > 64,
+      });
+    })()
+  `);
+  console.log('page-level link:', pageLevel);
+
+  await evaluate(`document.querySelector('#cg-card-sang-5 [data-cg-guide-link]').click(); 'ok'`);
+  await sleep(1600);
+  const landed = await evaluate(`
+    (() => {
+      const main = document.querySelector('main');
+      const text = main ? main.innerText.replace(/\\s+/g, ' ') : '';
+      return JSON.stringify({
+        hash: location.hash,
+        cgApp: !!document.querySelector('[data-cg-app]'),
+        title: text.slice(0, 90),
+        branches: ['只有桑禾蓓在旗下', '只有路风在旗下', '路风和桑禾蓓都在旗下', '路风和欧怡青都在旗下']
+          .filter((name) => text.includes(name)).length,
+      });
+    })()
+  `);
+  console.log('page-level landed:', landed);
+
+  // 攻略侧的指引也要能跳回来（路风 1 处、欧怡青 2 处）。
+  const tipLinks = {};
+  for (const [node, key] of [['characters/lu-feng', 'lufeng'], ['characters/ou-yiqing', 'ou']]) {
+    await evaluate(`location.hash = '#/guide/${node}'; 'ok'`);
+    await sleep(1500);
+    tipLinks[key] = await evaluate(`
+      [...document.querySelectorAll('main a')]
+        .filter((a) => a.getAttribute('href') === '#/other-events/luousang').length
+    `);
+  }
+  console.log('tip links:', JSON.stringify(tipLinks));
+
   const b = badgeState;
   const back = JSON.parse(afterBack);
   const d = JSON.parse(deep);
   const lb = JSON.parse(lightbox);
+  const pl = JSON.parse(pageLevel);
+  const landedView = JSON.parse(landed);
+  const tips = tipLinks;
   const checks = {
     'badge links to cg': b !== null && badge.href === '#/cg/lin-4',
     'badge click goes to cg': b.hash === '#/cg/lin-4',
@@ -219,6 +270,14 @@ async function main() {
     'deep link flashes card': d.cardFlash === true,
     'lightbox opens': lb.open === true,
     'lightbox has guide link': lb.guide.startsWith('#/guide/characters/xiao-yili~ev'),
+    // 路欧桑：感情 CG 整页跳，不带事件锚点；个人剧情 CG 不挂入口。
+    'page-level link is the node page': pl.href === '#/guide/other-events/luousang',
+    'page-level title says 完整剧情': pl.title.includes('完整剧情整理'),
+    'personal cg stays unlinked': pl.personalHasLink === false,
+    'page-level click lands on luousang': landedView.hash === '#/guide/other-events/luousang' && landedView.cgApp === false,
+    'luousang page shows the four branches': landedView.branches === 4,
+    'lu-feng tip links to luousang': tips.lufeng === 1,
+    'ou-yiqing tips link to luousang': tips.ou === 2,
   };
 
   let pass = true;
