@@ -25,6 +25,12 @@ export interface CgItem {
   image: string | null;
   width: number;
   height: number;
+  /** 页面级攻略落点（不带事件锚点）：一张 CG 散落在多个分支里时整组跳这一页。 */
+  guide?: {
+    nodeId: string;
+    /** 节点标题，用在按钮 title 上。 */
+    title: string;
+  };
 }
 
 export interface CgData {

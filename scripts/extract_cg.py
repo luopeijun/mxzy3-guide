@@ -30,6 +30,8 @@ SRC = ROOT / "outputs" / "明星志愿3_CG图鉴"
 OUT_IMAGES = ROOT / "public" / "images" / "cg"
 OUT_DATA = ROOT / "public" / "data" / "cg.json"
 GUIDE_DATA = ROOT / "public" / "data" / "guide.json"
+# CG → 攻略页面（不带锚点）的手写映射，见文件头的说明。
+NODE_LINKS = ROOT / "sources" / "cg-node-links.tsv"
 
 MAX_EDGE = 1100
 QUALITY = 76
@@ -61,6 +63,7 @@ TEXT_FIXES = {
     "少伟": "少纬",       # 原少纬的简称也被写错
     "克列斯": "克烈斯",   # ji-10 的「克列斯攻略」
     "莉玲": "莉铃",       # 秘书莉铃
+    "郝有乾": "郝友乾",   # chen-4「嫚君和郝有乾的绯闻」，攻略统一「郝友乾」
 }
 
 
@@ -95,6 +98,51 @@ def guide_characters() -> list[dict]:
 
     walk(guide)
     return found
+
+
+def guide_node_titles() -> dict[str, str]:
+    """全部攻略节点 id → 标题，用来校验 / 展开 CG 的页面级跳转。"""
+    titles: dict[str, str] = {}
+
+    def walk(value: object) -> None:
+        if isinstance(value, dict):
+            if value.get("id") and value.get("title"):
+                titles[value["id"]] = value["title"]
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(json.loads(read_text(GUIDE_DATA)))
+    return titles
+
+
+def apply_node_links(items: list[dict], titles: dict[str, str]) -> int:
+    """把 ``sources/cg-node-links.tsv`` 的「CG → 攻略页面」写进 items。
+
+    这里不带事件锚点：路欧桑剧情整理把同一段感情线按情况1~5 各写了一遍，
+    一张 CG 往往对应三四个分支里的同一个事件，锚到哪个都不对，所以整组跳页面。
+    """
+    by_id = {item["id"]: item for item in items}
+    count = 0
+    if not NODE_LINKS.is_file():
+        return count
+    for number, raw in enumerate(read_text(NODE_LINKS).splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        fields = [field.strip() for field in line.split("\t")]
+        if len(fields) < 2 or not fields[0] or not fields[1]:
+            raise SystemExit(f"cg-node-links.tsv:{number}: expected cg id + node id")
+        cg_id, node_id = fields[0], fields[1]
+        if cg_id not in by_id:
+            raise SystemExit(f"cg-node-links.tsv:{number}: unknown cg {cg_id}")
+        if node_id not in titles:
+            raise SystemExit(f"cg-node-links.tsv:{number}: unknown guide node {node_id}")
+        by_id[cg_id]["guide"] = {"nodeId": node_id, "title": titles[node_id]}
+        count += 1
+    return count
 
 
 def main() -> None:
@@ -212,6 +260,8 @@ def main() -> None:
     if missing:
         raise SystemExit(f"guide artists without a CG group: {missing}")
 
+    node_links = apply_node_links(items, guide_node_titles())
+
     payload = {
         "version": 1,
         "meta": {
@@ -229,6 +279,7 @@ def main() -> None:
         f"wrote {OUT_DATA.relative_to(ROOT)}: {len(items)} items / {len(groups)} groups, "
         f"images {total_bytes / 1024 / 1024:.1f} MB"
     )
+    print(f"cg -> guide node links: {node_links}")
 
 
 if __name__ == "__main__":

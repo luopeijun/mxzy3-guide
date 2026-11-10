@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { readCg, writeCg, CG_CHANGED_EVENT } from '../../lib/cg';
-import { buildCgGuideLinks, cgGuideHref } from '../../lib/cgLinks';
+import { buildCgGuideLinks, cgGuideHref, cgGuideTitle } from '../../lib/cgLinks';
 import type { CgGuideLink } from '../../lib/cgLinks';
 import { cgItemId } from '../../hooks/useHashSelection';
 import { useGuideContext } from '../../hooks/useGuideContext';
-import type { CgData } from '../../types/cg';
+import type { CgData, CgItem } from '../../types/cg';
 import CgCard from './CgCard';
 import CgLightbox from './CgLightbox';
 import SaveArchivePanel from '../tracker/SaveArchivePanel';
@@ -114,6 +114,19 @@ export default function CgApp({ data }: Props) {
   const guideLinks = useMemo(
     () => (guideData ? buildCgGuideLinks(guideData) : new Map<string, CgGuideLink>()),
     [guideData],
+  );
+
+  /**
+   * 先认事件级映射（`cgIds` 反查），再退到页面级落点（`cg.json` 的 `guide`）。
+   * 路欧桑那 16 张感情 CG 属于后者：同一段剧情写了五个分支，锚哪一条都不对。
+   */
+  const linkFor = useCallback(
+    (item: CgItem): CgGuideLink | undefined => {
+      const eventLink = guideLinks.get(item.id);
+      if (eventLink) return eventLink;
+      return item.guide ? { nodeId: item.guide.nodeId, nodeTitle: item.guide.title } : undefined;
+    },
+    [guideLinks],
   );
 
   // A save import writes the CG collection straight to localStorage and fires
@@ -390,7 +403,7 @@ export default function CgApp({ data }: Props) {
                   className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr))]"
                 >
                   {visible.map((item) => {
-                    const link = guideLinks.get(item.id);
+                    const link = linkFor(item);
                     return (
                       <li key={item.id}>
                         <CgCard
@@ -398,7 +411,7 @@ export default function CgApp({ data }: Props) {
                           collected={collected.has(item.id)}
                           group={groupId === 'all' ? groupById.get(item.groupId) : undefined}
                           guideHref={link ? cgGuideHref(link) : undefined}
-                          guideTitle={link ? `${link.nodeTitle} · 对应攻略事件` : undefined}
+                          guideTitle={link ? cgGuideTitle(link) : undefined}
                           onToggle={() => toggle(item.id)}
                           onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
                         />
@@ -433,9 +446,10 @@ export default function CgApp({ data }: Props) {
           total={lightbox.ids.length}
           hasPrev={lightboxIndex > 0}
           hasNext={lightboxIndex >= 0 && lightboxIndex < lightbox.ids.length - 1}
-          guideHref={
-            guideLinks.has(lightboxItem.id) ? cgGuideHref(guideLinks.get(lightboxItem.id)!) : undefined
-          }
+          guideHref={(() => {
+            const link = linkFor(lightboxItem);
+            return link ? cgGuideHref(link) : undefined;
+          })()}
           onPrev={() => stepLightbox(-1)}
           onNext={() => stepLightbox(1)}
           onToggle={() => toggle(lightboxItem.id)}

@@ -608,7 +608,11 @@
       "condition": "路风和欧怡青在旗下，在PUB聊天到深夜的新闻之后的新绯闻对象新闻事件后，前往工作地点(此CG可在玩欧风恋时于绯闻对象新闻后前往欧的工作地点)",
       "image": "images/cg/sang-3.webp",
       "width": 1100,
-      "height": 820
+      "height": 820,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "sang-4",
@@ -630,7 +634,11 @@
       "condition": "风桑恋在小桑拒绝路风三次接送后2年11月前小桑自由活动时前往公园",
       "image": "images/cg/sang-5.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "sang-6",
@@ -641,7 +649,11 @@
       "condition": "成功跑完风桑恋，",
       "image": "images/cg/sang-6.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "sang-7",
@@ -652,14 +664,18 @@
       "condition": "风桑恋末期于沟通时谈到关于自己的感情时选“隐瞒”或“谈得出结果吗”之后再度沟通说和母亲谈得如何后于小桑在SOSA工作或自由活动时前往SOSA",
       "image": "images/cg/sang-7.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "sang-8",
       "groupId": "sang",
       "order": 8,
       "code": "CG 08",
-      "name": "主角请吃宵夜（第二次）",
+      "name": "主角请吃宵夜",
       "condition": "跟随超过90天于杀青当天跟随引发事件后在跟随超过30天人气高于5且当天工作失败时跟随",
       "image": "images/cg/sang-8.webp",
       "width": 1100,
@@ -894,7 +910,11 @@
       "condition": "旗下有路敏、路风、怡青差不多在3月时，在路敏说弄坏怡青吉他，下礼拜帮路风、路敏、怡青排自由活动，之后去欧堡。",
       "image": "images/cg/ou-3.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "ou-4",
@@ -905,7 +925,11 @@
       "condition": "新闻公布路风怡青在酒店谈到深夜后，帮两人排自由活动去PUB会看到小桑落寞的在后面。",
       "image": "images/cg/ou-4.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "ou-5",
@@ -927,7 +951,11 @@
       "condition": "2007年九月手动探怡青班，帮路风排自由活动，路风说要举办生日会，怡青生日当天自动发生。",
       "image": "images/cg/ou-6.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "ou-7",
@@ -949,7 +977,11 @@
       "condition": "第三年一月，小青会来谈话，说他就快要回去了【选很高兴这段时间跟你合作】过几天记者会来问小青回去的事【选会遵守承诺回去】帮小青办大型演唱会，当天跟随即可。",
       "image": "images/cg/ou-8.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "ou-9",
@@ -1158,7 +1190,11 @@
       "condition": "第一年12月，安排路风自由活动时，前往休闲场所（公园、欧堡或19号酒馆），点选路风，他说来这里和桑禾蓓培养默契，选择“帮忙可以，别被媒体发现就好……”",
       "image": "images/cg/lu-4.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-5",
@@ -1169,7 +1205,11 @@
       "condition": "第二年10月后，安排路风自由活动时，前往公园，遇见路风，选择“跟上去看看”，看到路风询问桑禾蓓对自己的态度",
       "image": "images/cg/lu-5.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-6",
@@ -1180,7 +1220,11 @@
       "condition": "记者上门询问主角桑禾蓓是否与路风重新交往，选择“不管是不是我都乐观其成”，第三年12月，前往工作场所，看到路风向桑禾蓓求婚。（详情请看与桑禾蓓的感情事件攻略）",
       "image": "images/cg/lu-6.webp",
       "width": 1100,
-      "height": 817
+      "height": 817,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-7",
@@ -1191,7 +1235,11 @@
       "condition": "路敏在旗下，触发与欧怡青成为好友事件后，或第二年5月，欧怡青在旗下时，安排路风自由活动，前往欧堡，看到路敏把欧怡青介绍给哥哥",
       "image": "images/cg/lu-7.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-8",
@@ -1202,7 +1250,11 @@
       "condition": "第二年7月自动发生，“路风欧怡青PUB聊天至深夜”，欧怡青在旗下时，安排怡青、路风自由活动，前往19号酒馆，看到桑禾蓓远远看着两人说笑。",
       "image": "images/cg/lu-8.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-9",
@@ -1213,7 +1265,11 @@
       "condition": "路风和欧怡青公开恋情后，路风向主角借钱，选择“好啊，你拿去！”，友好度上升，看到路风买冰水给怡青；若欧怡青在旗下，跟随怡青，则选择“要不要我送你回家休息！”",
       "image": "images/cg/lu-9.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-10",
@@ -1224,7 +1280,11 @@
       "condition": "欧怡青在旗下时，第二年9月上旬，前往怡青工作场所，看到怡青和路风讨论生日的事。周末排行程时，怡青向主角提起自己的生日，生日当天可得",
       "image": "images/cg/lu-10.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-11",
@@ -1235,7 +1295,11 @@
       "condition": "有帮怡青开过告别演唱会、路欧恋情公开，且触发纪翔问怡青要不要回去的剧情后，安排路风去欧洲旅游，回来后，周末排行程时，路风说他已把怡青带回来了，达成情感结局，结尾可得",
       "image": "images/cg/lu-11.webp",
       "width": 1100,
-      "height": 823
+      "height": 823,
+      "guide": {
+        "nodeId": "other-events/luousang",
+        "title": "路欧桑剧情整理"
+      }
     },
     {
       "id": "lu-12",
@@ -1584,7 +1648,7 @@
       "order": 4,
       "code": "CG 04",
       "name": "与嫚君约会",
-      "condition": "第二年5月自动发生，“干女儿等于地下情人？”，周末排行程时，小夫对主角提起嫚君和郝有乾的绯闻，选择“现在是告白的好时机……”，两个月内，安排小夫自由活动，前往嫚君工作场所，看到小夫对嫚君告白，出现小夫和嫚君的绯闻前，且嫚君非旗下艺人时，小夫说要和嫚君约会了，选择“当然没问题！”，约会当天，点选育幼院，看到小夫参加育幼院的篮球赛。",
+      "condition": "第二年5月自动发生，“干女儿等于地下情人？”，周末排行程时，小夫对主角提起嫚君和郝友乾的绯闻，选择“现在是告白的好时机……”，两个月内，安排小夫自由活动，前往嫚君工作场所，看到小夫对嫚君告白，出现小夫和嫚君的绯闻前，且嫚君非旗下艺人时，小夫说要和嫚君约会了，选择“当然没问题！”，约会当天，点选育幼院，看到小夫参加育幼院的篮球赛。",
       "image": "images/cg/chen-4.webp",
       "width": 1100,
       "height": 817

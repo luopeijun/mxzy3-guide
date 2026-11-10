@@ -5,8 +5,8 @@ export interface CgGuideLink {
   nodeId: string;
   /** 节点标题（如「林芬芬」），用在按钮 title 上，让读者知道会跳去哪。 */
   nodeTitle: string;
-  /** 事件块的 DOM id，形如 `ev45`。 */
-  anchor: string;
+  /** 事件块的 DOM id，形如 `ev45`；页面级落点（路欧桑剧情整理）没有锚点。 */
+  anchor?: string;
 }
 
 /**
@@ -34,7 +34,15 @@ export function buildCgGuideLinks(data: GuideData): Map<string, CgGuideLink> {
   return links;
 }
 
-/** 攻略页的深链：`#/guide/<nodeId>~<anchor>`，与 `useAnchorJump` 同一套格式。 */
+/** 攻略页的深链：`#/guide/<nodeId>~<anchor>`，与 `useAnchorJump` 同一套格式。
+ *  页面级落点没有锚点，直接进这一页的顶部（`#/guide/<nodeId>`）。 */
 export function cgGuideHref(link: CgGuideLink): string {
-  return `#/guide/${link.nodeId}~${link.anchor}`;
+  return link.anchor
+    ? `#/guide/${link.nodeId}~${link.anchor}`
+    : `#/guide/${link.nodeId}`;
+}
+
+/** 按钮 title：锚到事件的写「对应攻略事件」，整页落点写「完整剧情整理」。 */
+export function cgGuideTitle(link: CgGuideLink): string {
+  return `${link.nodeTitle} · ${link.anchor ? '对应攻略事件' : '完整剧情整理'}`;
 }
