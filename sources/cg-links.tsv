@@ -7,6 +7,8 @@
 #   * 只有「事件与 CG 一一对应」才登记，双向跳转都成立；
 #     一个事件对应多张 CG（如美丽之星写真集，18 个角色各一张）不写这里，
 #     那种只做 CG → 事件单向，映射见前端 cgLinks 的 shared 表。
+#     反过来「一张 CG 出两次」（苏嫚君 CG05 圣诞布置，第二年/第三年各一次）
+#     两处都登记，反跳取第一次出现的那个事件。
 #   * 章节列留空表示节点内该事件号唯一；桑禾蓓那种跨「情况1/3/5」重号的必须写。
 #   * 写错（节点/事件号/章节对不上、或有多条命中）会让 extract_guide.py 直接报错，
 #     不静默断链。
@@ -30,3 +32,35 @@ characters/xiao-yili	45	xiao-3	出国开刀
 characters/xiao-yili	64	xiao-8	康复归来
 characters/xiao-yili	67	xiao-7	与主角达成感情结局的条件
 characters/xiao-yili	69	xiao-9	与主角达成感情结局的条件
+
+# ---- 桑禾蓓（3 条；感情线 CG 走页面级，见 cg-node-links.tsv）----
+characters/sang-hebei	2	sang-1	签约方法
+characters/sang-hebei	2	sang-8	达成结局条件
+characters/sang-hebei	4	sang-11	达成结局条件
+
+# ---- 苏嫚君（7 条；CG 05 圣诞节布置第二年、第三年各出一张，两处都登记）----
+characters/su-manjun	1	su-1	加入B
+characters/su-manjun	37	su-4	育幼院事件
+characters/su-manjun	40	su-5	育幼院事件
+characters/su-manjun	49	su-3	修水管事件
+characters/su-manjun	53	su-6	达成结局条件
+characters/su-manjun	55	su-5	达成结局条件
+characters/su-manjun	60	su-12	与王瑞恩的事件（需安装资料片“星光圆舞曲”）
+
+# ---- 欧怡青（3 条；路欧恋这几张 CG 走页面级）----
+characters/ou-yiqing	1	ou-1	签约方法
+characters/ou-yiqing	7	ou-8	告别
+characters/ou-yiqing	16	ou-9	与黎华的事件
+
+# ---- 路敏（8 条）----
+characters/lu-min	2	lum-1	签约方法
+characters/lu-min	1	lum-3	惹事生非
+characters/lu-min	3	lum-4	惹事生非
+characters/lu-min	12	lum-5	与方书展事件（需第二年3月欧怡青在旗下时）
+characters/lu-min	38	lum-8	与天晴的感情（需第二年3月欧怡青不在旗下时）
+characters/lu-min	45	lum-9	与天晴的感情（需第二年3月欧怡青不在旗下时）
+characters/lu-min	50	lum-10	与天晴的感情（需第二年3月欧怡青不在旗下时）
+characters/lu-min	52	lum-6	祈雨
+
+# ---- 路风（1 条；桑禾蓓/欧怡青两条感情线走页面级）----
+characters/lu-feng	2	lu-1	签约方法

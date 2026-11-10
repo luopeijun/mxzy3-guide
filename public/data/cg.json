@@ -977,11 +977,7 @@
       "condition": "第三年一月，小青会来谈话，说他就快要回去了【选很高兴这段时间跟你合作】过几天记者会来问小青回去的事【选会遵守承诺回去】帮小青办大型演唱会，当天跟随即可。",
       "image": "images/cg/ou-8.webp",
       "width": 1100,
-      "height": 823,
-      "guide": {
-        "nodeId": "other-events/luousang",
-        "title": "路欧桑剧情整理"
-      }
+      "height": 823
     },
     {
       "id": "ou-9",
