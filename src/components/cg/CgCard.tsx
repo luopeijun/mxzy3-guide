@@ -1,13 +1,13 @@
 import { cn } from '../../lib/cn';
 import type { CgItem } from '../../types/cg';
 
-/** 卡片尺寸档位，由 CgApp 的「大/中/小」开关传入；小档名称允许换行两行。 */
+/** 卡片尺寸档位，由 CgApp 的「大/中/小」开关传入；小档名称允许换行两行、整体更紧凑。 */
 export type CgCardSize = 'sm' | 'md' | 'lg';
 
 interface Props {
   item: CgItem;
   collected: boolean;
-  /** 卡片尺寸：小档（220px 列宽）名称换行两行、信息条加高；中/大档单行。 */
+  /** 卡片尺寸：小档（220px 列宽）名称换行两行、字号与信息条都缩小；中/大档单行、字号 14px。 */
   size?: CgCardSize;
   /** 「全部」页各人物的 CG 混在一起，用左上角头像徽标标明归属；分组页不传。 */
   group?: { name: string; avatar?: string };
@@ -19,11 +19,14 @@ interface Props {
 }
 
 /** 一张 CG 卡：图片占主体，左上角浮一个归属标签（头像+名称，纯展示、不挡点击）；
- *  底部一行只放收集芯片 + 序号 + 名称 + 攻略入口，所有卡片等高。
- *  中/大档列宽够宽（≥380px），名称单行不截断；小档列宽收到 220px，名称允许换行
- *  两行、信息条相应加高到固定 72px，保证同一尺寸下所有卡片仍等高。
+ *  底部一行只放收集芯片 + 序号 + 名称 + 攻略入口，同一尺寸下所有卡片等高。
+ *  中/大档（≥380px 列宽）字号 14px、信息条 56px、名称单行不截断；小档（220px 列宽）
+ *  整体缩小：字号 12px、信息条 44px、收集按钮更小、名称允许换行两行。
  *  图片本身是「查看大图」按钮，整块可点，图上 tag 是 pointer-events-none 不误触。 */
 export default function CgCard({ item, collected, size = 'md', group, guideHref, guideTitle, onToggle, onOpen }: Props) {
+  const isSm = size === 'sm';
+  const fontPx = isSm ? 'text-[12px]' : 'text-[14px]';
+  const btnH = isSm ? 'h-5' : 'h-6';
   return (
     <article
       id={`cg-card-${item.id}`}
@@ -61,12 +64,15 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
             </span>
           )}
         </button>
-        {/* 归属标签浮在图片左上角，纯展示不挡点击（分组页不传 group，故不显示）。 */}
+        {/* 归属标签浮在图片左上角，纯展示不挡点击（分组页不传 group，故不显示）。小档缩一圈。 */}
         {group && (
           <span
             data-cg-group-tag
             data-cg-group-name={group.name}
-            className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full bg-white/80 py-0.5 pl-0.5 pr-2 shadow-soft backdrop-blur-sm"
+            className={cn(
+              'pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full bg-white/80 py-0.5 pl-0.5 pr-2 shadow-soft backdrop-blur-sm',
+              isSm ? 'gap-0.5 pr-1.5' : '',
+            )}
           >
             {group.avatar ? (
               <img
@@ -75,23 +81,26 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
                 aria-hidden="true"
                 loading="lazy"
                 decoding="async"
-                className="h-5 w-5 shrink-0 rounded-full border border-line-strong object-cover"
+                className={cn('shrink-0 rounded-full border border-line-strong object-cover', isSm ? 'h-4 w-4' : 'h-5 w-5')}
               />
             ) : (
               <span
                 aria-hidden="true"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft text-ui-2xs font-semibold text-brand-strong"
+                className={cn(
+                  'flex shrink-0 items-center justify-center rounded-full border border-line-strong bg-brand-soft font-semibold text-brand-strong',
+                  isSm ? 'h-4 w-4 text-[10px]' : 'h-5 w-5 text-ui-2xs',
+                )}
               >
                 {group.name.slice(0, 1)}
               </span>
             )}
-            <span className="truncate text-ui-2xs font-medium text-ink">{group.name}</span>
+            <span className={cn('truncate font-medium text-ink', isSm ? 'text-[11px]' : 'text-ui-2xs')}>{group.name}</span>
           </span>
         )}
       </div>
       {/* 固定行高 + 顶部细线：底栏成为一条干净的横向信息条，和图片分隔开；
-          高度固定（中/大档 h-14、小档 h-[72px]）让 14px 文字有呼吸空间，也保住所有卡片等高。 */}
-      <div className={cn('flex min-w-0 items-center gap-1.5 border-t border-line px-2.5', size === 'sm' ? 'h-[72px]' : 'h-14')}>
+          高度固定（中/大档 h-14、小档 h-11）保住同一尺寸下所有卡片等高。小档字号整体降到 12px。 */}
+      <div className={cn('flex min-w-0 items-center gap-1.5 border-t border-line px-2.5', isSm ? 'h-11 gap-1' : 'h-14')}>
         <button
           type="button"
           data-cg-toggle
@@ -100,19 +109,21 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
           title={collected ? '取消收集' : '标记已收集'}
           onClick={onToggle}
           className={cn(
-            'flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[14px] font-medium leading-none transition-colors',
+            'flex shrink-0 items-center gap-1 rounded-full px-2 font-medium leading-none transition-colors',
+            btnH,
+            fontPx,
             collected
               ? 'bg-brand text-white'
               : 'border border-ink-faint text-ink-muted hover:border-brand hover:text-brand-strong',
           )}
         >
-          <span aria-hidden className="text-[14px] leading-none">{collected ? '✓' : '○'}</span>
+          <span aria-hidden className={cn('leading-none', fontPx)}>{collected ? '✓' : '○'}</span>
           {collected ? '已收集' : '收集'}
         </button>
-        <span className="shrink-0 text-[14px] font-semibold text-brand-strong">{item.code}</span>
+        <span className={cn('shrink-0 font-semibold text-brand-strong', fontPx)}>{item.code}</span>
         <span
           data-cg-name
-          className={cn('min-w-0 text-[14px] font-medium text-ink', size === 'sm' ? 'line-clamp-2' : 'truncate')}
+          className={cn('min-w-0 font-medium text-ink', fontPx, isSm ? 'line-clamp-2' : 'truncate')}
           title={item.name}
         >{item.name}</span>
         {guideHref && (
@@ -120,7 +131,7 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
             data-cg-guide-link
             href={guideHref}
             title={guideTitle ?? '查看对应攻略事件'}
-            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[14px] leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+            className={cn('ml-auto shrink-0 rounded-full px-1.5 py-0.5 leading-none text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong', fontPx)}
           >
             攻略<span aria-hidden className="ml-0.5">›</span>
           </a>
