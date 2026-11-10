@@ -5,7 +5,7 @@
 
 ## 内容来源
 
-- 《明星志愿3攻略.docx》（本地原始文档，不入库）：四大分级的主体正文。
+- 《明星志愿3攻略.docx》（本地原始文档，不入库）：经纪人事件簿 / 艺人事件簿 / 六大特殊通告 / 其他事件四类的主体正文。「路欧桑剧情整理」原本是「其他事件」的最后一条，现在单独提成一个类目（`extract_guide.py` 建树时把这一项从 `other_items` 里 `pop` 出来插到第三位），正文仍来自 `sources/luousang-*.txt` 那五份分支文件。**类目 id 与五个分支 id 一直是 `other-events/luousang*`，提升时没有改名**，老书签、CG 落点、追踪器的分支线都靠它。
 - `sources/game-initial-questions.txt`：开局访谈 14 题的完整选项与友好度变化，**以这份 txt 为唯一来源**，原文（GBK）转 UTF-8 后原样使用，不做改写。首行 `★标题` 只是页面标题（与页面同名时不重复渲染）；首个问题之前的说明行合并成一条黄底提示条；`问题结束（补充说明）` 的括号文字作为该选项的脚注（`hint`），选项本身仍显示「问题结束」终止标记。
 - `sources/initial-events.txt`：初始事件（新手事件 1–5 / 女艺人的疑惑 / 女艺人的请求），**以该 txt 为唯一来源**，docx 里的同名章节不再参与渲染，原文（GBK）转 UTF-8 后原样使用。解析规则：首行 `★新手事件：` 是页面标题，跳过；`#`、`*` 开头与**以冒号结尾的独行标题**（`初始女艺人的事件（指…）：`）都解析为 `section`；章节内不含标点的短行（`女艺人的疑惑`）解析为 `heading` 子标题；编号行（`1 （自动）`、`3－1 （跟随）`）解析为 `event` 并保留编号与触发方式标签，`提醒：` 行渲染为提示条，「旗下艺人为…」缩进为选项样式。txt 里已经没有 `#初始剧情` 这个标签，所以第一个 `event` 之前若还没有任何 `section`，脚本会自动补一个「初始剧情」小节，让开局 5 条事件不再裸挂在页面下。正文里混用的 `--` 与半角逗号会统一成 `——` 与 `，`。
 - `sources/character-stats.txt`：18 位可签约艺人（含资料片新增）的初始属性，**以游戏内「初始属性(女)」「初始属性(男)」两张截图为准**。源文件保持截图的行列形状：一段以角色名开头，随后是属性行与紧跟其后的 `成长` 行；女、男两段合并成**一张表**（`table` 块）而不分性别——一人一行、一项一列，每个格子上面是初始值、下面一行小字是成长加成。姓名列在窄屏横向滑动时保持固定；每列最高的数值套浅粉胶囊，成长加成的最高值用金色，**并列第一不标**。
@@ -43,6 +43,22 @@
 - `table` 块交给 `DataTable`：表头用 sidebar 底色，数值列右对齐并用 `tabular-nums` 对齐位数，奇偶行交替换色；`highlight` 列为真的列会把该列最高值套上 `bg-brand-soft` 胶囊，列上有 `growthKey` 时该格会多渲染一行「＋成长值」（最高值转金色）。最高值只在该列唯一时才标，和游戏内表格「多於一人時不會標示」一致。
 - 其余情况逐块渲染：`section`（`#`/`*` 大标题）、`heading`、段落、提示条各自成段。
 
+## 攻略 ⇄ CG 映射
+
+两张手写表是唯一事实来源，改映射只改这两张，再重跑对应脚本：
+
+| 表 | 用途 | 格式 |
+| --- | --- | --- |
+| `sources/cg-links.tsv` | 一对一：事件 → 它出的那张（或那几张）CG | `节点id <TAB> 事件号 <TAB> cgId[,cgId] <TAB> 章节?` |
+| `sources/cg-node-links.tsv` | 多对一：多张 CG 共用一个事件，或只能整页落点 | `cgId <TAB> 节点id <TAB> 备注 <TAB> 事件号? <TAB> 章节?` |
+
+- **章节列必须写「最内层」heading**，`☆d2` 子标题（「拒绝」「在巴黎」「同志传闻」）也算一层。同一编号在一页里出现两次时不写章节会报 `ambiguous event`，写错报 `no such event … @ 章节`，整条映射让生成直接失败，不会静默断链。
+- `extract_guide.py` 的 `apply_cg_links()` 给命中事件的块补 `cgIds` 与 `anchor="ev<块下标>"`；事件卡的 DOM id 用 `head.anchor ?? ev<index>` 兜底，所以任何事件都能被 `#/guide/<nodeId>~ev<n>` 深链，哪怕它没有 CG。
+- `extract_cg.py` 的 `apply_node_links()` 处理多对一：有事件号就现算 `ev<块下标>`（美丽之星写真集 18 张都锚 #14），没有就只写整页落点。两份结果分别落在 `guide.json` 的块上和 `cg.json` 的 `item.guide`。
+- 前端 `CgApp.linkFor()` 先认事件级（`cgIds` 反查），再认页面级；多个候选落点时**优先 `other-events/luousang/` 前缀**——三人恋情事件在各自艺人页只做浏览，跳转与收集统一走剧情整理。`src/lib/cgOrigin.ts` 另外记住「从哪条事件点进图鉴的」（sessionStorage，不进存档），同一张图有多处出处时按原路返回。
+- 允许的重复：同一张 CG 出现在同节点的两个事件（苏嫚君 CG05 圣诞布置，育幼院 #40 与达成结局 #55 各一次），以及 `other-events/luousang/` 五个分支页之间（同一段剧情写了五遍）。跨节点重复会被 `test_cg_links.py` 拦下，除非登记进 `DUPLICATED_ACROSS_NODES`。
+- 事件池里被挡掉的重复章节由 `src/lib/tracker.ts` 的 `POOL_SKIP` 按「节点 id + 章节名」配置（路风 / 桑禾蓓的整个「事件」节、欧怡青的「路欧恋」章）；**被挡的线仍递增序号**，其余线的 id 不位移，老存档才不会失联。
+
 ## 锚点跳转
 
 攻略正文里带 `id` 的标题块可以在页内跳转，`target` 指向目标块的 `id`：
@@ -65,7 +81,7 @@
 
 - 拖拽落点是目标行的上半 / 下半，分别表示「插入到它之前 / 之后」，落点处显示一条玫瑰色插入线，被拖的行变淡。
 - 顺序存在 `localStorage`（`guide.tree-order.v1`），只记录**真正动过的层级**（父级 id → 子 id 列表）。重新生成 `guide.json` 时，未动过的层级不受影响；列表里已不存在的 id 会被忽略，新增条目回落到该层级末尾。
-- 只改顺序不改数据：页头的四个分类 tab、搜索命中的排列、「上一条 / 下一条」都按新顺序走。URL 里仍是稳定的节点 id，重排不会让链接失效。
+- 只改顺序不改数据：页头的五个分类 tab、搜索命中的排列、「上一条 / 下一条」都按新顺序走。URL 里仍是稳定的节点 id，重排不会让链接失效。
 - 侧栏标题右侧出现「恢复默认」时表示顺序已被改过，点一下即回到脚本生成的顺序（同时清掉本地记录）。
 - 键盘可用 `Alt+↑` / `Alt+↓` 把焦点所在的条目上移 / 下移一位。触摸屏不支持 HTML5 拖拽，此时每行右侧显示 `↑` `↓` 两个按钮（`touch:` 变体，`pointer: coarse`）。
 
@@ -83,8 +99,9 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（29 项）+ 通告数据（13 项） |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项），共 52 项 |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
+| `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 
 **解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
 
@@ -118,18 +135,26 @@ node scripts/cdp_tracker_memo.mjs
 ```
 public/data/guide.json       生成的结构化攻略数据（运行时加载）
 public/data/notices.json     生成的通告数据（进入通告 tab 才加载）
+public/data/cg.json          生成的 CG 图鉴数据（含 CG → 攻略落点）
+public/images/cg/*.webp      压缩后的 CG 图片（进仓库）
 sources/*.txt                补充攻略的纯文本来源（UTF-8，可重跑）
 sources/notices/*.xls|xlsx   通告原始表格（重生成数据的输入）
+sources/cg-links.tsv         事件 → CG 的一对一映射（手写）
+sources/cg-node-links.tsv    CG → 事件 / 页面的多对一映射（手写）
 scripts/extract_guide.py     docx + sources → guide.json（零第三方依赖）
 scripts/extract_notices.py   表格 → notices.json（需 openpyxl / xlrd）
+scripts/extract_cg.py        CG 素材 → cg.json + webp（需 Pillow）
 scripts/test_extract.py      攻略解析回归测试
 scripts/test_notices.py      通告数据回归测试
+scripts/test_cg_links.py     事件 → CG 映射回归测试
+scripts/test_cg_node_links.py  CG → 事件 / 页面映射回归测试
 scripts/cdp_*.mjs            浏览器端到端验证脚本
 src/components/              攻略阅读页组件
 src/components/notices/      通告库（筛选、详情、能力对照）
 src/components/tracker/      事件追踪器
+src/components/cg/           CG 图鉴
 src/hooks/                   数据加载、选中态、进度存储、锚点跳转
-src/lib/                     纯逻辑：内容解析、统计、排序、筛选、存档
+src/lib/                     纯逻辑：内容解析、统计、排序、筛选、存档、CG 反向索引
 ```
 
 ## 提交约定
