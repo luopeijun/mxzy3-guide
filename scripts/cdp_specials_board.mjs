@@ -4,7 +4,7 @@ import http from 'node:http';
    1) 第 5 个 tab / 六张三列两行卡 / 默认全灰 / 旗下名单读事件追踪器
    2) 卡级指派 → 勾选即达标（属性/资源是清单勾选，数字只是可选 peek）
    3) 通告要求默认折叠，展开才看到属性/证书门槛
-   4) 共享条目一处改动多卡同步（证书 / 4000 万），且只标在真正共用的状态上
+   4) 共享条目一处改动多卡同步（证书），且只标在真正共用的状态上
    5) 昆仑三个角色位分别判定
    6) 银河团体锁定与解散重组
    7) 时间线备注零状态、只跳事件追踪器
@@ -40,7 +40,6 @@ const GALAXY = 'galaxy';
 const KUNLUN = 'kunlun-adventure';
 const DOOM = 'doomsday-warrior';
 const MUSIC_KEY = `cert:${LIN}:音乐证书`;
-const FUND_KEY = 'resource:大型演唱会需 4000 万';
 
 const failures = [];
 let checksTotal = 0;
@@ -179,7 +178,7 @@ async function main() {
   let list = JSON.parse(await cards());
   const angel = list.find((c) => c.id === ANGEL);
   check(angel.enabled === 'yes' && angel.rows > 0, '天使卡展开可见条件行', `${angel.rows} 条（通告要求默认折叠）`);
-  check(angel.progress.startsWith('0 / 21'), '达标数分母＝全部条件行数（含折叠的）', angel.progress);
+  check(angel.progress.startsWith('0 / 20'), '达标数分母＝全部条件行数（含折叠的）', angel.progress);
   check(await evaluate(`!document.querySelector('[data-notice-card][data-notice-id="${ANGEL}"] [data-notice-phase-toggle][aria-expanded="true"]')`),
     '通告要求阶段默认折叠');
   check(await evaluate(`!document.querySelector('[data-condition-row][data-row-id="angel.stat.singing"]')`),
@@ -203,7 +202,7 @@ async function main() {
   info = JSON.parse(await rowInfo('angel.stat.singing'));
   check(info.met === 'yes', '勾选后该行达标');
   list = JSON.parse(await cards());
-  check(list.find((c) => c.id === ANGEL).progress.startsWith('1 / 21'), '勾选 1 条后进度推进', list.find((c) => c.id === ANGEL).progress);
+  check(list.find((c) => c.id === ANGEL).progress.startsWith('1 / 20'), '勾选 1 条后进度推进', list.find((c) => c.id === ANGEL).progress);
   check(await click('[data-hide-done]') === 'ok', '「收起已完成」开关可点');
   await sleep(400);
   check(await evaluate(`!document.querySelector('[data-condition-row][data-row-id="angel.stat.singing"]')`),
@@ -211,7 +210,7 @@ async function main() {
   await click('[data-hide-done]');
   await sleep(300);
 
-  // ---------- 3. Shared state across cards (cert / fund) ----------
+  // ---------- 3. Shared certificate across cards (one cert, many cards) ----------
   await setup({
     enabled: [ANGEL, ETERNAL, GALAXY],
     assignments: {
@@ -227,22 +226,6 @@ async function main() {
   await sleep(400);
   const sharedAfter = JSON.parse(await rowInfo('eternal.cert.music'));
   check(sharedAfter.met === 'yes', '万年之恋的音乐证书同步亮（底层一份状态）');
-  // 4000 万是三张卡共用的公司资金：同一份数值，三张卡都读它。
-  const fundCards = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-condition-row][data-row-id$="fund4000"]')]
-    .map(r => r.closest('[data-notice-card]').getAttribute('data-notice-id')))`);
-  const fundIds = JSON.parse(fundCards);
-  check(fundIds.length === 3 && new Set(fundIds).size === 3, '4000 万被三张通告引用且共用同一个键', fundIds.join(','));
-  // Open each fund row's optional peek, then enter 4000 once on the 天使 card.
-  await expandRowPeek('angel.fund4000');
-  await expandRowPeek('eternal.fund4000');
-  await expandRowPeek('galaxy.fund4000');
-  check(await setNumber(`[data-notice-card][data-notice-id="${ANGEL}"] [data-part-number][data-part-key="${FUND_KEY}"]`, 4000) === 'ok',
-    '在天使卡填公司资金');
-  await sleep(400);
-  const fundVal = await evaluate(`(() => { const s = JSON.parse(localStorage.getItem('guide.specials.v1')); return s.values[${JSON.stringify(FUND_KEY)}]; })()`);
-  check(fundVal === 4000, '4000 万只存一份（三张卡读同一份数值）', String(fundVal));
-  const fundKeys = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-condition-row][data-row-id$="fund4000"] [data-part-number]')].map(i => i.getAttribute('data-part-key')))`);
-  check(JSON.parse(fundKeys).every((k) => k === FUND_KEY), '三张卡的 4000 万读同一份数值键', JSON.parse(fundKeys).join(','));
   check(await evaluate(`document.querySelectorAll('[data-shared-badge]').length > 0`), '共享小徽标出现在条件行');
 
   // ---------- 4. Cert gaps are read-only, no course-edit controls ----------
@@ -258,6 +241,24 @@ async function main() {
   await expandRowPeek('angel.cert.music');
   check(await evaluate(`!!document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-cert-gaps]')`),
     '证书行显示缺口文字（读属性/课程，展开 ▸ 后）');
+
+  // ---------- 4b. Course grades: click a chip to advance the level ----------
+  const courseChip = await evaluate(`(() => {
+    const row = document.querySelector('[data-condition-row][data-row-id="angel.cert.music"]');
+    const c = row && row.querySelector('[data-course-chip]');
+    return c ? JSON.stringify({ course: c.getAttribute('data-course'), artist: c.getAttribute('data-artist') }) : null;
+  })()`);
+  check(!!courseChip, '证书行展开后显示课程等级 chip');
+  if (courseChip) {
+    await click(`[data-condition-row][data-row-id="angel.cert.music"] [data-course-chip]`);
+    await sleep(300);
+    const courseState = await evaluate(`(() => {
+      const c = JSON.parse(${JSON.stringify(courseChip)});
+      const s = JSON.parse(localStorage.getItem('guide.specials.v1'));
+      return s.courses[c.artist]?.[c.course] ?? '未上';
+    })()`);
+    check(courseState === '初级', '点一下课程 chip 升到 初级', courseState);
+  }
 
   // ---------- 5. 昆仑 three role slots ----------
   await setup({

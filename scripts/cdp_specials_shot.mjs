@@ -61,11 +61,12 @@ async function main() {
     await new Promise((r) => setTimeout(r, 3200));
   }
 
-  // Expand every notice's collapsed 「通告要求」 phase so the compact single
-  // lines are visible in the shot (peek stays collapsed).
+  // Expand every notice's collapsed 「通告要求」 phase, then every row's
+  // ▸ peek so the course-grade chips (and optional numbers) are visible.
   await send('Runtime.evaluate', {
     expression: `(() => {
       document.querySelectorAll('[data-notice-phase-toggle][aria-expanded="false"]').forEach((t) => t.click());
+      document.querySelectorAll('[data-peek-toggle][aria-expanded="false"]').forEach((t) => t.click());
       return document.querySelectorAll('[data-notice-phase-toggle][aria-expanded="true"]').length;
     })()`,
   });

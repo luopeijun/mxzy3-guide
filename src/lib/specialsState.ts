@@ -176,26 +176,37 @@ export function certsForArtist(
   return [...found];
 }
 
-/** Attribute + course gaps behind one certificate. Purely informational: a
- *  certificate still needs its own 「已取得」 tick because studying abroad and
- *  the weekend the diploma arrives are not numeric conditions. */
-export function certGaps(cert: string, artistId: string, state: SpecialsState): string[] {
-  const gaps: string[] = [];
+/** Behind one certificate: which attributes are still short (a read-only hint),
+ *  and the full list of courses it needs with the grade currently reached.
+ *  Courses are always listed so the user can track "上到哪个等级了"; attributes
+ *  are shown only when they fall short, since numeric thresholds are not the
+ *  board's focus. A certificate still needs its own 「已取得」 tick. */
+export interface CertGap {
+  course: string;
+  required: CourseLevel;
+  current: CourseLevel;
+}
+
+export function certGaps(
+  cert: string,
+  artistId: string,
+  state: SpecialsState,
+): { attrs: string[]; courseList: CertGap[] } {
+  const attrs: string[] = [];
+  const courseList: CertGap[] = [];
   const requirement = CERT_REQUIREMENTS.find((row) => row.cert === cert);
   if (requirement) {
     for (const { name, min } of requirement.attrs) {
       const value = state.stats[artistId]?.[name];
-      if (value === undefined) gaps.push(`${name} 未录入`);
-      else if (value < min) gaps.push(`${name} 差 ${min - value}`);
+      if (value === undefined) attrs.push(`${name} 未录入`);
+      else if (value < min) attrs.push(`${name} 差 ${min - value}`);
     }
   }
   for (const course of COURSE_REQUIREMENTS.filter((row) => row.cert === cert)) {
-    const grade = state.courses[artistId]?.[course.name] ?? '未上';
-    if (COURSE_LEVELS.indexOf(grade) < COURSE_LEVELS.indexOf(course.level)) {
-      gaps.push(`${course.name} 未到${course.level}（${grade}）`);
-    }
+    const grade = (state.courses[artistId]?.[course.name] ?? '未上') as CourseLevel;
+    courseList.push({ course: course.name, required: course.level, current: grade });
   }
-  return gaps;
+  return { attrs, courseList };
 }
 
 export function certKey(cert: string, artistId: string): string {
@@ -217,6 +228,8 @@ export interface EvalPart {
    *  candidate-pool artists they are ORed. */
   ownerId?: string;
   gaps?: string[];
+  /** All courses this certificate needs, each with the grade reached so far. */
+  courseList?: CertGap[];
 }
 
 export interface RowEval {
@@ -328,7 +341,10 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): RowEval {
       for (const cert of certs) {
         const key = certKey(cert, artistId);
         const held = (state.values[key] ?? 0) >= 1;
-        const gaps = certGaps(cert, artistId, state);
+        const { attrs, courseList } = certGaps(cert, artistId, state);
+        const unmetCourses = courseList.filter(
+          (item) => COURSE_LEVELS.indexOf(item.current) < COURSE_LEVELS.indexOf(item.required),
+        ).length;
         const roleName = row.slot.startsWith('role:') ? row.slot.slice(5) : null;
         parts.push({
           key,
@@ -336,10 +352,11 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): RowEval {
           ownerId: artistId,
           input: 'check',
           met: held,
-          detail: held ? '已取得' : gaps.length ? `还差 ${gaps.length} 项` : '属性课程已凑齐 · 待取证',
+          detail: held ? '已取得' : attrs.length || unmetCourses ? `还差 ${attrs.length + unmetCourses} 项` : '属性课程已凑齐 · 待取证',
           value: state.values[key] ?? 0,
           target: 1,
-          gaps,
+          gaps: attrs,
+          courseList,
         });
       }
     }

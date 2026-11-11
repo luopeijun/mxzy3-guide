@@ -59,9 +59,9 @@ export default function SpecialsApp({ data, guide }: Props) {
             <div className="min-w-0 flex-1">
               <h1 className="text-ui-xl font-bold text-brand-strong">六大通告 · 规划与追踪</h1>
               <p className="mt-1 text-ui-xs text-ink-muted">
-                先选人、派通告，再逐个勾掉要准备的东西：道具、证书、属性、计数凑齐了没。
-                属性/证书门槛默认收起，想看「还差多少」点开填数值即可，不必开局先录一整张表。
-                事件的时间与步骤在<a href="#/tracker" className="text-brand hover:underline">事件追踪器</a>里跟，这里不重复打勾。
+                先选人、派通告，再逐个确认：道具、证书、计数凑齐了没。
+                证书这一行点开就能勾「已取得」，并逐门点出课程等级（未上 → 初级 → … → 专业）。
+                属性门槛默认收起、只是参考、不强制填；事件的时间与步骤在<a href="#/tracker" className="text-brand hover:underline">事件追踪器</a>里跟，这里不重复打勾。
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -163,6 +163,7 @@ export default function SpecialsApp({ data, guide }: Props) {
                 onValue={board.setValue}
                 onDone={board.toggleDone}
                 onStat={board.setStat}
+                onCourse={board.cycleCourse}
               />
             ))}
           </div>

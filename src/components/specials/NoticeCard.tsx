@@ -29,6 +29,7 @@ interface Props {
   onValue: (key: string, value: number) => void;
   onDone: (rowId: string) => void;
   onStat: (artistId: string, attr: string, value: number | null) => void;
+  onCourse: (artistId: string, course: string) => void;
 }
 
 const PHASES = [
@@ -45,7 +46,7 @@ function titleOf(artists: ArtistOption[], id: string): string {
  *  read-only timeline index. Six of these make the 3×2 board. */
 export default function NoticeCard({
   notice, rows, notes, artists, roster, state, hideDone,
-  onToggleEnabled, onAssign, onUnassign, onSetGroupLocked, onCheck, onBump, onValue, onDone, onStat,
+  onToggleEnabled, onAssign, onUnassign, onSetGroupLocked, onCheck, onBump, onValue, onDone, onStat, onCourse,
 }: Props) {
   const [showNotes, setShowNotes] = useState(false);
   const [showNotice, setShowNotice] = useState(false);
@@ -227,6 +228,7 @@ export default function NoticeCard({
                             onValue={onValue}
                             onDone={onDone}
                             onStat={onStat}
+                            onCourse={onCourse}
                           />
                         ))}
                         {hideDone && !visible.length && (
@@ -257,6 +259,7 @@ export default function NoticeCard({
                         onValue={onValue}
                         onDone={onDone}
                         onStat={onStat}
+                        onCourse={onCourse}
                       />
                     ))}
                     {hidden > 0 && (

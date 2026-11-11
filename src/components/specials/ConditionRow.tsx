@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { RowEval, EvalPart } from '../../lib/specialsState';
+import { COURSE_LEVELS } from '../../lib/specials';
 import { cn } from '../../lib/cn';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
   onValue: (key: string, value: number) => void;
   onDone: (rowId: string) => void;
   onStat: (artistId: string, attr: string, value: number | null) => void;
+  onCourse: (artistId: string, course: string) => void;
 }
 
 function statKeyParts(key: string): { artistId: string; attr: string } | null {
@@ -151,12 +153,12 @@ function PartControl({
  *  - stat / resource rows are a plain checklist tick; numbers are an optional,
  *    expandable peek. Certificate gaps show a one-line "还差 N 项" and the full
  *    breakdown stays behind the ▸ toggle. No red "差 80" wall, no forced entry. */
-export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, onStat }: Props) {
+export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, onStat, onCourse }: Props) {
   const { row, parts, met, shared, ownerLabel, doneEligible } = item;
   const [expanded, setExpanded] = useState(false);
   const showLabel = row.type === 'cert' || parts.length > 1;
   const numberPeek = doneEligible && parts.some((part) => part.input === 'number');
-  const gapPeek = !doneEligible && parts.some((part) => part.gaps?.length);
+  const gapPeek = !doneEligible && parts.some((part) => part.gaps?.length || part.courseList?.length);
   const showOwner = !!ownerLabel && ownerLabel !== '按艺人';
 
   const line = (children: React.ReactNode) => (
@@ -314,16 +316,44 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
         </>,
       )}
       {expanded && gapPeek && (
-        <div className="mt-1 space-y-0.5 pl-6" data-peek-list>
-          {parts.filter((part) => part.gaps?.length).map((part) => (
-            <div
-              key={part.key}
-              data-cert-gaps
-              title={`${part.label}：${part.gaps?.join(' · ')}`}
-              className="truncate text-ui-2xs leading-[1.5] text-ink-faint"
-            >
-              <span className="font-semibold text-ink-muted">{part.label}：</span>
-              {part.gaps?.join(' · ')}
+        <div className="mt-1 space-y-1 pl-6" data-peek-list>
+          {parts.filter((part) => part.courseList?.length || part.gaps?.length).map((part) => (
+            <div key={part.key} className="space-y-0.5">
+              {part.courseList?.length ? (
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="text-ui-2xs text-ink-faint">课程</span>
+                  {part.courseList.map((cg) => {
+                    const met = COURSE_LEVELS.indexOf(cg.current) >= COURSE_LEVELS.indexOf(cg.required);
+                    return (
+                      <button
+                        key={cg.course}
+                        type="button"
+                        data-course-chip
+                        data-course={cg.course}
+                        data-artist={part.ownerId}
+                        onClick={() => onCourse(part.ownerId ?? '', cg.course)}
+                        title={`要求 ${cg.required} · 点一下升一级`}
+                        className={cn(
+                          'rounded-full px-1.5 py-0.5 text-ui-2xs',
+                          met ? 'bg-growth-soft font-semibold text-growth-strong' : 'bg-surface text-ink-faint ring-1 ring-line-strong',
+                        )}
+                      >
+                        {cg.course} {cg.current}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+              {part.gaps?.length ? (
+                <div
+                  data-cert-gaps
+                  title={`${part.label}：${part.gaps.join(' · ')}`}
+                  className="truncate text-ui-2xs leading-[1.5] text-ink-faint"
+                >
+                  <span className="font-semibold text-ink-muted">属性缺口：</span>
+                  {part.gaps.join(' · ')}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
