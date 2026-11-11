@@ -1,14 +1,15 @@
 import http from 'node:http';
 
-/* 六大通告条件看板回归：
+/* 六大通告规划与追踪看板回归（瘦身版：纯清单 + 可选差额）：
    1) 第 5 个 tab / 六张三列两行卡 / 默认全灰 / 旗下名单读事件追踪器
-   2) 卡级指派 + 属性数字 → 差额自动算
-   3) 共享条目一处改动多卡同步（证书 / 4000 万）
-   4) 按需课程（只列挂了通告的证书）/ 等级循环 / 证书缺口 / 面板与卡同步
+   2) 卡级指派 → 勾选即达标（属性/资源是清单勾选，数字只是可选 peek）
+   3) 通告要求默认折叠，展开才看到属性/证书门槛
+   4) 共享条目一处改动多卡同步（证书 / 4000 万），且只标在真正共用的状态上
    5) 昆仑三个角色位分别判定
    6) 银河团体锁定与解散重组
    7) 时间线备注零状态、只跳事件追踪器
-   8) 存档持久化、刷新不丢、清空需二次确认
+   8) 候选池：任一位候选人齐证即可
+   9) 存档持久化、刷新不丢、清空需二次确认
    Usage: node cdp_specials_board.mjs */
 
 const url = 'http://localhost:5173/#/specials';
@@ -55,7 +56,7 @@ const seedTracker = (artists = [LIN, XIAO, SU, TIAN]) =>
   }))}); 1`;
 const seedSpecials = (state) =>
   `localStorage.setItem('guide.specials.v1', ${JSON.stringify(JSON.stringify({
-    version: 1, enabled: [], assignments: {}, stats: {}, courses: {}, values: {}, groupLocked: {}, ...state,
+    version: 1, enabled: [], assignments: {}, done: [], stats: {}, courses: {}, values: {}, groupLocked: {}, ...state,
   }))}); 1`;
 const clearSaves = `localStorage.removeItem('guide.specials.v1'); localStorage.removeItem('guide.progress.v1'); 1`;
 
@@ -108,12 +109,31 @@ async function main() {
     if (!el) return '{"missing":true}';
     return JSON.stringify({
       met: el.getAttribute('data-row-met'),
+      doneEligible: !!el.querySelector('[data-done-toggle]'),
       shared: el.getAttribute('data-row-shared'),
       owner: el.querySelector('[data-owner-label]')?.textContent ?? '',
       text: el.textContent.replace(/\\s+/g, ' ').trim(),
       keys: [...new Set([...el.querySelectorAll('[data-part-key]')].map(x => x.getAttribute('data-part-key')))],
     });
   })()`);
+  const expandNotice = async (noticeId) => {
+    const collapsed = await evaluate(`(() => {
+      const t = document.querySelector('[data-notice-card][data-notice-id="${noticeId}"] [data-notice-phase-toggle]');
+      if (!t || t.getAttribute('aria-expanded') === 'true') return false;
+      t.click(); return true;
+    })()`);
+    if (collapsed) await sleep(400);
+  };
+  // A doneEligible (stat / resource) row keeps its number behind a per-row
+  // "▸ 数值" peek. Open it so the optional number input / part keys are in DOM.
+  const expandRowPeek = async (rowId) => {
+    const opened = await evaluate(`(() => {
+      const t = document.querySelector('[data-condition-row][data-row-id="${rowId}"] [data-peek-toggle]');
+      if (!t || t.getAttribute('aria-expanded') === 'true') return false;
+      t.click(); return true;
+    })()`);
+    if (opened) await sleep(300);
+  };
   const click = (selector) => evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return 'missing'; el.click(); return 'ok'; })()`);
   const assign = (noticeId, slot, artistId) => evaluate(`(() => {
     const sel = document.querySelector('[data-notice-card][data-notice-id="${noticeId}"] [data-assign-select][data-slot="${slot}"]');
@@ -129,6 +149,9 @@ async function main() {
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
     setter.call(el, String(${Number(value)}));
     el.dispatchEvent(new Event('input', { bubbles: true }));
+    // React 19 maps onBlur to the bubbling focusout event, so a native blur()
+    // would NOT trigger the handler — dispatch focusout so the value persists.
+    el.dispatchEvent(new Event('focusout', { bubbles: true }));
     return 'ok';
   })()`);
   const stored = () => evaluate(`localStorage.getItem('guide.specials.v1')`);
@@ -148,43 +171,47 @@ async function main() {
   check(await evaluate(`!!document.querySelector('[data-global-note]')`), '周目前提作为只读索引放在顶部');
   check(await evaluate(`document.querySelector('[data-board-progress]').getAttribute('data-total')`) === '0',
     '未启用时不进统计');
+  check(await evaluate(`!document.querySelector('[data-artist-panel]')`), '已删除全局「艺人状态录入」面板（不再反复录入）');
 
-  // ---------- 2. Enable, assign, attribute deltas ----------
+  // ---------- 2. Enable, assign, checklist ticking; numbers are optional ----------
   check(await click(`[data-notice-enable][data-notice-id="${ANGEL}"]`) === 'ok', '勾「本次做」可启用通告');
   await sleep(400);
   let list = JSON.parse(await cards());
   const angel = list.find((c) => c.id === ANGEL);
-  check(angel.enabled === 'yes' && angel.rows === 21, '天使卡展开 21 条条件行', `${angel.rows} 条`);
-  check(angel.progress.startsWith('0 / 21'), '达标数分母＝条件行数', angel.progress);
+  check(angel.enabled === 'yes' && angel.rows > 0, '天使卡展开可见条件行', `${angel.rows} 条（通告要求默认折叠）`);
+  check(angel.progress.startsWith('0 / 21'), '达标数分母＝全部条件行数（含折叠的）', angel.progress);
+  check(await evaluate(`!document.querySelector('[data-notice-card][data-notice-id="${ANGEL}"] [data-notice-phase-toggle][aria-expanded="true"]')`),
+    '通告要求阶段默认折叠');
+  check(await evaluate(`!document.querySelector('[data-condition-row][data-row-id="angel.stat.singing"]')`),
+    '折叠时属性行不在 DOM 里');
   check(await assign(ANGEL, 'main', LIN) === 'ok', '卡头可指派艺人');
   await sleep(400);
+  await expandNotice(ANGEL);
   let info = JSON.parse(await rowInfo('angel.stat.singing'));
   check(!info.missing && (info.owner ?? '').includes('林芬芬'), '属性行的归属跟着卡级指派变', info.owner);
-  check(await setNumber(`[data-stat-input][data-stat-key="歌艺"]`, 620) === 'ok', '属性面板可填数字');
+  check(info.doneEligible === true, '属性行可作为清单勾选（doneEligible）');
+  // Numbers do NOT gate the checklist: open the row's optional peek, fill 630
+  // but leave it unticked.
+  await expandRowPeek('angel.stat.singing');
+  check(await setNumber(`[data-stat-input][data-part-key="stat:${LIN}:歌艺"]`, 630) === 'ok', '可填属性数字（可选 peek）');
   await sleep(400);
   info = JSON.parse(await rowInfo('angel.stat.singing'));
-  check(info.met === 'no' && info.text.includes('差 10'), '填 620 时显示「歌艺 差 10」', info.text);
-  await setNumber(`[data-stat-input][data-stat-key="歌艺"]`, 630);
+  check(info.met === 'no', '只填数字、不勾选 → 仍「未达标」（数字不自动gate）');
+  // Tick the checklist → met.
+  check(await click(`[data-done-toggle][data-row-id="angel.stat.singing"]`) === 'ok', '点勾选使该行达标');
   await sleep(400);
   info = JSON.parse(await rowInfo('angel.stat.singing'));
-  check(info.met === 'yes', '填到区间下限 630 即达标');
-  await setNumber(`[data-stat-input][data-stat-key="人气"]`, 3);
-  await sleep(300);
-  const charity = JSON.parse(await rowInfo('angel.charityStats'));
-  check(charity.keys.length === 3, '多属性条件拆成三项分别判定', charity.keys.join(','));
-  check(charity.met === 'no', '三项属性只满足两项时不算达标（不是任一项即可）');
-  await setNumber(`[data-stat-input][data-stat-key="仪态"]`, 300);
-  await sleep(350);
-  check((JSON.parse(await rowInfo('angel.charityStats'))).met === 'yes',
-    '歌艺/仪态/人气三项齐了才达标');
+  check(info.met === 'yes', '勾选后该行达标');
+  list = JSON.parse(await cards());
+  check(list.find((c) => c.id === ANGEL).progress.startsWith('1 / 21'), '勾选 1 条后进度推进', list.find((c) => c.id === ANGEL).progress);
   check(await click('[data-hide-done]') === 'ok', '「收起已完成」开关可点');
   await sleep(400);
   check(await evaluate(`!document.querySelector('[data-condition-row][data-row-id="angel.stat.singing"]')`),
-    '收起后已达标行隐藏');
+    '收起后已勾选行隐藏');
   await click('[data-hide-done]');
   await sleep(300);
 
-  // ---------- 3. Shared state across cards ----------
+  // ---------- 3. Shared state across cards (cert / fund) ----------
   await setup({
     enabled: [ANGEL, ETERNAL, GALAXY],
     assignments: {
@@ -200,66 +227,36 @@ async function main() {
   await sleep(400);
   const sharedAfter = JSON.parse(await rowInfo('eternal.cert.music'));
   check(sharedAfter.met === 'yes', '万年之恋的音乐证书同步亮（底层一份状态）');
-  const fundRows = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-condition-row]')]
-    .filter(r => [...r.querySelectorAll('[data-part-key]')].some(p => p.getAttribute('data-part-key') === ${JSON.stringify(FUND_KEY)}))
+  // 4000 万是三张卡共用的公司资金：同一份数值，三张卡都读它。
+  const fundCards = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-condition-row][data-row-id$="fund4000"]')]
     .map(r => r.closest('[data-notice-card]').getAttribute('data-notice-id')))`);
-  const fundIds = JSON.parse(fundRows);
-  check(fundIds.length === 3, '4000 万被三张通告引用且共用同一个键', fundIds.join(','));
+  const fundIds = JSON.parse(fundCards);
+  check(fundIds.length === 3 && new Set(fundIds).size === 3, '4000 万被三张通告引用且共用同一个键', fundIds.join(','));
+  // Open each fund row's optional peek, then enter 4000 once on the 天使 card.
+  await expandRowPeek('angel.fund4000');
+  await expandRowPeek('eternal.fund4000');
+  await expandRowPeek('galaxy.fund4000');
   check(await setNumber(`[data-notice-card][data-notice-id="${ANGEL}"] [data-part-number][data-part-key="${FUND_KEY}"]`, 4000) === 'ok',
     '在天使卡填公司资金');
   await sleep(400);
-  const fundMet = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-condition-row]')]
-    .filter(r => [...r.querySelectorAll('[data-part-key]')].some(p => p.getAttribute('data-part-key') === ${JSON.stringify(FUND_KEY)}))
-    .map(r => r.getAttribute('data-row-met')))`);
-  check(JSON.parse(fundMet).every((x) => x === 'yes'), '输入一次 4000，三张卡同时达标', JSON.parse(fundMet).join(','));
+  const fundVal = await evaluate(`(() => { const s = JSON.parse(localStorage.getItem('guide.specials.v1')); return s.values[${JSON.stringify(FUND_KEY)}]; })()`);
+  check(fundVal === 4000, '4000 万只存一份（三张卡读同一份数值）', String(fundVal));
+  const fundKeys = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-condition-row][data-row-id$="fund4000"] [data-part-number]')].map(i => i.getAttribute('data-part-key')))`);
+  check(JSON.parse(fundKeys).every((k) => k === FUND_KEY), '三张卡的 4000 万读同一份数值键', JSON.parse(fundKeys).join(','));
   check(await evaluate(`document.querySelectorAll('[data-shared-badge]').length > 0`), '共享小徽标出现在条件行');
 
-  // ---------- 4. On-demand courses ----------
+  // ---------- 4. Cert gaps are read-only, no course-edit controls ----------
   await setup({
-    enabled: [ANGEL, ETERNAL, DOOM],
-    assignments: {
-      [ANGEL]: { main: [LIN] }, [ETERNAL]: { main: [LIN] }, [DOOM]: { main: [YAO] },
-    },
-  }, [LIN, XIAO, SU, YAO]);
-  const courseCount = () => evaluate(`(() => ({
-    visible: document.querySelectorAll('[data-course-button]').length,
-    needed: document.querySelectorAll('[data-course-button][data-course-needed="yes"]').length,
-    names: [...document.querySelectorAll('[data-course-button]')].map(b => b.getAttribute('data-course')),
-  }))()`);
-  let courses = await courseCount();
-  check(courses.visible === 4 && courses.needed === 4,
-    '林芬芬挂天使+万年 → 只列音乐证书 4 门课', courses.names.join(','));
-  check(await click(`[data-artist-tab][data-artist-id="${YAO}"]`) === 'ok', '面板可切到另一位旗下艺人');
-  await sleep(400);
-  courses = await courseCount();
-  check(courses.visible === 3 && courses.names.includes('声音表情'),
-    '姚子奇挂末日战士 → 只列戏剧证书 3 门课', courses.names.join(','));
-  await click(`[data-artist-tab][data-artist-id="${SU}"]`);
-  await sleep(400);
-  courses = await courseCount();
-  check(courses.visible === 0, '没挂启用通告的艺人不出现任何课程');
-  check(await click('[data-show-all-courses]') === 'ok', '「显示全部 10 门」可展开');
-  await sleep(400);
-  courses = await courseCount();
-  check(courses.visible === 10 && courses.needed === 0,
-    '展开后 10 门全在、本轮用不到的标灰', `${courses.visible}/${courses.needed}`);
-  await click('[data-show-all-courses]');
-  await click(`[data-artist-tab][data-artist-id="${LIN}"]`);
-  await sleep(400);
-  const gapBefore = await evaluate(`document.querySelector('[data-cert-block][data-cert="音乐证书"] [data-cert-gaps]')?.textContent ?? ''`);
-  for (let i = 0; i < 4; i += 1) {
-    await click(`[data-course-button][data-course="音感发声"]`);
-    await sleep(120);
-  }
-  const gapAfter = await evaluate(`document.querySelector('[data-cert-block][data-cert="音乐证书"] [data-cert-gaps]')?.textContent ?? ''`);
-  const level = await evaluate(`document.querySelector('[data-course-button][data-course="音感发声"]').getAttribute('data-course-level')`);
-  check(level === '专业', '点课程名 4 次循环到「专业」', level);
-  check(!gapAfter.includes('音感发声') && gapBefore.includes('音感发声'),
-    '课程到专业后证书缺口里该门消失', `${gapBefore} -> ${gapAfter}`);
-  check(await click(`[data-cert-check][data-cert="音乐证书"]`) === 'ok', '面板可勾「已取得」');
-  await sleep(400);
-  check((JSON.parse(await rowInfo('angel.cert.music'))).met === 'yes',
-    '面板勾证书后通告卡同一行同步亮');
+    enabled: [ANGEL],
+    assignments: { [ANGEL]: { main: [LIN] } },
+    done: ['angel.stat.singing'],
+  });
+  await expandNotice(ANGEL);
+  check(await evaluate(`!!document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-part-check]')`),
+    '证书行有「已取得」勾选控件');
+  check(await evaluate(`!document.querySelector('[data-course-button]')`), '证书缺口不再带可编辑课程控件（按需课程改为只读提示）');
+  check(await evaluate(`!!document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-cert-gaps]')`),
+    '证书行显示缺口文字（读属性/课程）');
 
   // ---------- 5. 昆仑 three role slots ----------
   await setup({
@@ -269,13 +266,15 @@ async function main() {
     },
   }, [LIN, XIAO, SU, YAO]);
   const roleSlots = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-notice-card][data-notice-id="${KUNLUN}"] [data-slot]')]
-    .filter(x => x.hasAttribute('data-slot') && x.querySelector('[data-assigned-artist]'))
+    .filter(x => x.querySelector('[data-assigned-artist]') || x.querySelector('[data-assign-select]'))
     .map(x => ({ slot: x.getAttribute('data-slot'), n: x.querySelectorAll('[data-assigned-artist]').length })))`);
   const roles = JSON.parse(roleSlots);
   check(roles.length === 3 && roles.every((r) => r.n === 1),
     '昆仑三个角色位各指派 1 人', JSON.stringify(roles));
+  await expandNotice(KUNLUN);
+  await expandRowPeek('kunlun.stat.acting');
   const kunlunStat = JSON.parse(await rowInfo('kunlun.stat.acting'));
-  check(kunlunStat.keys.length === 3, '昆仑属性行按三位分别判定（不是单一主艺人）', kunlunStat.keys.length + ' 项');
+  check(kunlunStat.keys.length === 3, '昆仑属性行按三位分别判定（不是单一主艺人）', `${kunlunStat.keys.length} 项`);
   const certKeys = await evaluate(`JSON.stringify(['kunlun.cert.male','kunlun.cert.f1','kunlun.cert.f2'].map(id => {
     const el = document.querySelector('[data-condition-row][data-row-id="' + id + '"]');
     return el ? [...new Set([...el.querySelectorAll('[data-part-key]')].map(x => x.getAttribute('data-part-key')))] : [];
@@ -310,7 +309,7 @@ async function main() {
     if (!box) return JSON.stringify({ rows: 0 });
     return JSON.stringify({
       rows: box.querySelectorAll('[data-note-row]').length,
-      controls: box.querySelectorAll('[data-part-check],[data-part-plus],[data-part-number]').length,
+      controls: box.querySelectorAll('[data-part-check],[data-part-plus],[data-part-number],[data-done-toggle]').length,
       hrefs: [...box.querySelectorAll('[data-note-link]')].map(a => a.getAttribute('href')),
     });
   })()`);
@@ -325,6 +324,7 @@ async function main() {
     enabled: [DOOM],
     assignments: { [DOOM]: { main: [YAO, SU] } },
   }, [LIN, XIAO, SU, YAO]);
+  await expandNotice(DOOM);
   const doomCert = JSON.parse(await rowInfo('doom.cert.drama'));
   check(doomCert.keys.length === 2 && doomCert.met === 'no',
     '候选池两人各自判定证书', doomCert.keys.join(','));
@@ -338,13 +338,15 @@ async function main() {
   await setup({
     enabled: [ANGEL],
     assignments: { [ANGEL]: { main: [LIN] } },
-    stats: { [LIN]: { 歌艺: 700 } },
+    done: ['angel.stat.singing'],
     values: { [MUSIC_KEY]: 1 },
   });
-  check((JSON.parse(await rowInfo('angel.stat.singing'))).met === 'yes', 'seed 的属性数字让条件行达标');
+  await expandNotice(ANGEL);
+  check((JSON.parse(await rowInfo('angel.stat.singing'))).met === 'yes', 'seed 的清单勾选让条件行达标');
   check((JSON.parse(await rowInfo('angel.cert.music'))).met === 'yes', 'seed 的证书勾选让条件行达标');
   await reload();
-  check((JSON.parse(await rowInfo('angel.stat.singing'))).met === 'yes', '刷新后属性数字保留');
+  await expandNotice(ANGEL);
+  check((JSON.parse(await rowInfo('angel.stat.singing'))).met === 'yes', '刷新后清单勾选保留');
   check(await evaluate(`document.querySelector('[data-notice-card][data-notice-id="${ANGEL}"] [data-assigned-artist]')?.getAttribute('data-artist-id')`) === LIN,
     '刷新后指派保留');
   const beforeReset = JSON.parse(await stored());
@@ -355,7 +357,7 @@ async function main() {
   check(await click('[data-reset]') === 'ok', '再点一次执行清空');
   await sleep(400);
   const afterReset = JSON.parse(await stored());
-  check(afterReset.enabled.length === 0 && Object.keys(afterReset.stats).length === 0,
+  check(afterReset.enabled.length === 0 && afterReset.done.length === 0,
     '二次确认后看板清空');
   const finalCards = JSON.parse(await cards());
   check(finalCards.every((c) => c.enabled === 'no'), '清空后六张卡回到灰态');
