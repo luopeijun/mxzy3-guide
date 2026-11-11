@@ -61,6 +61,16 @@ async function main() {
     await new Promise((r) => setTimeout(r, 3200));
   }
 
+  // Expand every notice's collapsed 「通告要求」 phase so the compact single
+  // lines are visible in the shot (peek stays collapsed).
+  await send('Runtime.evaluate', {
+    expression: `(() => {
+      document.querySelectorAll('[data-notice-phase-toggle][aria-expanded="false"]').forEach((t) => t.click());
+      return document.querySelectorAll('[data-notice-phase-toggle][aria-expanded="true"]').length;
+    })()`,
+  });
+  await new Promise((r) => setTimeout(r, 600));
+
   if (Number(scrollY) > 0) {
     await send('Runtime.evaluate', {
       expression: `(() => { const box = document.querySelector('[data-specials-app] > div'); if (box) box.scrollTop = ${Number(scrollY)}; return box ? box.scrollTop : -1; })()`,

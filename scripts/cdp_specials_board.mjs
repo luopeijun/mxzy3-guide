@@ -255,8 +255,9 @@ async function main() {
   check(await evaluate(`!!document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-part-check]')`),
     '证书行有「已取得」勾选控件');
   check(await evaluate(`!document.querySelector('[data-course-button]')`), '证书缺口不再带可编辑课程控件（按需课程改为只读提示）');
+  await expandRowPeek('angel.cert.music');
   check(await evaluate(`!!document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-cert-gaps]')`),
-    '证书行显示缺口文字（读属性/课程）');
+    '证书行显示缺口文字（读属性/课程，展开 ▸ 后）');
 
   // ---------- 5. 昆仑 three role slots ----------
   await setup({

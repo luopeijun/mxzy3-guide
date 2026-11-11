@@ -145,16 +145,25 @@ function PartControl({
   );
 }
 
-/** One condition row.
+/** One condition row — compact single line.
+ *  - The name + its status (tick / 已取得 / counter) are the primary signal.
+ *  - The owner is a tiny inline tag; the hint moves to a hover title.
  *  - stat / resource rows are a plain checklist tick; numbers are an optional,
- *    expandable peek (no red "差 80" wall, no forced entry).
- *  - cert / item / flag / count rows keep their own control.
- *  - Notes never reach here: they are pure index rows rendered by NoticeCard. */
+ *    expandable peek. Certificate gaps show a one-line "还差 N 项" and the full
+ *    breakdown stays behind the ▸ toggle. No red "差 80" wall, no forced entry. */
 export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, onStat }: Props) {
   const { row, parts, met, shared, ownerLabel, doneEligible } = item;
   const [expanded, setExpanded] = useState(false);
   const showLabel = row.type === 'cert' || parts.length > 1;
-  const hasPeek = doneEligible && parts.some((part) => part.input === 'number');
+  const numberPeek = doneEligible && parts.some((part) => part.input === 'number');
+  const gapPeek = !doneEligible && parts.some((part) => part.gaps?.length);
+  const showOwner = !!ownerLabel && ownerLabel !== '按艺人';
+
+  const line = (children: React.ReactNode) => (
+    <div className="flex items-center gap-2">
+      {children}
+    </div>
+  );
 
   if (doneEligible) {
     return (
@@ -165,61 +174,66 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
         data-row-shared={shared ? 'yes' : 'no'}
         data-row-scope={row.scope}
         className={cn(
-          'rounded-ui-sm border-l-2 px-2.5 py-1.5',
+          'rounded-ui-sm border-l-2 px-2.5 py-1',
           met ? 'border-growth bg-growth-soft/50' : 'border-line-strong bg-surface',
         )}
       >
-        <div className="flex items-start gap-1.5">
-          <input
-            type="checkbox"
-            data-done-toggle
-            data-row-id={row.id}
-            checked={met}
-            onChange={() => onDone(row.id)}
-            style={{ accentColor: 'var(--color-brand)' }}
-            className="mt-0.5 h-3.5 w-3.5 shrink-0"
-          />
-          <span className="min-w-0 flex-1 text-ui-xs leading-[1.5] text-ink">{row.name}</span>
-          {shared && (
+        {line(
+          <>
+            <input
+              type="checkbox"
+              data-done-toggle
+              data-row-id={row.id}
+              checked={met}
+              onChange={() => onDone(row.id)}
+              style={{ accentColor: 'var(--color-brand)' }}
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+            />
             <span
-              data-shared-badge
-              className="shrink-0 rounded-full bg-brand-soft px-1.5 text-ui-2xs text-brand-strong"
-              title="这一条在多张通告卡之间共用一份状态，改一处全部同步"
+              className="min-w-0 flex-1 truncate text-ui-xs leading-[1.4] text-ink"
+              title={row.hint && row.hint !== '-' ? row.hint : undefined}
             >
-              共享
+              {row.name}
             </span>
-          )}
-          {row.link && (
-            <a href={row.link.href} className="shrink-0 text-ui-2xs text-brand hover:underline" title="查看攻略原文">
-              攻略 ›
-            </a>
-          )}
-          {hasPeek && (
-            <button
-              type="button"
-              data-peek-toggle
-              aria-expanded={expanded}
-              onClick={() => setExpanded((value) => !value)}
-              className="shrink-0 text-ui-2xs text-ink-faint hover:text-brand-strong"
-              title="填数值看还差多少（可选）"
-            >
-              {expanded ? '▾' : '▸ 数值'}
-            </button>
-          )}
-        </div>
-        <div className="mt-0.5 flex items-center gap-1.5">
-          <span
-            data-owner-label={ownerLabel}
-            className="max-w-[160px] shrink-0 truncate rounded-full bg-surface-soft px-1.5 text-ui-2xs text-ink-faint" title={`归属：${ownerLabel}`}
-          >
-            读：{ownerLabel}
-          </span>
-          {row.hint && row.hint !== '-' && (
-            <span className="min-w-0 flex-1 truncate text-ui-2xs text-ink-faint" title={row.hint}>{row.hint}</span>
-          )}
-        </div>
-        {expanded && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1" data-peek-list>
+            {shared && (
+              <span
+                data-shared-badge
+                className="shrink-0 rounded-full bg-brand-soft px-1.5 text-ui-2xs text-brand-strong"
+                title="这一条在多张通告卡之间共用一份状态，改一处全部同步"
+              >
+                共享
+              </span>
+            )}
+            {row.link && (
+              <a href={row.link.href} className="shrink-0 text-ui-2xs text-brand hover:underline" title="查看攻略原文">
+                攻略 ›
+              </a>
+            )}
+            {showOwner && (
+              <span
+                data-owner-label={ownerLabel}
+                className="shrink-0 truncate text-ui-2xs text-ink-faint"
+                title={`归属：${ownerLabel}`}
+              >
+                {ownerLabel}
+              </span>
+            )}
+            {numberPeek && (
+              <button
+                type="button"
+                data-peek-toggle
+                aria-expanded={expanded}
+                onClick={() => setExpanded((value) => !value)}
+                className="shrink-0 text-ui-2xs text-ink-faint hover:text-brand-strong"
+                title="填数值看还差多少（可选）"
+              >
+                {expanded ? '▾' : '▸'}
+              </button>
+            )}
+          </>,
+        )}
+        {expanded && numberPeek && (
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6" data-peek-list>
             {parts.map((part) => (
               <NumberPeek key={part.key} part={part} onStat={onStat} onValue={onValue} />
             ))}
@@ -237,62 +251,83 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
       data-row-shared={shared ? 'yes' : 'no'}
       data-row-scope={row.scope}
       className={cn(
-        'rounded-ui-sm border-l-2 px-2.5 py-1.5',
+        'rounded-ui-sm border-l-2 px-2.5 py-1',
         met ? 'border-growth bg-growth-soft/50' : 'border-line-strong bg-surface',
       )}
     >
-      <div className="flex items-start gap-1.5">
-        <span className="min-w-0 flex-1 text-ui-xs leading-[1.5] text-ink">{row.name}</span>
-        {shared && (
+      {line(
+        <>
           <span
-            data-shared-badge
-            className="shrink-0 rounded-full bg-brand-soft px-1.5 text-ui-2xs text-brand-strong"
-            title="这一条在多张通告卡之间共用一份状态，改一处全部同步"
+            className="min-w-0 flex-1 truncate text-ui-xs leading-[1.4] text-ink"
+            title={row.hint && row.hint !== '-' ? row.hint : undefined}
           >
-            共享
+            {row.name}
           </span>
-        )}
-        {row.link && (
-          <a href={row.link.href} className="shrink-0 text-ui-2xs text-brand hover:underline" title="查看攻略原文">
-            攻略 ›
-          </a>
-        )}
-      </div>
-      <div className="mt-0.5 flex items-center gap-1.5">
-        <span
-          data-owner-label={ownerLabel}
-          className="max-w-[150px] shrink-0 truncate rounded-full bg-surface-soft px-1.5 text-ui-2xs text-ink-faint" title={`归属：${ownerLabel}`}
-        >
-          读：{ownerLabel}
-        </span>
-        {row.hint && row.hint !== '-' && (
-          <span className="min-w-0 flex-1 truncate text-ui-2xs text-ink-faint" title={row.hint}>{row.hint}</span>
-        )}
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-        {parts.map((part) => (
-          <PartControl
-            key={part.key}
-            part={part}
-            rowType={row.type}
-            showLabel={showLabel}
-            onCheck={onCheck}
-            onBump={onBump}
-            onValue={onValue}
-          />
-        ))}
-      </div>
-      {parts.filter((part) => part.gaps?.length).map((part) => (
-        <div
-          key={part.key}
-          data-cert-gaps
-          title={`${part.label}：${part.gaps?.join(' · ')}`}
-          className="mt-1 line-clamp-2 text-ui-2xs leading-[1.6] text-ink-faint"
-        >
-          <span className="font-semibold text-ink-muted">{part.label}：</span>
-          {part.gaps?.join(' · ')}
+          {shared && (
+            <span
+              data-shared-badge
+              className="shrink-0 rounded-full bg-brand-soft px-1.5 text-ui-2xs text-brand-strong"
+              title="这一条在多张通告卡之间共用一份状态，改一处全部同步"
+            >
+              共享
+            </span>
+          )}
+          {row.link && (
+            <a href={row.link.href} className="shrink-0 text-ui-2xs text-brand hover:underline" title="查看攻略原文">
+              攻略 ›
+            </a>
+          )}
+          {showOwner && (
+            <span
+              data-owner-label={ownerLabel}
+              className="shrink-0 truncate text-ui-2xs text-ink-faint"
+              title={`归属：${ownerLabel}`}
+            >
+              {ownerLabel}
+            </span>
+          )}
+          <span className="flex shrink-0 items-center gap-1.5">
+            {parts.map((part) => (
+              <PartControl
+                key={part.key}
+                part={part}
+                rowType={row.type}
+                showLabel={showLabel}
+                onCheck={onCheck}
+                onBump={onBump}
+                onValue={onValue}
+              />
+            ))}
+          </span>
+          {gapPeek && (
+            <button
+              type="button"
+              data-peek-toggle
+              aria-expanded={expanded}
+              onClick={() => setExpanded((value) => !value)}
+              className="shrink-0 text-ui-2xs text-ink-faint hover:text-brand-strong"
+              title="查看属性 / 课程缺口详情"
+            >
+              {expanded ? '▾' : '▸'}
+            </button>
+          )}
+        </>,
+      )}
+      {expanded && gapPeek && (
+        <div className="mt-1 space-y-0.5 pl-6" data-peek-list>
+          {parts.filter((part) => part.gaps?.length).map((part) => (
+            <div
+              key={part.key}
+              data-cert-gaps
+              title={`${part.label}：${part.gaps?.join(' · ')}`}
+              className="truncate text-ui-2xs leading-[1.5] text-ink-faint"
+            >
+              <span className="font-semibold text-ink-muted">{part.label}：</span>
+              {part.gaps?.join(' · ')}
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
