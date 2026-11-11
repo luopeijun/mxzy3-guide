@@ -1,0 +1,106 @@
+﻿id	notice	slot	phase	kind	type	scope	name	target	hint	link	source	verify
+_global.paydebt	_global	-	prepare	note	flag	global	还清贺总欠款 → 公园找塔罗小魔女，开启六大	-	只有昆仑历险刚需；其他通告不触发该对话亦可正常进行	notices/kunlun-adventure#62	表+攻略	-
+proud.male	proud-of-the-world	main	trigger	condition	flag	notice	旗下男艺人 ≥1	1	通告为男主角；男配角不算特殊国际通告	notices/proud-of-the-world#92	表+攻略	-
+proud.medicine4	proud-of-the-world	-	trigger	condition	count	global	给金父送药	4	第二年送药 4 次后公园找老爸	notices/proud-of-the-world#87	表+攻略	-
+proud.fathersday2	proud-of-the-world	-	trigger	condition	count	global	过完父亲节（8.8）	2	送第四次药且过完第二次父亲节后触发	notices/proud-of-the-world#87	表+攻略	-
+proud.xiake5	proud-of-the-world	-	trigger	condition	count	global	侠客行事件触发	5	专辑可不拿，但第 1 次一定要触发；攻略写触发第 5 次时赠歌	notices/proud-of-the-world#76	表+攻略	-
+proud.filmguide3	proud-of-the-world	-	trigger	condition	count	global	王瑞恩与金父讨论（每月 1 次）	3	前往全球看到两人讨论，需触发 3 次	notices/proud-of-the-world#88	表+攻略	-
+proud.fatherAlive	proud-of-the-world	-	trigger	condition	flag	global	金父未死	-	第二年 4/5/7/10 月新闻均要求金父未死	notices/proud-of-the-world#84	表+攻略	-
+proud.goldMedal	proud-of-the-world	-	prepare	condition	item	notice	大侠金牌（可选）	-	可用大侠金牌直接接此通告	notices/proud-of-the-world#92	表+攻略	-
+proud.stat.acting	proud-of-the-world	main	notice	condition	stat	artist	演技	500~550	达到下限即达标；攻略给的正是区间	notices/proud-of-the-world#92	表+攻略	-
+proud.stat.movement	proud-of-the-world	main	notice	condition	stat	artist	动感	450~500	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
+proud.stat.energy	proud-of-the-world	main	notice	condition	stat	artist	体能	630~700	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
+proud.stat.fame	proud-of-the-world	main	notice	condition	stat	artist	名气	500~550	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
+proud.tl.booking	proud-of-the-world	-	-	note	-	-	1 月下旬预约，2 月下旬开拍	-	时间窗标签，不计时	tracker:notices/proud-of-the-world	表	-
+proud.tl.firstYear	proud-of-the-world	-	-	note	-	-	第一年：侠客行 5 次；按时参加影友会；影友会后 3 个月内周三找记者	-	影友会必须参加（#81），记者必须触发（#83）才有后续	tracker:notices/proud-of-the-world	表+攻略	-
+proud.tl.secondYear	proud-of-the-world	-	-	note	-	-	第二年：送药 4 次后公园找老爸；电影指导 3 次（每月 1 次）；过完 2 次父亲节（8.8）；11 月底前公园找老爸；参加记者会（12 月 16 日）；医院	-	对应攻略 #75 #77 #87 #88 #90 #91 #96	tracker:notices/proud-of-the-world	表+攻略	-
+proud.tl.reporterWarn	proud-of-the-world	-	-	note	-	-	如果最后的记者会没有参加，也一样会有笑傲天际通告，但结算时不计入国际通告完成数量	-	UP 本人血的教训，纯提醒	tracker:notices/proud-of-the-world	表	-
+proud.tl.note	proud-of-the-world	-	-	note	-	-	注：陈奕夫的国际记者工作与笑傲天际男主角不可兼得，规划时注意取舍	-	互斥提示	tracker:notices/proud-of-the-world	表	-
+doom.cert.drama	doomsday-warrior	main	prepare	condition	cert	artist	国际戏剧学院证书	-	戏剧学院（纽约）：声音表情/肢体语言 专业 + 说话技巧 高级；回国周末发证	notices/doomsday-warrior#51	表+攻略	-
+doom.stat.acting	doomsday-warrior	main	notice	condition	stat	artist	演技	550	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.stat.wisdom	doomsday-warrior	main	notice	condition	stat	artist	才智	550	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.stat.fame	doomsday-warrior	main	notice	condition	stat	artist	名气	550	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.stat.energy	doomsday-warrior	main	notice	condition	stat	artist	体能	500	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.metSmith	doomsday-warrior	-	prepare	condition	flag	global	见过史麦克导演	-	见过则初选前得 4 本剧本，否则贺总只给 2 本	notices/doomsday-warrior#47	表+攻略	-
+doom.prepDays	doomsday-warrior	main	notice	condition	flag	notice	剧本准备天数足够	-	初选/决选剧本给出后要如数安排自由活动	notices/doomsday-warrior#48	表+攻略	-
+doom.tl.dates	doomsday-warrior	-	-	note	-	-	第三年 4 月 27 日初选、7 月 27 日决选	-	具体日期按条件表（4/27 初选、7/27 决选）；攻略正文只给月份；时间窗只作标签，不计时	tracker:notices/doomsday-warrior	表	-
+doom.tl.route1	doomsday-warrior	-	-	note	-	-	路径 1 暗夜惊魂事件：女艺人，名气/演技 >400、电影 >3 部，拍 4 或 5 星女主角时触发，选关心的选项、跟随满 21 天，可提前开启好莱坞	-	属于事件流程，在事件追踪器里跟	tracker:notices/doomsday-warrior	表	-
+doom.tl.route2	doomsday-warrior	-	-	note	-	-	路径 2 等导演上门：任意艺人，名气/演技 >600、电影 >3 部，第三年 3 月史麦克上门	-	属于事件流程，在事件追踪器里跟	tracker:notices/doomsday-warrior	表	-
+doom.tl.scripts	doomsday-warrior	-	-	note	-	-	见过史麦克，初选前会得到 4 本剧本；否则贺总会给 2 本剧本	-	对应攻略 #47	tracker:notices/doomsday-warrior	表+攻略	-
+doom.tl.oneWinner	doomsday-warrior	-	-	note	-	-	若有一个以上艺人通过决选，史麦克只会邀请一个（可自己前往好莱坞预约）	-	候选池依据：多人各自算条件，最终 1 人接通告	tracker:notices/doomsday-warrior	攻略	-
+doom.tl.note	doomsday-warrior	-	-	note	-	-	注：关古威、欧怡青无法完成该通告；陈奕夫的国际记者工作亦与之不可兼得，规划时注意取舍	-	互斥提示	tracker:notices/doomsday-warrior	表	-
+eternal.cert.music	eternal-love	main	trigger	condition	cert	artist	国际音乐学院证书	-	音乐学院（维也纳）：音感发声/乐器乐理 专业 + 快速记忆/美姿美仪 高级	notices/eternal-love#14	表+攻略	-
+eternal.albums5	eternal-love	main	trigger	condition	count	artist	个人唱片 >5 张	5	5 张个人唱片 + 音乐证书，开过大型个人演唱会后触发	notices/eternal-love#14	表+攻略	-
+eternal.fame600	eternal-love	main	trigger	condition	stat	artist	名气（触发前置）	600	攻略 #14 的触发条件；与下方通告要求 450~500 不是同一条	notices/eternal-love#14	攻略	-
+eternal.bigConcert	eternal-love	main	trigger	condition	flag	artist	开过大型个人演唱会	-	触发爱慕信事件的前置	notices/eternal-love#14	表+攻略	-
+eternal.fund4000	eternal-love	-	prepare	condition	resource	global	大型演唱会需 4000 万	4000万	举办大型演唱会所需资金；金额来自条件表，攻略正文未列	notices/eternal-love	表	-
+eternal.item.meiying	eternal-love	-	prepare	condition	item	global	魅影	-	赢得综艺节目猫狗神偷的奖品	notices/eternal-love#17	表+攻略	-
+eternal.item.mozhou	eternal-love	-	prepare	condition	item	global	魔咒	-	在维也纳买 10 次听课证后教授赠送	notices/eternal-love#17	表+攻略	-
+eternal.item.huyan	eternal-love	-	prepare	condition	item	global	狐眼	-	秀场主持到资深后再打工 20 次以上，且主角跟随时会捡到	notices/eternal-love#17	表+攻略	-
+eternal.item.cross	eternal-love	-	prepare	condition	item	global	圣约翰的千年十字架	-	开罗购买，100 万；事件 15 后一个月内	notices/eternal-love#16	表+攻略	-
+eternal.stat.singing	eternal-love	main	notice	condition	stat	artist	歌艺	630~700	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.stat.wisdom	eternal-love	main	notice	condition	stat	artist	才智	450~500	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.stat.confidence	eternal-love	main	notice	condition	stat	artist	自信	630~700	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.stat.fame	eternal-love	main	notice	condition	stat	artist	名气	450~500	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.tl.flow	eternal-love	-	-	note	-	-	5 张个人唱片 + 音乐证书 → 大型个人演唱会后触发 → 买十字架 → 送暗黑之服 → 抽取利金	-	流程索引	tracker:notices/eternal-love	表	-
+eternal.tl.key	eternal-love	-	-	note	-	-	猫狗神偷可通过开罗商店物品「法老王之钥」大幅降低游戏难度（售价 100 万，每月末可蹲）	-	省事提示	tracker:notices/eternal-love	表	-
+eternal.tl.singer	eternal-love	-	-	note	-	-	攻略补充：万年之恋必须让交出歌曲的男艺人演唱，否则成绩很糟	-	对应攻略 #20 提醒	tracker:notices/eternal-love	攻略	-
+angel.cert.music	angel	main	trigger	condition	cert	artist	国际音乐学院证书	-	音乐学院（维也纳）：音感发声/乐器乐理 专业 + 快速记忆/美姿美仪 高级	notices/angel#3	表+攻略	-
+angel.albums5	angel	main	trigger	condition	count	artist	个人唱片 >5 张	5	捐款事件前置	notices/angel#3	表+攻略	-
+angel.fund4000	angel	-	prepare	condition	resource	global	大型演唱会需 4000 万	4000万	举办大型演唱会所需资金；金额来自条件表，攻略正文未列	notices/angel	表	-
+angel.charityStats	angel	main	trigger	condition	stat	artist	慈善义演邀约（歌艺/仪态/人气）	300/300/3	歌艺 300、仪态 300、人气 3，只会请女艺人	notices/angel#1	表+攻略	-
+angel.charity	angel	main	trigger	condition	flag	artist	参加慈善义演	-	每年 2 月/8 月第一周上门，只请人气最高的女艺人	notices/angel#1	表+攻略	-
+angel.hunger	angel	main	trigger	condition	flag	artist	参加饥饿百分百	-	4 月、10 月；周先生每年上门邀请一次，选「答应」	notices/angel#1	表+攻略	-
+angel.donate	angel	main	trigger	condition	flag	artist	大型演唱会后答应捐 10%	-	满足证书/唱片/演唱会后周末沟通，选「答应」	notices/angel#3	表+攻略	-
+angel.hospital10	angel	-	prepare	condition	count	global	旗下艺人生病时就医	10	任一艺人在生病状态下就医满 10 次，欧医生赠送天使的羽翼	notices/angel#6	表+攻略	-
+angel.divine10	angel	-	prepare	condition	count	global	小魔女占卜	10	前往公园让塔罗小魔女占卜后赠送精灵的祈祷；按攻略 10 次定稿（截图写 3 次）	notices/angel#6	表+攻略	-
+angel.boutique10	angel	-	prepare	condition	count	global	精品店买东西 >10 次	10	把音乐盒给周映彤后再去精品店，老板赠送光丝布料	notices/angel#6	表+攻略	-
+angel.item.tear	angel	-	prepare	condition	item	global	人鱼的眼泪	-	综艺节目大富翁 BABABA 赢得的第二个神秘礼物	notices/angel#6	表+攻略	-
+angel.item.wing	angel	-	prepare	condition	item	global	天使的羽翼	-	就医满 10 次的赠品	notices/angel#6	表+攻略	-
+angel.item.prayer	angel	-	prepare	condition	item	global	精灵的祈祷	-	公园让塔罗小魔女占卜后赠送	notices/angel#6	表+攻略	-
+angel.item.silk	angel	-	prepare	condition	item	global	光丝布料	-	精品店买过 >10 次 + 音乐盒给周映彤后	notices/angel#6	表+攻略	-
+angel.item.musicbox	angel	-	prepare	condition	item	global	天使的音乐盒	-	答应捐款 3 天后，大天使寄来感谢卡和音乐盒	notices/angel#5	表+攻略	-
+angel.item.dress	angel	-	prepare	condition	item	global	天使羽衣	-	集齐四样材料，巴黎找老板制作，两周后可取	notices/angel#7	表+攻略	-
+angel.giveDress	angel	main	trigger	condition	flag	artist	接通告前把天使羽衣送给对应艺人	-	必须送给触发捐款的那位女艺人	notices/angel#9	表+攻略	-
+angel.stat.singing	angel	main	notice	condition	stat	artist	歌艺	630~700	攻略「大致要求：歌艺 700」正好是区间上限；按定稿取下限达标	notices/angel#10	表+攻略	-
+angel.stat.etiquette	angel	main	notice	condition	stat	artist	仪态	630~700	攻略单值 700；按定稿取下限达标	notices/angel#10	表+攻略	-
+angel.stat.confidence	angel	main	notice	condition	stat	artist	自信	500~550	攻略单值 550；按定稿取下限达标	notices/angel#10	表+攻略	-
+angel.stat.fame	angel	main	notice	condition	stat	artist	名气	450~500	攻略单值 500；按定稿取下限达标	notices/angel#10	表+攻略	-
+angel.tl.charity	angel	-	-	note	-	-	慈善义演：每年 2 月/8 月第一周上门；触发条件歌艺/仪态 300、人气 3；确保排程时人气 >3 且为旗下女艺人中最高	-	流程索引	tracker:notices/angel	表	-
+angel.tl.hunger	angel	-	-	note	-	-	饥饿百分百：4 月、10 月	-	时间窗标签	tracker:notices/angel	表	-
+angel.tl.musicbox	angel	-	-	note	-	-	天使的音乐盒：参加过饥饿百分百 + 音乐证书 + 5 张个人唱片 → 举办大型个人演唱会后的周末答应捐款 → 3 天后获得	-	流程索引	tracker:notices/angel	表	-
+angel.tl.dress	angel	-	-	note	-	-	光丝布料：把音乐盒交给周映彤后去精品店（买过 >10 次）老板赠送；集齐材料巴黎做天使羽衣；拿回后找周映彤，下期通告上档（下期是团唱要再等一期）；接通告前把羽衣送给相应艺人	-	流程索引	tracker:notices/angel	表	-
+angel.tl.trigger	angel	-	-	note	-	-	攻略补充：不需要和塔罗小魔女交谈就能触发	-	节点标题注	tracker:notices/angel	攻略	-
+kunlun.debt	kunlun-adventure	-	trigger	condition	flag	global	还清贺总欠款 + 公园找小魔女	-	仅昆仑刚需，对应攻略 #62	notices/kunlun-adventure#62	表+攻略	-
+kunlun.item.soft	kunlun-adventure	-	prepare	condition	item	global	昆仑仙境软体	-	旗下艺人录制「益智休闲」类主持通告，跟随第 8 次时赠送（不限同一通告/同一艺人）	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.silk	kunlun-adventure	-	prepare	condition	item	global	真虹羽纱	-	在巴黎买过 3 件以上女装，且买走当季女装后可买到；名称按攻略正字统一（截图写「真虹纱羽」）	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.fox	kunlun-adventure	-	prepare	condition	item	global	九尾狐皮裳	-	旗下所有艺人日本旅游累计 >9 次，旅行社会赠送	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.stick	kunlun-adventure	-	prepare	condition	item	global	如意金箍棒	-	开罗有售（事件 68 后出现几率较高）	notices/kunlun-adventure#69	表+攻略	-
+kunlun.cert.male	kunlun-adventure	role:男主	prepare	condition	cert	role	男主：戏剧 + 音乐证书	-	按角色位判定，不能摊到一个人头上	notices/kunlun-adventure#69	表+攻略	-
+kunlun.cert.f1	kunlun-adventure	role:女主一	prepare	condition	cert	role	女主一：舞蹈 + 戏剧证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
+kunlun.cert.f2	kunlun-adventure	role:女主二	prepare	condition	cert	role	女主二：舞蹈 + 音乐证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
+kunlun.sight3	kunlun-adventure	-	trigger	condition	count	global	塞外观光累计	3	所有艺人累积不限哪位，但路风、路敏无法触发	notices/kunlun-adventure#64	表+攻略	-
+kunlun.movies5	kunlun-adventure	-	trigger	condition	count	global	旗下艺人出演电影	5	≥5 部	notices/kunlun-adventure#66	表+攻略	-
+kunlun.leads2	kunlun-adventure	-	trigger	condition	count	global	其中担任主角	2	≥2 次	notices/kunlun-adventure#66	表+攻略	-
+kunlun.fatherAlive	kunlun-adventure	-	trigger	condition	flag	global	老爸活下来	-	不满足则剧本获得时间推迟到老爸去世后	notices/kunlun-adventure#66	表+攻略	-
+kunlun.stat.acting	kunlun-adventure	main	notice	condition	stat	artist	演技	500~550	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.stat.fame	kunlun-adventure	main	notice	condition	stat	artist	名气	630~700	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.stat.etiquette	kunlun-adventure	main	notice	condition	stat	artist	仪态	500~550	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.stat.movement	kunlun-adventure	main	notice	condition	stat	artist	动感	450~500	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.tl.maleOnly	kunlun-adventure	-	-	note	-	-	注：旗下只有女艺人的话昆仑历险事件会中断（此条来自条件表，攻略正文未明写）	-	来源仅条件表；按裁决降级为只读备注，不进达标数	tracker:notices/kunlun-adventure	表	-
+kunlun.tl.sight	kunlun-adventure	-	-	note	-	-	塞外观光后，长城路老爹说风沙大；观光累计 3 次艺人叙述奇遇（风敏不触发）；有风敏在旗下时可沟通看塞外传说（不必须）	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-
+kunlun.tl.script	kunlun-adventure	-	-	note	-	-	以上事件触发后第三年 1 月后自动获得剧本；找王瑞恩闲聊 → 1 周后闲聊 → 1 月后闲聊；集齐所有道具且旗下至少 1 位艺人满足证书条件时闲聊，下次通告会上档	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-
+kunlun.tl.booking	kunlun-adventure	-	-	note	-	-	攻略补充：王导不会主动上门，需自己前往全球预约	-	对应攻略 #71	tracker:notices/kunlun-adventure	攻略	-
+galaxy.cert.dance	galaxy	group	prepare	condition	cert	group	国际舞蹈学院证书（全体成员）	-	舞蹈学院（夏威夷）：有氧舞蹈/舞台表演 专业 + 摄影训练 高级；团体成员都要有	notices/galaxy#36	表+攻略	-
+galaxy.fund4000	galaxy	-	prepare	condition	resource	global	大型演唱会需 4000 万	4000万	举办大型演唱会所需资金；金额来自条件表，攻略正文未列	notices/galaxy	表	-
+galaxy.albums3	galaxy	group	trigger	condition	count	group	团体唱片 ≥3 张	3	推出过 3 张或以上团体唱片，前往东京找加贺	notices/galaxy#28	表+攻略	-
+galaxy.jingfeng	galaxy	group	trigger	condition	flag	group	接过京风唱片的团体通告	-	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
+galaxy.groupFame	galaxy	group	trigger	condition	stat	group	团体名气 >6	6	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
+galaxy.groupPop	galaxy	group	trigger	condition	stat	group	团体人气 >5	5	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
+galaxy.concert	galaxy	group	trigger	condition	flag	group	开完大型演唱会	-	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
+galaxy.invite	galaxy	group	trigger	condition	flag	group	加贺大泽上门邀请巡演 → 同意	-	选拒绝有 BUG：仍出新闻，之后加贺以换员为由拒绝合作	notices/galaxy#30	表+攻略	-
+galaxy.dragonTail	galaxy	-	prepare	condition	item	global	龙尾散（可选）	-	答应巡演后到结束前，东京找加贺闲聊 3 次；歌艺 +50、自信 -30	notices/galaxy#31	表+攻略	-
+galaxy.tl.stats	galaxy	-	-	note	-	-	歌艺 500-550 / 动感 630-700 / 体能 630-700 / 自信 500-550：事件正常推进，数值不达标也能接	-	非硬门槛，按定位降级为只读备注、不计入达标数	tracker:notices/galaxy	表	-
+galaxy.tl.flow	galaxy	-	-	note	-	-	自答应巡演后到巡演结束前，东京闲聊 3 次可获得龙尾散（没时间或不想可以不触发，不影响后续）；巡演结束后出新闻；团体成员拿到舞蹈证书后东京闲聊；下一档团唱会放银河	-	流程索引	tracker:notices/galaxy	表+攻略	-
+galaxy.tl.lock	galaxy	-	-	note	-	-	攻略补充：加贺邀请的是担任日本演唱会嘉宾的团体成员，中途换人则加贺不会上门	-	对应攻略 #37，团体一旦锁定不可换人	tracker:notices/galaxy	攻略	-
+galaxy.tl.note	galaxy	-	-	note	-	-	注：如需要关古威参与，请在第三年 9 月前完成	-	时间窗标签	tracker:notices/galaxy	表	-
