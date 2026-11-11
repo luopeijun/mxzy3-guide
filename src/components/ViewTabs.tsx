@@ -1,6 +1,6 @@
 import { cn } from '../lib/cn';
 
-export type ViewMode = 'guide' | 'tracker' | 'notices' | 'cg';
+export type ViewMode = 'guide' | 'tracker' | 'notices' | 'cg' | 'specials';
 
 interface Props {
   mode: ViewMode;
@@ -8,6 +8,7 @@ interface Props {
   onViewTracker: () => void;
   onViewNotices: () => void;
   onViewCg: () => void;
+  onViewSpecials: () => void;
 }
 
 /** The one shared tab switch for every top-level view. Rendered by the single
@@ -21,6 +22,7 @@ export default function ViewTabs({
   onViewTracker,
   onViewNotices,
   onViewCg,
+  onViewSpecials,
 }: Props) {
   const tabClass = (active: boolean) =>
     cn(
@@ -76,6 +78,16 @@ export default function ViewTabs({
         className={tabClass(mode === 'cg')}
       >
         CG 图鉴
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === 'specials'}
+        data-tab="specials"
+        onClick={onViewSpecials}
+        className={tabClass(mode === 'specials')}
+      >
+        六大通告
       </button>
     </nav>
   );

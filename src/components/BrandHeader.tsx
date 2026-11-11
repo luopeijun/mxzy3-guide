@@ -12,13 +12,14 @@ interface Props {
   onViewTracker: () => void;
   onViewNotices: () => void;
   onViewCg: () => void;
+  onViewSpecials: () => void;
   onSelect: (id: string) => void;
   onMenuClick: () => void;
 }
 
 export default function BrandHeader({
   categories, activeCategoryId, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg,
-  onSelect, onMenuClick,
+  onViewSpecials, onSelect, onMenuClick,
 }: Props) {
   return (
     <header className="relative z-20 h-16 shrink-0 border-b border-line bg-surface shadow-soft">
@@ -49,6 +50,7 @@ export default function BrandHeader({
           onViewTracker={onViewTracker}
           onViewNotices={onViewNotices}
           onViewCg={onViewCg}
+          onViewSpecials={onViewSpecials}
         />
 
         <div className="ml-auto flex items-center gap-4 nav:gap-3">

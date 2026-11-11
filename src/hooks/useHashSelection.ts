@@ -20,6 +20,11 @@ export function isNoticesRoute(): boolean {
   return readHash() === 'notices';
 }
 
+/** True when the URL points at the 六大通告条件看板. */
+export function isSpecialsRoute(): boolean {
+  return readHash() === 'specials';
+}
+
 /** True when the URL points at the CG 图鉴 tab, including the deep link
  *  `#/cg/<cgId>` that the guide's CG badge produces. */
 export function isCgRoute(): boolean {
@@ -74,7 +79,7 @@ export function writeCgGroupHash(groupId: string) {
  *  legacy bookmarks that lack it, so old deep links keep working. */
 export function guideNodeId(): string {
   const h = readHash();
-  if (h === 'tracker' || h === 'notices') return '';
+  if (h === 'tracker' || h === 'notices' || h === 'specials') return '';
   if (isCgRoute()) return '';
   if (h.startsWith('guide/')) return h.slice('guide/'.length);
   return h; // legacy: node id without the `guide/` prefix
