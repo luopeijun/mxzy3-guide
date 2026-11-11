@@ -27,6 +27,8 @@ interface Props {
   onCheck: (key: string) => void;
   onBump: (key: string, delta: number) => void;
   onValue: (key: string, value: number) => void;
+  onDone: (rowId: string) => void;
+  onStat: (artistId: string, attr: string, value: number | null) => void;
 }
 
 const PHASES = [
@@ -43,9 +45,10 @@ function titleOf(artists: ArtistOption[], id: string): string {
  *  read-only timeline index. Six of these make the 3×2 board. */
 export default function NoticeCard({
   notice, rows, notes, artists, roster, state, hideDone,
-  onToggleEnabled, onAssign, onUnassign, onSetGroupLocked, onCheck, onBump, onValue,
+  onToggleEnabled, onAssign, onUnassign, onSetGroupLocked, onCheck, onBump, onValue, onDone, onStat,
 }: Props) {
   const [showNotes, setShowNotes] = useState(false);
+  const [showNotice, setShowNotice] = useState(false);
   const enabled = state.enabled.includes(notice.id);
   const locked = !!state.groupLocked[notice.id];
   const slots = assignableSlots(notice);
@@ -195,6 +198,45 @@ export default function NoticeCard({
             {PHASES.map((phase) => {
               const all = rows.filter((item) => item.row.phase === phase.key);
               if (!all.length) return null;
+              // 通告要求（属性 / 证书门槛）是重头：默认折叠，让卡片一打开就是
+              // 一张干净的清单；只有想看「还差多少」时才展开填数值。
+              if (phase.key === 'notice') {
+                const doneCount = all.filter((item) => item.met).length;
+                const visible = hideDone ? all.filter((item) => !item.met) : all;
+                return (
+                  <div key={phase.key} data-phase={phase.key} className="rounded-ui-sm border border-line bg-surface-soft/60">
+                    <button
+                      type="button"
+                      data-notice-phase-toggle
+                      aria-expanded={showNotice}
+                      onClick={() => setShowNotice((value) => !value)}
+                      className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left"
+                    >
+                      <span className="text-ui-2xs font-semibold text-ink-muted">{phase.title}</span>
+                      <span className="text-ui-2xs text-ink-faint">属性 / 证书门槛 · {doneCount}/{all.length} 已确认</span>
+                      <span className="ml-auto text-ui-2xs text-ink-faint">{showNotice ? '▾' : '▸ 填数值'}</span>
+                    </button>
+                    {showNotice && (
+                      <div className="flex flex-col gap-1.5 px-2.5 pb-2.5">
+                        {visible.map((item) => (
+                          <ConditionRow
+                            key={item.row.id}
+                            item={item}
+                            onCheck={onCheck}
+                            onBump={onBump}
+                            onValue={onValue}
+                            onDone={onDone}
+                            onStat={onStat}
+                          />
+                        ))}
+                        {hideDone && !visible.length && (
+                          <span className="px-0.5 text-ui-2xs text-growth-strong">✓ 这一段全部已确认</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
               const visible = hideDone ? all.filter((item) => !item.met) : all;
               const hidden = all.length - visible.length;
               return (
@@ -213,6 +255,8 @@ export default function NoticeCard({
                         onCheck={onCheck}
                         onBump={onBump}
                         onValue={onValue}
+                        onDone={onDone}
+                        onStat={onStat}
                       />
                     ))}
                     {hidden > 0 && (

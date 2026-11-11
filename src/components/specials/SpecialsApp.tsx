@@ -6,7 +6,6 @@ import { useTracker } from '../../hooks/useTracker';
 import { useSpecials } from '../../hooks/useSpecials';
 import { evaluateBoard, noticeProgress } from '../../lib/specialsState';
 import { cn } from '../../lib/cn';
-import ArtistStatePanel from './ArtistStatePanel';
 import NoticeCard from './NoticeCard';
 
 interface Props {
@@ -58,10 +57,11 @@ export default function SpecialsApp({ data, guide }: Props) {
           {/* Heading */}
           <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-0 flex-1">
-              <h1 className="text-ui-xl font-bold text-brand-strong">六大通告 · 条件看板</h1>
+              <h1 className="text-ui-xl font-bold text-brand-strong">六大通告 · 规划与追踪</h1>
               <p className="mt-1 text-ui-xs text-ink-muted">
-                只看归属、条件与收集进度：属性、课程、证书、道具、公司计数凑齐了没。
-                事件的顺序、时间与步骤在<a href="#/tracker" className="text-brand hover:underline">事件追踪器</a>里跟，这里不重复打勾。
+                先选人、派通告，再逐个勾掉要准备的东西：道具、证书、属性、计数凑齐了没。
+                属性/证书门槛默认收起，想看「还差多少」点开填数值即可，不必开局先录一整张表。
+                事件的时间与步骤在<a href="#/tracker" className="text-brand hover:underline">事件追踪器</a>里跟，这里不重复打勾。
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -136,18 +136,6 @@ export default function SpecialsApp({ data, guide }: Props) {
             </div>
           </div>
 
-          {/* One state-entry panel for the whole board. */}
-          <div className="mt-4">
-            <ArtistStatePanel
-              data={data}
-              state={state}
-              artists={rosterArtists}
-              onStat={board.setStat}
-              onCourse={board.cycleCourse}
-              onCheck={board.toggleCheck}
-            />
-          </div>
-
           {/* Six vertical cards, 3 × 2. */}
           <div className="mt-5 mb-1 flex items-center gap-2">
             <h2 className="text-ui-sm font-bold text-brand-strong">通告卡片</h2>
@@ -173,13 +161,15 @@ export default function SpecialsApp({ data, guide }: Props) {
                 onCheck={board.toggleCheck}
                 onBump={board.bump}
                 onValue={board.setValue}
+                onDone={board.toggleDone}
+                onStat={board.setStat}
               />
             ))}
           </div>
 
           <p className="mt-5 text-ui-2xs text-ink-faint">
             条件来源：人工维护的六大通告条件表（{data.stats.rows} 行 = {data.stats.conditions} 条条件 + {data.stats.notes} 条只读备注），
-            深链已逐条对过攻略事件号。区间型数值达到下限即达标。
+            深链已逐条对过攻略事件号。属性 / 证书的「还差多少」是可选填写，不填也不影响勾选进度。
           </p>
         </div>
       </div>
