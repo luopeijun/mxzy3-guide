@@ -170,7 +170,7 @@ async function main() {
   check(await evaluate(`!!document.querySelector('[data-global-note]')`), '周目前提作为只读索引放在顶部');
   check(await evaluate(`document.querySelector('[data-board-progress]').getAttribute('data-total')`) === '0',
     '未启用时不进统计');
-  check(await evaluate(`!document.querySelector('[data-artist-panel]')`), '已删除全局「艺人状态录入」面板（不再反复录入）');
+  check(await evaluate(`!!document.querySelector('[data-stats-panel]')`), '顶部有集中「数值录入」面板（全站一份，不再每行重复录入）');
 
   // ---------- 2. Enable, assign, checklist ticking; numbers are optional ----------
   check(await click(`[data-notice-enable][data-notice-id="${ANGEL}"]`) === 'ok', '勾「本次做」可启用通告');
@@ -209,6 +209,29 @@ async function main() {
     '收起后已勾选行隐藏');
   await click('[data-hide-done]');
   await sleep(300);
+
+  // ---------- 2b. Central numeric-entry panel ----------
+  const cellSel = (artist, attr) => `[data-stat-cell][data-artist="${artist}"][data-attr="${attr}"]`;
+  check(await evaluate(`!!document.querySelector('${cellSel(LIN, '口才')}')`), '面板列出全部 10 个属性（含口才）');
+  check(await setNumber(cellSel(LIN, '口才'), 600) === 'ok', '面板可直接填「口才」数值');
+  await sleep(300);
+  const caiPersist = await evaluate(`(() => { const s = JSON.parse(localStorage.getItem('guide.specials.v1')); return s.stats['${LIN}']?.口才 ?? null; })()`);
+  check(caiPersist === 600, '口才数值写进 state.stats', String(caiPersist));
+  // Fill 歌艺 700 → the music certificate gap stops listing 歌艺.
+  check(await setNumber(cellSel(LIN, '歌艺'), 700) === 'ok', '面板可直接填「歌艺」数值');
+  await sleep(300);
+  await expandNotice(ANGEL);
+  await expandRowPeek('angel.cert.music');
+  const musicGap = await evaluate(`(() => { const el = document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-cert-gaps]'); return el ? el.textContent : ''; })()`);
+  check(!musicGap.includes('歌艺 未录入'), '填了歌艺后证书缺口不再提示「歌艺 未录入」', musicGap);
+  // Group 人气 (银河) writes to state.values under its gval: key.
+  const popKey = 'gval:galaxy:galaxy.groupPop';
+  await setup({ enabled: [GALAXY], assignments: { [GALAXY]: { group: [LIN, XIAO] } } });
+  check(await evaluate(`!!document.querySelector('[data-group-input][data-key="${popKey}"]')`), '团体人气有独立输入框');
+  check(await setNumber(`[data-group-input][data-key="${popKey}"]`, 5) === 'ok', '可填团体人气');
+  await sleep(300);
+  const popPersist = await evaluate(`(() => { const s = JSON.parse(localStorage.getItem('guide.specials.v1')); return s.values['${popKey}'] ?? null; })()`);
+  check(popPersist === 5, '团体人气写进 state.values', String(popPersist));
 
   // ---------- 3. Shared certificate across cards (one cert, many cards) ----------
   await setup({

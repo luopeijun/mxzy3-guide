@@ -5,8 +5,10 @@ import { listArtists } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
 import { useSpecials } from '../../hooks/useSpecials';
 import { evaluateBoard, noticeProgress } from '../../lib/specialsState';
+import { parseTarget } from '../../lib/specials';
 import { cn } from '../../lib/cn';
 import NoticeCard from './NoticeCard';
+import StatsPanel, { type GroupStatRow } from './StatsPanel';
 
 interface Props {
   data: SpecialsData;
@@ -50,6 +52,27 @@ export default function SpecialsApp({ data, guide }: Props) {
     return map;
   }, [data.rows, notices]);
 
+  // Group-level stat rows (团体名气 / 团体人气) store their value under a
+  // gval: key in state.values; surface them here so the panel can edit them.
+  const groupRows = useMemo<GroupStatRow[]>(
+    () =>
+      data.rows
+        .filter((row) => row.kind === 'condition' && row.type === 'stat' && row.scope === 'group')
+        .map((row) => {
+          const parsed = parseTarget(row.target);
+          return {
+            key: `gval:${row.notice}:${row.id}`,
+            label: row.name
+              .replace(/[（(].*?[）)]/g, '')
+              .replace('团体', '')
+              .replace(/\s*>\s*\d+.*$/, '')
+              .trim() || '名气',
+            target: parsed && parsed.kind !== 'multi' ? parsed.min : 0,
+          };
+        }),
+    [data.rows],
+  );
+
   return (
     <div data-specials-app className="fixed inset-x-0 bottom-0 top-16 z-50 flex flex-col bg-canvas">
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
@@ -59,9 +82,9 @@ export default function SpecialsApp({ data, guide }: Props) {
             <div className="min-w-0 flex-1">
               <h1 className="text-ui-xl font-bold text-brand-strong">六大通告 · 规划与追踪</h1>
               <p className="mt-1 text-ui-xs text-ink-muted">
-                先选人、派通告，再逐个确认：道具、证书、计数凑齐了没。
+                先在上方「数值录入」填好旗下艺人的当前属性（演技 / 歌艺 / 口才 / 仪态 / 动感 / 体能 / 才智 / 自信 / 名气 / 人气，人气是 0–5 等级），证书行的「还差多少」会自动跟着算。
                 证书这一行点开就能勾「已取得」，并逐门点出课程等级（未上 → 初级 → … → 专业）。
-                属性门槛默认收起、只是参考、不强制填；事件的时间与步骤在<a href="#/tracker" className="text-brand hover:underline">事件追踪器</a>里跟，这里不重复打勾。
+                数值只是参考、不强制填，填不填都不影响勾选进度；事件的时间与步骤在<a href="#/tracker" className="text-brand hover:underline">事件追踪器</a>里跟，这里不重复打勾。
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -135,6 +158,16 @@ export default function SpecialsApp({ data, guide }: Props) {
               )}
             </div>
           </div>
+
+          {/* Centralised numeric entry — the one place to record current
+           *  attribute values; condition rows read from here and show gaps. */}
+          <StatsPanel
+            artists={rosterArtists}
+            state={state}
+            groupRows={groupRows}
+            onStat={board.setStat}
+            onValue={board.setValue}
+          />
 
           {/* Six vertical cards, 3 × 2. */}
           <div className="mt-5 mb-1 flex items-center gap-2">
