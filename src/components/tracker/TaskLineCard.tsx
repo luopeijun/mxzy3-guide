@@ -303,6 +303,20 @@ export default function TaskLineCard({
           >
             <MarkText text={line.name} query={query} />
           </span>
+          {line.staleKind && (
+            <span
+              data-stale-badge
+              data-stale-kind={line.staleKind}
+              title={
+                line.staleKind === 'released'
+                  ? '这位艺人已解约，进度仍保留；默认不计入完成度'
+                  : '旧的签约组合对应的分支，进度仍保留；默认不计入完成度'
+              }
+              className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-faint ring-1 ring-line-strong"
+            >
+              {line.staleKind === 'released' ? '已解约' : '旧分支'}
+            </span>
+          )}
           {inCompletedPool && (
             <span className="shrink-0 rounded-full bg-gold-soft px-2 py-0.5 text-ui-2xs font-semibold text-gold">
               已完成
