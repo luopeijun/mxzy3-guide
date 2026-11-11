@@ -9,12 +9,16 @@ interface Props {
 }
 
 /** Compact, collapsible artist picker. Closed (default) it is a single row:
- *  tracked artists' portraits + counts. Click a portrait to drop that artist,
+ *  the 旗下 portraits (max 4) + counts. Click a portrait to drop that artist,
  *  or the row to expand the full button grid.
  *
  *  The picker tracks a whole playthrough, not just the current roster: 旗下 is
  *  capped at 4, but releasing someone keeps their lines (and progress) in the
- *  pool. The corner badge on each button toggles 旗下 ⇄ 已解约. */
+ *  pool. The corner badge on each button toggles 旗下 ⇄ 已解约.
+ *
+ *  The closed row shows 旗下 only: a long playthrough can release far more than
+ *  4 artists, and stacking every tracked portrait overflows the narrow rail.
+ *  Released artists stay in the expanded grid and are counted via the +N hint. */
 export default function TrackerSetup({ data }: Props) {
   const {
     artists: tracked,
@@ -57,7 +61,7 @@ export default function TrackerSetup({ data }: Props) {
           title={
             open
               ? '收起艺人列表'
-              : tracked.length > 0
+              : rosterCount > 0
                 ? '展开艺人列表；点右侧头像可直接移出追踪'
                 : '展开选择要追踪的艺人'
           }
@@ -78,23 +82,19 @@ export default function TrackerSetup({ data }: Props) {
           </span>
         </button>
 
-        {tracked.length > 0 && (
+        {rosterCount > 0 && (
           <div className="flex shrink-0 items-center -space-x-1.5">
-            {tracked.map((entry) => {
-              const artist = artists.find((a) => a.id === entry.id);
-              const title = artist?.title ?? entry.id;
-              const released = entry.status === 'released';
+            {selectedArtists.map((id) => {
+              const artist = artists.find((a) => a.id === id);
+              const title = artist?.title ?? id;
               return (
                 <button
-                  key={entry.id}
+                  key={id}
                   type="button"
-                  onClick={() => toggleArtist(entry.id)}
-                  title={`移出追踪 ${title}${released ? '（已解约）' : ''}`}
+                  onClick={() => toggleArtist(id)}
+                  title={`移出追踪 ${title}`}
                   aria-label={`取消追踪 ${title}`}
-                  className={cn(
-                    'rounded-full ring-2 ring-surface transition-transform hover:z-10 hover:scale-110',
-                    released && 'opacity-55 grayscale',
-                  )}
+                  className="rounded-full ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
                 >
                   {artist?.avatar ? (
                     <img

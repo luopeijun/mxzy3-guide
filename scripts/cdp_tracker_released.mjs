@@ -1,4 +1,5 @@
 import http from 'node:http';
+import fs from 'node:fs';
 
 /* 多艺人追踪回归：一个周目累计追踪 5+ 艺人，旗下仍 ≤4。
    1) 全员进池、已解约艺人的线带灰标签
@@ -8,6 +9,7 @@ import http from 'node:http';
    5) 完成度默认不算已解约 / 旧分支线，开关打开才计入
    6) 旧路欧桑分支有进度时解约换人后仍留在池里
    7) 存档带 releasedArtists，导出/导入不丢
+   8) 折叠行只显示旗下头像，已解约再多也不溢出左栏
    Usage: node cdp_tracker_released.mjs */
 
 const url = 'http://localhost:5173/#/tracker';
@@ -35,6 +37,23 @@ const LUMIN = 'characters/lu-min';
 const LU = 'characters/lu-feng';
 const OU = 'characters/ou-yiqing';
 const SANG = 'characters/sang-hebei';
+
+// Mirror listArtists(): every leaf under the characters category. Lets us seed
+// a worst-case save (4 旗下 + all remaining artists 已解约) for the closed row.
+const guideData = JSON.parse(
+  fs.readFileSync(new URL('../public/data/guide.json', import.meta.url), 'utf8'),
+);
+const ALL_ARTISTS = [];
+const ARTIST_TITLES = new Map();
+{
+  const walk = (node) => {
+    if (!node.children?.length) {
+      ALL_ARTISTS.push(node.id);
+      ARTIST_TITLES.set(node.id, node.title);
+    } else node.children.forEach(walk);
+  };
+  guideData.categories.find((c) => c.id === 'characters').children.forEach(walk);
+}
 
 const failures = [];
 const check = (ok, label, extra = '') => {
@@ -283,6 +302,49 @@ async function main() {
   rows = JSON.parse(await pool());
   check(rows.some((r) => r.id.startsWith(`${LUMIN}::`) && r.stale === 'released'),
     '导入后已解约艺人的线仍在池里并带灰标签');
+
+  // ---------- 9. Closed row shows 旗下 only, even with many released ----------
+  const ROSTER = [LIN, XIAO, SU, TIAN];
+  const RELEASED_MANY = ALL_ARTISTS.filter((id) => !ROSTER.includes(id));
+  await evaluate(seed({
+    selectedArtists: ROSTER,
+    releasedArtists: RELEASED_MANY,
+  }));
+  await reload();
+  const closedRow = JSON.parse(await evaluate(`(() => {
+    const section = [...document.querySelectorAll('section')].find(
+      (s) => s.querySelector('[data-setup-hint]'));
+    if (!section) return '{"missing":true}';
+    const row = section.firstElementChild;
+    const portraits = [...section.querySelectorAll('button[aria-label^="取消追踪"]')];
+    const sr = section.getBoundingClientRect();
+    const last = portraits.length ? portraits[portraits.length - 1].getBoundingClientRect() : null;
+    return JSON.stringify({
+      portraits: portraits.length,
+      labels: portraits.map((p) => p.getAttribute('aria-label')),
+      hint: section.querySelector('[data-setup-hint]').textContent.trim(),
+      overhang: last ? Math.round(last.right - sr.right) : 0,
+      rowOverflow: row.scrollWidth - row.clientWidth,
+    });
+  })()`));
+  check(RELEASED_MANY.length >= 10, '构造了足够多的已解约艺人复现溢出', `${RELEASED_MANY.length} 人`);
+  check(closedRow.portraits === ROSTER.length,
+    '折叠行只显示旗下 4 个头像', `${closedRow.portraits} 个`);
+  check(JSON.stringify([...closedRow.labels].sort()) ===
+        JSON.stringify(ROSTER.map((id) => `取消追踪 ${ARTIST_TITLES.get(id)}`).sort()),
+    '折叠行头像确实都是旗下艺人，不含已解约', closedRow.labels.join(','));
+  check(closedRow.overhang <= 1 && closedRow.rowOverflow <= 1,
+    '已解约艺人再多，头像也不溢出艺人选择区',
+    `overhang=${closedRow.overhang} rowOverflow=${closedRow.rowOverflow}`);
+  check(closedRow.hint.includes(`+${RELEASED_MANY.length}`),
+    'hint 仍提示已解约人数', closedRow.hint);
+  await evaluate(`document.querySelector('[aria-label="展开艺人选择"]')?.click(); 1`);
+  await sleep(400);
+  const releasedButtons = await evaluate(
+    `document.querySelectorAll('[data-artist-button][data-artist-state="released"]').length`,
+  );
+  check(releasedButtons === RELEASED_MANY.length,
+    '已解约艺人仍全部留在展开区，可复签 / 移出追踪', `${releasedButtons} 个`);
 
   ws.close();
   if (failures.length) throw new Error(`${failures.length} checks failed: ${failures.join(' | ')}`);
