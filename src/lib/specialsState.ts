@@ -21,6 +21,10 @@ export interface SpecialsState {
   enabled: string[];
   /** noticeId → slot → artist ids. A slot may hold several candidates. */
   assignments: Record<string, Record<string, string[]>>;
+  /** Manual "I've satisfied this" ticks, keyed by row id. The whole board is a
+   *  checklist: ticking is the source of truth for progress. Numbers (stats /
+   *  courses / funds) are an *optional* peek you open per row, never required. */
+  done: string[];
   /** artistId → attribute → current value. Missing means "not entered yet". */
   stats: Record<string, Record<string, number>>;
   /** artistId → course → grade. Missing means 未上. */
@@ -36,6 +40,7 @@ export function emptyState(): SpecialsState {
     version: 1,
     enabled: [],
     assignments: {},
+    done: [],
     stats: {},
     courses: {},
     values: {},
@@ -101,6 +106,7 @@ export function sanitiseState(raw: unknown): SpecialsState {
     version: 1,
     enabled: [...new Set(stringList(parsed.enabled))],
     assignments,
+    done: [...new Set(stringList(parsed.done))],
     stats,
     courses,
     values: numberMap(parsed.values),
@@ -219,6 +225,9 @@ export interface RowEval {
   met: boolean;
   shared: boolean;
   ownerLabel: string;
+  /** True for stat / resource rows: they have no auto gate, so the checklist
+   *  checkbox is authoritative and any number is an optional peek. */
+  doneEligible: boolean;
 }
 
 interface EvalContext {
@@ -243,7 +252,7 @@ function statPart(
     key: `stat:${artistId}:${attr}`,
     label: labelFor(artistId, ctx.titles),
     ownerId: artistId,
-    input: 'none',
+    input: 'number',
     met,
     detail: value === undefined ? `${attr} 未录入` : met ? `${attr} ${value} ✓` : `${attr} 差 ${min - value}`,
     value: value ?? 0,
@@ -391,14 +400,21 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): RowEval {
   }
   const perOwner = [...groups.values()].map((list) => list.every((part) => part.met));
   const requireEveryOwner = row.scope === 'role' || row.scope === 'group' || requireAll;
-  const met = requireEveryOwner ? perOwner.every(Boolean) : perOwner.some(Boolean);
+
+  // stat / resource rows have no auto gate, so the checklist tick is the source
+  // of truth and any number you enter is an optional, expandable peek only.
+  const doneEligible = (row.type === 'stat' && owners.length > 0) || row.type === 'resource';
+  const met = doneEligible
+    ? ctx.state.done.includes(row.id)
+    : requireEveryOwner ? perOwner.every(Boolean) : perOwner.some(Boolean);
+
   const ownerLabel = row.scope === 'global' ? '公司共享'
     : row.scope === 'group' ? '团体'
       : row.scope === 'role' ? (row.slot.startsWith('role:') ? row.slot.slice(5) : '角色位')
         : row.scope === 'notice' ? '仅本通告'
           : owners.length ? owners.map((id) => labelFor(id, titles)).join('、') : '按艺人';
 
-  return { row, parts, met, shared: false, ownerLabel };
+  return { row, parts, met, shared: false, ownerLabel, doneEligible };
 }
 
 export interface BoardEval {
@@ -435,9 +451,11 @@ export function evaluateBoard(
   const sharedKeys = new Set(Object.entries(counts).filter(([, n]) => n > 1).map(([key]) => key));
   for (const rows of Object.values(byNotice)) {
     for (const row of rows) {
-      // Attribute rows read the one shared attribute table but have no control
-      // to change here — reserve the badge for state the user actually edits.
-      row.shared = row.parts.some((part) => sharedKeys.has(part.key) && part.input !== 'none');
+      // Reserve the badge for state the user actually edits in more than one
+      // card. Done-based stat / resource rows tick per notice, so their
+      // shared-looking attribute key must not earn a misleading badge.
+      row.shared = !row.doneEligible
+        && row.parts.some((part) => sharedKeys.has(part.key) && part.input !== 'none');
     }
   }
   return { byNotice, sharedKeys, enabledCount: counts };

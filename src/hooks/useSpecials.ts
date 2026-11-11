@@ -116,6 +116,17 @@ export function useSpecials() {
     });
   }, []);
 
+  /** Tick / untick a checklist row (stat / resource). This is the authoritative
+   *  progress signal; numbers are only an optional peek elsewhere. */
+  const toggleDone = useCallback((rowId: string) => {
+    setState((previous) => ({
+      ...previous,
+      done: previous.done.includes(rowId)
+        ? previous.done.filter((id) => id !== rowId)
+        : [...previous.done, rowId],
+    }));
+  }, []);
+
   const setGroupLocked = useCallback((noticeId: string, locked: boolean) => {
     setState((previous) => ({
       ...previous,
@@ -136,9 +147,10 @@ export function useSpecials() {
       setValue,
       bump,
       toggleCheck,
+      toggleDone,
       setGroupLocked,
       reset,
     }),
-    [state, toggleEnabled, assign, unassign, setStat, cycleCourse, setValue, bump, toggleCheck, setGroupLocked, reset],
+    [state, toggleEnabled, assign, unassign, setStat, cycleCourse, setValue, bump, toggleCheck, toggleDone, setGroupLocked, reset],
   );
 }
