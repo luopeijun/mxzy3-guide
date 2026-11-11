@@ -1,0 +1,2052 @@
+{
+  "version": 1,
+  "meta": {
+    "generatedBy": "scripts/extract_specials.py",
+    "source": "sources/special-notices.tsv"
+  },
+  "stats": {
+    "rows": 105,
+    "conditions": 77,
+    "notes": 28,
+    "scopeCounts": {
+      "artist": 32,
+      "global": 32,
+      "group": 7,
+      "notice": 3,
+      "role": 3
+    },
+    "eventAnchorsChecked": 2013
+  },
+  "notices": [
+    {
+      "id": "_global",
+      "title": "全局前提",
+      "guideNode": null,
+      "conditionCount": 0,
+      "noteCount": 1,
+      "slots": []
+    },
+    {
+      "id": "proud-of-the-world",
+      "title": "笑傲天际",
+      "guideNode": "notices/proud-of-the-world",
+      "conditionCount": 11,
+      "noteCount": 5,
+      "slots": [
+        "main"
+      ]
+    },
+    {
+      "id": "doomsday-warrior",
+      "title": "末日战士",
+      "guideNode": "notices/doomsday-warrior",
+      "conditionCount": 7,
+      "noteCount": 6,
+      "slots": [
+        "main"
+      ]
+    },
+    {
+      "id": "eternal-love",
+      "title": "万年之恋",
+      "guideNode": "notices/eternal-love",
+      "conditionCount": 13,
+      "noteCount": 3,
+      "slots": [
+        "main"
+      ]
+    },
+    {
+      "id": "angel",
+      "title": "落入凡间的天使",
+      "guideNode": "notices/angel",
+      "conditionCount": 21,
+      "noteCount": 5,
+      "slots": [
+        "main"
+      ]
+    },
+    {
+      "id": "kunlun-adventure",
+      "title": "昆仑历险",
+      "guideNode": "notices/kunlun-adventure",
+      "conditionCount": 16,
+      "noteCount": 4,
+      "slots": [
+        "role:男主",
+        "role:女主一",
+        "role:女主二",
+        "main"
+      ]
+    },
+    {
+      "id": "galaxy",
+      "title": "银河",
+      "guideNode": "notices/galaxy",
+      "conditionCount": 9,
+      "noteCount": 4,
+      "slots": [
+        "group"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "_global.paydebt",
+      "notice": "_global",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "note",
+      "type": "flag",
+      "scope": "global",
+      "name": "还清贺总欠款 → 公园找塔罗小魔女，开启六大",
+      "target": "-",
+      "hint": "只有昆仑历险刚需；其他通告不触发该对话亦可正常进行",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev0",
+        "node": "notices/kunlun-adventure",
+        "event": "62"
+      }
+    },
+    {
+      "id": "proud.male",
+      "notice": "proud-of-the-world",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "notice",
+      "name": "旗下男艺人 ≥1",
+      "target": "1",
+      "hint": "通告为男主角；男配角不算特殊国际通告",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev19",
+        "node": "notices/proud-of-the-world",
+        "event": "92"
+      }
+    },
+    {
+      "id": "proud.medicine4",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "给金父送药",
+      "target": "4",
+      "hint": "第二年送药 4 次后公园找老爸",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev14",
+        "node": "notices/proud-of-the-world",
+        "event": "87"
+      }
+    },
+    {
+      "id": "proud.fathersday2",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "过完父亲节（8.8）",
+      "target": "2",
+      "hint": "送第四次药且过完第二次父亲节后触发",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev14",
+        "node": "notices/proud-of-the-world",
+        "event": "87"
+      }
+    },
+    {
+      "id": "proud.xiake5",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "侠客行事件触发",
+      "target": "5",
+      "hint": "专辑可不拿，但第 1 次一定要触发；攻略写触发第 5 次时赠歌",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev2",
+        "node": "notices/proud-of-the-world",
+        "event": "76"
+      }
+    },
+    {
+      "id": "proud.filmguide3",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "王瑞恩与金父讨论（每月 1 次）",
+      "target": "3",
+      "hint": "前往全球看到两人讨论，需触发 3 次",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev15",
+        "node": "notices/proud-of-the-world",
+        "event": "88"
+      }
+    },
+    {
+      "id": "proud.fatherAlive",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "global",
+      "name": "金父未死",
+      "target": "-",
+      "hint": "第二年 4/5/7/10 月新闻均要求金父未死",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev10",
+        "node": "notices/proud-of-the-world",
+        "event": "84"
+      }
+    },
+    {
+      "id": "proud.goldMedal",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "notice",
+      "name": "大侠金牌（可选）",
+      "target": "-",
+      "hint": "可用大侠金牌直接接此通告",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev19",
+        "node": "notices/proud-of-the-world",
+        "event": "92"
+      }
+    },
+    {
+      "id": "proud.stat.acting",
+      "notice": "proud-of-the-world",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "演技",
+      "target": "500~550",
+      "hint": "达到下限即达标；攻略给的正是区间",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev19",
+        "node": "notices/proud-of-the-world",
+        "event": "92"
+      }
+    },
+    {
+      "id": "proud.stat.movement",
+      "notice": "proud-of-the-world",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "动感",
+      "target": "450~500",
+      "hint": "达到下限即达标",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev19",
+        "node": "notices/proud-of-the-world",
+        "event": "92"
+      }
+    },
+    {
+      "id": "proud.stat.energy",
+      "notice": "proud-of-the-world",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "体能",
+      "target": "630~700",
+      "hint": "达到下限即达标",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev19",
+        "node": "notices/proud-of-the-world",
+        "event": "92"
+      }
+    },
+    {
+      "id": "proud.stat.fame",
+      "notice": "proud-of-the-world",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "名气",
+      "target": "500~550",
+      "hint": "达到下限即达标",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/proud-of-the-world~ev19",
+        "node": "notices/proud-of-the-world",
+        "event": "92"
+      }
+    },
+    {
+      "id": "proud.tl.booking",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "1 月下旬预约，2 月下旬开拍",
+      "target": "-",
+      "hint": "时间窗标签，不计时",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/proud-of-the-world"
+      }
+    },
+    {
+      "id": "proud.tl.firstYear",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "第一年：侠客行 5 次；按时参加影友会；影友会后 3 个月内周三找记者",
+      "target": "-",
+      "hint": "影友会必须参加（#81），记者必须触发（#83）才有后续",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/proud-of-the-world"
+      }
+    },
+    {
+      "id": "proud.tl.secondYear",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "第二年：送药 4 次后公园找老爸；电影指导 3 次（每月 1 次）；过完 2 次父亲节（8.8）；11 月底前公园找老爸；参加记者会（12 月 16 日）；医院",
+      "target": "-",
+      "hint": "对应攻略 #75 #77 #87 #88 #90 #91 #96",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/proud-of-the-world"
+      }
+    },
+    {
+      "id": "proud.tl.reporterWarn",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "如果最后的记者会没有参加，也一样会有笑傲天际通告，但结算时不计入国际通告完成数量",
+      "target": "-",
+      "hint": "UP 本人血的教训，纯提醒",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/proud-of-the-world"
+      }
+    },
+    {
+      "id": "proud.tl.note",
+      "notice": "proud-of-the-world",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "注：陈奕夫的国际记者工作与笑傲天际男主角不可兼得，规划时注意取舍",
+      "target": "-",
+      "hint": "互斥提示",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/proud-of-the-world"
+      }
+    },
+    {
+      "id": "doom.cert.drama",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "cert",
+      "scope": "artist",
+      "name": "国际戏剧学院证书",
+      "target": "-",
+      "hint": "戏剧学院（纽约）：声音表情/肢体语言 专业 + 说话技巧 高级；回国周末发证",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev14",
+        "node": "notices/doomsday-warrior",
+        "event": "51"
+      }
+    },
+    {
+      "id": "doom.stat.acting",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "演技",
+      "target": "550",
+      "hint": "决选与通告要求一致",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.stat.wisdom",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "才智",
+      "target": "550",
+      "hint": "决选与通告要求一致",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.stat.fame",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "名气",
+      "target": "550",
+      "hint": "决选与通告要求一致",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.stat.energy",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "体能",
+      "target": "500",
+      "hint": "决选与通告要求一致",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.metSmith",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "global",
+      "name": "见过史麦克导演",
+      "target": "-",
+      "hint": "见过则初选前得 4 本剧本，否则贺总只给 2 本",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev5",
+        "node": "notices/doomsday-warrior",
+        "event": "47"
+      }
+    },
+    {
+      "id": "doom.prepDays",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "notice",
+      "name": "剧本准备天数足够",
+      "target": "-",
+      "hint": "初选/决选剧本给出后要如数安排自由活动",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev6",
+        "node": "notices/doomsday-warrior",
+        "event": "48"
+      }
+    },
+    {
+      "id": "doom.tl.dates",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "第三年 4 月 27 日初选、7 月 27 日决选",
+      "target": "-",
+      "hint": "具体日期按条件表（4/27 初选、7/27 决选）；攻略正文只给月份；时间窗只作标签，不计时",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.tl.route1",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "路径 1 暗夜惊魂事件：女艺人，名气/演技 >400、电影 >3 部，拍 4 或 5 星女主角时触发，选关心的选项、跟随满 21 天，可提前开启好莱坞",
+      "target": "-",
+      "hint": "属于事件流程，在事件追踪器里跟",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.tl.route2",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "路径 2 等导演上门：任意艺人，名气/演技 >600、电影 >3 部，第三年 3 月史麦克上门",
+      "target": "-",
+      "hint": "属于事件流程，在事件追踪器里跟",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.tl.scripts",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "见过史麦克，初选前会得到 4 本剧本；否则贺总会给 2 本剧本",
+      "target": "-",
+      "hint": "对应攻略 #47",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.tl.oneWinner",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "若有一个以上艺人通过决选，史麦克只会邀请一个（可自己前往好莱坞预约）",
+      "target": "-",
+      "hint": "候选池依据：多人各自算条件，最终 1 人接通告",
+      "source": "攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.tl.note",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "注：关古威、欧怡青无法完成该通告；陈奕夫的国际记者工作亦与之不可兼得，规划时注意取舍",
+      "target": "-",
+      "hint": "互斥提示",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "eternal.cert.music",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "cert",
+      "scope": "artist",
+      "name": "国际音乐学院证书",
+      "target": "-",
+      "hint": "音乐学院（维也纳）：音感发声/乐器乐理 专业 + 快速记忆/美姿美仪 高级",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev0",
+        "node": "notices/eternal-love",
+        "event": "14"
+      }
+    },
+    {
+      "id": "eternal.albums5",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "artist",
+      "name": "个人唱片 >5 张",
+      "target": "5",
+      "hint": "5 张个人唱片 + 音乐证书，开过大型个人演唱会后触发",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev0",
+        "node": "notices/eternal-love",
+        "event": "14"
+      }
+    },
+    {
+      "id": "eternal.fame600",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "名气（触发前置）",
+      "target": "600",
+      "hint": "攻略 #14 的触发条件；与下方通告要求 450~500 不是同一条",
+      "source": "攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev0",
+        "node": "notices/eternal-love",
+        "event": "14"
+      }
+    },
+    {
+      "id": "eternal.bigConcert",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "artist",
+      "name": "开过大型个人演唱会",
+      "target": "-",
+      "hint": "触发爱慕信事件的前置",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev0",
+        "node": "notices/eternal-love",
+        "event": "14"
+      }
+    },
+    {
+      "id": "eternal.fund4000",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "resource",
+      "scope": "global",
+      "name": "大型演唱会需 4000 万",
+      "target": "4000万",
+      "hint": "举办大型演唱会所需资金；金额来自条件表，攻略正文未列",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.item.meiying",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "魅影",
+      "target": "-",
+      "hint": "赢得综艺节目猫狗神偷的奖品",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev4",
+        "node": "notices/eternal-love",
+        "event": "17"
+      }
+    },
+    {
+      "id": "eternal.item.mozhou",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "魔咒",
+      "target": "-",
+      "hint": "在维也纳买 10 次听课证后教授赠送",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev4",
+        "node": "notices/eternal-love",
+        "event": "17"
+      }
+    },
+    {
+      "id": "eternal.item.huyan",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "狐眼",
+      "target": "-",
+      "hint": "秀场主持到资深后再打工 20 次以上，且主角跟随时会捡到",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev4",
+        "node": "notices/eternal-love",
+        "event": "17"
+      }
+    },
+    {
+      "id": "eternal.item.cross",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "圣约翰的千年十字架",
+      "target": "-",
+      "hint": "开罗购买，100 万；事件 15 后一个月内",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love~ev2",
+        "node": "notices/eternal-love",
+        "event": "16"
+      }
+    },
+    {
+      "id": "eternal.stat.singing",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "歌艺",
+      "target": "630~700",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.stat.wisdom",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "才智",
+      "target": "450~500",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.stat.confidence",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "自信",
+      "target": "630~700",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.stat.fame",
+      "notice": "eternal-love",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "名气",
+      "target": "450~500",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/eternal-love",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.tl.flow",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "5 张个人唱片 + 音乐证书 → 大型个人演唱会后触发 → 买十字架 → 送暗黑之服 → 抽取利金",
+      "target": "-",
+      "hint": "流程索引",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.tl.key",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "猫狗神偷可通过开罗商店物品「法老王之钥」大幅降低游戏难度（售价 100 万，每月末可蹲）",
+      "target": "-",
+      "hint": "省事提示",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.tl.singer",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "攻略补充：万年之恋必须让交出歌曲的男艺人演唱，否则成绩很糟",
+      "target": "-",
+      "hint": "对应攻略 #20 提醒",
+      "source": "攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "angel.cert.music",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "cert",
+      "scope": "artist",
+      "name": "国际音乐学院证书",
+      "target": "-",
+      "hint": "音乐学院（维也纳）：音感发声/乐器乐理 专业 + 快速记忆/美姿美仪 高级",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev4",
+        "node": "notices/angel",
+        "event": "3"
+      }
+    },
+    {
+      "id": "angel.albums5",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "artist",
+      "name": "个人唱片 >5 张",
+      "target": "5",
+      "hint": "捐款事件前置",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev4",
+        "node": "notices/angel",
+        "event": "3"
+      }
+    },
+    {
+      "id": "angel.fund4000",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "resource",
+      "scope": "global",
+      "name": "大型演唱会需 4000 万",
+      "target": "4000万",
+      "hint": "举办大型演唱会所需资金；金额来自条件表，攻略正文未列",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.charityStats",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "慈善义演邀约（歌艺/仪态/人气）",
+      "target": "300/300/3",
+      "hint": "歌艺 300、仪态 300、人气 3，只会请女艺人",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev1",
+        "node": "notices/angel",
+        "event": "1"
+      }
+    },
+    {
+      "id": "angel.charity",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "artist",
+      "name": "参加慈善义演",
+      "target": "-",
+      "hint": "每年 2 月/8 月第一周上门，只请人气最高的女艺人",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev1",
+        "node": "notices/angel",
+        "event": "1"
+      }
+    },
+    {
+      "id": "angel.hunger",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "artist",
+      "name": "参加饥饿百分百",
+      "target": "-",
+      "hint": "4 月、10 月；周先生每年上门邀请一次，选「答应」",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev1",
+        "node": "notices/angel",
+        "event": "1"
+      }
+    },
+    {
+      "id": "angel.donate",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "artist",
+      "name": "大型演唱会后答应捐 10%",
+      "target": "-",
+      "hint": "满足证书/唱片/演唱会后周末沟通，选「答应」",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev4",
+        "node": "notices/angel",
+        "event": "3"
+      }
+    },
+    {
+      "id": "angel.hospital10",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "旗下艺人生病时就医",
+      "target": "10",
+      "hint": "任一艺人在生病状态下就医满 10 次，欧医生赠送天使的羽翼",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev7",
+        "node": "notices/angel",
+        "event": "6"
+      }
+    },
+    {
+      "id": "angel.divine10",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "小魔女占卜",
+      "target": "10",
+      "hint": "前往公园让塔罗小魔女占卜后赠送精灵的祈祷；按攻略 10 次定稿（截图写 3 次）",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev7",
+        "node": "notices/angel",
+        "event": "6"
+      }
+    },
+    {
+      "id": "angel.boutique10",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "精品店买东西 >10 次",
+      "target": "10",
+      "hint": "把音乐盒给周映彤后再去精品店，老板赠送光丝布料",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev7",
+        "node": "notices/angel",
+        "event": "6"
+      }
+    },
+    {
+      "id": "angel.item.tear",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "人鱼的眼泪",
+      "target": "-",
+      "hint": "综艺节目大富翁 BABABA 赢得的第二个神秘礼物",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev7",
+        "node": "notices/angel",
+        "event": "6"
+      }
+    },
+    {
+      "id": "angel.item.wing",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "天使的羽翼",
+      "target": "-",
+      "hint": "就医满 10 次的赠品",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev7",
+        "node": "notices/angel",
+        "event": "6"
+      }
+    },
+    {
+      "id": "angel.item.prayer",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "精灵的祈祷",
+      "target": "-",
+      "hint": "公园让塔罗小魔女占卜后赠送",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev7",
+        "node": "notices/angel",
+        "event": "6"
+      }
+    },
+    {
+      "id": "angel.item.silk",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "光丝布料",
+      "target": "-",
+      "hint": "精品店买过 >10 次 + 音乐盒给周映彤后",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev7",
+        "node": "notices/angel",
+        "event": "6"
+      }
+    },
+    {
+      "id": "angel.item.musicbox",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "天使的音乐盒",
+      "target": "-",
+      "hint": "答应捐款 3 天后，大天使寄来感谢卡和音乐盒",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev6",
+        "node": "notices/angel",
+        "event": "5"
+      }
+    },
+    {
+      "id": "angel.item.dress",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "天使羽衣",
+      "target": "-",
+      "hint": "集齐四样材料，巴黎找老板制作，两周后可取",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev9",
+        "node": "notices/angel",
+        "event": "7"
+      }
+    },
+    {
+      "id": "angel.giveDress",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "artist",
+      "name": "接通告前把天使羽衣送给对应艺人",
+      "target": "-",
+      "hint": "必须送给触发捐款的那位女艺人",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev11",
+        "node": "notices/angel",
+        "event": "9"
+      }
+    },
+    {
+      "id": "angel.stat.singing",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "歌艺",
+      "target": "630~700",
+      "hint": "攻略「大致要求：歌艺 700」正好是区间上限；按定稿取下限达标",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev12",
+        "node": "notices/angel",
+        "event": "10"
+      }
+    },
+    {
+      "id": "angel.stat.etiquette",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "仪态",
+      "target": "630~700",
+      "hint": "攻略单值 700；按定稿取下限达标",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev12",
+        "node": "notices/angel",
+        "event": "10"
+      }
+    },
+    {
+      "id": "angel.stat.confidence",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "自信",
+      "target": "500~550",
+      "hint": "攻略单值 550；按定稿取下限达标",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev12",
+        "node": "notices/angel",
+        "event": "10"
+      }
+    },
+    {
+      "id": "angel.stat.fame",
+      "notice": "angel",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "名气",
+      "target": "450~500",
+      "hint": "攻略单值 500；按定稿取下限达标",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/angel~ev12",
+        "node": "notices/angel",
+        "event": "10"
+      }
+    },
+    {
+      "id": "angel.tl.charity",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "慈善义演：每年 2 月/8 月第一周上门；触发条件歌艺/仪态 300、人气 3；确保排程时人气 >3 且为旗下女艺人中最高",
+      "target": "-",
+      "hint": "流程索引",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.tl.hunger",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "饥饿百分百：4 月、10 月",
+      "target": "-",
+      "hint": "时间窗标签",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.tl.musicbox",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "天使的音乐盒：参加过饥饿百分百 + 音乐证书 + 5 张个人唱片 → 举办大型个人演唱会后的周末答应捐款 → 3 天后获得",
+      "target": "-",
+      "hint": "流程索引",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.tl.dress",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "光丝布料：把音乐盒交给周映彤后去精品店（买过 >10 次）老板赠送；集齐材料巴黎做天使羽衣；拿回后找周映彤，下期通告上档（下期是团唱要再等一期）；接通告前把羽衣送给相应艺人",
+      "target": "-",
+      "hint": "流程索引",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.tl.trigger",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "攻略补充：不需要和塔罗小魔女交谈就能触发",
+      "target": "-",
+      "hint": "节点标题注",
+      "source": "攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "kunlun.debt",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "global",
+      "name": "还清贺总欠款 + 公园找小魔女",
+      "target": "-",
+      "hint": "仅昆仑刚需，对应攻略 #62",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev0",
+        "node": "notices/kunlun-adventure",
+        "event": "62"
+      }
+    },
+    {
+      "id": "kunlun.item.soft",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "昆仑仙境软体",
+      "target": "-",
+      "hint": "旗下艺人录制「益智休闲」类主持通告，跟随第 8 次时赠送（不限同一通告/同一艺人）",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev8",
+        "node": "notices/kunlun-adventure",
+        "event": "69"
+      }
+    },
+    {
+      "id": "kunlun.item.silk",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "真虹羽纱",
+      "target": "-",
+      "hint": "在巴黎买过 3 件以上女装，且买走当季女装后可买到；名称按攻略正字统一（截图写「真虹纱羽」）",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev8",
+        "node": "notices/kunlun-adventure",
+        "event": "69"
+      }
+    },
+    {
+      "id": "kunlun.item.fox",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "九尾狐皮裳",
+      "target": "-",
+      "hint": "旗下所有艺人日本旅游累计 >9 次，旅行社会赠送",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev8",
+        "node": "notices/kunlun-adventure",
+        "event": "69"
+      }
+    },
+    {
+      "id": "kunlun.item.stick",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "如意金箍棒",
+      "target": "-",
+      "hint": "开罗有售（事件 68 后出现几率较高）",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev8",
+        "node": "notices/kunlun-adventure",
+        "event": "69"
+      }
+    },
+    {
+      "id": "kunlun.cert.male",
+      "notice": "kunlun-adventure",
+      "slot": "role:男主",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "cert",
+      "scope": "role",
+      "name": "男主：戏剧 + 音乐证书",
+      "target": "-",
+      "hint": "按角色位判定，不能摊到一个人头上",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev8",
+        "node": "notices/kunlun-adventure",
+        "event": "69"
+      }
+    },
+    {
+      "id": "kunlun.cert.f1",
+      "notice": "kunlun-adventure",
+      "slot": "role:女主一",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "cert",
+      "scope": "role",
+      "name": "女主一：舞蹈 + 戏剧证书",
+      "target": "-",
+      "hint": "按角色位判定",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev8",
+        "node": "notices/kunlun-adventure",
+        "event": "69"
+      }
+    },
+    {
+      "id": "kunlun.cert.f2",
+      "notice": "kunlun-adventure",
+      "slot": "role:女主二",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "cert",
+      "scope": "role",
+      "name": "女主二：舞蹈 + 音乐证书",
+      "target": "-",
+      "hint": "按角色位判定",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev8",
+        "node": "notices/kunlun-adventure",
+        "event": "69"
+      }
+    },
+    {
+      "id": "kunlun.sight3",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "塞外观光累计",
+      "target": "3",
+      "hint": "所有艺人累积不限哪位，但路风、路敏无法触发",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev3",
+        "node": "notices/kunlun-adventure",
+        "event": "64"
+      }
+    },
+    {
+      "id": "kunlun.movies5",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "旗下艺人出演电影",
+      "target": "5",
+      "hint": "≥5 部",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev5",
+        "node": "notices/kunlun-adventure",
+        "event": "66"
+      }
+    },
+    {
+      "id": "kunlun.leads2",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "global",
+      "name": "其中担任主角",
+      "target": "2",
+      "hint": "≥2 次",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev5",
+        "node": "notices/kunlun-adventure",
+        "event": "66"
+      }
+    },
+    {
+      "id": "kunlun.fatherAlive",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "global",
+      "name": "老爸活下来",
+      "target": "-",
+      "hint": "不满足则剧本获得时间推迟到老爸去世后",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure~ev5",
+        "node": "notices/kunlun-adventure",
+        "event": "66"
+      }
+    },
+    {
+      "id": "kunlun.stat.acting",
+      "notice": "kunlun-adventure",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "演技",
+      "target": "500~550",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "kunlun.stat.fame",
+      "notice": "kunlun-adventure",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "名气",
+      "target": "630~700",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "kunlun.stat.etiquette",
+      "notice": "kunlun-adventure",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "仪态",
+      "target": "500~550",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "kunlun.stat.movement",
+      "notice": "kunlun-adventure",
+      "slot": "main",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "动感",
+      "target": "450~500",
+      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/kunlun-adventure",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "kunlun.tl.maleOnly",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "注：旗下只有女艺人的话昆仑历险事件会中断（此条来自条件表，攻略正文未明写）",
+      "target": "-",
+      "hint": "来源仅条件表；按裁决降级为只读备注，不进达标数",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "kunlun.tl.sight",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "塞外观光后，长城路老爹说风沙大；观光累计 3 次艺人叙述奇遇（风敏不触发）；有风敏在旗下时可沟通看塞外传说（不必须）",
+      "target": "-",
+      "hint": "流程索引",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "kunlun.tl.script",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "以上事件触发后第三年 1 月后自动获得剧本；找王瑞恩闲聊 → 1 周后闲聊 → 1 月后闲聊；集齐所有道具且旗下至少 1 位艺人满足证书条件时闲聊，下次通告会上档",
+      "target": "-",
+      "hint": "流程索引",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "kunlun.tl.booking",
+      "notice": "kunlun-adventure",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "攻略补充：王导不会主动上门，需自己前往全球预约",
+      "target": "-",
+      "hint": "对应攻略 #71",
+      "source": "攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/kunlun-adventure"
+      }
+    },
+    {
+      "id": "galaxy.cert.dance",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "cert",
+      "scope": "group",
+      "name": "国际舞蹈学院证书（全体成员）",
+      "target": "-",
+      "hint": "舞蹈学院（夏威夷）：有氧舞蹈/舞台表演 专业 + 摄影训练 高级；团体成员都要有",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev13",
+        "node": "notices/galaxy",
+        "event": "36"
+      }
+    },
+    {
+      "id": "galaxy.fund4000",
+      "notice": "galaxy",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "resource",
+      "scope": "global",
+      "name": "大型演唱会需 4000 万",
+      "target": "4000万",
+      "hint": "举办大型演唱会所需资金；金额来自条件表，攻略正文未列",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy",
+        "node": "notices/galaxy"
+      }
+    },
+    {
+      "id": "galaxy.albums3",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "count",
+      "scope": "group",
+      "name": "团体唱片 ≥3 张",
+      "target": "3",
+      "hint": "推出过 3 张或以上团体唱片，前往东京找加贺",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev2",
+        "node": "notices/galaxy",
+        "event": "28"
+      }
+    },
+    {
+      "id": "galaxy.jingfeng",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "group",
+      "name": "接过京风唱片的团体通告",
+      "target": "-",
+      "hint": "加贺上门邀请巡演的前置",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev6",
+        "node": "notices/galaxy",
+        "event": "30"
+      }
+    },
+    {
+      "id": "galaxy.groupFame",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "group",
+      "name": "团体名气 >6",
+      "target": "6",
+      "hint": "加贺上门邀请巡演的前置",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev6",
+        "node": "notices/galaxy",
+        "event": "30"
+      }
+    },
+    {
+      "id": "galaxy.groupPop",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "group",
+      "name": "团体人气 >5",
+      "target": "5",
+      "hint": "加贺上门邀请巡演的前置",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev6",
+        "node": "notices/galaxy",
+        "event": "30"
+      }
+    },
+    {
+      "id": "galaxy.concert",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "group",
+      "name": "开完大型演唱会",
+      "target": "-",
+      "hint": "加贺上门邀请巡演的前置",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev6",
+        "node": "notices/galaxy",
+        "event": "30"
+      }
+    },
+    {
+      "id": "galaxy.invite",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "trigger",
+      "kind": "condition",
+      "type": "flag",
+      "scope": "group",
+      "name": "加贺大泽上门邀请巡演 → 同意",
+      "target": "-",
+      "hint": "选拒绝有 BUG：仍出新闻，之后加贺以换员为由拒绝合作",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev6",
+        "node": "notices/galaxy",
+        "event": "30"
+      }
+    },
+    {
+      "id": "galaxy.dragonTail",
+      "notice": "galaxy",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "item",
+      "scope": "global",
+      "name": "龙尾散（可选）",
+      "target": "-",
+      "hint": "答应巡演后到结束前，东京找加贺闲聊 3 次；歌艺 +50、自信 -30",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev8",
+        "node": "notices/galaxy",
+        "event": "31"
+      }
+    },
+    {
+      "id": "galaxy.tl.stats",
+      "notice": "galaxy",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "歌艺 500-550 / 动感 630-700 / 体能 630-700 / 自信 500-550：事件正常推进，数值不达标也能接",
+      "target": "-",
+      "hint": "非硬门槛，按定位降级为只读备注、不计入达标数",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/galaxy"
+      }
+    },
+    {
+      "id": "galaxy.tl.flow",
+      "notice": "galaxy",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "自答应巡演后到巡演结束前，东京闲聊 3 次可获得龙尾散（没时间或不想可以不触发，不影响后续）；巡演结束后出新闻；团体成员拿到舞蹈证书后东京闲聊；下一档团唱会放银河",
+      "target": "-",
+      "hint": "流程索引",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/galaxy"
+      }
+    },
+    {
+      "id": "galaxy.tl.lock",
+      "notice": "galaxy",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "攻略补充：加贺邀请的是担任日本演唱会嘉宾的团体成员，中途换人则加贺不会上门",
+      "target": "-",
+      "hint": "对应攻略 #37，团体一旦锁定不可换人",
+      "source": "攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/galaxy"
+      }
+    },
+    {
+      "id": "galaxy.tl.note",
+      "notice": "galaxy",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "注：如需要关古威参与，请在第三年 9 月前完成",
+      "target": "-",
+      "hint": "时间窗标签",
+      "source": "表",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/galaxy"
+      }
+    }
+  ]
+}
