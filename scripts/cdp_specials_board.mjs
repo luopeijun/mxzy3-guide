@@ -309,6 +309,9 @@ async function main() {
     '三位各自要两张证书', `${male.length}/${f1.length}/${f2.length}`);
   check(male.some((k) => k.includes('戏剧证书')) && f2.some((k) => k.includes('音乐证书')),
     '男主＝戏剧+音乐，女主二＝舞蹈+音乐（按位不摊派）');
+  const certLines = await evaluate(`JSON.stringify(['kunlun.cert.male','kunlun.cert.f1','kunlun.cert.f2']
+    .map(id => document.querySelectorAll('[data-condition-row][data-row-id="' + id + '"] [data-owner-part]').length))`);
+  check(JSON.parse(certLines).every((n) => n === 2), '一个角色位两张证书各占一行', certLines);
 
   // ---------- 6. 银河 group lock ----------
   await setup({ enabled: [GALAXY], assignments: { [GALAXY]: { group: [LIN, XIAO] } } });

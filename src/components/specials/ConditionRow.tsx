@@ -219,8 +219,10 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
   const toggle = (key: string) => setPeek((current) => (current === key ? null : key));
   const showLabel = row.type === 'cert' || parts.length > 1;
 
-  // Group parts by artist: a candidate pool evaluates each artist separately,
-  // so it should read as one line per person.
+  // Group parts by artist, then fan out one sub-line per *thing to check*: a
+  // candidate pool gives one line per artist, and one role that needs two
+  // certificates gives one line per certificate. Nothing is stacked into a
+  // single stretched-out row.
   const ownerGroups = useMemo(() => {
     const map = new Map<string, EvalPart[]>();
     for (const part of parts) {
@@ -231,8 +233,18 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
     }
     return [...map.entries()];
   }, [parts]);
+  const lines = useMemo(
+    () => ownerGroups.flatMap(([ownerId, list]) => (
+      list.length > 1
+        ? list.map((part) => ({ key: `p:${part.key}`, head: part.label, parts: [part] }))
+        : [{ key: `o:${ownerId}`, head: list[0].ownerLabel ?? ownerId, parts: list }]
+    )),
+    [ownerGroups],
+  );
   const multiOwner = ownerGroups.length > 1;
-  const showOwner = !multiOwner && !!ownerLabel && ownerLabel !== '按艺人';
+  const split = lines.length > 1;
+  // 「男主：戏剧 + 音乐证书」 already names the role — do not repeat it as a tag.
+  const showOwner = !split && !!ownerLabel && ownerLabel !== '按艺人' && !row.name.includes(ownerLabel);
 
   const shell = cn(
     'rounded-ui-sm border-l-2 px-2.5 py-1',
@@ -326,8 +338,8 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
     );
   }
 
-  // Candidate pool / multi-role row: one sub-line per artist.
-  if (multiOwner) {
+  // Candidate pool / one role needing several certificates: one sub-line each.
+  if (split) {
     return (
       <div
         data-condition-row
@@ -345,27 +357,29 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
             {row.name}
           </span>
           {headMeta}
-          <span data-owner-count className="shrink-0 text-ui-2xs text-ink-faint">
-            {ownerGroups.length} 人
-          </span>
+          {multiOwner && (
+            <span data-owner-count className="shrink-0 text-ui-2xs text-ink-faint">
+              {ownerGroups.length} 人
+            </span>
+          )}
         </div>
         <div data-owner-parts className="mt-1 space-y-1 border-t border-line/60 pt-1">
-          {ownerGroups.map(([ownerId, list]) => {
-            const key = `owner:${ownerId}`;
-            const hasGap = list.some((part) => part.gaps?.length || part.courseList?.length);
+          {lines.map((line) => {
+            const hasGap = line.parts.some((part) => part.gaps?.length || part.courseList?.length);
+            const ownerId = line.parts[0].ownerId ?? line.key;
             return (
-              <div key={ownerId} data-owner-part data-artist-id={ownerId}>
+              <div key={line.key} data-owner-part data-artist-id={ownerId}>
                 <div className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate text-ui-2xs text-ink-muted">
-                    {list[0].ownerLabel ?? ownerId}
+                    {line.head}
                   </span>
                   <span className="flex shrink-0 items-center gap-1.5">
-                    {list.map((part) => (
+                    {line.parts.map((part) => (
                       <PartControl
                         key={part.key}
                         part={part}
                         rowType={row.type}
-                        showLabel={list.length > 1}
+                        showLabel={false}
                         onCheck={onCheck}
                         onBump={onBump}
                         onValue={onValue}
@@ -376,16 +390,16 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
                     <button
                       type="button"
                       data-peek-toggle
-                      aria-expanded={peek === key}
-                      onClick={() => toggle(key)}
+                      aria-expanded={peek === line.key}
+                      onClick={() => toggle(line.key)}
                       className="shrink-0 text-ui-2xs text-ink-faint hover:text-brand-strong"
                       title="查看属性 / 课程缺口详情"
                     >
-                      {peek === key ? '▾' : '▸'}
+                      {peek === line.key ? '▾' : '▸'}
                     </button>
                   )}
                 </div>
-                {peek === key && hasGap && <GapDetail parts={list} onCourse={onCourse} />}
+                {peek === line.key && hasGap && <GapDetail parts={line.parts} onCourse={onCourse} />}
               </div>
             );
           })}

@@ -386,10 +386,11 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): RowEval {
         const unmetCourses = courseList.filter(
           (item) => COURSE_LEVELS.indexOf(item.current) < COURSE_LEVELS.indexOf(item.required),
         ).length;
-        const roleName = row.slot.startsWith('role:') ? row.slot.slice(5) : null;
         parts.push({
           key,
-          label: roleName ? `${roleName} · ${cert}` : cert,
+          // Pure certificate name: the row head already carries the role /
+          // artist, so repeating it here just widens the line.
+          label: cert,
           ownerId: artistId,
           ownerLabel: labelFor(artistId, titles),
           input: 'check',
