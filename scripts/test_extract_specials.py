@@ -65,8 +65,8 @@ class TestSpecialsJson(unittest.TestCase):
     def test_counts_match_the_reviewed_table(self):
         data = _json()
         s = data["stats"]
-        self.assertEqual(s["rows"], 105)
-        self.assertEqual(s["conditions"], 77)
+        self.assertEqual(s["rows"], 102)
+        self.assertEqual(s["conditions"], 74)
         self.assertEqual(s["notes"], 28)
         self.assertEqual(len(data["notices"]), 7)
         self.assertEqual(
@@ -121,8 +121,10 @@ class TestSpecialsJson(unittest.TestCase):
         self.assertEqual(rows["kunlun.item.silk"]["name"], "真虹羽纱")
         self.assertEqual(rows["angel.divine10"]["target"], "10")
         self.assertEqual(rows["eternal.fame600"]["target"], "600")
-        for key in ("eternal.fund4000", "angel.fund4000", "galaxy.fund4000"):
-            self.assertEqual(rows[key]["kind"], "condition")
+        self.assertFalse(
+            any(r["type"] == "resource" for r in _json()["rows"]),
+            "4000 万等 resource 条件已从看板移除",
+        )
         self.assertEqual(rows["kunlun.tl.maleOnly"]["kind"], "note")
         self.assertEqual(rows["galaxy.tl.stats"]["kind"], "note")
 

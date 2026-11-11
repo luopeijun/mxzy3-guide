@@ -33,7 +33,6 @@ eternal.cert.music	eternal-love	main	trigger	condition	cert	artist	国际音乐�
 eternal.albums5	eternal-love	main	trigger	condition	count	artist	个人唱片 >5 张	5	5 张个人唱片 + 音乐证书，开过大型个人演唱会后触发	notices/eternal-love#14	表+攻略	-
 eternal.fame600	eternal-love	main	trigger	condition	stat	artist	名气（触发前置）	600	攻略 #14 的触发条件；与下方通告要求 450~500 不是同一条	notices/eternal-love#14	攻略	-
 eternal.bigConcert	eternal-love	main	trigger	condition	flag	artist	开过大型个人演唱会	-	触发爱慕信事件的前置	notices/eternal-love#14	表+攻略	-
-eternal.fund4000	eternal-love	-	prepare	condition	resource	global	大型演唱会需 4000 万	4000万	举办大型演唱会所需资金；金额来自条件表，攻略正文未列	notices/eternal-love	表	-
 eternal.item.meiying	eternal-love	-	prepare	condition	item	global	魅影	-	赢得综艺节目猫狗神偷的奖品	notices/eternal-love#17	表+攻略	-
 eternal.item.mozhou	eternal-love	-	prepare	condition	item	global	魔咒	-	在维也纳买 10 次听课证后教授赠送	notices/eternal-love#17	表+攻略	-
 eternal.item.huyan	eternal-love	-	prepare	condition	item	global	狐眼	-	秀场主持到资深后再打工 20 次以上，且主角跟随时会捡到	notices/eternal-love#17	表+攻略	-
@@ -47,7 +46,6 @@ eternal.tl.key	eternal-love	-	-	note	-	-	猫狗神偷可通过开罗商店物品
 eternal.tl.singer	eternal-love	-	-	note	-	-	攻略补充：万年之恋必须让交出歌曲的男艺人演唱，否则成绩很糟	-	对应攻略 #20 提醒	tracker:notices/eternal-love	攻略	-
 angel.cert.music	angel	main	trigger	condition	cert	artist	国际音乐学院证书	-	音乐学院（维也纳）：音感发声/乐器乐理 专业 + 快速记忆/美姿美仪 高级	notices/angel#3	表+攻略	-
 angel.albums5	angel	main	trigger	condition	count	artist	个人唱片 >5 张	5	捐款事件前置	notices/angel#3	表+攻略	-
-angel.fund4000	angel	-	prepare	condition	resource	global	大型演唱会需 4000 万	4000万	举办大型演唱会所需资金；金额来自条件表，攻略正文未列	notices/angel	表	-
 angel.charityStats	angel	main	trigger	condition	stat	artist	慈善义演邀约（歌艺/仪态/人气）	300/300/3	歌艺 300、仪态 300、人气 3，只会请女艺人	notices/angel#1	表+攻略	-
 angel.charity	angel	main	trigger	condition	flag	artist	参加慈善义演	-	每年 2 月/8 月第一周上门，只请人气最高的女艺人	notices/angel#1	表+攻略	-
 angel.hunger	angel	main	trigger	condition	flag	artist	参加饥饿百分百	-	4 月、10 月；周先生每年上门邀请一次，选「答应」	notices/angel#1	表+攻略	-
@@ -92,7 +90,6 @@ kunlun.tl.sight	kunlun-adventure	-	-	note	-	-	塞外观光后，长城路老爹�
 kunlun.tl.script	kunlun-adventure	-	-	note	-	-	以上事件触发后第三年 1 月后自动获得剧本；找王瑞恩闲聊 → 1 周后闲聊 → 1 月后闲聊；集齐所有道具且旗下至少 1 位艺人满足证书条件时闲聊，下次通告会上档	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-
 kunlun.tl.booking	kunlun-adventure	-	-	note	-	-	攻略补充：王导不会主动上门，需自己前往全球预约	-	对应攻略 #71	tracker:notices/kunlun-adventure	攻略	-
 galaxy.cert.dance	galaxy	group	prepare	condition	cert	group	国际舞蹈学院证书（全体成员）	-	舞蹈学院（夏威夷）：有氧舞蹈/舞台表演 专业 + 摄影训练 高级；团体成员都要有	notices/galaxy#36	表+攻略	-
-galaxy.fund4000	galaxy	-	prepare	condition	resource	global	大型演唱会需 4000 万	4000万	举办大型演唱会所需资金；金额来自条件表，攻略正文未列	notices/galaxy	表	-
 galaxy.albums3	galaxy	group	trigger	condition	count	group	团体唱片 ≥3 张	3	推出过 3 张或以上团体唱片，前往东京找加贺	notices/galaxy#28	表+攻略	-
 galaxy.jingfeng	galaxy	group	trigger	condition	flag	group	接过京风唱片的团体通告	-	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
 galaxy.groupFame	galaxy	group	trigger	condition	stat	group	团体名气 >6	6	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-

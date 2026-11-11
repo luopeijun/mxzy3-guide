@@ -5,12 +5,12 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 105,
-    "conditions": 77,
+    "rows": 102,
+    "conditions": 74,
     "notes": 28,
     "scopeCounts": {
       "artist": 32,
-      "global": 32,
+      "global": 29,
       "group": 7,
       "notice": 3,
       "role": 3
@@ -50,7 +50,7 @@
       "id": "eternal-love",
       "title": "万年之恋",
       "guideNode": "notices/eternal-love",
-      "conditionCount": 13,
+      "conditionCount": 12,
       "noteCount": 3,
       "slots": [
         "main"
@@ -60,7 +60,7 @@
       "id": "angel",
       "title": "落入凡间的天使",
       "guideNode": "notices/angel",
-      "conditionCount": 21,
+      "conditionCount": 20,
       "noteCount": 5,
       "slots": [
         "main"
@@ -83,7 +83,7 @@
       "id": "galaxy",
       "title": "银河",
       "guideNode": "notices/galaxy",
-      "conditionCount": 9,
+      "conditionCount": 8,
       "noteCount": 4,
       "slots": [
         "group"
@@ -727,24 +727,6 @@
       }
     },
     {
-      "id": "eternal.fund4000",
-      "notice": "eternal-love",
-      "slot": "-",
-      "phase": "prepare",
-      "kind": "condition",
-      "type": "resource",
-      "scope": "global",
-      "name": "大型演唱会需 4000 万",
-      "target": "4000万",
-      "hint": "举办大型演唱会所需资金；金额来自条件表，攻略正文未列",
-      "source": "表",
-      "link": {
-        "kind": "guide",
-        "href": "#/guide/notices/eternal-love",
-        "node": "notices/eternal-love"
-      }
-    },
-    {
       "id": "eternal.item.meiying",
       "notice": "eternal-love",
       "slot": "-",
@@ -982,24 +964,6 @@
         "href": "#/guide/notices/angel~ev4",
         "node": "notices/angel",
         "event": "3"
-      }
-    },
-    {
-      "id": "angel.fund4000",
-      "notice": "angel",
-      "slot": "-",
-      "phase": "prepare",
-      "kind": "condition",
-      "type": "resource",
-      "scope": "global",
-      "name": "大型演唱会需 4000 万",
-      "target": "4000万",
-      "hint": "举办大型演唱会所需资金；金额来自条件表，攻略正文未列",
-      "source": "表",
-      "link": {
-        "kind": "guide",
-        "href": "#/guide/notices/angel",
-        "node": "notices/angel"
       }
     },
     {
@@ -1823,24 +1787,6 @@
         "href": "#/guide/notices/galaxy~ev13",
         "node": "notices/galaxy",
         "event": "36"
-      }
-    },
-    {
-      "id": "galaxy.fund4000",
-      "notice": "galaxy",
-      "slot": "-",
-      "phase": "prepare",
-      "kind": "condition",
-      "type": "resource",
-      "scope": "global",
-      "name": "大型演唱会需 4000 万",
-      "target": "4000万",
-      "hint": "举办大型演唱会所需资金；金额来自条件表，攻略正文未列",
-      "source": "表",
-      "link": {
-        "kind": "guide",
-        "href": "#/guide/notices/galaxy",
-        "node": "notices/galaxy"
       }
     },
     {
