@@ -55,10 +55,23 @@ export default function StatsPanel({ artists, state, groupRows, onStat, onValue 
               <table className="border-separate border-spacing-1 text-ui-2xs">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 z-10 bg-surface px-2 py-1 text-left font-medium text-ink-faint">属性</th>
-                    {artists.map((artist) => (
-                      <th key={artist.id} className="px-2 py-1 text-center font-medium text-ink-muted whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1">
+                    <th className="sticky left-0 z-10 bg-surface px-2 py-1 text-left font-medium text-ink-faint whitespace-nowrap">艺人</th>
+                    {ATTRIBUTES.map((attr) => (
+                      <th
+                        key={attr.key}
+                        title={attr.hint}
+                        className="px-1 py-1 text-center font-medium text-ink-muted whitespace-nowrap"
+                      >
+                        {attr.key}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {artists.map((artist) => (
+                    <tr key={artist.id}>
+                      <td className="sticky left-0 z-10 bg-surface px-2 py-1 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 text-ink-muted">
                           {artist.avatar && (
                             <img
                               src={`${import.meta.env.BASE_URL}${artist.avatar}`}
@@ -68,24 +81,12 @@ export default function StatsPanel({ artists, state, groupRows, onStat, onValue 
                           )}
                           {artist.title}
                         </span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {ATTRIBUTES.map((attr) => (
-                    <tr key={attr.key}>
-                      <td
-                        className="sticky left-0 z-10 bg-surface px-2 py-1 text-ink-muted whitespace-nowrap"
-                        title={attr.hint}
-                      >
-                        {attr.key}
                       </td>
-                      {artists.map((artist) => {
+                      {ATTRIBUTES.map((attr) => {
                         const value = state.stats[artist.id]?.[attr.key];
                         const filled = value !== undefined;
                         return (
-                          <td key={artist.id} className="px-1 py-0.5">
+                          <td key={attr.key} className="px-0.5 py-0.5">
                             <input
                               type="number"
                               min={0}
@@ -100,7 +101,7 @@ export default function StatsPanel({ artists, state, groupRows, onStat, onValue 
                                 onStat(artist.id, attr.key, raw === '' ? null : Math.max(0, Number(raw)));
                               }}
                               className={cn(
-                                'w-[60px] rounded-ui-xs border bg-canvas px-1.5 py-0.5 text-center tabular-nums text-ink focus:border-brand focus:outline-none',
+                                'w-[56px] rounded-ui-xs border bg-canvas px-1.5 py-0.5 text-center tabular-nums text-ink focus:border-brand focus:outline-none',
                                 filled ? 'border-line-strong' : 'border-line',
                               )}
                             />
