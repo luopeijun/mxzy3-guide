@@ -29,6 +29,17 @@
 - **能力对照是便签墙**：`ReferenceView.tsx` 把五块内容排成 `grid`，窄表（难度换算、特殊要求影响）并排占一行，宽表（类型能力要求、艺人成长率）`col-span-2`；每块顶部一条 3px 色带 + 标题同色圆点当作索引，不再是「一列铺到底、每块只占左半边」。右侧 176px 的「本页小结」是滚动定位器：点条目把对应便签滚到容器顶部（`scrollTo` + 减去 8px 留白），滚动时按「顶部已越过容器上沿且最贴近上沿的那块」反高亮——并排两块会同时越线，所以不能简单取最后一块。小于 1120 收藏起 rail，单列便签照常。
 - **七种特殊要求各有一个色相**：`specialStyle.ts` 把搞笑（琥珀）、反串（墨绿）、暴力（砖红，`--color-alert*`）、反派（暗玫）、裸露（紫）、丑化（暖灰）、吻戏（品牌粉）分开，每个标签带同色圆点和描边；没登记的标签回落到中性灰，不会因为新增标签而消失。`cdp_notices.mjs` 断言七行样式的 class 两两不同，防止以后被合并成同一个灰 chip。
 
+## 六大通告条件表
+
+这是**第三条独立管线**，和通告库、攻略正文都不共用解析脚本。它服务 `#/specials` 条件看板，刻意不自动从攻略正文抽条件（条件散在提醒句、括号、区间、否定和时间窗里，抽不准且改一句就崩）：
+
+- `sources/special-notices.tsv`：人工维护的唯一内容来源，105 行 × 13 列（BOM + LF），六个通告各一列拆成行。**条件行 77 条**（计入达标数）、**只读备注行 28 条**（时间线与「注」，零状态、不计数、只跳事件追踪器）。`verify` 列保留 10 条裁决的依据；只要还有 `?` 开头的疑点，运行时数据就拒绝生成。改这张表时按字节补，别手抄整份（弯引号会被改成直引号）。
+- `scripts/build_specials_review.py`：校验表结构、把 `节点id#事件号` 逐条对到 `guide.json` 的事件块、生成 `outputs/specials-review.html` 审阅页（不入库）。10 条裁决记录在 `DECISIONS` 常量里，改表时可回查。
+- `scripts/extract_specials.py` → `public/data/specials.json`（约 56KB，进入「六大通告」tab 才 fetch）。生成时**复用审阅页那份节点与深链校验**，把 `notices/angel#3` 直接算成 `#/guide/notices/angel~ev19`；`tracker:` 开头的行落成 `#/tracker`。守护测试在 `scripts/test_extract_specials.py`（7 项），其中两条是硬拦：表里塞未裁决疑点、或事件号写成不存在的 `#9999`，都必须直接失败。
+- 每行字段：`id / notice / slot / phase / kind / type / scope / name / target / hint / link / source / verify`。`slot` 是槽位骨架（`main` / `group` / `role:男主` 等），`scope` 只写「这条该读谁的数值」这条**规则**——`global` 公司共享、`artist` 按艺人、`group` 按团体、`role` 按角色位、`notice` 仅本通告。**表里绝不写艺人名**，具体是谁由前端「指派艺人」在运行时产生。
+- 前端状态在 `src/lib/specialsState.ts`（纯判定）与 `src/hooks/useSpecials.ts`（`guide.specials.v1` 存档）。旗下 4 人**读 `guide.progress.v1`**，这里不复制名单。共享不是维护一张映射表，而是由状态键决定：同名的公司计数 / 资金共用一个键，证书按「艺人 + 证书」共用，同一个艺人挂两张卡时两处读同一份属性数字，一处改动多卡同步。属性 10 格（人气 0–5 单列）、课程等级 5 档与证书门槛都从 `tipsData.ts` 的 `TRAINING_ROWS` / `CERT_ROWS` 派生，不另造一份游戏数值。
+- 课程清单**按需**：只列该艺人挂的、且已启用的通告所需证书对应的几门课（音乐 4 / 戏剧 3 / 舞蹈 3），没挂通告的人一行都不出现；等级不从属性自动派生，属性够只代表够格升级。回归 `scripts/cdp_specials_board.mjs`（66 项）覆盖指派、差额、共享、按需课程、昆仑三位、银河锁定、备注零状态与存档持久化；`scripts/cdp_specials_shot.mjs` 用来截看板界面。
+
 ## 体量统计口径
 
 页面上显示的是**字数**，不再是段落数：「约 X 字」取正文非空白字符数（含标点），`table` 块的单元格也算在内，分类页按「自身 + 全部子条目」累计；叶子条目只显示字数，没有子条目时不再显示「0 个子条目」。超过 1 万字折算成「1.2 万」，由 `src/lib/guide.ts` 的 `countChars` / `countCharsDeep` / `formatCount` 统一处理。
