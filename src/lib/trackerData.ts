@@ -4,9 +4,19 @@
 
 import { ORDER_EPOCH, hoistLuosangLines } from './trackerOrder';
 
+/** Hard cap on the *roster* (artists currently under contract). The tracked
+ *  list itself is unbounded: releasing someone keeps their lines in the pool. */
 export const MAX_ARTISTS = 4;
 
 export type LineStatus = 'active' | 'abandoned' | 'excluded';
+
+/** An artist in the tracked list, with the single state bit the UI needs. */
+export type ArtistStatus = 'active' | 'released';
+
+export interface ArtistEntry {
+  id: string;
+  status: ArtistStatus;
+}
 
 export interface LineState {
   status: LineStatus;
@@ -19,7 +29,12 @@ export interface LineState {
 
 export interface TrackerData {
   version: 1;
+  /** Roster: artists currently under contract (≤ MAX_ARTISTS). 路欧桑 branch
+   *  selection reads *only* this list, never the released ones. */
   selectedArtists: string[];
+  /** Released but still tracked: their lines stay in the pool with progress
+   *  intact. No cap — a playthrough may sign 5+ people one after another. */
+  releasedArtists: string[];
   lines: Record<string, LineState>;
   /** Manual drag order of event-pool line ids (full list, pinned included). */
   order: string[];
@@ -34,6 +49,7 @@ export function emptyData(): TrackerData {
   return {
     version: 1,
     selectedArtists: [],
+    releasedArtists: [],
     lines: {},
     order: [],
     pinned: [],
@@ -78,6 +94,39 @@ function stringList(raw: unknown): string[] {
     : [];
 }
 
+/** The two persisted arrays are mutually exclusive: the roster wins if an id
+ *  somehow appears in both. Keeping this in one place means every reader sees
+ *  exactly the same list. */
+export function normaliseArtists(
+  selectedRaw: unknown,
+  releasedRaw: unknown,
+): { selectedArtists: string[]; releasedArtists: string[] } {
+  const selectedArtists = stringList(selectedRaw).slice(0, MAX_ARTISTS);
+  const roster = new Set(selectedArtists);
+  const releasedArtists = stringList(releasedRaw).filter((id) => !roster.has(id));
+  return { selectedArtists, releasedArtists };
+}
+
+/** One tracked list with a state bit — the shape the picker actually renders.
+ *  Roster first, released after, so the grid keeps a stable reading order. */
+export function artistRoster(
+  data: Pick<TrackerData, 'selectedArtists' | 'releasedArtists'>,
+): ArtistEntry[] {
+  const entries: ArtistEntry[] = [];
+  const seen = new Set<string>();
+  for (const id of data.selectedArtists) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    entries.push({ id, status: 'active' });
+  }
+  for (const id of data.releasedArtists) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    entries.push({ id, status: 'released' });
+  }
+  return entries;
+}
+
 /** Turn arbitrary parsed JSON into a valid TrackerData. Unknown versions are
  *  rejected rather than guessed at; every other field degrades to empty. */
 export function sanitiseData(raw: unknown): TrackerData {
@@ -91,9 +140,10 @@ export function sanitiseData(raw: unknown): TrackerData {
   }
   const order = stringList(parsed.order);
   const epoch = typeof parsed.orderEpoch === 'number' ? parsed.orderEpoch : 0;
+  const artists = normaliseArtists(parsed.selectedArtists, parsed.releasedArtists);
   return {
     version: 1,
-    selectedArtists: stringList(parsed.selectedArtists).slice(0, MAX_ARTISTS),
+    ...artists,
     lines: normaliseLines(parsed.lines),
     // 老存档把路欧桑线拖在最后，读进来先按新顺序挪一次；之后顺序归用户。
     order: epoch < ORDER_EPOCH ? hoistLuosangLines(order) : order,

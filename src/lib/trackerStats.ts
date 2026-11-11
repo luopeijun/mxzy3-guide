@@ -13,6 +13,8 @@ export interface PoolStats {
   completedLines: number;
   abandoned: number;
   excluded: number;
+  /** Lines skipped by the "include released" switch (still visible in the pool). */
+  omittedLines: number;
   /** Steps that still count — skipped ones are excluded from the denominator. */
   totalSteps: number;
   doneSteps: number;
@@ -23,10 +25,15 @@ export interface PoolStats {
 }
 
 /** One summary shared by the desktop overview card and the narrow-screen
- *  progress bar, so both read exactly the same numbers. */
+ *  progress bar, so both read exactly the same numbers.
+ *
+ *  Stale lines (released artists / former 路欧桑 branches) stay visible in the
+ *  pool, but are left out of the completion maths unless `includeReleased` is
+ *  on — the user's default is "only count the current roster". */
 export function summarisePool(
   pool: TaskLine[],
   getState: (lineId: string) => StatsState | undefined,
+  includeReleased = false,
 ): PoolStats {
   let totalSteps = 0;
   let doneSteps = 0;
@@ -35,8 +42,13 @@ export function summarisePool(
   let excluded = 0;
   let activeLines = 0;
   let completedLines = 0;
+  let omittedLines = 0;
 
   for (const line of pool) {
+    if (line.staleKind && !includeReleased) {
+      omittedLines += 1;
+      continue;
+    }
     const state = getState(line.id);
     const status = state?.status ?? 'active';
     if (status === 'excluded') {
@@ -58,11 +70,12 @@ export function summarisePool(
 
   const pct = totalSteps > 0 ? Math.round((doneSteps / totalSteps) * 100) : 0;
   return {
-    totalLines: pool.length,
+    totalLines: pool.length - omittedLines,
     activeLines,
     completedLines,
     abandoned,
     excluded,
+    omittedLines,
     totalSteps,
     doneSteps,
     skippedSteps,

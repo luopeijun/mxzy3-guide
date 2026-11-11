@@ -62,7 +62,8 @@ function mergeMatched(
  *  restored in place. A filtered list is a partial view, so drag is disabled
  *  there for the same reason it is disabled while searching. */
 export default function TrackerPool({ data }: Props) {
-  const { selectedArtists, getLine, lineOrder, pinnedIds, togglePin, reorderLines } = useTracker();
+  const { poolSelection, includeReleased, getLine, lineOrder, pinnedIds, togglePin, reorderLines } =
+    useTracker();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<LineFilter>('all');
   const [content, setContent] = useState<ContentFilter>(NO_CONTENT);
@@ -77,7 +78,7 @@ export default function TrackerPool({ data }: Props) {
   const filtering = filter !== 'all';
   const contentFiltering = isContentFilterActive(content);
   const dragDisabled = searching || filtering || contentFiltering;
-  const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
+  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
   // Content is a *view* over the pool: progress maths (overview, sticky bar)
   // always uses the full pool so filtering never rewrites the totals.
   const visiblePool = useMemo(
@@ -100,7 +101,10 @@ export default function TrackerPool({ data }: Props) {
   // list. The 全部 view still uses the original split so its ordering, archive
   // and drag behaviour are byte-for-byte unchanged.
   const phases = useMemo(() => groupPhases(visiblePool, getLine), [visiblePool, getLine]);
-  const stats = useMemo(() => summarisePool(pool, getLine), [pool, getLine]);
+  const stats = useMemo(
+    () => summarisePool(pool, getLine, includeReleased),
+    [pool, getLine, includeReleased],
+  );
   const { activeLines, completedLines } = useMemo(() => {
     const activeLines: TaskLine[] = [];
     const completedLines: TaskLine[] = [];

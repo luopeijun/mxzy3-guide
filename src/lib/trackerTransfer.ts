@@ -37,7 +37,9 @@ export interface TrackerArchive {
 
 function summarise(data: TrackerData): ArchiveSummary {
   return {
-    artists: data.selectedArtists.length,
+    // Tracked artists, not just the current roster — a released artist still
+    // has lines worth exporting.
+    artists: data.selectedArtists.length + data.releasedArtists.length,
     lines: Object.keys(data.lines).length,
     steps: countSavedSteps(data),
   };
@@ -145,16 +147,30 @@ export function mergeProgress(local: TrackerData, incoming: TrackerData): Tracke
   for (const [id, state] of Object.entries(incoming.lines)) {
     lines[id] = mergeLine(lines[id], state);
   }
-  // Keep the local artist picks first: they decide which lines are even shown.
-  const artists = Array.from(new Set([...local.selectedArtists, ...incoming.selectedArtists])).slice(
-    0,
-    MAX_ARTISTS,
+  // Union both tracked lists. Local roster picks come first, then the incoming
+  // roster; anything past the 4-slot cap (or explicitly released on either
+  // side) is tracked as released instead of being silently dropped.
+  const union = Array.from(
+    new Set([
+      ...local.selectedArtists,
+      ...incoming.selectedArtists,
+      ...local.releasedArtists,
+      ...incoming.releasedArtists,
+    ]),
   );
+  const released = new Set([...local.releasedArtists, ...incoming.releasedArtists]);
+  const selectedArtists: string[] = [];
+  const releasedArtists: string[] = [];
+  for (const id of union) {
+    if (released.has(id) || selectedArtists.length >= MAX_ARTISTS) releasedArtists.push(id);
+    else selectedArtists.push(id);
+  }
   const order = Array.from(new Set([...local.order, ...incoming.order]));
   const pinned = Array.from(new Set([...local.pinned, ...incoming.pinned]));
   return {
     version: 1,
-    selectedArtists: artists,
+    selectedArtists,
+    releasedArtists,
     lines,
     order,
     pinned,

@@ -36,13 +36,13 @@ const STATUS_TONE: Record<string, string> = {
  *  Like the artist picker, the whole panel collapses to a single 50px row by
  *  default; the full editor is rendered only while expanded. */
 export default function TrackerCategories({ data }: Props) {
-  const { selectedArtists, getLine, setManyStatus } = useTracker();
+  const { poolSelection, getLine, setManyStatus } = useTracker();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const [onlyOut, setOnlyOut] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(() => new Set());
 
-  const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
+  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
   const groups = useMemo(() => computeGroups(pool), [pool]);
   const inPoolTotal = pool.filter((line) => (getLine(line.id)?.status ?? 'active') !== 'excluded').length;
 

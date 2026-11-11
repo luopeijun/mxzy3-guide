@@ -9,8 +9,8 @@ interface Props {
 
 /** 放弃 / 移出的任务线集中在这里，可单条恢复——比池底那条「全部恢复」更可控。 */
 export default function TrackerRecycle({ data }: Props) {
-  const { selectedArtists, getLine, setLineStatus, restoreExcluded } = useTracker();
-  const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
+  const { poolSelection, getLine, setLineStatus, restoreExcluded } = useTracker();
+  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
 
   const items = useMemo(
     () =>

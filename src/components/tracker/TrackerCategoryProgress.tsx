@@ -12,11 +12,14 @@ interface Props {
 /** Per-category completion, so the right rail answers "which part of the guide
  *  have I actually cleared" without expanding every line. */
 export default function TrackerCategoryProgress({ data }: Props) {
-  const { selectedArtists, getLine } = useTracker();
-  const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
+  const { poolSelection, includeReleased, getLine } = useTracker();
+  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
 
   const rows = useMemo(() => {
-    return computeGroups(pool)
+    // Same denominator rule as the overview: stale lines are visible in the
+    // pool but not counted unless the switch is on.
+    const scoped = includeReleased ? pool : pool.filter((line) => !line.staleKind);
+    return computeGroups(scoped)
       .filter((group) => group.lines.length > 0)
       .map((group) => {
         let done = 0;
@@ -34,7 +37,7 @@ export default function TrackerCategoryProgress({ data }: Props) {
         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
         return { key: group.key, label: group.label, done, total, pct, excluded };
       });
-  }, [pool, getLine]);
+  }, [pool, includeReleased, getLine]);
 
   return (
     <section className="rounded-ui-md border border-line bg-surface p-5 shadow-soft">

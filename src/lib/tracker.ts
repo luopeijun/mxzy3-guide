@@ -29,6 +29,12 @@ export interface LineOrigin {
   avatar?: string;
 }
 
+/** Why a line is "stale": its artist has been released, or its 路欧桑 branch
+ *  is no longer implied by the current roster. Stale lines stay in the pool
+ *  (progress must never vanish) but carry a grey badge and are left out of the
+ *  completion maths unless the user opts in. */
+export type StaleKind = 'released' | 'former-branch';
+
 export interface TaskLine {
   /** Stable id: `节点id::线序号::名称`. */
   id: string;
@@ -37,6 +43,7 @@ export interface TaskLine {
   kind: LineKind;
   origin: LineOrigin;
   steps: TaskStep[];
+  staleKind?: StaleKind;
 }
 
 /** The three artists whose love triangle (路欧桑) has sign-off-dependent
@@ -238,18 +245,47 @@ export function luousangBranchesFor(trio: string[]): Set<string> {
   return set;
 }
 
-/** The default pool for a selection: every non-artist line, the chosen
- *  artists' lines, and the 路欧桑 branches implied by the trio subset. */
-export function buildPool(data: GuideData, selectedArtists: string[]): TaskLine[] {
+/** Everything the pool needs to decide membership. The tracked list is the
+ *  whole playthrough (roster + released); the roster alone decides 路欧桑
+ *  branches — a released artist must never reopen a branch. */
+export interface PoolSelection {
+  /** Roster + released: every artist whose lines stay visible. */
+  trackedArtists: string[];
+  /** Currently under contract (≤4). 路欧桑 branches read *only* this. */
+  rosterArtists: string[];
+  /** Released artists: their lines get a grey 「已解约」 badge. */
+  releasedArtists: string[];
+  /** 路欧桑 branch node ids that already have recorded progress. A branch
+   *  implied by an older roster stays in the pool once work was done on it. */
+  retainedBranches: string[];
+}
+
+/** The default pool: every non-artist line, all tracked artists' lines, and
+ *  the 路欧桑 branches implied by the *roster* (plus retained old branches).
+ *  Lines no longer implied by the current roster are marked stale rather than
+ *  dropped, so progress never disappears when the roster changes. */
+export function buildPool(data: GuideData, selection: PoolSelection): TaskLine[] {
   const all = extractLines(data);
-  const selected = new Set(selectedArtists);
-  const trio = LUO_ARTIST_IDS.filter((id) => selected.has(id));
+  const tracked = new Set(selection.trackedArtists);
+  const released = new Set(selection.releasedArtists);
+  const roster = new Set(selection.rosterArtists);
+  const trio = LUO_ARTIST_IDS.filter((id) => roster.has(id));
   const branches = luousangBranchesFor(trio);
-  return all.filter((line) => {
-    if (line.kind === 'artist') return selected.has(line.nodeId);
-    if (line.kind === 'luousang') return branches.has(line.nodeId);
-    return true;
-  });
+  const retained = new Set(selection.retainedBranches);
+  const result: TaskLine[] = [];
+  for (const line of all) {
+    let staleKind: StaleKind | undefined;
+    if (line.kind === 'artist') {
+      if (!tracked.has(line.nodeId)) continue;
+      if (released.has(line.nodeId)) staleKind = 'released';
+    } else if (line.kind === 'luousang') {
+      const current = branches.has(line.nodeId);
+      if (!current && !retained.has(line.nodeId)) continue;
+      if (!current) staleKind = 'former-branch';
+    }
+    result.push(staleKind ? { ...line, staleKind } : line);
+  }
+  return result;
 }
 
 /** Skip indices that still point at a real step. Stale indices left over from

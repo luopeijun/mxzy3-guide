@@ -11,10 +11,20 @@ interface Props {
 /** Compact progress summary that rounds out the selector panel: how many lines
  *  are in the pool, how many steps are done, and what was abandoned/excluded. */
 export default function TrackerOverview({ data }: Props) {
-  const { selectedArtists, getLine, resetAll } = useTracker();
+  const {
+    poolSelection,
+    includeReleased,
+    setIncludeReleased,
+    getLine,
+    resetAll,
+  } = useTracker();
   const [confirmReset, setConfirmReset] = useState(false);
-  const pool = useMemo(() => buildPool(data, selectedArtists), [data, selectedArtists]);
-  const stats = useMemo(() => summarisePool(pool, getLine), [pool, getLine]);
+  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
+  const stats = useMemo(
+    () => summarisePool(pool, getLine, includeReleased),
+    [pool, getLine, includeReleased],
+  );
+  const staleCount = pool.filter((line) => line.staleKind).length;
 
   const rows: Array<[string, number, string]> = [
     ['进行中', stats.activeLines, 'text-brand-strong'],
@@ -93,6 +103,22 @@ export default function TrackerOverview({ data }: Props) {
           {stats.skippedSteps > 0 && ` · 已放弃 ${stats.skippedSteps} 步`}
           {stats.completedLines > 0 && ` · ${stats.completedLines} 条线已归档`}
         </p>
+        {staleCount > 0 && (
+          <label
+            className="mt-2.5 flex cursor-pointer items-center gap-2 text-ui-2xs text-ink-muted"
+            title="已解约艺人与旧路欧桑分支的线仍在事件池里，只是默认不计入完成度"
+          >
+            <input
+              type="checkbox"
+              data-include-released
+              checked={includeReleased}
+              onChange={(event) => setIncludeReleased(event.target.checked)}
+              style={{ accentColor: 'var(--color-brand)' }}
+              className="h-3.5 w-3.5 shrink-0"
+            />
+            <span>包含已解约（{staleCount} 条线）</span>
+          </label>
+        )}
       </div>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
         {rows.map(([label, value, tone]) => (
