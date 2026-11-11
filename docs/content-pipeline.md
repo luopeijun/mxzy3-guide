@@ -33,12 +33,12 @@
 
 这是**第三条独立管线**，和通告库、攻略正文都不共用解析脚本。它服务 `#/specials` 条件看板，刻意不自动从攻略正文抽条件（条件散在提醒句、括号、区间、否定和时间窗里，抽不准且改一句就崩）：
 
-- `sources/special-notices.tsv`：人工维护的唯一内容来源，105 行 × 13 列（BOM + LF），六个通告各一列拆成行。**条件行 77 条**（计入达标数）、**只读备注行 28 条**（时间线与「注」，零状态、不计数、只跳事件追踪器）。`verify` 列保留 10 条裁决的依据；只要还有 `?` 开头的疑点，运行时数据就拒绝生成。改这张表时按字节补，别手抄整份（弯引号会被改成直引号）。
+- `sources/special-notices.tsv`：人工维护的唯一内容来源，102 行 × 13 列（BOM + LF），六个通告各一列拆成行。**条件行 74 条**（计入达标数）、**只读备注行 28 条**（时间线与「注」，零状态、不计数、只跳事件追踪器）。`verify` 列保留 10 条裁决的依据；只要还有 `?` 开头的疑点，运行时数据就拒绝生成。改这张表时按字节补，别手抄整份（弯引号会被改成直引号）。
 - `scripts/build_specials_review.py`：校验表结构、把 `节点id#事件号` 逐条对到 `guide.json` 的事件块、生成 `outputs/specials-review.html` 审阅页（不入库）。10 条裁决记录在 `DECISIONS` 常量里，改表时可回查。
 - `scripts/extract_specials.py` → `public/data/specials.json`（约 56KB，进入「六大通告」tab 才 fetch）。生成时**复用审阅页那份节点与深链校验**，把 `notices/angel#3` 直接算成 `#/guide/notices/angel~ev19`；`tracker:` 开头的行落成 `#/tracker`。守护测试在 `scripts/test_extract_specials.py`（7 项），其中两条是硬拦：表里塞未裁决疑点、或事件号写成不存在的 `#9999`，都必须直接失败。
 - 每行字段：`id / notice / slot / phase / kind / type / scope / name / target / hint / link / source / verify`。`slot` 是槽位骨架（`main` / `group` / `role:男主` 等），`scope` 只写「这条该读谁的数值」这条**规则**——`global` 公司共享、`artist` 按艺人、`group` 按团体、`role` 按角色位、`notice` 仅本通告。**表里绝不写艺人名**，具体是谁由前端「指派艺人」在运行时产生。
-- 前端状态在 `src/lib/specialsState.ts`（纯判定）与 `src/hooks/useSpecials.ts`（`guide.specials.v1` 存档）。旗下 4 人**读 `guide.progress.v1`**，这里不复制名单。共享不是维护一张映射表，而是由状态键决定：同名的公司计数 / 资金共用一个键，证书按「艺人 + 证书」共用，同一个艺人挂两张卡时两处读同一份属性数字，一处改动多卡同步。属性 10 格（人气 0–5 单列）、课程等级 5 档与证书门槛都从 `tipsData.ts` 的 `TRAINING_ROWS` / `CERT_ROWS` 派生，不另造一份游戏数值。
-- 课程清单**按需**：只列该艺人挂的、且已启用的通告所需证书对应的几门课（音乐 4 / 戏剧 3 / 舞蹈 3），没挂通告的人一行都不出现；等级不从属性自动派生，属性够只代表够格升级。回归 `scripts/cdp_specials_board.mjs`（66 项）覆盖指派、差额、共享、按需课程、昆仑三位、银河锁定、备注零状态与存档持久化；`scripts/cdp_specials_shot.mjs` 用来截看板界面。
+- 前端状态在 `src/lib/specialsState.ts`（纯判定）与 `src/hooks/useSpecials.ts`（`guide.specials.v1` 存档）。旗下 4 人**读 `guide.progress.v1`**，这里不复制名单。共享不是维护一张映射表，而是由状态键决定：同名的公司计数 / 资金共用一个键，证书按「艺人 + 证书」共用，同一个艺人挂两张卡时两处读同一份属性数字，一处改动多卡同步。属性 10 格（人气 0–5 单列）、课程等级 5 档与证书门槛都从 `tipsData.ts` 的 `TRAINING_ROWS` / `CERT_ROWS` 派生，不另造一份游戏数值。**数值录入集中在 `StatsPanel.tsx`**（`data-stats-panel`）：一张表填 10 项属性 × 旗下艺人，外加团体名气 / 人气（`state.values` 的 `gval:` 键），条件行只读它算缺口，不在每行重复输入；`stat` / `resource` 行仍保留逐行 ▸ 可选 peek，但只是冗余视图。
+- 课程清单**按需**：只列该艺人挂的、且已启用的通告所需证书对应的几门课（音乐 4 / 戏剧 3 / 舞蹈 3），没挂通告的人一行都不出现；等级不从属性自动派生，属性够只代表够格升级。回归 `scripts/cdp_specials_board.mjs`（69 项）覆盖指派、清单勾选、共享、按需课程、数值录入面板、昆仑三位、银河锁定、备注零状态与存档持久化；`scripts/cdp_specials_shot.mjs` 用来截看板界面。
 
 ## 体量统计口径
 
@@ -110,7 +110,7 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项），共 52 项 |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项），共 59 项 |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 
@@ -146,14 +146,17 @@ node scripts/cdp_tracker_memo.mjs
 ```
 public/data/guide.json       生成的结构化攻略数据（运行时加载）
 public/data/notices.json     生成的通告数据（进入通告 tab 才加载）
+public/data/specials.json    生成的六大通告条件表（进入六大通告 tab 才加载）
 public/data/cg.json          生成的 CG 图鉴数据（含 CG → 攻略落点）
 public/images/cg/*.webp      压缩后的 CG 图片（进仓库）
 sources/*.txt                补充攻略的纯文本来源（UTF-8，可重跑）
 sources/notices/*.xls|xlsx   通告原始表格（重生成数据的输入）
+sources/special-notices.tsv  六大通告条件表（手写，BOM + LF）
 sources/cg-links.tsv         事件 → CG 的一对一映射（手写）
 sources/cg-node-links.tsv    CG → 事件 / 页面的多对一映射（手写）
 scripts/extract_guide.py     docx + sources → guide.json（零第三方依赖）
 scripts/extract_notices.py   表格 → notices.json（需 openpyxl / xlrd）
+scripts/extract_specials.py  六大通告条件表 → specials.json
 scripts/extract_cg.py        CG 素材 → cg.json + webp（需 Pillow）
 scripts/test_extract.py      攻略解析回归测试
 scripts/test_notices.py      通告数据回归测试
