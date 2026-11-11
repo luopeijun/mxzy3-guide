@@ -124,6 +124,41 @@ export function readState(): SpecialsState {
   }
 }
 
+/** How many artists one slot may hold. Named roles are one person each,
+ *  银河's group takes 2–4, and 天使 / 万年之恋 are single-artist notices — the
+ *  rest are candidate pools that may hold up to four. */
+export function slotLimit(notice: SpecialNotice, slot: string): number {
+  if (slot.startsWith('role:')) return 1;
+  if (slot === 'group') return 4;
+  if (slot === 'main' && notice.soloMain) return 1;
+  return 4;
+}
+
+/** Older saves may hold a candidate pool on a now-solo notice. Keep the first
+ *  artist and drop the rest — the extra names could never be the contractor. */
+export function trimSoloAssignments(state: SpecialsState, notices: SpecialNotice[]): SpecialsState {
+  const solo = new Set(notices.filter((notice) => notice.soloMain).map((notice) => notice.id));
+  let changed = false;
+  const assignments: Record<string, Record<string, string[]>> = {};
+  for (const [noticeId, slots] of Object.entries(state.assignments)) {
+    if (!solo.has(noticeId)) {
+      assignments[noticeId] = slots;
+      continue;
+    }
+    const next: Record<string, string[]> = {};
+    for (const [slot, ids] of Object.entries(slots)) {
+      if (slot === 'main' && ids.length > 1) {
+        next[slot] = ids.slice(0, 1);
+        changed = true;
+      } else {
+        next[slot] = ids;
+      }
+    }
+    assignments[noticeId] = next;
+  }
+  return changed ? { ...state, assignments } : state;
+}
+
 /** A notice's assignable slots. 昆仑 has three named role slots and no 主艺人
  *  (the `main` in its slots comes from the four attribute rows, which are
  *  checked against all three roles). 银河 has one group slot. */
@@ -227,6 +262,9 @@ export interface EvalPart {
   /** Artist this part belongs to. Parts of one artist are ANDed; across
    *  candidate-pool artists they are ORed. */
   ownerId?: string;
+  /** Display name of that artist, without the certificate suffix. Multi-owner
+   *  rows split per artist and use this as the row head. */
+  ownerLabel?: string;
   gaps?: string[];
   /** All courses this certificate needs, each with the grade reached so far. */
   courseList?: CertGap[];
@@ -265,6 +303,7 @@ function statPart(
     key: `stat:${artistId}:${attr}`,
     label: labelFor(artistId, ctx.titles),
     ownerId: artistId,
+    ownerLabel: labelFor(artistId, ctx.titles),
     input: 'number',
     met,
     detail: value === undefined ? `${attr} 未录入` : met ? `${attr} ${value} ✓` : `${attr} 差 ${min - value}`,
@@ -292,6 +331,8 @@ function numberPart(
     value,
     target,
     ownerId,
+    // Every artist-scoped call passes the artist name as `label`.
+    ...(ownerId ? { ownerLabel: label } : {}),
   };
 }
 
@@ -348,8 +389,9 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): RowEval {
         const roleName = row.slot.startsWith('role:') ? row.slot.slice(5) : null;
         parts.push({
           key,
-          label: `${roleName ?? labelFor(artistId, titles)} · ${cert}`,
+          label: roleName ? `${roleName} · ${cert}` : cert,
           ownerId: artistId,
+          ownerLabel: labelFor(artistId, titles),
           input: 'check',
           met: held,
           detail: held ? '已取得' : attrs.length || unmetCourses ? `还差 ${attrs.length + unmetCourses} 项` : '属性课程已凑齐 · 待取证',

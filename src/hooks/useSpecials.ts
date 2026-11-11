@@ -4,13 +4,16 @@ import {
   SPECIALS_STORAGE_KEY,
   emptyState,
   readState,
+  trimSoloAssignments,
   type SpecialsState,
 } from '../lib/specialsState';
+import type { SpecialNotice } from '../types/specials';
 
 /** Board-local save state. Deliberately not a context: only #/specials mounts
  *  it, and the four 旗下 artists come from the tracker save via props. */
-export function useSpecials() {
-  const [state, setState] = useState<SpecialsState>(readState);
+export function useSpecials(notices: SpecialNotice[] = []) {
+  const [state, setState] = useState<SpecialsState>(() =>
+    trimSoloAssignments(readState(), notices));
 
   useEffect(() => {
     try {
@@ -29,20 +32,22 @@ export function useSpecials() {
     }));
   }, []);
 
-  const assign = useCallback((noticeId: string, slot: string, artistId: string) => {
+  const assign = useCallback((noticeId: string, slot: string, artistId: string, limit = 4, replace = false) => {
     setState((previous) => {
       if (previous.groupLocked[noticeId]) return previous;
       const current = previous.assignments[noticeId]?.[slot] ?? [];
       if (current.includes(artistId)) return previous;
-      // Named role slots are one person each; groups take 2–4; other notices
-      // are candidate pools that may hold several artists.
-      const limit = slot.startsWith('role:') ? 1 : 4;
-      if (current.length >= limit) return previous;
+      const next = current.length >= limit
+        // A full slot can still be swapped (single-artist notices, one person
+        // per role) — the caller decides whether that is allowed.
+        ? (replace ? [artistId] : null)
+        : [...current, artistId];
+      if (!next) return previous;
       return {
         ...previous,
         assignments: {
           ...previous.assignments,
-          [noticeId]: { ...previous.assignments[noticeId], [slot]: [...current, artistId] },
+          [noticeId]: { ...previous.assignments[noticeId], [slot]: next },
         },
       };
     });

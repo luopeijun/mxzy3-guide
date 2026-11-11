@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SpecialNotice, SpecialRow } from '../../types/specials';
 import type { RowEval, SpecialsState } from '../../lib/specialsState';
-import { assignableSlots, noticeProgress } from '../../lib/specialsState';
+import { assignableSlots, noticeProgress, slotLimit } from '../../lib/specialsState';
 import { slotLabel } from '../../lib/specials';
 import { cn } from '../../lib/cn';
 import ConditionRow from './ConditionRow';
@@ -21,7 +21,7 @@ interface Props {
   state: SpecialsState;
   hideDone: boolean;
   onToggleEnabled: (id: string) => void;
-  onAssign: (noticeId: string, slot: string, artistId: string) => void;
+  onAssign: (noticeId: string, slot: string, artistId: string, limit?: number, replace?: boolean) => void;
   onUnassign: (noticeId: string, slot: string, artistId: string) => void;
   onSetGroupLocked: (noticeId: string, locked: boolean) => void;
   onCheck: (key: string) => void;
@@ -142,9 +142,17 @@ export default function NoticeCard({
               {slots.map((slot) => {
                 const ids = assigned[slot] ?? [];
                 const options = roster.filter((id) => !ids.includes(id));
+                const limit = slotLimit(notice, slot);
+                const full = ids.length >= limit;
+                // 天使 / 万年之恋 only take one artist: once filled the select
+                // stays as a 「换人」 swap instead of disappearing.
+                const solo = slot === 'main' && notice.soloMain;
+                const showSelect = !locked && (!full || solo);
                 return (
                   <div key={slot} data-slot={slot} className="flex flex-wrap items-center gap-1">
-                    <span className="w-[52px] shrink-0 text-ui-2xs text-ink-faint">{slotLabel(slot)}</span>
+                    <span className="w-[52px] shrink-0 whitespace-nowrap text-ui-2xs text-ink-faint">
+                      {slotLabel(slot)}
+                    </span>
                     {ids.map((id) => (
                       <span
                         key={id}
@@ -168,21 +176,33 @@ export default function NoticeCard({
                         )}
                       </span>
                     ))}
-                    {!locked && (
+                    {showSelect && (
                       <select
                         data-assign-select
                         data-slot={slot}
                         value=""
                         onChange={(event) => {
-                          if (event.target.value) onAssign(notice.id, slot, event.target.value);
+                          if (event.target.value) {
+                            onAssign(notice.id, slot, event.target.value, limit, full);
+                          }
                         }}
                         className="rounded-full border border-line-strong bg-surface px-1.5 py-0.5 text-ui-2xs text-ink-muted"
                       >
-                        <option value="">+ 指派艺人</option>
+                        <option value="">{full ? '换人' : '+ 指派艺人'}</option>
                         {options.map((id) => (
                           <option key={id} value={id}>{titleOf(artists, id)}</option>
                         ))}
                       </select>
+                    )}
+                    {full && !solo && (
+                      <span data-slot-full className="text-ui-2xs text-ink-faint">
+                        已满 {limit} 人
+                      </span>
+                    )}
+                    {solo && (
+                      <span data-solo-badge className="text-ui-2xs text-ink-faint">
+                        单人通告 · 只能 1 位
+                      </span>
                     )}
                   </div>
                 );

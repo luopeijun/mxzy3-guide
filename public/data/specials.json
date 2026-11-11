@@ -24,7 +24,8 @@
       "guideNode": null,
       "conditionCount": 0,
       "noteCount": 1,
-      "slots": []
+      "slots": [],
+      "soloMain": false
     },
     {
       "id": "proud-of-the-world",
@@ -34,7 +35,8 @@
       "noteCount": 5,
       "slots": [
         "main"
-      ]
+      ],
+      "soloMain": false
     },
     {
       "id": "doomsday-warrior",
@@ -44,7 +46,8 @@
       "noteCount": 6,
       "slots": [
         "main"
-      ]
+      ],
+      "soloMain": false
     },
     {
       "id": "eternal-love",
@@ -54,7 +57,8 @@
       "noteCount": 3,
       "slots": [
         "main"
-      ]
+      ],
+      "soloMain": true
     },
     {
       "id": "angel",
@@ -64,7 +68,8 @@
       "noteCount": 5,
       "slots": [
         "main"
-      ]
+      ],
+      "soloMain": true
     },
     {
       "id": "kunlun-adventure",
@@ -77,7 +82,8 @@
         "role:女主一",
         "role:女主二",
         "main"
-      ]
+      ],
+      "soloMain": false
     },
     {
       "id": "galaxy",
@@ -87,7 +93,8 @@
       "noteCount": 4,
       "slots": [
         "group"
-      ]
+      ],
+      "soloMain": false
     }
   ],
   "rows": [

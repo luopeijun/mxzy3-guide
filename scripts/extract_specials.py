@@ -38,6 +38,10 @@ GUIDE_NODES = {
     "galaxy": "notices/galaxy",
 }
 
+# 落入凡间的天使 / 万年之恋 only ever go to one artist — the game picks a
+# single 主艺人, so the main slot must hold one name, not a candidate pool.
+SOLO_MAIN = {"angel", "eternal-love"}
+
 FIELDS_TO_EMIT = [
     "id", "notice", "slot", "phase", "kind", "type", "scope",
     "name", "target", "hint", "source",
@@ -96,6 +100,7 @@ def build():
             "conditionCount": sum(1 for r in group if r["kind"] == "condition"),
             "noteCount": sum(1 for r in group if r["kind"] == "note"),
             "slots": list(dict.fromkeys(r["slot"] for r in group if r["slot"] != "-")),
+            "soloMain": notice_id in SOLO_MAIN,
         })
 
     conditions = [r for r in out_rows if r["kind"] == "condition"]

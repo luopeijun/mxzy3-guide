@@ -38,7 +38,10 @@
 - `scripts/extract_specials.py` → `public/data/specials.json`（约 56KB，进入「六大通告」tab 才 fetch）。生成时**复用审阅页那份节点与深链校验**，把 `notices/angel#3` 直接算成 `#/guide/notices/angel~ev19`；`tracker:` 开头的行落成 `#/tracker`。守护测试在 `scripts/test_extract_specials.py`（7 项），其中两条是硬拦：表里塞未裁决疑点、或事件号写成不存在的 `#9999`，都必须直接失败。
 - 每行字段：`id / notice / slot / phase / kind / type / scope / name / target / hint / link / source / verify`。`slot` 是槽位骨架（`main` / `group` / `role:男主` 等），`scope` 只写「这条该读谁的数值」这条**规则**——`global` 公司共享、`artist` 按艺人、`group` 按团体、`role` 按角色位、`notice` 仅本通告。**表里绝不写艺人名**，具体是谁由前端「指派艺人」在运行时产生。
 - 前端状态在 `src/lib/specialsState.ts`（纯判定）与 `src/hooks/useSpecials.ts`（`guide.specials.v1` 存档）。旗下 4 人**读 `guide.progress.v1`**，这里不复制名单。共享不是维护一张映射表，而是由状态键决定：同名的公司计数 / 资金共用一个键，证书按「艺人 + 证书」共用，同一个艺人挂两张卡时两处读同一份属性数字，一处改动多卡同步。属性 10 格（人气 0–5 单列）、课程等级 5 档与证书门槛都从 `tipsData.ts` 的 `TRAINING_ROWS` / `CERT_ROWS` 派生，不另造一份游戏数值。**数值录入集中在 `StatsPanel.tsx`**（`data-stats-panel`）：一张表填 10 项属性 × 旗下艺人，外加团体名气 / 人气（`state.values` 的 `gval:` 键），条件行只读它算缺口，不在每行重复输入；`stat` / `resource` 行仍保留逐行 ▸ 可选 peek，但只是冗余视图。
-- 课程清单**按需**：只列该艺人挂的、且已启用的通告所需证书对应的几门课（音乐 4 / 戏剧 3 / 舞蹈 3），没挂通告的人一行都不出现；等级不从属性自动派生，属性够只代表够格升级。回归 `scripts/cdp_specials_board.mjs`（69 项）覆盖指派、清单勾选、共享、按需课程、数值录入面板、昆仑三位、银河锁定、备注零状态与存档持久化；`scripts/cdp_specials_shot.mjs` 用来截看板界面。
+- 课程清单**按需**：只列该艺人挂的、且已启用的通告所需证书对应的几门课（音乐 4 / 戏剧 3 / 舞蹈 3），没挂通告的人一行都不出现；等级不从属性自动派生，属性够只代表够格升级。
+- 名额：命名角色位（昆仑）1 人、银河团体 2–4 人、落入凡间的天使 / 万年之恋（`soloMain`，由 `extract_specials.py` 的 `SOLO_MAIN` 写入）只能 1 人，其余候选池最多 4 人。选满后下拉消失并显示「已满 N 人」；单人通告例外——下拉变成「换人」，选中即替换。
+- 一个条件行摊到多位艺人时（末日战士的证书 / 属性行、昆仑的三位角色）**每人一行**，不再把所有人的控件塞进同一行。
+- 回归 `scripts/cdp_specials_board.mjs`（76 项）覆盖指派名额、单人换人、多人拆行、清单勾选、共享、按需课程、数值录入面板、昆仑三位、银河锁定、备注零状态与存档持久化；`scripts/cdp_specials_shot.mjs` 用来截看板界面。
 
 ## 体量统计口径
 

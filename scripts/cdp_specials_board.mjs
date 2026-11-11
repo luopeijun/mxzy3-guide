@@ -353,11 +353,36 @@ async function main() {
   const doomCert = JSON.parse(await rowInfo('doom.cert.drama'));
   check(doomCert.keys.length === 2 && doomCert.met === 'no',
     '候选池两人各自判定证书', doomCert.keys.join(','));
+  const doomParts = await evaluate(`document.querySelectorAll('[data-condition-row][data-row-id="doom.cert.drama"] [data-owner-part]').length`);
+  check(doomParts === 2, '多人证书行拆成每人一行（不挤在同一行）', `${doomParts} 行`);
   check(await click(`[data-notice-card][data-notice-id="${DOOM}"] [data-part-check][data-part-key="cert:${YAO}:戏剧证书"]`) === 'ok',
     '只给其中一位勾证书');
   await sleep(400);
   check((JSON.parse(await rowInfo('doom.cert.drama'))).met === 'yes',
     '任一位候选人齐证即可（不要求全员都拿证）');
+
+  // ---------- 8b. Solo notice keeps one artist; a full pool hides its select ----------
+  await setup({ enabled: [ANGEL], assignments: { [ANGEL]: { main: [LIN] } } });
+  const soloSelect = await evaluate(`(() => {
+    const sel = document.querySelector('[data-notice-card][data-notice-id="${ANGEL}"] [data-assign-select][data-slot="main"]');
+    return JSON.stringify({ exists: !!sel, placeholder: sel ? sel.options[0].textContent : '', badge: !!document.querySelector('[data-notice-card][data-notice-id="${ANGEL}"] [data-solo-badge]') });
+  })()`);
+  const solo = JSON.parse(soloSelect);
+  check(solo.exists && solo.placeholder === '换人', '单人通告选满后下拉变成「换人」', solo.placeholder);
+  check(solo.badge, '单人通告带「单人」标记');
+  check(await assign(ANGEL, 'main', SU) === 'ok', '单人通告可以直接换人');
+  await sleep(400);
+  const soloAfter = JSON.parse(await evaluate(`JSON.stringify([...document.querySelectorAll('[data-notice-card][data-notice-id="${ANGEL}"] [data-assigned-artist]')].map(x => x.getAttribute('data-artist-id')))`));
+  check(soloAfter.length === 1 && soloAfter[0] === SU, '换人后仍只有 1 位艺人', soloAfter.join(','));
+
+  await setup({
+    enabled: [DOOM],
+    assignments: { [DOOM]: { main: [LIN, XIAO, SU, YAO] } },
+  }, [LIN, XIAO, SU, YAO]);
+  check(await evaluate(`!document.querySelector('[data-notice-card][data-notice-id="${DOOM}"] [data-assign-select]')`),
+    '候选池选满 4 人后不再显示加人下拉');
+  const fullHint = await evaluate(`document.querySelector('[data-notice-card][data-notice-id="${DOOM}"] [data-slot-full]')?.textContent.trim() ?? ''`);
+  check(fullHint.includes('已满'), '选满后显示「已满 4 人」提示', fullHint);
 
   // ---------- 9. Persistence + reset guard ----------
   await setup({

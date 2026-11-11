@@ -61,14 +61,19 @@ async function main() {
     await new Promise((r) => setTimeout(r, 3200));
   }
 
-  // Expand every notice's collapsed 「通告要求」 phase, then every row's
-  // ▸ peek so the course-grade chips (and optional numbers) are visible.
+  // Expand every notice's collapsed 「通告要求」 phase first — rows inside it
+  // do not exist in the DOM until React re-renders.
   await send('Runtime.evaluate', {
-    expression: `(() => {
-      document.querySelectorAll('[data-notice-phase-toggle][aria-expanded="false"]').forEach((t) => t.click());
-      document.querySelectorAll('[data-peek-toggle][aria-expanded="false"]').forEach((t) => t.click());
-      return document.querySelectorAll('[data-notice-phase-toggle][aria-expanded="true"]').length;
-    })()`,
+    expression: `document.querySelectorAll('[data-notice-phase-toggle][aria-expanded="false"]').forEach((t) => t.click())`,
+  });
+  await new Promise((r) => setTimeout(r, 500));
+  // Then open the first ▸ peek of each row (a multi-artist row keeps one peek
+  // per artist, so only the first one opens — enough to show chips + numbers).
+  await send('Runtime.evaluate', {
+    expression: `document.querySelectorAll('[data-condition-row]').forEach((row) => {
+      const t = row.querySelector('[data-peek-toggle][aria-expanded="false"]');
+      if (t) t.click();
+    })`,
   });
   await new Promise((r) => setTimeout(r, 600));
 

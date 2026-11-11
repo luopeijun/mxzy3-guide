@@ -21,7 +21,7 @@ interface Props {
  *  - 时间线备注零状态、零计数，只作为跳回事件追踪器的索引。 */
 export default function SpecialsApp({ data, guide }: Props) {
   const { selectedArtists } = useTracker();
-  const board = useSpecials();
+  const board = useSpecials(data.notices);
   const { state } = board;
   const [hideDone, setHideDone] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);

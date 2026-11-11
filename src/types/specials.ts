@@ -44,6 +44,9 @@ export interface SpecialNotice {
   conditionCount: number;
   noteCount: number;
   slots: string[];
+  /** 落入凡间的天使 / 万年之恋 go to exactly one artist: the main slot holds
+   *  one name and cannot grow into a candidate pool. */
+  soloMain: boolean;
 }
 
 export interface SpecialsData {
