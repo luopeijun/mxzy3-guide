@@ -88,6 +88,9 @@ async function main() {
     const avatars = rows
       .filter((n) => n.dataset.nodeId.startsWith('sweet-characters/'))
       .map((n) => n.querySelectorAll('img').length);
+    const sideAvatars = rows
+      .filter((n) => n.dataset.nodeId.startsWith('sweet-side/'))
+      .map((n) => ({ id: n.dataset.nodeId, imgs: n.querySelectorAll('img').length }));
     return {
       cats: ['sweet-guide', 'sweet-characters', 'sweet-side'].filter((id) => ids.includes(id)),
       total: ids.length,
@@ -97,6 +100,7 @@ async function main() {
       guideTitle: rows.find((n) => n.dataset.nodeId === 'sweet-guide')?.textContent ?? '',
       hasIntro: ids.includes('sweet-guide/intro'),
       avatars,
+      sideAvatars,
     };
   })()`);
   check('目录有 3 个类目', tree.cats.length === 3, JSON.stringify(tree.cats));
@@ -107,6 +111,10 @@ async function main() {
   check('已删掉「角色介绍」', tree.hasIntro === false, `hasIntro=${tree.hasIntro}`);
   check('角色 8 位目录行都有圆圈头像', tree.avatars.length === 8 && tree.avatars.every((n) => n === 1),
     `avatars=${JSON.stringify(tree.avatars)}`);
+  check('支线 5 位有头像、舞台秘影没有',
+    tree.sideAvatars.filter((n) => n.imgs === 1).length === 5
+      && !tree.sideAvatars.find((n) => n.id === 'sweet-side/stage-shadow').imgs,
+    `sideAvatars=${JSON.stringify(tree.sideAvatars)}`);
 
   // 3. 主线攻略正文：4 章 23 个事件，右侧小节同步 5 条
   if (shot) {

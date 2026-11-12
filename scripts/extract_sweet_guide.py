@@ -1018,6 +1018,8 @@ CATEGORIES: list[dict] = [
     {
         "id": "sweet-side",
         "title": "支线攻略",
+        # 支线角色页同样在目录里显示圆圈头像（舞台秘影没有头像文件，不写）。
+        "avatars": True,
         "children": [
             ("stage-shadow", "舞台秘影"),
             ("tian-qing", "天晴"),

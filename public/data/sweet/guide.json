@@ -13517,7 +13517,8 @@
               "label": "37"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/tian-qing-logo.png"
         },
         {
           "id": "sweet-side/xia-yijun",
@@ -13857,7 +13858,8 @@
               "group": 44
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/xia-yijun-logo.png"
         },
         {
           "id": "sweet-side/xu-shijie",
@@ -14107,7 +14109,8 @@
               "label": "2-11"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/xu-shijie-logo.png"
         },
         {
           "id": "sweet-side/du-sichen",
@@ -14221,7 +14224,8 @@
               "group": 6
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/du-sichen-logo.png"
         },
         {
           "id": "sweet-side/jin-haoxun",
@@ -14524,7 +14528,8 @@
               "group": 18
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/jin-haoxun-logo.png"
         }
       ]
     }
