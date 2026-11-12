@@ -35,10 +35,14 @@ export interface SpecialsState {
   groupLocked: Record<string, boolean>;
 }
 
-export function emptyState(): SpecialsState {
+/** A fresh board starts with every notice enabled — players untick the ones
+ *  they are not pursuing. Existing saves always keep their own selection.
+ *  `defaultEnabled` comes from the runtime data so a new notice joins the
+ *  default automatically. */
+export function emptyState(defaultEnabled: string[] = []): SpecialsState {
   return {
     version: 1,
-    enabled: [],
+    enabled: [...defaultEnabled],
     assignments: {},
     done: [],
     stats: {},
@@ -63,8 +67,8 @@ function numberMap(value: unknown): Record<string, number> {
 
 /** Tolerate hand-edited / older saves: unknown keys and grades are dropped,
  *  but a partial save keeps everything it does know. */
-export function sanitiseState(raw: unknown): SpecialsState {
-  if (!raw || typeof raw !== 'object') return emptyState();
+export function sanitiseState(raw: unknown, defaultEnabled: string[] = []): SpecialsState {
+  if (!raw || typeof raw !== 'object') return emptyState(defaultEnabled);
   const parsed = raw as Partial<SpecialsState>;
   const stats: Record<string, Record<string, number>> = {};
   if (parsed.stats && typeof parsed.stats === 'object') {
@@ -114,13 +118,13 @@ export function sanitiseState(raw: unknown): SpecialsState {
   };
 }
 
-export function readState(): SpecialsState {
+export function readState(defaultEnabled: string[] = []): SpecialsState {
   try {
     const raw = localStorage.getItem(SPECIALS_STORAGE_KEY);
-    if (!raw) return emptyState();
-    return sanitiseState(JSON.parse(raw));
+    if (!raw) return emptyState(defaultEnabled);
+    return sanitiseState(JSON.parse(raw), defaultEnabled);
   } catch {
-    return emptyState();
+    return emptyState(defaultEnabled);
   }
 }
 

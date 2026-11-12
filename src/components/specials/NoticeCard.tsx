@@ -113,7 +113,7 @@ export default function NoticeCard({
 
       {!enabled ? (
         <p className="px-3.5 py-4 text-ui-2xs text-ink-faint">
-          本次不做。勾选上方「本次做」后逐条确认条件，未启用的通告不进统计。
+          本次不做（未启用，不进统计）。想接这张通告时勾回上方「本次做」。
         </p>
       ) : (
         <>

@@ -54,7 +54,9 @@ async function main() {
   if (trackerJson || specialsJson) {
     const expression = [
       trackerJson ? `localStorage.setItem('guide.progress.v1', ${JSON.stringify(trackerJson)});` : '',
-      specialsJson ? `localStorage.setItem('guide.specials.v1', ${JSON.stringify(specialsJson)});` : '',
+      specialsJson === 'fresh'
+        ? `localStorage.removeItem('guide.specials.v1');`
+        : specialsJson ? `localStorage.setItem('guide.specials.v1', ${JSON.stringify(specialsJson)});` : '',
       'location.reload(); 1',
     ].join('');
     await send('Runtime.evaluate', { expression });

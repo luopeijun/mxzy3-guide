@@ -12,8 +12,12 @@ import type { SpecialNotice } from '../types/specials';
 /** Board-local save state. Deliberately not a context: only #/specials mounts
  *  it, and the four 旗下 artists come from the tracker save via props. */
 export function useSpecials(notices: SpecialNotice[] = []) {
+  const defaultEnabled = useMemo(
+    () => notices.filter((notice) => notice.id !== '_global').map((notice) => notice.id),
+    [notices],
+  );
   const [state, setState] = useState<SpecialsState>(() =>
-    trimSoloAssignments(readState(), notices));
+    trimSoloAssignments(readState(defaultEnabled), notices));
 
   useEffect(() => {
     try {
@@ -139,7 +143,7 @@ export function useSpecials(notices: SpecialNotice[] = []) {
     }));
   }, []);
 
-  const reset = useCallback(() => setState(emptyState()), []);
+  const reset = useCallback(() => setState(emptyState(defaultEnabled)), [defaultEnabled]);
 
   return useMemo(
     () => ({

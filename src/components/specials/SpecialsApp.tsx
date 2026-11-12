@@ -173,7 +173,7 @@ export default function SpecialsApp({ data, guide }: Props) {
           <div className="mt-5 mb-1 flex items-center gap-2">
             <h2 className="text-ui-sm font-bold text-brand-strong">通告卡片</h2>
             <span className="text-ui-2xs text-ink-faint">
-              卡头勾「本次做」→ 指派艺人 → 逐条确认；标「共享」的条目改一处，多张卡同步
+              六张卡默认全部启用，不想做的取消卡头勾选 → 指派艺人 → 逐条确认；标「共享」的条目改一处，多张卡同步
             </span>
           </div>
           <div data-notice-grid className="grid grid-cols-3 items-start gap-4 tab:grid-cols-2 phone:grid-cols-1">

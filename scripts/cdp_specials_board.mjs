@@ -1,7 +1,7 @@
 import http from 'node:http';
 
 /* 六大通告规划与追踪看板回归（瘦身版：纯清单 + 可选差额）：
-   1) 第 5 个 tab / 六张三列两行卡 / 默认全灰 / 旗下名单读事件追踪器
+   1) 第 5 个 tab / 六张三列两行卡 / 全新存档默认全部启用 / 旗下名单读事件追踪器
    2) 卡级指派 → 勾选即达标（属性/资源是清单勾选，数字只是可选 peek）
    3) 通告要求默认折叠，展开才看到属性/证书门槛
    4) 共享条目一处改动多卡同步（证书），且只标在真正共用的状态上
@@ -96,6 +96,13 @@ async function main() {
     await evaluate(seedSpecials(state));
     await reload();
   };
+  // A truly fresh browser (no guide.specials.v1 save at all) — this is where
+  // the default-enabled list comes from, not from a seeded state.
+  const setupFresh = async (artists) => {
+    await evaluate(clearSaves);
+    await evaluate(seedTracker(artists));
+    await reload();
+  };
 
   const cards = () => evaluate(`JSON.stringify([...document.querySelectorAll('[data-notice-card]')].map(c => ({
     id: c.getAttribute('data-notice-id'),
@@ -155,13 +162,26 @@ async function main() {
   })()`);
   const stored = () => evaluate(`localStorage.getItem('guide.specials.v1')`);
 
-  // ---------- 1. Route, six cards, default state, roster ----------
+  // ---------- 0. Fresh save: all six notices start enabled ----------
+  await setupFresh();
+  const fresh = JSON.parse(await cards());
+  check(fresh.length === 6 && fresh.every((c) => c.enabled === 'yes'),
+    '全新存档：六张通告卡默认全部勾选', fresh.map((c) => c.enabled).join(','));
+  check(await evaluate(`document.querySelector('[data-board-progress]').getAttribute('data-total')`) === '73',
+    '默认全启用时总进度包含全部 73 条条件');
+  check(await click(`[data-notice-enable][data-notice-id="${ANGEL}"]`) === 'ok', '不想做可以取消勾选');
+  await sleep(400);
+  check((JSON.parse(await cards())).find((c) => c.id === ANGEL).enabled === 'no', '取消后该卡回到未启用');
+  check(await evaluate(`document.querySelector('[data-board-progress]').getAttribute('data-total')`) === '53',
+    '取消一张卡后它不进统计（73 → 53）');
+
+  // ---------- 1. Route, six cards, explicit "none selected" state, roster ----------
   await setup();
   check(await evaluate(`!!document.querySelector('[data-tab="specials"]')`), '顶栏出现第 5 个「六大通告」页签');
   check(await evaluate(`!!document.querySelector('[data-specials-app]')`), '#/specials 直接落地到看板');
   const first = JSON.parse(await cards());
   check(first.length === 6, '六张通告卡（全局前提不占卡）', `${first.length} 张`);
-  check(first.every((c) => c.enabled === 'no'), '六张卡默认全是「本次不做」');
+  check(first.every((c) => c.enabled === 'no'), '存档明确全不选时六张卡都是灰态');
   check(first.every((c) => c.rows === 0), '未启用的卡不渲染条件行');
   check(await evaluate(`getComputedStyle(document.querySelector('[data-notice-grid]')).gridTemplateColumns.split(' ').length`) === 3,
     '桌面下三列排布（3×2）');
@@ -169,7 +189,7 @@ async function main() {
   check(rosterCount === 4, '旗下 4 人直接读事件追踪器存档', `${rosterCount} 人`);
   check(await evaluate(`!!document.querySelector('[data-global-note]')`), '周目前提作为只读索引放在顶部');
   check(await evaluate(`document.querySelector('[data-board-progress]').getAttribute('data-total')`) === '0',
-    '未启用时不进统计');
+    '全部取消勾选时总进度为 0');
   check(await evaluate(`!!document.querySelector('[data-stats-panel]')`), '顶部有集中「数值录入」面板（全站一份，不再每行重复录入）');
 
   // ---------- 2. Enable, assign, checklist ticking; numbers are optional ----------
@@ -428,10 +448,10 @@ async function main() {
   check(await click('[data-reset]') === 'ok', '再点一次执行清空');
   await sleep(400);
   const afterReset = JSON.parse(await stored());
-  check(afterReset.enabled.length === 0 && afterReset.done.length === 0,
-    '二次确认后看板清空');
+  check(afterReset.enabled.length === 6 && afterReset.done.length === 0,
+    '二次确认后进度清空、通告恢复默认全启用');
   const finalCards = JSON.parse(await cards());
-  check(finalCards.every((c) => c.enabled === 'no'), '清空后六张卡回到灰态');
+  check(finalCards.every((c) => c.enabled === 'yes'), '清空后六张卡回到默认全部勾选');
 
   ws.close();
   if (failures.length) throw new Error(`${failures.length} checks failed: ${failures.join(' | ')}`);
