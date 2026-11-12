@@ -319,14 +319,12 @@ export default function SpecialsApp({ data, guide }: Props) {
         <nav
           data-specials-rail
           aria-label="六大通告跳转"
-          className="hidden w-[184px] shrink-0 border-l border-line px-3 py-5 min-[1200px]:block"
+          className="hidden w-[176px] shrink-0 border-l border-line px-3 py-5 min-[1120px]:block"
         >
           <p className="px-1 text-ui-2xs font-semibold text-ink-faint">六大通告</p>
           <ul className="mt-2 flex flex-col gap-0.5">
             {notices.map((notice) => {
               const isActive = activeNotice === notice.id;
-              const isEnabled = state.enabled.includes(notice.id);
-              const prog = noticeProgress(evaluation.byNotice[notice.id] ?? []);
               return (
                 <li key={notice.id}>
                   <button
@@ -335,29 +333,19 @@ export default function SpecialsApp({ data, guide }: Props) {
                     aria-current={isActive ? 'true' : undefined}
                     onClick={() => jumpToNotice(notice.id)}
                     className={cn(
-                      'flex w-full flex-col gap-0.5 rounded-ui-xs px-2 py-1.5 text-left transition-colors',
-                      isActive ? 'bg-brand-soft' : 'hover:bg-surface-soft',
+                      'flex w-full items-center gap-2 rounded-ui-xs px-2 py-1.5 text-left text-ui-2xs transition-colors',
+                      isActive
+                        ? 'bg-brand-soft font-semibold text-brand-strong'
+                        : 'text-ink-muted hover:bg-surface-soft hover:text-brand-strong',
                     )}
                   >
                     <span
                       className={cn(
-                        'flex items-center gap-1.5 text-ui-2xs',
-                        isActive ? 'font-semibold text-brand-strong' : isEnabled ? 'text-ink-muted' : 'text-ink-faint',
+                        'h-1.5 w-1.5 shrink-0 rounded-full',
+                        isActive ? 'bg-brand' : 'bg-line-strong',
                       )}
-                    >
-                      <span
-                        className={cn(
-                          'h-1.5 w-1.5 shrink-0 rounded-full',
-                          isActive ? 'bg-brand' : isEnabled ? 'bg-line-strong' : 'bg-line',
-                        )}
-                      />
-                      {notice.title}
-                    </span>
-                    {isEnabled && (
-                      <span className="pl-3 text-ui-2xs tabular-nums text-ink-faint">
-                        {prog.met} / {prog.total}
-                      </span>
-                    )}
+                    />
+                    {notice.title}
                   </button>
                 </li>
               );
