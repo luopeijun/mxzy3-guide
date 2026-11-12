@@ -241,6 +241,8 @@ async function main() {
     hash: location.hash,
     heads: [...document.querySelectorAll('main h3')].map((h) => h.textContent.trim()),
     cards: document.querySelectorAll('[data-event-label]').length,
+    // 没有编号的事件卡不会有 data-event-label（属性为空就不渲染），按 id 数总数。
+    cardTotal: document.querySelectorAll('main [id^="ev"]').length,
     firstCard: document.querySelector('[data-event-label]')?.innerText ?? '',
     notes: [...document.querySelectorAll('main p')]
       .filter((p) => p.className.includes('bg-note-soft'))
@@ -304,6 +306,68 @@ async function main() {
     '原文错字已补正（春夏洋装 / 约会）',
     festivals.text.includes('城仲瑄：杜云芊穿着春夏洋装')
       && festivals.text.includes('没有特殊行程和约会'),
+    'ok',
+  );
+
+  // 5c. 女主事业结局 / 结局条件一览 / 甜蜜模式 / 喜爱物品一览
+  await openNode('sweet-guide/career-endings');
+  const career = await readPage();
+  check('点女主事业结局写入深链', career.hash === '#/guide/sweet-guide/career-endings', career.hash);
+  check('11 个事业结局各一张卡', career.cardTotal === 11, `cards=${career.cardTotal}`);
+  check(
+    '巨星条件四项都在',
+    career.heads.join('/') === '巨星条件/数值条件/通告条件（1或2）/其他条件（1和2）/奖项条件',
+    JSON.stringify(career.heads),
+  );
+  check('全角数字已归一（歌唱：600↑）', career.text.includes('歌唱：600↑'), 'ok');
+
+  await openNode('sweet-guide/endings');
+  const endings = await evaluate(`(() => {
+    const table = document.querySelector('main table');
+    if (!table) return { hash: location.hash, found: false, headers: [], rows: [] };
+    return {
+      hash: location.hash,
+      found: true,
+      headers: [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim()),
+      rows: [...table.querySelectorAll('tbody tr')].map((tr) =>
+        [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())),
+    };
+  })()`);
+  check('点结局条件写入深链', endings.hash === '#/guide/sweet-guide/endings', endings.hash);
+  check('结局条件渲染成表格', endings.found === true, String(endings.found));
+  check(
+    '表头是 序号 / 名称 / 知名度 / 公关 / 达成条件',
+    endings.headers.join('/') === '序号/公司显示名称/知名度/公关/达成条件',
+    JSON.stringify(endings.headers),
+  );
+  check('16 个结局 5 列', endings.rows.length === 16 && endings.rows[0].length === 5, `rows=${endings.rows.length}`);
+  check(
+    '第一行与第 16 行内容正确',
+    endings.rows[0]?.[1] === '傲视全球的演艺帝国'
+      && endings.rows[0]?.[4].includes('完成夏以军相关剧情')
+      && endings.rows[15]?.[1] === '白忙一场',
+    JSON.stringify(endings.rows[0]),
+  );
+
+  await openNode('sweet-guide/sweet-mode');
+  const mode = await readPage();
+  check('点甜蜜模式写入深链', mode.hash === '#/guide/sweet-guide/sweet-mode', mode.hash);
+  check(
+    '启动方法 / 使用时机 / 影响 三章',
+    mode.heads.slice(0, 3).join('/') === '启动方法/使用时机/影响',
+    JSON.stringify(mode.heads.slice(0, 3)),
+  );
+  check('结婚 8 张卡 + 告白 22 张卡', mode.cardTotal === 30, `cards=${mode.cardTotal}`);
+  check('告白条件带编号 pill', mode.text.includes('取消票房检查'), 'ok');
+  check('两段作者注释渲染成便签', mode.notes.length === 2, `notes=${mode.notes.length}`);
+
+  await openNode('sweet-guide/favorite-gifts');
+  const gifts = await readPage();
+  check('点喜爱物品写入深链', gifts.hash === '#/guide/sweet-guide/favorite-gifts', gifts.hash);
+  check('8 位角色各一张卡', gifts.cardTotal === 8, `cards=${gifts.cardTotal}`);
+  check(
+    '原文错字「蓝色咖啡额」已补正',
+    !gifts.text.includes('蓝色咖啡额') && gifts.text.includes('蓝色咖啡'),
     'ok',
   );
 

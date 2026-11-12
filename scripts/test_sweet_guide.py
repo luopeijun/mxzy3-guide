@@ -82,8 +82,8 @@ class TestSweetGuide(unittest.TestCase):
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
         self.assertEqual(stats["items"], 24)
-        self.assertEqual(stats["readyItems"], 6)
-        self.assertEqual(stats["missingItems"], 18)
+        self.assertEqual(stats["readyItems"], 10)
+        self.assertEqual(stats["missingItems"], 14)
 
     def test_no_invented_descriptions(self) -> None:
         # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
@@ -154,6 +154,7 @@ class TestSweetGuide(unittest.TestCase):
                 for text in texts(node):
                     self.assertNotIn("．", text, f"残留全角句点：{text}")
                     self.assertNotIn("\u3000", text, f"残留全角空格：{text}")
+                    self.assertNotRegex(text, r"[０-９]", f"残留全角数字：{text}")
 
     def test_company_page(self) -> None:
         self.assertEqual(self.company["status"], "ready")
@@ -301,6 +302,109 @@ class TestSweetGuide(unittest.TestCase):
         # 源文本的两处错字已按用户裁决补正（缺字 / 同音字），别改回去。
         self.assertIn("城仲瑄：杜云芊穿着春夏洋装", texts)
         self.assertIn("2.该艺人2月14日当天没有特殊行程和约会", texts)
+
+    def test_career_endings(self) -> None:
+        node = _node(self.data, "career-endings")
+        blocks = node["blocks"]
+        self.assertNotIn("description", node)  # 首行与页面标题同名
+
+        # 前 11 条事业结局：结局名进卡头，条件单列一行。
+        cards = [b["text"] for b in blocks if b["kind"] == "event"]
+        self.assertEqual(len(cards), 11)
+        self.assertEqual((cards[0], cards[-1]), ("天王巨星", "公司倒闭"))
+
+        # 「巨星条件」之后是四个块，各自一个小标题。
+        self.assertEqual([b["text"] for b in blocks if b["kind"] == "section"], ["巨星条件"])
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "heading"],
+            ["数值条件", "通告条件（1或2）", "其他条件（1和2）", "奖项条件"],
+        )
+        texts = [b["text"] for b in blocks if b["kind"] == "paragraph"]
+        self.assertIn("女主角的称号为超级天后", texts)
+        # 源文本是全角数字，转码时已归一成半角。
+        self.assertIn("歌唱：600↑", texts)
+        self.assertIn("知名度过1500而又没有创作10部以上上市", texts)
+        self.assertIn("金像奖（11月30日）：最佳男主角奖、最佳女主角奖", texts)
+
+    def test_endings_table(self) -> None:
+        node = _node(self.data, "endings")
+        self.assertEqual(len(node["blocks"]), 1)
+        block = node["blocks"][0]
+        self.assertEqual(block["kind"], "table")
+        table = block["table"]
+        self.assertEqual(
+            [c["label"] for c in table["columns"]],
+            ["序号", "公司显示名称", "知名度", "公关", "达成条件"],
+        )
+
+        rows = table["rows"]
+        self.assertEqual(len(rows), 16)
+        self.assertEqual(rows[0]["name"], "傲视全球的演艺帝国")
+        self.assertEqual((rows[0]["fame"], rows[0]["pr"]), ("2500以上", "150以上"))
+        self.assertEqual(rows[0]["condition"], "完成夏以军相关剧情，其余同顶尖国际经纪公司。")
+        self.assertEqual(rows[13]["condition"], "以上皆不符合")
+        self.assertEqual(rows[14]["condition"], "同上")
+        self.assertEqual(rows[15]["condition"], "")  # 原文第 16 条没写说明
+
+    def test_sweet_mode(self) -> None:
+        node = _node(self.data, "sweet-mode")
+        blocks = node["blocks"]
+        self.assertNotIn("description", node)  # 原文没有页面总标题
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "section"],
+            ["启动方法", "使用时机", "影响"],
+        )
+        notes = [b["text"] for b in blocks if b["kind"] == "note"]
+        self.assertEqual(len(notes), 2)
+        self.assertTrue(notes[0].startswith("以下列出使用甜蜜模式时结婚事件"), notes[0])
+
+        # 结婚清单：一个角色一张卡，续行留在同一张卡里。
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "event" and "label" not in b],
+            ["沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄"],
+        )
+        by_group: dict[int, list[dict]] = {}
+        for block in blocks:
+            by_group.setdefault(block["group"], []).append(block)
+        first = next(b for b in blocks if b["kind"] == "event" and b["text"] == "沈惟真")
+        self.assertEqual(
+            [b["text"] for b in by_group[first["group"]] if b["kind"] == "paragraph"],
+            ["收到喜欢的礼物5个以上。", "邀约25次以上。", "沈惟真跟记者坦承与女主角交往"],
+        )
+
+        # 告白清单：角色当小标题，攻略本的事件编号进 pill。
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "heading"][:2], ["沈惟真", "丹尼斯"]
+        )
+        labels = [b["label"] for b in blocks if b["kind"] == "event" and "label" in b]
+        self.assertEqual(len(labels), 22)
+        self.assertEqual(labels[:3], ["4-1", "4-3", "4-5"])
+        self.assertIn("7-10", labels)
+
+        # d./e./f. 是「影响」的条目，不能并进上一张角色卡里。
+        for prefix in ("d.告白相关事件门槛降低", "e.情人节邀约门槛降低。"):
+            group = by_group[next(b for b in blocks if b["text"] == prefix)["group"]]
+            self.assertEqual(group[0]["text"], prefix)
+            self.assertNotIn("event", [b["kind"] for b in group])
+
+    def test_favorite_gifts(self) -> None:
+        node = _node(self.data, "favorite-gifts")
+        blocks = node["blocks"]
+        self.assertNotIn("description", node)
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "event"],
+            ["沈惟真", "城仲瑄", "卫亚", "慕容和希", "姚子奇", "纪翔", "史蒂芬", "丹尼斯"],
+        )
+        self.assertEqual(len(blocks), 16)  # 8 个角色 ×（卡头 + 一行物品）
+
+        by_group: dict[int, list[dict]] = {}
+        for block in blocks:
+            by_group.setdefault(block["group"], []).append(block)
+        danisi = next(b for b in blocks if b["kind"] == "event" and b["text"] == "丹尼斯")
+        items = by_group[danisi["group"]][1]["text"]
+        # 原文写成「蓝色咖啡额」，多出来的「额」是错字，已补正。
+        self.assertTrue(items.startswith("大宇啤酒、蓝色咖啡、海蓝色休闲头巾"), items[:24])
+        self.assertNotIn("蓝色咖啡额", "".join(b["text"] for b in blocks))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

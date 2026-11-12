@@ -11,7 +11,7 @@ public/data/guide.json。
 sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应节点。还没有
 正文的节点保留 status="missing"，页面上给出「这一页还没整理」的占位提示。
 
-目前有五种页面形态：
+目前有八种页面形态：
 
 **事件页**（主线攻略、公司改建攻略）
 
@@ -53,6 +53,29 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
     ▲主角生日▲               ← 分章（section），源文本没有整页标题
     第一年生日                ← 小标题（heading）
     1.如果有交往对象，…        ← 列表项与箭头流程都是普通段落，编号原样保留
+
+**结局页**（女主事业结局达成条件）
+
+    女主事业结局达成条件      ← 首行，与页面标题同名 → 不当副标题
+    天王巨星：女主角的称号…    ← 一个结局一张卡：结局名进卡头，条件单列一行
+    巨星条件                  ← 分章（section）
+    ●数值条件                 ← 小标题（heading）
+    歌唱：600↑                ← 门槛数值都是普通段落
+
+**表格页（带说明）**（结局条件一览）
+
+    结局条件一览              ← 首行，页内不重复
+    公司显示名称   知名度   公关   ← 原表头（列间用两个以上空格对齐，读入时跳过）
+    1.傲视全球的演艺帝国  2500以上  150以上
+    完成夏以军相关剧情……       ← 紧跟着的一行是这一个结局的条件说明
+
+**清单页（按角色）**（甜蜜模式的影响 / 角色喜爱物品一览）
+
+    启动方法 / 影响           ← 分章（section）；甜蜜模式这页没有页面总标题
+    #以下列出使用甜蜜模式时…   ← 作者注释（note）
+    沈惟真： 收到喜欢的礼物…    ← 角色进卡头，同一角色的续行留在卡里
+    4-1.约会2次以上…          ← 告白条件用攻略本的事件编号当 pill
+    玫瑰之星、爱神巧克力、…    ← 喜爱物品：一个角色一行（用顿号分隔判断）
 """
 
 from __future__ import annotations
@@ -399,6 +422,173 @@ def parse_festivals(path: Path) -> tuple[list[dict], str]:
     return blocks, ""
 
 
+# 「天王巨星：女主角的称号为超级天后」——结局名 + 达成条件，一个结局一张卡。
+CAREER_ENDING_RE = re.compile(r"^([^：:]{2,12})[：:](.+)$")
+
+
+def parse_career_endings(path: Path) -> tuple[list[dict], str]:
+    """女主事业结局达成条件 → 11 个结局各一张卡，后面接「巨星条件」四项细则。"""
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+    in_giant = False
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines[1:]:
+        # 「巨星条件」之后是巨星的数值 / 通告 / 奖项门槛，形态与前面的结局列表不同。
+        if text.startswith("巨星条件"):
+            in_giant = True
+            group += 1
+            push("section", "巨星条件")
+            continue
+
+        if text.startswith("●"):
+            group += 1
+            push("heading", text.lstrip("●").strip(), depth=1)
+            continue
+
+        ending = CAREER_ENDING_RE.match(text) if not in_giant else None
+        if ending:
+            group += 1
+            push("event", ending.group(1).strip())
+            push("paragraph", ending.group(2).strip())
+            continue
+
+        push("paragraph", text)
+
+    return blocks, lines[0]
+
+
+# 「1.傲视全球的演艺帝国       2500以上             150以上」——列之间用两个以上空格对齐。
+ENDINGS_ROW_RE = re.compile(r"^(\d+)\.(.+?)\s{2,}(\S+)\s{2,}(\S+)$")
+
+
+def parse_endings(path: Path) -> tuple[list[dict], str]:
+    """结局条件一览 → 16 行「序号 / 公司名称 / 知名度 / 公关 / 达成条件」的表。
+
+    原表里每个结局下面还有一行条件说明，收进同一行的「达成条件」列；
+    第 16 条原文没写说明，留空。
+    """
+    lines = _read_lines(path)
+    rows: list[dict] = []
+    for text in lines[2:]:  # 首行是页面标题，第二行是原表的表头
+        match = ENDINGS_ROW_RE.match(text)
+        if match:
+            rows.append(
+                {
+                    "index": match.group(1),
+                    "name": match.group(2).strip(),
+                    "fame": match.group(3),
+                    "pr": match.group(4),
+                    "condition": "",
+                }
+            )
+            continue
+        if not rows:
+            raise ValueError(f"{path.name}: 表头之后的行不属于任何结局：{text!r}")
+        rows[-1]["condition"] = text
+
+    columns = [
+        {"key": "index", "label": "序号"},
+        {"key": "name", "label": "公司显示名称"},
+        {"key": "fame", "label": "知名度"},
+        {"key": "pr", "label": "公关"},
+        # 「达成条件」是整句话，允许折行，否则整张表会被撑出横向滚动条。
+        {"key": "condition", "label": "达成条件", "wrap": True},
+    ]
+    return [{"kind": "table", "text": "", "group": 1, "table": {"columns": columns, "rows": rows}}], lines[0]
+
+
+# 甜蜜模式这一页的首行就是「启动方法」，没有单独的页面总标题。
+SWEET_MODE_SECTIONS = {"启动方法", "使用时机", "影响"}
+# 「沈惟真： 收到喜欢的礼物5个以上。」——角色名 + 该角色的条件。
+SWEET_MODE_ROLE_RE = re.compile(r"^([^\s：:]{2,6})[：:]\s*(.*)$")
+# 「4-1.约会2次以上…」——告白条件按攻略本的事件编号列出。
+SWEET_MODE_EVENT_RE = re.compile(r"^(\d+-\d+)[.](.+)$")
+# 「a.哥哥送钱剧情…」——「影响」的条目，见到就说明上面的角色清单结束了。
+SWEET_MODE_IMPACT_RE = re.compile(r"^[a-f][.．]")
+
+
+def parse_sweet_mode(path: Path) -> tuple[list[dict], str]:
+    """甜蜜模式的影响 → 三段正文 + 两张「结婚 / 告白条件」清单。
+
+    那两个 # 开头的注释后面跟的是按角色列的条件表：结婚那张是一角色一卡，
+    告白那张先给角色小标题、再给带编号的事件卡。`a.`~`f.` 开头的行是「影响」
+    的条目，出现即说明该清单结束了。
+    """
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+    section = ""  # "" / "marriage" / "confession"
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines:
+        if text in SWEET_MODE_SECTIONS:
+            section = ""
+            group += 1
+            push("section", text)
+            continue
+
+        if text.startswith("#"):
+            # 注释行与前后的角色卡不共用 group，否则会渲染进上一张卡里。
+            section = "confession" if "告白" in text else "marriage"
+            group += 1
+            push("note", text.lstrip("#").strip())
+            continue
+
+        if SWEET_MODE_IMPACT_RE.match(text):
+            section = ""
+            group += 1
+            push("paragraph", text)
+            continue
+
+        role = SWEET_MODE_ROLE_RE.match(text)
+        if section == "marriage" and role and role.group(2):
+            group += 1
+            push("event", role.group(1).strip())
+            push("paragraph", role.group(2).strip())
+            continue
+
+        if section == "confession":
+            event = SWEET_MODE_EVENT_RE.match(text)
+            if event:
+                group += 1
+                push("event", event.group(2).strip(), label=event.group(1))
+                continue
+            if role and not role.group(2):
+                group += 1
+                push("heading", role.group(1).strip(), depth=1)
+                continue
+
+        push("paragraph", text)
+
+    return blocks, ""
+
+
+def parse_favorite_gifts(path: Path) -> tuple[list[dict], str]:
+    """角色喜爱物品一览 → 一个角色一张卡，卡里是该角色喜欢的物品（顿号分隔）。"""
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines[1:]:
+        # 角色名是短名（中间没有顿号），下一行才是物品清单。
+        if "、" in text:
+            push("paragraph", text)
+        else:
+            group += 1
+            push("event", text)
+
+    return blocks, lines[0]
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
@@ -406,6 +596,10 @@ PARSERS = {
     "self-notices": parse_self_notices,
     "outfits": parse_outfits,
     "festivals": parse_festivals,
+    "sweet-mode": parse_sweet_mode,
+    "favorite-gifts": parse_favorite_gifts,
+    "career-endings": parse_career_endings,
+    "endings": parse_endings,
 }
 
 # 类目 / 子节点：(slug, 标题)。有正文的节由 PARSERS 覆盖 status 与 blocks。
