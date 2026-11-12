@@ -16,7 +16,6 @@
     {
       "id": "sweet-guide",
       "title": "经纪人事件簿",
-      "description": "经纪人相关的主线与经营事件：投资、骗局、摩登时代、公司改建、落日",
       "status": "ready",
       "blocks": [],
       "children": [
@@ -740,7 +739,6 @@
     {
       "id": "sweet-characters",
       "title": "角色攻略",
-      "description": "每位角色一页，感情线与约会选项合并",
       "status": "ready",
       "blocks": [],
       "children": [
@@ -749,71 +747,62 @@
           "title": "城仲瑄",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         },
         {
           "id": "sweet-characters/danisi",
           "title": "丹尼斯",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         },
         {
           "id": "sweet-characters/ji-xiang",
           "title": "纪翔",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         },
         {
           "id": "sweet-characters/murong-hexi",
           "title": "慕容和希",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         },
         {
           "id": "sweet-characters/shen-weizhen",
           "title": "沈惟真",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         },
         {
           "id": "sweet-characters/shi-difen",
           "title": "史蒂芬",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         },
         {
           "id": "sweet-characters/wei-ya",
           "title": "卫亚",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         },
         {
           "id": "sweet-characters/yao-ziqi",
           "title": "姚子奇",
           "status": "missing",
           "blocks": [],
-          "children": [],
-          "description": "感情线与约会选项"
+          "children": []
         }
       ]
     },
     {
       "id": "sweet-side",
       "title": "支线攻略",
-      "description": "配角与舞台相关的支线",
       "status": "ready",
       "blocks": [],
       "children": [

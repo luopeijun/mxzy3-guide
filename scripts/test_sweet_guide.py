@@ -85,6 +85,23 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(stats["readyItems"], 3)
         self.assertEqual(stats["missingItems"], 21)
 
+    def test_no_invented_descriptions(self) -> None:
+        # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
+        def headline(node: dict) -> str:
+            slug = node["id"].split("/")[-1]
+            text = (ROOT / "sources" / "sweet" / f"{slug}.txt").read_bytes().decode("utf-8")
+            return text.replace("\r\n", "\n").split("\n")[0].strip()
+
+        for category in self.data["categories"]:
+            self.assertNotIn("description", category, category["title"])
+            for node in category["children"]:
+                if "description" in node:
+                    self.assertEqual(
+                        node["description"],
+                        headline(node),
+                        f"{node['title']} 的副标题不是原文首行",
+                    )
+
     def test_main_story_is_ready(self) -> None:
         self.assertEqual(self.story["status"], "ready")
         self.assertEqual(self.story["description"], "主线任务（落日相关）")

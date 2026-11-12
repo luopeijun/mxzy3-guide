@@ -189,12 +189,12 @@ PARSERS = {
     "abroad-notices": parse_abroad_notices,
 }
 
-# 类目 / 子节点：(slug, 标题[, 副标题])。有正文的节由 PARSERS 覆盖 status 与 blocks。
+# 类目 / 子节点：(slug, 标题)。有正文的节由 PARSERS 覆盖 status 与 blocks。
+# 副标题一律来自原文首行，这里不写任何概述——目录上的说明文字同样不写。
 CATEGORIES: list[dict] = [
     {
         "id": "sweet-guide",
         "title": "经纪人事件簿",
-        "description": "经纪人相关的主线与经营事件：投资、骗局、摩登时代、公司改建、落日",
         "children": [
             ("main-story", "主线攻略"),
             ("company", "公司改建攻略"),
@@ -211,7 +211,6 @@ CATEGORIES: list[dict] = [
     {
         "id": "sweet-characters",
         "title": "角色攻略",
-        "description": "每位角色一页，感情线与约会选项合并",
         "children": [
             ("cheng-zhongxuan", "城仲瑄"),
             ("danisi", "丹尼斯"),
@@ -222,12 +221,10 @@ CATEGORIES: list[dict] = [
             ("wei-ya", "卫亚"),
             ("yao-ziqi", "姚子奇"),
         ],
-        "childDescription": "感情线与约会选项",
     },
     {
         "id": "sweet-side",
         "title": "支线攻略",
-        "description": "配角与舞台相关的支线",
         "children": [
             ("stage-shadow", "舞台秘影"),
             ("tian-qing", "关于天晴"),
@@ -246,7 +243,6 @@ def build() -> dict:
         children: list[dict] = []
         for entry in category["children"]:
             slug, title = entry[0], entry[1]
-            fallback = entry[2] if len(entry) > 2 else category.get("childDescription")
             node: dict = {
                 "id": f"{category['id']}/{slug}",
                 "title": title,
@@ -254,15 +250,13 @@ def build() -> dict:
                 "blocks": [],
                 "children": [],
             }
-            if fallback:
-                node["description"] = fallback
 
             parser = PARSERS.get(slug)
             if parser is not None:
                 blocks, subtitle = parser(SOURCES / f"{slug}.txt")
                 node["blocks"] = blocks
                 node["status"] = "ready"
-                # 首行常常就是页面自己的标题，重复的话不当作副标题，保留上面的说明。
+                # 副标题只取原文首行；与页面标题重复（或原文没写）就不写，绝不自己编一句概述。
                 if subtitle and subtitle != title:
                     node["description"] = subtitle
             children.append(node)
@@ -271,7 +265,6 @@ def build() -> dict:
             {
                 "id": category["id"],
                 "title": category["title"],
-                "description": category["description"],
                 "status": "ready",
                 "blocks": [],
                 "children": children,
