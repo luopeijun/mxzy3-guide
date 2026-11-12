@@ -248,6 +248,7 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
 
   // 「提前准备」里的道具 / 前置计数行常驻一行灰色备注：hint 就是这张表里
   // 写好的获取来源（哪个综艺的奖品、在哪买、跟谁拿），不用再 hover 才看见。
+  // 纯文字、不加装饰符号，靠淡色小字和缩进区分层级。
   // 证书行不重复铺——它的课程与属性缺口已经在 ▸ 展开里。
   const sourceNote = row.phase === 'prepare' && (row.type === 'item' || row.type === 'count')
     && row.hint && row.hint !== '-' ? row.hint : null;
@@ -257,14 +258,16 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
       title={sourceNote}
       className="mt-0.5 pl-1 text-ui-2xs leading-[1.45] text-ink-faint"
     >
-      <span aria-hidden="true" className="mr-1">↳</span>
       {sourceNote}
     </p>
   ) : null;
 
+  // A uniform 1px outline instead of the old 2px left status bar: completed
+  // rows are told apart by their soft green fill + green control, not by a
+  // heavy stripe that makes the checklist look like a row of warning markers.
   const shell = cn(
-    'rounded-ui-sm border-l-2 px-2.5 py-1',
-    met ? 'border-growth bg-growth-soft/50' : 'border-line-strong bg-surface',
+    'rounded-ui-sm border border-line px-2.5 py-1',
+    met ? 'bg-growth-soft/50' : 'bg-surface',
   );
 
   const headMeta = (

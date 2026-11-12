@@ -350,6 +350,14 @@ async function main() {
   // ---------- 7b. 提前准备：道具行常驻一行获取来源 ----------
   const tearNote = await evaluate(`document.querySelector('[data-condition-row][data-row-id="angel.item.tear"] [data-item-source]')?.textContent.trim() ?? ''`);
   check(tearNote.includes('综艺节目大富翁'), '人鱼的眼泪下方常驻获取来源', tearNote);
+  check(!tearNote.includes('↳'), '来源备注是纯文字、不带装饰箭头', tearNote);
+  const rowBorder = await evaluate(`(() => {
+    const el = document.querySelector('[data-condition-row][data-row-id="angel.item.tear"]');
+    if (!el) return '';
+    const s = getComputedStyle(el);
+    return [s.borderTopWidth, s.borderRightWidth, s.borderBottomWidth, s.borderLeftWidth].join('/');
+  })()`);
+  check(rowBorder === '1px/1px/1px/1px', '条件行四边细边框一致（没有左侧粗状态条）', rowBorder);
   const sourceCount = await evaluate(`document.querySelectorAll('[data-notice-card][data-notice-id="${ANGEL}"] [data-item-source]').length`);
   check(sourceCount === 9, '天使卡 9 条道具 / 前置行各带一条备注', `${sourceCount} 条`);
   check(await evaluate(`!document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-item-source]')`),
