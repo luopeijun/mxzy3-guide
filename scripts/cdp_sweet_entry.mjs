@@ -3,7 +3,8 @@ import fs from 'node:fs';
 
 /* 双站点入口回归：确认 sweet.html 能独立跑起来、用的是粉色主题令牌、
    目录结构与原攻略一致（3 类 10/8/6 条，第一类叫「经纪人事件簿」）、
-   主线攻略正文能渲染（23 张事件卡 + 5 条本页小节）、点角色页能进、
+   主线攻略正文能渲染（23 张事件卡 + 5 条本页小节）、公司改建攻略能渲染
+   （单章 + 9 张事件卡）、国外通告接拍条件渲染成 5 行表格、点角色页能进、
    跨站入口能来回跳；同时确认明星志愿3 那边只是多了一枚跨站胶囊，五个页签不变。
 
    Usage: node scripts/cdp_sweet_entry.mjs [shot.png]
@@ -142,12 +143,91 @@ async function main() {
     story.firstCard.replace(/\\n+/g, ' ').slice(0, 40),
   );
 
-  // 4. 点角色页（每行第一个按钮是展开/折叠，第二个才是选中）
   if (shot) {
     const { data } = await send('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(shot, Buffer.from(data, 'base64'));
     console.log('wrote', shot);
   }
+
+  // 4. 公司改建攻略：单章「改建」+ 9 个事件；源文本的细节行是顶格写的
+  await evaluate(`(() => {
+    const row = document.querySelector('[data-node-id="sweet-guide/company"]');
+    const pick = [...row.querySelectorAll('button')].find((b) => b.className.includes('flex-1'));
+    pick.click();
+    return 1;
+  })()`);
+  await new Promise((r) => setTimeout(r, 600));
+  const company = await evaluate(`(() => ({
+    hash: location.hash,
+    cards: document.querySelectorAll('[data-event-label]').length,
+    labels: [...document.querySelectorAll('[data-event-label]')].map((el) => el.dataset.eventLabel),
+    chapters: [...document.querySelectorAll('nav[aria-label="本页小节"] li button')]
+      .map((b) => (b.querySelectorAll('span')[1]?.textContent ?? b.textContent).trim()),
+    firstCard: document.querySelector('[data-event-label]')?.innerText ?? '',
+    hasHint: document.body.innerText.includes('公司金钱1500以上才会触发'),
+  }))()`);
+  check('点公司改建写入深链', company.hash === '#/guide/sweet-guide/company', company.hash);
+  check('公司改建渲染 9 张事件卡', company.cards === 9, `cards=${company.cards}`);
+  check(
+    '事件编号是 4-1 ~ 4-9',
+    company.labels.join(',') === '4-1,4-2,4-3,4-4,4-5,4-6,4-7,4-8,4-9',
+    JSON.stringify(company.labels),
+  );
+  check('本页小节只有「改建」一章', company.chapters.join('/') === '改建', JSON.stringify(company.chapters));
+  check(
+    '顶格写的细节行也进卡片',
+    company.firstCard.includes('时间：第2年1月') && company.firstCard.includes('概要：在酒吧遇到林芬芬'),
+    company.firstCard.replace(/\n+/g, ' ').slice(0, 40),
+  );
+  check('「提示：」渲染成备注', company.hasHint === true, String(company.hasHint));
+  if (shot) {
+    const view = await send('Page.captureScreenshot', { format: 'png' });
+    const companyPath = shot.replace(/\.png$/, '-company.png');
+    fs.writeFileSync(companyPath, Buffer.from(view.data, 'base64'));
+    console.log('wrote', companyPath);
+  }
+
+  // 5. 国外通告接拍条件：5 行 3 列的表格
+  await evaluate(`(() => {
+    const row = document.querySelector('[data-node-id="sweet-guide/abroad-notices"]');
+    const pick = [...row.querySelectorAll('button')].find((b) => b.className.includes('flex-1'));
+    pick.click();
+    return 1;
+  })()`);
+  await new Promise((r) => setTimeout(r, 600));
+  const abroad = await evaluate(`(() => {
+    const table = document.querySelector('main table');
+    if (!table) return { hash: location.hash, found: false, headers: [], rows: [] };
+    return {
+      hash: location.hash,
+      found: true,
+      headers: [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim()),
+      rows: [...table.querySelectorAll('tbody tr')].map((tr) =>
+        [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())),
+    };
+  })()`);
+  check('点国外通告写入深链', abroad.hash === '#/guide/sweet-guide/abroad-notices', abroad.hash);
+  check('国外通告渲染成表格', abroad.found === true, String(abroad.found));
+  check(
+    '表头是 城市 / 公司 / 接拍条件',
+    abroad.headers.join('/') === '城市/公司（通告类型）/接拍条件',
+    JSON.stringify(abroad.headers),
+  );
+  check('表格 5 个城市 3 列', abroad.rows.length === 5 && abroad.rows[0].length === 3, `rows=${abroad.rows.length}`);
+  check(
+    '行内容与源文本一致',
+    abroad.rows[0]?.join('/') === '东京/京风唱片（唱片）/推出3张唱片以上（个人、团体分开计算）'
+      && abroad.rows[4]?.join('/') === '纽约/巴洛克之诗（舞台剧）/拍过电影，拍过电视剧，做过主持',
+    JSON.stringify(abroad.rows[0]),
+  );
+  if (shot) {
+    const table = await send('Page.captureScreenshot', { format: 'png' });
+    const tablePath = shot.replace(/\.png$/, '-abroad.png');
+    fs.writeFileSync(tablePath, Buffer.from(table.data, 'base64'));
+    console.log('wrote', tablePath);
+  }
+
+  // 6. 点角色页（每行第一个按钮是展开/折叠，第二个才是选中）
   await evaluate(`(() => {
     const row = document.querySelector('[data-node-id="sweet-characters/yao-ziqi"]');
     const pick = [...row.querySelectorAll('button')].find((b) => b.className.includes('flex-1'));
@@ -169,14 +249,14 @@ async function main() {
   check('正文标题是姚子奇', page.heading.includes('姚子奇'), page.heading);
   check('空页给出甜蜜乐章自己的提示', page.emptyHint === true, String(page.emptyHint));
 
-  // 5. 跨站入口
+  // 7. 跨站入口
   const cross = await evaluate(`(() => {
     const a = document.querySelector('[data-game-switch]');
     return a ? { href: a.getAttribute('href'), label: a.textContent.trim() } : null;
   })()`);
   check('甜蜜乐章顶栏有回原站入口', cross?.label?.includes('明星志愿3') === true, JSON.stringify(cross));
 
-  // 6. 回原站：五个页签 + 一枚去甜蜜乐章的胶囊，主题仍是玫瑰色
+  // 8. 回原站：五个页签 + 一枚去甜蜜乐章的胶囊，主题仍是玫瑰色
   await send('Page.navigate', { url: MAIN });
   await new Promise((r) => setTimeout(r, 2600));
   const main = await evaluate(`(() => ({

@@ -6,17 +6,17 @@
     "stats": {
       "categories": 3,
       "items": 24,
-      "blocks": 80,
-      "readyItems": 1,
-      "missingItems": 23,
-      "sourceParagraphs": 80
+      "blocks": 112,
+      "readyItems": 3,
+      "missingItems": 21,
+      "sourceParagraphs": 112
     }
   },
   "categories": [
     {
       "id": "sweet-guide",
       "title": "经纪人事件簿",
-      "description": "经纪人相关的主线与经营事件：投资、骗局、摩登时代、落日",
+      "description": "经纪人相关的主线与经营事件：投资、骗局、摩登时代、公司改建、落日",
       "status": "ready",
       "blocks": [],
       "children": [
@@ -460,16 +460,233 @@
         {
           "id": "sweet-guide/company",
           "title": "公司改建攻略",
-          "status": "missing",
-          "blocks": [],
-          "children": []
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "section",
+              "text": "改建",
+              "group": 1,
+              "depth": 0
+            },
+            {
+              "kind": "event",
+              "text": "今天让我请客吧！",
+              "group": 2,
+              "label": "4-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年1月～第2年12月",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在酒吧遇到林芬芬与姚子莹，杜云芊表示大方帮忙买单。",
+              "group": 2
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊人气400以上，公司金钱10万以上才会触发。",
+              "group": 2
+            },
+            {
+              "kind": "event",
+              "text": "门面是最重要的",
+              "group": 3,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1发生后一个月内",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：林芬芬与姚子莹依约到公司玩，并提出了改建的建议。",
+              "group": 3
+            },
+            {
+              "kind": "event",
+              "text": "听说你想要改建大楼？",
+              "group": 4,
+              "label": "4-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-2发生后",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：马智文前来拜访，询问改建的事。",
+              "group": 4
+            },
+            {
+              "kind": "note",
+              "text": "提示：公司金钱1500以上才会触发。",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "想要改建大楼了吗？",
+              "group": 5,
+              "label": "4-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3发生后～第2年12月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件4-3中拒绝了大楼改建一事，之后在酒吧可以再跟马智文主动提起想要改建。",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "超现代的设计",
+              "group": 6,
+              "label": "4-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3或4-4发生后一个月内",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：办公室改建完成后，林芬芬与姚子莹前来拜访，表示赞赏。",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "比巨子更气派！",
+              "group": 7,
+              "label": "4-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-5发生后",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊结束电视工作后，遇到金皓薰与贺总，得知贺总正在改建自己的办公大楼。",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "我有事想请教贺总",
+              "group": 8,
+              "label": "4-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-6发生后6个月内",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到巨子经纪，在金皓薰的帮助下，顺利得到贺总的帮助来改建大楼。",
+              "group": 8
+            },
+            {
+              "kind": "note",
+              "text": "提示：公司金钱3000万以上才会触发。",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "要这么贵啊？",
+              "group": 9,
+              "label": "4-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-7发生后",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：贺总与金皓薰前来拜访，表示要帮忙改建。如果跟金皓薰关系够好，或许能够得到不错的折扣。",
+              "group": 9
+            },
+            {
+              "kind": "event",
+              "text": "拥有一间气派的大楼",
+              "group": 10,
+              "label": "4-9"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-8发生后一个月内",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：改建完成后，金皓薰前来祝贺，贺总也偷偷带了神秘小礼物跟来…",
+              "group": 10
+            }
+          ],
+          "children": [],
+          "description": "从第 2 年的请客买单到气派大楼落成，共 9 个事件"
         },
         {
           "id": "sweet-guide/abroad-notices",
           "title": "国外通告接拍条件",
-          "status": "missing",
-          "blocks": [],
-          "children": []
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "table",
+              "text": "",
+              "group": 1,
+              "table": {
+                "columns": [
+                  {
+                    "key": "city",
+                    "label": "城市"
+                  },
+                  {
+                    "key": "company",
+                    "label": "公司（通告类型）"
+                  },
+                  {
+                    "key": "requirement",
+                    "label": "接拍条件"
+                  }
+                ],
+                "rows": [
+                  {
+                    "city": "东京",
+                    "company": "京风唱片（唱片）",
+                    "requirement": "推出3张唱片以上（个人、团体分开计算）"
+                  },
+                  {
+                    "city": "好莱坞",
+                    "company": "大宇宙影业（电影）",
+                    "requirement": "拍过3部电影主角"
+                  },
+                  {
+                    "city": "伦敦",
+                    "company": "伊丽莎白（广告）",
+                    "requirement": "拍过5个广告"
+                  },
+                  {
+                    "city": "米兰",
+                    "company": "柯里昂（时装秀）",
+                    "requirement": "拍过5个广告"
+                  },
+                  {
+                    "city": "纽约",
+                    "company": "巴洛克之诗（舞台剧）",
+                    "requirement": "拍过电影，拍过电视剧，做过主持"
+                  }
+                ]
+              }
+            }
+          ],
+          "children": [],
+          "description": "东京、好莱坞、伦敦、米兰、纽约五个城市的接拍门槛"
         },
         {
           "id": "sweet-guide/self-notices",

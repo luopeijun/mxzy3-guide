@@ -15,12 +15,13 @@
 
 甜蜜乐章是与原站平级的第二个站点（`sweet.html`），共用同一套组件与设计令牌，但**数据、目录顺序、进度键全部另起一套**——改这边的正文永远不会碰到原站的 `public/data/guide.json`。
 
-- `sources/sweet/main-story.txt`：主线攻略（落日相关）。原始资料是本地 GBK 繁体 TXT，导入时转成 UTF-8 简体（`zhconv` 转码，`「」`一并落成原站的 `“”` 风格），全角数字与连接号统一成 ASCII，入了 `sources/` 之后这份就是唯一来源，**不再回读本地原文件**。
-- `python scripts/extract_sweet_guide.py` → `public/data/sweet/guide.json`：目录结构（类目 / 每节标题 / 顺序）写在脚本的 `CATEGORIES` 里，正文按节名读 `sources/sweet/<slug>.txt`；没有对应 txt 的节点保留 `status: "missing"`，页面给「这一页还没整理」的占位提示。新增一节 = 加一条 `CATEGORIES` 条目 + 放一份 txt + 在 `PARSERS` 里登记解析函数。
-- 节内解析规则：首行是正文页副标题（渲染在标题下方）；不带编号的行是章节（`section`）；`数字-数字．标题` 是事件（编号进 pill、标题进卡头，句尾的 `．．` 统一成 `…`）；缩进行按前缀决定类型——`时间：` / `概要：` 是普通段落，`提示：` 与 `（…` 是金色备注。文末不带编号但含冒号的行视为作者注解，连同其缩进续行收进「结局分歧」一节。
-- 目录按用户裁决：第一类叫「**经纪人事件簿**」（10 节，**不含「角色介绍」**），角色攻略 8 位（感情线与约会选项合并成同一个角色页），支线攻略 6 条，合计 24 节。
-- `scripts/test_sweet_guide.py`：锁住「提交的 guide.json 与脚本重算完全一致」+ 4 章 23 个事件且编号连续 + 每个事件都带时间与概要 + 三类目录结构，防手改 JSON 导致的静默回退。
-- 界面回归 `scripts/cdp_sweet_entry.mjs`：站点身份（标题 / `data-game="sweet"` / 粉色令牌）、目录 10-8-6、主线攻略 23 张事件卡 + 5 条本页小节、跨站胶囊，以及原站五个页签未受影响。
+- `sources/sweet/main-story.txt`（主线攻略）、`company.txt`（公司改建攻略）、`abroad-notices.txt`（国外通告接拍条件）：原始资料都是本地 GBK 繁体 TXT，导入时转成 UTF-8 简体（`zhconv` 转码，`「」`一并落成原站的 `“”` 风格），全角数字与连接号统一成 ASCII，入了 `sources/` 之后这些就是唯一来源，**不再回读本地原文件**。
+- `python scripts/extract_sweet_guide.py` → `public/data/sweet/guide.json`：目录结构（类目 / 每节标题 / 顺序 / 可选副标题）写在脚本的 `CATEGORIES` 里，正文按节名读 `sources/sweet/<slug>.txt`；没有对应 txt 的节点保留 `status: "missing"`，页面给「这一页还没整理」的占位提示。新增一节 = 加一条 `CATEGORIES` 条目 + 放一份 txt + 在 `PARSERS` 里登记解析函数。
+- 事件页解析规则（主线、公司改建共用 `parse_event_page`）：首行是正文页副标题（与页面标题重复时不再重复显示）；不带编号的行是章节；`数字.标题` 是带编号的章节（`4.改建` → 标题取「改建」）；`数字-数字．标题` 是事件（编号进 pill、标题进卡头，句尾的 `．．` 统一成 `…`）；细节行按前缀决定类型——`时间：` / `概要：` / `条件：` 是普通段落，`提示：` 与 `（…` 是金色备注，**缩进可有可无**（公司改建的源文本就是顶格写的）。主线文末不带编号但含冒号的行视为作者注解，连同续行收进「结局分歧」一节；公司改建没有这段，解析时不开启该规则，避免误吞正文。
+- 表格页解析规则（国外通告）：首行是副标题，之后每三行一组「城市 / 公司（类型）/ 接拍条件」，校验总行数是 3 的倍数、公司行必须带全角括号，错位直接报错而不是生成半截表；产出一个 `kind: "table"` 块，前端复用通用的 `DataTable`。
+- 目录按用户裁决：第一类叫「**经纪人事件簿**」（10 节，**不含「角色介绍」**），角色攻略 8 位（感情线与约会选项合并成同一个角色页），支线攻略 6 条，合计 24 节。目前有正文的是主线攻略（4 章 23 个事件）、公司改建攻略（1 章 9 个事件）、国外通告接拍条件（5 行表格）。
+- `scripts/test_sweet_guide.py`：锁住「提交的 guide.json 与脚本重算完全一致」+ 主线 4 章 23 个事件且编号连续 + 每个事件都带时间与概要 + 公司改建 9 个事件与 3 条提示 + 国外通告 5 行表格内容 + 三类目录结构，防手改 JSON 导致的静默回退。
+- 界面回归 `scripts/cdp_sweet_entry.mjs`：站点身份（标题 / `data-game="sweet"` / 粉色令牌）、目录 10-8-6、主线攻略 23 张事件卡 + 5 条本页小节、公司改建 9 张事件卡、国外通告表格 5 行 3 列、跨站胶囊，以及原站五个页签未受影响。
 
 ## 通告数据
 
@@ -128,7 +129,7 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章（9 项），共 68 项 |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章（11 项），共 70 项 |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 | `python scripts/extract_sweet_guide.py` | 重生成甜蜜乐章的 `public/data/sweet/guide.json` |
