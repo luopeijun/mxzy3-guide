@@ -26,7 +26,7 @@ const EMPTY_HINT = {
 const OVERVIEW_HERO = {
   kicker: '明星志愿3 · 甜蜜乐章',
   title: '明星志愿3 甜蜜乐章 · 攻略助手',
-  paragraphs: ['目录按原攻略整理，正文还在陆续导入；每一节都先占好位置，补上文字就会显示。'],
+  paragraphs: [],
   gradientClass: 'bg-[linear-gradient(118deg,#7d1f45,#b32f68_58%,#cf5a8e)]',
 };
 
