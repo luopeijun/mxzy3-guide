@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import type { GuideData } from '../../types/guide';
 import { useWheelForward } from '../../hooks/useWheelForward';
 import TrackerSetup from './TrackerSetup';
@@ -12,6 +13,9 @@ import TrackerPool from './TrackerPool';
 
 interface Props {
   data: GuideData;
+  /** Optional replacement for the right-rail archive panel. Both sites use the
+   *  shared panel, which adapts its envelope and copy via TrackerSiteConfig. */
+  archivePanel?: ReactNode;
 }
 
 /** Overlay that replaces the reader while the tracker is open. It starts below
@@ -20,7 +24,7 @@ interface Props {
  *  stays mounted, preserving its sidebar expansion and scroll position.
  *  Three columns: selector on the left, event pool in the middle, progress /
  *  archive rail on the right; they stack on narrow screens. */
-export default function TrackerApp({ data }: Props) {
+export default function TrackerApp({ data, archivePanel }: Props) {
   const poolRef = useRef<HTMLElement>(null);
   // Columns scroll independently; forward wheels from the side rails / header
   // into the event pool so the pointer does not have to stay in the middle.
@@ -55,7 +59,7 @@ export default function TrackerApp({ data }: Props) {
           <aside className="w-[320px] shrink-0 overflow-x-hidden overflow-y-auto py-6 pl-1 tab:w-full tab:overflow-visible tab:py-4">
             <div className="flex flex-col gap-4 pb-6">
               <TrackerOverview data={data} />
-              <SaveArchivePanel />
+              {archivePanel ?? <SaveArchivePanel />}
               <TrackerCategoryProgress data={data} />
               <TrackerRecycle data={data} />
             </div>

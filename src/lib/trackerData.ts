@@ -96,14 +96,33 @@ function stringList(raw: unknown): string[] {
 
 /** The two persisted arrays are mutually exclusive: the roster wins if an id
  *  somehow appears in both. Keeping this in one place means every reader sees
- *  exactly the same list. */
+ *  exactly the same list.
+ *
+ *  `maxArtists` / `protagonistId` come from the site config: 甜蜜乐章 caps the
+ *  roster at 3 and keeps its protagonist under contract no matter what an old
+ *  save claims — she is prepended so she always survives the cap cut. */
 export function normaliseArtists(
   selectedRaw: unknown,
   releasedRaw: unknown,
+  maxArtists: number = MAX_ARTISTS,
+  protagonistId?: string,
 ): { selectedArtists: string[]; releasedArtists: string[] } {
-  const selectedArtists = stringList(selectedRaw).slice(0, MAX_ARTISTS);
-  const roster = new Set(selectedArtists);
-  const releasedArtists = stringList(releasedRaw).filter((id) => !roster.has(id));
+  const picked = stringList(selectedRaw).slice(0, maxArtists);
+  const roster = new Set(picked);
+  let releasedArtists = stringList(releasedRaw).filter((id) => !roster.has(id));
+  let selectedArtists = picked;
+  if (protagonistId) {
+    releasedArtists = releasedArtists.filter((id) => id !== protagonistId);
+    const rest = picked.filter((id) => id !== protagonistId);
+    const kept = rest.slice(0, maxArtists - 1);
+    // The protagonist takes one slot; anyone pushed out by that becomes a
+    // released artist instead of vanishing (their lines and ticks stay).
+    const bumped = rest.slice(maxArtists - 1);
+    selectedArtists = [protagonistId, ...kept];
+    for (const id of bumped) {
+      if (!releasedArtists.includes(id)) releasedArtists.push(id);
+    }
+  }
   return { selectedArtists, releasedArtists };
 }
 
@@ -129,7 +148,10 @@ export function artistRoster(
 
 /** Turn arbitrary parsed JSON into a valid TrackerData. Unknown versions are
  *  rejected rather than guessed at; every other field degrades to empty. */
-export function sanitiseData(raw: unknown): TrackerData {
+export function sanitiseData(
+  raw: unknown,
+  opts?: { maxArtists?: number; protagonistId?: string },
+): TrackerData {
   if (!raw || typeof raw !== 'object') throw new Error('存档内容不是有效的进度数据。');
   const parsed = raw as Partial<TrackerData>;
   if (parsed.version !== undefined && parsed.version !== 1) {
@@ -140,7 +162,12 @@ export function sanitiseData(raw: unknown): TrackerData {
   }
   const order = stringList(parsed.order);
   const epoch = typeof parsed.orderEpoch === 'number' ? parsed.orderEpoch : 0;
-  const artists = normaliseArtists(parsed.selectedArtists, parsed.releasedArtists);
+  const artists = normaliseArtists(
+    parsed.selectedArtists,
+    parsed.releasedArtists,
+    opts?.maxArtists,
+    opts?.protagonistId,
+  );
   return {
     version: 1,
     ...artists,

@@ -62,7 +62,7 @@ function mergeMatched(
  *  restored in place. A filtered list is a partial view, so drag is disabled
  *  there for the same reason it is disabled while searching. */
 export default function TrackerPool({ data }: Props) {
-  const { poolSelection, includeReleased, getLine, lineOrder, pinnedIds, togglePin, reorderLines } =
+  const { config, poolSelection, includeReleased, getLine, lineOrder, pinnedIds, togglePin, reorderLines } =
     useTracker();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<LineFilter>('all');
@@ -78,7 +78,10 @@ export default function TrackerPool({ data }: Props) {
   const filtering = filter !== 'all';
   const contentFiltering = isContentFilterActive(content);
   const dragDisabled = searching || filtering || contentFiltering;
-  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
+  const pool = useMemo(
+    () => buildPool(data, poolSelection, config),
+    [data, poolSelection, config],
+  );
   // Content is a *view* over the pool: progress maths (overview, sticky bar)
   // always uses the full pool so filtering never rewrites the totals.
   const visiblePool = useMemo(

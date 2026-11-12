@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { cn } from '../../lib/cn';
+import { useTracker } from '../../hooks/useTracker';
 import {
   MEMO_MAX_LENGTH,
   countUndone,
@@ -16,7 +17,8 @@ import {
  *  it lives in its own storage key. Add with Enter, tick to finish, ✎ to edit,
  *  × to delete. */
 export default function TrackerMemo() {
-  const [items, setItems] = useState<MemoItem[]>(readMemos);
+  const { config } = useTracker();
+  const [items, setItems] = useState<MemoItem[]>(() => readMemos(config.memoKey));
   const [open, setOpen] = useState(true);
   const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -28,8 +30,8 @@ export default function TrackerMemo() {
   // Same contract as useTracker: write on every change, tolerate a dead
   // localStorage (private mode) without breaking the UI.
   useEffect(() => {
-    writeMemos(items);
-  }, [items]);
+    writeMemos(items, config.memoKey);
+  }, [items, config.memoKey]);
 
   useEffect(() => {
     if (editingId) editRef.current?.select();

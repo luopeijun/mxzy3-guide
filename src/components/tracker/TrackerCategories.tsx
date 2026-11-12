@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { GuideData } from '../../types/guide';
 import { buildPool } from '../../lib/tracker';
-import { computeGroups, GROUP_LABEL, type GroupKey } from '../../lib/trackerGroups';
+import { computeGroups, type GroupKey } from '../../lib/trackerGroups';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
 import ArtistAvatar from './ArtistAvatar';
@@ -11,13 +11,6 @@ interface Props {
 }
 
 type Filter = GroupKey | 'all';
-
-const SHORT_LABEL: Record<GroupKey, string> = {
-  broker: '经纪人',
-  other: '其他',
-  artist: '艺人',
-  luousang: '路欧桑',
-};
 
 const STATUS_LABEL: Record<string, string> = {
   active: '在池',
@@ -36,14 +29,25 @@ const STATUS_TONE: Record<string, string> = {
  *  Like the artist picker, the whole panel collapses to a single 50px row by
  *  default; the full editor is rendered only while expanded. */
 export default function TrackerCategories({ data }: Props) {
-  const { poolSelection, getLine, setManyStatus } = useTracker();
+  const { config, poolSelection, getLine, setManyStatus } = useTracker();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const [onlyOut, setOnlyOut] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(() => new Set());
 
-  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
-  const groups = useMemo(() => computeGroups(pool), [pool]);
+  const shortLabel = useMemo(
+    () => Object.fromEntries(config.groups.map((g) => [g.key, g.short])) as Record<GroupKey, string>,
+    [config],
+  );
+  const groupLabel = useMemo(
+    () => Object.fromEntries(config.groups.map((g) => [g.key, g.label])) as Record<GroupKey, string>,
+    [config],
+  );
+  const pool = useMemo(
+    () => buildPool(data, poolSelection, config),
+    [data, poolSelection, config],
+  );
+  const groups = useMemo(() => computeGroups(pool, config), [pool, config]);
   const inPoolTotal = pool.filter((line) => (getLine(line.id)?.status ?? 'active') !== 'excluded').length;
 
   const rows = useMemo(() => {
@@ -124,13 +128,17 @@ export default function TrackerCategories({ data }: Props) {
               whenever a group became empty (or the active chip lost its border),
               making the whole panel jump between 3+1 / 2+2 layouts. Equal-width
               cells and a 1px border on BOTH states keep every chip pinned. */}
-          <div data-batch-chips className="mt-3 grid grid-cols-3 gap-1.5">
+          <div
+            data-batch-chips
+            className="mt-3 grid grid-cols-3 gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${config.chipCols}, minmax(0, 1fr))` }}
+          >
             {(['all', ...groups.map((g) => g.key)] as Filter[]).map((key) => {
               const lines = key === 'all' ? pool : (groups.find((g) => g.key === key)?.lines ?? []);
               const inPool = key === 'all'
                 ? inPoolTotal
                 : lines.filter((l) => (getLine(l.id)?.status ?? 'active') !== 'excluded').length;
-              const label = key === 'all' ? '全部' : SHORT_LABEL[key];
+              const label = key === 'all' ? '全部' : shortLabel[key];
               const active = filter === key;
               return (
                 <button
@@ -143,8 +151,8 @@ export default function TrackerCategories({ data }: Props) {
                     key === 'all'
                       ? '全部任务线'
                       : lines.length === 0
-                        ? `${GROUP_LABEL[key]}（暂无任务线）`
-                        : GROUP_LABEL[key]
+                        ? `${groupLabel[key]}（暂无任务线）`
+                        : groupLabel[key]
                   }
                   className={cn(
                     'flex min-w-0 items-center justify-center gap-1 rounded-full border px-1 py-1 text-ui-2xs tabular-nums transition-colors',

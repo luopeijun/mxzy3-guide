@@ -1,5 +1,6 @@
 import type { ContentBlock, GuideData, GuideNode } from '../types/guide';
 import { plainText } from './markup';
+import { MAIN_TRACKER_CONFIG, type TrackerSiteConfig } from './trackerConfig';
 
 /** A single triggerable event inside a task line. `index` is the event's
  *  position in the owning node's `blocks` array — that is the stable step id
@@ -54,41 +55,30 @@ export const LUO_ARTIST_IDS = [
   'characters/sang-hebei',
 ] as const;
 
-function kindOf(nodeId: string): LineKind {
-  if (nodeId.startsWith('characters/')) return 'artist';
-  if (nodeId.startsWith('other-events/luousang/')) return 'luousang';
+function kindOf(nodeId: string, config: TrackerSiteConfig): LineKind {
+  if (nodeId.startsWith(config.artistPrefix)) return 'artist';
+  if (config.branchPrefix && nodeId.startsWith(config.branchPrefix)) return 'luousang';
   return 'non-artist';
 }
-
-interface CategoryMeta {
-  label: string;
-  full: string;
-  tone: OriginTone;
-}
-
-const CATEGORY_META: Record<string, CategoryMeta> = {
-  'game-guide': { label: '经纪人', full: '经纪人事件簿', tone: 'broker' },
-  characters: { label: '艺人', full: '艺人事件簿', tone: 'artist' },
-  notices: { label: '通告', full: '六大特殊通告', tone: 'notice' },
-  'other-events': { label: '其他', full: '其他事件', tone: 'other' },
-};
 
 /** Derive the chip from the owning node + its top-level category. Artist pages
  *  are leaves named after the artist, so their title (and portrait) is exactly
  *  the "哪个艺人" answer the chip needs. */
-function originOf(node: GuideNode, categoryId: string): LineOrigin {
-  if (node.id.startsWith('characters/')) {
+function originOf(node: GuideNode, categoryId: string, config: TrackerSiteConfig): LineOrigin {
+  if (node.id.startsWith(config.artistPrefix)) {
+    const full = config.categoryMeta[config.artistCategoryId]?.full ?? '艺人事件簿';
     return {
       label: node.title,
-      title: `艺人事件簿 · ${node.title}`,
+      title: `${full} · ${node.title}`,
       tone: 'artist',
       avatar: node.avatar,
     };
   }
-  if (node.id.startsWith('other-events/luousang/')) {
+  if (config.branchPrefix && node.id.startsWith(config.branchPrefix)) {
     return { label: '路欧桑', title: `路欧桑剧情 · ${node.title}`, tone: 'luousang' };
   }
-  const meta = CATEGORY_META[categoryId] ?? CATEGORY_META['other-events'];
+  // Unknown category: same fallback as the original hard-coded map (其他事件).
+  const meta = config.categoryMeta[categoryId] ?? { label: '其他', full: '其他事件', tone: 'other' as const };
   return { label: meta.label, title: `${meta.full} · ${node.title}`, tone: meta.tone };
 }
 
@@ -110,25 +100,13 @@ function boundaryIndices(node: GuideNode): number[] {
   return indices;
 }
 
-/** 只有攻略页该读、不该进池的章节。
- *
- *  路欧桑这三条感情线在角色页里按「情况1~5」各写了一遍，而「其他事件 · 路欧桑剧情整理」
- *  已经把同样五个情况拆成了独立分支节点（`other-events/luousang/*`，按签约组合进池）。
- *  角色页这一份再进池，等于同一批事件在列表里重复两遍、每条几十上百步，纯噪音。
- *  所以按「节点 id + 章节名」把这几条线挡在池外：攻略页照常可读，池子里只留自己的剧情。
- *
- *  删掉的是**线**，不是内容：`seq` 仍然递增，保留下来的线 id 不变，老存档不会失效。 */
-const POOL_SKIP: Record<string, { sections?: string[]; headings?: string[] }> = {
-  // 路风的「事件」整节就是路桑恋 / 路欧恋分支。
-  'characters/lu-feng': { sections: ['事件'] },
-  // 桑禾蓓同理；「与主角的感情」不在此列，照常进池。
-  'characters/sang-hebei': { sections: ['事件'] },
-  // 欧怡青只去掉「路欧恋」一章，纪翔 / 告别 / 黎华那几章照常。
-  'characters/ou-yiqing': { headings: ['路欧恋'] },
-};
-
-function skipFromPool(nodeId: string, section: string, name: string): boolean {
-  const rule = POOL_SKIP[nodeId];
+function skipFromPool(
+  nodeId: string,
+  section: string,
+  name: string,
+  config: TrackerSiteConfig,
+): boolean {
+  const rule = config.poolSkip[nodeId];
   if (!rule) return false;
   if (rule.sections?.includes(section)) return true;
   return Boolean(rule.headings?.some((heading) => name.startsWith(heading)));
@@ -144,6 +122,7 @@ function makeLine(
   name: string,
   events: { block: ContentBlock; index: number }[],
   origin: LineOrigin,
+  config: TrackerSiteConfig,
 ): TaskLine {
   const steps: TaskStep[] = events.map(({ block, index }) => ({
     index,
@@ -156,14 +135,14 @@ function makeLine(
     id: `${node.id}::${seq}::${name}`,
     nodeId: node.id,
     name,
-    kind: kindOf(node.id),
+    kind: kindOf(node.id, config),
     origin,
     steps,
   };
 }
 
 /** One node → zero or more task lines. A node with no events yields nothing. */
-function linesFromNode(node: GuideNode, origin: LineOrigin): TaskLine[] {
+function linesFromNode(node: GuideNode, origin: LineOrigin, config: TrackerSiteConfig): TaskLine[] {
   if (node.status === 'missing') return [];
   const events = eventEntries(node);
   if (events.length === 0) return [];
@@ -171,7 +150,7 @@ function linesFromNode(node: GuideNode, origin: LineOrigin): TaskLine[] {
   const boundaries = boundaryIndices(node);
   // No usable heading → the whole page is one task line.
   if (boundaries.length === 0) {
-    return [makeLine(node, 0, node.title, events, origin)];
+    return [makeLine(node, 0, node.title, events, origin, config)];
   }
 
   const lines: TaskLine[] = [];
@@ -181,7 +160,7 @@ function linesFromNode(node: GuideNode, origin: LineOrigin): TaskLine[] {
   // consumed as the page title, so without this they would be silently dropped.
   const preEvents = events.filter((e) => e.index < boundaries[0]);
   if (preEvents.length > 0) {
-    lines.push(makeLine(node, seq, node.title, preEvents, origin));
+    lines.push(makeLine(node, seq, node.title, preEvents, origin, config));
     seq += 1;
   }
   /** 当前所属的大章节（★ 那一层），用来判断这一条线该不该进池。 */
@@ -195,19 +174,22 @@ function linesFromNode(node: GuideNode, origin: LineOrigin): TaskLine[] {
     if (rangeEvents.length === 0) continue; // container heading with no events
     const name = headingText(boundary);
     // `seq` 照常递增：被挡掉的线也占着自己的序号，别的线 id 才不会整体前移。
-    const line = makeLine(node, seq, name, rangeEvents, origin);
+    const line = makeLine(node, seq, name, rangeEvents, origin, config);
     seq += 1;
-    if (!skipFromPool(node.id, section, name)) lines.push(line);
+    if (!skipFromPool(node.id, section, name, config)) lines.push(line);
   }
   return lines;
 }
 
 /** Every task line across the whole guide, before artist / 路欧桑 filtering. */
-export function extractLines(data: GuideData): TaskLine[] {
+export function extractLines(
+  data: GuideData,
+  config: TrackerSiteConfig = MAIN_TRACKER_CONFIG,
+): TaskLine[] {
   const result: TaskLine[] = [];
   for (const category of data.categories) {
     const walk = (node: GuideNode) => {
-      result.push(...linesFromNode(node, originOf(node, category.id)));
+      result.push(...linesFromNode(node, originOf(node, category.id, config), config));
       node.children.forEach(walk);
     };
     walk(category);
@@ -264,8 +246,12 @@ export interface PoolSelection {
  *  the 路欧桑 branches implied by the *roster* (plus retained old branches).
  *  Lines no longer implied by the current roster are marked stale rather than
  *  dropped, so progress never disappears when the roster changes. */
-export function buildPool(data: GuideData, selection: PoolSelection): TaskLine[] {
-  const all = extractLines(data);
+export function buildPool(
+  data: GuideData,
+  selection: PoolSelection,
+  config: TrackerSiteConfig = MAIN_TRACKER_CONFIG,
+): TaskLine[] {
+  const all = extractLines(data, config);
   const tracked = new Set(selection.trackedArtists);
   const released = new Set(selection.releasedArtists);
   const roster = new Set(selection.rosterArtists);
@@ -334,9 +320,12 @@ export function isLineComplete(
   return counted.length > 0 && counted.every((step) => set.has(step.index));
 }
 
-/** Leaf artist nodes under the 艺人事件簿 category, for the setup picker. */
-export function listArtists(data: GuideData): { id: string; title: string; avatar?: string }[] {
-  const category = data.categories.find((c) => c.id === 'characters');
+/** Leaf artist nodes under the artist category, for the setup picker. */
+export function listArtists(
+  data: GuideData,
+  config: TrackerSiteConfig = MAIN_TRACKER_CONFIG,
+): { id: string; title: string; avatar?: string }[] {
+  const category = data.categories.find((c) => c.id === config.artistCategoryId);
   if (!category) return [];
   const leaves: GuideNode[] = [];
   const walk = (node: GuideNode) => {

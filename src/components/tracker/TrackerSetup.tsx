@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { GuideData } from '../../types/guide';
 import { listArtists } from '../../lib/tracker';
-import { MAX_ARTISTS, useTracker } from '../../hooks/useTracker';
+import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
 
 interface Props {
@@ -21,28 +21,41 @@ interface Props {
  *  Released artists stay in the expanded grid and are counted via the +N hint. */
 export default function TrackerSetup({ data }: Props) {
   const {
+    config,
     artists: tracked,
     selectedArtists,
     releasedArtists,
     toggleArtist,
     setArtistStatus,
   } = useTracker();
-  const artists = listArtists(data);
+  const maxArtists = config.maxArtists;
+  const protagonist = config.protagonist;
+  // 甜蜜乐章的主角没有攻略页（也就没有节点可以列进目录），但她恒占一个
+  // 签约位，所以作为固定项插到选择器最前面，头像/计数都能照常显示。
+  const artists = useMemo(() => {
+    const fromGuide = listArtists(data, config);
+    if (!protagonist) return fromGuide;
+    return [
+      { id: protagonist.id, title: protagonist.title, avatar: protagonist.avatar },
+      ...fromGuide,
+    ];
+  }, [data, config, protagonist]);
   const rosterCount = selectedArtists.length;
   const releasedCount = releasedArtists.length;
-  const rosterFull = rosterCount >= MAX_ARTISTS;
+  const rosterFull = rosterCount >= maxArtists;
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const stateOf = new Map(tracked.map((entry) => [entry.id, entry.status]));
 
   const addOrDrop = (id: string, title: string) => {
+    if (id === protagonist?.id) return;
     const wasTracked = stateOf.has(id);
     // A newcomer joining a full roster is recorded as released: the game lets
-    // you sign a 5th person only after releasing someone, and we still want to
-    // follow their events. No modal, just a one-line explanation.
+    // you sign one more person only after releasing someone, and we still want
+    // to follow their events. No modal, just a one-line explanation.
     if (!wasTracked && rosterFull) {
       setNotice(
-        `旗下已满 ${MAX_ARTISTS} 人，${title} 已加入追踪（记为已解约），进度线照常显示`,
+        `旗下已满 ${maxArtists} 人，${title} 已加入追踪（记为已解约），进度线照常显示`,
       );
     } else {
       setNotice('');
@@ -77,8 +90,8 @@ export default function TrackerSetup({ data }: Props) {
           {/* 折叠行空间有限：只放短计数，不 truncate。长提示放到展开区完整表述。 */}
           <span data-setup-hint className="shrink-0 whitespace-nowrap text-ui-2xs text-ink-faint">
             {tracked.length === 0
-              ? `点击选择 · 最多 ${MAX_ARTISTS} 位`
-              : `${rosterCount}/${MAX_ARTISTS} 位${releasedCount > 0 ? ` +${releasedCount}` : ''}`}
+              ? `点击选择 · 最多 ${maxArtists} 位`
+              : `${rosterCount}/${maxArtists} 位${releasedCount > 0 ? ` +${releasedCount}` : ''}`}
           </span>
         </button>
 
@@ -87,14 +100,16 @@ export default function TrackerSetup({ data }: Props) {
             {selectedArtists.map((id) => {
               const artist = artists.find((a) => a.id === id);
               const title = artist?.title ?? id;
+              const locked = id === protagonist?.id;
               return (
                 <button
                   key={id}
                   type="button"
+                  disabled={locked}
                   onClick={() => toggleArtist(id)}
-                  title={`移出追踪 ${title}`}
-                  aria-label={`取消追踪 ${title}`}
-                  className="rounded-full ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
+                  title={locked ? protagonist?.hint ?? title : `移出追踪 ${title}`}
+                  aria-label={locked ? `固定成员 ${title}` : `取消追踪 ${title}`}
+                  className="rounded-full ring-2 ring-surface transition-transform hover:z-10 hover:scale-110 disabled:cursor-default disabled:hover:scale-100"
                 >
                   {artist?.avatar ? (
                     <img
@@ -116,9 +131,15 @@ export default function TrackerSetup({ data }: Props) {
 
       {open && (
         <div className="border-t border-line px-4 pb-4 pt-3">
-          <p className="text-ui-2xs leading-[1.7] text-ink-muted">
-            旗下最多 {MAX_ARTISTS} 位；解约的艺人仍会留在追踪名单里，任务线与已勾选的进度都保留。路欧桑剧情只按当前旗下组合挑选分支。点按钮＝加入 / 移出追踪，点右上角角标＝解约 / 复签。
-          </p>
+          <p className="text-ui-2xs leading-[1.7] text-ink-muted">{config.setupIntro}</p>
+          {protagonist && (
+            <p
+              data-protagonist-hint
+              className="mt-2 rounded-ui-sm border border-brand-line bg-brand-soft/60 px-2.5 py-1.5 text-ui-2xs leading-[1.7] text-brand-strong"
+            >
+              {protagonist.hint}
+            </p>
+          )}
           {notice && (
             <p
               data-setup-notice
@@ -134,6 +155,7 @@ export default function TrackerSetup({ data }: Props) {
               const active = state === 'active';
               const released = state === 'released';
               const trackedHere = Boolean(state);
+              const locked = artist.id === protagonist?.id;
               // Re-signing is only possible with a free roster slot.
               const resignDisabled = released && rosterFull;
               return (
@@ -143,23 +165,29 @@ export default function TrackerSetup({ data }: Props) {
                     data-artist-button
                     data-artist-id={artist.id}
                     data-artist-state={state ?? 'none'}
+                    data-protagonist={locked ? 'yes' : undefined}
+                    disabled={locked}
                     onClick={() => addOrDrop(artist.id, artist.title)}
                     title={
-                      active
-                        ? `移出追踪 ${artist.title}`
-                        : released
-                          ? `${artist.title} 已解约 · 点击移出追踪`
-                          : rosterFull
-                            ? `旗下已满，${artist.title} 会记为已解约并继续追踪`
-                            : `追踪 ${artist.title}`
+                      locked
+                        ? protagonist?.hint
+                        : active
+                          ? `移出追踪 ${artist.title}`
+                          : released
+                            ? `${artist.title} 已解约 · 点击移出追踪`
+                            : rosterFull
+                              ? `旗下已满，${artist.title} 会记为已解约并继续追踪`
+                              : `追踪 ${artist.title}`
                     }
                     className={cn(
                       'flex w-full items-center gap-2 rounded-ui-sm border px-2.5 py-1.5 text-left text-ui-xs transition-colors',
-                      active
+                      locked
                         ? 'border-brand bg-brand-soft text-brand-strong'
-                        : released
-                          ? 'border-line-strong bg-surface-soft text-ink-faint'
-                          : 'border-line bg-surface-soft text-ink-muted hover:border-brand-line',
+                        : active
+                          ? 'border-brand bg-brand-soft text-brand-strong'
+                          : released
+                            ? 'border-line-strong bg-surface-soft text-ink-faint'
+                            : 'border-line bg-surface-soft text-ink-muted hover:border-brand-line',
                     )}
                   >
                     {artist.avatar && (
@@ -175,7 +203,7 @@ export default function TrackerSetup({ data }: Props) {
                     )}
                     <span className="min-w-0 truncate font-medium">{artist.title}</span>
                     <span className="ml-auto shrink-0">
-                      {active ? '✓' : released ? '已解约' : ''}
+                      {locked ? '固定' : active ? '✓' : released ? '已解约' : ''}
                     </span>
                   </button>
 
@@ -183,7 +211,7 @@ export default function TrackerSetup({ data }: Props) {
                       hover), expanding into a label on hover. The hover zone is
                       the whole button block via `group`, so moving the pointer
                       from the button to the badge never makes it flicker. */}
-                  {trackedHere && (
+                  {trackedHere && !locked && (
                     <button
                       type="button"
                       data-artist-status-toggle
@@ -198,9 +226,9 @@ export default function TrackerSetup({ data }: Props) {
                       aria-label={`${active ? '解约' : '复签'} ${artist.title}`}
                       title={
                         active
-                          ? `解约 ${artist.title}：进度线保留，路欧桑组合随即更新`
+                          ? `解约 ${artist.title}：进度线保留${config.branchPrefix ? '，路欧桑组合随即更新' : ''}`
                           : resignDisabled
-                            ? `旗下已满 ${MAX_ARTISTS} 人，先解约一位才能复签`
+                            ? `旗下已满 ${maxArtists} 人，先解约一位才能复签`
                             : `复签 ${artist.title}`
                       }
                       className={cn(

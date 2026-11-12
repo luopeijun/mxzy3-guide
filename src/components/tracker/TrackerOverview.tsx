@@ -12,6 +12,7 @@ interface Props {
  *  are in the pool, how many steps are done, and what was abandoned/excluded. */
 export default function TrackerOverview({ data }: Props) {
   const {
+    config,
     poolSelection,
     includeReleased,
     setIncludeReleased,
@@ -19,7 +20,10 @@ export default function TrackerOverview({ data }: Props) {
     resetAll,
   } = useTracker();
   const [confirmReset, setConfirmReset] = useState(false);
-  const pool = useMemo(() => buildPool(data, poolSelection), [data, poolSelection]);
+  const pool = useMemo(
+    () => buildPool(data, poolSelection, config),
+    [data, poolSelection, config],
+  );
   const stats = useMemo(
     () => summarisePool(pool, getLine, includeReleased),
     [pool, getLine, includeReleased],
@@ -106,7 +110,7 @@ export default function TrackerOverview({ data }: Props) {
         {staleCount > 0 && (
           <label
             className="mt-2.5 flex cursor-pointer items-center gap-2 text-ui-2xs text-ink-muted"
-            title="已解约艺人与旧路欧桑分支的线仍在事件池里，只是默认不计入完成度"
+            title={config.includeReleasedTip}
           >
             <input
               type="checkbox"

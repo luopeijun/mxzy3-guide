@@ -47,9 +47,9 @@ export function sanitiseMemos(raw: unknown): MemoItem[] {
   return out;
 }
 
-export function readMemos(): MemoItem[] {
+export function readMemos(key: string = MEMO_KEY): MemoItem[] {
   try {
-    const raw = localStorage.getItem(MEMO_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     return sanitiseMemos(JSON.parse(raw));
   } catch {
@@ -57,9 +57,9 @@ export function readMemos(): MemoItem[] {
   }
 }
 
-export function writeMemos(list: MemoItem[]): void {
+export function writeMemos(list: MemoItem[], key: string = MEMO_KEY): void {
   try {
-    localStorage.setItem(MEMO_KEY, JSON.stringify(list));
+    localStorage.setItem(key, JSON.stringify(list));
   } catch {
     // Private mode / quota: the list simply will not survive a reload.
   }

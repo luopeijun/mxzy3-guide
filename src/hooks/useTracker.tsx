@@ -14,16 +14,11 @@ import {
 } from '../lib/trackerData';
 import { ORDER_EPOCH, hoistLuosangLines } from '../lib/trackerOrder';
 import type { PoolSelection } from '../lib/tracker';
+import { MAIN_TRACKER_CONFIG, type TrackerSiteConfig } from '../lib/trackerConfig';
 import { applyProgress } from '../lib/trackerTransfer';
 
 export { MAX_ARTISTS };
 export type { LineState, LineStatus, TrackerData } from '../lib/trackerData';
-
-const STORAGE_KEY = 'guide.progress.v1';
-
-/** One-shot snapshot taken right before a destructive action (reset / overwrite
- *  import), so an accidental wipe can be undone instead of re-typed. */
-const BACKUP_KEY = 'guide.progress.backup.v1';
 
 export interface ProgressBackup {
   at: string;
@@ -31,16 +26,19 @@ export interface ProgressBackup {
   data: TrackerData;
 }
 
-function readBackup(): ProgressBackup | null {
+function readBackup(config: TrackerSiteConfig): ProgressBackup | null {
   try {
-    const raw = localStorage.getItem(BACKUP_KEY);
+    const raw = localStorage.getItem(config.backupKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<ProgressBackup>;
     if (!parsed || (parsed.reason !== 'reset' && parsed.reason !== 'replace')) return null;
     return {
       at: typeof parsed.at === 'string' ? parsed.at : '',
       reason: parsed.reason,
-      data: sanitiseData(parsed.data),
+      data: sanitiseData(parsed.data, {
+        maxArtists: config.maxArtists,
+        protagonistId: config.protagonist?.id,
+      }),
     };
   } catch {
     return null;
@@ -58,15 +56,20 @@ function hasContent(data: TrackerData): boolean {
   );
 }
 
-function readStorage(): TrackerData {
+function readStorage(config: TrackerSiteConfig): TrackerData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(config.storageKey);
     if (!raw) return emptyData();
     const parsed = JSON.parse(raw) as Partial<TrackerData>;
     if (!parsed || parsed.version !== 1) return emptyData();
     const order = Array.isArray(parsed.order) ? parsed.order : [];
     const epoch = typeof parsed.orderEpoch === 'number' ? parsed.orderEpoch : 0;
-    const artists = normaliseArtists(parsed.selectedArtists, parsed.releasedArtists);
+    const artists = normaliseArtists(
+      parsed.selectedArtists,
+      parsed.releasedArtists,
+      config.maxArtists,
+      config.protagonist?.id,
+    );
     return {
       version: 1,
       ...artists,
@@ -83,6 +86,8 @@ function readStorage(): TrackerData {
 }
 
 interface TrackerContextValue {
+  /** Site wiring (storage keys, roster cap, protagonist, copy text). */
+  config: TrackerSiteConfig;
   /** Roster: artists currently under contract (≤4). */
   selectedArtists: string[];
   /** Released but still tracked. */
@@ -128,6 +133,7 @@ interface TrackerContextValue {
 }
 
 const TrackerContext = createContext<TrackerContextValue>({
+  config: MAIN_TRACKER_CONFIG,
   selectedArtists: [],
   releasedArtists: [],
   trackedArtists: [],
@@ -182,108 +188,146 @@ function persistLine(
   return next;
 }
 
-export function TrackerProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<TrackerData>(readStorage);
-  const [backup, setBackup] = useState<ProgressBackup | null>(readBackup);
+export function TrackerProvider({
+  children,
+  config = MAIN_TRACKER_CONFIG,
+}: {
+  children: ReactNode;
+  config?: TrackerSiteConfig;
+}) {
+  const protagonistId = config.protagonist?.id;
+  const withConfigArtists = useCallback(
+    (incoming: TrackerData): TrackerData => ({
+      ...incoming,
+      ...normaliseArtists(
+        incoming.selectedArtists,
+        incoming.releasedArtists,
+        config.maxArtists,
+        protagonistId,
+      ),
+    }),
+    [config.maxArtists, protagonistId],
+  );
+  const [data, setData] = useState<TrackerData>(() => withConfigArtists(readStorage(config)));
+  const [backup, setBackup] = useState<ProgressBackup | null>(() => readBackup(config));
   // Purely local view option, like the CG size toggle: reset on reload.
   const [includeReleased, setIncludeReleased] = useState(false);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(config.storageKey, JSON.stringify(data));
     } catch {
       // Private mode / quota: progress simply will not persist.
     }
-  }, [data]);
+  }, [data, config.storageKey]);
 
   // The backup outlives a reload: a user who wiped progress by mistake may well
   // refresh the page before noticing.
   useEffect(() => {
     try {
-      if (backup) localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
-      else localStorage.removeItem(BACKUP_KEY);
+      if (backup) localStorage.setItem(config.backupKey, JSON.stringify(backup));
+      else localStorage.removeItem(config.backupKey);
     } catch {
       // Ignore: no backup is a degraded but working state.
     }
-  }, [backup]);
+  }, [backup, config.backupKey]);
 
   /** Replace the roster wholesale. Kept for the transfer layer / tests; the
    *  picker uses toggleArtist and setArtistStatus instead. */
-  const setArtists = useCallback((ids: string[]) => {
-    setData((previous) => ({
-      ...previous,
-      ...normaliseArtists(ids, previous.releasedArtists),
-    }));
-  }, []);
+  const setArtists = useCallback(
+    (ids: string[]) => {
+      setData((previous) => ({
+        ...previous,
+        ...normaliseArtists(ids, previous.releasedArtists, config.maxArtists, protagonistId),
+      }));
+    },
+    [config.maxArtists, protagonistId],
+  );
 
   /** Clicking the artist button: add to the tracked list, or drop it entirely.
    *  A full roster no longer blocks the pick — the newcomer is simply recorded
-   *  as released, which is exactly the "signed after a release" case. */
-  const toggleArtist = useCallback((id: string) => {
-    setData((previous) => {
-      const { selectedArtists, releasedArtists } = normaliseArtists(
-        previous.selectedArtists,
-        previous.releasedArtists,
-      );
-      const tracked = selectedArtists.includes(id) || releasedArtists.includes(id);
-      if (tracked) {
-        return {
-          ...previous,
-          selectedArtists: selectedArtists.filter((a) => a !== id),
-          releasedArtists: releasedArtists.filter((a) => a !== id),
-        };
-      }
-      if (selectedArtists.length < MAX_ARTISTS) {
-        return { ...previous, selectedArtists: [...selectedArtists, id], releasedArtists };
-      }
-      return { ...previous, selectedArtists, releasedArtists: [...releasedArtists, id] };
-    });
-  }, []);
+   *  as released, which is exactly the "signed after a release" case. The
+   *  protagonist (site config) is locked: she is always under contract. */
+  const toggleArtist = useCallback(
+    (id: string) => {
+      if (id === protagonistId) return;
+      setData((previous) => {
+        const { selectedArtists, releasedArtists } = normaliseArtists(
+          previous.selectedArtists,
+          previous.releasedArtists,
+          config.maxArtists,
+          protagonistId,
+        );
+        const tracked = selectedArtists.includes(id) || releasedArtists.includes(id);
+        if (tracked) {
+          return {
+            ...previous,
+            selectedArtists: selectedArtists.filter((a) => a !== id),
+            releasedArtists: releasedArtists.filter((a) => a !== id),
+          };
+        }
+        if (selectedArtists.length < config.maxArtists) {
+          return { ...previous, selectedArtists: [...selectedArtists, id], releasedArtists };
+        }
+        return { ...previous, selectedArtists, releasedArtists: [...releasedArtists, id] };
+      });
+    },
+    [config.maxArtists, protagonistId],
+  );
 
   /** Corner badge: 旗下 ⇄ 已解约. Re-signing needs a free roster slot;
-   *  releasing always works. Neither action ever touches line progress. */
-  const setArtistStatus = useCallback((id: string, status: ArtistStatus) => {
-    setData((previous) => {
-      const { selectedArtists, releasedArtists } = normaliseArtists(
-        previous.selectedArtists,
-        previous.releasedArtists,
-      );
-      const inRoster = selectedArtists.includes(id);
-      const inReleased = releasedArtists.includes(id);
-      if (!inRoster && !inReleased) return previous;
-      if (status === 'released') {
-        if (inReleased) return previous;
+   *  releasing always works. Neither action ever touches line progress. The
+   *  protagonist can do neither. */
+  const setArtistStatus = useCallback(
+    (id: string, status: ArtistStatus) => {
+      if (id === protagonistId) return;
+      setData((previous) => {
+        const { selectedArtists, releasedArtists } = normaliseArtists(
+          previous.selectedArtists,
+          previous.releasedArtists,
+          config.maxArtists,
+          protagonistId,
+        );
+        const inRoster = selectedArtists.includes(id);
+        const inReleased = releasedArtists.includes(id);
+        if (!inRoster && !inReleased) return previous;
+        if (status === 'released') {
+          if (inReleased) return previous;
+          return {
+            ...previous,
+            selectedArtists: selectedArtists.filter((a) => a !== id),
+            releasedArtists: [...releasedArtists, id],
+          };
+        }
+        if (inRoster) return previous;
+        if (selectedArtists.length >= config.maxArtists) return previous;
         return {
           ...previous,
-          selectedArtists: selectedArtists.filter((a) => a !== id),
-          releasedArtists: [...releasedArtists, id],
+          selectedArtists: [...selectedArtists, id],
+          releasedArtists: releasedArtists.filter((a) => a !== id),
         };
-      }
-      if (inRoster) return previous;
-      if (selectedArtists.length >= MAX_ARTISTS) return previous;
-      return {
-        ...previous,
-        selectedArtists: [...selectedArtists, id],
-        releasedArtists: releasedArtists.filter((a) => a !== id),
-      };
-    });
-  }, []);
+      });
+    },
+    [config.maxArtists, protagonistId],
+  );
 
   const artists = useMemo(() => artistRoster(data), [data]);
   const trackedArtists = useMemo(() => artists.map((entry) => entry.id), [artists]);
-  const rosterFull = data.selectedArtists.length >= MAX_ARTISTS;
+  const rosterFull = data.selectedArtists.length >= config.maxArtists;
 
-  /** 路欧桑 branches that already have recorded progress stay in the pool after
-   *  a roster change (decision: never silently lose progress). Line ids are
-   *  `nodeId::seq::name`, so the node prefix is all we need. */
+  /** Sign-off-dependent branch nodes that already have recorded progress stay
+   *  in the pool after a roster change (decision: never silently lose
+   *  progress). Line ids are `nodeId::seq::name`, so the node prefix is all we
+   *  need. Sites without branches (甜蜜乐章) never retain anything. */
   const retainedBranches = useMemo(() => {
     const set = new Set<string>();
+    if (!config.branchPrefix) return [];
     for (const lineId of Object.keys(data.lines)) {
       const nodeId = lineId.split('::')[0];
-      if (nodeId.startsWith('other-events/luousang/')) set.add(nodeId);
+      if (nodeId.startsWith(config.branchPrefix)) set.add(nodeId);
     }
     return [...set];
-  }, [data.lines]);
+  }, [data.lines, config.branchPrefix]);
 
   const poolSelection = useMemo<PoolSelection>(
     () => ({
@@ -404,12 +448,12 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
 
   const resetAll = useCallback(() => {
     if (!hasContent(data)) {
-      setData(emptyData());
+      setData(withConfigArtists(emptyData()));
       return;
     }
     setBackup({ at: new Date().toISOString(), reason: 'reset', data });
-    setData(emptyData());
-  }, [data]);
+    setData(withConfigArtists(emptyData()));
+  }, [data, withConfigArtists]);
 
   const snapshot = useCallback(() => data, [data]);
 
@@ -421,16 +465,28 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       // iterate over.
       const safe: TrackerData = {
         ...next,
-        ...normaliseArtists(next.selectedArtists, next.releasedArtists),
+        ...normaliseArtists(
+          next.selectedArtists,
+          next.releasedArtists,
+          config.maxArtists,
+          protagonistId,
+        ),
       };
       // Merging is additive and safe; replacing throws the local save away, so
       // keep a one-shot snapshot to roll back to.
       if (mode === 'replace' && hasContent(data)) {
         setBackup({ at: new Date().toISOString(), reason: 'replace', data });
       }
-      setData((previous) => applyProgress(mode, previous, safe));
+      setData((previous) =>
+        withConfigArtists(
+          applyProgress(mode, previous, safe, {
+            maxArtists: config.maxArtists,
+            protagonistId,
+          }),
+        ),
+      );
     },
-    [data],
+    [data, config.maxArtists, protagonistId, withConfigArtists],
   );
 
   const undoBackup = useCallback(() => {
@@ -443,6 +499,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<TrackerContextValue>(
     () => ({
+      config,
       selectedArtists: data.selectedArtists,
       releasedArtists: data.releasedArtists,
       trackedArtists,
@@ -475,6 +532,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       resetAll,
     }),
     [
+      config,
       data.selectedArtists,
       data.releasedArtists,
       data.order,
