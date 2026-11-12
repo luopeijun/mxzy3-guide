@@ -347,6 +347,16 @@ async function main() {
   check(noteInfo.hrefs.every((h) => h === '#/tracker') && noteInfo.hrefs.length === 5,
     '每条备注都跳事件追踪器', noteInfo.hrefs.join(','));
 
+  // ---------- 7b. 提前准备：道具行常驻一行获取来源 ----------
+  const tearNote = await evaluate(`document.querySelector('[data-condition-row][data-row-id="angel.item.tear"] [data-item-source]')?.textContent.trim() ?? ''`);
+  check(tearNote.includes('综艺节目大富翁'), '人鱼的眼泪下方常驻获取来源', tearNote);
+  const sourceCount = await evaluate(`document.querySelectorAll('[data-notice-card][data-notice-id="${ANGEL}"] [data-item-source]').length`);
+  check(sourceCount === 9, '天使卡 9 条道具 / 前置行各带一条备注', `${sourceCount} 条`);
+  check(await evaluate(`!document.querySelector('[data-condition-row][data-row-id="angel.cert.music"] [data-item-source]')`),
+    '证书行不铺备注（缺口在 ▸ 展开里）');
+  check(await evaluate(`document.querySelectorAll('[data-item-source] button,[data-item-source] input').length === 0`),
+    '来源备注零状态、不带可点控件');
+
   // ---------- 8. Candidate pool: one qualifying artist is enough ----------
   await setup({
     enabled: [DOOM],

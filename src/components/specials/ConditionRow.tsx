@@ -246,6 +246,22 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
   // 「男主：戏剧 + 音乐证书」 already names the role — do not repeat it as a tag.
   const showOwner = !split && !!ownerLabel && ownerLabel !== '按艺人' && !row.name.includes(ownerLabel);
 
+  // 「提前准备」里的道具 / 前置计数行常驻一行灰色备注：hint 就是这张表里
+  // 写好的获取来源（哪个综艺的奖品、在哪买、跟谁拿），不用再 hover 才看见。
+  // 证书行不重复铺——它的课程与属性缺口已经在 ▸ 展开里。
+  const sourceNote = row.phase === 'prepare' && (row.type === 'item' || row.type === 'count')
+    && row.hint && row.hint !== '-' ? row.hint : null;
+  const noteLine = sourceNote ? (
+    <p
+      data-item-source
+      title={sourceNote}
+      className="mt-0.5 pl-1 text-ui-2xs leading-[1.45] text-ink-faint"
+    >
+      <span aria-hidden="true" className="mr-1">↳</span>
+      {sourceNote}
+    </p>
+  ) : null;
+
   const shell = cn(
     'rounded-ui-sm border-l-2 px-2.5 py-1',
     met ? 'border-growth bg-growth-soft/50' : 'border-line-strong bg-surface',
@@ -320,6 +336,7 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
             </button>
           )}
         </div>
+        {noteLine}
         {peek === 'row' && numberPeek && (
           <div className="mt-1 space-y-1 pl-6" data-peek-list>
             {parts.map((part) => (
@@ -363,6 +380,7 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
             </span>
           )}
         </div>
+        {noteLine}
         <div data-owner-parts className="mt-1 space-y-1 border-t border-line/60 pt-1">
           {lines.map((line) => {
             const hasGap = line.parts.some((part) => part.gaps?.length || part.courseList?.length);
@@ -453,6 +471,7 @@ export default function ConditionRow({ item, onCheck, onBump, onValue, onDone, o
           </button>
         )}
       </div>
+      {noteLine}
       {peek === 'row' && gapPeek && <GapDetail parts={parts} onCourse={onCourse} />}
     </div>
   );
