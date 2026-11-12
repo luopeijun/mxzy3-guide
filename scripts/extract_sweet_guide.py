@@ -79,6 +79,20 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
                                 续行是卡内的细则
     4-1.约会2次以上…          ← 告白条件：编号单独进 tag，正文跟在后面
     玫瑰之星、爱神巧克力、…    ← 喜爱物品：一个角色一个大标题（section）
+
+**角色页**（8 位角色的感情攻略）
+
+    城仲瑄                    ← 首行，与页面标题同名 → 不当副标题
+    签约金：0万                ← 开头三行是列表（分红 / 限制），不加自拟的「基础信息」标题
+    可创作作品：               ← 分章（section）
+    唱片·如雪：自由活动20天后   ← 每条作品一个圆点；源文本带 `*` 的是特殊作品（金色菱形）
+    事件：                     ← 分章（section）
+    1.加入                    ← 章节（heading depth 1）
+    1-1.樱花绽放的季节（友好度上升、CG）  ← 事件卡：编号进 pill，括号里 CG 走徽标、
+    　　　　　　　　　　　　　　　　　 其余效果（友好度上升）单独成 tag
+    时间：第1年3月             ← 事件的细节行，「提示：」渲染成金色备注
+    普通模式下结婚图取得条件：   ← 分章（section），下面的编号条目原样排（不重复加圆点）
+    6-2.取消友好度检查、…      ← 告白条件：事件编号进 pill，条件跟在后面
 """
 
 from __future__ import annotations
@@ -628,6 +642,92 @@ def parse_favorite_gifts(path: Path) -> tuple[list[dict], str]:
     return blocks, lines[0]
 
 
+# 角色页的三个收尾小节：里面的编号条目是条件清单，不是事件，不能当事件卡/章节。
+CHARACTER_TAILS = (
+    "普通模式下结婚图取得条件",
+    "甜蜜模式下结婚图取得条件",
+    "甜蜜模式下告白相关事件触发条件",
+)
+# 「1-1.樱花绽放的季节（友好度上升、CG）」——尾部括号是事件的效果标记。
+CHARACTER_MARK_RE = re.compile(r"（([^（）]*)）$")
+
+
+def parse_character(path: Path) -> tuple[list[dict], str]:
+    """角色页 → 开头一段基础信息 + 可创作作品 + 事件 + 三个结局条件小节。
+
+    8 位角色的源文本是同一套排法，所以一个解析器吃全部。四个区靠小节名切换：
+    `可创作作品：` / `事件：` / 三个「…条件：」，在区外的编号行不能按编号猜
+    ——「1.公司自制作品10个以上」是条件条目，`6-2.取消友好度检查…` 也不是事件。
+    """
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+    zone = "info"
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines[1:]:
+        label = text.rstrip("：:")
+        if label in ("可创作作品", "事件") or label in CHARACTER_TAILS:
+            zone = {"可创作作品": "works", "事件": "events"}.get(label, "tail")
+            group += 1
+            push("section", label)
+            continue
+
+        if zone == "info":
+            # 「签约金：0万」这类短项，一行一条列表。
+            push("paragraph", text, bullet=True)
+            continue
+
+        if zone == "works":
+            # 源文本用 `*` 标出特殊作品（丹尼斯的「从接吻开始」要靠 CG 才解锁）。
+            special = text.startswith("*")
+            push("paragraph", text.lstrip("*").strip(), bullet=True, **({"special": True} if special else {}))
+            continue
+
+        if zone == "tail":
+            condition = SWEET_MODE_EVENT_RE.match(text)
+            if condition:
+                push("paragraph", condition.group(2).strip(), label=condition.group(1))
+            else:
+                push("paragraph", text)
+            continue
+
+        event = EVENT_RE.match(text)
+        if event:
+            group += 1
+            title = _clean_title(event.group(3))
+            mark = CHARACTER_MARK_RE.search(title)
+            extra: dict = {}
+            if mark:
+                # 括号里是这条事件的效果标记。CG 单独走徽标（和原站一套处理：
+                # 卡片描边转玫红、编号反白底），剩下的（友好度上升）留作 tag。
+                parts = [part.strip() for part in mark.group(1).split("、") if part.strip()]
+                if any(part.upper() == "CG" for part in parts):
+                    extra["cg"] = True
+                rest = [part for part in parts if part.upper() != "CG"]
+                if rest:
+                    extra["tag"] = "、".join(rest)
+                title = title[: mark.start()].rstrip()
+            push("event", title, label=f"{event.group(1)}-{event.group(2)}", **extra)
+            continue
+
+        chapter = CHAPTER_RE.match(text)
+        if chapter:
+            group += 1
+            push("heading", _clean_title(chapter.group(2)), depth=1)
+            continue
+
+        if text.startswith("提示："):
+            push("note", text)
+            continue
+
+        push("paragraph", text)
+
+    return blocks, lines[0]
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
@@ -639,6 +739,8 @@ PARSERS = {
     "favorite-gifts": parse_favorite_gifts,
     "career-endings": parse_career_endings,
     "endings": parse_endings,
+    "cheng-zhongxuan": parse_character,
+    "danisi": parse_character,
 }
 
 # 类目 / 子节点：(slug, 标题)。有正文的节由 PARSERS 覆盖 status 与 blocks。

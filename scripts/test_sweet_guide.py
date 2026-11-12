@@ -82,8 +82,8 @@ class TestSweetGuide(unittest.TestCase):
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
         self.assertEqual(stats["items"], 24)
-        self.assertEqual(stats["readyItems"], 10)
-        self.assertEqual(stats["missingItems"], 14)
+        self.assertEqual(stats["readyItems"], 12)
+        self.assertEqual(stats["missingItems"], 12)
 
     def test_no_invented_descriptions(self) -> None:
         # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
@@ -456,6 +456,86 @@ class TestSweetGuide(unittest.TestCase):
         # 原文写成「蓝色咖啡额」，多出来的「额」是错字，已补正。
         self.assertTrue(items.startswith("大宇啤酒、蓝色咖啡、海蓝色休闲头巾"), items[:24])
         self.assertNotIn("蓝色咖啡额", "".join(b["text"] for b in blocks))
+
+    def test_character_pages(self) -> None:
+        category = next(c for c in self.data["categories"] if c["id"] == "sweet-characters")
+        nodes = {n["id"].split("/")[-1]: n for n in category["children"]}
+        self.assertEqual(nodes["cheng-zhongxuan"]["status"], "ready")
+        self.assertEqual(nodes["danisi"]["status"], "ready")
+        # 首行就是角色名，与页面标题相同 → 不写副标题。
+        self.assertNotIn("description", nodes["cheng-zhongxuan"])
+
+        cheng = nodes["cheng-zhongxuan"]["blocks"]
+        # 开头三行基础信息直接是列表，没有自拟的「基础信息」小标题。
+        self.assertEqual(
+            [b["text"] for b in cheng[:3]], ["签约金：0万", "分红：80%", "限制：严禁裸露"]
+        )
+        self.assertTrue(all(b["kind"] == "paragraph" and b.get("bullet") for b in cheng[:3]))
+
+        self.assertEqual(
+            [b["text"] for b in cheng if b["kind"] == "section"],
+            [
+                "可创作作品",
+                "事件",
+                "普通模式下结婚图取得条件",
+                "甜蜜模式下结婚图取得条件",
+                "甜蜜模式下告白相关事件触发条件",
+            ],
+        )
+        self.assertEqual(
+            [b["text"] for b in cheng if b["kind"] == "heading"],
+            ["加入", "拘谨", "得奖", "犹豫", "家境", "资格", "贤惠", "距离"],
+        )
+
+        events = [b for b in cheng if b["kind"] == "event"]
+        self.assertEqual(len(events), 37)  # 1-1 ~ 8-7
+        self.assertEqual((events[0]["label"], events[0]["text"]), ("1-1", "樱花绽放的季节"))
+        self.assertEqual(events[-1]["label"], "8-7")
+        # 括号里的效果标记拆成两个标记：CG 走徽标（和原站同一套高亮），其余进 tag。
+        self.assertNotIn("（", "".join(b["text"] for b in events))
+        self.assertEqual(events[1]["text"], "我看你的外型不错…")
+        self.assertEqual(events[1]["tag"], "友好度上升")
+        self.assertTrue(events[1]["cg"])
+        cg_only = next(b for b in events if b["label"] == "8-2")
+        self.assertTrue(cg_only["cg"])
+        self.assertNotIn("tag", cg_only)
+        self.assertEqual([b["label"] for b in events if b.get("cg")], ["1-2", "6-2", "8-2"])
+        self.assertEqual(len([b for b in events if b.get("tag")]), 18)
+        self.assertEqual({b["tag"] for b in events if b.get("tag")}, {"友好度上升"})
+
+        # 「提示：」是金色备注，跟事件的细节行同组（会渲染进同一张卡）。
+        note_at = next(i for i, b in enumerate(cheng) if b["kind"] == "note")
+        self.assertTrue(cheng[note_at]["text"].startswith("提示："))
+        self.assertEqual(cheng[note_at]["group"], cheng[note_at - 1]["group"])
+
+        # 收尾三个小节里的编号条目是条件，不是事件：普通模式那几条保持原样一行一条。
+        start = next(i for i, b in enumerate(cheng) if b["text"] == "普通模式下结婚图取得条件")
+        tail = [b for b in cheng[start:] if b["group"] == cheng[start]["group"]]
+        self.assertEqual(len(tail), 4)  # 小节头 + 3 条
+        self.assertEqual(
+            [b["text"] for b in tail[1:]],
+            [
+                "1.公司自制作品10个以上",
+                "2.城仲瑄称号为天王巨星",
+                "3.公司结局为顶尖国际经纪公司或迈向国际的经纪公司",
+            ],
+        )
+        self.assertFalse(any(b.get("bullet") for b in tail[1:]))
+        # 告白条件带事件编号：编号进 pill，条件跟在后面。
+        self.assertEqual(cheng[-1]["label"], "6-2")
+        self.assertTrue(cheng[-1]["text"].startswith("取消友好度检查"))
+
+        # 丹尼斯：可创作作品里带 `*` 的那条是特殊作品（金色菱形），星号不进正文。
+        dan = nodes["danisi"]["blocks"]
+        works = [b for b in dan if b["group"] == 1]
+        self.assertEqual(len(works), 12)  # 小节头 + 11 部作品
+        special = [b for b in works if b.get("special")]
+        self.assertEqual([b["text"] for b in special], ["舞台剧·从接吻开始：获得kissCG后"])
+        self.assertFalse(any(b["text"].startswith("*") for b in dan))
+        # 源文本的「称讃」是错字，已按用户裁决补正。
+        self.assertFalse(any("称讃" in b["text"] for b in dan))
+        self.assertTrue(any("称赞" in b["text"] for b in dan))
+        self.assertEqual(len([b for b in dan if b["kind"] == "event"]), 51)  # 1-1 ~ 8-9
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

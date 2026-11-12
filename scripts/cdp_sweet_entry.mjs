@@ -402,6 +402,85 @@ async function main() {
     'ok',
   );
 
+  // 5d. 角色页：城仲瑄 / 丹尼斯（8 位角色共用一套排法）
+  const readCharacter = () => evaluate(`(() => {
+    const bg = (label) => {
+      const el = document.querySelector('[data-event-label="' + label + '"]');
+      return el ? getComputedStyle(el).backgroundColor : '';
+    };
+    const chips = (text) => [...document.querySelectorAll('main span')]
+      .filter((s) => s.textContent.trim() === text).length;
+    return {
+      hash: location.hash,
+      heads: [...document.querySelectorAll('main h3')].map((h) => h.textContent.trim()),
+      cards: document.querySelectorAll('[data-event-label]').length,
+      bullets: [...document.querySelectorAll('main p[data-bullet]')].map((p) => p.innerText.trim()),
+      diamonds: [...document.querySelectorAll('main p[data-bullet] span')]
+        .filter((s) => s.className.includes('rotate-45')).length,
+      friendChips: chips('友好度上升'),
+      cgChips: chips('CG'),
+      cgCardBg: bg('1-2'),
+      plainCardBg: bg('1-1'),
+      text: document.querySelector('main')?.innerText ?? '',
+    };
+  })()`);
+
+  await openNode('sweet-characters/cheng-zhongxuan');
+  const cheng = await readCharacter();
+  check(
+    '点城仲瑄写入深链',
+    cheng.hash === '#/guide/sweet-characters/cheng-zhongxuan',
+    cheng.hash,
+  );
+  check(
+    '可创作作品 / 事件 + 三个条件小节，共 13 个小标题',
+    cheng.heads.slice(0, 2).join('/') === '可创作作品/事件'
+      && cheng.heads[12] === '甜蜜模式下告白相关事件触发条件'
+      && cheng.heads.length === 13,
+    JSON.stringify(cheng.heads.slice(0, 3)),
+  );
+  check(
+    '8 个章节：加入 … 距离',
+    cheng.heads.slice(2, 10).join('/') === '加入/拘谨/得奖/犹豫/家境/资格/贤惠/距离',
+    JSON.stringify(cheng.heads.slice(2, 10)),
+  );
+  check('37 张事件卡（1-1 ~ 8-7）', cheng.cards === 37, `cards=${cheng.cards}`);
+  check(
+    '开头基础信息是圆点列表',
+    cheng.bullets.slice(0, 3).join('/') === '签约金：0万/分红：80%/限制：严禁裸露',
+    JSON.stringify(cheng.bullets.slice(0, 3)),
+  );
+  check(
+    '友好度与 CG 拆成两个标记（18 + 3）',
+    cheng.friendChips === 18 && cheng.cgChips === 3,
+    `${cheng.friendChips} / ${cheng.cgChips}`,
+  );
+  check(
+    'CG 事件按原站方式高亮（卡片换玫红底）',
+    cheng.cgCardBg !== cheng.plainCardBg && cheng.cgCardBg.includes('rgba(0, 0, 0, 0)') === false,
+    `${cheng.cgCardBg} vs ${cheng.plainCardBg}`,
+  );
+  check(
+    '事件名不带括号、编号进 pill',
+    !cheng.text.includes('（友好度上升') && cheng.text.includes('樱花绽放的季节'),
+    'ok',
+  );
+
+  await openNode('sweet-characters/danisi');
+  const danisi = await readCharacter();
+  check('点丹尼斯写入深链', danisi.hash === '#/guide/sweet-characters/danisi', danisi.hash);
+  check('51 张事件卡（1-1 ~ 8-9）', danisi.cards === 51, `cards=${danisi.cards}`);
+  check(
+    '可创作作品里带 * 的那条用金色菱形标出',
+    danisi.diamonds === 1 && danisi.text.includes('从接吻开始'),
+    `diamonds=${danisi.diamonds}`,
+  );
+  check(
+    '原文错字「称讃」已补正为「称赞」',
+    !danisi.text.includes('称讃') && danisi.text.includes('称赞'),
+    'ok',
+  );
+
   // 6. 点角色页（每行第一个按钮是展开/折叠，第二个才是选中）
   await evaluate(`(() => {
     const row = document.querySelector('[data-node-id="sweet-characters/yao-ziqi"]');

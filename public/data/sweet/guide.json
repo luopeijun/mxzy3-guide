@@ -6,10 +6,10 @@
     "stats": {
       "categories": 3,
       "items": 24,
-      "blocks": 618,
-      "readyItems": 10,
-      "missingItems": 14,
-      "sourceParagraphs": 618
+      "blocks": 972,
+      "readyItems": 12,
+      "missingItems": 12,
+      "sourceParagraphs": 972
     }
   },
   "categories": [
@@ -3706,15 +3706,1958 @@
         {
           "id": "sweet-characters/cheng-zhongxuan",
           "title": "城仲瑄",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：0万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：80%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "限制：严禁裸露",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·如雪：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·十二月的企鹅：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·减肥大作战：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·十八岁新娘：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·老鼠嫁女：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·丑小鸭的天空：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·单身套房：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·地下铁之旅：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·未来启示录：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·乡愁：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "樱花绽放的季节",
+              "group": 4,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年3月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣到公司，邀请杜云芊一起去日本渡假。既然是哥哥的邀请当然要答应了。",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "我看你的外型不错…",
+              "group": 5,
+              "label": "1-2",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-1发生后一星期内",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到东京后，杜司臣表示想送自己的手下帮妹妹打点杂事，但杜云芊却另有打算…第一次见面，要保持礼貌喔。",
+              "group": 5
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊要穿着秋冬洋装才能看到事件图。",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "不可以放弃梦想！",
+              "group": 6,
+              "label": "1-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：正式工作后，城仲瑄前来拜访，杜云芊询问有没有加入演艺圈的意愿。不论如何，梦想是最重要的。",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "跟我说话会很无聊吗？",
+              "group": 7,
+              "label": "1-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-3发生后",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在酒吧遇到城仲瑄，只要表现得体，就能顺利签下他。",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "我不会让你哥哥失望",
+              "group": 8,
+              "label": "1-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后一星期内",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄到公司报到，搞不清楚谁才是老板？",
+              "group": 8
+            },
+            {
+              "kind": "heading",
+              "text": "拘谨",
+              "group": 9,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "生病就不应该工作",
+              "group": 10,
+              "label": "2-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生后",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊生病超过一个星期以上，城仲瑄就有可能会主动沟通要杜云芊保重身体。表示以工作为重，就能留下好印象。",
+              "group": 10
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟城仲瑄要“颇有好感”才能看到完整事件。",
+              "group": 10
+            },
+            {
+              "kind": "event",
+              "text": "别为了我浪费时间…",
+              "group": 11,
+              "label": "2-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生后",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：指定跟随城仲瑄一段时间后，城仲瑄会指责杜云芊浪费时间。但是久而久之，想守在他身边的心情，也能够被谅解。",
+              "group": 11
+            },
+            {
+              "kind": "note",
+              "text": "提示：此事件第二次发生后，跟城仲瑄要“颇有好感”才能看到完整事件。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "你最近的工作状况欠佳",
+              "group": 12,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生后",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊工作连续失败一个星期以上，城仲瑄会用严厉的语气前来关心。",
+              "group": 12
+            },
+            {
+              "kind": "heading",
+              "text": "得奖",
+              "group": 13,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "明天就是颁奖典礼…",
+              "group": 14,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年11月或第3年11月",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊有入围金像奖，在颁奖典礼的前一天，城仲瑄会前来打气。",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "恭喜您得奖！",
+              "group": 15,
+              "label": "3-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年后的颁奖典礼当天",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊有得奖，城仲瑄会主动前来恭喜，并且送花祝贺。",
+              "group": 15
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟城仲瑄要“很有好感”才会得到玫瑰花。",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "下次请继续加油吧！",
+              "group": 16,
+              "label": "3-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年后的颁奖典礼当天",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊没有得奖，城仲瑄主动前来鼓励，并期待下一次的胜利。",
+              "group": 16
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟城仲瑄要“很有好感”才能看到完整事件。",
+              "group": 16
+            },
+            {
+              "kind": "heading",
+              "text": "犹豫",
+              "group": 17,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "你太轻忽事业了…",
+              "group": 18,
+              "label": "4-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年1月～第3年12月",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄主动沟通，希望杜云芊能减少游玩的时间。但实际上只是努力没有被看到？",
+              "group": 18
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟城仲瑄约会10次以上才会触发。",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "属下不敢随便高攀…",
+              "group": 19,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1发生后",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣前来询问城仲瑄与杜云芊的关系。",
+              "group": 19
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟城仲瑄“颇有好感”才会触发。",
+              "group": 19
+            },
+            {
+              "kind": "event",
+              "text": "我们算是约会吗？",
+              "group": 20,
+              "label": "4-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-2发生后",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄主动沟通，希望杜云芊以后不要再跟任何人约会，包括自己。",
+              "group": 20
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件4-2之后跟城仲瑄约会5次以上才会触发。",
+              "group": 20
+            },
+            {
+              "kind": "event",
+              "text": "你对杜云芊不满吗？",
+              "group": 21,
+              "label": "4-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3发生后",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟城仲瑄一起工作或指定跟随，会看到杜司臣不满城仲瑄对待杜云芊的方式，两人似乎话中有话？",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "我都已经默许你了",
+              "group": 22,
+              "label": "4-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-4发生后",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊跟城仲瑄一起度过情人节后，会看到杜司臣质疑两人的关系。",
+              "group": 22
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟城仲瑄要“颇有好感”才会触发。",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "我没资格追求她…",
+              "group": 23,
+              "label": "4-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年情人节后",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣质问城仲瑄为何不采取行动，却反被城仲瑄质问！",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "你们在聊什么？",
+              "group": 24,
+              "label": "4-7",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-6发生后一个月内",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊不懂城仲瑄与杜司臣长久以来的对话，于是跟城仲瑄沟通想问个清楚。虽然只是小员工，但绝对不只是赚钱的工具，同时也需要被了解",
+              "group": 24
+            },
+            {
+              "kind": "heading",
+              "text": "家境",
+              "group": 25,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我会善待仲瑄！",
+              "group": 26,
+              "label": "5-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-7发生后一星期内",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣专程前来，跟杜云芊提起城仲瑄的家境。",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "关于你的家境…",
+              "group": 27,
+              "label": "5-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生后两星期内",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟城仲瑄沟通家境的事，如果表现出怜悯的态度，会被讨厌喔！",
+              "group": 27
+            },
+            {
+              "kind": "event",
+              "text": "我配不上你…",
+              "group": 28,
+              "label": "5-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生一星期后",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄主动前来表示，自己配不上杜云芊。这样的想法真是大错特错！",
+              "group": 28
+            },
+            {
+              "kind": "event",
+              "text": "是你给我力量！",
+              "group": 29,
+              "label": "5-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：戏剧类颁奖典礼当天",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄得奖之后，表示自己的梦想不再是一场海市蜃楼而已。",
+              "group": 29
+            },
+            {
+              "kind": "heading",
+              "text": "资格",
+              "group": 30,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "可以来植物园一趟吗？",
+              "group": 31,
+              "label": "6-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后两星期内",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄主动沟通，约杜云芊去植物园走走，表示有话要跟杜云芊说。",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "向您告白的资格",
+              "group": 32,
+              "label": "6-2",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1中约定的日期",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄苦思许久，终于鼓起勇气告白。",
+              "group": 32
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟城仲瑄约会20次以上，并且要“很有好感”；杜云芊穿着春夏洋装，作品20部以上，得奖3次以上；公司金钱300万以上，知名度300以上且满4人，才能顺利看到事件图。",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "不要老是当我不存在…",
+              "group": 33,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2发生后一星期内",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣主动拜访，跟城仲瑄聊到与杜云芊的感情，两人话中有话的交谈让杜云芊不悦！",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "你们真的交往了？",
+              "group": 34,
+              "label": "6-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-3发生后一星期内",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他艺人会前来祝福这段感情，但是其中有些人是吃醋大过祝福？",
+              "group": 34
+            },
+            {
+              "kind": "heading",
+              "text": "贤惠",
+              "group": 35,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "一起去商店街走走",
+              "group": 36,
+              "label": "7-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年1月～第2年12月",
+              "group": 36
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄赶着去采买，并表示杜云芊有兴趣，下星期也一起来！",
+              "group": 36
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟城仲瑄约会4次以上才会触发。",
+              "group": 36
+            },
+            {
+              "kind": "event",
+              "text": "你实在太厉害了！",
+              "group": 37,
+              "label": "7-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-1中约定的日期",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到商店街发现城仲瑄早就到了，而且还买了特价品！",
+              "group": 37
+            },
+            {
+              "kind": "event",
+              "text": "到购物中心逛逛吧～",
+              "group": 38,
+              "label": "7-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-2发生后",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄主动沟通，约杜云芊去购物中心逛街。",
+              "group": 38
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件7-2过后，与城仲瑄约会10次以上才会触发。",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "买奢侈品的感觉…",
+              "group": 39,
+              "label": "7-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3中约定的日期",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在购物中心杜云芊逛了几间高级商店，让城仲瑄有所感慨。不过，珠宝店还是要去逛的。",
+              "group": 39
+            },
+            {
+              "kind": "heading",
+              "text": "距离",
+              "group": 40,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "去植物园走走～",
+              "group": 41,
+              "label": "8-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-4发生后",
+              "group": 41
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄约杜云芊去植物园走走。",
+              "group": 41
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件7-4过后，与城仲瑄约会12次以上才会触发。",
+              "group": 41
+            },
+            {
+              "kind": "event",
+              "text": "请您听从我的建议",
+              "group": 42,
+              "label": "8-2",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1中约定的日期",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到展望台后，得知今日有优惠，杜云芊表示欣赏城仲瑄的脚踏实地。靠近窗边，还可以借故拉住城仲瑄的手！",
+              "group": 42
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着秋冬洋装才能看到事件图。",
+              "group": 42
+            },
+            {
+              "kind": "event",
+              "text": "不要太靠近他！",
+              "group": 43,
+              "label": "8-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-2发生后",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊与城仲瑄在展望台传出绯闻，沈惟真前来表达不悦的情绪。",
+              "group": 43
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟沈惟真要“颇有好感”才会触发。",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "你紧张什么？",
+              "group": 44,
+              "label": "8-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-3发生后一个月内",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟城仲瑄一起工作或指定跟随，可以看到城仲瑄跟杜司臣解释，两人还说了不为杜云芊所知的秘辛。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "我跟你没有私人感情！",
+              "group": 45,
+              "label": "8-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-4发生后两星期内",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄主动沟通，表示要澄清两人之间的绯闻，不改其拘谨的本性。",
+              "group": 45
+            },
+            {
+              "kind": "event",
+              "text": "愿意与我同行吗？",
+              "group": 46,
+              "label": "8-6",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-5发生后",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：城仲瑄主动沟通，希望能邀请杜云芊到高级餐厅用餐。",
+              "group": 46
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟城仲瑄约会25次以上，并且有一起度过情人节才会触发。",
+              "group": 46
+            },
+            {
+              "kind": "event",
+              "text": "谢谢你的用心！",
+              "group": 47,
+              "label": "8-7",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-6中约定的日期",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到高级餐厅，城仲瑄已准备好一切。在高级餐厅不同的态度，能看出两人之间的距离。",
+              "group": 47
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.公司自制作品10个以上",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.城仲瑄称号为天王巨星",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.公司结局为顶尖国际经纪公司或迈向国际的经纪公司",
+              "group": 48
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.公司结局为顶尖国际经纪公司或迈向国际的经纪公司",
+              "group": 49
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "取消友好度检查、约会10次、杜云芊作品10部、得过1次奖、公司知名度150、公司满2人",
+              "group": 50,
+              "label": "6-2"
+            }
+          ],
           "children": []
         },
         {
           "id": "sweet-characters/danisi",
           "title": "丹尼斯",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：150万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：50%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·藏梦：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·蓝色咖啡厅：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·医院风云：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·美酒贵公子：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·刑事侦察一周间：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·塔罗牌杀人事件：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·花样年华：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·梧桐雨之秋：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·永恒之轮：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·驯妻记：自由活动33天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·从接吻开始：获得kissCG后",
+              "group": 1,
+              "bullet": true,
+              "special": true
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "与贺总冲突不断",
+              "group": 4,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年6月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：此新闻自动发生，透露出SD的动向。",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "我们看错了贺总",
+              "group": 5,
+              "label": "1-2",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年6月～第1年12月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊有正式工作后，能偷看到SD起了争执。虽然遭到拒绝，但留下好印象至少是个开始。",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "SD送给你好了",
+              "group": 6,
+              "label": "1-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件1-2当中坚持签约，就能在唱片公司跟贺总讨论SD的事。就算想签SD也别在贺总面前承认。",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "这是我们开出来的条件",
+              "group": 7,
+              "label": "1-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-3发生一星期后～第2年6月",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：只要公司艺人在2人以下，SD会主动出现，表示有意愿加入公司。",
+              "group": 7
+            },
+            {
+              "kind": "note",
+              "text": "提示：公司知名度要在100以上才能顺利签下SD。",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "恋弟情节还没有痊愈？",
+              "group": 8,
+              "label": "1-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生一个月后",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：克烈斯来探望史蒂芬，遭到丹尼斯无礼的对待。",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "能回翱翔天际就好了…",
+              "group": 9,
+              "label": "1-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生两星期后",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：萧依莉来探望史蒂芬。",
+              "group": 9
+            },
+            {
+              "kind": "heading",
+              "text": "林芬芬",
+              "group": 10,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "这样忍耐值得吗？",
+              "group": 11,
+              "label": "2-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年6月～第1年10月",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟丹尼斯一起工作或指定跟随，就有可能遇到林芬芬跟杜云芊诉苦。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "谢谢你听我诉苦",
+              "group": 12,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后一个月内",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟丹尼斯一起工作或指定跟随，林芬芬会送上创作“温柔时刻”以表达谢意。",
+              "group": 12
+            },
+            {
+              "kind": "event",
+              "text": "感情方面有遇到什么问题吗？",
+              "group": 13,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年11月",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟丹尼斯沟通感情方面的问题，丹尼斯会毫不保留的说出来。",
+              "group": 13
+            },
+            {
+              "kind": "event",
+              "text": "偷看完了吧？",
+              "group": 14,
+              "label": "2-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年12月～第2年1月",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：2-3之后，有跟丹尼斯一起工作或指定跟随，就会看到跟林芬芬谈判的场面。想趁虚而入会留下坏印象喔！",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "芬芬还好吗？",
+              "group": 15,
+              "label": "2-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-4发生后两个月内",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：周日沟通",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "猜你在想什么？",
+              "group": 16,
+              "label": "2-6",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-5发生后",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：看到丹尼斯在路边发呆，八成是在想林芬芬。与其复合，不如好好珍惜身边的人。",
+              "group": 16
+            },
+            {
+              "kind": "heading",
+              "text": "身世",
+              "group": 17,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "认真的丹尼斯",
+              "group": 18,
+              "label": "3-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯拍摄电影时，有跟丹尼斯一起工作或指定跟随，就有可能看到丹尼斯认真的一面。请不要打扰他！",
+              "group": 18
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟丹尼斯要有“基本好感”才会触发，并且要触发两次才有后续事件。",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "我是绝对不会回去的！",
+              "group": 19,
+              "label": "3-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年6月～第3年6月",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯跟史蒂芬为了家事而争执，从对话中可以得知丹尼斯跟家人决裂了！",
+              "group": 19
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟丹尼斯约会10次以上才会触发。",
+              "group": 19
+            },
+            {
+              "kind": "event",
+              "text": "下个星期有空吗？",
+              "group": 20,
+              "label": "3-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-2发生后",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬邀约杜云芊去公园。",
+              "group": 20
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟史蒂芬要“很有好感”才会触发。",
+              "group": 20
+            },
+            {
+              "kind": "event",
+              "text": "哥哥对我真的很温柔",
+              "group": 21,
+              "label": "3-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-3中约定的日期",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到了公园，史蒂芬跟杜云芊详细交代丹尼斯跟家人决裂的原因。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "不要多管闲事！",
+              "group": 22,
+              "label": "3-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-4发生后一个月内",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟丹尼斯沟通跟家人决裂的事，得到的回应却格外强硬。",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "我上次太激动了",
+              "group": 23,
+              "label": "3-6",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-5发生后一星期内",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯为了上次的态度道歉，原谅他就能得知连史蒂芬都不知道的苦衷！",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "也许我太顽固了",
+              "group": 24,
+              "label": "3-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-6发生后",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯表示要带史蒂芬回家，想请假一个星期。比起工作，家人还是更重要的。",
+              "group": 24
+            },
+            {
+              "kind": "event",
+              "text": "我回来了",
+              "group": 25,
+              "label": "3-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-7发生后两个月内",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：回到公司，丹尼斯表示这里是他另一个家。",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "请再多影响他一点吧！",
+              "group": 26,
+              "label": "3-9"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-7发生后两个月内",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬很开心这次返乡，也觉得哥哥变温柔了。",
+              "group": 26
+            },
+            {
+              "kind": "heading",
+              "text": "沉默",
+              "group": 27,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "下次一起去餐厅",
+              "group": 28,
+              "label": "4-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年情人节后三个月内",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟丹尼斯一起工作或指定跟随，有机会邀丹尼斯去高级餐厅约会。",
+              "group": 28
+            },
+            {
+              "kind": "note",
+              "text": "提示：此事件要先取得丹尼斯的情人节事件图才会触发。",
+              "group": 28
+            },
+            {
+              "kind": "event",
+              "text": "这个话题到此结束吧！",
+              "group": 29,
+              "label": "4-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1中约定的日期",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：吃着高级料理，心里却想着丹尼斯煮的平淡食物，这也算是一种幸福吧！",
+              "group": 29
+            },
+            {
+              "kind": "heading",
+              "text": "澄清",
+              "group": 30,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "一辈子都别想！",
+              "group": 31,
+              "label": "5-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊跟丹尼斯约会10次以上，就会收到影迷呛声的信。",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "我来接你回家",
+              "group": 32,
+              "label": "5-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生后一星期内",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：突然出现要接杜云芊回家的丹尼斯，展现意外的温柔！",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "别以为你有机会",
+              "group": 33,
+              "label": "5-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件5-2之后又跟丹尼斯约会8次以上，影迷会再一次来信恐吓。",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "我是为了你的安全",
+              "group": 34,
+              "label": "5-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生后一星期内",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯送杜云芊回家途中，提出了两人保持距离的想法。",
+              "group": 34
+            },
+            {
+              "kind": "event",
+              "text": "人要有自知之明！",
+              "group": 35,
+              "label": "5-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后一星期内",
+              "group": 35
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯出面澄清两人只是朋友，影迷照旧寄信示威。",
+              "group": 35
+            },
+            {
+              "kind": "event",
+              "text": "因为我不喜欢说谎",
+              "group": 36,
+              "label": "5-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后一星期内",
+              "group": 36
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯告知杜云芊，已经澄清两人只是好朋友，并希望从此保持距离。",
+              "group": 36
+            },
+            {
+              "kind": "heading",
+              "text": "合作",
+              "group": 37,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我们一起加油吧～",
+              "group": 38,
+              "label": "6-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年6月～第1年12月",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊跟丹尼斯一起合作电影或电视时，表现出认真的态度。",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "我看你状况不太好",
+              "group": 39,
+              "label": "6-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1发生后",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：两人合作电视或电影时，杜云芊当天失败，丹尼斯就有可能会主动关心。认真的丹尼斯不喜欢别人找借口！",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "不想被你超越",
+              "group": 40,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1发生后",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：两人合作电视或电影时，连续五天都成功或完美，就有可能得到丹尼斯的称赞。",
+              "group": 40
+            },
+            {
+              "kind": "heading",
+              "text": "假戏真做",
+              "group": 41,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "很高兴跟你合作",
+              "group": 42,
+              "label": "7-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年6月～第2年12月",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊跟丹尼斯一起合作舞台剧时，看到丹尼斯的专注。心思放在工作进度上，就能留下好印象。",
+              "group": 42
+            },
+            {
+              "kind": "event",
+              "text": "专心在工作吧！",
+              "group": 43,
+              "label": "7-2",
+              "tag": "好感度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-1发生后～该通告结束前",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯想起林芬芬，只有工作才能让丹尼斯抛开烦恼。",
+              "group": 43
+            },
+            {
+              "kind": "note",
+              "text": "提示：丹尼斯跟林芬芬分手后，要约会5次以上，并且“很有好感”才能看到事件。",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "那只是演技…",
+              "group": 44,
+              "label": "7-3",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年2月～第3年12月",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：两人合作舞台剧时，决定留下来排练且酝酿情绪，两人的关系就会有重大突破。给予回应之后，丹尼斯却说一切都是演技！？",
+              "group": 44
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件5-6发生过，并且取得丹尼斯的情人节事件图才会触发。杜云芊穿着秋冬洋装才能看到事件图。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "我有一些灵感…",
+              "group": 45,
+              "label": "7-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件7-3中有看到事件图，之后丹尼斯会利用自由活动创作剧本“从接吻开始”，并送给杜云芊。",
+              "group": 45
+            },
+            {
+              "kind": "event",
+              "text": "你否认这一切吧！",
+              "group": 46,
+              "label": "7-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后一星期内",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：关于因为排戏过于认真而引起了绯闻，丹尼斯深感抱歉。从言语中能看出丹尼斯的迷惘。",
+              "group": 46
+            },
+            {
+              "kind": "event",
+              "text": "你跟丹尼斯在交往吗？",
+              "group": 47,
+              "label": "7-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后一星期内",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：八卦记者前来确认，就算感到迷惘，也要勇于承认自己的感情。",
+              "group": 47
+            },
+            {
+              "kind": "event",
+              "text": "不要抱太多期待",
+              "group": 48,
+              "label": "7-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后两星期内",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬跟杜云芊解释，丹尼斯演戏总是很认真，别因此受伤了。",
+              "group": 48
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟史蒂芬要“很有好感”才会触发此事件。",
+              "group": 48
+            },
+            {
+              "kind": "event",
+              "text": "这绝对不是真的",
+              "group": 49,
+              "label": "7-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-6发生后一星期内",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件7-5中承认假戏真做之后，有跟丹尼斯一起工作或指定跟随，就能看到林芬芬跟丹尼斯确认此事。",
+              "group": 49
+            },
+            {
+              "kind": "event",
+              "text": "好好合作吧！",
+              "group": 50,
+              "label": "7-9"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-6发生后一星期内",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：一连串的绯闻让丹尼斯感到困扰，于是向杜云芊提议两人维持工作上的关系就好。",
+              "group": 50
+            },
+            {
+              "kind": "event",
+              "text": "我跳脱不出来！",
+              "group": 51,
+              "label": "7-10"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年5月～第3年12月",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：舞台剧结束之后，丹尼斯表示自己可以很快跳脱角色。但一切真的只是演戏？",
+              "group": 51
+            },
+            {
+              "kind": "note",
+              "text": "提示：舞台剧票房要在1万以上才会触发",
+              "group": 51
+            },
+            {
+              "kind": "heading",
+              "text": "烦躁（需要史蒂芬也在旗下才会完整）",
+              "group": 52,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我真的很困扰…",
+              "group": 53,
+              "label": "8-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-10发生后一星期内",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件7-10中若表示无法跳脱，丹尼斯也会因此感到困扰而不知所措。",
+              "group": 53
+            },
+            {
+              "kind": "event",
+              "text": "我觉得问题处在你身上…",
+              "group": 54,
+              "label": "8-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1发生后两星期内",
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬主动沟通，并以自己的直觉告诉杜云芊，哥哥是为了你烦恼！",
+              "group": 54
+            },
+            {
+              "kind": "event",
+              "text": "我不需要你的关心！",
+              "group": 55,
+              "label": "8-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-2发生后一个月内",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟丹尼斯沟通心情烦闷的事，却遭到强烈抵抗…",
+              "group": 55
+            },
+            {
+              "kind": "event",
+              "text": "我哥出了车祸…",
+              "group": 56,
+              "label": "8-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-3发生后一星期内",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬前来告知，丹尼斯出了点小车祸…",
+              "group": 56
+            },
+            {
+              "kind": "event",
+              "text": "你可以接受我的情感吗？",
+              "group": 57,
+              "label": "8-5",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-4发生后一星期内",
+              "group": 57
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在住院间到医院探望丹尼斯，但丹尼斯终于说出内心真正的感觉。",
+              "group": 57
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊跟丹尼斯的称号至少为实力派演员、唱匠、主持名嘴、超级名模，杜云芊穿着秋冬洋装，才能看到丹尼斯的深情告白。",
+              "group": 57
+            },
+            {
+              "kind": "event",
+              "text": "每天都想见到你…",
+              "group": 58,
+              "label": "8-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-5发生后一星期内",
+              "group": 58
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊到医院探望丹尼斯，两人相处融洽。",
+              "group": 58
+            },
+            {
+              "kind": "event",
+              "text": "两人的未来…",
+              "group": 59,
+              "label": "8-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-6发生后",
+              "group": 59
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：八卦记者前来试探杜云芊跟丹尼斯真正的关系。",
+              "group": 59
+            },
+            {
+              "kind": "event",
+              "text": "我会陪在你身边",
+              "group": 60,
+              "label": "8-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-4发生一星期后",
+              "group": 60
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯出院，跟杜云芊报平安。",
+              "group": 60
+            },
+            {
+              "kind": "event",
+              "text": "你们真的交往了？",
+              "group": 61,
+              "label": "8-9"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-7发生后一个月内",
+              "group": 61
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件8-7中坦承交往之后，其他艺人会前来祝福这段感情，但是其中有些人是吃醋大过祝福？",
+              "group": 61
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 62
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.SD从来没有解散过",
+              "group": 62
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.丹尼斯的称号为天王巨星",
+              "group": 62
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.杜云芊得过戏剧类的个人奖项",
+              "group": 62
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 63
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.SD从来没有解散过",
+              "group": 63
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 64
+            },
+            {
+              "kind": "paragraph",
+              "text": "不一定要发生事件5-6",
+              "group": 64,
+              "label": "7-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "取消票房检查",
+              "group": 64,
+              "label": "7-10"
+            },
+            {
+              "kind": "paragraph",
+              "text": "取消两人称号都是实力派的检查",
+              "group": 64,
+              "label": "8-5"
+            }
+          ],
           "children": []
         },
         {
