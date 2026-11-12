@@ -237,6 +237,12 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(blocks[0]["kind"], "paragraph")
         self.assertEqual(blocks[0]["text"], "1、触发剧情后直接获得；")
 
+        # 作者补的 PS 单独走便签样式，行首的 * 是源文本的标记，去掉。
+        notes = [b["text"] for b in blocks if b["kind"] == "note"]
+        self.assertEqual(len(notes), 1, notes)
+        self.assertTrue(notes[0].startswith("（PS："), notes[0])
+        self.assertFalse(notes[0].startswith("*"), notes[0])
+
     def test_outfits(self) -> None:
         node = _node(self.data, "outfits")
         blocks = node["blocks"]
@@ -292,6 +298,9 @@ class TestSweetGuide(unittest.TestCase):
         self.assertTrue(
             any(t.startswith("情人节邀约沟通话题->") for t in texts), "箭头流程丢了"
         )
+        # 源文本的两处错字已按用户裁决补正（缺字 / 同音字），别改回去。
+        self.assertIn("城仲瑄：杜云芊穿着春夏洋装", texts)
+        self.assertIn("2.该艺人2月14日当天没有特殊行程和约会", texts)
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

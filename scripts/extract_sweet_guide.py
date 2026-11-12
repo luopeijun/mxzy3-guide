@@ -270,6 +270,11 @@ def parse_self_notices(path: Path) -> tuple[list[dict], str]:
             push("paragraph", detail)
 
     for text in lines[1:]:
+        # 作者补的 PS 是整段的附加说明，走便签样式；不能进下面「行首括号＝折行」的合并。
+        if text.startswith(("（PS", "（ps")):
+            push("note", text)
+            continue
+
         genre = GENRE_RE.match(text)
         if genre:
             in_genre = True

@@ -242,6 +242,9 @@ async function main() {
     heads: [...document.querySelectorAll('main h3')].map((h) => h.textContent.trim()),
     cards: document.querySelectorAll('[data-event-label]').length,
     firstCard: document.querySelector('[data-event-label]')?.innerText ?? '',
+    notes: [...document.querySelectorAll('main p')]
+      .filter((p) => p.className.includes('bg-note-soft'))
+      .map((p) => p.innerText.trim()),
     text: document.querySelector('main')?.innerText ?? '',
   }))()`);
 
@@ -260,6 +263,13 @@ async function main() {
     notice.firstCard.replace(/\n+/g, ' ').slice(0, 40),
   );
   check('页首的获得方式说明保留', notice.text.includes('1、触发剧情后直接获得；'), 'ok');
+  check(
+    'PS 说明渲染成便签（黄底）且不带 *',
+    notice.notes.length === 1
+      && notice.notes[0].startsWith('（PS：')
+      && !notice.notes[0].startsWith('*'),
+    `${notice.notes.length} / ${notice.notes[0]?.slice(0, 10) ?? '无'}`,
+  );
 
   await openNode('sweet-guide/outfits');
   const outfits = await readPage();
@@ -288,6 +298,12 @@ async function main() {
   check(
     '生日礼物与情人节流程都在',
     festivals.text.includes('沈惟真的蓝色缎带') && festivals.text.includes('情人节邀约沟通话题->敲定约会地点'),
+    'ok',
+  );
+  check(
+    '原文错字已补正（春夏洋装 / 约会）',
+    festivals.text.includes('城仲瑄：杜云芊穿着春夏洋装')
+      && festivals.text.includes('没有特殊行程和约会'),
     'ok',
   );
 
