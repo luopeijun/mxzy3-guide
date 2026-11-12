@@ -566,27 +566,46 @@ async function main() {
     JSON.stringify(shen.bullets.slice(0, 2)),
   );
 
-  // 6. 还没整理的支线页给出空态提示
-  await evaluate(`(() => {
-    const row = document.querySelector('[data-node-id="sweet-side/stage-shadow"]');
-    const pick = [...row.querySelectorAll('button')].find((b) => b.className.includes('flex-1'));
-    pick.click();
-    return 1;
-  })()`);
-  await new Promise((r) => setTimeout(r, 600));
-  const page = await evaluate(`(() => ({
+  // 6. 支线六页：目录标题去掉「关于」，正文是「章节 + 编号步骤」，全站不再有「待补充」
+  const sideRows = await evaluate(`(() => [...document.querySelectorAll('[data-node-id^="sweet-side/"]')]
+    .map((n) => n.textContent.replace(/\\s+/g, ' ').trim()))()`);
+  check(
+    '支线六页的目录标题去掉「关于」',
+    sideRows.length === 6 && sideRows.every((t) => !t.includes('关于')),
+    JSON.stringify(sideRows),
+  );
+  check('目录里不再有「待补充」', (await evaluate('document.body.innerText.includes("待补充")')) === false, 'clean');
+
+  await openNode('sweet-side/stage-shadow');
+  const stage = await evaluate(`(() => ({
     hash: location.hash,
-    heading: document.querySelector('main h1')?.textContent?.trim()
-      ?? document.querySelector('main')?.textContent?.slice(0, 40) ?? '',
-    emptyHint: document.body.innerText.includes('这一页还没整理'),
-    brandOfTitle: (() => {
-      const el = document.querySelector('main h1');
-      return el ? getComputedStyle(el).color : '';
-    })(),
+    title: document.querySelector('main h1')?.textContent?.trim() ?? '',
+    cards: document.querySelectorAll('[data-event-label]').length,
+    labels: [...document.querySelectorAll('[data-event-label]')].map((el) => el.dataset.eventLabel),
+    body: document.querySelector('main')?.innerText ?? '',
   }))()`);
-  check('点舞台秘影写入 #/guide/ 深链', page.hash === '#/guide/sweet-side/stage-shadow', page.hash);
-  check('正文标题是舞台秘影', page.heading.includes('舞台秘影'), page.heading);
-  check('空页给出甜蜜乐章自己的提示', page.emptyHint === true, String(page.emptyHint));
+  check('点舞台秘影写入 #/guide/ 深链', stage.hash === '#/guide/sweet-side/stage-shadow', stage.hash);
+  check('正文标题是舞台秘影', stage.title === '舞台秘影', stage.title);
+  check('舞台秘影：15 张步骤卡（1-1 ~ 1-15）', stage.cards === 15, `cards=${stage.cards}`);
+  check(
+    '舞台秘影：1-12 的六个送礼地点留在同一步里',
+    stage.body.includes('天晴&原少纬 EAMI唱片公司二楼'),
+    stage.body.slice(0, 30),
+  );
+
+  await openNode('sweet-side/tian-qing');
+  const tian = await readPage();
+  check('天晴：5 个小节 + 37 张步骤卡', tian.heads.length === 5 && tian.cards === 37, `heads=${tian.heads.length} cards=${tian.cards}`);
+
+  await openNode('sweet-side/jin-haoxun');
+  const jin = await readPage();
+  check(
+    '金皓薰：3 章（变身 / 夺爱 / 金皓薰）+ 15 张事件卡',
+    jin.heads.join('/') === '变身/夺爱/金皓薰' && jin.cards === 15,
+    `heads=${jin.heads.join('/')} cards=${jin.cards}`,
+  );
+  const jinText = await evaluate('document.querySelector("main")?.innerText ?? ""');
+  check('金皓薰：（友好度上升）走标记、不进标题', !jinText.includes('（友好度上升）'), 'ok');
 
   // 7. 跨站入口
   const cross = await evaluate(`(() => {

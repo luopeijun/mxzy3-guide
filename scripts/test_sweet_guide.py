@@ -83,8 +83,8 @@ class TestSweetGuide(unittest.TestCase):
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
         self.assertEqual(stats["items"], 24)
-        self.assertEqual(stats["readyItems"], 18)
-        self.assertEqual(stats["missingItems"], 6)
+        self.assertEqual(stats["readyItems"], 24)
+        self.assertEqual(stats["missingItems"], 0)
 
     def test_no_invented_descriptions(self) -> None:
         # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
@@ -722,6 +722,86 @@ class TestSweetGuide(unittest.TestCase):
         yao = nodes["yao-ziqi"]["blocks"]
         self.assertTrue(any(b["text"] == "好，先到哪去？" for b in yao))
         self.assertFalse(any("》" in b["text"] for b in yao if b["kind"] == "qa"))
+
+    def test_side_stories(self) -> None:
+        # 支线六页：目录标题去掉「关于」，正文是「章节 / 编号步骤 / 条件附注」三层。
+        category = next(c for c in self.data["categories"] if c["id"] == "sweet-side")
+        self.assertEqual(
+            [n["title"] for n in category["children"]],
+            ["舞台秘影", "天晴", "夏以军", "徐世杰", "杜司臣", "金皓薰"],
+        )
+        self.assertTrue(all(n["status"] == "ready" for n in category["children"]))
+        nodes = {n["id"].split("/")[-1]: n["blocks"] for n in category["children"]}
+
+        def kinds(blocks: list[dict], kind: str) -> list[dict]:
+            return [b for b in blocks if b["kind"] == kind]
+
+        # 章 / 步骤 / 说明三层，各页数量固定。
+        expected = {
+            "stage-shadow": (0, 15),
+            "tian-qing": (5, 37),
+            "xia-yijun": (4, 40),
+            "xu-shijie": (3, 37),
+            "du-sichen": (1, 5),
+            "jin-haoxun": (3, 15),
+        }
+        for slug, (sections, events) in expected.items():
+            self.assertEqual(len(kinds(nodes[slug], "section")), sections, slug)
+            self.assertEqual(len(kinds(nodes[slug], "event")), events, slug)
+
+        # 金皓薰的章是「1.变身」，靠下一行是 1-1. 认出来；条件清单里的「1.…」不能当章。
+        self.assertEqual(
+            [b["text"] for b in kinds(nodes["jin-haoxun"], "section")], ["变身", "夺爱", "金皓薰"]
+        )
+        self.assertEqual(
+            [b["text"] for b in kinds(nodes["xia-yijun"], "section")],
+            ["条件", "豪门爱恋", "紫罗兰之恋", "附注"],
+        )
+        self.assertTrue(
+            any(b["text"] == "1.要有古典晚礼服，CG必要" for b in nodes["xia-yijun"])
+        )
+
+        # 天晴是「（1）～（37）」连续编号，跨章节也不重来。
+        tian = kinds(nodes["tian-qing"], "event")
+        self.assertEqual([b["label"] for b in tian], [str(n) for n in range(1, 38)])
+        # ※ 行是便签，挂在上面那一步里。
+        self.assertEqual(len(kinds(nodes["tian-qing"], "note")), 2)
+
+        # 徐世杰有两步漏了点号（`1-11与…` / `1-12十一月…`），照样是步骤而不是正文。
+        shijie = kinds(nodes["xu-shijie"], "event")
+        self.assertIn("1-11", [b["label"] for b in shijie])
+        self.assertTrue(
+            next(b for b in shijie if b["label"] == "1-11")["text"].startswith("与徐世杰第二次遇袭")
+        )
+
+        # 舞台秘影 1-12 下面是六个送礼地点的续行，归在同一步里当细节。
+        stage = nodes["stage-shadow"]
+        star = next(i for i, b in enumerate(stage) if b.get("label") == "1-12")
+        self.assertEqual(
+            [b["text"] for b in stage[star + 1 : star + 7]],
+            ["纪翔 酒吧", "丹尼斯 全球制片", "姚子莹 日月光唱片", "关古威&克烈斯 SOSA电视台",
+             "天晴&原少纬 EAMI唱片公司二楼", "姚子奇 永振电视台"],
+        )
+
+        # 杜司臣的事件带 时间 / 概要 / 提示，尾号（CG）走徽标。
+        self.assertEqual([b["label"] for b in nodes["du-sichen"] if b.get("cg")], ["4-5"])
+        self.assertTrue(any(b["text"].startswith("时间：第3年8月") for b in nodes["du-sichen"]))
+
+        # 金皓薰的（友好度上升）走 tag，不进标题。
+        jin = nodes["jin-haoxun"]
+        self.assertEqual(
+            [b["label"] for b in jin if b.get("tag")], ["1-2", "1-3", "2-2", "2-3", "2-4"]
+        )
+        self.assertFalse(any("（友好度上升）" in b["text"] for b in jin))
+
+        # 原文错字 / 错名按本仓统一写法补正。
+        joined = "\n".join(b["text"] for blocks in nodes.values() for b in blocks)
+        for bad in ("溷溷", "遇刺桉", "项炼", "萤幕", "苏曼君", "原少伟", "郭秘术", "天睛"):
+            self.assertNotIn(bad, joined, bad)
+        self.assertIn("小混混", joined)
+        self.assertIn("苏嫚君", joined)
+        # 全角字母（ＥAＭＩ）已归一。
+        self.assertFalse(any("Ｅ" in b["text"] or "Ｍ" in b["text"] for blocks in nodes.values() for b in blocks))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

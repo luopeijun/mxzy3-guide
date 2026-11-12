@@ -44,12 +44,28 @@ EXTRA_CHARS = {
     "％": "%",  # 沈惟真的「分红：20％」
 }
 
+# 天晴那页混进过全角字母「ＥAＭＩ」，只归一字母，**不要**碰全角标点
+# （（）：，！？ 是正文标点，归一半角反而难看）。
+FULLWIDTH_LATIN = str.maketrans(
+    {chr(0xFF21 + offset): chr(ord("A") + offset) for offset in range(26)}
+    | {chr(0xFF41 + offset): chr(ord("a") + offset) for offset in range(26)}
+)
+
 # 原文错字 → 正字（用户明确裁决过的才写在这里，别顺手改作者的行文）
 FIXES = {
     "稱讚": "称赞",
     "稱讃": "称赞",
     # 姚子奇约会「好，先到哪去》」——疑问句结尾错成书名号，按问号出。
     "先到哪去》": "先到哪去？",
+    # 支线页里的错字 / 错名（人名按本仓统一写法：苏嫚君、原少纬）。
+    "小溷溷": "小混混",
+    "遇刺桉": "遇刺案",
+    "钻石项炼": "钻石项链",
+    "萤幕": "荧幕",
+    "苏曼君": "苏嫚君",
+    "原少伟": "原少纬",
+    "郭秘术": "郭秘书",
+    "天睛": "天晴",
 }
 
 
@@ -67,7 +83,7 @@ def convert(source: Path, target: Path) -> int:
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     text = CTRL_RE.sub("", text)
     text = zhconv.convert(text, "zh-cn")
-    text = text.translate(DIGITS).replace("．", ".").replace("－", "-")
+    text = text.translate(DIGITS).translate(FULLWIDTH_LATIN).replace("．", ".").replace("－", "-")
     text = "\n".join(line.rstrip() for line in text.split("\n"))
     for bad, good in EXTRA_CHARS.items():
         text = text.replace(bad, good)

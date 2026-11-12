@@ -683,6 +683,26 @@ CHARACTER_MARKS = ("友好度上升", "好感度上升", "CG")
 WORKS_NUMBERED_RE = re.compile(r"^\d+[、.．]")
 
 
+def _split_effect_marks(title: str) -> tuple[str, dict]:
+    """把标题尾部的「（友好度上升、CG）」拆成事件标记。
+
+    括号里是这条事件的效果：CG 单独走徽标（和原站一套处理——卡片描边转玫红、
+    编号反白底），剩下的（友好度上升）留作 tag。「出去走走吧～（2）」这种括号是
+    标题的一部分，不是标记，不能拆。
+    """
+    mark = CHARACTER_MARK_RE.search(title)
+    parts = [part.strip() for part in mark.group(1).split("、") if part.strip()] if mark else []
+    if not parts or not all(part.upper() in CHARACTER_MARKS for part in parts):
+        return title, {}
+    extra: dict = {}
+    if any(part.upper() == "CG" for part in parts):
+        extra["cg"] = True
+    rest = [part for part in parts if part.upper() != "CG"]
+    if rest:
+        extra["tag"] = "、".join(rest)
+    return title[: mark.start()].rstrip(), extra
+
+
 def parse_character(path: Path) -> tuple[list[dict], str]:
     """角色页 → 开头一段基础信息 + 可创作作品 + 事件 + 三个结局条件小节。
 
@@ -733,20 +753,7 @@ def parse_character(path: Path) -> tuple[list[dict], str]:
         event = EVENT_RE.match(text)
         if event:
             group += 1
-            title = _clean_title(event.group(3))
-            mark = CHARACTER_MARK_RE.search(title)
-            extra: dict = {}
-            parts = [part.strip() for part in mark.group(1).split("、") if part.strip()] if mark else []
-            # 括号里是这条事件的效果标记。CG 单独走徽标（和原站一套处理：
-            # 卡片描边转玫红、编号反白底），剩下的（友好度上升）留作 tag。
-            # 「出去走走吧～（2）」这种括号是标题的一部分，不是标记，不能拆。
-            if parts and all(part.upper() in CHARACTER_MARKS for part in parts):
-                if any(part.upper() == "CG" for part in parts):
-                    extra["cg"] = True
-                rest = [part for part in parts if part.upper() != "CG"]
-                if rest:
-                    extra["tag"] = "、".join(rest)
-                title = title[: mark.start()].rstrip()
+            title, extra = _split_effect_marks(_clean_title(event.group(3)))
             push("event", title, label=f"{event.group(1)}-{event.group(2)}", **extra)
             continue
 
@@ -763,6 +770,86 @@ def parse_character(path: Path) -> tuple[list[dict], str]:
         push("paragraph", text)
 
     return blocks, lines[0]
+
+
+# 支线页：六页三种排法，规则并在一起。
+# - `#爱情陷阱` / `#豪门爱恋` 用 `#` 分章（徐世杰 / 夏以军 / 天晴）
+# - `1.变身` 用编号分章（金皓薰），靠「下一行是 `1-1.`」认出来，不按行首数字瞎猜
+# - 步骤 `1-1.xxx`（徐世杰 / 夏以军 / 舞台秘影 / 金皓薰 / 杜司臣）或 `（1）xxx`（天晴）
+# - `条件：` / `附注：` / `附：` 自成一个小节
+SIDE_CHAPTER_RE = re.compile(r"^[#＃]\s*(.+)$")
+SIDE_STEP_RE = re.compile(r"^(\d+)-(\d+)[.．]?\s*(.+)$")
+SIDE_PAREN_STEP_RE = re.compile(r"^（(\d+)）\s*(.+)$")
+SIDE_NUMBERED_RE = re.compile(r"^(\d+)[.．]\s*(.+)$")
+SIDE_SECTION_RE = re.compile(r"^(条件|附注|附)[：:]\s*(.*)$")
+SIDE_BULLET_PREFIXES = ("公司结局：", "感情结局：")
+
+
+def parse_side(path: Path) -> tuple[list[dict], str]:
+    """支线页 → 章节 + 步骤 + 条件 / 附注。
+
+    六页排法不完全一样（见上面的常量说明），但都在「分章 → 编号步骤 → 说明行」这
+    三层里，所以一个解析器吃全部。步骤做成事件卡：编号进 pill，后面跟在同一步里的
+    `※` / `提示：` / 续行成为卡内的备注与细节，和角色页的事件卡是同一套。
+    """
+    lines = _read_lines(path)
+    # 首行是页名（金皓薰 / 杜司臣 / 舞台秘影）时当标题用；其余页首行本身就是正文
+    # （徐世杰 / 夏以军首行是「条件：…」，天晴首行是 `#加入志工团`）。
+    head_is_title = bool(lines) and len(lines[0]) <= 8 and not re.search(r"[：:#＃（(0-9]", lines[0])
+    body = lines[1:] if head_is_title else lines
+    blocks: list[dict] = []
+    group = 0
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for index, text in enumerate(body):
+        chapter = SIDE_CHAPTER_RE.match(text)
+        if chapter:
+            group += 1
+            push("section", _clean_title(chapter.group(1)))
+            continue
+
+        section = SIDE_SECTION_RE.match(text)
+        if section:
+            group += 1
+            push("section", section.group(1))
+            if section.group(2).strip():
+                push("paragraph", section.group(2).strip())
+            continue
+
+        step = SIDE_STEP_RE.match(text)
+        if step:
+            group += 1
+            title, extra = _split_effect_marks(_clean_title(step.group(3)))
+            push("event", title, label=f"{step.group(1)}-{step.group(2)}", **extra)
+            continue
+
+        paren = SIDE_PAREN_STEP_RE.match(text)
+        if paren:
+            group += 1
+            title, extra = _split_effect_marks(_clean_title(paren.group(2)))
+            push("event", title, label=paren.group(1), **extra)
+            continue
+
+        numbered = SIDE_NUMBERED_RE.match(text)
+        if numbered and index + 1 < len(body) and re.match(rf"^{numbered.group(1)}-1[.．]", body[index + 1]):
+            # 「1.变身」下面紧跟 `1-1.`，是章；否则是正文里的序号条目。
+            group += 1
+            push("section", _clean_title(numbered.group(2)))
+            continue
+
+        if text.startswith(("※", "提示：")):
+            push("note", text)
+            continue
+
+        if text.startswith(SIDE_BULLET_PREFIXES):
+            push("paragraph", text, bullet=True)
+            continue
+
+        push("paragraph", text)
+
+    return blocks, (lines[0] if head_is_title else "")
 
 
 # 约会页：两组对话选项，下面按地点列「Q / A」。
@@ -871,6 +958,13 @@ PARSERS = {
     "shi-difen": parse_character,
     "wei-ya": parse_character,
     "yao-ziqi": parse_character,
+    # 支线六页同一套「章节 / 编号步骤 / 条件附注」，共用一个解析器。
+    "stage-shadow": parse_side,
+    "tian-qing": parse_side,
+    "xia-yijun": parse_side,
+    "xu-shijie": parse_side,
+    "du-sichen": parse_side,
+    "jin-haoxun": parse_side,
 }
 
 # 类目 / 子节点：(slug, 标题)。有正文的节由 PARSERS 覆盖 status 与 blocks。
@@ -911,11 +1005,11 @@ CATEGORIES: list[dict] = [
         "title": "支线攻略",
         "children": [
             ("stage-shadow", "舞台秘影"),
-            ("tian-qing", "关于天晴"),
-            ("xia-yijun", "关于夏以军"),
-            ("xu-shijie", "关于徐世杰"),
-            ("du-sichen", "关于杜司臣"),
-            ("jin-haoxun", "关于金皓薰"),
+            ("tian-qing", "天晴"),
+            ("xia-yijun", "夏以军"),
+            ("xu-shijie", "徐世杰"),
+            ("du-sichen", "杜司臣"),
+            ("jin-haoxun", "金皓薰"),
         ],
     },
 ]
