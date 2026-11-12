@@ -765,6 +765,86 @@ def parse_character(path: Path) -> tuple[list[dict], str]:
     return blocks, lines[0]
 
 
+# 约会页：两组对话选项，下面按地点列「Q / A」。
+DATE_SECTIONS = ("普通约会对话选项提示", "亲密约会对话选项提示")
+DATE_QUESTION_RE = re.compile(r"^(\d+)[.．]\s*Q[：:](.+)$")
+DATE_ANSWER_RE = re.compile(r"^A[：:](.+)$")
+
+
+def parse_date(path: Path) -> tuple[list[dict], list[dict]]:
+    """约会页 → 开头四条邀约限制 + 两组「地点 / 问题 / 回答」。
+
+    返回 (head, body)：head 由 `_merge_date` 并进角色页的基础信息列表，body 追加到页尾。
+    一个问题可能有多个都能过关的回答（东门商店街「今天想去什么地方？」下面就有
+    唱片行 / 服饰店两条 A），所以 answer 里用换行分隔，由 `qa` 块分行渲染。
+    """
+    lines = _read_lines(path)
+    head: list[dict] = []
+    body: list[dict] = []
+    group = 0
+    in_body = False
+
+    for text in lines:
+        if text in DATE_SECTIONS:
+            in_body = True
+            group += 1
+            body.append({"kind": "section", "text": text, "group": group})
+            continue
+
+        if not in_body:
+            # 「开启邀约条件：…」这类门槛，和签约金 / 分红同属基础信息。
+            head.append({"kind": "paragraph", "text": text, "group": 0, "bullet": True})
+            continue
+
+        question = DATE_QUESTION_RE.match(text)
+        if question:
+            body.append(
+                {
+                    "kind": "qa",
+                    "text": question.group(2).strip(),
+                    "label": question.group(1),
+                    "group": group,
+                }
+            )
+            continue
+
+        answer = DATE_ANSWER_RE.match(text)
+        if answer and body and body[-1]["kind"] == "qa":
+            previous = body[-1]
+            value = answer.group(1).strip()
+            previous["answer"] = f"{previous['answer']}\n{value}" if previous.get("answer") else value
+            continue
+
+        # 剩下的都是地点名，一个地点一组。
+        group += 1
+        body.append({"kind": "heading", "text": text, "depth": 1, "group": group})
+
+    return head, body
+
+
+# 「<slug>-date.txt」放该角色的约会选项，有就并进角色页。
+DATE_SUFFIX = "-date.txt"
+
+
+def _merge_date(slug: str, blocks: list[dict]) -> list[dict]:
+    """把约会页并进角色页：邀约限制接到基础信息后面，对话选项追加到页尾。
+
+    没有 `<slug>-date.txt` 就原样返回，所以只导入正文的角色页不受影响。
+    """
+    path = SOURCES / f"{slug}{DATE_SUFFIX}"
+    if not path.exists():
+        return blocks
+    head, body = parse_date(path)
+    split = 0
+    while split < len(blocks) and blocks[split]["kind"] == "paragraph" and blocks[split].get("bullet"):
+        split += 1
+    # 追加到页尾的块要从最后一段之后重新编号，否则会和前面的块并成一组。
+    offset = max((block["group"] for block in blocks), default=0) + 10
+    for block in body:
+        block["group"] += offset
+    return [*blocks[:split], *head, *blocks[split:], *body]
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
@@ -851,7 +931,7 @@ def build() -> dict:
             parser = PARSERS.get(slug)
             if parser is not None:
                 blocks, subtitle = parser(SOURCES / f"{slug}.txt")
-                node["blocks"] = blocks
+                node["blocks"] = _merge_date(slug, blocks)
                 node["status"] = "ready"
                 # 副标题只取原文首行；与页面标题重复（或原文没写）就不写，绝不自己编一句概述。
                 if subtitle and subtitle != title:

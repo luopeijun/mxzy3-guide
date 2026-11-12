@@ -505,10 +505,15 @@ class TestSweetGuide(unittest.TestCase):
                 "普通模式下结婚图取得条件",
                 "甜蜜模式下结婚图取得条件",
                 "甜蜜模式下告白相关事件触发条件",
+                # 约会页的对话选项追加在页尾（见 test_character_date_options）。
+                "普通约会对话选项提示",
+                "亲密约会对话选项提示",
             ],
         )
+        # 只数事件部分的章节标题；页尾约会小节下的地点名也是 heading。
+        first_date = next(i for i, b in enumerate(cheng) if b["text"] == "普通约会对话选项提示")
         self.assertEqual(
-            [b["text"] for b in cheng if b["kind"] == "heading"],
+            [b["text"] for b in cheng[:first_date] if b["kind"] == "heading"],
             ["加入", "拘谨", "得奖", "犹豫", "家境", "资格", "贤惠", "距离"],
         )
 
@@ -546,9 +551,11 @@ class TestSweetGuide(unittest.TestCase):
             ],
         )
         self.assertFalse(any(b.get("bullet") for b in tail[1:]))
-        # 告白条件带事件编号：编号进 pill，条件跟在后面。
-        self.assertEqual(cheng[-1]["label"], "6-2")
-        self.assertTrue(cheng[-1]["text"].startswith("取消友好度检查"))
+        # 告白条件带事件编号：编号进 pill，条件跟在后面（页尾现在是约会小节）。
+        announce = next(i for i, b in enumerate(cheng) if b["text"] == "甜蜜模式下告白相关事件触发条件")
+        last_condition = [b for b in cheng[announce:] if b["group"] == cheng[announce]["group"]][-1]
+        self.assertEqual(last_condition["label"], "6-2")
+        self.assertTrue(last_condition["text"].startswith("取消友好度检查"))
 
         # 丹尼斯：可创作作品里带 `*` 的那条是特殊作品（金色菱形），星号不进正文。
         dan = nodes["danisi"]["blocks"]
@@ -618,6 +625,59 @@ class TestSweetGuide(unittest.TestCase):
         self.assertTrue(any("困扰着" in b["text"] for b in wei))
         yao = nodes["yao-ziqi"]["blocks"]
         self.assertTrue(any("惊人的赞美！" in b["text"] for b in yao))
+
+    def test_character_date_options(self) -> None:
+        # 约会页（<slug>-date.txt）并进角色页：开头的邀约门槛接在基础信息后面，
+        # 两组对话选项追加到页尾，按地点分组的 Q/A 走 `qa` 块。
+        category = next(c for c in self.data["categories"] if c["id"] == "sweet-characters")
+        nodes = {n["id"].split("/")[-1]: n for n in category["children"]}
+
+        cheng = nodes["cheng-zhongxuan"]["blocks"]
+        # 基础信息：签约金 / 分红 / 限制 之后接四行邀约门槛，仍是一张列表。
+        head = [b["text"] for b in cheng if b["group"] == cheng[0]["group"]]
+        self.assertEqual(
+            head,
+            [
+                "签约金：0万",
+                "分红：80%",
+                "限制：严禁裸露",
+                "开启邀约条件：公司知名度300以上、城仲瑄称号达偶像级",
+                "无法邀约的情况：杜云芊一星期内任一天的行程失败",
+                "可连续约会上限周数：1周",
+                "达上限后无法邀约周数：1周",
+            ],
+        )
+        self.assertTrue(all(b.get("bullet") for b in cheng if b["group"] == cheng[0]["group"]))
+
+        # 两个约会小节排在三个条件小节之后（追加到页尾），没有插进事件中间。
+        self.assertEqual(
+            [b["text"] for b in cheng if b["kind"] == "section"][-2:],
+            ["普通约会对话选项提示", "亲密约会对话选项提示"],
+        )
+
+        for slug, questions, answers, places, first_answer in (
+            ("cheng-zhongxuan", 12, 13, 10, "赞成他的说法"),
+            ("danisi", 20, 20, 14, "是否该改变造型？"),
+        ):
+            blocks = nodes[slug]["blocks"]
+            start = next(i for i, b in enumerate(blocks) if b["text"] == "普通约会对话选项提示")
+            date = blocks[start:]
+            pairs = [b for b in date if b["kind"] == "qa"]
+            self.assertEqual(len(pairs), questions, slug)
+            self.assertEqual(sum(len(b["answer"].split("\n")) for b in pairs), answers, slug)
+            self.assertEqual(len([b for b in date if b["kind"] == "heading"]), places, slug)
+            # 问题按地点从 1 重新编号；回答挂在各自的问题上。
+            self.assertEqual((pairs[0]["label"], pairs[0]["answer"]), ("1", first_answer), slug)
+            self.assertTrue(all(b.get("answer") for b in pairs), slug)
+            # 「Q：」「A：」这类源文本标记已经变成编号 / 答 徽标，正文里不再带。
+            self.assertFalse(any(b["text"].startswith("Q：") for b in pairs), slug)
+
+        # 一个问题两个都能过关的回答：源文本两行 A，存成一个换行分隔的 answer。
+        multi = next(b for b in cheng if b["kind"] == "qa" and b["text"] == "今天想去什么地方？")
+        self.assertEqual(multi["answer"], "唱片行\n服饰店")
+        # 地点名是「东门商店街」（原文 OCR 成「咚门」）。
+        self.assertTrue(any(b["text"] == "东门商店街" for b in cheng))
+        self.assertFalse(any("咚" in b["text"] for b in cheng))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

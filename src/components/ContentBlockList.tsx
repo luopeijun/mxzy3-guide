@@ -298,30 +298,43 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
         </p>
       );
     }
-    case 'qa':
-      // Every Q&A pair is its own item: a dot in the gutter for the question,
-      // and the answer nested under it, so a long run of questions stays scannable.
+    case 'qa': {
+      // 每个问答一张白底卡片，壳子与事件卡同一套（描边 + 白底 + 编号 pill 对齐）。
+      // 源文本一个问句可能有好几个都能过关的回答（「今天想去什么地方？」下面就是
+      // 唱片行 / 服饰店两行 A），answer 里用换行分隔，这里一行一个「答」。
+      const answers = block.answer ? block.answer.split('\n') : [];
       return (
-        <div className="mb-3.5">
-          <p className="relative pl-[19px] text-ui-sm leading-[1.75] break-words text-ink">
-            <span
-              aria-hidden="true"
-              className="absolute left-[6px] top-[11px] h-[5px] w-[5px] rounded-full bg-brand"
-            />
-            <HighlightText text={block.text} />
-          </p>
-          {block.answer && (
-            <p className="mt-1 flex items-start gap-1.5 pl-[19px]">
-              <span className="mt-[3px] shrink-0 rounded-ui-xs bg-brand-soft px-[5px] text-ui-2xs font-bold leading-[1.6] text-brand-strong">
-                答
+        <div
+          data-qa=""
+          className={`mb-3 rounded-ui-sm border px-3 py-2.5 ${eventCardClasses(false)}`}
+        >
+          <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
+            {block.label && (
+              <span className="mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs bg-brand-soft px-[5px] text-center text-ui-2xs font-bold leading-[1.7] text-brand-strong">
+                {block.label}
               </span>
-              <span className="min-w-0 flex-1 text-ui-sm leading-[1.75] break-words text-ink">
-                <HighlightText text={block.answer} />
-              </span>
-            </p>
+            )}
+            <span className="min-w-0 flex-1 break-words">
+              <HighlightText text={block.text} />
+            </span>
+          </div>
+          {answers.length > 0 && (
+            <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">
+              {answers.map((answer, position) => (
+                <p key={position} className="flex items-start gap-1.5" data-qa-answer="">
+                  <span className="mt-[3px] shrink-0 rounded-ui-xs bg-brand-soft px-[5px] text-ui-2xs font-bold leading-[1.6] text-brand-strong">
+                    答
+                  </span>
+                  <span className="min-w-0 flex-1 text-ui-sm leading-[1.8] break-words text-ink">
+                    <HighlightText text={answer} />
+                  </span>
+                </p>
+              ))}
+            </div>
           )}
         </div>
       );
+    }
     case 'table':
       return block.table ? <DataTable data={block.table} /> : null;
     case 'item':

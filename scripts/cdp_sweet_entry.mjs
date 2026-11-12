@@ -421,6 +421,18 @@ async function main() {
       cgChips: chips('CG'),
       cgCardBg: bg('1-2'),
       plainCardBg: bg('1-1'),
+      qaCount: document.querySelectorAll('[data-qa]').length,
+      qaAnswers: document.querySelectorAll('[data-qa-answer]').length,
+      qaBg: (() => {
+        const el = document.querySelector('[data-qa]');
+        return el ? getComputedStyle(el).backgroundColor : '';
+      })(),
+      qaBorder: (() => {
+        const el = document.querySelector('[data-qa]');
+        return el ? getComputedStyle(el).borderTopColor : '';
+      })(),
+      dateSections: [...document.querySelectorAll('main h3')]
+        .filter((h) => h.textContent.includes('约会对话选项提示')).length,
       text: document.querySelector('main')?.innerText ?? '',
     };
   })()`);
@@ -433,11 +445,13 @@ async function main() {
     cheng.hash,
   );
   check(
-    '可创作作品 / 事件 + 三个条件小节，共 13 个小标题',
+    '可创作作品 / 事件 + 三个条件小节 + 两个约会小节，共 25 个小标题',
     cheng.heads.slice(0, 2).join('/') === '可创作作品/事件'
       && cheng.heads[12] === '甜蜜模式下告白相关事件触发条件'
-      && cheng.heads.length === 13,
-    JSON.stringify(cheng.heads.slice(0, 3)),
+      && cheng.heads[13] === '普通约会对话选项提示'
+      && cheng.dateSections === 2
+      && cheng.heads.length === 25,
+    `heads=${cheng.heads.length} date=${cheng.dateSections}`,
   );
   check(
     '8 个章节：加入 … 距离',
@@ -465,11 +479,33 @@ async function main() {
     !cheng.text.includes('（友好度上升') && cheng.text.includes('樱花绽放的季节'),
     'ok',
   );
+  // 约会选项：每个问答一张白底卡（壳子与事件卡同一套），一个提问可以有多个答案。
+  check(
+    '12 个约会问答各一张白底卡（13 个答案）',
+    cheng.qaCount === 12 && cheng.qaAnswers === 13,
+    `${cheng.qaCount} / ${cheng.qaAnswers}`,
+  );
+  check(
+    '问答卡的白底 / 描边与普通事件卡一致',
+    cheng.qaBg === cheng.plainCardBg && cheng.qaBorder !== '' && cheng.qaBg.includes('rgba(0, 0, 0, 0)') === false,
+    `${cheng.qaBg} vs ${cheng.plainCardBg}`,
+  );
+  check(
+    '邀约门槛并进页首基础信息',
+    cheng.bullets.slice(3, 7).join('/').includes('开启邀约条件') &&
+      cheng.bullets.slice(3, 7).join('/').includes('可连续约会上限周数'),
+    JSON.stringify(cheng.bullets.slice(3, 5)),
+  );
 
   await openNode('sweet-characters/danisi');
   const danisi = await readCharacter();
   check('点丹尼斯写入深链', danisi.hash === '#/guide/sweet-characters/danisi', danisi.hash);
   check('51 张事件卡（1-1 ~ 8-9）', danisi.cards === 51, `cards=${danisi.cards}`);
+  check(
+    '丹尼斯：14 个约会地点 + 20 个问答',
+    danisi.heads.length === 29 && danisi.qaCount === 20 && danisi.qaAnswers === 20,
+    `heads=${danisi.heads.length} qa=${danisi.qaCount}`,
+  );
   check(
     '可创作作品里带 * 的那条用金色菱形标出',
     danisi.diamonds === 1 && danisi.text.includes('从接吻开始'),
