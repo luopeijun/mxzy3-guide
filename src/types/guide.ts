@@ -18,6 +18,8 @@ export interface TableColumn {
   highlight?: boolean;
   /** Second line under the value, e.g. the growth bonus of that attribute. */
   growthKey?: string;
+  /** Long prose column: let the cell wrap instead of pushing the table sideways. */
+  wrap?: boolean;
 }
 
 export interface TableData {

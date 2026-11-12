@@ -90,7 +90,8 @@ export default function DataTable({ data }: Props) {
                     <td
                       key={column.key}
                       className={cn(
-                        'whitespace-nowrap px-2 py-[7px] leading-[1.5]',
+                        'px-2 py-[7px] leading-[1.5]',
+                        column.wrap ? 'whitespace-normal' : 'whitespace-nowrap',
                         column.numeric ? 'text-right tabular-nums' : 'text-left',
                         columnIndex === 0
                           ? 'sticky left-0 z-[1] bg-inherit font-semibold text-ink shadow-[1px_0_0_var(--color-line)]'
