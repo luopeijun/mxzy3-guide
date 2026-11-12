@@ -24,6 +24,7 @@ import {
   type SaveArchive,
 } from '../../lib/saveArchive';
 import { readCgRaw } from '../../lib/cg';
+import { applySpecialsToLocal, readSpecialsForExport } from '../../lib/specialsState';
 
 type Notice = { tone: 'ok' | 'error'; text: string };
 
@@ -72,6 +73,11 @@ export default function SaveArchivePanel() {
 
   const buildCgPart = () => ({ version: 1 as const, collected: readCgRaw() });
 
+  const buildSpecialsPart = () => {
+    const state = readSpecialsForExport();
+    return state ? ({ version: 1 as const, state } as const) : undefined;
+  };
+
   const applyArchive = (archive: SaveArchive) => {
     const { data, report } = archive.tracker
       ? reanchorProgress(archive.tracker.data, archive.tracker.steps, allLines)
@@ -94,17 +100,25 @@ export default function SaveArchivePanel() {
   const handleExport = () => {
     const now = new Date();
     downloadText(
-      serialiseSaveArchive(createSaveArchive(buildTrackerArchive(now), buildCgPart(), now)),
+      serialiseSaveArchive(
+        createSaveArchive(buildTrackerArchive(now), buildCgPart(), buildSpecialsPart(), now),
+      ),
       saveArchiveFileName(now),
     );
-    setNotice({ tone: 'ok', text: '存档文件已下载，传到另一台设备后导入即可（含进度与 CG 收集）。' });
+    setNotice({
+      tone: 'ok',
+      text: '存档文件已下载，传到另一台设备后导入即可（含进度、CG 收集与六大通告配置）。',
+    });
   };
 
   const handleCopy = async () => {
     try {
       const now = new Date();
       await navigator.clipboard.writeText(
-        serialiseSaveArchive(createSaveArchive(buildTrackerArchive(now), buildCgPart(), now), false),
+        serialiseSaveArchive(
+          createSaveArchive(buildTrackerArchive(now), buildCgPart(), buildSpecialsPart(), now),
+          false,
+        ),
       );
       setNotice({ tone: 'ok', text: '存档内容已复制到剪贴板，可直接粘贴到另一台设备。' });
     } catch {
@@ -132,10 +146,11 @@ export default function SaveArchivePanel() {
     }
     if (pending.trackerData) importProgress(pending.trackerData, mode);
     if (pending.archive?.cg) applyCgToLocal(pending.archive.cg.collected);
+    if (pending.archive?.specials) applySpecialsToLocal(pending.archive.specials.state, mode);
     const base =
       mode === 'merge'
-        ? '已合并存档，本机原有进度与 CG 收集都保留着。'
-        : '已用存档覆盖本机进度（CG 收集仍按合并处理，不会丢失）。';
+        ? '已合并存档，本机原有进度、CG 收集与六大通告配置都保留着。'
+        : '已用存档覆盖本机进度（CG 收集与六大通告仍按合并处理，不会丢失）。';
     const extra = pending.report ? describeReport(pending.report) : '';
     setNotice({ tone: 'ok', text: extra ? `${base} ${extra}。` : base });
     setPending(null);
@@ -158,7 +173,7 @@ export default function SaveArchivePanel() {
         <span className="text-ui-2xs text-ink-faint">多端同步</span>
       </div>
       <p className="mt-2 text-ui-2xs leading-[1.7] text-ink-faint">
-        进度与 CG 收藏只保存在本机浏览器。导出存档后在另一台设备导入，就能接着之前的记录继续。
+        进度、CG 收藏与六大通告配置只保存在本机浏览器。导出存档后在另一台设备导入，就能接着之前的记录继续。
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">

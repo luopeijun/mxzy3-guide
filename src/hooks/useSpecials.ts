@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { COURSE_LEVELS, type CourseLevel } from '../lib/specials';
 import {
   SPECIALS_STORAGE_KEY,
+  SPECIALS_CHANGED_EVENT,
   emptyState,
   readState,
   trimSoloAssignments,
@@ -26,6 +27,15 @@ export function useSpecials(notices: SpecialNotice[] = []) {
       // Private mode / quota: the board still works for this session.
     }
   }, [state]);
+
+  // Re-read after a unified save import writes the board back to localStorage.
+  // The tracker page owns the import UI, so the board is usually not mounted
+  // then — but if it is (or a future layout mounts both), stay in sync.
+  useEffect(() => {
+    const handler = () => setState(trimSoloAssignments(readState(defaultEnabled), notices));
+    window.addEventListener(SPECIALS_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(SPECIALS_CHANGED_EVENT, handler);
+  }, [defaultEnabled, notices]);
 
   const toggleEnabled = useCallback((noticeId: string) => {
     setState((previous) => ({

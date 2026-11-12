@@ -565,3 +565,100 @@ function coursesForCertsNames(certs: string[]): string[] {
   const wanted = new Set(certs);
   return COURSE_REQUIREMENTS.filter((course) => wanted.has(course.cert)).map((course) => course.name);
 }
+
+/** Fired after the board save is written back from a unified save import, so a
+ *  mounted useSpecials re-reads localStorage instead of keeping its snapshot. */
+export const SPECIALS_CHANGED_EVENT = 'guide.specials.changed';
+
+/** The current board save, or null when nothing has been written yet — a fresh
+ *  board that was never touched should not be exported, and must never be
+ *  imported over (the unified save simply omits the specials half then). */
+export function readSpecialsForExport(): SpecialsState | null {
+  try {
+    const raw = localStorage.getItem(SPECIALS_STORAGE_KEY);
+    if (!raw) return null;
+    return sanitiseState(JSON.parse(raw), []);
+  } catch {
+    return null;
+  }
+}
+
+/** Union two board saves. Every side keeps what it recorded, so an import can
+ *  never drop a tick the player already earned on either device. Numeric stats /
+ *  counters / funds take the higher value; course grades take the higher level;
+ *  everything else (enabled notices, assignments, done ticks, group locks) is a
+ *  set union. Used by the "merge" branch of the unified save import. */
+export function mergeSpecialsState(local: SpecialsState, incoming: SpecialsState): SpecialsState {
+  const enabled = [...new Set([...local.enabled, ...incoming.enabled])];
+  const assignments: Record<string, Record<string, string[]>> = {};
+  for (const noticeId of new Set([
+    ...Object.keys(local.assignments),
+    ...Object.keys(incoming.assignments),
+  ])) {
+    const slots = new Set([
+      ...Object.keys(local.assignments[noticeId] ?? {}),
+      ...Object.keys(incoming.assignments[noticeId] ?? {}),
+    ]);
+    const merged: Record<string, string[]> = {};
+    for (const slot of slots) {
+      merged[slot] = [...new Set([
+        ...(local.assignments[noticeId]?.[slot] ?? []),
+        ...(incoming.assignments[noticeId]?.[slot] ?? []),
+      ])];
+    }
+    assignments[noticeId] = merged;
+  }
+  const done = [...new Set([...local.done, ...incoming.done])];
+  const artistIds = new Set([...Object.keys(local.stats), ...Object.keys(incoming.stats)]);
+  const stats: Record<string, Record<string, number>> = {};
+  const courses: Record<string, Record<string, CourseLevel>> = {};
+  for (const artistId of artistIds) {
+    const attrs = new Set([
+      ...Object.keys(local.stats[artistId] ?? {}),
+      ...Object.keys(incoming.stats[artistId] ?? {}),
+    ]);
+    const statRow: Record<string, number> = {};
+    for (const attr of attrs) {
+      statRow[attr] = Math.max(local.stats[artistId]?.[attr] ?? 0, incoming.stats[artistId]?.[attr] ?? 0);
+    }
+    stats[artistId] = statRow;
+    const courseKeys = new Set([
+      ...Object.keys(local.courses[artistId] ?? {}),
+      ...Object.keys(incoming.courses[artistId] ?? {}),
+    ]);
+    const courseRow: Record<string, CourseLevel> = {};
+    for (const course of courseKeys) {
+      const lv = local.courses[artistId]?.[course];
+      const iv = incoming.courses[artistId]?.[course];
+      if (lv && iv) courseRow[course] = COURSE_LEVELS.indexOf(lv) >= COURSE_LEVELS.indexOf(iv) ? lv : iv;
+      else if (lv) courseRow[course] = lv;
+      else if (iv) courseRow[course] = iv;
+    }
+    courses[artistId] = courseRow;
+  }
+  const values: Record<string, number> = {};
+  for (const key of new Set([...Object.keys(local.values), ...Object.keys(incoming.values)])) {
+    values[key] = Math.max(local.values[key] ?? 0, incoming.values[key] ?? 0);
+  }
+  const groupLocked: Record<string, boolean> = {};
+  for (const noticeId of new Set([
+    ...Object.keys(local.groupLocked),
+    ...Object.keys(incoming.groupLocked),
+  ])) {
+    groupLocked[noticeId] = local.groupLocked[noticeId] || incoming.groupLocked[noticeId] || false;
+  }
+  return { version: 1, enabled, assignments, done, stats, courses, values, groupLocked };
+}
+
+/** Write a board save back from a unified save import. `merge` keeps both
+ *  devices' progress; `replace` uses the file verbatim (still sanitised). The
+ *  mounted board listens for SPECIALS_CHANGED_EVENT and re-reads. */
+export function applySpecialsToLocal(incoming: SpecialsState, mode: 'merge' | 'replace'): void {
+  const next = mode === 'replace' ? sanitiseState(incoming, []) : mergeSpecialsState(readState([]), incoming);
+  try {
+    localStorage.setItem(SPECIALS_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Private mode / quota: the import is silently best-effort.
+  }
+  window.dispatchEvent(new Event(SPECIALS_CHANGED_EVENT));
+}
