@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { GuideData } from '../../types/guide';
 import type { SpecialsData } from '../../types/specials';
 import { listArtists } from '../../lib/tracker';
@@ -9,6 +9,7 @@ import { parseTarget } from '../../lib/specials';
 import { cn } from '../../lib/cn';
 import NoticeCard from './NoticeCard';
 import StatsPanel, { type GroupStatRow } from './StatsPanel';
+import SaveArchivePanel from '../tracker/SaveArchivePanel';
 
 interface Props {
   data: SpecialsData;
@@ -25,6 +26,7 @@ export default function SpecialsApp({ data, guide }: Props) {
   const { state } = board;
   const [hideDone, setHideDone] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const allArtists = useMemo(() => listArtists(guide), [guide]);
   const titles = useMemo(() => new Map(allArtists.map((artist) => [artist.id, artist.title])), [allArtists]);
@@ -73,6 +75,15 @@ export default function SpecialsApp({ data, guide }: Props) {
     [data.rows],
   );
 
+  useEffect(() => {
+    if (!archiveOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setArchiveOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [archiveOpen]);
+
   return (
     <div data-specials-app className="fixed inset-x-0 bottom-0 top-16 z-50 flex flex-col bg-canvas">
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
@@ -103,6 +114,14 @@ export default function SpecialsApp({ data, guide }: Props) {
                 />
                 收起已完成
               </label>
+              <button
+                type="button"
+                data-specials-archive
+                onClick={() => setArchiveOpen(true)}
+                className="shrink-0 whitespace-nowrap rounded-full border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+              >
+                全部存档
+              </button>
               <button
                 type="button"
                 data-reset
@@ -207,6 +226,21 @@ export default function SpecialsApp({ data, guide }: Props) {
           </p>
         </div>
       </div>
+
+      {archiveOpen && (
+        <div
+          data-specials-archive-modal
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 py-6"
+          onClick={() => setArchiveOpen(false)}
+        >
+          <div
+            className="max-h-full w-full max-w-[440px] overflow-y-auto"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <SaveArchivePanel />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

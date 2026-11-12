@@ -177,6 +177,26 @@ async function main() {
     JSON.stringify(s?.done),
   );
 
+  // 4) 六大通告页「全部存档」按钮 + 弹窗（与 CG / 追踪器同一面板）
+  await evaluate(`(() => { localStorage.clear(); location.hash = '#/specials'; return true; })()`);
+  await sleep(2500);
+  const hasBtn = await evaluate(`!!document.querySelector('[data-specials-archive]')`);
+  check(hasBtn, '六大通告页存在「全部存档」按钮', '');
+  if (hasBtn) {
+    await evaluate(`document.querySelector('[data-specials-archive]').click()`);
+    await sleep(400);
+    const modalShown = await evaluate(`!!document.querySelector('[data-specials-archive-modal]')`);
+    check(modalShown, '点击后弹出存档面板弹窗', '');
+    const panelInModal = await evaluate(
+      `!!document.querySelector('[data-specials-archive-modal] [data-transfer-paste]')`,
+    );
+    check(panelInModal, '弹窗内是同一个全部存档面板（含导入控件）', '');
+    await evaluate(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`);
+    await sleep(300);
+    const modalClosed = await evaluate(`!document.querySelector('[data-specials-archive-modal]')`);
+    check(modalClosed, 'Esc 可关闭弹窗', '');
+  }
+
   console.log(`\n${checksTotal - failures.length}/${checksTotal} passed`);
   if (failures.length) {
     console.log('FAILURES:', failures.join(' | '));
