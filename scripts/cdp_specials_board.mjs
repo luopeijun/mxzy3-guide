@@ -10,6 +10,7 @@ import http from 'node:http';
    7) 时间线备注零状态、只跳事件追踪器
    8) 候选池：任一位候选人齐证即可
    9) 存档持久化、刷新不丢、清空需二次确认
+   10) 右侧「六大通告」跳转导航：rail 存在、六张卡入口齐全、点击滚到卡片、滚动高亮
    Usage: node cdp_specials_board.mjs */
 
 const url = 'http://localhost:5173/#/specials';
@@ -452,6 +453,63 @@ async function main() {
     '二次确认后进度清空、通告恢复默认全启用');
   const finalCards = JSON.parse(await cards());
   check(finalCards.every((c) => c.enabled === 'yes'), '清空后六张卡回到默认全部勾选');
+
+  // 10) 右侧「六大通告」跳转导航：存在、点击滚到卡片、滚动高亮
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await setupFresh();
+  check(await evaluate(`!!document.querySelector('[data-specials-rail]')`), '右侧跳转导航 rail 存在', '');
+  const railList = JSON.parse(await evaluate(`JSON.stringify([...document.querySelectorAll('[data-specials-rail-item]')].map((b) => b.getAttribute('data-specials-rail-item')))`));
+  check(railList.length === 6, 'rail 含六张卡入口', JSON.stringify(railList));
+  const waitScrollSettle = async (maxMs = 3000) => {
+    let last = -1;
+    const start = Date.now();
+    while (Date.now() - start < maxMs) {
+      const cur = await evaluate(`document.querySelector('[data-specials-app] > div > div').scrollTop`);
+      if (cur === last) return cur;
+      last = cur;
+      await sleep(120);
+    }
+    return last;
+  };
+  const waitCardAtTop = async (id, maxMs = 6000) => {
+    const start = Date.now();
+    let prev = null;
+    while (Date.now() - start < maxMs) {
+      const ct = await evaluate(`(() => {
+        const box = document.querySelector('[data-specials-app] > div > div');
+        const c = document.querySelector('[data-notice-id="${id}"]');
+        return c ? c.getBoundingClientRect().top - box.getBoundingClientRect().top : 9999;
+      })()`);
+      if (prev !== null && Math.abs(ct - prev) < 3 && ct < 40) return true;
+      prev = ct;
+      await sleep(100);
+    }
+    return false;
+  };
+  const railState = (id) => evaluate(`(() => {
+    const box = document.querySelector('[data-specials-app] > div > div');
+    const card = document.querySelector('[data-notice-id="${id}"]');
+    const item = document.querySelector('[data-specials-rail-item="${id}"]');
+    return JSON.stringify({
+      scrollTop: box.scrollTop,
+      cardTop: card.getBoundingClientRect().top - box.getBoundingClientRect().top,
+      active: item.getAttribute('aria-current'),
+      highlighted: document.querySelector('[data-specials-rail-item][aria-current="true"]')?.getAttribute('data-specials-rail-item') ?? null,
+    });
+  })()`);
+  if (railList.length === 6) {
+    const last = railList[5];
+    await evaluate(`document.querySelector('[data-specials-rail-item="${last}"]').click()`);
+    check(await waitCardAtTop(last), '点最后一张后滚到该卡片（卡片贴顶）', '');
+    const r1 = JSON.parse(await railState(last));
+    check(r1.active === 'true', '点最后一张后该入口高亮', JSON.stringify(r1));
+    const first = railList[0];
+    await evaluate(`document.querySelector('[data-specials-rail-item="${first}"]').click()`);
+    check(await waitCardAtTop(first), '点第一张后滚到该卡片（卡片贴顶）', '');
+    const r0 = JSON.parse(await railState(first));
+    check(r0.active === 'true', '点第一张后该入口高亮', JSON.stringify(r0));
+  }
+  await send('Emulation.clearDeviceMetricsOverride', {});
 
   ws.close();
   if (failures.length) throw new Error(`${failures.length} checks failed: ${failures.join(' | ')}`);
