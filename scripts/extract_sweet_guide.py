@@ -105,6 +105,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = ROOT / "sources" / "sweet"
 OUTPUT = ROOT / "public" / "data" / "sweet" / "guide.json"
+# 角色头像按约定命名放在 public/images/sweet/：`<slug>-logo.*` 是目录与
+# 角色卡在人名左侧展示的圆圈头像（与主站 images/characters/ 同一套约定）。
+SWEET_IMAGES = ROOT / "public" / "images" / "sweet"
+IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
+
+def _character_avatar(slug: str) -> str | None:
+    """Return the web path (relative to BASE_URL) of `<slug>-logo` image."""
+    for ext in IMAGE_EXTS:
+        path = SWEET_IMAGES / f"{slug}-logo{ext}"
+        if path.exists():
+            return f"images/sweet/{slug}-logo{ext}"
+    return None
 
 # 「1-1．可别乱花我的钱！」——源文本的句点有全角也有半角，两种都认。
 EVENT_RE = re.compile(r"^(\d+)-(\d+)[．.](.+)$")
@@ -989,6 +1002,8 @@ CATEGORIES: list[dict] = [
     {
         "id": "sweet-characters",
         "title": "角色攻略",
+        # 角色页目录与角色卡要在人名左侧显示圆圈头像，探测 <slug>-logo.*。
+        "avatars": True,
         "children": [
             ("cheng-zhongxuan", "城仲瑄"),
             ("danisi", "丹尼斯"),
@@ -1028,6 +1043,10 @@ def build() -> dict:
                 "blocks": [],
                 "children": [],
             }
+            if category.get("avatars"):
+                avatar = _character_avatar(slug)
+                if avatar:
+                    node["avatar"] = avatar
 
             parser = PARSERS.get(slug)
             if parser is not None:

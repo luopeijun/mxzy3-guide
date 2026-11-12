@@ -86,6 +86,24 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(stats["readyItems"], 24)
         self.assertEqual(stats["missingItems"], 0)
 
+    def test_character_avatars(self) -> None:
+        # 角色页目录 / 角色卡在人名左侧显示圆圈头像：<slug>-logo.* 探测到才写，
+        # 其他类目绝不带 avatar 字段（GuideTree 对任何节点都会渲染头像）。
+        expected = {"cheng-zhongxuan", "danisi", "ji-xiang", "murong-hexi",
+                    "shen-weizhen", "shi-difen", "wei-ya", "yao-ziqi"}
+        for category in self.data["categories"]:
+            with_avatar = {n["id"].split("/")[-1] for n in category["children"] if "avatar" in n}
+            if category["id"] == "sweet-characters":
+                self.assertEqual(with_avatar, expected, "角色攻略 8 位都应有头像")
+                for node in category["children"]:
+                    self.assertRegex(node["avatar"], r"^images/sweet/[a-z-]+-logo\.(png|jpg|webp)$")
+                    self.assertTrue(
+                        (ROOT / "public" / node["avatar"]).exists(),
+                        f"{node['title']} 的头像文件不存在：{node['avatar']}",
+                    )
+            else:
+                self.assertEqual(with_avatar, set(), f"{category['title']} 不该有头像")
+
     def test_no_invented_descriptions(self) -> None:
         # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
         def headline(node: dict) -> str:

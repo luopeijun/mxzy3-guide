@@ -4771,7 +4771,8 @@
               "answer": "依然是对的！"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/cheng-zhongxuan-logo.png"
         },
         {
           "id": "sweet-characters/danisi",
@@ -6108,7 +6109,8 @@
               "answer": "（过去找她聊聊）"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/danisi-logo.png"
         },
         {
           "id": "sweet-characters/ji-xiang",
@@ -7238,7 +7240,8 @@
               "answer": "有……"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/ji-xiang-logo.png"
         },
         {
           "id": "sweet-characters/murong-hexi",
@@ -8406,7 +8409,8 @@
               "answer": "很喜欢……\n需要改进！"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/murong-hexi-logo.png"
         },
         {
           "id": "sweet-characters/shen-weizhen",
@@ -9492,7 +9496,8 @@
               "answer": "学长想试探什么？"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/shen-weizhen-logo.png"
         },
         {
           "id": "sweet-characters/shi-difen",
@@ -10554,7 +10559,8 @@
               "answer": "应该会吧！"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/shi-difen-logo.png"
         },
         {
           "id": "sweet-characters/wei-ya",
@@ -11726,7 +11732,8 @@
               "answer": "去试试看！"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/wei-ya-logo.png"
         },
         {
           "id": "sweet-characters/yao-ziqi",
@@ -13063,7 +13070,8 @@
               "answer": "想到晚餐？"
             }
           ],
-          "children": []
+          "children": [],
+          "avatar": "images/sweet/yao-ziqi-logo.png"
         }
       ]
     },

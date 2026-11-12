@@ -85,6 +85,9 @@ async function main() {
     const rows = [...document.querySelectorAll('[data-node-id]')];
     const ids = rows.map((n) => n.dataset.nodeId);
     const count = (prefix) => ids.filter((id) => id.startsWith(prefix)).length;
+    const avatars = rows
+      .filter((n) => n.dataset.nodeId.startsWith('sweet-characters/'))
+      .map((n) => n.querySelectorAll('img').length);
     return {
       cats: ['sweet-guide', 'sweet-characters', 'sweet-side'].filter((id) => ids.includes(id)),
       total: ids.length,
@@ -93,6 +96,7 @@ async function main() {
       side: count('sweet-side/'),
       guideTitle: rows.find((n) => n.dataset.nodeId === 'sweet-guide')?.textContent ?? '',
       hasIntro: ids.includes('sweet-guide/intro'),
+      avatars,
     };
   })()`);
   check('目录有 3 个类目', tree.cats.length === 3, JSON.stringify(tree.cats));
@@ -101,6 +105,8 @@ async function main() {
   check('支线攻略 6 条', tree.side === 6, `side=${tree.side}`);
   check('第一类叫「经纪人事件簿」', tree.guideTitle.includes('经纪人事件簿'), tree.guideTitle.trim().slice(0, 20));
   check('已删掉「角色介绍」', tree.hasIntro === false, `hasIntro=${tree.hasIntro}`);
+  check('角色 8 位目录行都有圆圈头像', tree.avatars.length === 8 && tree.avatars.every((n) => n === 1),
+    `avatars=${JSON.stringify(tree.avatars)}`);
 
   // 3. 主线攻略正文：4 章 23 个事件，右侧小节同步 5 条
   if (shot) {
