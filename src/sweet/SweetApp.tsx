@@ -4,6 +4,7 @@ import type { ReorderRequest } from '../lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from '../lib/guide';
 import { useGuideData } from '../hooks/useGuideData';
 import { useHashSelection } from '../hooks/useHashSelection';
+import { cn } from '../lib/cn';
 import { useTreeOrder } from '../hooks/useTreeOrder';
 import AppShell from '../components/AppShell';
 import ContentPanel from '../components/ContentPanel';
@@ -61,6 +62,7 @@ function SweetGuide({ data: source }: Props) {
   );
 
   const currentNode = path[path.length - 1];
+  const activeCategoryId = path[0]?.id ?? '';
 
   useEffect(() => {
     if (!path.length) return;
@@ -110,6 +112,25 @@ function SweetGuide({ data: source }: Props) {
         </button>
       )}
       tabs={<TabBar items={TABS} activeId="guide" ariaLabel="视图切换" onSelect={() => {}} />}
+      right={(
+        <nav className="flex items-center gap-1 tab:gap-0 nav:hidden" aria-label="攻略分类">
+          {guide.categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              className={cn(
+                'whitespace-nowrap rounded-full px-[13px] py-[7px] text-ui-xs transition-colors duration-150 tab:px-[9px] tab:py-1.5',
+                activeCategoryId === category.id
+                  ? 'bg-brand-soft font-semibold text-brand-strong'
+                  : 'text-ink-muted hover:bg-surface-soft hover:text-ink',
+              )}
+              onClick={() => handleSelect(category.id)}
+            >
+              {category.title}
+            </button>
+          ))}
+        </nav>
+      )}
       crossLink={{
         href: `${import.meta.env.BASE_URL}index.html`,
         label: '‹ 明星志愿3',

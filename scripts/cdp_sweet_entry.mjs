@@ -80,6 +80,40 @@ async function main() {
   check('html 带 data-game="sweet"', head.game === 'sweet', String(head.game));
   check('品牌色令牌是粉色 c0306f', head.brandColor.toLowerCase() === '#c0306f', head.brandColor);
 
+  // 1b. 顶栏右侧的「攻略分类」胶囊（快速定位到三个一级目录，对齐主站）
+  const topNav = await evaluate(`(() => {
+    const nav = document.querySelector('nav[aria-label="攻略分类"]');
+    if (!nav) return { exists: false, labels: [] };
+    const labels = [...nav.querySelectorAll('button')].map((b) => b.textContent.trim());
+    return { exists: true, labels };
+  })()`);
+  check('顶栏有「攻略分类」胶囊', topNav.exists === true, JSON.stringify(topNav));
+  check('三个类目胶囊文本正确',
+    JSON.stringify(topNav.labels) === JSON.stringify(['经纪人事件簿', '角色攻略', '支线攻略']),
+    JSON.stringify(topNav.labels));
+  // 点击「角色攻略」应定位到该类目
+  await evaluate(`(() => {
+    const nav = document.querySelector('nav[aria-label="攻略分类"]');
+    [...nav.querySelectorAll('button')].find((b) => b.textContent.trim() === '角色攻略').click();
+    return 1;
+  })()`);
+  await new Promise((r) => setTimeout(r, 700));
+  const navJump = await evaluate(`(() => ({
+    hash: location.hash,
+    h1: document.querySelector('main h1')?.textContent?.trim() ?? '',
+    active: [...document.querySelectorAll('nav[aria-label="攻略分类"] button')]
+      .find((b) => b.className.includes('bg-brand-soft'))?.textContent?.trim() ?? '',
+  }))()`);
+  check('点「角色攻略」跳到该类目', navJump.hash.includes('sweet-characters'), navJump.hash);
+  check('跳转后高亮「角色攻略」胶囊', navJump.active === '角色攻略', navJump.active);
+  // 回到主线攻略，保证后续用例起点一致
+  await evaluate(`(() => {
+    const nav = document.querySelector('nav[aria-label="攻略分类"]');
+    [...nav.querySelectorAll('button')].find((b) => b.textContent.trim() === '经纪人事件簿').click();
+    return 1;
+  })()`);
+  await new Promise((r) => setTimeout(r, 600));
+
   // 2. 目录结构（按原攻略清单；第一类按用户裁决改叫「经纪人事件簿」，不再列角色介绍）
   const tree = await evaluate(`(() => {
     const rows = [...document.querySelectorAll('[data-node-id]')];
