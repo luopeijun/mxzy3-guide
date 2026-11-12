@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GuideData } from '../types/guide';
 import type { ReorderRequest } from '../lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from '../lib/guide';
 import { useGuideData } from '../hooks/useGuideData';
-import { useHashSelection } from '../hooks/useHashSelection';
+import { guideNodeId, isTrackerRoute, useHashSelection } from '../hooks/useHashSelection';
+import { GuideDataContext } from '../hooks/useGuideContext';
+import { TrackerProvider } from '../hooks/useTracker';
+import { SWEET_TRACKER_CONFIG } from '../lib/trackerConfig';
 import { cn } from '../lib/cn';
 import { useTreeOrder } from '../hooks/useTreeOrder';
 import AppShell from '../components/AppShell';
@@ -11,6 +14,7 @@ import ContentPanel from '../components/ContentPanel';
 import EmptyState from '../components/EmptyState';
 import LoadingScreen from '../components/LoadingScreen';
 import Sidebar from '../components/Sidebar';
+import TrackerApp from '../components/tracker/TrackerApp';
 import GameHeader from '../ui/GameHeader';
 import TabBar, { type TabItem } from '../ui/TabBar';
 
@@ -19,7 +23,10 @@ import TabBar, { type TabItem } from '../ui/TabBar';
 const DATA_FILE = 'data/sweet/guide.json';
 /** 目录拖拽顺序另存一个键，否则会把另一个站的目录顺序打乱。 */
 const ORDER_STORE = { key: 'sweet.tree-order.v1', hoistCategory: false };
-const TABS: TabItem[] = [{ id: 'guide', label: '攻略' }];
+const TABS: TabItem[] = [
+  { id: 'guide', label: '攻略' },
+  { id: 'tracker', label: '事件追踪', dataTab: 'tracker' },
+];
 const EMPTY_HINT = {
   title: '这一页还没整理',
   text: '目录已经按原攻略排好了，正文还没导入。补齐这一节的文字后，这里会自动显示。',
@@ -44,6 +51,26 @@ function SweetGuide({ data: source }: Props) {
   const allNodes = useMemo(() => flattenNodes(guide), [guide]);
   const validIds = useMemo(() => new Set(allNodes.map((node) => node.id)), [allNodes]);
   const { selectedId, select } = useHashSelection(validIds);
+
+  const [mode, setMode] = useState<'guide' | 'tracker'>(() =>
+    isTrackerRoute() ? 'tracker' : 'guide',
+  );
+  // 关掉追踪器时回到打开前那一页；从 URL 直接进入追踪器时留空。
+  const lastNodeRef = useRef<string>(isTrackerRoute() ? '' : guideNodeId());
+
+  useEffect(() => {
+    const onChange = () => {
+      if (isTrackerRoute()) {
+        setMode('tracker');
+      } else {
+        setMode('guide');
+        const id = guideNodeId();
+        if (id) lastNodeRef.current = id;
+      }
+    };
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(categories.map((category) => category.id)),
@@ -86,11 +113,23 @@ function SweetGuide({ data: source }: Props) {
     select(id);
     setQuery('');
     setSidebarOpen(false);
+    setMode('guide');
   }, [select]);
 
   const handleReorder = useCallback((request: ReorderRequest) => {
     move(request.parentKey, request.dragId, request.targetId, request.place);
   }, [move]);
+
+  const openTracker = useCallback(() => {
+    window.location.hash = '/tracker';
+    setMode('tracker');
+  }, []);
+
+  const closeTracker = useCallback(() => {
+    const id = lastNodeRef.current;
+    window.location.hash = id ? `/guide/${id}` : '/guide/';
+    setMode('guide');
+  }, []);
 
   const position = allNodes.findIndex((node) => node.id === selectedId);
   const previousNode = position > 0 ? allNodes[position - 1] : null;
@@ -111,7 +150,14 @@ function SweetGuide({ data: source }: Props) {
           ☰
         </button>
       )}
-      tabs={<TabBar items={TABS} activeId="guide" ariaLabel="视图切换" onSelect={() => {}} />}
+      tabs={(
+        <TabBar
+          items={TABS}
+          activeId={mode}
+          ariaLabel="视图切换"
+          onSelect={(id) => (id === 'tracker' ? openTracker() : closeTracker())}
+        />
+      )}
       right={(
         <nav className="flex items-center gap-1 tab:gap-0 nav:hidden" aria-label="攻略分类">
           {guide.categories.map((category) => (
@@ -159,41 +205,47 @@ function SweetGuide({ data: source }: Props) {
   }
 
   return (
-    <AppShell
-      header={header}
-      scrollKey={selectedId}
-      sidebarOpen={sidebarOpen}
-      onCloseSidebar={() => setSidebarOpen(false)}
-      sidebar={(
-        <Sidebar
-          categories={guide.categories}
-          selectedId={selectedId}
-          expandedIds={expandedIds}
-          query={query}
-          hits={hits}
-          open={sidebarOpen}
-          summary={summary}
-          customized={customized}
-          onToggle={toggle}
-          onSelect={handleSelect}
-          onQueryChange={setQuery}
-          onReorder={handleReorder}
-          onResetOrder={reset}
-          footerNote="正文陆续导入中 · 每节补上文字即显示"
-        />
-      )}
-    >
-      <ContentPanel
-        data={guide}
-        node={currentNode}
-        path={path}
-        prev={previousNode}
-        next={nextNode}
-        onSelect={handleSelect}
-        emptyHint={EMPTY_HINT}
-        overviewHero={OVERVIEW_HERO}
-      />
-    </AppShell>
+    <GuideDataContext.Provider value={guide}>
+      {/* 进度、备忘录、存档格式全部走 SWEET_TRACKER_CONFIG，不碰原站的 key。 */}
+      <TrackerProvider config={SWEET_TRACKER_CONFIG}>
+        <AppShell
+          header={header}
+          scrollKey={selectedId}
+          sidebarOpen={sidebarOpen}
+          onCloseSidebar={() => setSidebarOpen(false)}
+          sidebar={(
+            <Sidebar
+              categories={guide.categories}
+              selectedId={selectedId}
+              expandedIds={expandedIds}
+              query={query}
+              hits={hits}
+              open={sidebarOpen}
+              summary={summary}
+              customized={customized}
+              onToggle={toggle}
+              onSelect={handleSelect}
+              onQueryChange={setQuery}
+              onReorder={handleReorder}
+              onResetOrder={reset}
+              footerNote="正文陆续导入中 · 每节补上文字即显示"
+            />
+          )}
+        >
+          <ContentPanel
+            data={guide}
+            node={currentNode}
+            path={path}
+            prev={previousNode}
+            next={nextNode}
+            onSelect={handleSelect}
+            emptyHint={EMPTY_HINT}
+            overviewHero={OVERVIEW_HERO}
+          />
+        </AppShell>
+        {mode === 'tracker' && <TrackerApp data={guide} />}
+      </TrackerProvider>
+    </GuideDataContext.Provider>
   );
 }
 
