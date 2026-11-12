@@ -45,15 +45,27 @@ function stepDepth(label: string): number {
 
 /** 一条事件：勾选框 + 玫红编号 pill + 类型 tag + 正文，与攻略正文的事件卡同一套观感。
  *  左侧勾选区即切换完成；右侧「⊘」按钮或右键可单独放弃这一步——被放弃的步骤
- *  不再计入这条线的完成度，也不影响其它步骤。 */
-function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; query: string }) {
+ *  不再计入这条线的完成度，也不影响其它步骤。
+ *
+ *  详情的展开状态由 TaskLineCard 统一持有：线头部的「展开全部 / 收起全部」
+ *  和每个步骤自己的小箭头写的是同一份状态，两者不会互相打架。 */
+function StepRow({
+  lineId,
+  step,
+  query,
+  expanded,
+  onToggleExpand,
+}: {
+  lineId: string;
+  step: TaskStep;
+  query: string;
+  expanded: boolean;
+  onToggleExpand: () => void;
+}) {
   const { isDone, isSkipped, toggleStep, toggleStepSkip } = useTracker();
   const done = isDone(lineId, step.index);
   const skipped = isSkipped(lineId, step.index);
   const details = step.details ?? [];
-  // 甜蜜乐章每个事件下面还有「时间 / 概要 / 提示」：默认收起，点小箭头就地展开。
-  // 纯本地状态，不写存档；主站步骤没有 details，连箭头都不会出现。
-  const [expanded, setExpanded] = useState(false);
   const depth = stepDepth(step.label);
   // Indent by shrinking the row as well as offsetting it: `w-full` plus a
   // margin would push the right edge past the card and give the middle column
@@ -146,7 +158,7 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
           aria-expanded={expanded}
           aria-label={`${expanded ? '收起' : '展开'}事件详情：${step.label || step.text.slice(0, 18)}`}
           title={expanded ? '收起时间 / 概要 / 提示' : '查看时间 / 概要 / 提示'}
-          onClick={() => setExpanded((value) => !value)}
+          onClick={onToggleExpand}
           className={cn(
             'mt-[2px] flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-ui-xs border text-ui-2xs leading-none transition-colors',
             expanded
@@ -212,7 +224,10 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
 /** One task line: a master checkbox + progress bar + expandable step list.
  *  The master checkbox ticks / clears every step at once, which is what moves
  *  the line into (or back out of) the 已完成 pool. The line itself can also be
- *  放弃 (kept but dimmed) or 移出池子 (hidden). */
+ *  放弃 (kept but dimmed) or 移出池子 (hidden). The same toolbar carries
+ *  「展开全部 / 收起全部」 for step details on sites whose events split their
+ *  body into follow-up blocks (甜蜜乐章); both write the line-level state that
+ *  the per-step arrows read. */
 export default function TaskLineCard({
   line,
   matched = null,
@@ -256,6 +271,27 @@ export default function TaskLineCard({
   const searching = query.trim().length > 0;
   const hasHidden = matched !== null && matched.size < line.steps.length;
   const steps = matched && !showAll ? line.steps.filter((step) => matched.has(step.index)) : line.steps;
+
+  // 甜蜜乐章的步骤详情（时间 / 概要 / 提示）按「整条事件线」管理：打开事件后
+  // 默认全部展开，线头部的两个按钮一键全开 / 全收，单个步骤的小箭头仍可单独切。
+  // 纯本地状态、不写存档；主站步骤没有 details，detailIndices 恒为空，下面
+  // 两个按钮和箭头都不渲染，行为零变化。
+  const detailIndices = line.steps
+    .filter((step) => (step.details?.length ?? 0) > 0)
+    .map((step) => step.index);
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(() => new Set(detailIndices));
+  const allExpanded =
+    detailIndices.length > 0 && detailIndices.every((index) => expandedSteps.has(index));
+  const noneExpanded = detailIndices.every((index) => !expandedSteps.has(index));
+  const setAllDetails = (open: boolean) =>
+    setExpandedSteps(open ? new Set(detailIndices) : new Set());
+  const toggleDetail = (index: number) =>
+    setExpandedSteps((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
 
   // 搜索 / 内容筛选时自动展开，让命中的事件直接可见；退出后回到默认态。
   useEffect(() => {
@@ -468,6 +504,44 @@ export default function TaskLineCard({
               })}
             </span>
           )}
+          {detailIndices.length > 0 && (
+            <span data-line-detail-actions className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                data-line-expand-all
+                disabled={allExpanded}
+                onClick={() => {
+                  setAllDetails(true);
+                  // 折叠的卡片也要能「一键展开」：把事件本身一起打开才看得见。
+                  setOpen(true);
+                }}
+                title="展开这条事件下所有步骤的时间 / 概要 / 提示"
+                className={cn(
+                  'rounded-ui-sm border border-line px-2 py-1 text-ui-2xs transition-colors',
+                  allExpanded
+                    ? 'cursor-not-allowed text-ink-faint opacity-40'
+                    : 'text-ink-muted hover:border-brand-line hover:text-brand-strong',
+                )}
+              >
+                展开全部
+              </button>
+              <button
+                type="button"
+                data-line-collapse-all
+                disabled={noneExpanded}
+                onClick={() => setAllDetails(false)}
+                title="收起这条事件下所有步骤的详情，只留事件标题"
+                className={cn(
+                  'rounded-ui-sm border border-line px-2 py-1 text-ui-2xs transition-colors',
+                  noneExpanded
+                    ? 'cursor-not-allowed text-ink-faint opacity-40'
+                    : 'text-ink-muted hover:border-brand-line hover:text-brand-strong',
+                )}
+              >
+                收起全部
+              </button>
+            </span>
+          )}
           <button
             type="button"
             onClick={onTogglePin}
@@ -551,7 +625,13 @@ export default function TaskLineCard({
           <ul className="flex flex-col gap-2">
             {steps.map((step) => (
               <li key={step.index}>
-                <StepRow lineId={line.id} step={step} query={query} />
+                <StepRow
+                  lineId={line.id}
+                  step={step}
+                  query={query}
+                  expanded={expandedSteps.has(step.index)}
+                  onToggleExpand={() => toggleDetail(step.index)}
+                />
               </li>
             ))}
           </ul>

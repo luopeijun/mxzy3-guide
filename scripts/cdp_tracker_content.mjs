@@ -55,6 +55,10 @@ const STATE = `(() => {
     hint: root.querySelector('[data-filter-hint]')?.textContent?.replace(/\\s+/g, ' ').trim() ?? null,
     progress: bar,
     emptyText: pool ? null : (root.querySelector('section')?.textContent?.match(/没有内容为[^，]*/)?.[0] ?? null),
+    // Sweet-melody-only step-detail controls must never leak into the main site.
+    detailActions: root.querySelectorAll('[data-line-detail-actions]').length,
+    stepArrows: root.querySelectorAll('[data-step-expand]').length,
+    stepDetails: root.querySelectorAll('[data-step-details]').length,
   });
 })()`;
 
@@ -119,6 +123,10 @@ async function main() {
   if (initial.label !== '不限') fail('content row should start as 不限, got ' + initial.label);
   if (initial.open) fail('content panel should start collapsed');
   if (initial.cards === 0) fail('pool is empty — cannot test filtering');
+  if (initial.detailActions || initial.stepArrows || initial.stepDetails) {
+    fail('main site rendered sweet-only step-detail controls: ' +
+      JSON.stringify({ actions: initial.detailActions, arrows: initial.stepArrows, boxes: initial.stepDetails }));
+  }
   const allCards = initial.cards;
   const allProgress = initial.progress;
   if (!allProgress) fail('narrow progress bar is missing, cannot check total stability');
