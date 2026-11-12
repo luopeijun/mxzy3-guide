@@ -50,6 +50,10 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
   const { isDone, isSkipped, toggleStep, toggleStepSkip } = useTracker();
   const done = isDone(lineId, step.index);
   const skipped = isSkipped(lineId, step.index);
+  const details = step.details ?? [];
+  // 甜蜜乐章每个事件下面还有「时间 / 概要 / 提示」：默认收起，点小箭头就地展开。
+  // 纯本地状态，不写存档；主站步骤没有 details，连箭头都不会出现。
+  const [expanded, setExpanded] = useState(false);
   const depth = stepDepth(step.label);
   // Indent by shrinking the row as well as offsetting it: `w-full` plus a
   // margin would push the right edge past the card and give the middle column
@@ -70,7 +74,7 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
       }}
       title={skipped ? '已放弃这一步 · 点右侧「恢复」或再次右键撤销' : '点勾选框完成 · 右键放弃这一步'}
       className={cn(
-        'flex w-full items-start gap-2 rounded-ui-sm border px-3 py-2.5 transition-colors',
+        'flex w-full flex-wrap items-start gap-2 rounded-ui-sm border px-3 py-2.5 transition-colors',
         skipped
           ? 'border-dashed border-line-strong bg-surface-soft'
           : cn(step.cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface',
@@ -135,6 +139,29 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
           )}
         </span>
       </button>
+      {details.length > 0 && (
+        <button
+          type="button"
+          data-step-expand
+          aria-expanded={expanded}
+          aria-label={`${expanded ? '收起' : '展开'}事件详情：${step.label || step.text.slice(0, 18)}`}
+          title={expanded ? '收起时间 / 概要 / 提示' : '查看时间 / 概要 / 提示'}
+          onClick={() => setExpanded((value) => !value)}
+          className={cn(
+            'mt-[2px] flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-ui-xs border text-ui-2xs leading-none transition-colors',
+            expanded
+              ? 'border-brand-line bg-brand-soft text-brand-strong'
+              : 'border-line text-ink-faint hover:border-brand-line hover:bg-surface-soft hover:text-brand-strong',
+          )}
+        >
+          <span
+            className="inline-block transition-transform duration-150"
+            style={{ transform: expanded ? 'rotate(180deg)' : 'none' }}
+          >
+            ▾
+          </span>
+        </button>
+      )}
       <button
         type="button"
         data-step-skip
@@ -154,6 +181,30 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
       >
         {skipped ? '恢复' : '⊘'}
       </button>
+      {expanded && details.length > 0 && (
+        <div
+          data-step-details
+          className="flex w-full basis-full flex-col gap-1 border-t border-line pl-[25px] pt-2"
+        >
+          {details.map((detail, i) => (
+            <div
+              key={i}
+              data-step-detail
+              data-step-detail-kind={detail.kind}
+              className={cn(
+                'text-ui-xs leading-[1.8] break-words',
+                detail.kind === 'note'
+                  ? 'rounded-ui-xs border border-gold-line bg-gold-soft px-2 py-1 text-gold'
+                  : 'text-ink',
+                detail.bullet && 'pl-1',
+              )}
+            >
+              {detail.bullet && <span className="mr-1 font-bold text-brand-strong">·</span>}
+              <MarkText text={detail.text} query={query} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

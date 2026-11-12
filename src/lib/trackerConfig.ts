@@ -40,6 +40,10 @@ export interface TrackerSiteConfig {
    *  明星志愿3 用它挡掉角色页里与路欧桑分支页重复的感情线；甜蜜乐章没有
    *  重复内容，留空。 */
   poolSkip: Record<string, { sections?: string[]; headings?: string[] }>;
+  /** 事件块的正文是否拆在同 group 的后续块里。明星志愿3 的 event.text 就是
+   *  整段正文；甜蜜乐章把「时间 / 概要 / 提示」拆成 paragraph / note 跟在
+   *  事件标题后面，把它们收进步骤详情，折叠箭头点开才显示。 */
+  stepDetails?: boolean;
   /** A locked artist who is always under contract. 甜蜜乐章's protagonist is
    *  played by the user: agent and artist at once, not releasable. */
   protagonist?: { id: string; title: string; avatar?: string; hint: string };
@@ -99,8 +103,8 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
   storageKey: 'sweet.progress.v1',
   backupKey: 'sweet.progress.backup.v1',
   memoKey: 'sweet.memo.v1',
-  // 主角既当经纪人又当艺人，恒占一个签约位：最多再签 2 人。
-  maxArtists: 3,
+  // 主角既当经纪人又当艺人，恒占一个签约位：还能再签 3 位艺人，共 4 位。
+  maxArtists: 4,
   artistPrefix: 'sweet-characters/',
   artistCategoryId: 'sweet-characters',
   categoryMeta: {
@@ -116,6 +120,9 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
   ],
   chipCols: 2,
   poolSkip: {},
+  // 甜站事件卡把「时间 / 概要 / 提示」拆成同 group 的 paragraph / note，
+  // 追踪器要把它们挂到对应事件的折叠详情里。
+  stepDetails: true,
   protagonist: {
     id: 'protagonist',
     // 主角是杜云芊（红发双马尾），头像取自 甜蜜乐章/2/620-1.bmp。
@@ -125,7 +132,7 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
     hint: '杜云芊（主角）就是我们自己——既扮演经纪人也是旗下艺人，本周目固定在签约名单里，不能解约。',
   },
   setupIntro:
-    '旗下最多 3 位，主角杜云芊固定占一位（我们既当经纪人也是艺人）；解约的艺人仍会留在追踪名单里，任务线与已勾选的进度都保留。点按钮＝加入 / 移出追踪，点右上角角标＝解约 / 复签。',
+    '旗下最多 4 位，主角杜云芊固定占一位（我们既当经纪人也是艺人），还能再签 3 位；解约的艺人仍会留在追踪名单里，任务线与已勾选的进度都保留。点按钮＝加入 / 移出追踪，点右上角角标＝解约 / 复签。',
   includeReleasedTip: '已解约艺人的线仍在事件池里，只是默认不计入完成度',
   archiveFormat: 'sweet-tracker-save',
   archiveFilePrefix: '甜蜜乐章',

@@ -24,7 +24,9 @@ export function matchLine(line: TaskLine, needle: string): LineMatch | null {
     if (
       step.label.toLowerCase().includes(needle) ||
       (step.tag ?? '').toLowerCase().includes(needle) ||
-      step.text.toLowerCase().includes(needle)
+      step.text.toLowerCase().includes(needle) ||
+      // 甜蜜乐章的「时间 / 概要 / 提示」收在折叠详情里，也要能被搜到。
+      (step.details ?? []).some((detail) => detail.text.toLowerCase().includes(needle))
     ) {
       matched.add(step.index);
     }

@@ -1,16 +1,25 @@
-import type { ContentBlock, GuideData, GuideNode } from '../types/guide';
+import type { ContentBlock, ContentBlockKind, GuideData, GuideNode } from '../types/guide';
 import { plainText } from './markup';
 import { MAIN_TRACKER_CONFIG, type TrackerSiteConfig } from './trackerConfig';
 
 /** A single triggerable event inside a task line. `index` is the event's
  *  position in the owning node's `blocks` array — that is the stable step id
  *  the tracker keys progress against (per the user's "数组下标定位第几步"). */
+/** 事件标题下面的补充行（甜蜜乐章的「时间 / 概要 / 提示」）。 */
+export interface StepDetail {
+  kind: ContentBlockKind;
+  text: string;
+  bullet?: boolean;
+}
+
 export interface TaskStep {
   index: number;
   label: string;
   tag?: string;
   cg: boolean;
   text: string;
+  /** 折叠箭头点开后显示的详情；明星志愿3 的事件正文已在 text 里，为空。 */
+  details?: StepDetail[];
 }
 
 export type LineKind = 'artist' | 'luousang' | 'non-artist';
@@ -116,6 +125,28 @@ function headingText(block: ContentBlock): string {
   return (block.label ?? block.text ?? '').trim() || '未命名章节';
 }
 
+/** 甜蜜乐章把事件正文拆成紧跟在 event 后面、同一 group 的 paragraph / note
+ *  （时间、概要、提示）。收进步骤的折叠详情；明星志愿3 的 event.text 本身
+ *  就是整段正文，不开这个开关，行为零变化。 */
+function detailsFor(node: GuideNode, index: number, enabled: boolean): StepDetail[] {
+  if (!enabled) return [];
+  const blocks = node.blocks;
+  const group = blocks[index].group;
+  const out: StepDetail[] = [];
+  for (let i = index + 1; i < blocks.length; i += 1) {
+    const block = blocks[i];
+    if (
+      block.group !== group ||
+      block.kind === 'event' ||
+      block.kind === 'section' ||
+      block.kind === 'heading'
+    ) break;
+    const text = plainText(block.text).trim();
+    if (text) out.push({ kind: block.kind, text, bullet: block.bullet });
+  }
+  return out;
+}
+
 function makeLine(
   node: GuideNode,
   seq: number,
@@ -130,6 +161,7 @@ function makeLine(
     tag: block.tag,
     cg: Boolean(block.cg),
     text: plainText(block.text),
+    details: detailsFor(node, index, Boolean(config.stepDetails)),
   }));
   return {
     id: `${node.id}::${seq}::${name}`,

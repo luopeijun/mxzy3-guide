@@ -2,7 +2,8 @@ import http from 'node:http';
 import fs from 'node:fs';
 
 /* 甜蜜乐章事件追踪器回归：两个页签与 #/tracker 路由、主角恒占一个签约位
-   （最多 3 人、不可解约、头像在人名左边）、事件池按甜站类目分组、进度与
+   （最多 4 人＝主角 + 3 位艺人、不可解约、头像在人名左边）、事件步骤折叠
+   能看「时间 / 概要 / 提示」、事件池按甜站类目分组、进度与
    存档键和明星志愿3 完全隔离、存档面板不带 CG / 六大通告。
 
    Usage: node scripts/cdp_sweet_tracker.mjs [shot.png]
@@ -125,7 +126,7 @@ async function main() {
     JSON.stringify(initial.selected));
   check('折叠行显示主角圆圈头像', initial.portraits.some((src) => src?.includes('protagonist-logo')),
     JSON.stringify(initial.portraits));
-  check('折叠行计数是 1/3 位', initial.hint === '1/3 位', initial.hint);
+  check('折叠行计数是 1/4 位', initial.hint === '1/4 位', initial.hint);
   check('默认池里有非艺人任务线', initial.lines > 0, `lines=${initial.lines}`);
 
   // 4. 展开艺人选择
@@ -167,7 +168,7 @@ async function main() {
     .filter((f) => fs.readFileSync(new URL(f, imgDir)).equals(protagonistPng));
   check('主角头像不与任何角色头像重复（杜云芊 ≠ 卫亚）', duplicated.length === 0, duplicated.join(','));
   check('展开区说明主角既当经纪人也是艺人', picker.hint.includes('既扮演经纪人也是旗下艺人'), picker.hint);
-  check('选择器说明写的是最多 3 位', picker.intro.includes('最多 3 位'), picker.intro);
+  check('选择器说明写的是最多 4 位', picker.intro.includes('最多 4 位'), picker.intro);
 
   // 5. 点主角无效
   await evaluate(`(() => {
@@ -180,12 +181,12 @@ async function main() {
   check('点主角不会把她移出追踪', afterClick.length === 1 && afterClick[0] === 'protagonist',
     JSON.stringify(afterClick));
 
-  // 6. 选两位 → 满 3；选第三位 → 记为已解约
+  // 6. 选三位 → 满 4；选第四位 → 记为已解约
   const picked = await evaluate(`(() => {
     const btns = [...document.querySelectorAll('[data-artist-button]')]
       .filter(b => !b.disabled && b.dataset.artistState === 'none');
-    const ids = btns.slice(0, 3).map(b => b.dataset.artistId);
-    for (const aid of ids.slice(0, 2)) {
+    const ids = btns.slice(0, 4).map(b => b.dataset.artistId);
+    for (const aid of ids.slice(0, 3)) {
       const b = document.querySelector('[data-artist-button][data-artist-id="' + aid + '"]');
       if (b) b.click();
     }
@@ -201,12 +202,12 @@ async function main() {
       released: save.releasedArtists || [],
     };
   })()`);
-  check('选两位艺人后旗下正好 3 位', full.selected.length === 3 && full.selected[0] === 'protagonist',
+  check('选三位艺人后旗下正好 4 位', full.selected.length === 4 && full.selected[0] === 'protagonist',
     JSON.stringify(full.selected));
-  check('满员计数 3/3 位', full.hint === '3/3 位', full.hint);
+  check('满员计数 4/4 位', full.hint === '4/4 位', full.hint);
 
   await evaluate(`(() => {
-    const b = document.querySelector('[data-artist-button][data-artist-id="' + ${JSON.stringify(picked[2])} + '"]');
+    const b = document.querySelector('[data-artist-button][data-artist-id="' + ${JSON.stringify(picked[3])} + '"]');
     if (b) b.click();
     return 1;
   })()`);
@@ -221,10 +222,10 @@ async function main() {
       released: save.releasedArtists || [],
     };
   })()`);
-  check('第 4 位自动记为已解约且不挤掉主角',
-    overflow.selected.length === 3 && overflow.selected[0] === 'protagonist' && overflow.released.includes(picked[2]),
+  check('第 5 位自动记为已解约且不挤掉主角',
+    overflow.selected.length === 4 && overflow.selected[0] === 'protagonist' && overflow.released.includes(picked[3]),
     JSON.stringify(overflow));
-  check('满员提示 +M 且不弹窗', overflow.hint === '3/3 位 +1' && overflow.notice.includes('已加入追踪'),
+  check('满员提示 +M 且不弹窗', overflow.hint === '4/4 位 +1' && overflow.notice.includes('已加入追踪') && overflow.notice.includes('旗下已满 4 人'),
     `${overflow.hint} / ${overflow.notice}`);
 
   // 7. 分组 chips：甜站 3 组，没有路欧桑
@@ -286,6 +287,65 @@ async function main() {
   check('勾选写进 sweet.progress.v1', afterStep.lines > 0 && afterStep.done > 0, JSON.stringify(afterStep));
   check('原站 guide.progress.v1 完全没被碰', afterStep.main === beforeStep.main,
     `before=${String(beforeStep.main)?.length} after=${String(afterStep.main)?.length}`);
+
+  // 9b. 甜站事件步骤的折叠详情：小箭头点开看「时间 / 概要 / 提示」。
+  // 只点卡片头部的展开按钮，别误点到步骤行里的小箭头。
+  await evaluate(`(() => {
+    for (const card of [...document.querySelectorAll('main [data-line-card]')].slice(0, 8)) {
+      const toggle = card.firstElementChild?.querySelector('button[aria-expanded]');
+      if (toggle && toggle.getAttribute('aria-expanded') === 'false') toggle.click();
+    }
+    return 1;
+  })()`);
+  await sleep(600);
+  const detailClosed = await evaluate(`(() => {
+    const arrow = document.querySelector('main [data-step-row] [data-step-expand]');
+    return {
+      hasArrow: !!arrow,
+      expanded: arrow?.getAttribute('aria-expanded') ?? '',
+      boxes: document.querySelectorAll('main [data-step-details]').length,
+    };
+  })()`);
+  check('甜站步骤有向下箭头、详情默认收起',
+    detailClosed.hasArrow && detailClosed.expanded === 'false' && detailClosed.boxes === 0,
+    JSON.stringify(detailClosed));
+
+  await evaluate(`(() => {
+    const arrow = document.querySelector('main [data-step-row] [data-step-expand]');
+    if (arrow) arrow.click();
+    return 1;
+  })()`);
+  await sleep(350);
+  const detailOpened = await evaluate(`(() => {
+    const arrow = document.querySelector('main [data-step-row] [data-step-expand]');
+    const box = document.querySelector('main [data-step-details]');
+    return {
+      expanded: arrow?.getAttribute('aria-expanded') ?? '',
+      text: box?.textContent?.trim() ?? '',
+      rows: box?.querySelectorAll('[data-step-detail]').length ?? 0,
+      kinds: box ? [...box.querySelectorAll('[data-step-detail]')].map(d => d.dataset.stepDetailKind) : [],
+    };
+  })()`);
+  check('点箭头展开「时间 / 概要 / 提示」详情',
+    detailOpened.expanded === 'true' && detailOpened.rows >= 2 &&
+    (detailOpened.text.includes('时间：') || detailOpened.text.includes('概要：') || detailOpened.text.includes('提示：')),
+    JSON.stringify(detailOpened));
+  check('详情只收 paragraph / note 两种块',
+    detailOpened.kinds.length > 0 && detailOpened.kinds.every((k) => k === 'paragraph' || k === 'note'),
+    JSON.stringify(detailOpened.kinds));
+
+  await evaluate(`(() => {
+    const arrow = document.querySelector('main [data-step-row] [data-step-expand]');
+    if (arrow) arrow.click();
+    return 1;
+  })()`);
+  await sleep(300);
+  const detailReclosed = await evaluate(`(() => ({
+    expanded: document.querySelector('main [data-step-row] [data-step-expand]')?.getAttribute('aria-expanded') ?? '',
+    boxes: document.querySelectorAll('main [data-step-details]').length,
+  }))()`);
+  check('再点一次收起详情', detailReclosed.expanded === 'false' && detailReclosed.boxes === 0,
+    JSON.stringify(detailReclosed));
 
   // 10. 存档面板只讲进度
   const archiveText = await evaluate(`document.querySelector('[data-transfer-panel]')?.textContent ?? ''`);
