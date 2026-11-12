@@ -11,7 +11,7 @@ public/data/guide.json。
 sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应节点。还没有
 正文的节点保留 status="missing"，页面上给出「这一页还没整理」的占位提示。
 
-目前有两种页面形态：
+目前有五种页面形态：
 
 **事件页**（主线攻略、公司改建攻略）
 
@@ -30,6 +30,29 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
     东京                      ← 之后每三行一组：城市 / 公司（类型）/ 接拍条件
     京风唱片（唱片）
     推出3张唱片以上（个人、团体分开计算）
+
+**清单页**（自制通告一览）
+
+    自制通告一览              ← 首行，与页面标题同名 → 不当副标题
+    1、触发剧情后直接获得；    ← ●…● 之前是整页的获得方式说明，普通段落
+    ●唱片●                   ← 分章（section），后面的艺人分组是 heading
+    1）《晴天娃娃》特殊，…     ← 一首歌一张卡：歌名当标题、编号进 pill
+    歌艺700、名气500、…       ← 属性行留在同一张卡里（行首括号的折行也接回去）
+
+**事件页（带时间）**（服装获得方法和剧情）
+
+    服装获得方法              ← 首行，页面副标题
+    春夏洋装                  ← 服装名（heading）
+    1-1差不多该换季了…2008/3   ← 编号 + 标题 + 省略号后的条件与年月
+    ※杜云芊仪态350↑才触发     ← 提示
+    虚拟服装相关剧情           ← 分章（section）
+    1-1.穿上小红帽服装后…      ← 编号带句点、整行都是正文
+
+**分段页**（三大节日相关）
+
+    ▲主角生日▲               ← 分章（section），源文本没有整页标题
+    第一年生日                ← 小标题（heading）
+    1.如果有交往对象，…        ← 列表项与箭头流程都是普通段落，编号原样保留
 """
 
 from __future__ import annotations
@@ -183,10 +206,201 @@ def parse_abroad_notices(path: Path) -> tuple[list[dict], str]:
     return [block], ""
 
 
+GENRE_RE = re.compile(r"^●(.+)●$")
+GROUP_RE = re.compile(r"^(\d+)、(.*)$")
+NOTICE_RE = re.compile(r"^(\d+)）(.*)$")
+BOOK_RE = re.compile(r"^《([^》]+)》(.*)$")
+
+# 小标题的判定：短、不带句读的行（服装名 / 节日里的「第一年生日」这类）。
+# 全角括号不算句读——「甜美小红帽（坚定的友谊）」本身就是一节的名字。
+HEADING_PUNCT = "。，、：；！？—…"
+# 源文本里混进来的 ASCII 控制字符（BOM、软连字符之类）。
+CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def _read_lines(path: Path) -> list[str]:
+    """按行读源文本：统一换行、去掉首尾空白与空行。
+
+    原攻略是从别处拷贝来的，个别地方混进了 ASCII 控制字符（自制通告那页就有一个
+    0x18），这里一并清掉，免得进到页面源码里。
+    """
+    raw = path.read_bytes().decode("utf-8").replace("\r\n", "\n").split("\n")
+    return [CTRL_RE.sub("", line).strip() for line in raw if line.strip()]
+
+
+def _is_heading(text: str) -> bool:
+    """节日页的小标题：短、不带句读、不是列表项。"""
+    if len(text) > 14 or any(ch in text for ch in HEADING_PUNCT):
+        return False
+    # 「第1年-不限次数」「1.如果有交往对象…」是列表项，不是标题。
+    return not re.match(r"^(第\d+年-|\d)", text)
+
+
+def _is_outfit_heading(text: str) -> bool:
+    """服装页的服装名：都是不含数字的名词短语（带括号的是「服装（结局/效果）」）。
+
+    这页的正文里也会出现「星期2前往追梦广告公司」这种又短又没标点的句子，
+    所以不能像节日页那样只看长度——带数字的一律不是服装名。
+    """
+    if any(ch in text for ch in HEADING_PUNCT) or re.search(r"\d", text):
+        return False
+    return len(text) <= 14 if "（" in text else len(text) <= 6
+
+
+def parse_self_notices(path: Path) -> tuple[list[dict], str]:
+    """自制通告一览 → ●唱片 / ●电视剧 / ●电影 分章，每个艺人一节，一首歌一张卡。
+
+    源文本有两种「1、」编号：开头的获得方式说明和后面的艺人都长这样，只能靠
+    「是否已经出现过 ●…●」来区分。歌名后的说明与属性行留在同一张卡里。
+    """
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+    in_genre = False
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    def open_event(title: str, rest: str, label: str | None = None) -> None:
+        blocks.append(
+            {"kind": "event", "text": title, "group": group, **({"label": label} if label else {})}
+        )
+        detail = rest.strip("，, ")
+        if detail:
+            push("paragraph", detail)
+
+    for text in lines[1:]:
+        genre = GENRE_RE.match(text)
+        if genre:
+            in_genre = True
+            group += 1
+            push("section", genre.group(1).strip())
+            continue
+
+        song = NOTICE_RE.match(text)
+        if song:
+            group += 1
+            book = BOOK_RE.match(song.group(2))
+            if book:
+                open_event(f"《{book.group(1)}》", book.group(2), song.group(1))
+            else:
+                open_event(song.group(2), "", song.group(1))
+            continue
+
+        numbered = GROUP_RE.match(text)
+        if numbered and in_genre:
+            group += 1
+            push("heading", numbered.group(2).strip(), depth=1)
+            continue
+
+        book = BOOK_RE.match(text) if in_genre else None
+        if book:
+            group += 1
+            open_event(f"《{book.group(1)}》", book.group(2))
+            continue
+
+        # 行首括号是上一句的折行（电影《讨厌爱上你》那条的片种说明）。
+        if text.startswith("（") and blocks:
+            last = blocks[-1]
+            if last["kind"] == "paragraph":
+                last["text"] += text
+                continue
+            if last["kind"] == "event":
+                push("paragraph", text)
+                continue
+
+        push("paragraph", text)
+
+    return blocks, lines[0]
+
+
+# 「1-1差不多该换季了…2008/3」——编号紧跟标题，省略号后面是条件与年月。
+OUTFIT_TIMED_RE = re.compile(r"^(\d+(?:-\d+)+)[.]?(.+?)…(.+)$")
+# 「1-1.穿上小红帽服装后…」——后半段虚拟服装剧情，整行都是正文。
+# 句点可有可无：源文本的 `2-8周三,继续去酒吧…` 就漏了那个点。
+OUTFIT_STEP_RE = re.compile(r"^(\d+(?:-\d+)+)[.]?(.+)$")
+# 源文本里这两块是并列的；只有「虚拟服装相关剧情」是分章标题，其余短行是服装名。
+OUTFIT_SECTIONS = {"虚拟服装相关剧情"}
+
+
+def parse_outfits(path: Path) -> tuple[list[dict], str]:
+    """服装获得方法和剧情 → 每件衣服一节，事件卡里带上「时间：」与提示。"""
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines[1:]:
+        if text in OUTFIT_SECTIONS:
+            group += 1
+            push("section", text)
+            continue
+
+        timed = OUTFIT_TIMED_RE.match(text)
+        if timed:
+            group += 1
+            push("event", timed.group(2).strip(), label=timed.group(1))
+            push("paragraph", f"时间：{timed.group(3).strip()}")
+            continue
+
+        step = OUTFIT_STEP_RE.match(text)
+        if step:
+            group += 1
+            push("event", step.group(2).strip(), label=step.group(1))
+            continue
+
+        if text.startswith("※"):
+            push("note", text)
+            continue
+
+        if _is_outfit_heading(text):
+            group += 1
+            push("heading", text, depth=1)
+            continue
+
+        push("paragraph", text)
+
+    return blocks, lines[0]
+
+
+FESTIVAL_SECTION_RE = re.compile(r"^▲(.+)▲$")
+
+
+def parse_festivals(path: Path) -> tuple[list[dict], str]:
+    """三大节日相关 → ▲…▲ 分章，其余是短标题与说明段落（源文本没有页面总标题）。"""
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines:
+        section = FESTIVAL_SECTION_RE.match(text)
+        if section:
+            group += 1
+            push("section", section.group(1).strip())
+            continue
+
+        if _is_heading(text):
+            group += 1
+            push("heading", text, depth=1)
+            continue
+
+        push("paragraph", text)
+
+    return blocks, ""
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
     "abroad-notices": parse_abroad_notices,
+    "self-notices": parse_self_notices,
+    "outfits": parse_outfits,
+    "festivals": parse_festivals,
 }
 
 # 类目 / 子节点：(slug, 标题)。有正文的节由 PARSERS 覆盖 status 与 blocks。

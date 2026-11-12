@@ -82,8 +82,8 @@ class TestSweetGuide(unittest.TestCase):
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
         self.assertEqual(stats["items"], 24)
-        self.assertEqual(stats["readyItems"], 3)
-        self.assertEqual(stats["missingItems"], 21)
+        self.assertEqual(stats["readyItems"], 6)
+        self.assertEqual(stats["missingItems"], 18)
 
     def test_no_invented_descriptions(self) -> None:
         # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
@@ -191,6 +191,106 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(
             [(r["city"], r["company"], r["requirement"]) for r in table["rows"]],
             ABROAD_ROWS,
+        )
+
+    def test_self_notices(self) -> None:
+        node = _node(self.data, "self-notices")
+        blocks = node["blocks"]
+
+        # 三种介质各一章；艺人分组是小标题，「其他」也在里面。
+        self.assertEqual([b["text"] for b in blocks if b["kind"] == "section"], ["唱片", "电视剧", "电影"])
+        headings = [b["text"] for b in blocks if b["kind"] == "heading"]
+        self.assertEqual(len(headings), 24)
+        self.assertEqual(headings[:2], ["杜云芊", "沈惟真"])
+        self.assertEqual(headings[-1], "其他")
+
+        # 一首歌一张卡：歌名当标题、编号进 pill，说明与属性要求在同一个 group 里。
+        by_group: dict[int, list[dict]] = {}
+        for block in blocks:
+            by_group.setdefault(block["group"], []).append(block)
+        songs = [b for b in blocks if b["kind"] == "event"]
+        self.assertEqual(len(songs), 73)
+        self.assertEqual(sum(1 for b in songs if "label" not in b), 4)  # 《无瑕四重奏》等没编号
+        self.assertEqual((songs[0]["label"], songs[0]["text"]), ("1", "《晴天娃娃》"))
+
+        first = by_group[songs[0]["group"]]
+        self.assertEqual(
+            [(b["kind"], b["text"]) for b in first],
+            [
+                ("event", "《晴天娃娃》"),
+                ("paragraph", "特殊，录制完第一张专辑且上市后，累积16天自由活动获得。（民歌个人、两星）"),
+            ],
+        )
+        escape = next(b for b in songs if b["text"] == "《逃离过去》")
+        self.assertEqual(
+            [b["text"] for b in by_group[escape["group"]] if b["kind"] == "paragraph"],
+            ["一般，累积20天自由活动后获得（摇滚个人、五星）", "歌艺700、名气500、动感550、体能550"],
+        )
+
+        # 电影《讨厌爱上你》的片种说明是折行，要接回上一句。
+        hate = next(b for b in songs if b["text"] == "《讨厌爱上你》")
+        detail = [b["text"] for b in by_group[hate["group"]] if b["kind"] == "paragraph"]
+        self.assertEqual(len(detail), 1)
+        self.assertTrue(detail[0].endswith("（爱情文艺片，男双五星）"), detail[0])
+
+        # 开头那段获得方式说明留在页首，不是艺人分组。
+        self.assertEqual(blocks[0]["kind"], "paragraph")
+        self.assertEqual(blocks[0]["text"], "1、触发剧情后直接获得；")
+
+    def test_outfits(self) -> None:
+        node = _node(self.data, "outfits")
+        blocks = node["blocks"]
+        self.assertEqual(node["description"], "服装获得方法")  # 原文首行，不是自拟的
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "section"], ["虚拟服装相关剧情"]
+        )
+        headings = [b["text"] for b in blocks if b["kind"] == "heading"]
+        self.assertEqual(
+            headings[:4],
+            ["春夏洋装", "古典晚礼服", "皮衣", "诱惑女神晨袍"],
+        )
+        self.assertIn("甜美小红帽（坚定的友谊）", headings)
+
+        labels = [b["label"] for b in blocks if b["kind"] == "event"]
+        self.assertEqual(labels[:3], ["1-1", "1-2", "1-3"])
+        self.assertIn("3-8-1", labels)  # 三级编号
+        self.assertEqual(len(labels), 42)
+
+        # 前半段「编号 + 标题…时间」：标题进卡片头，省略号后的条件与年月单列一行。
+        by_group: dict[int, list[dict]] = {}
+        for block in blocks:
+            by_group.setdefault(block["group"], []).append(block)
+        first = next(b for b in blocks if b["kind"] == "event" and b["label"] == "1-1")
+        self.assertEqual(first["text"], "差不多该换季了")
+        self.assertEqual(
+            [b["text"] for b in by_group[first["group"]] if b["kind"] == "paragraph"],
+            ["时间：2008/3", "工作结束后，自动遇到王洁安与马秋慧讨论换季的事"],
+        )
+        # 源文本的 `2-8周三,…` 漏了句点，也要认出来是事件。
+        step = next(b for b in blocks if b["kind"] == "event" and b["label"] == "2-8")
+        self.assertTrue(step["text"].startswith("周三"), step["text"])
+
+        notes = [b["text"] for b in blocks if b["kind"] == "note"]
+        self.assertEqual(len(notes), 3)
+        self.assertTrue(all(n.startswith("※") for n in notes))
+
+    def test_festivals(self) -> None:
+        node = _node(self.data, "festivals")
+        blocks = node["blocks"]
+        self.assertNotIn("description", node)  # 源文本没有整页标题
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "section"], ["主角生日", "情人节", "圣诞节"]
+        )
+        headings = [b["text"] for b in blocks if b["kind"] == "heading"]
+        self.assertEqual(
+            headings[:3], ["第一年生日", "第二年后生日", "艺人生日礼物列表--"]
+        )
+        # 列表项与箭头流程都是普通段落，原样保留编号。
+        texts = [b["text"] for b in blocks if b["kind"] == "paragraph"]
+        self.assertIn("1.如果有交往对象，就和交往对象一起过", texts)
+        self.assertIn("第1年-不限次数", texts)
+        self.assertTrue(
+            any(t.startswith("情人节邀约沟通话题->") for t in texts), "箭头流程丢了"
         )
 
     def test_ids_unique(self) -> None:

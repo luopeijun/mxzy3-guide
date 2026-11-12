@@ -6,10 +6,10 @@
     "stats": {
       "categories": 3,
       "items": 24,
-      "blocks": 112,
-      "readyItems": 3,
-      "missingItems": 21,
-      "sourceParagraphs": 112
+      "blocks": 492,
+      "readyItems": 6,
+      "missingItems": 18,
+      "sourceParagraphs": 492
     }
   },
   "categories": [
@@ -688,22 +688,2079 @@
         {
           "id": "sweet-guide/self-notices",
           "title": "自制通告一览",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "1、触发剧情后直接获得；",
+              "group": 0
+            },
+            {
+              "kind": "paragraph",
+              "text": "2、触发该自制通告的特殊要求后，累积达到相应自由活动天数后获得；",
+              "group": 0
+            },
+            {
+              "kind": "paragraph",
+              "text": "3、触发该自制通告的特殊要求后再满足属性要求，累积达到相应自由活动天数后获得；",
+              "group": 0
+            },
+            {
+              "kind": "paragraph",
+              "text": "4、满足属性要求，累积达到相应自由活动天数后获得。",
+              "group": 0
+            },
+            {
+              "kind": "paragraph",
+              "text": "*（PS：如果同时满足几个自制通告要求的属性数值时，系统会优先累积所需自由活动天数少的自制通告；若所要求的自由活动天数相同，则在累积达到相应自由活动天数会先获得属性要求较高的自制通告。）",
+              "group": 0
+            },
+            {
+              "kind": "paragraph",
+              "text": "甜蜜乐章游戏中，必须满足自制通告的要求后系统才会开始累积自由活动天数，未满足要求前自由活动天数不累积。",
+              "group": 0
+            },
+            {
+              "kind": "section",
+              "text": "唱片",
+              "group": 1
+            },
+            {
+              "kind": "heading",
+              "text": "杜云芊",
+              "group": 2,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《晴天娃娃》",
+              "group": 3,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，录制完第一张专辑且上市后，累积16天自由活动获得。（民歌个人、两星）",
+              "group": 3
+            },
+            {
+              "kind": "event",
+              "text": "《夏天小说》",
+              "group": 4,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，录制完第二张专辑且上市后，累积17天自由活动获得。（抒情个人、两星）",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "《逃离过去》",
+              "group": 5,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（摇滚个人、五星）",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、动感550、体能550",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "《我们和你们》",
+              "group": 6,
+              "label": "4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积18天自由活动后获得（抒情个人、四星）",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺600、名气450、仪态600、自信520",
+              "group": 6
+            },
+            {
+              "kind": "heading",
+              "text": "沈惟真",
+              "group": 7,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《雨天》",
+              "group": 8,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，进公司一个月后，累积18天自由活动获得。（抒情个人、三星）",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "《倒数计时》",
+              "group": 9,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积16天自由活动后获得（舞曲个人、四星）",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺520、动感600、体能600、自信520",
+              "group": 9
+            },
+            {
+              "kind": "event",
+              "text": "《掌心的温度》",
+              "group": 10,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积18天自由活动后获得（摇滚个人、五星）",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、动感550、体能550",
+              "group": 10
+            },
+            {
+              "kind": "event",
+              "text": "《最后一封信》",
+              "group": 11,
+              "label": "4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积16天自由活动后获得（蓝调个人、五星）",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、才智500、自信700",
+              "group": 11
+            },
+            {
+              "kind": "heading",
+              "text": "丹尼斯",
+              "group": 12,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《藏梦》",
+              "group": 13,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（蓝调个人、四星）",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺600、名气450、才智450、自信600",
+              "group": 13
+            },
+            {
+              "kind": "event",
+              "text": "《蓝色咖啡厅》",
+              "group": 14,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（爵士个人、三星）",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺480、名气330、仪态420、自信420",
+              "group": 14
+            },
+            {
+              "kind": "heading",
+              "text": "史蒂芬",
+              "group": 15,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《禁忌之吻》",
+              "group": 16,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，跟丹尼斯一个团体并出过团体唱片后，满足数值要求后累积15天自由活动获得（摇滚团体、三星）",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺480、名气330、动感420、体能420",
+              "group": 16
+            },
+            {
+              "kind": "event",
+              "text": "《舞台风暴》",
+              "group": 17,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，跟丹尼斯一个团体并出过团体唱片后，满足数值要求后累积15天自由活动后获得（舞曲团体、三星）",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺420、动感480、体能480、自信420",
+              "group": 17
+            },
+            {
+              "kind": "event",
+              "text": "《没有雪的耶诞夜》",
+              "group": 18,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，史蒂芬剧情3-8发生后获得。（抒情个人、五星）",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "《飞跃午夜》",
+              "group": 19,
+              "label": "4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动后获得（摇滚团体、五星）",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、动感550、体能550",
+              "group": 19
+            },
+            {
+              "kind": "event",
+              "text": "《突如其来的爱恋》",
+              "group": 20,
+              "label": "5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动获得（蓝调个人、五星）",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、才智500、自信700",
+              "group": 20
+            },
+            {
+              "kind": "event",
+              "text": "《十字路的我们》",
+              "group": 21,
+              "label": "6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动后获得（民歌个人、五星）",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、仪态550、才智400",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "《恋爱公式题》",
+              "group": 22,
+              "label": "7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动后获得（抒情个人、五星）",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、仪态700、自信550",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "《往星光前进》",
+              "group": 23,
+              "label": "8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动后获得（抒情个人、四星）",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺600、名气450、仪态600、自信520",
+              "group": 23
+            },
+            {
+              "kind": "heading",
+              "text": "姚子奇",
+              "group": 24,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《红花》",
+              "group": 25,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，姚子奇剧情1-2发生后获得。（摇滚个人、两星）",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "《浪漫赌注》",
+              "group": 26,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，姚子奇剧情4-2发生后获得。（抒情个人、三星）",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "《寂寞国度》",
+              "group": 27,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，姚子奇剧情6-3发生后获得。（蓝调个人、四星）",
+              "group": 27
+            },
+            {
+              "kind": "event",
+              "text": "《恋爱最终章续篇》",
+              "group": 28,
+              "label": "4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，慕容和希剧情9-6发生后获得。（摇滚个人、五星）",
+              "group": 28
+            },
+            {
+              "kind": "event",
+              "text": "《最爱的朋友》",
+              "group": 29,
+              "label": "5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，出过团体唱片后，满足数值要求后累积15天自由活动后获得（舞曲团体、三星）",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺420、动感480、体能480、自信420",
+              "group": 29
+            },
+            {
+              "kind": "event",
+              "text": "《四手连弹爱情曲》",
+              "group": 30,
+              "label": "6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，跟慕容和希同一个团体并出过团体唱片后，满足数值要求后累积12天自由活动后获得（抒情团体、五星）",
+              "group": 30
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、仪态700、自信550",
+              "group": 30
+            },
+            {
+              "kind": "event",
+              "text": "《小王子的花园》",
+              "group": 31,
+              "label": "7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积12天自由活动后获得（爵士个人、五星）",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、仪态550、自信550",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "《公元2025年》",
+              "group": 32,
+              "label": "8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动后获得（蓝调个人、四星）",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺600、名气450、才智450、自信600",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "《银河漂流》",
+              "group": 33,
+              "label": "9"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积12天自由活动后获得（摇滚个人、五星）",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、动感550、体能550",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "《封印之钥》",
+              "group": 34,
+              "label": "10"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积12天自由活动后获得（抒情个人、五星）",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、仪态700、自信550",
+              "group": 34
+            },
+            {
+              "kind": "heading",
+              "text": "慕容和希",
+              "group": 35,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《秋草旧长营》",
+              "group": 36,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，慕容和希剧情5-1发生后获得。（蓝调个人、两星）",
+              "group": 36
+            },
+            {
+              "kind": "event",
+              "text": "《因风飞过蔷薇》",
+              "group": 37,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，慕容和希剧情9-7发生后获得。（抒情个人、五星）",
+              "group": 37
+            },
+            {
+              "kind": "event",
+              "text": "《凉夏》",
+              "group": 38,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，出过团体唱片后，累积15天自由活动后获得（抒情团体、两星）",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺400、名气200、仪态400、自信360",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "《梦红楼》",
+              "group": 39,
+              "label": "4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动后获得（抒情个人、四星）",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺600、名气450、仪态600、自信520",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "《蝴蝶轨迹》",
+              "group": 40,
+              "label": "5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积12天自由活动后获得（抒情个人、四星）",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺600、名气450、仪态600、自信520",
+              "group": 40
+            },
+            {
+              "kind": "event",
+              "text": "《左岸无战事》",
+              "group": 41,
+              "label": "6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积15天自由活动后获得（蓝调个人、五星）",
+              "group": 41
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、才智500、自信700",
+              "group": 41
+            },
+            {
+              "kind": "heading",
+              "text": "卫亚",
+              "group": 42,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《奈何天》",
+              "group": 43,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（另类个人、两星）",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "口才300、歌艺360、自信400",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "《黑暗之心》",
+              "group": 44,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（爵士个人、三星）",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺480、名气330、仪态420、自信420",
+              "group": 44
+            },
+            {
+              "kind": "heading",
+              "text": "纪翔",
+              "group": 45,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《昨日约定》",
+              "group": 46,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，纪翔剧情4-3发生后获得。（蓝调个人、五星）",
+              "group": 46
+            },
+            {
+              "kind": "event",
+              "text": "《烟花下的你》",
+              "group": 47,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，纪翔剧情9-4发生后获得。（抒情个人、五星）",
+              "group": 47
+            },
+            {
+              "kind": "event",
+              "text": "《拜伦的诗句》",
+              "group": 48,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（抒情个人、四星）",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺600、名气450、仪态600、自信520",
+              "group": 48
+            },
+            {
+              "kind": "event",
+              "text": "《宿醉》",
+              "group": 49,
+              "label": "4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（抒情个人、五星）",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、仪态700、自信550",
+              "group": 49
+            },
+            {
+              "kind": "heading",
+              "text": "城仲瑄",
+              "group": 50,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《如雪》",
+              "group": 51,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（民歌个人、五星）",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺700、名气500、仪态550、才智400",
+              "group": 51
+            },
+            {
+              "kind": "event",
+              "text": "《十二月的企鹅》",
+              "group": 52,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积20天自由活动后获得（儿歌个人、四星）",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "歌艺520、名气520、才智520",
+              "group": 52
+            },
+            {
+              "kind": "heading",
+              "text": "其他",
+              "group": 53,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《温柔时刻》",
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，林芬芬作品，丹尼斯剧情2-3发生后获得。（儿歌个人、三星）",
+              "group": 54
+            },
+            {
+              "kind": "section",
+              "text": "电视剧",
+              "group": 55
+            },
+            {
+              "kind": "heading",
+              "text": "杜云芊",
+              "group": 56,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《学院的王子们》",
+              "group": 57,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积40天自由活动后获得（爱情偶像剧，连续剧，双五星）",
+              "group": 57
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技500、名气700、仪态550",
+              "group": 57
+            },
+            {
+              "kind": "event",
+              "text": "《名字》",
+              "group": 58,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积38天自由活动后获得（冒险动作片，连续剧，双四星）",
+              "group": 58
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技520、名气520、动感450、体能520",
+              "group": 58
+            },
+            {
+              "kind": "heading",
+              "text": "沈惟真",
+              "group": 59,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《回到爱上那天》",
+              "group": 60,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积40天自由活动后获得（爱情偶像剧，10天短剧，男三星、女二星）",
+              "group": 60
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技330、名气480、仪态420",
+              "group": 60
+            },
+            {
+              "kind": "event",
+              "text": "《恋爱魔镜》",
+              "group": 61,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积40天自由活动后获得（爱情偶像剧，20天短剧，双三星）",
+              "group": 61
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技330、名气480、仪态420",
+              "group": 61
+            },
+            {
+              "kind": "event",
+              "text": "《青春玛奇朵》",
+              "group": 62,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积40天自由活动后获得（少年励志剧，连续剧，女五星，男配二星）",
+              "group": 62
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技550、名气550、体能500、才智500",
+              "group": 62
+            },
+            {
+              "kind": "heading",
+              "text": "丹尼斯",
+              "group": 63,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《医院风云》",
+              "group": 64,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（社会乡土剧，20天短剧，男四星、女三星、男配一星）",
+              "group": 64
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技600、口才450、名气520、自信520",
+              "group": 64
+            },
+            {
+              "kind": "event",
+              "text": "《美酒贵公子》",
+              "group": 65,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（爱情偶像剧，连续剧，双四星）",
+              "group": 65
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技520、名气600、仪态520",
+              "group": 65
+            },
+            {
+              "kind": "event",
+              "text": "《刑事侦查一周间》",
+              "group": 66,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后活动（侦探悬疑剧，连续剧，双五星）",
+              "group": 66
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技550、名气500、才智500、自信550",
+              "group": 66
+            },
+            {
+              "kind": "heading",
+              "text": "卫亚",
+              "group": 67,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《状元红》",
+              "group": 68,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（古装宫廷剧，10天短剧，双三星）",
+              "group": 68
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技420、名气420、仪态330、自信420",
+              "group": 68
+            },
+            {
+              "kind": "event",
+              "text": "《情剑无双》",
+              "group": 69,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积30天自由活动后获得（古装宫廷剧，连续剧，双五星）",
+              "group": 69
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技550、名气550、仪态500、自信550",
+              "group": 69
+            },
+            {
+              "kind": "event",
+              "text": "《梅岭情缘》",
+              "group": 70,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（古装宫廷剧，连续剧，男五星）",
+              "group": 70
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技550、名气550、仪态500、自信550",
+              "group": 70
+            },
+            {
+              "kind": "heading",
+              "text": "城仲瑄",
+              "group": 71,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《减肥大作战》",
+              "group": 72,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（温馨伦理剧，连续剧，女五星，女配二星）",
+              "group": 72
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技700、名气550、仪态550",
+              "group": 72
+            },
+            {
+              "kind": "event",
+              "text": "《十八岁新娘》",
+              "group": 73,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积33天自由活动后获得（社会乡土剧，连续剧，双四星）",
+              "group": 73
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技700、口才500、名气550、自信550",
+              "group": 73
+            },
+            {
+              "kind": "section",
+              "text": "电影",
+              "group": 74
+            },
+            {
+              "kind": "heading",
+              "text": "杜云芊",
+              "group": 75,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《落日》",
+              "group": 76,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，公司主线剧情4-3发生后累积1个月自由活动后获得（剧情片，双五星，男配一四星，男配二三星）",
+              "group": 76
+            },
+            {
+              "kind": "event",
+              "text": "《沉默的告白》",
+              "group": 77,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积40天自由活动后获得（剧情片，双三星）",
+              "group": 77
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技480、名气420、仪态330、动感330",
+              "group": 77
+            },
+            {
+              "kind": "heading",
+              "text": "沈惟真",
+              "group": 78,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《无瑕四重奏》",
+              "group": 79
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积40天自由活动后获得（剧情片，双五星）",
+              "group": 79
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技700、名气550、仪态500、动感500",
+              "group": 79
+            },
+            {
+              "kind": "heading",
+              "text": "丹尼斯",
+              "group": 80,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《塔罗牌杀人事件》",
+              "group": 81,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积33天自由活动后获得（剧情片，男四星，女三星，男配一星）",
+              "group": 81
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技600、名气520、仪态450、动感450",
+              "group": 81
+            },
+            {
+              "kind": "event",
+              "text": "《花样年华》",
+              "group": 82,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（剧情片，双五星，男配四星）",
+              "group": 82
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技700、名气550、仪态500、动感500",
+              "group": 82
+            },
+            {
+              "kind": "event",
+              "text": "《梧桐雨之秋》",
+              "group": 83,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（剧情片，双五星，男配三星）",
+              "group": 83
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技700、名气550、仪态500、动感500",
+              "group": 83
+            },
+            {
+              "kind": "heading",
+              "text": "姚子奇",
+              "group": 84,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《讨厌爱上你》",
+              "group": 85
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，与慕容和希一同拍过《从来不曾爱你》杀青后，累积40天自由活动后获得（爱情文艺片，男双五星）",
+              "group": 85
+            },
+            {
+              "kind": "heading",
+              "text": "慕容和希",
+              "group": 86,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《现在如此爱你》",
+              "group": 87,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，与姚子奇一同拍过《从来不曾爱你》杀青后，累积40天自由活动后获得（爱情文艺片，男双五星）",
+              "group": 87
+            },
+            {
+              "kind": "event",
+              "text": "《万事如意》",
+              "group": 88,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积40天自由活动后获得（爱情文艺片，双三星）",
+              "group": 88
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技420、名气480、仪态420、自信330",
+              "group": 88
+            },
+            {
+              "kind": "heading",
+              "text": "卫亚",
+              "group": 89,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《异世界童话》",
+              "group": 90,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "特殊，卫亚剧情5-9发生后获得。（科幻未来片，男五星，男配三星）",
+              "group": 90
+            },
+            {
+              "kind": "event",
+              "text": "《校园怪谈》",
+              "group": 91,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（侦探悬疑片，双五星，男配四星）",
+              "group": 91
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技700、名气550、才智550、自信500",
+              "group": 91
+            },
+            {
+              "kind": "heading",
+              "text": "纪翔",
+              "group": 92,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《王子复仇记》",
+              "group": 93,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（剧情片，男四星，男配女配一星）",
+              "group": 93
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技600、名气520、仪态450、动感450",
+              "group": 93
+            },
+            {
+              "kind": "event",
+              "text": "《雪莱传记》",
+              "group": 94,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（剧情片，双五星）",
+              "group": 94
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技700、名气550、仪态500、动感500",
+              "group": 94
+            },
+            {
+              "kind": "heading",
+              "text": "城仲瑄",
+              "group": 95,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《老鼠嫁女》",
+              "group": 96,
+              "label": "1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（轻松喜剧片，女三星，男配双一星）",
+              "group": 96
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技420、口才330、名气480、自信420",
+              "group": 96
+            },
+            {
+              "kind": "event",
+              "text": "《丑小鸭的天空》",
+              "group": 97,
+              "label": "2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积33天自由活动后获得（爱情文艺片，双五星）",
+              "group": 97
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技550、名气700、仪态550、自信500",
+              "group": 97
+            },
+            {
+              "kind": "event",
+              "text": "《单身套房》",
+              "group": 98,
+              "label": "3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "一般，累积35天自由活动后获得（轻松喜剧片，女五星，男配女配三星）",
+              "group": 98
+            },
+            {
+              "kind": "paragraph",
+              "text": "演技550、口才500、名气700、自信550",
+              "group": 98
+            },
+            {
+              "kind": "heading",
+              "text": "其他",
+              "group": 99,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "《从来不曾爱过》",
+              "group": 100
+            },
+            {
+              "kind": "paragraph",
+              "text": "第二年6月~12月，公司资金大于300万，苏嫚君上门募捐，答应捐钱可得剧本（剧情片，男双五星，女配3星）",
+              "group": 100
+            }
+          ],
           "children": []
         },
         {
           "id": "sweet-guide/outfits",
           "title": "服装获得方法和剧情",
-          "status": "missing",
-          "blocks": [],
-          "children": []
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "heading",
+              "text": "春夏洋装",
+              "group": 1,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "差不多该换季了",
+              "group": 2,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2008/3",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "工作结束后，自动遇到王洁安与马秋慧讨论换季的事",
+              "group": 2
+            },
+            {
+              "kind": "event",
+              "text": "是谁踩到我的脚",
+              "group": 3,
+              "label": "1-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-1发生后-2008/4",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "星期六到商店街抢购打折商品，结果惨败",
+              "group": 3
+            },
+            {
+              "kind": "event",
+              "text": "今天真是大丰收",
+              "group": 4,
+              "label": "1-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后-2008/4",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "星期六到商店街找马秋慧逛街，钱有10万↑，就能顺利入手-春夏洋装",
+              "group": 4
+            },
+            {
+              "kind": "heading",
+              "text": "古典晚礼服",
+              "group": 5,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "谁这么没有公德心",
+              "group": 6,
+              "label": "2-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2008/8",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "进入电视或广告公司，柜台小姐说公司地板最近时常遭人涂鸦",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "原来是你",
+              "group": 7,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视或广告的工作结束后，自动发现朱莉在地上涂鸦",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "请当我的模特儿",
+              "group": 8,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-2发生后",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "朱莉主动前来拜托杜云芊当模特儿，但笔会断掉",
+              "group": 8
+            },
+            {
+              "kind": "note",
+              "text": "※杜云芊仪态350↑演技400↑会触发(有大大演技343就触发了…看至顶板)",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "写不坏也折不坏的笔",
+              "group": 9,
+              "label": "2-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-3发生1个月内",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "到精品店买笔，钱有30万↑，就能买到七彩色笔",
+              "group": 9
+            },
+            {
+              "kind": "event",
+              "text": "设计图完成了",
+              "group": 10,
+              "label": "2-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-4发生后",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "到电视或广告公司可以遇到朱莉，把笔给她，终于完成设计图了",
+              "group": 10
+            },
+            {
+              "kind": "event",
+              "text": "这都是你的功劳",
+              "group": 11,
+              "label": "2-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-5发生后1个月后",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "朱莉主动前来送杜云芊自己设计的衣服，古典晚礼服入手",
+              "group": 11
+            },
+            {
+              "kind": "heading",
+              "text": "皮衣",
+              "group": 12,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "明星美人志",
+              "group": 13,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2009/2",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "自动遇到萧依莉和新明纱雪正在研究流行杂志",
+              "group": 13
+            },
+            {
+              "kind": "event",
+              "text": "有兴趣来试镜吗",
+              "group": 14,
+              "label": "3-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2009/3-2009/4",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "周先生主动拜访，邀请杜云芊参加明星美人志试镜",
+              "group": 14
+            },
+            {
+              "kind": "note",
+              "text": "※杜云芊演技仪态动感体能皆在350↑才会触发",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "青春洋溢有活力",
+              "group": 15,
+              "label": "3-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2009/5",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "星期2前往追梦广告公司",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "就是少了点妩媚",
+              "group": 16,
+              "label": "3-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2009/6",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "参加试镜后，周先生前来拜访告知结果",
+              "group": 16
+            },
+            {
+              "kind": "event",
+              "text": "杜云芊展现自信风采",
+              "group": 17,
+              "label": "3-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-4发生后(大约要到2010年)",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "赞美杜云芊的新闻",
+              "group": 17
+            },
+            {
+              "kind": "note",
+              "text": "※3-4发生后，杜云芊拍5部↑的广告，仪态与自信450↑才会触发",
+              "group": 17
+            },
+            {
+              "kind": "event",
+              "text": "请担任本季代言人",
+              "group": 18,
+              "label": "3-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-5发生后1个月内",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "今年秋季流行就靠你",
+              "group": 19,
+              "label": "3-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-6发生1星期内",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "到创意广告公司拍摄杂志封面，顺便把拍摄用的皮衣带回家",
+              "group": 19
+            },
+            {
+              "kind": "heading",
+              "text": "诱惑女神晨袍",
+              "group": 20,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "预购甜蜜乐章赠送之‘诱惑女神晨袍’在2008/1/30开始兑换",
+              "group": 20
+            },
+            {
+              "kind": "heading",
+              "text": "甜蜜新娘礼服",
+              "group": 21,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "兑换方式：凭序号，进入‘甜蜜乐章’游戏中即可兑换",
+              "group": 21
+            },
+            {
+              "kind": "heading",
+              "text": "甜美小红帽装",
+              "group": 22,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "兑换方式：凭序号，进入‘甜蜜乐章’游戏中即可兑换",
+              "group": 22
+            },
+            {
+              "kind": "heading",
+              "text": "卡哇伊女仆装",
+              "group": 23,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "兑换方式：凭序号，进入‘甜蜜乐章’游戏中即可兑换",
+              "group": 23
+            },
+            {
+              "kind": "section",
+              "text": "虚拟服装相关剧情",
+              "group": 24
+            },
+            {
+              "kind": "heading",
+              "text": "甜美小红帽（坚定的友谊）",
+              "group": 25,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "穿着提高参加节目小游戏通告得到的奖金及奖品。",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "穿上小红帽服装后，在街边偶遇伦敦广告的负责人杰西卡。",
+              "group": 26,
+              "label": "1-1"
+            },
+            {
+              "kind": "event",
+              "text": "当主角达到演技220、仪态415、自信285且拍过几辑广告后，杰西卡上门邀约《相遇花精》。",
+              "group": 27,
+              "label": "1-2"
+            },
+            {
+              "kind": "event",
+              "text": "接下《相遇花精》后，隔天出新闻“和克烈斯互动亲密，横刀夺爱？杜云芊背叛好友？”",
+              "group": 28,
+              "label": "1-3"
+            },
+            {
+              "kind": "event",
+              "text": "周末，杨安妤来找主角，相约下周公园见。",
+              "group": 29,
+              "label": "1-4"
+            },
+            {
+              "kind": "event",
+              "text": "隔周周一到公园，必须身穿甜美小红帽装。安妤与主角冰释前嫌，得到CG",
+              "group": 30,
+              "label": "1-5"
+            },
+            {
+              "kind": "event",
+              "text": "与安妤冰释前嫌后接拍电视剧，会看见克烈斯跟安妤解释。",
+              "group": 31,
+              "label": "1-6"
+            },
+            {
+              "kind": "heading",
+              "text": "甜蜜新娘礼服（尘封的记忆）",
+              "group": 32,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "穿着可提高通告结果的‘完美’机率。",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "5月初新闻,“招募模特拍摄婚纱特辑”。",
+              "group": 33,
+              "label": "2-1"
+            },
+            {
+              "kind": "event",
+              "text": "新闻过后,穿着新娘礼服去广告公司",
+              "group": 34,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "第一次对话,会抱怨说拍摄总感觉缺少什么,不要以为对话完了就结束了,再次点击人物,会表示希望主角拍摄该特别企划,自动会答应,之后获得CG。",
+              "group": 34
+            },
+            {
+              "kind": "event",
+              "text": "6月出新闻，“6月新娘特辑 由杜云芊担当! 一个人的结婚典礼特别企划!”(仪态和自信上升)",
+              "group": 35,
+              "label": "2-3"
+            },
+            {
+              "kind": "event",
+              "text": "周末,欧凯文医生前来公司,表示有病童看了杂志后想起父母亲婚纱照,所以欧医生希望和主角去拍结婚照,从而激励少年动手术,芊芊表示太突然要考虑。",
+              "group": 36,
+              "label": "2-4"
+            },
+            {
+              "kind": "event",
+              "text": "之后周三去酒吧找八卦记者,询问关于欧医生的情况,付出50w后了解到欧医生的身世,为人,以及关于病童的情况,主角开始相信欧医生的话。",
+              "group": 37,
+              "label": "2-5"
+            },
+            {
+              "kind": "event",
+              "text": "次日便可去医院寻找欧医生,到了医院由于病童身体原因无法探视他,之后对于欧医生的请求,选择答应后,欧医生会约主角下周一去商店街拍摄婚纱照。",
+              "group": 38,
+              "label": "2-6"
+            },
+            {
+              "kind": "event",
+              "text": "隔周周一前往商店街,一见面,欧医生居然说被主角的样子深深着迷，之后获得假结婚照。然后欧医生表示感谢后先行离开,主角继续在婚纱店晃晃,发现一张酷似人物自己的多年前的婚纱照。",
+              "group": 39,
+              "label": "2-7"
+            },
+            {
+              "kind": "event",
+              "text": "周三,继续去酒吧找八卦记者,支付五百万调查照片中人的详情。",
+              "group": 40,
+              "label": "2-8"
+            },
+            {
+              "kind": "event",
+              "text": "大约2周后,八卦记者主动前来找寻主角,调查出结果,并得到一封由病童父母在多年前写的信,表达自己对于孩子的思念不舍之情。",
+              "group": 41,
+              "label": "2-9"
+            },
+            {
+              "kind": "event",
+              "text": "第二天往医院,将从记者那里打听到的结果告诉欧医生,并将信转交给他,医生表示会在病童手术清醒后告诉这一切",
+              "group": 42,
+              "label": "2-10"
+            },
+            {
+              "kind": "event",
+              "text": "周末,欧医生主动拜访,告知病童逝世的情况,但由于得知了一切,是带着幸福的泪水离开世界的,医生向主角表示感谢后离开,芊芊曝光度增加",
+              "group": 43,
+              "label": "2-11"
+            },
+            {
+              "kind": "heading",
+              "text": "卡哇伊女仆装（为你服务）",
+              "group": 44,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "穿着将可影响旗下艺人主角疲劳、压力上升速度缓慢。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "穿上卡哇伊女仆装后到19号酒馆点席若云，她会说主角这套衣服很适合她们酒馆，让主角周末一有空就到店里打工。",
+              "group": 45,
+              "label": "3-1"
+            },
+            {
+              "kind": "event",
+              "text": "到酒馆打工一段时间后会碰上加贺大泽，前去点击，他会建议你说“主人，欢迎回来!”",
+              "group": 46,
+              "label": "3-2"
+            },
+            {
+              "kind": "event",
+              "text": "10月，新闻“国际慈善表演计划”。",
+              "group": 47,
+              "label": "3-3"
+            },
+            {
+              "kind": "event",
+              "text": "新闻出现后到19号酒馆，点加贺大泽的小人，他会说要的就是这种风格，然后扬长而去。",
+              "group": 48,
+              "label": "3-4"
+            },
+            {
+              "kind": "event",
+              "text": "12月，新闻“跨国大型慈善晚会正式定名”",
+              "group": 49,
+              "label": "3-5"
+            },
+            {
+              "kind": "event",
+              "text": "周末，加贺大泽来访，邀请主角参加慈善晚会，选“我愿意试试看”",
+              "group": 50,
+              "label": "3-6"
+            },
+            {
+              "kind": "event",
+              "text": "接上一个月后收到晚会海报，CG入手",
+              "group": 51,
+              "label": "3-7"
+            },
+            {
+              "kind": "event",
+              "text": "接上一个月后，主角属性高时会出现“主持人完美演出，慈善晚会圆满落幕”的新闻。",
+              "group": 52,
+              "label": "3-8"
+            },
+            {
+              "kind": "event",
+              "text": "如果主角属性偏低，则会出现“场面略显冷清，大型慈善活动落幕”的新闻。",
+              "group": 53,
+              "label": "3-8-1"
+            }
+          ],
+          "children": [],
+          "description": "服装获得方法"
         },
         {
           "id": "sweet-guide/festivals",
           "title": "三大节日相关",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "section",
+              "text": "主角生日",
+              "group": 1
+            },
+            {
+              "kind": "heading",
+              "text": "第一年生日",
+              "group": 2,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "只有杜司臣和杨安妤会帮杜云芊过生日，旗下艺人不会前来祝贺",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "第二年后生日",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.如果有交往对象，就和交往对象一起过",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.和杜云芊有一定程度好感，就会跟杜云芊一起过生日",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.旗下没有任何艺人，或好感皆未达生日事件的标准，就与杜司臣一起过生日",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "4.第2年和第3年都和同一人度过生日，就能得到该艺人的生日礼物",
+              "group": 3
+            },
+            {
+              "kind": "heading",
+              "text": "艺人生日礼物列表--",
+              "group": 4,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "沈惟真：沈惟真的蓝色缎带",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "丹尼斯：丹尼斯的手表",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "史蒂芬：史蒂芬的徽章",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "姚子奇：姚子奇的避邪手链",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "慕容和希：慕容和希的乐谱",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "卫亚：卫亚的素描",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "纪翔：纪翔的相簿",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "城仲瑄：城仲瑄的围巾",
+              "group": 4
+            },
+            {
+              "kind": "section",
+              "text": "情人节",
+              "group": 5
+            },
+            {
+              "kind": "heading",
+              "text": "情人节流程",
+              "group": 6,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "情人节邀约沟通话题->敲定约会地点->情人节当天前往指定地点->情人节事件完成",
+              "group": 6
+            },
+            {
+              "kind": "heading",
+              "text": "情人节邀约触发条件",
+              "group": 7,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.旗下艺人才可触发",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.该艺人2月14日当天没有特殊行程和院会",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.情人节前的星期日启动沟通话题",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "4.近4个月内约会次数最多的旗下艺人",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "5.约会次数要求：",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "第1年-不限次数",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "第2年-近4个月内约会4次以上",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "第3年-近4个月内约会5次以上",
+              "group": 7
+            },
+            {
+              "kind": "heading",
+              "text": "情人节CG图取得条件",
+              "group": 8,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "沈惟真：杜云芊穿着春夏洋装",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "丹尼斯：杜云芊穿着秋冬洋装",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "史蒂芬：杜云芊穿着秋冬洋装",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "姚子奇：杜云芊穿着秋冬洋装",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "慕容和希：杜云芊穿着春夏洋装",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "卫亚：杜云芊穿着春夏洋装",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "纪翔：杜云芊穿着秋冬洋装",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "城仲瑄：杜云芊穿着春夏洋",
+              "group": 8
+            },
+            {
+              "kind": "section",
+              "text": "圣诞节",
+              "group": 9
+            },
+            {
+              "kind": "heading",
+              "text": "圣诞节流程",
+              "group": 10,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "圣诞节邀约沟通话题->敲定约会地点->圣诞节当天前往指定地点->圣诞节事件完成",
+              "group": 10
+            },
+            {
+              "kind": "heading",
+              "text": "圣诞节邀约触发条件",
+              "group": 11,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.旗下艺人才可触发",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.该艺人12月25日当天没有特殊行程和约会",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.圣诞节前的星期日启动沟通话题",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "4.好感度要求：",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "第1年-不限制好感",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "第2年-与该艺人要“很有好感”才能够触发邀约沟通",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "第3年-与该艺人要“究极好感”才能够触发邀约沟通",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "5.圣诞节邀约沟通话题可多人同时提出，没有其他限制",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "注：圣诞节事件没有CG图或任何特殊物品称号达成条件。",
+              "group": 11
+            }
+          ],
           "children": []
         },
         {

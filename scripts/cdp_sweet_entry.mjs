@@ -227,6 +227,70 @@ async function main() {
     console.log('wrote', tablePath);
   }
 
+  // 5b. 自制通告一览 / 服装获得方法和剧情 / 三大节日相关
+  const openNode = async (id) => {
+    await evaluate(`(() => {
+      const row = document.querySelector('[data-node-id="${id}"]');
+      const pick = [...row.querySelectorAll('button')].find((b) => b.className.includes('flex-1'));
+      pick.click();
+      return 1;
+    })()`);
+    await new Promise((r) => setTimeout(r, 600));
+  };
+  const readPage = () => evaluate(`(() => ({
+    hash: location.hash,
+    heads: [...document.querySelectorAll('main h3')].map((h) => h.textContent.trim()),
+    cards: document.querySelectorAll('[data-event-label]').length,
+    firstCard: document.querySelector('[data-event-label]')?.innerText ?? '',
+    text: document.querySelector('main')?.innerText ?? '',
+  }))()`);
+
+  await openNode('sweet-guide/self-notices');
+  const notice = await readPage();
+  check('点自制通告写入深链', notice.hash === '#/guide/sweet-guide/self-notices', notice.hash);
+  check(
+    '自制通告按唱片/电视剧/电影分章，艺人小标题 24 条',
+    notice.heads.slice(0, 2).join('/') === '唱片/杜云芊' && notice.heads.length === 27,
+    JSON.stringify(notice.heads.slice(0, 3)),
+  );
+  check('一首歌一张卡（69 张带编号）', notice.cards === 69, `cards=${notice.cards}`);
+  check(
+    '第一首歌带说明与属性行',
+    notice.firstCard.includes('《晴天娃娃》') && notice.firstCard.includes('（民歌个人、两星）'),
+    notice.firstCard.replace(/\n+/g, ' ').slice(0, 40),
+  );
+  check('页首的获得方式说明保留', notice.text.includes('1、触发剧情后直接获得；'), 'ok');
+
+  await openNode('sweet-guide/outfits');
+  const outfits = await readPage();
+  check('点服装写入深链', outfits.hash === '#/guide/sweet-guide/outfits', outfits.hash);
+  check(
+    '服装名渲染成小标题',
+    outfits.heads.slice(0, 2).join('/') === '春夏洋装/古典晚礼服' && outfits.heads.length === 11,
+    JSON.stringify(outfits.heads.slice(0, 3)),
+  );
+  check('服装事件 42 张卡', outfits.cards === 42, `cards=${outfits.cards}`);
+  check(
+    '省略号后的时间进卡片',
+    outfits.firstCard.includes('时间：2008/3'),
+    outfits.firstCard.replace(/\n+/g, ' ').slice(0, 40),
+  );
+  check('※ 行渲染成提示', outfits.text.includes('杜云芊仪态350↑演技400↑会触发'), 'ok');
+
+  await openNode('sweet-guide/festivals');
+  const festivals = await readPage();
+  check('点三大节日写入深链', festivals.hash === '#/guide/sweet-guide/festivals', festivals.hash);
+  check(
+    '主角生日 / 情人节 / 圣诞节各一章',
+    festivals.heads[0] === '主角生日' && festivals.text.includes('圣诞节邀约触发条件'),
+    JSON.stringify(festivals.heads.slice(0, 2)),
+  );
+  check(
+    '生日礼物与情人节流程都在',
+    festivals.text.includes('沈惟真的蓝色缎带') && festivals.text.includes('情人节邀约沟通话题->敲定约会地点'),
+    'ok',
+  );
+
   // 6. 点角色页（每行第一个按钮是展开/折叠，第二个才是选中）
   await evaluate(`(() => {
     const row = document.querySelector('[data-node-id="sweet-characters/yao-ziqi"]');
