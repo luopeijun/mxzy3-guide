@@ -4,7 +4,8 @@ import fs from 'node:fs';
 /* 甜蜜乐章事件追踪器回归：两个页签与 #/tracker 路由、主角恒占一个签约位
    （最多 4 人＝主角 + 3 位艺人、不可解约、头像在人名左边）、事件步骤详情
    打开事件即全部展开、线头部「展开全部 / 收起全部」与置顶同一排、事件池
-   按甜站类目分组、进度与存档键和明星志愿3 完全隔离、存档面板不带 CG / 六大通告。
+   按甜站类目分组（经纪人事件簿只收主线 / 公司改建 / 服装三页）、进度与
+   存档键和明星志愿3 完全隔离、存档面板不带 CG / 六大通告。
 
    Usage: node scripts/cdp_sweet_tracker.mjs [shot.png]
    前置：dev server 5173 + Chrome 调试端口 9339。 */
@@ -260,6 +261,23 @@ async function main() {
   check('池里有已签约角色的任务线', pool.artist > 0, JSON.stringify(pool));
   check('经纪人事件簿 / 支线攻略的线默认进池', pool.broker > 0 && pool.side > 0, JSON.stringify(pool));
   check('池里没有原站节点前缀', pool.mainPrefix === 0, JSON.stringify(pool));
+
+  // 8b. 经纪人事件簿只收三个页面；「自制通告一览」是资料页，不该变待办线。
+  const brokerNodes = await evaluate(`(() => {
+    const ids = [...document.querySelectorAll('main [data-line-card]')]
+      .map(c => c.dataset.lineId || '')
+      .filter(x => x.startsWith('sweet-guide/'));
+    return {
+      total: ids.length,
+      nodes: [...new Set(ids.map(x => x.split('::')[0]))].sort(),
+      selfNotices: ids.filter(x => x.startsWith('sweet-guide/self-notices')).length,
+    };
+  })()`);
+  check('经纪人事件簿只收主线 / 公司改建 / 服装三页',
+    brokerNodes.total > 0 &&
+    brokerNodes.nodes.join(',') === 'sweet-guide/company,sweet-guide/main-story,sweet-guide/outfits',
+    JSON.stringify(brokerNodes));
+  check('自制通告一览不再进事件池', brokerNodes.selfNotices === 0, JSON.stringify(brokerNodes));
 
   // 9. 勾选一步 → 只写甜站进度键
   const beforeStep = await evaluate(`(() => ({

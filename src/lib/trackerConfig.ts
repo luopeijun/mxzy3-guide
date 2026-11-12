@@ -40,6 +40,13 @@ export interface TrackerSiteConfig {
    *  明星志愿3 用它挡掉角色页里与路欧桑分支页重复的感情线；甜蜜乐章没有
    *  重复内容，留空。 */
   poolSkip: Record<string, { sections?: string[]; headings?: string[] }>;
+  /** 类目级节点白名单：键＝顶层类目 id，值＝允许生成任务线的节点 id
+   *  （这些节点自己的后代也一起放行）。没配置的类目照常全收。
+   *
+   *  甜蜜乐章的「经纪人事件簿」里只有主线 / 公司改建 / 服装三页是可追踪的
+   *  事件；「自制通告一览」等资料页虽然也用 event 块排版（每个通告一条），
+   *  但不是待办事件，放进池子会冒出 24 条人名重复的怪线。 */
+  poolNodeAllowlist?: Record<string, string[]>;
   /** 事件块的正文是否拆在同 group 的后续块里。明星志愿3 的 event.text 就是
    *  整段正文；甜蜜乐章把「时间 / 概要 / 提示」拆成 paragraph / note 跟在
    *  事件标题后面，把它们收进步骤详情，折叠箭头点开才显示。 */
@@ -121,6 +128,14 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
   ],
   chipCols: 2,
   poolSkip: {},
+  // 「经纪人事件簿」只收这三页；其余资料页（自制通告一览等）不进事件池。
+  poolNodeAllowlist: {
+    'sweet-guide': [
+      'sweet-guide/main-story',
+      'sweet-guide/company',
+      'sweet-guide/outfits',
+    ],
+  },
   // 甜站事件卡把「时间 / 概要 / 提示」拆成同 group 的 paragraph / note，
   // 追踪器要把它们挂到对应事件的折叠详情里。
   stepDetails: true,

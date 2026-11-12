@@ -220,11 +220,17 @@ export function extractLines(
 ): TaskLine[] {
   const result: TaskLine[] = [];
   for (const category of data.categories) {
-    const walk = (node: GuideNode) => {
-      result.push(...linesFromNode(node, originOf(node, category.id, config), config));
-      node.children.forEach(walk);
+    // 配了节点白名单的类目只放行名单里的页面（及其后代）；没配的类目全收。
+    const allowlist = config.poolNodeAllowlist?.[category.id];
+    const allowed = allowlist ? new Set(allowlist) : null;
+    const walk = (node: GuideNode, parentAllowed: boolean) => {
+      const inPool = !allowed || parentAllowed || allowed.has(node.id);
+      if (inPool) {
+        result.push(...linesFromNode(node, originOf(node, category.id, config), config));
+      }
+      node.children.forEach((child) => walk(child, inPool));
     };
-    walk(category);
+    walk(category, false);
   }
   return result;
 }
