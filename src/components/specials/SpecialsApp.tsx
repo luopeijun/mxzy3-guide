@@ -316,42 +316,51 @@ export default function SpecialsApp({ data, guide }: Props) {
         </div>
       </div>
 
-        <nav
-          data-specials-rail
-          aria-label="六大通告跳转"
-          className="hidden w-[176px] shrink-0 border-l border-line px-3 py-5 min-[1120px]:block"
-        >
-          <p className="px-1 text-ui-2xs font-semibold text-ink-faint">六大通告</p>
-          <ul className="mt-2 flex flex-col gap-0.5">
-            {notices.map((notice) => {
-              const isActive = activeNotice === notice.id;
-              return (
-                <li key={notice.id}>
-                  <button
-                    type="button"
-                    data-specials-rail-item={notice.id}
-                    aria-current={isActive ? 'true' : undefined}
-                    onClick={() => jumpToNotice(notice.id)}
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-ui-xs px-2 py-1.5 text-left text-ui-2xs transition-colors',
-                      isActive
-                        ? 'bg-brand-soft font-semibold text-brand-strong'
-                        : 'text-ink-muted hover:bg-surface-soft hover:text-brand-strong',
-                    )}
-                  >
-                    <span
+        <aside className="hidden w-[204px] shrink-0 py-5 pr-4 min-[1120px]:block">
+          <nav
+            data-specials-rail
+            aria-label="六大通告跳转"
+            className="sticky top-0 rounded-ui-md border border-line bg-surface p-3 shadow-soft"
+          >
+            <p className="px-1 text-ui-2xs font-semibold text-ink-faint">六大通告</p>
+            <ul className="mt-2 flex flex-col gap-0.5">
+              {notices.map((notice) => {
+                const isActive = activeNotice === notice.id;
+                const isEnabled = state.enabled.includes(notice.id);
+                const prog = noticeProgress(evaluation.byNotice[notice.id] ?? []);
+                return (
+                  <li key={notice.id}>
+                    <button
+                      type="button"
+                      data-specials-rail-item={notice.id}
+                      aria-current={isActive ? 'true' : undefined}
+                      onClick={() => jumpToNotice(notice.id)}
                       className={cn(
-                        'h-1.5 w-1.5 shrink-0 rounded-full',
-                        isActive ? 'bg-brand' : 'bg-line-strong',
+                        'flex w-full items-center gap-2 rounded-ui-xs px-2 py-1.5 text-left text-ui-2xs transition-colors',
+                        isActive
+                          ? 'bg-brand-soft font-semibold text-brand-strong'
+                          : 'text-ink-muted hover:bg-surface-soft hover:text-brand-strong',
                       )}
-                    />
-                    {notice.title}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+                    >
+                      <span
+                        className={cn(
+                          'h-1.5 w-1.5 shrink-0 rounded-full',
+                          isActive ? 'bg-brand' : isEnabled ? 'bg-line-strong' : 'bg-line',
+                        )}
+                      />
+                      <span className="min-w-0 flex-1 truncate">{notice.title}</span>
+                      {isEnabled && (
+                        <span className={cn('shrink-0 tabular-nums', isActive ? 'text-brand-strong' : 'text-ink-faint')}>
+                          {prog.met} / {prog.total}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </aside>
       </div>
 
       {archiveOpen && (
