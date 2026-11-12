@@ -125,7 +125,8 @@ npm run dev         # 开发服务器
 npm run build       # 构建至 dist/
 npm run preview     # 预览构建产物
 npm run typecheck   # 类型检查
-npm run test:guide  # 数据校验
+npm run test:guide  # 数据校验（两站全部）
+npm run test:sweet  # 只校验甜蜜乐章的攻略数据
 ```
 
 ## 说明

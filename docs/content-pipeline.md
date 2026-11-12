@@ -130,9 +130,12 @@
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
 | `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章（11 项），共 70 项 |
+| `npm run test:sweet` | 只跑甜蜜乐章的解析回归（11 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 | `python scripts/extract_sweet_guide.py` | 重生成甜蜜乐章的 `public/data/sweet/guide.json` |
+
+**测试范围**：只改甜蜜乐章的内容或组件时，跑 `npm run test:sweet` + `node scripts/cdp_sweet_entry.mjs` 就够了，不必跑全量 `test:guide` 和其它站点的 `cdp_*.mjs`。只有动到共享层（`global.css` 令牌、`patterns.ts`、`src/ui/*`、路由、`useGuideData`、`treeOrder`）时，才需要补跑原站回归。
 
 **解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
 

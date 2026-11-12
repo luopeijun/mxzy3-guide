@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "test:guide": "python -m unittest discover -s scripts -p \"test_*.py\" -v"
+    "test:guide": "python -m unittest discover -s scripts -p \"test_*.py\" -v",
+    "test:sweet": "python -m unittest scripts.test_sweet_guide -v"
   },
   "dependencies": {
     "react": "^19.0.0",
