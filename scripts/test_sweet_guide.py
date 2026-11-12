@@ -82,8 +82,8 @@ class TestSweetGuide(unittest.TestCase):
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
         self.assertEqual(stats["items"], 24)
-        self.assertEqual(stats["readyItems"], 12)
-        self.assertEqual(stats["missingItems"], 12)
+        self.assertEqual(stats["readyItems"], 18)
+        self.assertEqual(stats["missingItems"], 6)
 
     def test_no_invented_descriptions(self) -> None:
         # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
@@ -155,6 +155,10 @@ class TestSweetGuide(unittest.TestCase):
                     self.assertNotIn("．", text, f"残留全角句点：{text}")
                     self.assertNotIn("\u3000", text, f"残留全角空格：{text}")
                     self.assertNotRegex(text, r"[０-９]", f"残留全角数字：{text}")
+                    # 转码漏网的：全角百分号、「讃」是「赞」的异体、「著」应作语助词「着」。
+                    self.assertNotIn("％", text, f"残留全角百分号：{text}")
+                    self.assertNotIn("讃", text, f"残留异体字「讃」：{text}")
+                    self.assertNotIn("著", text, f"残留「著」：{text}")
 
     def test_company_page(self) -> None:
         self.assertEqual(self.company["status"], "ready")
@@ -557,6 +561,63 @@ class TestSweetGuide(unittest.TestCase):
         self.assertFalse(any("称讃" in b["text"] for b in dan))
         self.assertTrue(any("称赞" in b["text"] for b in dan))
         self.assertEqual(len([b for b in dan if b["kind"] == "event"]), 51)  # 1-1 ~ 8-9
+
+    def test_remaining_character_pages(self) -> None:
+        # 六页同一套排法，解析器不用各自定制；锁章节数 / 事件数 / 出 CG 的事件号。
+        category = next(c for c in self.data["categories"] if c["id"] == "sweet-characters")
+        nodes = {n["id"].split("/")[-1]: n for n in category["children"]}
+        sections = [
+            "可创作作品",
+            "事件",
+            "普通模式下结婚图取得条件",
+            "甜蜜模式下结婚图取得条件",
+            "甜蜜模式下告白相关事件触发条件",
+        ]
+        expected = {
+            "ji-xiang": (9, 43, ["5-2", "7-6", "8-2", "9-1"]),
+            "murong-hexi": (9, 44, ["1-2", "4-1", "4-4", "7-4", "9-5"]),
+            "shen-weizhen": (7, 36, ["1-1", "2-1", "4-6", "5-2", "7-4"]),
+            "shi-difen": (7, 43, ["1-2", "4-3", "5-3"]),
+            "wei-ya": (8, 40, ["4-4", "6-3", "8-2"]),
+            "yao-ziqi": (9, 40, ["1-2", "8-5", "9-2"]),
+        }
+        for slug, (heads, events, cgs) in expected.items():
+            node = nodes[slug]
+            self.assertEqual(node["status"], "ready", slug)
+            # 首行就是角色名 → 不写副标题。
+            self.assertNotIn("description", node, slug)
+            blocks = node["blocks"]
+            self.assertEqual([b["text"] for b in blocks if b["kind"] == "section"], sections, slug)
+            self.assertEqual(len([b for b in blocks if b["kind"] == "heading"]), heads, slug)
+            event_blocks = [b for b in blocks if b["kind"] == "event"]
+            self.assertEqual(len(event_blocks), events, slug)
+            self.assertEqual([b["label"] for b in event_blocks if b.get("cg")], cgs, slug)
+            # 效果标记已经从标题里摘掉（CG / 友好度上升都进了标记）。
+            self.assertFalse(
+                any("（友好度上升" in b["text"] or "（CG" in b["text"] for b in event_blocks), slug
+            )
+
+        # 「出去走走吧～（2）」的括号是标题的一部分（同名事件的第二次），不是效果标记。
+        shen = nodes["shen-weizhen"]["blocks"]
+        again = next(b for b in shen if b.get("label") == "4-3")
+        self.assertEqual(again["text"], "出去走走吧～（2）")
+        self.assertNotIn("tag", again)
+        self.assertNotIn("cg", again)
+
+        # 沈惟真的作品清单自带「1、」序号，不再叠圆点；「分红：20％」的全角百分号已归一。
+        works_start = next(i for i, b in enumerate(shen) if b["text"] == "可创作作品")
+        works = [b for b in shen[works_start:] if b["group"] == shen[works_start]["group"]][1:]
+        self.assertEqual(len(works), 9)
+        self.assertEqual(works[0]["text"], "1、唱片·雨天：进公司一月后主动赠送")
+        self.assertFalse(any(b.get("bullet") for b in works))
+        self.assertEqual([b["text"] for b in shen[:3]][1], "分红：20%")
+
+        # 转码漏网的异体字 / 语助词：「称讃」→称赞、「讃美」→赞美、「困扰著」→困扰着。
+        wei = nodes["wei-ya"]["blocks"]
+        self.assertTrue(any("称赞卫亚的新闻" in b["text"] for b in wei))
+        self.assertTrue(any("困扰着" in b["text"] for b in wei))
+        yao = nodes["yao-ziqi"]["blocks"]
+        self.assertTrue(any("惊人的赞美！" in b["text"] for b in yao))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

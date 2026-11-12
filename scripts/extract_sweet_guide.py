@@ -677,6 +677,10 @@ CHARACTER_TAILS = (
 )
 # 「1-1.樱花绽放的季节（友好度上升、CG）」——尾部括号是事件的效果标记。
 CHARACTER_MARK_RE = re.compile(r"（([^（）]*)）$")
+# 括号里只认这三种效果词；别的（如「出去走走吧～（2）」的序号）是标题的一部分。
+CHARACTER_MARKS = ("友好度上升", "好感度上升", "CG")
+# 「1、唱片·雨天：进公司一月后主动赠送」——沈惟真的作品清单自带序号。
+WORKS_NUMBERED_RE = re.compile(r"^\d+[、.．]")
 
 
 def parse_character(path: Path) -> tuple[list[dict], str]:
@@ -710,7 +714,12 @@ def parse_character(path: Path) -> tuple[list[dict], str]:
         if zone == "works":
             # 源文本用 `*` 标出特殊作品（丹尼斯的「从接吻开始」要靠 CG 才解锁）。
             special = text.startswith("*")
-            push("paragraph", text.lstrip("*").strip(), bullet=True, **({"special": True} if special else {}))
+            body = text.lstrip("*").strip()
+            # 已经有「1、」这种序号的条目不再叠圆点（序号本身已是标记）。
+            extra = {"special": True} if special else {}
+            if not WORKS_NUMBERED_RE.match(body):
+                extra["bullet"] = True
+            push("paragraph", body, **extra)
             continue
 
         if zone == "tail":
@@ -727,10 +736,11 @@ def parse_character(path: Path) -> tuple[list[dict], str]:
             title = _clean_title(event.group(3))
             mark = CHARACTER_MARK_RE.search(title)
             extra: dict = {}
-            if mark:
-                # 括号里是这条事件的效果标记。CG 单独走徽标（和原站一套处理：
-                # 卡片描边转玫红、编号反白底），剩下的（友好度上升）留作 tag。
-                parts = [part.strip() for part in mark.group(1).split("、") if part.strip()]
+            parts = [part.strip() for part in mark.group(1).split("、") if part.strip()] if mark else []
+            # 括号里是这条事件的效果标记。CG 单独走徽标（和原站一套处理：
+            # 卡片描边转玫红、编号反白底），剩下的（友好度上升）留作 tag。
+            # 「出去走走吧～（2）」这种括号是标题的一部分，不是标记，不能拆。
+            if parts and all(part.upper() in CHARACTER_MARKS for part in parts):
                 if any(part.upper() == "CG" for part in parts):
                     extra["cg"] = True
                 rest = [part for part in parts if part.upper() != "CG"]
@@ -768,6 +778,12 @@ PARSERS = {
     "endings": parse_endings,
     "cheng-zhongxuan": parse_character,
     "danisi": parse_character,
+    "ji-xiang": parse_character,
+    "murong-hexi": parse_character,
+    "shen-weizhen": parse_character,
+    "shi-difen": parse_character,
+    "wei-ya": parse_character,
+    "yao-ziqi": parse_character,
 }
 
 # 类目 / 子节点：(slug, 标题)。有正文的节由 PARSERS 覆盖 status 与 blocks。

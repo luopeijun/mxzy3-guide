@@ -481,9 +481,50 @@ async function main() {
     'ok',
   );
 
-  // 6. 点角色页（每行第一个按钮是展开/折叠，第二个才是选中）
+  // 5e. 余下六页角色攻略：同一套排法，只有章节数 / 事件数不同
+  const moreCharacters = [
+    ['ji-xiang', '纪翔', 9, 43, 4],
+    ['murong-hexi', '慕容和希', 9, 44, 5],
+    ['shen-weizhen', '沈惟真', 7, 36, 5],
+    ['shi-difen', '史蒂芬', 7, 43, 3],
+    ['wei-ya', '卫亚', 8, 40, 3],
+    ['yao-ziqi', '姚子奇', 9, 40, 3],
+  ];
+  for (const [slug, title, heads, cards, cg] of moreCharacters) {
+    await openNode(`sweet-characters/${slug}`);
+    const page = await readCharacter();
+    check(`点${title}写入深链`, page.hash === `#/guide/sweet-characters/${slug}`, page.hash);
+    check(
+      `${title}：${heads} 个章节 + 5 个小标题`,
+      page.heads.length === heads + 5 && page.heads[0] === '可创作作品' && page.heads[1] === '事件',
+      `heads=${page.heads.length}`,
+    );
+    check(`${title}：${cards} 张事件卡`, page.cards === cards, `cards=${page.cards}`);
+    check(
+      `${title}：${cg} 张 CG 卡 + 友好度标记`,
+      page.cgChips === cg && page.friendChips > 0,
+      `cg=${page.cgChips} friend=${page.friendChips}`,
+    );
+  }
+
+  // 沈惟真：「出去走走吧～（2）」的括号是标题，不该被当成效果标记。
+  await openNode('sweet-characters/shen-weizhen');
+  const shen = await readCharacter();
+  check(
+    '同名事件的「（2）」留在标题里',
+    shen.text.includes('出去走走吧～（2）'),
+    'ok',
+  );
+  check(
+    '沈惟真的作品清单带「1、」序号且不叠圆点',
+    shen.bullets.some((t) => t.includes('签约金：50万'))
+      && !shen.bullets.some((t) => t.startsWith('1、唱片·雨天')),
+    JSON.stringify(shen.bullets.slice(0, 2)),
+  );
+
+  // 6. 还没整理的支线页给出空态提示
   await evaluate(`(() => {
-    const row = document.querySelector('[data-node-id="sweet-characters/yao-ziqi"]');
+    const row = document.querySelector('[data-node-id="sweet-side/stage-shadow"]');
     const pick = [...row.querySelectorAll('button')].find((b) => b.className.includes('flex-1'));
     pick.click();
     return 1;
@@ -499,8 +540,8 @@ async function main() {
       return el ? getComputedStyle(el).color : '';
     })(),
   }))()`);
-  check('点姚子奇写入 #/guide/ 深链', page.hash === '#/guide/sweet-characters/yao-ziqi', page.hash);
-  check('正文标题是姚子奇', page.heading.includes('姚子奇'), page.heading);
+  check('点舞台秘影写入 #/guide/ 深链', page.hash === '#/guide/sweet-side/stage-shadow', page.hash);
+  check('正文标题是舞台秘影', page.heading.includes('舞台秘影'), page.heading);
   check('空页给出甜蜜乐章自己的提示', page.emptyHint === true, String(page.emptyHint));
 
   // 7. 跨站入口

@@ -6,10 +6,10 @@
     "stats": {
       "categories": 3,
       "items": 24,
-      "blocks": 972,
-      "readyItems": 12,
-      "missingItems": 12,
-      "sourceParagraphs": 972
+      "blocks": 1980,
+      "readyItems": 18,
+      "missingItems": 6,
+      "sourceParagraphs": 1980
     }
   },
   "categories": [
@@ -4681,8 +4681,8 @@
               "kind": "paragraph",
               "text": "舞台剧·从接吻开始：获得kissCG后",
               "group": 1,
-              "bullet": true,
-              "special": true
+              "special": true,
+              "bullet": true
             },
             {
               "kind": "section",
@@ -5677,43 +5677,5573 @@
         {
           "id": "sweet-characters/ji-xiang",
           "title": "纪翔",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：200万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：50%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·拜伦的诗句：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·宿醉：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·王子复仇记：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·雪莱传记：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·直到永远：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·昨日约定：纪翔回欧洲后",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·烟花下的你：成功撮合纪熏，第二轮才有",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "你也是这样长大的吗？",
+              "group": 4,
+              "label": "1-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：不限",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊有电影通告时，纪翔主动前来打招呼。独立自主的个性很获得纪翔认同。",
+              "group": 4
+            },
+            {
+              "kind": "note",
+              "text": "提示：限定第一轮才会触发",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "金皓薰与萧依莉交往？",
+              "group": 5,
+              "label": "1-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年10月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：此则新闻自动发生",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "我才不是小朋友！",
+              "group": 6,
+              "label": "1-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后一星期内",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：看到纪翔忧伤的神情，继续追问下去，虽然没问到什么，但纪翔会表示杜云芊很像他的一个好朋友。",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "你想要换经纪公司？",
+              "group": 7,
+              "label": "1-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-3发生后～第2年5月",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：看到纪翔在烦恼，主动追问下去并顺势提出邀请，就能签下他。",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "不要对我怀抱期待",
+              "group": 8,
+              "label": "1-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后一星期内",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔到公司报到，并提出了特别的要求。另外，在纪翔面前请勿装傻！",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "请好好照顾纪翔",
+              "group": 9,
+              "label": "1-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后一星期后",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰前来拜访，恭喜杜云芊得到一位好艺人。",
+              "group": 9
+            },
+            {
+              "kind": "heading",
+              "text": "逃避",
+              "group": 10,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "纪翔传出同志疑云？",
+              "group": 11,
+              "label": "2-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：中伤纪翔的不实（？）报导。",
+              "group": 11
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟纪翔约会6次以上，并且要“很有好感”才会触发。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "我不想妥协！",
+              "group": 12,
+              "label": "2-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后三星期内",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，展现冷漠的功力，但是就算再冷漠也要坚持到底！",
+              "group": 12
+            },
+            {
+              "kind": "event",
+              "text": "这一点我也很疑惑…",
+              "group": 13,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-2发生一星期后",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰前来拜访，表示要帮忙澄清纪翔的丑闻。跟八卦记者打交道这种事，让前辈去处理就好了。",
+              "group": 13
+            },
+            {
+              "kind": "event",
+              "text": "不需要他多事！",
+              "group": 14,
+              "label": "2-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-3发生后一个月内",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，对于杜云芊把这件事交给金皓薰处理感到很不悦！",
+              "group": 14
+            },
+            {
+              "kind": "note",
+              "text": "提示：限定第二轮才会触发。",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "你走开！",
+              "group": 15,
+              "label": "2-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-4发生后",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟纪翔一起工作或指定跟随，会看到纪翔臭骂金皓薰。纪翔似乎在逃避些什么？",
+              "group": 15
+            },
+            {
+              "kind": "note",
+              "text": "提示：限定第二轮才会触发。",
+              "group": 15
+            },
+            {
+              "kind": "heading",
+              "text": "信任",
+              "group": 16,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "这件事八九不离十",
+              "group": 17,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-3发生后",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在事件2-3中拒绝金皓薰的帮忙，可以在星期三以外的日子，到酒吧找八卦记者澄清纪翔的丑闻。",
+              "group": 17
+            },
+            {
+              "kind": "event",
+              "text": "这样我就放心了…",
+              "group": 18,
+              "label": "3-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生后一星期内",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰表示，纪翔很信任杜云芊，言语中透露出对纪翔的不舍。",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "我们一起奋斗下去吧！",
+              "group": 19,
+              "label": "3-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生后一个月内",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，感谢杜云芊帮自己澄清丑闻，同时也表示自己的心情轻松一些了。",
+              "group": 19
+            },
+            {
+              "kind": "heading",
+              "text": "离开",
+              "group": 20,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "谁都不能欺负纪翔！",
+              "group": 21,
+              "label": "4-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：事件2-1发生后～第2年6月",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：一直不去处理纪翔的丑闻，杨安妤会主动前来，代替克烈斯表达能够代为处理这件事。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "不能为我留下吗？",
+              "group": 22,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生3个月后",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件4-1中拒绝克烈斯的帮忙，纪翔会表示想回欧洲过自在的生活。如果是为了杜云芊，两人的关系也够好，或许有机会留下他！",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "不要让纪翔失望喔！",
+              "group": 23,
+              "label": "4-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-2发生一个月后",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔离开之后，为了感谢杜云芊，于是请欧怡青代他送来亲手的创作“昨日约定”。",
+              "group": 23
+            },
+            {
+              "kind": "heading",
+              "text": "探望",
+              "group": 24,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "愿意陪我去散步吗？",
+              "group": 25,
+              "label": "5-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年2月～第2年7月",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，邀请杜云芊去公园走走。",
+              "group": 25
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟纪翔约会5次以上，并且要“颇有好感”才会触发。",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "下次再一起出来吧！",
+              "group": 26,
+              "label": "5-2",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1中约定的日期",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到了公园，发现纪翔原来是探望已经过逝的母亲。谈到过往种种，纪翔也不禁怀疑起自己…所以，请给他正面的想法。",
+              "group": 26
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着春夏洋装才能看到事件图。",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "你怎么一直傻笑？",
+              "group": 27,
+              "label": "5-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后一个月内",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，感谢杜云芊帮忙打开自己的心结，并表示会试着更坦率一些。",
+              "group": 27
+            },
+            {
+              "kind": "event",
+              "text": "我只是在发呆…",
+              "group": 28,
+              "label": "5-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生后一星期内",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊因为与纪翔拉近距离而自言自语，两人的关系接下来会怎么发展呢？",
+              "group": 28
+            },
+            {
+              "kind": "heading",
+              "text": "融化",
+              "group": 29,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我想邀请你吃一顿饭",
+              "group": 30,
+              "label": "6-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后",
+              "group": 30
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，邀请杜云芊去餐厅用餐。",
+              "group": 30
+            },
+            {
+              "kind": "note",
+              "text": "提示：与纪翔的在餐厅的约会5次以上才会触发。",
+              "group": 30
+            },
+            {
+              "kind": "event",
+              "text": "你是鼓励我还是试探我？",
+              "group": 31,
+              "label": "6-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1中约定的日期",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到了餐厅，碰巧遇到了金皓薰与萧依莉。纪翔有点不大方的祝福对方？",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "我想去海边走走…",
+              "group": 32,
+              "label": "6-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2发生后",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，邀请杜云芊去海边走走",
+              "group": 32
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟纪翔约会15次以上，杜云芊人气达400以上才会触发。",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "不然你做我男朋友！",
+              "group": 33,
+              "label": "6-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-3中约定的日期",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在海边，纪翔终于说出对“那个人”的思念。",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "找一段新的恋情吧？",
+              "group": 34,
+              "label": "6-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-4发生后",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔突然出现，邀请杜云芊共进晚餐，仍难掩沮丧。杜云芊的回应将决定纪翔未来的归属？",
+              "group": 34
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊连续7天工作完美才会触发，第二轮的选项内容有所不同。",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "※跟金皓薰交往后，以下事件将不完整",
+              "group": 34
+            },
+            {
+              "kind": "heading",
+              "text": "倒追",
+              "group": 35,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "别再对纪翔死缠烂打…",
+              "group": 36,
+              "label": "7-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-5发生后一星期内",
+              "group": 36
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣表示得罪不起穆勒家族，要求杜云芊放弃。既然缠都已经缠了，绝不放弃，缠到手再说！",
+              "group": 36
+            },
+            {
+              "kind": "event",
+              "text": "我的确在倒追纪翔",
+              "group": 37,
+              "label": "7-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-5发生一星期后",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件6-5中跟纪翔告白遭到拒绝后，八卦记者前来确认此事。",
+              "group": 37
+            },
+            {
+              "kind": "event",
+              "text": "你真的在倒追纪翔？",
+              "group": 38,
+              "label": "7-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-5发生后一个月内",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他艺人前来确认或劝阻此事。",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "没有原因的喜欢…",
+              "group": 39,
+              "label": "7-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-1发生后一星期内",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件7-1中跟杜司臣表示不放弃跟纪翔的感情，纪翔也觉得纳闷，主动跟杜云芊问原因。",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "我有事想跟你说…",
+              "group": 40,
+              "label": "7-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-4发生后一个月内",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，约杜云芊去公园。",
+              "group": 40
+            },
+            {
+              "kind": "event",
+              "text": "你能接受这样的情感吗？",
+              "group": 41,
+              "label": "7-6",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-5中约定的日期",
+              "group": 41
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在公园，纪翔坦白自己的心情，虽然不是爱，但可以在一起！",
+              "group": 41
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟纪翔约会20次以上，并且要“极有好感”；纪翔共有15部作品以上、开过演唱会、得奖3次以上、舞台剧演过2次以上、走过国际时装秀；杜云芊穿着秋冬洋装，才能顺利看到事件图。",
+              "group": 41
+            },
+            {
+              "kind": "event",
+              "text": "恭喜你跟纪翔交往！",
+              "group": 42,
+              "label": "7-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-6发生后一个月内",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：克烈斯与其他艺人前来祝贺，除了祝福，还有一个大红包。",
+              "group": 42
+            },
+            {
+              "kind": "heading",
+              "text": "口是心非",
+              "group": 43,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我想邀请你吃一顿饭",
+              "group": 44,
+              "label": "8-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-5发生后一个月内",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，邀请杜云芊到餐厅一同用餐。",
+              "group": 44
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件6-5中，第二轮时跟纪翔说还有机会，才会触发。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "你这无可救药的滥好人",
+              "group": 45,
+              "label": "8-2",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1中约定的日期",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在餐厅再次巧遇金皓薰与萧依莉，纪翔发挥毒舌功力，让人忍不住想赏他一巴掌！",
+              "group": 45
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着古典晚礼服才能看到事件图。",
+              "group": 45
+            },
+            {
+              "kind": "event",
+              "text": "你为什么在这里？",
+              "group": 46,
+              "label": "8-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年的情人节",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：指定跟随纪翔，看到金皓薰约纪翔共度情人节。",
+              "group": 46
+            },
+            {
+              "kind": "event",
+              "text": "你有喜欢的人吗？",
+              "group": 47,
+              "label": "8-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-3发生后一个月内",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟纪翔一起工作或指定跟随纪翔，就有机会跟纪翔聊感情方面的事。如果说自己，纪翔会笑的很开心…",
+              "group": 47
+            },
+            {
+              "kind": "event",
+              "text": "我会选择我爱的人",
+              "group": 48,
+              "label": "8-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-4发生后一个月内",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在电视或电影公司遇到金皓薰，在感情方面似乎有点问题？提供给他一点意见吧！",
+              "group": 48
+            },
+            {
+              "kind": "event",
+              "text": "你不是喜欢他？",
+              "group": 49,
+              "label": "8-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-5发生后一个月内",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟纪翔沟通，请面对金皓薰！",
+              "group": 49
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟纪翔要“极有好感”才会触发。",
+              "group": 49
+            },
+            {
+              "kind": "heading",
+              "text": "真心话",
+              "group": 50,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我一直都喜欢着你…",
+              "group": 51,
+              "label": "9-1",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-6发生后一个月内～第3年9月",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔自由活动时，在公园可以看到他跟金皓薰表明自己的感情。",
+              "group": 51
+            },
+            {
+              "kind": "note",
+              "text": "提示：纪翔称号是天王巨星才会告白成功。",
+              "group": 51
+            },
+            {
+              "kind": "event",
+              "text": "你不会跳回翱翔天际吧！",
+              "group": 52,
+              "label": "9-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-1发生后一星期内",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动跟杜云芊通知好消息。",
+              "group": 52
+            },
+            {
+              "kind": "event",
+              "text": "我们比以前更好了",
+              "group": 53,
+              "label": "9-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-1发生两星期后",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰前来拜访，感谢杜云芊一直以来的协助。",
+              "group": 53
+            },
+            {
+              "kind": "event",
+              "text": "一切都是你的功劳",
+              "group": 54,
+              "label": "9-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-3发生后一个月内",
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：纪翔主动沟通，为了感谢杜云芊，特地送上创作“烟花下的你”。",
+              "group": 54
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.约会40次以上",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.纪翔称号为天王巨星",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.杜云芊称号为超级天后",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "4.公司结局为顶尖国际经纪公司或迈向国际的经纪公司",
+              "group": 55
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.邀约20次以上",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.公司结局为顶尖国际经纪公司或迈向国际的经纪公司",
+              "group": 56
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 57
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会3次以上、取消友好度检查",
+              "group": 57,
+              "label": "5-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会8次以上、人气199",
+              "group": 57,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会10次、取消友好度检查、纪翔有8部作品、得过1次奖、取消舞台剧和时装秀条件",
+              "group": 57,
+              "label": "7-6"
+            }
+          ],
           "children": []
         },
         {
           "id": "sweet-characters/murong-hexi",
           "title": "慕容和希",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：50万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：70%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·梦红楼：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·蝴蝶轨迹：自由活动12天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·左岸无战事：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·凉夏（团体）：出过团体唱片",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·万事如意：自由活动40天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·彻夜谋杀：自由活动40天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·因风飞过蔷薇：感情线剧情获得",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·秋草旧长：获得姚子奇的《浪漫赌注》后",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·现在如此爱你：与姚子奇拍苏嫚君的《从来不曾爱过》",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "音乐祭",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "一起去音乐祭吧！",
+              "group": 4,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年2月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杨安妤邀杜云芊去音乐祭走走…",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "两个人不可以吵架喔！",
+              "group": 5,
+              "label": "1-2",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年2月～第1年3月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在音乐祭看到姚子奇跟慕容和希吵架，并且还能够得到姚子奇的创作“红花”。",
+              "group": 5
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 6,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "子奇交给你我就放心了",
+              "group": 7,
+              "label": "2-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：签下姚子奇后，慕容和希专程登门拜访。如果不认得他，会伤到他的自尊心喔！",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "你的音乐才华已无法隐藏",
+              "group": 8,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希前来拜访，鼓励杜云芊在音乐的路上大放异彩。",
+              "group": 8
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊歌艺400以上才会触发。",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "你完美诠释了子奇的歌曲",
+              "group": 9,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希要求加入",
+              "group": 9
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊要录制完姚子奇的创作“红花”且专辑上市，才会触发。",
+              "group": 9
+            },
+            {
+              "kind": "heading",
+              "text": "夕阳",
+              "group": 10,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我可以叫你妹妹吗？",
+              "group": 11,
+              "label": "3-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-3发生后",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希主动沟通",
+              "group": 11
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟慕容和希约会5次以上才会触发。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "原来妹妹不只一个…",
+              "group": 12,
+              "label": "3-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生后",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件3-1答应后，有跟慕容和希一起工作或指定跟随，会发现姚子莹也是妹妹之一。",
+              "group": 12
+            },
+            {
+              "kind": "event",
+              "text": "海的声音真寂寞…",
+              "group": 13,
+              "label": "3-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年1月～第2年12月",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件3-1答应后，慕容和希偶尔会约杜云芊去海边看夕阳。只要顺着慕容和希，就能轻易获得好感。",
+              "group": 13
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟慕容和希约会10次以上，并且没有在海边约会过，才会触发。此事件可触发两次。",
+              "group": 13
+            },
+            {
+              "kind": "heading",
+              "text": "特训",
+              "group": 14,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我不能坐视不管",
+              "group": 15,
+              "label": "4-1",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-3发生后",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊开巡回演唱会之前，慕容和希特地安排了音乐方面的课程。不要怕传出绯闻，这可是难得的机会？",
+              "group": 15
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着春夏洋装；与慕容和希约会20次以上，且要“颇有好感”才触发并看到事件图。事件可重复发生。",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "什么！还要再来一遍？",
+              "group": 16,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1发生一个月后",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件4-1中接受特训，在巡回演唱会结束后慕容和希前来称赞，并表示下次也要特训。",
+              "group": 16
+            },
+            {
+              "kind": "note",
+              "text": "提示：演唱会售票率90%以上才会触发。此事件可重复发生。",
+              "group": 16
+            },
+            {
+              "kind": "event",
+              "text": "可以接受我的邀请吗？",
+              "group": 17,
+              "label": "4-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-2发生后一个月内",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：为了犒赏杜云芊的努力，慕容和希主动沟通，约杜云芊到海边走走。",
+              "group": 17
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟慕容和希的约会等级2以上才会触发。",
+              "group": 17
+            },
+            {
+              "kind": "event",
+              "text": "让我握住你的手…",
+              "group": 18,
+              "label": "4-4",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3中约定的日期",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到了海边，慕容和希担心杜云芊的手指着凉了。记住！不管任何时候都不要拒绝慕容和希的好意",
+              "group": 18
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着秋冬洋装才能看到事件图。",
+              "group": 18
+            },
+            {
+              "kind": "heading",
+              "text": "醉翁之意",
+              "group": 19,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "姚子奇的演唱会",
+              "group": 20,
+              "label": "5-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年1月～第3年12月（友好度上升）",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇开演唱会前，慕容和希主动沟通，希望邀杜云芊陪他一起去。",
+              "group": 20
+            },
+            {
+              "kind": "event",
+              "text": "为什么这么在意他？",
+              "group": 21,
+              "label": "5-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生后两星期内",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟慕容和希沟通姚子奇的事，大致了解慕容和希如何看待姚子奇。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "子奇真是可爱…",
+              "group": 22,
+              "label": "5-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1中约定的演唱会当天",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：开演前探望姚子奇，慕容和希似乎以逗姚子奇为乐？",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "慕容对杜云芊呵护备至",
+              "group": 23,
+              "label": "5-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生后一星期内",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：捕风捉影的新闻报导",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "慕容对我有什么批评？",
+              "group": 24,
+              "label": "5-5",
+              "tag": "好感度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生后两星期内",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇主动沟通，想知道自己的演唱会表现如何。说谎也没关系，就夸奖他吧。",
+              "group": 24
+            },
+            {
+              "kind": "event",
+              "text": "你跟慕容和希之间…",
+              "group": 25,
+              "label": "5-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后一个月内",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他艺人前来询问两人的关系。",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "你们是在交往吗？",
+              "group": 26,
+              "label": "5-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后一星期内",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：八卦记者想证实两人的关系，虽然慕容和希难以捉摸，不过先承认就有机会！",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "因为我喜欢你！",
+              "group": 27,
+              "label": "5-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-7发生后一星期内",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希质问杜云芊为何要承认交往。大胆说出心意之后，冷静的慕容和希也开始困扰了。",
+              "group": 27
+            },
+            {
+              "kind": "heading",
+              "text": "拒绝",
+              "group": 28,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "请不要跟在我身边…",
+              "group": 29,
+              "label": "6-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-8发生后三个月内",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟慕容和希一起工作或指定跟随，有可能会遭到冷漠的对待。装可怜或许有用！？",
+              "group": 29
+            },
+            {
+              "kind": "event",
+              "text": "慕容和希是个好对象…",
+              "group": 30,
+              "label": "6-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-7发生后一星期内",
+              "group": 30
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣到公司，表示以慕容和希的背景，配得上自己的妹妹。",
+              "group": 30
+            },
+            {
+              "kind": "event",
+              "text": "你让我觉得好失望…",
+              "group": 31,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-8发生三个月后",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件5-8中对慕容和希告白后，3个月内找他约会遭到拒绝6次以上，慕容和希会出现说些难以理解的话。",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "你想告诉我什么事情？",
+              "group": 32,
+              "label": "6-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-3发生后一个月内",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：找慕容和希沟通，温和的言语能让他相当开心。",
+              "group": 32
+            },
+            {
+              "kind": "heading",
+              "text": "相信",
+              "group": 33,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "可以接受我的邀请吗？",
+              "group": 34,
+              "label": "7-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-4发生后",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希主动沟通，邀杜云芊去餐厅吃饭。",
+              "group": 34
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟慕容和希约会次数30次以上，且约会等级达3才会触发。",
+              "group": 34
+            },
+            {
+              "kind": "event",
+              "text": "你相信爱情吗？",
+              "group": 35,
+              "label": "7-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-1中约定的日期",
+              "group": 35
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在餐厅中，两人聊到爱情的话题。如果态度很坚定，或许能影响慕容和希。",
+              "group": 35
+            },
+            {
+              "kind": "event",
+              "text": "再给我一点勇气吧！",
+              "group": 36,
+              "label": "7-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-2发生后一个月内",
+              "group": 36
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟慕容和希一起工作或指定跟随，就有可能听到慕容和希悲惨的过往。",
+              "group": 36
+            },
+            {
+              "kind": "event",
+              "text": "真的可以相信你？",
+              "group": 37,
+              "label": "7-4",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后一星期内",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希决定再相信爱情，搞得杜云芊有些尴尬。转身就走的时候，出现戏剧性的大转折。",
+              "group": 37
+            },
+            {
+              "kind": "note",
+              "text": "提示：需穿古典晚礼服才可以看到事件图。",
+              "group": 37
+            },
+            {
+              "kind": "event",
+              "text": "粉丝不容偶像恋爱！",
+              "group": 38,
+              "label": "7-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-4发生后一星期内",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：抗议两人交往的新闻。",
+              "group": 38
+            },
+            {
+              "kind": "note",
+              "text": "提示：慕容和希名气800以上才会触发。",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "你会担心这些流言吗？",
+              "group": 39,
+              "label": "7-6",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-5发生后一星期内",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希前来询问杜云芊对于粉丝抗议的意见。要小心回答，慕容和希的心灵很脆弱！",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "你们真的交往了？",
+              "group": 40,
+              "label": "7-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-5发生后两星期内",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他艺人会前来祝福这段感情，但是其中有些人是吃醋大过祝福？",
+              "group": 40
+            },
+            {
+              "kind": "heading",
+              "text": "暧昧",
+              "group": 41,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "爱心不落人后",
+              "group": 42,
+              "label": "8-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年6月～第2年12月",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：公司金钱大于300万，苏嫚君会主动前来募款，并附赠自己的创作“从来不曾爱过”。",
+              "group": 42
+            },
+            {
+              "kind": "event",
+              "text": "有接吻的剧情？",
+              "group": 43,
+              "label": "8-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1发生后",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：让姚子奇与慕容和希合演事件8-1中得到的剧本，在看过剧本后姚子奇主动向杜云芊抗议。",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "让我跟子奇合作？",
+              "group": 44,
+              "label": "8-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1发生后",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：让姚子奇与慕容和希合演事件8-1中得到的剧本，慕容和希期望借此机会增进两人的关系。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "你一定是故意的吧！",
+              "group": 45,
+              "label": "8-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1发生后",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：开始正式拍摄后，指定跟随姚子奇，姚子奇会再次抗议。但只要装傻就能应付过去！",
+              "group": 45
+            },
+            {
+              "kind": "event",
+              "text": "其实你很紧张？",
+              "group": 46,
+              "label": "8-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1发生后",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：开始正式拍摄后，指定跟随慕容和希，慕容和希特别表示会全力以赴，其实只是因为紧张？",
+              "group": 46
+            },
+            {
+              "kind": "event",
+              "text": "务求逼真！",
+              "group": 47,
+              "label": "8-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1发生后",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：开始正式拍摄后，同时指定跟随两人，就有可能看到排戏的情况。或许能够看到重要的桥段…",
+              "group": 47
+            },
+            {
+              "kind": "note",
+              "text": "提示：此事件可发生两次",
+              "group": 47
+            },
+            {
+              "kind": "heading",
+              "text": "接受",
+              "group": 48,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "疑似假戏真作！？",
+              "group": 49,
+              "label": "9-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1发生后",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件8-1中的剧本由姚子奇与慕容和希合演，上市三个月后发生此则新闻。",
+              "group": 49
+            },
+            {
+              "kind": "note",
+              "text": "提示：电影票房30亿以上才会触发。",
+              "group": 49
+            },
+            {
+              "kind": "event",
+              "text": "我只想告诉你一个人",
+              "group": 50,
+              "label": "9-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-1发生后",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希特地来澄清跟姚子奇的误会，要杜云芊别误会。",
+              "group": 50
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟慕容和希约会20次以上，并且要“颇有好感”才会触发。",
+              "group": 50
+            },
+            {
+              "kind": "event",
+              "text": "记得去帮我澄清",
+              "group": 51,
+              "label": "9-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-1发生两个月后",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇主动沟通，表示新闻只是造谣，别相信八卦！",
+              "group": 51
+            },
+            {
+              "kind": "event",
+              "text": "两人的关系是…",
+              "group": 52,
+              "label": "9-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-3发生后",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件9-2、9-3中两人皆要求澄清绯闻，在星期二、四、六时去公园或Pub，可以遇到八卦记者。想加油添醋得花大钱，对两人或许是帮助？",
+              "group": 52
+            },
+            {
+              "kind": "event",
+              "text": "交往看看也没关系",
+              "group": 53,
+              "label": "9-5",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-4发生后～第3年9月",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：颁奖典礼后，姚子奇或慕容和希有得奖，跟其中一人一起工作或指定跟随，能看到两人亲密的对话。",
+              "group": 53
+            },
+            {
+              "kind": "event",
+              "text": "我做了一首歌给慕容…",
+              "group": 54,
+              "label": "9-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-5发生后两星期内",
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：慕容和希得奖后，姚子奇表示要送给他自己的创作“恋爱最终章续篇”来恭喜慕容和希。",
+              "group": 54
+            },
+            {
+              "kind": "event",
+              "text": "我做了一首歌给子奇…",
+              "group": 55,
+              "label": "9-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-5发生后两星期内",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇得奖后，慕容和希表示要送给他自己的创作“因风飞过蔷薇”来恭喜姚子奇。",
+              "group": 55
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.杜云芊得过音乐类的奖项（团体可）",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.慕容和希得过音乐类的奖项（团体可）",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.杜云芊举办过个人巡回演唱会",
+              "group": 56
+            },
+            {
+              "kind": "paragraph",
+              "text": "4.杜云芊录制自创的唱片通告并且上市",
+              "group": 56
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 57
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.杜云芊举办过个人巡回演唱会",
+              "group": 57
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 58
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊邀约被拒绝次数达3次",
+              "group": 58,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会次数达15次以上",
+              "group": 58,
+              "label": "7-1"
+            }
+          ],
           "children": []
         },
         {
           "id": "sweet-characters/shen-weizhen",
           "title": "沈惟真",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：50万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：20%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "比较喜欢的物品：玫瑰之星 爱神巧克力 男性香水 雪山灵芝 蓝色奶粉 人面狮身纸镇 埃及女王的秘密 尼罗河之水 骷髅魔戒 水晶魔戒 法老王之钥 白色毛线帽 渐层反光太阳眼睛 渔夫帽 迷彩派克大衣",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "1、唱片·雨天：进公司一月后主动赠送",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "2、唱片·倒数计时：自由活动16天后",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "3、唱片·掌心的温度：自由活动18天后",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "4、唱片·最后一封信：自由活动16天后",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "5、电视·回到爱上那一天：自由活动40天后",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "6、电视·恋爱魔镜：自由活动40天后",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "7、电视·青春玛奇朵：自由活动40天后",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "8、电影·无暇四重奏：自由活动40天后",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "9、舞台剧·窗外：自由活动40天后",
+              "group": 1
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "雨中重逢",
+              "group": 4,
+              "label": "1-1",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年1月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：这个事件一定会发生，不用担心错过。记得要大方接受沈惟真的好意。",
+              "group": 4
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着秋冬洋装才会触发。",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "第一次工作还习惯吗？",
+              "group": 5,
+              "label": "1-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年1月～第1年5月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊接下生平第一份工作后，沈惟真会主动前来关心。只要表现出积极的态度，就能留下好印象。",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "好像快被你超越了…",
+              "group": 6,
+              "label": "1-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年1月～第1年5月",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件1-2之后，会遇到刚从图书馆念完书回家的沈惟真，小心别表现的太骄傲了。",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "你很了解我吗？",
+              "group": 7,
+              "label": "1-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "event",
+              "text": "我可不会便宜你",
+              "group": 8,
+              "label": "1-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年3月～第1年12月",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：只要多跑广告公司，就能够遇到沈惟真，并且用“学长价”签下他。",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "我很期待今后的生活",
+              "group": 9,
+              "label": "1-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生后的第1个星期日",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真到公司报到，从此摆脱被忽略的人生！？",
+              "group": 9
+            },
+            {
+              "kind": "heading",
+              "text": "生病",
+              "group": 10,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "你怎么还在工作？",
+              "group": 11,
+              "label": "2-1",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年3月～第2年5月",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊若生病了，沈惟真有可能会主动来关心。用婉转的口气表示一定要完成工作，沈惟真就会展现“强硬的温柔”。",
+              "group": 11
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着秋冬洋装；要跟沈惟真约会5次以上，并且有“基本好感”才能看到事件图。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "身体好一点了吗？",
+              "group": 12,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后一星期内",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真主动沟通关心病情。",
+              "group": 12
+            },
+            {
+              "kind": "heading",
+              "text": "解释",
+              "group": 13,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "王洁安自曝恋曲",
+              "group": 14,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年8月",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真一旦拍了电视或电影的工作，就会出现这则新闻…",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "早上的新闻看过了吗？",
+              "group": 15,
+              "label": "3-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生当天",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真特地来澄清早上的新闻，只要表示对绯闻很介意、非常介意，沈惟真就会承诺绝对不交女友。",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "你就是那个学妹！？",
+              "group": 16,
+              "label": "3-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-2发生后～第2年8月",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：王洁安直接上门谈判，请不要对她客气，不然会引起沈惟真的不悦。",
+              "group": 16
+            },
+            {
+              "kind": "event",
+              "text": "请问你对这件绯闻的看法？",
+              "group": 17,
+              "label": "3-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-2发生后～第2年9月",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：八卦记者询问看法，当然要反对！",
+              "group": 17
+            },
+            {
+              "kind": "event",
+              "text": "从现在开始不许接近我！",
+              "group": 18,
+              "label": "3-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-3发生后1个月内",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真拍电视或电影时，到通告拍摄地点就可以看到王洁安挨骂。",
+              "group": 18
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟沈惟真要“稍有好感”才会触发。",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "解决了大麻烦",
+              "group": 19,
+              "label": "3-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生2个月后",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真很开心地表示终于摆脱了王洁安的纠缠，与杜云芊的关系也因此悄悄升温了？",
+              "group": 19
+            },
+            {
+              "kind": "heading",
+              "text": "交往",
+              "group": 20,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "出去走走吧～",
+              "group": 21,
+              "label": "4-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年4月～第2年6月",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟沈惟真一起工作或指定跟随，沈惟真就有可能会主动邀约去图书馆走走。",
+              "group": 21
+            },
+            {
+              "kind": "note",
+              "text": "提示：与沈惟真约会5次以上，且杜云芊才智要高于550才会触发。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "图书馆的回忆",
+              "group": 22,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1中决定的日期",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：两人在图书馆回忆了不少从前的往事。",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "出去走走吧～（2）",
+              "group": 23,
+              "label": "4-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年11月～第3年1月",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件4-2发生过，有跟沈惟真一起工作或指定跟随，沈惟真就有可能会主动邀约去海边走走。",
+              "group": 23
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟沈惟真要“颇有好感”，且沈惟真称号为实力派演员及以上，才会触发。",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "海边的太阳",
+              "group": 24,
+              "label": "4-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3中约定的日期",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到了海边，只要别逞强，也不怕沈惟真唠叨，两人感情就升温啰。",
+              "group": 24
+            },
+            {
+              "kind": "event",
+              "text": "找一天出去玩吧",
+              "group": 25,
+              "label": "4-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年3月～第3年5月",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件4-4发生过，有跟沈惟真一起工作或主动跟随，沈惟真就有可能会主动邀约去海生馆走走。",
+              "group": 25
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊的称号至少为实力派演员、唱匠、主持名嘴、超级名模（及以上？），才会触发。",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "我在看你，你没发觉吗？",
+              "group": 26,
+              "label": "4-6",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-5中约定的日期",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在海生馆时，接受沈惟真的提议，沈惟真就会大胆示爱。如果太专心看展览，会把事情搞砸的。",
+              "group": 26
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着春夏洋装，并且约会等级到达3才能看到事件图。",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "很高兴也很烦恼…",
+              "group": 27,
+              "label": "4-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-6发生后～第3年5月",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真告白后的冲击，让杜云芊自言自语，典型的恋爱症状之一。",
+              "group": 27
+            },
+            {
+              "kind": "event",
+              "text": "我的稿子价值一百万",
+              "group": 28,
+              "label": "4-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-6发生后两星期内",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真与杜云芊的恋情渐渐浮上台面，到酒吧找八卦记者可以花钱澄清绯闻，以避免两人的人气下降。",
+              "group": 28
+            },
+            {
+              "kind": "heading",
+              "text": "后援会",
+              "group": 29,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "后援会成立",
+              "group": 30,
+              "label": "5-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年6月",
+              "group": 30
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：此新闻自动发生，沈惟真人气大增！",
+              "group": 30
+            },
+            {
+              "kind": "event",
+              "text": "你这个女人还顶嘴！",
+              "group": 31,
+              "label": "5-2",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-6发生后～第3年6月",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：面对激动的后援会成员，请勇敢面对到底，并且还别迁怒到沈惟真身上喔！",
+              "group": 31
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着秋冬洋装才会触发。",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "我以后不会再犯了",
+              "group": 32,
+              "label": "5-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后～第3年7月",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件5-2中跟后援会成员发生冲突，哥哥会前来告诫杜云芊要注意仪态。",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "可以原谅我的后援会吗？",
+              "group": 33,
+              "label": "5-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真主动沟通，请求杜云芊原谅自己的后援会，展现出风度就能获得沈惟真的好感。",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "解散后援会",
+              "group": 34,
+              "label": "5-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后三星期内",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真主动沟通，表示后援会希望他分手。为了不要让沈惟真为难，还是别解散后援会吧！",
+              "group": 34
+            },
+            {
+              "kind": "event",
+              "text": "请不要解散后援会！",
+              "group": 35,
+              "label": "5-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-5发生后～第3年8月",
+              "group": 35
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：后援会成员来信致歉。",
+              "group": 35
+            },
+            {
+              "kind": "heading",
+              "text": "面对",
+              "group": 36,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "你们正式交往了吧？",
+              "group": 37,
+              "label": "6-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后～第3年7月",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：面对八卦记者的质问，请勿闪躲！",
+              "group": 37
+            },
+            {
+              "kind": "event",
+              "text": "是我承认的…",
+              "group": 38,
+              "label": "6-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1发生后～第3年7月",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真要抗议捕风捉影的报导，请告诉他这不是捕风捉影。",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "她说了算",
+              "group": 39,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2发生后～第3年7月",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真拍摄电视或电影时，到拍摄地点可以看到沈惟真对交往的态度。",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "你们真的交往了？",
+              "group": 40,
+              "label": "6-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1发生后三星期内",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他艺人会前来祝福这段感情，但是其中有些人是吃醋大过祝福？",
+              "group": 40
+            },
+            {
+              "kind": "heading",
+              "text": "确认",
+              "group": 41,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "工作也可以抛下？",
+              "group": 42,
+              "label": "7-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-6发生后一个月内",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：交往之后，沈惟真主动约图书馆走走。",
+              "group": 42
+            },
+            {
+              "kind": "event",
+              "text": "叫我惟真吧～",
+              "group": 43,
+              "label": "7-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-1中约定的日期",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在图书馆甜蜜的约会，沈惟真希望杜云芊能叫他的名字。",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "一切都太像是梦境了",
+              "group": 44,
+              "label": "7-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-2发生后两个月内",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真邀杜云芊去海生馆约会，到底要不要在办公室打情骂俏呢？",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "交往的起点",
+              "group": 45,
+              "label": "7-4",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3中约定的日期",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：两人旧地重游，特意打扮之下的杜云芊看来特别耀眼。在两人交往的起点，沈惟真会再次确认彼此的感情。",
+              "group": 45
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着春夏洋装才能看到事件图。",
+              "group": 45
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.收到的喜欢的礼物10个以上",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.约会次数50次以上",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.沈惟真的称号在实力派以上",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "4.杜云芊的称号在实力派以上",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "5.事件6-3中，以愉快的心情跟记者坦承正在跟杜云芊交往",
+              "group": 46
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.收到的喜欢的礼物5个以上",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.约会次数25次以上",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.事件6-3中，以愉快的心情跟记者坦承正在跟杜云芊交往",
+              "group": 47
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会2次以上，杜云芊才智高于250",
+              "group": 48,
+              "label": "4-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "取消友好度与称号检查",
+              "group": 48,
+              "label": "4-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "取消称号检查",
+              "group": 48,
+              "label": "4-5"
+            }
+          ],
           "children": []
         },
         {
           "id": "sweet-characters/shi-difen",
           "title": "史蒂芬",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：150万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：50%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·禁忌之吻（团体）：SD没解散",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·舞台风暴（团体）：SD没解散",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·飞跃午夜（团体）：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·突如其来的爱恋：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·十字路的我们：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·恋爱公式题：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·往星光前进：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·没有雪的耶诞节：克烈斯退出演艺圈，女主角陪S散步后",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "与贺总冲突不断",
+              "group": 4,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年6月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：此新闻自动发生，透露出SD的动向。",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "我们看错了贺总",
+              "group": 5,
+              "label": "1-2",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年6月～第1年12月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊有正式工作后，能偷看到SD起了争执。虽然遭到拒绝，但留下好印象至少是个开始。",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "SD送给你好了",
+              "group": 6,
+              "label": "1-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件1-2当中坚持签约，就能在唱片公司跟贺总讨论SD的事。就算想签SD也别在贺总面前承认。",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "这是我们开出来的条件",
+              "group": 7,
+              "label": "1-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-3发生一星期后～第2年6月",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：只要公司艺人在2人以下，SD会主动出现，表示有意愿加入公司。",
+              "group": 7
+            },
+            {
+              "kind": "note",
+              "text": "提示：公司知名度要在100以上才能顺利签下SD。",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "恋弟情节还没有痊愈？",
+              "group": 8,
+              "label": "1-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生一个月后",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：克烈斯来探望史蒂芬，遭到丹尼斯无礼的对待。",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "能回翱翔天际就好了…",
+              "group": 9,
+              "label": "1-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生两星期后",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：萧依莉来探望史蒂芬。",
+              "group": 9
+            },
+            {
+              "kind": "heading",
+              "text": "解散",
+              "group": 10,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "SD分道扬镳",
+              "group": 11,
+              "label": "2-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：解散SD后，就会出现此则新闻。",
+              "group": 11
+            },
+            {
+              "kind": "note",
+              "text": "提示：SD只要解散过，就无法与丹尼斯结婚；如果一直没解散，就无法与史蒂芬结婚。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "我们兄弟不能分开",
+              "group": 12,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟丹尼斯一起工作或指定跟随，就会看到兄弟两人为了解散而起了争执。",
+              "group": 12
+            },
+            {
+              "kind": "event",
+              "text": "什么事情都不对劲…",
+              "group": 13,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后两星期内",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟丹尼斯沟通解散的事，仍耿耿于怀。站在史蒂芬的立场想，或许是件好事？",
+              "group": 13
+            },
+            {
+              "kind": "event",
+              "text": "是我拖累了哥…",
+              "group": 14,
+              "label": "2-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后两星期内",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟史蒂芬沟通解散的事，觉得对哥哥很愧疚。不过，丹尼斯一定不会这么想的。",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "SD是我们共同的骄傲",
+              "group": 15,
+              "label": "2-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-2发生后",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟丹尼斯一起工作或指定跟随，看到兄弟两人再次为了解散的事而争吵。",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "我没有责怪你",
+              "group": 16,
+              "label": "2-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-5发生后一个月内",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬主动沟通，表示丹尼斯不是气SD解散，而是气史蒂芬不在乎的态度。",
+              "group": 16
+            },
+            {
+              "kind": "event",
+              "text": "兄弟的感情是永远的",
+              "group": 17,
+              "label": "2-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-6发生后",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在电视或电影公司，可以看到两人和好。之后也会主动向杜云芊道谢，并允诺会创造更好的成绩。",
+              "group": 17
+            },
+            {
+              "kind": "event",
+              "text": "一个人工作真寂寞！",
+              "group": 18,
+              "label": "2-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：SD解散后，史蒂芬录制个人唱片时指定跟随，会看到史蒂芬仍不适应单飞。",
+              "group": 18
+            },
+            {
+              "kind": "heading",
+              "text": "不舍",
+              "group": 19,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "克烈斯退出演艺圈！",
+              "group": 20,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年5月",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：此新闻自动发生，克烈斯即将回国继承家业。",
+              "group": 20
+            },
+            {
+              "kind": "event",
+              "text": "好不容易交到一位好朋友…",
+              "group": 21,
+              "label": "3-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生后一个月内",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟史蒂芬一起工作或指定跟随，就能看到史蒂芬为了离别而感伤。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "史蒂芬跟克烈斯的关系是？",
+              "group": 22,
+              "label": "3-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生后一星期内",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：八卦记者前来探消息，史蒂芬虽然感伤，仍然会祝福克烈斯吧？",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "谢谢你帮我解释",
+              "group": 23,
+              "label": "3-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-3发生后",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件3-3中帮史蒂芬说了祝福的话，有跟史蒂芬一起工作或指定跟随，史蒂芬会前来道谢。",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "他总是一个人独处…",
+              "group": 24,
+              "label": "3-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-4发生后",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟史蒂芬一起工作或指定跟随，史蒂芬会提到跟克烈斯的相遇。",
+              "group": 24
+            },
+            {
+              "kind": "event",
+              "text": "祈求下次的相聚",
+              "group": 25,
+              "label": "3-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-5发生后",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟史蒂芬一起工作或指定跟随，杨安妤会跟史蒂芬谈论着克烈斯。",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "我陪你散散步！",
+              "group": 26,
+              "label": "3-7",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-6发生后一星期内",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟史蒂芬一起工作或指定给随，会看到跟克烈斯饯行。即使是暂时的分别，还是难忍悲伤，多陪陪他吧。",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "原来你比我惨…",
+              "group": 27,
+              "label": "3-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-7发生后一个月内",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件3-7中，史蒂芬听了杜云芊悲惨的经历，让他重新振作，甚至还写了一首歌“没有雪的耶诞节”！",
+              "group": 27
+            },
+            {
+              "kind": "heading",
+              "text": "谈心",
+              "group": 28,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "深夜的街道最适合独处",
+              "group": 29,
+              "label": "4-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟史蒂芬一起工作后，会知道史蒂芬工作后的习惯。陪他走走，两人的关系会更融洽。",
+              "group": 29
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟史蒂芬约会5次以上，并且要“颇有好感”才会触发。",
+              "group": 29
+            },
+            {
+              "kind": "event",
+              "text": "会很困扰喔！",
+              "group": 30,
+              "label": "4-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1发生后",
+              "group": 30
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟史蒂芬一起工作后，史蒂芬偶尔会出现约杜云芊工作后出去走走。走着走着，也有情侣的感觉，史蒂芬不禁担心要造成困扰了。",
+              "group": 30
+            },
+            {
+              "kind": "event",
+              "text": "要相信自己！",
+              "group": 31,
+              "label": "4-3",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-2发生后",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟史蒂芬一起工作后，深夜散步已经成为两人的惯例，如果鼓励史蒂芬，两人的关系会大有进展。",
+              "group": 31
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜、史两人的名气皆高于399，杜云芊穿着秋冬洋装才会触发并看到事件图。",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "深夜公园幽会！",
+              "group": 32,
+              "label": "4-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3发生后一星期内",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：从此则新闻可知八卦记者无所不在，就算在深夜的公园还是被爆料了。",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "你跟史蒂芬是认真的？",
+              "group": 33,
+              "label": "4-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-4发生后一星期内",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他艺人前来关心两人的绯闻，只要承认真的喜欢，史蒂芬也会感应的到喔！",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "抱歉造成困扰了…",
+              "group": 34,
+              "label": "4-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-4发生后一星期内",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬主动沟通，表示以后还是避免深夜独处吧…",
+              "group": 34
+            },
+            {
+              "kind": "event",
+              "text": "你给我小心一点！",
+              "group": 35,
+              "label": "4-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-6发生后两星期内",
+              "group": 35
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟史蒂芬一起工作或指定跟随，会看到八卦记者直接跟史蒂芬求证绯闻，于是史蒂芬怒了！",
+              "group": 35
+            },
+            {
+              "kind": "event",
+              "text": "我不想伤害你",
+              "group": 36,
+              "label": "4-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-7发生一星期后的 一个月内",
+              "group": 36
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：史蒂芬主动沟通，表示澄清绯闻是不得已，虽然有些遗憾…",
+              "group": 36
+            },
+            {
+              "kind": "event",
+              "text": "想约你…可是…",
+              "group": 37,
+              "label": "4-9"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-4发生后",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟史蒂芬一起工作后，虽然想重温深夜独处时光，但还是算了。",
+              "group": 37
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟史蒂芬要“颇有好感”才会触发。",
+              "group": 37
+            },
+            {
+              "kind": "heading",
+              "text": "意外",
+              "group": 38,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我会全力以赴的～",
+              "group": 39,
+              "label": "5-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年1月～第3年12月",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：执行国外巡回演唱会的第一天，两人都很期待接下来一个月的相处，不过终究仍是工作，不是旅行喔！",
+              "group": 39
+            },
+            {
+              "kind": "note",
+              "text": "提示：两人组团。事件4-4发生过才会触发。",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "终于顺利圆满完成了",
+              "group": 40,
+              "label": "5-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生一个月后",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：巡回演唱的最后一天，两人相约回国后庆功。",
+              "group": 40
+            },
+            {
+              "kind": "event",
+              "text": "快离开这张床！",
+              "group": 41,
+              "label": "5-3",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后一星期内",
+              "group": 41
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：两人喝酒庆功不胜酒力，要送史蒂芬回家时杜云芊发觉自己也喝多了，之后发生的事就不清楚了…",
+              "group": 41
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着古典晚礼服才会看到事件图。",
+              "group": 41
+            },
+            {
+              "kind": "event",
+              "text": "都是我不好…",
+              "group": 42,
+              "label": "5-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生后一星期内",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：两人共度一夜的事终究是曝光了，史蒂芬前来道歉。",
+              "group": 42
+            },
+            {
+              "kind": "event",
+              "text": "这是怎么一回事！",
+              "group": 43,
+              "label": "5-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后一星期内",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯前来兴师问罪。与其道歉，不如说是误会，丹尼斯还比较能接受。",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "哥哥会替你顶住",
+              "group": 44,
+              "label": "5-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-5发生后一星期内",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟史蒂芬一起工作或指定跟随，会看到丹尼斯温柔的责备。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "这也太不像话了吧！",
+              "group": 45,
+              "label": "5-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生后一星期内",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他男艺人前来指责杜云芊荒唐的行径。",
+              "group": 45
+            },
+            {
+              "kind": "heading",
+              "text": "将错就错",
+              "group": 46,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "把公司解散掉！",
+              "group": 47,
+              "label": "6-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生后两星期内",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣严厉要求杜云芊不能再跟史蒂芬往来，如果答应了，史蒂芬会很伤心吧？",
+              "group": 47
+            },
+            {
+              "kind": "event",
+              "text": "趁此机会宣布交往吧？",
+              "group": 48,
+              "label": "6-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1发生后一星期内",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件6-1中反抗哥哥之后，史蒂芬会主动跟杜云芊告白。",
+              "group": 48
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟史蒂芬约会20次以上，并且史蒂芬发行5张唱片以上、称号为唱匠、歌神或天王巨星之一。另外跟史蒂芬还要“超有好感”、跟丹尼斯也要“很有好感”，才能顺利看到告白事件。",
+              "group": 48
+            },
+            {
+              "kind": "event",
+              "text": "关于你和史蒂芬之间…",
+              "group": 49,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2发生后一星期内",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：丹尼斯前来表达自己对于两人交往的立场。",
+              "group": 49
+            },
+            {
+              "kind": "event",
+              "text": "如果只能选一个…",
+              "group": 50,
+              "label": "6-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2发生后",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟史蒂芬一起工作或指定跟随，会看到史蒂芬跟丹尼斯报告自己的感情。",
+              "group": 50
+            },
+            {
+              "kind": "heading",
+              "text": "请教",
+              "group": 51,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "抒情还是摇滚？",
+              "group": 52,
+              "label": "7-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊出过唱片，史蒂芬有唱片通告时，两人一起工作或指定跟随，史蒂芬会请教音乐方面的意见。虽然抒情是主流，摇滚更能散发热情。",
+              "group": 52
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.SD已经解散了",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.收到喜欢的礼物20个以上",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.杜云芊得过音乐类的个人奖项",
+              "group": 53
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.SD已经解散了",
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.送史蒂芬喜欢的礼物10个以上",
+              "group": 54
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 55
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会2次以上，并取消友好度检查",
+              "group": 55,
+              "label": "4-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会5次以上，并取消友好度检查",
+              "group": 55,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "两人名气高于199",
+              "group": 55,
+              "label": "4-3"
+            }
+          ],
           "children": []
         },
         {
           "id": "sweet-characters/wei-ya",
           "title": "卫亚",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：40万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：60%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "限制：严禁裸露、拒拍吻戏",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·奈何天：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·黑暗之心：自由活动20天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·状元红：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·情剑无双：自由活动30天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电视·梅岭情缘：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·校园怪谭：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·杀死我杀死你：自由活动30天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "舞台剧·爱是无限回圈：自由活动35天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·异世界神话：卫亚没有离开公司",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "很高兴认识你",
+              "group": 4,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年2月～第1年12月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊要回住所时，遇到沈惟真前来看她，顺便介绍卫亚给杜云芊。",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "我考得上理想学校吗？",
+              "group": 5,
+              "label": "1-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-1发生两星期后～第1年7月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊有正式工作时，会遇到正在准备考试的卫亚。给卫亚信心，好感就会提升。",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "学姐真了不起！",
+              "group": 6,
+              "label": "1-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊有去图书馆约会，几天后会遇到卫亚，并且表示十分尊敬杜云芊的好学。",
+              "group": 6
+            },
+            {
+              "kind": "event",
+              "text": "卫亚考上第一志愿！",
+              "group": 7,
+              "label": "1-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年7月",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：此则新闻自动发生，卫亚的努力有了成果。",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "我想加入学姐的公司",
+              "group": 8,
+              "label": "1-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-4发生后一星期内",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件1-2中鼓励卫亚不要气馁，在顺利考上大学后，就会主动表示要加入。",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "不愧是我的青梅竹马",
+              "group": 9,
+              "label": "1-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生后一个月内",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：新名纱雪送来一束玫瑰花，恭喜卫亚重新出发。",
+              "group": 9
+            },
+            {
+              "kind": "heading",
+              "text": "内向",
+              "group": 10,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "他对人群有障碍…",
+              "group": 11,
+              "label": "2-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生后",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚一起工作时，有机会遇到林芬芬跟姚子莹帮忙翻译卫亚说什么。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "可以念书我很高兴",
+              "group": 12,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚一起工作时，有机会跟卫亚聊天，对卫亚来说念书跟工作一样重要。",
+              "group": 12
+            },
+            {
+              "kind": "event",
+              "text": "你是不是在躲我？",
+              "group": 13,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-2发生后",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚一起工作时，有机会遇到原少纬与耿言颢，卫亚显得毫无反抗能力。",
+              "group": 13
+            },
+            {
+              "kind": "heading",
+              "text": "兼顾",
+              "group": 14,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "时间完全不够用…",
+              "group": 15,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-5发生后",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：收工之后看到卫亚赶着去图书馆。",
+              "group": 15
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟卫亚约会5次以上，并且要“颇有好感”才会触发。",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "当作没有听见！",
+              "group": 16,
+              "label": "3-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生后",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚因为某事而困扰着，前来征询杜云芊的意见。",
+              "group": 16
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟卫亚约会10次以上，并且要“很有好感”才会触发。",
+              "group": 16
+            },
+            {
+              "kind": "event",
+              "text": "我真的该继续下去吗？",
+              "group": 17,
+              "label": "3-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-2发生后",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟卫亚一起工作或指定跟随，卫亚当天工作失败，会向杜云芊吐苦水。只要尽力，一切都能克服。",
+              "group": 17
+            },
+            {
+              "kind": "heading",
+              "text": "书卷奖",
+              "group": 18,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "可以多给我一点时间吗？",
+              "group": 19,
+              "label": "4-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年5月",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚主动沟通要求多一点时间念书，对于学业的重视，卫亚可不输任何人。",
+              "group": 19
+            },
+            {
+              "kind": "note",
+              "text": "提示：此事件第3年可重复发生。",
+              "group": 19
+            },
+            {
+              "kind": "event",
+              "text": "你家境不好吗？",
+              "group": 20,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年5月～第2年6月",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：期末考跟卫亚一起工作或指定跟随，会知道卫亚很重视奖学金。",
+              "group": 20
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟卫亚要“很有好感”才会触发。",
+              "group": 20
+            },
+            {
+              "kind": "event",
+              "text": "可以跟我去图书馆吗？",
+              "group": 21,
+              "label": "4-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1发生后～第2年12月",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚主动沟通，表示想约杜云芊一起念书。",
+              "group": 21
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟卫亚约会10次以上才会触发。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "你的思想越来越成熟了",
+              "group": 22,
+              "label": "4-4",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3中约定的日期",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在图书馆跟着卫亚，卫亚会提出奇怪的想法。不要太一本正经，卫亚希望自己的想法被认同。",
+              "group": 22
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊要穿春夏洋装，并且跟卫亚要“很有好感”才能看到完整事件。",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "卫亚获取书卷奖！",
+              "group": 23,
+              "label": "4-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-1发生后～第2年12月",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：称赞卫亚的新闻。",
+              "group": 23
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件4-1中选择给卫亚时间，并且卫亚才智500以上才会触发。",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "谢谢你让我冲刺学业",
+              "group": 24,
+              "label": "4-6",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-5发生后一星期内",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚专程前来感谢杜云芊，并且希望杜云芊永远不要抛弃他，绝对不是开玩笑！",
+              "group": 24
+            },
+            {
+              "kind": "note",
+              "text": "提示：此事件可发生两次。",
+              "group": 24
+            },
+            {
+              "kind": "heading",
+              "text": "退出",
+              "group": 25,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "可以多给我一点时间吗？",
+              "group": 26,
+              "label": "5-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年5月",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚主动沟通要求多一点时间念书，既然当了艺人，当然是以工作为主。",
+              "group": 26
+            },
+            {
+              "kind": "note",
+              "text": "提示：此事件与4-1相同，不同的选择会造成事件分歧。",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "卫亚低分通过期末考",
+              "group": 27,
+              "label": "5-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生后一星期内",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件5-1中要求卫亚以工作为主，就会出现此则新闻。",
+              "group": 27
+            },
+            {
+              "kind": "event",
+              "text": "考试没有考好？",
+              "group": 28,
+              "label": "5-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后两星期内",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚沟通考试的事，发现卫亚很沮丧。",
+              "group": 28
+            },
+            {
+              "kind": "event",
+              "text": "卫亚萌生退意！",
+              "group": 29,
+              "label": "5-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-3发生两星期后",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚想退出演艺圈的新闻。",
+              "group": 29
+            },
+            {
+              "kind": "event",
+              "text": "想要退出演艺圈？",
+              "group": 30,
+              "label": "5-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-4发生后两星期内",
+              "group": 30
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚沟通退出的事，卫亚表示如果无法兼顾事业与学业，将以学业为主。",
+              "group": 30
+            },
+            {
+              "kind": "event",
+              "text": "引导他说出真心话吧…",
+              "group": 31,
+              "label": "5-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-5发生后",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：沈惟真来找杜云芊讨论卫亚的事，并透露卫亚同时也承受来自家里的压力。",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "我相信你的能力！",
+              "group": 32,
+              "label": "5-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-6发生后一个月内",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚沟通学业的事，只要给他信心就还有希望。",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "可以让我离开公司吗？",
+              "group": 33,
+              "label": "5-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-6发生一个月后",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚主动表示要离开公司，如果承诺给他多一点时间，或许还有机会！",
+              "group": 33
+            },
+            {
+              "kind": "note",
+              "text": "提示：时间5-7中跟卫亚说相信他的能力则不会触发。另外跟卫亚要“超有好感”才有机会留下他。",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "请收下我的创作",
+              "group": 34,
+              "label": "5-9"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-8发生半年后",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚离开公司后，杜云芊主演的电影卖座，卫亚表示看过之后深受感动，于是创作了“异世界神话”要送给杜云芊。",
+              "group": 34
+            },
+            {
+              "kind": "heading",
+              "text": "帮忙",
+              "group": 35,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "一切都拜托你了",
+              "group": 36,
+              "label": "6-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-5发生后两个月内",
+              "group": 36
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚一起工作或指定跟随，会看到卫亚与新名纱雪两人窃窃私语，似乎有什么神秘的计划？",
+              "group": 36
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟卫亚约会12次以上，并且要“很有好感”才会触发。",
+              "group": 36
+            },
+            {
+              "kind": "event",
+              "text": "可以跟我去植物园吗？",
+              "group": 37,
+              "label": "6-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1发生后两星期内",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：卫亚主动沟通，想邀请杜云芊去植物园走走。",
+              "group": 37
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟卫亚要“超有好感”才会触发。",
+              "group": 37
+            },
+            {
+              "kind": "event",
+              "text": "大家一起野餐吧！",
+              "group": 38,
+              "label": "6-3",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2中约定的日期",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚在植物园巧遇新名纱雪，大方承认正在约会并邀请新名纱雪加入，三人会度过一段愉快的时光。",
+              "group": 38
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊穿着春夏洋装才能看到完整事件。",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "跟新名纱雪的关系？",
+              "group": 39,
+              "label": "6-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-3发生后两星期内",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟卫亚沟通新名纱雪的事，话才讲一半卫亚就默默离开了。",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "请你多多照顾他",
+              "group": 40,
+              "label": "6-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2发生后",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：新名纱雪主动找杜云芊说卫亚的好话，并邀请下次一起野餐。身为经纪人，表现出大方的态度吧！",
+              "group": 40
+            },
+            {
+              "kind": "heading",
+              "text": "流言",
+              "group": 41,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "跟新名纱雪在交往？",
+              "group": 42,
+              "label": "7-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-3发生后一星期内",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件6-3过后，卫亚跟新名纱雪的关系被记者拿来炒作。跟卫亚沟通此事，卫亚只担心纱雪受到伤害。",
+              "group": 42
+            },
+            {
+              "kind": "event",
+              "text": "请你务必要相信我！",
+              "group": 43,
+              "label": "7-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-3发生后一星期内",
+              "group": 43
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件6-3过后，卫亚跟新名纱雪的关系被记者拿来炒作。新名纱雪主动找杜云芊澄清，并希望能平息风波。",
+              "group": 43
+            },
+            {
+              "kind": "event",
+              "text": "我帮你陷害新名纱雪",
+              "group": 44,
+              "label": "7-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-3发生后",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到电视或电影公司找八卦记者，八卦记者提出了邪恶的交易。当然不能被蛊惑。",
+              "group": 44
+            },
+            {
+              "kind": "note",
+              "text": "提示：金钱超过500万才会触发。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "我非常感谢你！",
+              "group": 45,
+              "label": "7-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后一星期内",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：风波平息后，新名纱雪为了表示谢意，特地送上创作“寂寞微光”。",
+              "group": 45
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件6-5中表示很欢迎纱雪，才能得到创作。",
+              "group": 45
+            },
+            {
+              "kind": "heading",
+              "text": "争取",
+              "group": 46,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我会深深地祝福你们…",
+              "group": 47,
+              "label": "8-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第3年8月",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：新名纱雪前来邀请杜云芊与卫亚一同出席学生会举办的新生舞会。",
+              "group": 47
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件7-4发生过，杜云芊与卫亚有一起度过情人节，杜云芊人气400以上，卫亚人气500以上，才会触发。",
+              "group": 47
+            },
+            {
+              "kind": "event",
+              "text": "我不想将幸福拱手让人",
+              "group": 48,
+              "label": "8-2",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-1中约定的日期",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在高级餐厅，卫亚终于说出埋藏已久的秘密，真正为自己去争取幸福，而不只是个弟弟！",
+              "group": 48
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟卫亚约会30次以上，并且要“极有好感”，且卫亚的演技与才智800以上、自信500以上，两人皆拍过5部以上的电影，杜云芊穿古典晚礼服，才能看到事件图。",
+              "group": 48
+            },
+            {
+              "kind": "event",
+              "text": "我心中的大石落地了…",
+              "group": 49,
+              "label": "8-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-2发生后一星期内",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊接受卫亚的感情后，新名纱雪前来恭喜。",
+              "group": 49
+            },
+            {
+              "kind": "event",
+              "text": "你们真的交往了？",
+              "group": 50,
+              "label": "8-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-2发生后一星期内",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：其他艺人会前来祝福这段感情，但是其中有些人是吃醋大过祝福？",
+              "group": 50
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.约会次数50次以上",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.杜云芊的才智900以上",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.跟杜云芊合作过舞台剧并公开演出",
+              "group": 51
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.邀约次数25次以上",
+              "group": 52
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会5次以上，取消友好度检查",
+              "group": 53,
+              "label": "6-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "取消友好度检查",
+              "group": 53,
+              "label": "6-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊、卫亚人气各250以上",
+              "group": 53,
+              "label": "8-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会12次、取消友好度检查、卫亚演技才智达600、自信300、两人皆拍过2部以上电影",
+              "group": 53,
+              "label": "8-2"
+            }
+          ],
           "children": []
         },
         {
           "id": "sweet-characters/yao-ziqi",
           "title": "姚子奇",
-          "status": "missing",
-          "blocks": [],
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": "签约金：100万",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "分红：60%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "可创作作品",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·红花：初次见面赠送",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·小王子的花园：自由活动12天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·公元2025年：自由活动15天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·银河漂流：自由活动12天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·最爱的朋友 (团体)：出过团体唱片",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·四手连弹爱情曲 (团体)：与慕容和希同一团体",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·封印之钥：自由活动12天后",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "电影·讨厌爱上你：与慕容和希拍苏嫚君的《从来不曾爱过》",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·寂寞国度：女主角唱姚子奇作品销售不到9万",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·恋爱最终章续篇：于慕容和希感情线剧情获得",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片·浪漫赌注：女主角得过音乐奖且与之约会5次以上",
+              "group": 1,
+              "special": true,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "事件",
+              "group": 2
+            },
+            {
+              "kind": "heading",
+              "text": "音乐祭",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "一起去音乐祭吧！",
+              "group": 4,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年2月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杨安妤邀杜云芊去音乐祭走走…",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "两个人不可以吵架喔！",
+              "group": 5,
+              "label": "1-2",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年2月～第1年3月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在音乐祭看到姚子奇跟慕容和希吵架，并且还能够得到姚子奇的创作“红花”。",
+              "group": 5
+            },
+            {
+              "kind": "heading",
+              "text": "加入",
+              "group": 6,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我才不关心别人的音乐",
+              "group": 7,
+              "label": "2-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第1年3月～第2年12月",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊举办歌友会，会遇到姚家兄妹。",
+              "group": 7
+            },
+            {
+              "kind": "event",
+              "text": "我正在转换经纪公司",
+              "group": 8,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：每星期的二、四、六，能够在唱片公司遇到姚子奇，赶快签下他吧！",
+              "group": 8
+            },
+            {
+              "kind": "heading",
+              "text": "捉弄",
+              "group": 9,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "演戏我可没把握…",
+              "group": 10,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：第一次合作戏剧，姚子奇礼貌性的问候。",
+              "group": 10
+            },
+            {
+              "kind": "event",
+              "text": "这是你故意安排的吧？",
+              "group": 11,
+              "label": "3-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-1发生后",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：第二次合作戏剧，姚子奇故意问了个问题来捉弄杜云芊。如果太认真就输了…",
+              "group": 11
+            },
+            {
+              "kind": "heading",
+              "text": "否认",
+              "group": 12,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "担心你自己吧！",
+              "group": 13,
+              "label": "4-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 13
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊得过音乐奖项后，姚子奇前来关心。他似乎喜欢女孩子强势一点…",
+              "group": 13
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟姚子奇约会5次以上，并且要“颇有好感”才会触发。",
+              "group": 13
+            },
+            {
+              "kind": "event",
+              "text": "仅此一次，下不为例！",
+              "group": 14,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年8月或第3年8月",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊得到音乐奖项后，姚子奇会破例赠送个人创作“浪漫赌注”。",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "姚子奇送歌表情意？",
+              "group": 15,
+              "label": "4-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-2发生后一星期内",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：捕风捉影的新闻报导。",
+              "group": 15
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟姚子奇要“很有好感”才会触发。",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "自己心里知道就好了",
+              "group": 16,
+              "label": "4-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3发生后一个月内",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：上则报导出现后，姚子奇主动向杜云芊否认一些事，却也透露出一些事…",
+              "group": 16
+            },
+            {
+              "kind": "heading",
+              "text": "竞争",
+              "group": 17,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "请比较看看",
+              "group": 18,
+              "label": "5-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3发生后一星期内",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：因为某种偏执？慕容和希硬是要送杜云芊一首创作“秋草旧长营”。",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "只是我哥会不爽而已",
+              "group": 19,
+              "label": "5-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生后一星期内",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子莹告诉杜云芊，要习惯姚子奇与慕容和希这种无形的竞争…",
+              "group": 19
+            },
+            {
+              "kind": "event",
+              "text": "我跟他一点关系也没有！",
+              "group": 20,
+              "label": "5-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后两个月内",
+              "group": 20
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟姚子奇沟通与慕容和希的关系，虽然有点暧昧，不过互为竞争对手是比较合理的解释。",
+              "group": 20
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟姚子奇要“颇有好感”才有较多对话。",
+              "group": 20
+            },
+            {
+              "kind": "event",
+              "text": "你那双慧黠的眼睛…",
+              "group": 21,
+              "label": "5-4",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-2发生后两个月内",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟慕容和希沟通姚子奇的事，认同他的理念会得到惊人的赞美！",
+              "group": 21
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟慕容和希要“颇有好感”才有较多对话。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "为什么你选了子奇？",
+              "group": 22,
+              "label": "5-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生后",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：如果先录制了“浪漫赌注”，慕容和希会主动沟通并质问杜云芊。如果只是刺探敌情，那倒无所谓！",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "我们只是讨论音乐",
+              "group": 23,
+              "label": "5-6",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-5发生后一个月内",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇主动沟通，怀疑有人背后说他坏话。",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "我会请教你",
+              "group": 24,
+              "label": "5-7",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-2发生后",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊录制“浪漫赌注”期间，姚子奇有可能会主动前来关心。",
+              "group": 24
+            },
+            {
+              "kind": "event",
+              "text": "时光中漂浮的爱情…",
+              "group": 25,
+              "label": "5-8",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：5-1发生后",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊录制“秋草旧长营”期间，慕容和希多次前来关心，并提议送杜云芊回家。",
+              "group": 25
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊歌艺350以上，跟慕容和希约会15次以上，并且要“很有好感”才会触发，可触发两次。",
+              "group": 25
+            },
+            {
+              "kind": "heading",
+              "text": "振作",
+              "group": 26,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "唱片销售惨淡！",
+              "group": 27,
+              "label": "6-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊唱姚子奇的创作，结算卖不到9万就会发生此新闻。",
+              "group": 27
+            },
+            {
+              "kind": "event",
+              "text": "你怎么解释？",
+              "group": 28,
+              "label": "6-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-1发生后一星期内",
+              "group": 28
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇来问销售结果，道歉只会让他生气。",
+              "group": 28
+            },
+            {
+              "kind": "event",
+              "text": "不要停止前进的脚步",
+              "group": 29,
+              "label": "6-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6-2发生一个月后",
+              "group": 29
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件6-2中表示是歌迷不懂欣赏，姚子奇会再给杜云芊一次机会，赠送创作“寂寞国度”。",
+              "group": 29
+            },
+            {
+              "kind": "heading",
+              "text": "宿敌",
+              "group": 30,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我的歌给慕容和希唱？",
+              "group": 31,
+              "label": "7-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 31
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：让慕容和希唱姚子奇的创作，姚子奇就会主动沟通这件事。故意这么做其实是为了突显两人的差距？",
+              "group": 31
+            },
+            {
+              "kind": "event",
+              "text": "为什么要唱慕容的创作？",
+              "group": 32,
+              "label": "7-2",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2-1发生后",
+              "group": 32
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：让姚子奇唱慕容和希的创作，姚子奇会主动沟通并表示反弹。只要曲子适合，谁创作的并不是重点！",
+              "group": 32
+            },
+            {
+              "kind": "event",
+              "text": "真是一首娘娘腔的歌…",
+              "group": 33,
+              "label": "7-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-2发生后",
+              "group": 33
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇录制慕容和希的创作时，指定跟随他，就能看到他在发牢骚。",
+              "group": 33
+            },
+            {
+              "kind": "event",
+              "text": "你一定要好好唱喔！",
+              "group": 34,
+              "label": "7-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后",
+              "group": 34
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇录制慕容和希的创作时，指定跟随他，就有机会看到姚子莹前来探班。",
+              "group": 34
+            },
+            {
+              "kind": "event",
+              "text": "你千万不能让他知道",
+              "group": 35,
+              "label": "7-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：7-3发生后",
+              "group": 35
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：录制完慕容和希的创作之后，姚子奇主动沟通，偷偷表示这真是一首好歌。",
+              "group": 35
+            },
+            {
+              "kind": "heading",
+              "text": "鬼月",
+              "group": 36,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "不要跟着我！",
+              "group": 37,
+              "label": "8-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：每年农历7月",
+              "group": 37
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇主动沟通，提醒杜云芊在鬼月期间离他远一点。",
+              "group": 37
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟姚子奇有“基本好感”才会触发。",
+              "group": 37
+            },
+            {
+              "kind": "event",
+              "text": "不要怪我没有提醒你…",
+              "group": 38,
+              "label": "8-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：每年农历鬼月",
+              "group": 38
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟姚子奇一起工作或指定跟随，姚子奇有可能会再次警告。",
+              "group": 38
+            },
+            {
+              "kind": "event",
+              "text": "你快点给我回家",
+              "group": 39,
+              "label": "8-3",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：每年农历鬼月",
+              "group": 39
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟姚子奇一起工作或指定跟随，有机会看到姚子莹前来探班。为了大家安全，还是叫子莹快回家吧！",
+              "group": 39
+            },
+            {
+              "kind": "event",
+              "text": "不要让他独处",
+              "group": 40,
+              "label": "8-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：每年农历鬼月",
+              "group": 40
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：林芬芬前来提醒杜云芊，这阵子要多关心姚子奇的状况。",
+              "group": 40
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟姚子奇约会20次以上，并且要“很有好感”才会触发。",
+              "group": 40
+            },
+            {
+              "kind": "event",
+              "text": "好好睡一觉吧！",
+              "group": 41,
+              "label": "8-5",
+              "cg": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第2年后农历鬼月",
+              "group": 41
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟姚子奇合作电视剧，就可能会看到姚子奇开骂，叫杜云芊先回家。或许再多待一会儿，一切的谜题都将解开…",
+              "group": 41
+            },
+            {
+              "kind": "note",
+              "text": "提示：要穿春夏洋装，并且跟姚子奇要“超有好感”，才能触发事件并看到事件图。",
+              "group": 41
+            },
+            {
+              "kind": "event",
+              "text": "不要在意这种小事！",
+              "group": 42,
+              "label": "8-6",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-5发生一个月内",
+              "group": 42
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇主动沟通自己昏倒的原因，并且觉得有这样的体质很丢脸！",
+              "group": 42
+            },
+            {
+              "kind": "heading",
+              "text": "高调",
+              "group": 43,
+              "depth": 1
+            },
+            {
+              "kind": "event",
+              "text": "我当你的特别来宾",
+              "group": 44,
+              "label": "9-1",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：8-5发生后",
+              "group": 44
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊举办个人巡回演唱会，姚子奇自告奋勇担任特别来宾。",
+              "group": 44
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟姚子奇约会20次以上，至少唱过两张姚子奇的创作，并且在事件8-5中看到姚子奇昏倒，才会触发。",
+              "group": 44
+            },
+            {
+              "kind": "event",
+              "text": "让我们全力以赴吧！",
+              "group": 45,
+              "label": "9-2",
+              "cg": true,
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-1发生一个月后",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：巡回演唱的最后一天，有机会跟姚子奇告白，两人的感情也因此有突破性的发展。",
+              "group": 45
+            },
+            {
+              "kind": "note",
+              "text": "提示：演唱会售票率80%以上，并且杜云芊穿着古典晚礼服才会触发并看到事件图。",
+              "group": 45
+            },
+            {
+              "kind": "event",
+              "text": "你们真的交往了？",
+              "group": 46,
+              "label": "9-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-2发生一星期内",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：姚子奇的高调告白，让其他艺人前来祝福这段感情，但是其中有些人是吃醋大过祝福，甚至有人哭了！？",
+              "group": 46
+            },
+            {
+              "kind": "event",
+              "text": "子奇的个性真的是…",
+              "group": 47,
+              "label": "9-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-2发生一星期后",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：面对姚子奇演唱会上冲击性的告白，杜云芊也慌了…",
+              "group": 47
+            },
+            {
+              "kind": "event",
+              "text": "我从来不管别人的评价",
+              "group": 48,
+              "label": "9-5",
+              "tag": "友好度上升"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-2发生两星期内",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟姚子奇沟通，询问告白的事。交往会伤害艺人形象的事，姚子奇一点都不在乎。",
+              "group": 48
+            },
+            {
+              "kind": "note",
+              "text": "提示：要跟姚子奇约会30次以上，并且要“极有好感”才能顺利交往。",
+              "group": 48
+            },
+            {
+              "kind": "event",
+              "text": "绝对不是玩玩而已",
+              "group": 49,
+              "label": "9-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-5发生后两个月内",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟姚子奇一起工作或指定跟随，有机会看到姚子奇跟林芬芬报告跟杜云芊的感情。",
+              "group": 49
+            },
+            {
+              "kind": "event",
+              "text": "记得在妈面前多说好话",
+              "group": 50,
+              "label": "9-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-5发生后两个月内",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟姚子奇一起工作或指定跟随，有机会看到姚子奇跟姚子莹报告跟杜云芊的感情。",
+              "group": 50
+            },
+            {
+              "kind": "event",
+              "text": "为什么要你来认同？",
+              "group": 51,
+              "label": "9-8"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：9-5发生后两个月内",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：有跟慕容和希一起工作或指定跟随，有机会看到慕容和希追问姚子奇交往的事。",
+              "group": 51
+            },
+            {
+              "kind": "note",
+              "text": "提示：跟慕容和希要“颇有好感”才会触发。",
+              "group": 51
+            },
+            {
+              "kind": "section",
+              "text": "普通模式下结婚图取得条件",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.跟杜云芊度过情人节，并且有看到事件图",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.跟杜云芊度过圣诞节",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "3.杜云芊出过3张以上的唱片",
+              "group": 52
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下结婚图取得条件",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "1.看过姚子奇与杜云芊共度情人节事件图",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "2.曾经和杜云芊共度圣诞节",
+              "group": 53
+            },
+            {
+              "kind": "section",
+              "text": "甜蜜模式下告白相关事件触发条件",
+              "group": 54
+            },
+            {
+              "kind": "paragraph",
+              "text": "降低友好度要求",
+              "group": 54,
+              "label": "8-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊录过1首姚子奇的歌，约会10次",
+              "group": 54,
+              "label": "9-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会15次，并取消友好度检查",
+              "group": 54,
+              "label": "9-5"
+            }
+          ],
           "children": []
         }
       ]
