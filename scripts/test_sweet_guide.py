@@ -107,6 +107,24 @@ class TestSweetGuide(unittest.TestCase):
                     f"{node['title']} 的头像文件不存在：{node['avatar']}",
                 )
 
+    def test_character_covers(self) -> None:
+        # 封面渲染在正文头部（ContentPanel 的 node.cover）：<slug>-cover.* 探测到
+        # 才写。本轮只有角色攻略 8 位给了封面，支线 5 位没给，绝不留空串。
+        expected = {"cheng-zhongxuan", "danisi", "ji-xiang", "murong-hexi",
+                    "shen-weizhen", "shi-difen", "wei-ya", "yao-ziqi"}
+        for category in self.data["categories"]:
+            with_cover = {n["id"].split("/")[-1] for n in category["children"] if "cover" in n}
+            if category["id"] == "sweet-characters":
+                self.assertEqual(with_cover, expected, "角色攻略 8 位都应有封面")
+                for node in category["children"]:
+                    self.assertRegex(node["cover"], r"^images/sweet/[a-z-]+-cover\.(png|jpg|webp)$")
+                    self.assertTrue(
+                        (ROOT / "public" / node["cover"]).exists(),
+                        f"{node['title']} 的封面文件不存在：{node['cover']}",
+                    )
+            else:
+                self.assertEqual(with_cover, set(), f"{category['title']} 不该有封面")
+
     def test_no_invented_descriptions(self) -> None:
         # 用户在意的点：目录与页面上的说明文字只能来自原文，不能自己总结。
         def headline(node: dict) -> str:

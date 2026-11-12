@@ -4772,7 +4772,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/cheng-zhongxuan-logo.png"
+          "avatar": "images/sweet/cheng-zhongxuan-logo.png",
+          "cover": "images/sweet/cheng-zhongxuan-cover.jpg"
         },
         {
           "id": "sweet-characters/danisi",
@@ -6110,7 +6111,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/danisi-logo.png"
+          "avatar": "images/sweet/danisi-logo.png",
+          "cover": "images/sweet/danisi-cover.jpg"
         },
         {
           "id": "sweet-characters/ji-xiang",
@@ -7241,7 +7243,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/ji-xiang-logo.png"
+          "avatar": "images/sweet/ji-xiang-logo.png",
+          "cover": "images/sweet/ji-xiang-cover.jpg"
         },
         {
           "id": "sweet-characters/murong-hexi",
@@ -8410,7 +8413,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/murong-hexi-logo.png"
+          "avatar": "images/sweet/murong-hexi-logo.png",
+          "cover": "images/sweet/murong-hexi-cover.jpg"
         },
         {
           "id": "sweet-characters/shen-weizhen",
@@ -9497,7 +9501,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/shen-weizhen-logo.png"
+          "avatar": "images/sweet/shen-weizhen-logo.png",
+          "cover": "images/sweet/shen-weizhen-cover.jpg"
         },
         {
           "id": "sweet-characters/shi-difen",
@@ -10560,7 +10565,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/shi-difen-logo.png"
+          "avatar": "images/sweet/shi-difen-logo.png",
+          "cover": "images/sweet/shi-difen-cover.jpg"
         },
         {
           "id": "sweet-characters/wei-ya",
@@ -11733,7 +11739,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/wei-ya-logo.png"
+          "avatar": "images/sweet/wei-ya-logo.png",
+          "cover": "images/sweet/wei-ya-cover.jpg"
         },
         {
           "id": "sweet-characters/yao-ziqi",
@@ -13071,7 +13078,8 @@
             }
           ],
           "children": [],
-          "avatar": "images/sweet/yao-ziqi-logo.png"
+          "avatar": "images/sweet/yao-ziqi-logo.png",
+          "cover": "images/sweet/yao-ziqi-cover.jpg"
         }
       ]
     },

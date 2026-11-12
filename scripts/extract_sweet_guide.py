@@ -119,6 +119,15 @@ def _character_avatar(slug: str) -> str | None:
             return f"images/sweet/{slug}-logo{ext}"
     return None
 
+
+def _character_cover(slug: str) -> str | None:
+    """Return the web path (relative to BASE_URL) of `<slug>-cover` image."""
+    for ext in IMAGE_EXTS:
+        path = SWEET_IMAGES / f"{slug}-cover{ext}"
+        if path.exists():
+            return f"images/sweet/{slug}-cover{ext}"
+    return None
+
 # 「1-1．可别乱花我的钱！」——源文本的句点有全角也有半角，两种都认。
 EVENT_RE = re.compile(r"^(\d+)-(\d+)[．.](.+)$")
 # 「4.改建」——章节自带编号。事件是 `4-1`，靠 `(?!\d)` 把两者区分开。
@@ -1049,6 +1058,10 @@ def build() -> dict:
                 avatar = _character_avatar(slug)
                 if avatar:
                     node["avatar"] = avatar
+                # 封面渲染在正文头部（ContentPanel）；探测不到就不写，绝不留空串。
+                cover = _character_cover(slug)
+                if cover:
+                    node["cover"] = cover
 
             parser = PARSERS.get(slug)
             if parser is not None:

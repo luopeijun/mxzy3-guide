@@ -447,6 +447,10 @@ async function main() {
       })(),
       dateSections: [...document.querySelectorAll('main h3')]
         .filter((h) => h.textContent.includes('约会对话选项提示')).length,
+      coverImg: (() => {
+        const img = document.querySelector('main img[alt$="封面"]');
+        return img ? { src: img.getAttribute('src') ?? '', ok: img.complete && img.naturalWidth > 0 } : null;
+      })(),
       text: document.querySelector('main')?.innerText ?? '',
     };
   })()`);
@@ -473,6 +477,11 @@ async function main() {
     JSON.stringify(cheng.heads.slice(2, 10)),
   );
   check('37 张事件卡（1-1 ~ 8-7）', cheng.cards === 37, `cards=${cheng.cards}`);
+  check(
+    '城仲瑄正文头部有封面图',
+    !!cheng.coverImg && cheng.coverImg.ok && cheng.coverImg.src.includes('cheng-zhongxuan-cover'),
+    `cover=${cheng.coverImg ? cheng.coverImg.src : 'none'}`,
+  );
   check(
     '开头基础信息是圆点列表',
     cheng.bullets.slice(0, 3).join('/') === '签约金：0万/分红：80%/限制：严禁裸露',
@@ -516,6 +525,11 @@ async function main() {
   check('点丹尼斯写入深链', danisi.hash === '#/guide/sweet-characters/danisi', danisi.hash);
   check('51 张事件卡（1-1 ~ 8-9）', danisi.cards === 51, `cards=${danisi.cards}`);
   check(
+    '丹尼斯正文头部有封面图',
+    !!danisi.coverImg && danisi.coverImg.ok && danisi.coverImg.src.includes('danisi-cover'),
+    `cover=${danisi.coverImg ? danisi.coverImg.src : 'none'}`,
+  );
+  check(
     '丹尼斯：14 个约会地点 + 20 个问答',
     danisi.heads.length === 29 && danisi.qaCount === 20 && danisi.qaAnswers === 20,
     `heads=${danisi.heads.length} qa=${danisi.qaCount}`,
@@ -554,6 +568,11 @@ async function main() {
     );
     check(`${title}：${cards} 张事件卡`, page.cards === cards, `cards=${page.cards}`);
     check(
+      `${title}：正文头部有封面图`,
+      !!page.coverImg && page.coverImg.ok && page.coverImg.src.includes(`${slug}-cover`),
+      `cover=${page.coverImg ? page.coverImg.src : 'none'}`,
+    );
+    check(
       `${title}：${cg} 张 CG 卡 + 友好度标记`,
       page.cgChips === cg && page.friendChips > 0,
       `cg=${page.cgChips} friend=${page.friendChips}`,
@@ -568,6 +587,11 @@ async function main() {
   // 沈惟真：「出去走走吧～（2）」的括号是标题，不该被当成效果标记。
   await openNode('sweet-characters/shen-weizhen');
   const shen = await readCharacter();
+  check(
+    '沈惟真正文头部有封面图',
+    !!shen.coverImg && shen.coverImg.ok && shen.coverImg.src.includes('shen-weizhen-cover'),
+    `cover=${shen.coverImg ? shen.coverImg.src : 'none'}`,
+  );
   check(
     '同名事件的「（2）」留在标题里',
     shen.text.includes('出去走走吧～（2）'),
