@@ -18,7 +18,8 @@ export interface TaskStep {
   tag?: string;
   cg: boolean;
   text: string;
-  /** 折叠箭头点开后显示的详情；明星志愿3 的事件正文已在 text 里，为空。 */
+  /** 常驻在步骤标题下方的详情（时间 / 概要 / 提示）；明星志愿3 的事件正文
+   *  已经在 text 里，为空。 */
   details?: StepDetail[];
 }
 
@@ -126,7 +127,7 @@ function headingText(block: ContentBlock): string {
 }
 
 /** 甜蜜乐章把事件正文拆成紧跟在 event 后面、同一 group 的 paragraph / note
- *  （时间、概要、提示）。收进步骤的折叠详情；明星志愿3 的 event.text 本身
+ *  （时间、概要、提示）。收进步骤的常驻详情；明星志愿3 的 event.text 本身
  *  就是整段正文，不开这个开关，行为零变化。 */
 function detailsFor(node: GuideNode, index: number, enabled: boolean): StepDetail[] {
   if (!enabled) return [];

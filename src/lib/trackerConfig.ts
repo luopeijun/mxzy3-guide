@@ -49,7 +49,7 @@ export interface TrackerSiteConfig {
   poolNodeAllowlist?: Record<string, string[]>;
   /** 事件块的正文是否拆在同 group 的后续块里。明星志愿3 的 event.text 就是
    *  整段正文；甜蜜乐章把「时间 / 概要 / 提示」拆成 paragraph / note 跟在
-   *  事件标题后面，把它们收进步骤详情，折叠箭头点开才显示。 */
+   *  事件标题后面，开这个开关就把它们收进步骤详情、常驻显示在标题下方。 */
   stepDetails?: boolean;
   /** A locked artist who is always under contract (甜蜜乐章's protagonist).
    *  `hint` is optional: without it no explanatory callout renders in the
@@ -137,7 +137,7 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
     ],
   },
   // 甜站事件卡把「时间 / 概要 / 提示」拆成同 group 的 paragraph / note，
-  // 追踪器要把它们挂到对应事件的折叠详情里。
+  // 追踪器要把它们挂到对应事件、常驻显示在步骤卡里（不折叠）。
   stepDetails: true,
   protagonist: {
     id: 'protagonist',

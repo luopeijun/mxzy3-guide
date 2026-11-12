@@ -55,10 +55,13 @@ const STATE = `(() => {
     hint: root.querySelector('[data-filter-hint]')?.textContent?.replace(/\\s+/g, ' ').trim() ?? null,
     progress: bar,
     emptyText: pool ? null : (root.querySelector('section')?.textContent?.match(/没有内容为[^，]*/)?.[0] ?? null),
-    // Sweet-melody-only step-detail controls must never leak into the main site.
+    // Sweet-melody-only step details must never leak into the main site: its
+    // event.text already holds the whole body, so no detail block / control
+    // should render here (the removed collapse controls stay guarded too).
     detailActions: root.querySelectorAll('[data-line-detail-actions]').length,
     stepArrows: root.querySelectorAll('[data-step-expand]').length,
     stepDetails: root.querySelectorAll('[data-step-details]').length,
+    detailRoles: root.querySelectorAll('[data-step-detail-role]').length,
   });
 })()`;
 
@@ -123,9 +126,10 @@ async function main() {
   if (initial.label !== '不限') fail('content row should start as 不限, got ' + initial.label);
   if (initial.open) fail('content panel should start collapsed');
   if (initial.cards === 0) fail('pool is empty — cannot test filtering');
-  if (initial.detailActions || initial.stepArrows || initial.stepDetails) {
-    fail('main site rendered sweet-only step-detail controls: ' +
-      JSON.stringify({ actions: initial.detailActions, arrows: initial.stepArrows, boxes: initial.stepDetails }));
+  if (initial.detailActions || initial.stepArrows || initial.stepDetails || initial.detailRoles) {
+    fail('main site rendered sweet-only step details or controls: ' +
+      JSON.stringify({ actions: initial.detailActions, arrows: initial.stepArrows,
+        boxes: initial.stepDetails, roles: initial.detailRoles }));
   }
   const allCards = initial.cards;
   const allProgress = initial.progress;

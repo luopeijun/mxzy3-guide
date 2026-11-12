@@ -2,8 +2,9 @@ import http from 'node:http';
 import fs from 'node:fs';
 
 /* 甜蜜乐章事件追踪器回归：两个页签与 #/tracker 路由、主角恒占一个签约位
-   （最多 4 人＝主角 + 3 位艺人、不可解约、头像在人名左边）、事件步骤详情
-   打开事件即全部展开、线头部「展开全部 / 收起全部」与置顶同一排、事件池
+   （最多 4 人＝主角 + 3 位艺人、不可解约、头像在人名左边）、事件步骤的
+   时间 / 概要 / 提示常驻显示在步骤卡里（无展开 / 收起按钮与单步箭头）、
+   头部只剩置顶 / 放弃 / 移出池子、事件池
    按甜站类目分组（经纪人事件簿只收主线 / 公司改建 / 服装三页）、进度与
    存档键和明星志愿3 完全隔离、存档面板不带 CG / 六大通告。
 
@@ -310,96 +311,93 @@ async function main() {
   check('原站 guide.progress.v1 完全没被碰', afterStep.main === beforeStep.main,
     `before=${String(beforeStep.main)?.length} after=${String(afterStep.main)?.length}`);
 
-  // 9b. 事件线级的「展开全部 / 收起全部」：打开事件后所有步骤详情默认展开，
-  // 两个按钮与置顶 / 放弃 / 移出池子同一排；单步箭头仍可单独切。
+  // 9b. 事件详情常驻在步骤卡里：打开事件就能一眼看到「时间 / 概要 / 提示」，
+  // 不需要任何展开动作；线级按钮、单步箭头、折叠状态全部移除。
   await evaluate(`(() => {
-    for (const card of [...document.querySelectorAll('main [data-line-card]')].slice(0, 8)) {
+    for (const card of [...document.querySelectorAll('main [data-line-card]')].slice(0, 20)) {
       const toggle = card.firstElementChild?.querySelector('button[aria-expanded]');
       if (toggle && toggle.getAttribute('aria-expanded') === 'false') toggle.click();
     }
     return 1;
   })()`);
-  await sleep(600);
-  const detailSnapshot = () => evaluate(`(() => {
-    const card = [...document.querySelectorAll('main [data-line-card]')]
-      .find(c => c.querySelector('[data-line-detail-actions]'));
-    const arrows = [...(card?.querySelectorAll('[data-step-expand]') ?? [])];
+  await sleep(700);
+  const flat = await evaluate(`(() => {
+    const scope = document.querySelector('[data-tracker-app]') || document;
+    const cards = [...scope.querySelectorAll('[data-line-card]')];
+    const card = cards.find(c => c.querySelector('[data-step-details]'));
+    const rows = [...(card?.querySelectorAll('[data-step-row]') ?? [])];
     const boxes = [...(card?.querySelectorAll('[data-step-details]') ?? [])];
-    const actions = card?.querySelector('[data-line-detail-actions]');
-    const pin = [...(card?.querySelectorAll('button') ?? [])]
-      .find(b => /置顶/.test(b.textContent.trim()));
+    const details = [...scope.querySelectorAll('[data-step-detail]')];
+    const tip = details.find(d => d.dataset.stepDetailRole === 'tip');
+    const toolbar = [...(card?.firstElementChild?.querySelectorAll('button') ?? [])]
+      .map(b => b.textContent.trim())
+      .filter(t => /置顶|放弃|移出池子|恢复进池|恢复追踪|展开全部|收起全部/.test(t));
     return {
       hasCard: !!card,
-      arrows: arrows.length,
-      open: arrows.filter(a => a.getAttribute('aria-expanded') === 'true').length,
+      rows: rows.length,
       boxes: boxes.length,
-      kinds: [...(card?.querySelectorAll('[data-step-detail]') ?? [])].map(d => d.dataset.stepDetailKind),
-      text: boxes.map(b => b.textContent.trim()).join(' '),
-      expandDisabled: card?.querySelector('[data-line-expand-all]')?.disabled ?? null,
-      collapseDisabled: card?.querySelector('[data-line-collapse-all]')?.disabled ?? null,
-      sameToolbar: !!actions && !!pin && actions.parentElement === pin.parentElement,
+      rowsWithDetails: rows.filter(r => r.querySelector('[data-step-details]')).length,
+      kinds: [...new Set(details.map(d => d.dataset.stepDetailKind))].sort(),
+      roles: [...new Set(details.map(d => d.dataset.stepDetailRole))].sort(),
+      text: details.map(d => d.textContent.trim()).join(' '),
+      tipBg: tip ? getComputedStyle(tip).backgroundColor : null,
+      tipBorderLeft: tip ? getComputedStyle(tip).borderLeftWidth : null,
+      arrows: scope.querySelectorAll('[data-step-expand]').length,
+      expandAll: scope.querySelectorAll('[data-line-expand-all]').length,
+      collapseAll: scope.querySelectorAll('[data-line-collapse-all]').length,
+      detailActions: scope.querySelectorAll('[data-line-detail-actions]').length,
+      toolbar,
     };
   })()`);
-  const initialDetail = await detailSnapshot();
-  check('打开事件后所有步骤的详情默认展开',
-    initialDetail.hasCard && initialDetail.arrows > 0 &&
-    initialDetail.open === initialDetail.arrows && initialDetail.boxes === initialDetail.arrows &&
-    initialDetail.expandDisabled === true && initialDetail.collapseDisabled === false,
-    JSON.stringify(initialDetail));
-  check('展开全部 / 收起全部与置顶、放弃、移出池子同一排',
-    initialDetail.sameToolbar, JSON.stringify(initialDetail));
+  check('打开事件后详情直接常驻，无需点任何按钮',
+    flat.hasCard && flat.boxes > 0 && flat.rowsWithDetails === flat.boxes,
+    JSON.stringify({ rows: flat.rows, boxes: flat.boxes, withDetails: flat.rowsWithDetails }));
+  check('折叠控件已彻底移除（无线级按钮、无单步箭头）',
+    flat.arrows === 0 && flat.expandAll === 0 && flat.collapseAll === 0 && flat.detailActions === 0,
+    JSON.stringify({ arrows: flat.arrows, expandAll: flat.expandAll, collapseAll: flat.collapseAll, actions: flat.detailActions }));
+  check('头部工具按钮只剩置顶 / 放弃 / 移出池子',
+    flat.toolbar.length === 3 &&
+    flat.toolbar.some(t => t.includes('置顶')) &&
+    flat.toolbar.some(t => t.includes('放弃')) &&
+    flat.toolbar.some(t => t.includes('移出池子')),
+    JSON.stringify(flat.toolbar));
   check('详情含时间 / 概要 / 提示',
-    initialDetail.text.includes('时间：') || initialDetail.text.includes('概要：') ||
-      initialDetail.text.includes('提示：'),
-    initialDetail.text.slice(0, 90));
+    flat.text.includes('时间：') || flat.text.includes('概要：') || flat.text.includes('提示：'),
+    flat.text.slice(0, 90));
   check('详情只收 paragraph / note 两种块',
-    initialDetail.kinds.length > 0 && initialDetail.kinds.every((k) => k === 'paragraph' || k === 'note'),
-    JSON.stringify(initialDetail.kinds));
+    flat.kinds.length > 0 && flat.kinds.every((k) => k === 'paragraph' || k === 'note'),
+    JSON.stringify(flat.kinds));
+  check('时间 / 概要 / 提示分三种层次，提示不再整块黄底',
+    flat.roles.includes('time') && flat.roles.includes('body') && flat.roles.includes('tip') &&
+      /rgba\(0, 0, 0, 0\)|transparent/.test(flat.tipBg ?? '') &&
+      parseFloat(flat.tipBorderLeft ?? '') >= 2,
+    JSON.stringify({ roles: flat.roles, tipBg: flat.tipBg, border: flat.tipBorderLeft }));
+  check('没有详情的步骤不渲染空详情框',
+    flat.rows >= flat.rowsWithDetails && flat.boxes === flat.rowsWithDetails,
+    JSON.stringify({ rows: flat.rows, boxes: flat.boxes }));
 
-  await evaluate(`(() => {
-    const b = document.querySelector('main [data-line-collapse-all]');
-    if (b && !b.disabled) b.click();
-    return 1;
+  // 详情常驻不影响卡片本身的折叠：点标题仍能把整条线收起来。
+  const foldId = await evaluate(`(() => {
+    const card = [...document.querySelectorAll('main [data-line-card]')]
+      .find(c => c.querySelector('[data-step-details]'));
+    if (!card) return '';
+    const t = card.firstElementChild?.querySelector('button[aria-expanded]');
+    if (t) t.click();
+    return card.dataset.lineId || '';
   })()`);
   await sleep(350);
-  const collapsedAll = await detailSnapshot();
-  check('一键收起：这条事件下所有详情都收起',
-    collapsedAll.arrows > 0 && collapsedAll.open === 0 && collapsedAll.boxes === 0 &&
-    collapsedAll.expandDisabled === false && collapsedAll.collapseDisabled === true,
-    JSON.stringify(collapsedAll));
-
-  await evaluate(`(() => {
-    const b = document.querySelector('main [data-line-expand-all]');
-    if (b && !b.disabled) b.click();
-    return 1;
+  const folded = await evaluate(`(() => {
+    const card = [...document.querySelectorAll('main [data-line-card]')]
+      .find(c => c.dataset.lineId === ${JSON.stringify(foldId)});
+    return {
+      found: !!card,
+      open: card?.firstElementChild?.querySelector('button[aria-expanded]')?.getAttribute('aria-expanded') ?? '',
+      boxes: card?.querySelectorAll('[data-step-details]').length ?? -1,
+    };
   })()`);
-  await sleep(350);
-  const expandedAll = await detailSnapshot();
-  check('一键展开：所有步骤详情重新展开',
-    expandedAll.open === expandedAll.arrows && expandedAll.boxes === expandedAll.arrows &&
-    expandedAll.expandDisabled === true && expandedAll.collapseDisabled === false,
-    JSON.stringify(expandedAll));
-
-  await evaluate(`(() => {
-    const a = document.querySelector('main [data-line-card] [data-step-expand]');
-    if (a) a.click();
-    return 1;
-  })()`);
-  await sleep(300);
-  const singleClosed = await detailSnapshot();
-  check('单步箭头仍可单独收起，其它步骤不受影响',
-    singleClosed.open === expandedAll.arrows - 1 && singleClosed.boxes === expandedAll.arrows - 1,
-    JSON.stringify(singleClosed));
-  await evaluate(`(() => {
-    const a = document.querySelector('main [data-line-card] [data-step-expand]');
-    if (a) a.click();
-    return 1;
-  })()`);
-  await sleep(300);
-  const singleRestored = await detailSnapshot();
-  check('再点单步箭头恢复这一步',
-    singleRestored.open === expandedAll.arrows && singleRestored.boxes === expandedAll.arrows,
-    JSON.stringify(singleRestored));
+  check('详情常驻不影响卡片折叠：点标题仍收起整条线',
+    folded.found && folded.open === 'false' && folded.boxes === 0,
+    JSON.stringify(folded));
 
   // 10. 存档面板只讲进度
   const archiveText = await evaluate(`document.querySelector('[data-transfer-panel]')?.textContent ?? ''`);
