@@ -97,7 +97,7 @@ function SweetGuide({ data: source }: Props) {
   const header = (
     <GameHeader
       title="明星志愿3 甜蜜乐章 · 攻略助手"
-      logoSrc={`${import.meta.env.BASE_URL}favicon.ico`}
+      logoSrc={`${import.meta.env.BASE_URL}sweet-logo.png`}
       onBrandClick={() => handleSelect('')}
       menuButton={(
         <button
