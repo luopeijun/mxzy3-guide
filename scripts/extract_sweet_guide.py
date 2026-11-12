@@ -775,7 +775,7 @@ def parse_date(path: Path) -> tuple[list[dict], list[dict]]:
     """约会页 → 开头四条邀约限制 + 两组「地点 / 问题 / 回答」。
 
     返回 (head, body)：head 由 `_merge_date` 并进角色页的基础信息列表，body 追加到页尾。
-    一个问题可能有多个都能过关的回答（东门商店街「今天想去什么地方？」下面就有
+    一个问题可能有多个都能过关的回答（咚门商店街「今天想去什么地方？」下面就有
     唱片行 / 服饰店两条 A），所以 answer 里用换行分隔，由 `qa` 块分行渲染。
     """
     lines = _read_lines(path)
@@ -785,10 +785,12 @@ def parse_date(path: Path) -> tuple[list[dict], list[dict]]:
     in_body = False
 
     for text in lines:
-        if text in DATE_SECTIONS:
+        # 小节名后面带不带冒号各页不一致（卫亚两份都带、姚子奇那份还是半角冒号）。
+        section = text.rstrip("：: ")
+        if section in DATE_SECTIONS:
             in_body = True
             group += 1
-            body.append({"kind": "section", "text": text, "group": group})
+            body.append({"kind": "section", "text": section, "group": group})
             continue
 
         if not in_body:
@@ -813,6 +815,11 @@ def parse_date(path: Path) -> tuple[list[dict], list[dict]]:
             previous = body[-1]
             value = answer.group(1).strip()
             previous["answer"] = f"{previous['answer']}\n{value}" if previous.get("answer") else value
+            continue
+
+        # 「提示：…」跟在某个地点下面，讲这条对话的附加门槛（慕容和希的购物中心）。
+        if text.startswith("提示："):
+            body.append({"kind": "note", "text": text, "group": group})
             continue
 
         # 剩下的都是地点名，一个地点一组。

@@ -6,10 +6,10 @@
     "stats": {
       "categories": 3,
       "items": 24,
-      "blocks": 2048,
+      "blocks": 2261,
       "readyItems": 18,
       "missingItems": 6,
-      "sourceParagraphs": 2048
+      "sourceParagraphs": 2261
     }
   },
   "categories": [
@@ -4649,7 +4649,7 @@
             },
             {
               "kind": "heading",
-              "text": "东门商店街",
+              "text": "咚门商店街",
               "depth": 1,
               "group": 64
             },
@@ -4719,7 +4719,7 @@
             },
             {
               "kind": "heading",
-              "text": "东门商店街",
+              "text": "咚门商店街",
               "depth": 1,
               "group": 70
             },
@@ -5927,7 +5927,7 @@
             },
             {
               "kind": "heading",
-              "text": "东门商店街",
+              "text": "咚门商店街",
               "depth": 1,
               "group": 78
             },
@@ -6024,7 +6024,7 @@
             },
             {
               "kind": "heading",
-              "text": "东门商店街",
+              "text": "咚门商店街",
               "depth": 1,
               "group": 85
             },
@@ -6124,6 +6124,30 @@
             {
               "kind": "paragraph",
               "text": "分红：50%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "开启约会条件：跟随50天后",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "无法邀约的情况：杜云芊与金皓薰交往、纪翔与金皓薰交往",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "可连续约会上限周数：1周",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "达上限后无法邀约周数：1周",
               "group": 0,
               "bullet": true
             },
@@ -7077,6 +7101,141 @@
               "text": "约会10次、取消友好度检查、纪翔有8部作品、得过1次奖、取消舞台剧和时装秀条件",
               "group": 57,
               "label": "7-6"
+            },
+            {
+              "kind": "section",
+              "text": "普通约会对话选项提示",
+              "group": 68
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 69
+            },
+            {
+              "kind": "qa",
+              "text": "你想去什么地方吗？",
+              "label": "1",
+              "group": 69,
+              "answer": "书店"
+            },
+            {
+              "kind": "qa",
+              "text": "你常看书吗？",
+              "label": "2",
+              "group": 69,
+              "answer": "每天都看"
+            },
+            {
+              "kind": "heading",
+              "text": "购物中心",
+              "depth": 1,
+              "group": 70
+            },
+            {
+              "kind": "qa",
+              "text": "购物中心的人潮永远这么多……你想去哪里逛一逛吗？",
+              "label": "1",
+              "group": 70,
+              "answer": "到广场散散步！"
+            },
+            {
+              "kind": "heading",
+              "text": "电影院",
+              "depth": 1,
+              "group": 71
+            },
+            {
+              "kind": "qa",
+              "text": "今天有一部评价很好的动作片要上映，有兴趣吗？",
+              "label": "1",
+              "group": 71,
+              "answer": "有兴趣"
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 72
+            },
+            {
+              "kind": "qa",
+              "text": "你这次要推荐什么呢？",
+              "label": "1",
+              "group": 72,
+              "answer": "炸昆虫！"
+            },
+            {
+              "kind": "section",
+              "text": "亲密约会对话选项提示",
+              "group": 73
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 74
+            },
+            {
+              "kind": "qa",
+              "text": "要不要去叫醒他呢？（春夏季）",
+              "label": "1",
+              "group": 74,
+              "answer": "去叫醒他"
+            },
+            {
+              "kind": "qa",
+              "text": "就例如……打鼾、说梦话、起来梦游……这样的行为。（春夏季）",
+              "label": "2",
+              "group": 74,
+              "answer": "什么都没有！"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 75
+            },
+            {
+              "kind": "qa",
+              "text": "你想去什么地方吗？",
+              "label": "1",
+              "group": 75,
+              "answer": "唱片行"
+            },
+            {
+              "kind": "qa",
+              "text": "嗯？嫉妒了吗？",
+              "label": "2",
+              "group": 75,
+              "answer": "有点嫉妒……"
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 76
+            },
+            {
+              "kind": "qa",
+              "text": "要不要先放下餐点，跟我跳一首华尔兹？",
+              "label": "1",
+              "group": 76,
+              "answer": "接受邀请"
+            },
+            {
+              "kind": "heading",
+              "text": "月光海滩",
+              "depth": 1,
+              "group": 77
+            },
+            {
+              "kind": "qa",
+              "text": "你有为了我打扮吗？",
+              "label": "1",
+              "group": 77,
+              "answer": "有……"
             }
           ],
           "children": []
@@ -7095,6 +7254,30 @@
             {
               "kind": "paragraph",
               "text": "分红：70%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "开启约会条件：杜云芊有创作上市",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "无法邀约的情况：看心情…（上周与子奇约会后较容易邀约成功）",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "可连续约会上限周数：2周",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "达上限后无法邀约周数：2周",
               "group": 0,
               "bullet": true
             },
@@ -8061,6 +8244,166 @@
               "text": "约会次数达15次以上",
               "group": 58,
               "label": "7-1"
+            },
+            {
+              "kind": "section",
+              "text": "普通约会对话选项提示",
+              "group": 69
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 70
+            },
+            {
+              "kind": "qa",
+              "text": "想去哪里走一走？（春夏季）",
+              "label": "1",
+              "group": 70,
+              "answer": "去林荫小径好了。"
+            },
+            {
+              "kind": "qa",
+              "text": "今天想要到哪里走走吗？（秋冬季）",
+              "label": "2",
+              "group": 70,
+              "answer": "林荫小径"
+            },
+            {
+              "kind": "qa",
+              "text": "（慕容看着我，好像希望我可以接什么话？）",
+              "label": "3",
+              "group": 70,
+              "answer": "解除压力……"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 71
+            },
+            {
+              "kind": "qa",
+              "text": "今天想要去哪里走一走？",
+              "label": "1",
+              "group": 71,
+              "answer": "唱片行"
+            },
+            {
+              "kind": "heading",
+              "text": "购物中心",
+              "depth": 1,
+              "group": 72
+            },
+            {
+              "kind": "qa",
+              "text": "当然。这就像是我身体的一部分一样。",
+              "label": "1",
+              "group": 72,
+              "answer": "令人佩服！"
+            },
+            {
+              "kind": "heading",
+              "text": "电影院",
+              "depth": 1,
+              "group": 73
+            },
+            {
+              "kind": "qa",
+              "text": "今天想看什么电影？以女性的意见为优先。",
+              "label": "1",
+              "group": 73,
+              "answer": "恐怖片。\n动作片。"
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 74
+            },
+            {
+              "kind": "qa",
+              "text": "今天点菜的工作也交给我吧？",
+              "label": "1",
+              "group": 74,
+              "answer": "抢下点菜工作"
+            },
+            {
+              "kind": "section",
+              "text": "亲密约会对话选项提示",
+              "group": 75
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 76
+            },
+            {
+              "kind": "qa",
+              "text": "想去哪里走一走？（春夏季）",
+              "label": "1",
+              "group": 76,
+              "answer": "花圃"
+            },
+            {
+              "kind": "qa",
+              "text": "怎么了？（春夏季）",
+              "label": "2",
+              "group": 76,
+              "answer": "有点肉麻……"
+            },
+            {
+              "kind": "qa",
+              "text": "生于自然、长于自然，以天地为家，以大地为枕，这是任何人都无法拥有的享受。（秋冬季）",
+              "label": "3",
+              "group": 76,
+              "answer": "我也这么觉得。"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 77
+            },
+            {
+              "kind": "qa",
+              "text": "今天想要去哪里走一走？",
+              "label": "1",
+              "group": 77,
+              "answer": "唱片行"
+            },
+            {
+              "kind": "heading",
+              "text": "购物中心",
+              "depth": 1,
+              "group": 78
+            },
+            {
+              "kind": "qa",
+              "text": "我相信你一定有那个能力，我也会在旁边一起合奏",
+              "label": "1",
+              "group": 78,
+              "answer": "恭敬不如从命"
+            },
+            {
+              "kind": "note",
+              "text": "提示：杜云芊歌唱、才智、体力总和400以上，好感才会上升。",
+              "group": 78
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 79
+            },
+            {
+              "kind": "qa",
+              "text": "喜欢吗？",
+              "label": "1",
+              "group": 79,
+              "answer": "很喜欢……\n需要改进！"
             }
           ],
           "children": []
@@ -8085,6 +8428,30 @@
             {
               "kind": "paragraph",
               "text": "比较喜欢的物品：玫瑰之星 爱神巧克力 男性香水 雪山灵芝 蓝色奶粉 人面狮身纸镇 埃及女王的秘密 尼罗河之水 骷髅魔戒 水晶魔戒 法老王之钥 白色毛线帽 渐层反光太阳眼睛 渔夫帽 迷彩派克大衣",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "开启邀约条件：跟随30天后",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "无法邀约的情况：杜云芊压力30以上、疲劳30以上、生病",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "可连续约会上限周数：3周",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "达上限后无法邀约周数：1周",
               "group": 0,
               "bullet": true
             },
@@ -8887,6 +9254,242 @@
               "text": "取消称号检查",
               "group": 48,
               "label": "4-5"
+            },
+            {
+              "kind": "section",
+              "text": "普通约会对话选项提示",
+              "group": 59
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 60
+            },
+            {
+              "kind": "qa",
+              "text": "对不起，我只是觉得很有趣而已……这也是你少数的弱点之一吧？（秋冬季）",
+              "label": "1",
+              "group": 60,
+              "answer": "这不是我的弱点"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 61
+            },
+            {
+              "kind": "qa",
+              "text": "不管你想去哪里，我都愿意奉陪到底！",
+              "label": "1",
+              "group": 61,
+              "answer": "服饰店"
+            },
+            {
+              "kind": "qa",
+              "text": "你都已经成年了，该有自己的生活，你哥不该控制你的行为！",
+              "label": "2",
+              "group": 61,
+              "answer": "我也这样认为……"
+            },
+            {
+              "kind": "qa",
+              "text": "也逛了一段时间，要不要休息一下？",
+              "label": "3",
+              "group": 61,
+              "answer": "学长累了？"
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 62
+            },
+            {
+              "kind": "qa",
+              "text": "既然如此，要不要去索取签名？",
+              "label": "1",
+              "group": 62,
+              "answer": "想跟学长独处！"
+            },
+            {
+              "kind": "qa",
+              "text": "（……好严肃的对谈，该不该去打断他们的对话呢？）",
+              "label": "2",
+              "group": 62,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "要不要去打声招呼？",
+              "label": "3",
+              "group": 62,
+              "answer": "想跟学长独处！"
+            },
+            {
+              "kind": "qa",
+              "text": "既然来了就一起吃个饭吧！",
+              "label": "4",
+              "group": 62,
+              "answer": "不行……"
+            },
+            {
+              "kind": "heading",
+              "text": "海生馆",
+              "depth": 1,
+              "group": 63
+            },
+            {
+              "kind": "qa",
+              "text": "有喂食表演，要不要去看？",
+              "label": "1",
+              "group": 63,
+              "answer": "看"
+            },
+            {
+              "kind": "section",
+              "text": "亲密约会对话选项提示",
+              "group": 64
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 65
+            },
+            {
+              "kind": "qa",
+              "text": "其实你一点也不喜欢靠近水边，对不对？（春夏季）",
+              "label": "1",
+              "group": 65,
+              "answer": "我可是游泳高手！"
+            },
+            {
+              "kind": "qa",
+              "text": "不喜欢吗？还是去展望台走走？（秋冬季）",
+              "label": "2",
+              "group": 65,
+              "answer": "在这里走走！"
+            },
+            {
+              "kind": "qa",
+              "text": "这主意不错吧？（秋冬季）",
+              "label": "3",
+              "group": 65,
+              "answer": "学长真坏心……"
+            },
+            {
+              "kind": "heading",
+              "text": "市民图书馆",
+              "depth": 1,
+              "group": 66
+            },
+            {
+              "kind": "qa",
+              "text": "这部分，是不是应该多加强些？",
+              "label": "1",
+              "group": 66,
+              "answer": "学长好过分！"
+            },
+            {
+              "kind": "qa",
+              "text": "他根本就不算尽到照顾你的责任……",
+              "label": "2",
+              "group": 66,
+              "answer": "希望能够重来…"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 67
+            },
+            {
+              "kind": "qa",
+              "text": "彼此彼此，你也一样，一直以来，都只有看到表面的我，让我非常的困扰！",
+              "label": "1",
+              "group": 67,
+              "answer": "对不起……"
+            },
+            {
+              "kind": "heading",
+              "text": "购物中心",
+              "depth": 1,
+              "group": 68
+            },
+            {
+              "kind": "qa",
+              "text": "是不是想签他们？",
+              "label": "1",
+              "group": 68,
+              "answer": "有学长就够了！"
+            },
+            {
+              "kind": "qa",
+              "text": "程度一点也不亚于职业歌手，你觉得呢？",
+              "label": "2",
+              "group": 68,
+              "answer": "还有进步的空间！"
+            },
+            {
+              "kind": "qa",
+              "text": "你觉得呢？",
+              "label": "3",
+              "group": 68,
+              "answer": "还有进步的空间！"
+            },
+            {
+              "kind": "heading",
+              "text": "电影院",
+              "depth": 1,
+              "group": 69
+            },
+            {
+              "kind": "qa",
+              "text": "你猜猜看我喜欢什么？",
+              "label": "1",
+              "group": 69,
+              "answer": "爱情文艺！"
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 70
+            },
+            {
+              "kind": "qa",
+              "text": "终究你还是适合嫁给一个有钱人，过着富裕的生活……",
+              "label": "1",
+              "group": 70,
+              "answer": "我不在乎物质享受！"
+            },
+            {
+              "kind": "heading",
+              "text": "月光海滩",
+              "depth": 1,
+              "group": 71
+            },
+            {
+              "kind": "qa",
+              "text": "你讨厌我吗？",
+              "label": "1",
+              "group": 71,
+              "answer": "一点也不！"
+            },
+            {
+              "kind": "heading",
+              "text": "海生馆",
+              "depth": 1,
+              "group": 72
+            },
+            {
+              "kind": "qa",
+              "text": "那我问你，这个世界上，你最喜欢的人是谁？",
+              "label": "1",
+              "group": 72,
+              "answer": "学长想试探什么？"
             }
           ],
           "children": []
@@ -8905,6 +9508,30 @@
             {
               "kind": "paragraph",
               "text": "分红：50%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "开启邀约条件：SD出唱片且上市，跟随10天后",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "无法邀约的情况：唱片录制期间",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "可连续约会上限周数：3周",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "达上限后无法邀约周数：2周",
               "group": 0,
               "bullet": true
             },
@@ -9809,6 +10436,122 @@
               "text": "两人名气高于199",
               "group": 55,
               "label": "4-3"
+            },
+            {
+              "kind": "section",
+              "text": "普通约会对话选项提示",
+              "group": 66
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 67
+            },
+            {
+              "kind": "qa",
+              "text": "你看，那边有一只松鼠耶！（春夏季）",
+              "label": "1",
+              "group": 67,
+              "answer": "啊！好可爱！"
+            },
+            {
+              "kind": "qa",
+              "text": "我们要到哪里去走走？（秋冬季）",
+              "label": "2",
+              "group": 67,
+              "answer": "展望台"
+            },
+            {
+              "kind": "qa",
+              "text": "我知道了，你一定是……（秋冬季）",
+              "label": "3",
+              "group": 67,
+              "answer": "有惧高症！"
+            },
+            {
+              "kind": "heading",
+              "text": "市民图书馆",
+              "depth": 1,
+              "group": 68
+            },
+            {
+              "kind": "qa",
+              "text": "现在要做什么呢？",
+              "label": "1",
+              "group": 68,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "heading",
+              "text": "月光海滩",
+              "depth": 1,
+              "group": 69
+            },
+            {
+              "kind": "qa",
+              "text": "我也想把鞋子脱掉，感受一下亲自踏在沙子上的感觉……",
+              "label": "1",
+              "group": 69,
+              "answer": "我也脱？"
+            },
+            {
+              "kind": "section",
+              "text": "亲密约会对话选项提示",
+              "group": 70
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 71
+            },
+            {
+              "kind": "qa",
+              "text": "我可以在这里躺一下吗？（春夏季）",
+              "label": "1",
+              "group": 71,
+              "answer": "当然可以！"
+            },
+            {
+              "kind": "qa",
+              "text": "你想做什么？（春夏季）",
+              "label": "2",
+              "group": 71,
+              "answer": "坐下来聊天"
+            },
+            {
+              "kind": "qa",
+              "text": "我绝对不让她受到一丝的伤害。（秋冬季）",
+              "label": "3",
+              "group": 71,
+              "answer": "你有一个好哥哥！"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 72
+            },
+            {
+              "kind": "qa",
+              "text": "你不会嘲笑我太过喜欢打扮吧？",
+              "label": "1",
+              "group": 72,
+              "answer": "当然不会"
+            },
+            {
+              "kind": "heading",
+              "text": "月光海滩",
+              "depth": 1,
+              "group": 73
+            },
+            {
+              "kind": "qa",
+              "text": "我是说，如果有一个完全看不到目的地的方向，你还会往那个方向过去吗？",
+              "label": "1",
+              "group": 73,
+              "answer": "应该会吧！"
             }
           ],
           "children": []
@@ -9833,6 +10576,30 @@
             {
               "kind": "paragraph",
               "text": "限制：严禁裸露、拒拍吻戏",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "开启邀约条件：送喜欢的东西2样、跟随20天后",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "无法邀约的情况：卫亚两星期内任一天的行程失败",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "可连续约会上限周数：4周",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "达上限后无法邀约的周数：3周",
               "group": 0,
               "bullet": true
             },
@@ -10747,6 +11514,216 @@
               "text": "约会12次、取消友好度检查、卫亚演技才智达600、自信300、两人皆拍过2部以上电影",
               "group": 53,
               "label": "8-2"
+            },
+            {
+              "kind": "section",
+              "text": "普通约会对话选项提示",
+              "group": 64
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 65
+            },
+            {
+              "kind": "qa",
+              "text": "我私自画学姐，学姐会不会生气？（春夏季）",
+              "label": "1",
+              "group": 65,
+              "answer": "当然不会"
+            },
+            {
+              "kind": "qa",
+              "text": "学姐想去哪里都可以，我没有意见。（春夏季）",
+              "label": "2",
+              "group": 65,
+              "answer": "花圃"
+            },
+            {
+              "kind": "qa",
+              "text": "这里人好多……连走路都有困难……这种环境之下，真的能安安静静的赏花吗？（春夏季）",
+              "label": "3",
+              "group": 65,
+              "answer": "离开这里！"
+            },
+            {
+              "kind": "qa",
+              "text": "学姐想去哪里呢？（秋冬季）",
+              "label": "4",
+              "group": 65,
+              "answer": "展望台"
+            },
+            {
+              "kind": "qa",
+              "text": "就算脑袋里面有许多话想说，也没有办法……",
+              "label": "5",
+              "group": 65,
+              "answer": "我是好听众"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 66
+            },
+            {
+              "kind": "qa",
+              "text": "学姐今天想要去哪里走一走？",
+              "label": "1",
+              "group": 66,
+              "answer": "唱片行\n书店"
+            },
+            {
+              "kind": "qa",
+              "text": "如果学姐现在也要兼顾学业与事业，学姐会比较在意哪方面呢？",
+              "label": "2",
+              "group": 66,
+              "answer": "学业！\n两者兼顾！"
+            },
+            {
+              "kind": "heading",
+              "text": "购物中心",
+              "depth": 1,
+              "group": 67
+            },
+            {
+              "kind": "qa",
+              "text": "今天学姐有任何计划吗？",
+              "label": "1",
+              "group": 67,
+              "answer": "购物"
+            },
+            {
+              "kind": "qa",
+              "text": "不、不用了，我是男孩子，不需要太多装饰品来打扮自己……",
+              "label": "2",
+              "group": 67,
+              "answer": "艺人需要打扮！"
+            },
+            {
+              "kind": "heading",
+              "text": "电影院",
+              "depth": 1,
+              "group": 68
+            },
+            {
+              "kind": "qa",
+              "text": "既然碰到，我们一起看电影吧？学姐好不好？",
+              "label": "1",
+              "group": 68,
+              "answer": "当然没问题！"
+            },
+            {
+              "kind": "heading",
+              "text": "海生馆",
+              "depth": 1,
+              "group": 69
+            },
+            {
+              "kind": "qa",
+              "text": "学姐希望我去做吗？",
+              "label": "1",
+              "group": 69,
+              "answer": "由你决定！"
+            },
+            {
+              "kind": "qa",
+              "text": "学姐会害怕孤独？",
+              "label": "2",
+              "group": 69,
+              "answer": "不害怕……"
+            },
+            {
+              "kind": "section",
+              "text": "亲密约会对话选项提示",
+              "group": 70
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 71
+            },
+            {
+              "kind": "qa",
+              "text": "如果是学姐，学姐会怎么做呢？（春夏季）",
+              "label": "1",
+              "group": 71,
+              "answer": "逃跑！"
+            },
+            {
+              "kind": "qa",
+              "text": "今天花圃的花开了，我想在这里画一些素描，会花一些时间，可以吗？（春夏季）",
+              "label": "2",
+              "group": 71,
+              "answer": "我在这里陪你"
+            },
+            {
+              "kind": "qa",
+              "text": "要让卫亚跟吗？（秋冬季）",
+              "label": "3",
+              "group": 71,
+              "answer": "我就不客气了！"
+            },
+            {
+              "kind": "qa",
+              "text": "没有。看学姐的意思？（秋冬季）",
+              "label": "4",
+              "group": 71,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "heading",
+              "text": "市民图书馆",
+              "depth": 1,
+              "group": 72
+            },
+            {
+              "kind": "qa",
+              "text": "学姐，我今天有一些学校的功课要念，我可以一个人念书吗？",
+              "label": "1",
+              "group": 72,
+              "answer": "我陪你一起念！"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 73
+            },
+            {
+              "kind": "qa",
+              "text": "学姐今天想去哪里呢？",
+              "label": "1",
+              "group": 73,
+              "answer": "唱片行\n书店"
+            },
+            {
+              "kind": "heading",
+              "text": "月光海滩",
+              "depth": 1,
+              "group": 74
+            },
+            {
+              "kind": "qa",
+              "text": "学姐，你有没有想玩的项目？",
+              "label": "1",
+              "group": 74,
+              "answer": "潜水"
+            },
+            {
+              "kind": "heading",
+              "text": "海生馆",
+              "depth": 1,
+              "group": 75
+            },
+            {
+              "kind": "qa",
+              "text": "学姐希望我去吗？",
+              "label": "1",
+              "group": 75,
+              "answer": "去试试看！"
             }
           ],
           "children": []
@@ -10765,6 +11742,30 @@
             {
               "kind": "paragraph",
               "text": "分红：60%",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "开启邀约条件：合作戏剧30天后",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "无法邀约的情况：农历七月、杜云芊上周与慕容和希约会、姚子奇压力30以上",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "可连续约会周数：2周",
+              "group": 0,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "达上限后无法邀约周数：2周",
               "group": 0,
               "bullet": true
             },
@@ -11678,6 +12679,388 @@
               "text": "约会15次，并取消友好度检查",
               "group": 54,
               "label": "9-5"
+            },
+            {
+              "kind": "section",
+              "text": "普通约会对话选项提示",
+              "group": 65
+            },
+            {
+              "kind": "heading",
+              "text": "植物园",
+              "depth": 1,
+              "group": 66
+            },
+            {
+              "kind": "qa",
+              "text": "就算是你也很不习惯这样人潮汹涌的地方吧！（春夏季）",
+              "label": "1",
+              "group": 66,
+              "answer": "不太习惯"
+            },
+            {
+              "kind": "qa",
+              "text": "你喜欢什么地方？（春夏季）",
+              "label": "2",
+              "group": 66,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "你要坐下来聊聊天，还是沿着湖边散步一下？（春夏季）",
+              "label": "3",
+              "group": 66,
+              "answer": "湖边散步"
+            },
+            {
+              "kind": "qa",
+              "text": "你喜欢什么花朵？（春夏季）",
+              "label": "4",
+              "group": 66,
+              "answer": "不喜欢花朵\n什么都喜欢"
+            },
+            {
+              "kind": "qa",
+              "text": "你平常是怎么激发创作灵感的？（春夏季）",
+              "label": "5",
+              "group": 66,
+              "answer": "看着书本发呆\n听听音乐"
+            },
+            {
+              "kind": "qa",
+              "text": "好冷喔～我们还要站在这里到什么时候！（秋冬季）",
+              "label": "6",
+              "group": 66,
+              "answer": "我们沿着这条路走走吧……"
+            },
+            {
+              "kind": "qa",
+              "text": "怎么你特别不一样？（秋冬季）",
+              "label": "7",
+              "group": 66,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "我们站过去看看外头景色。（秋冬季）",
+              "label": "8",
+              "group": 66,
+              "answer": "那就去吧……"
+            },
+            {
+              "kind": "heading",
+              "text": "市民图书馆",
+              "depth": 1,
+              "group": 67
+            },
+            {
+              "kind": "qa",
+              "text": "不管什么时候图书馆的人都是一样多。",
+              "label": "1",
+              "group": 67,
+              "answer": "找个靠窗的地方坐下……"
+            },
+            {
+              "kind": "qa",
+              "text": "你试试看，是不是很暖和，催人入眠？",
+              "label": "2",
+              "group": 67,
+              "answer": "趴在桌上晒太阳"
+            },
+            {
+              "kind": "qa",
+              "text": "不说了！找些事情来做吧……",
+              "label": "3",
+              "group": 67,
+              "answer": "翻阅桌上的书"
+            },
+            {
+              "kind": "qa",
+              "text": "所以我们要去哪一区？",
+              "label": "4",
+              "group": 67,
+              "answer": "武侠小说区"
+            },
+            {
+              "kind": "qa",
+              "text": "在最上层……",
+              "label": "5",
+              "group": 67,
+              "answer": "垫起脚尖"
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 68
+            },
+            {
+              "kind": "qa",
+              "text": "不行！我要跟老板说把他的专辑统统给我调开！",
+              "label": "1",
+              "group": 68,
+              "answer": "帮忙去跟老板说个明白"
+            },
+            {
+              "kind": "qa",
+              "text": "既然如此……",
+              "label": "2",
+              "group": 68,
+              "answer": "当众秀歌喉给子奇听"
+            },
+            {
+              "kind": "qa",
+              "text": "喔，就是架上那本……",
+              "label": "3",
+              "group": 68,
+              "answer": "音乐疯"
+            },
+            {
+              "kind": "heading",
+              "text": "购物中心",
+              "depth": 1,
+              "group": 69
+            },
+            {
+              "kind": "qa",
+              "text": "好，先到哪去？",
+              "label": "1",
+              "group": 69,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "你最喜欢的是哪个地方？",
+              "label": "2",
+              "group": 69,
+              "answer": "地下街\n电器行"
+            },
+            {
+              "kind": "qa",
+              "text": "我知道了。",
+              "label": "3",
+              "group": 69,
+              "answer": "担心被别人以为是情侣"
+            },
+            {
+              "kind": "qa",
+              "text": "你应该不会想尝试这种事情吧？",
+              "label": "4",
+              "group": 69,
+              "answer": "会！"
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 70
+            },
+            {
+              "kind": "qa",
+              "text": "啊啊～反正我就是很难习惯啦……",
+              "label": "1",
+              "group": 70,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "既然来了花园就……",
+              "label": "2",
+              "group": 70,
+              "answer": "聊自己的事情"
+            },
+            {
+              "kind": "heading",
+              "text": "月光海滩",
+              "depth": 1,
+              "group": 71
+            },
+            {
+              "kind": "qa",
+              "text": "让我猜猜看--",
+              "label": "1",
+              "group": 71,
+              "answer": "听海的日子最能激发男人的种种情怀"
+            },
+            {
+              "kind": "qa",
+              "text": "悠游于天地之间，连心灵都获得解放！",
+              "label": "2",
+              "group": 71,
+              "answer": "真豪迈"
+            },
+            {
+              "kind": "heading",
+              "text": "海生馆",
+              "depth": 1,
+              "group": 72
+            },
+            {
+              "kind": "qa",
+              "text": "我们要先去哪里逛？",
+              "label": "1",
+              "group": 72,
+              "answer": "去看展览"
+            },
+            {
+              "kind": "qa",
+              "text": "我决定……",
+              "label": "2",
+              "group": 72,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "逛了这么久，要不要休息一下？",
+              "label": "3",
+              "group": 72,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "section",
+              "text": "亲密约会对话选项提示",
+              "group": 73
+            },
+            {
+              "kind": "heading",
+              "text": "咚门商店街",
+              "depth": 1,
+              "group": 74
+            },
+            {
+              "kind": "qa",
+              "text": "你接下来想去哪里？",
+              "label": "1",
+              "group": 74,
+              "answer": "书店"
+            },
+            {
+              "kind": "qa",
+              "text": "对我有什么意见就直说，不要吞吞吐吐的。",
+              "label": "2",
+              "group": 74,
+              "answer": "我赞成你的想法"
+            },
+            {
+              "kind": "heading",
+              "text": "购物中心",
+              "depth": 1,
+              "group": 75
+            },
+            {
+              "kind": "qa",
+              "text": "你接下来想去哪里？",
+              "label": "1",
+              "group": 75,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "里面挤了一堆女孩子，我才不要去！",
+              "label": "2",
+              "group": 75,
+              "answer": "（唱歌给姚子奇听）"
+            },
+            {
+              "kind": "qa",
+              "text": "读这么多书，对演艺圈需要的才能也不会有帮助吧！",
+              "label": "3",
+              "group": 75,
+              "answer": "绝对有帮助"
+            },
+            {
+              "kind": "heading",
+              "text": "电影院",
+              "depth": 1,
+              "group": 76
+            },
+            {
+              "kind": "qa",
+              "text": "电影墙上介绍的几部片子看起来都不错……",
+              "label": "1",
+              "group": 76,
+              "answer": "所有答案皆可"
+            },
+            {
+              "kind": "qa",
+              "text": "（又来了，他的眼神飘忽不定，到底是在看什么？）",
+              "label": "2",
+              "group": 76,
+              "answer": "望着右边的电视墙"
+            },
+            {
+              "kind": "qa",
+              "text": "嗯，子奇很认真的在介绍",
+              "label": "3",
+              "group": 76,
+              "answer": "那就选择这部电影吧"
+            },
+            {
+              "kind": "qa",
+              "text": "（既然如此……）",
+              "label": "4",
+              "group": 76,
+              "answer": "吓吓他"
+            },
+            {
+              "kind": "qa",
+              "text": "（果然，子奇不喜欢人挤人的场合。）",
+              "label": "5",
+              "group": 76,
+              "answer": "让子奇决定"
+            },
+            {
+              "kind": "qa",
+              "text": "所以你的推荐是什么？",
+              "label": "6",
+              "group": 76,
+              "answer": "选择演员"
+            },
+            {
+              "kind": "qa",
+              "text": "原来如此……",
+              "label": "7",
+              "group": 76,
+              "answer": "不管，我就是想看"
+            },
+            {
+              "kind": "heading",
+              "text": "高级餐厅",
+              "depth": 1,
+              "group": 77
+            },
+            {
+              "kind": "qa",
+              "text": "你会愿意吗？",
+              "label": "1",
+              "group": 77,
+              "answer": "愿意"
+            },
+            {
+              "kind": "heading",
+              "text": "月光海滩",
+              "depth": 1,
+              "group": 78
+            },
+            {
+              "kind": "qa",
+              "text": "喔，你是指……",
+              "label": "1",
+              "group": 78,
+              "answer": "海产"
+            },
+            {
+              "kind": "heading",
+              "text": "海生馆",
+              "depth": 1,
+              "group": 79
+            },
+            {
+              "kind": "qa",
+              "text": "那你就猜猜看我在想什么……",
+              "label": "1",
+              "group": 79,
+              "answer": "想到晚餐？"
             }
           ],
           "children": []

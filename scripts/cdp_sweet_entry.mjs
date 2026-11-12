@@ -517,29 +517,37 @@ async function main() {
     'ok',
   );
 
-  // 5e. 余下六页角色攻略：同一套排法，只有章节数 / 事件数不同
+  // 5e. 余下六页角色攻略：同一套排法，只有章节数 / 事件数 / 约会地点数不同
   const moreCharacters = [
-    ['ji-xiang', '纪翔', 9, 43, 4],
-    ['murong-hexi', '慕容和希', 9, 44, 5],
-    ['shen-weizhen', '沈惟真', 7, 36, 5],
-    ['shi-difen', '史蒂芬', 7, 43, 3],
-    ['wei-ya', '卫亚', 8, 40, 3],
-    ['yao-ziqi', '姚子奇', 9, 40, 3],
+    ['ji-xiang', '纪翔', 9, 43, 4, 8, 11, 11],
+    ['murong-hexi', '慕容和希', 9, 44, 5, 9, 13, 15],
+    ['shen-weizhen', '沈惟真', 7, 36, 5, 12, 22, 22],
+    ['shi-difen', '史蒂芬', 7, 43, 3, 6, 10, 10],
+    ['wei-ya', '卫亚', 8, 40, 3, 10, 20, 23],
+    ['yao-ziqi', '姚子奇', 9, 40, 3, 13, 42, 45],
   ];
-  for (const [slug, title, heads, cards, cg] of moreCharacters) {
+  for (const [slug, title, heads, cards, cg, places, qa, answers] of moreCharacters) {
     await openNode(`sweet-characters/${slug}`);
     const page = await readCharacter();
     check(`点${title}写入深链`, page.hash === `#/guide/sweet-characters/${slug}`, page.hash);
     check(
-      `${title}：${heads} 个章节 + 5 个小标题`,
-      page.heads.length === heads + 5 && page.heads[0] === '可创作作品' && page.heads[1] === '事件',
-      `heads=${page.heads.length}`,
+      `${title}：${heads} 个章节 + 5 个小标题 + 2 个约会小节 + ${places} 个地点`,
+      page.heads.length === heads + 7 + places
+        && page.heads[0] === '可创作作品'
+        && page.heads[1] === '事件'
+        && page.dateSections === 2,
+      `heads=${page.heads.length} date=${page.dateSections}`,
     );
     check(`${title}：${cards} 张事件卡`, page.cards === cards, `cards=${page.cards}`);
     check(
       `${title}：${cg} 张 CG 卡 + 友好度标记`,
       page.cgChips === cg && page.friendChips > 0,
       `cg=${page.cgChips} friend=${page.friendChips}`,
+    );
+    check(
+      `${title}：${qa} 个约会问答 / ${answers} 个答案`,
+      page.qaCount === qa && page.qaAnswers === answers,
+      `${page.qaCount} / ${page.qaAnswers}`,
     );
   }
 

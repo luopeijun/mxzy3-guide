@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -579,6 +580,9 @@ class TestSweetGuide(unittest.TestCase):
             "普通模式下结婚图取得条件",
             "甜蜜模式下结婚图取得条件",
             "甜蜜模式下告白相关事件触发条件",
+            # 约会页的对话选项追加在页尾（见 test_character_date_options）。
+            "普通约会对话选项提示",
+            "亲密约会对话选项提示",
         ]
         expected = {
             "ji-xiang": (9, 43, ["5-2", "7-6", "8-2", "9-1"]),
@@ -595,8 +599,11 @@ class TestSweetGuide(unittest.TestCase):
             self.assertNotIn("description", node, slug)
             blocks = node["blocks"]
             self.assertEqual([b["text"] for b in blocks if b["kind"] == "section"], sections, slug)
-            self.assertEqual(len([b for b in blocks if b["kind"] == "heading"]), heads, slug)
-            event_blocks = [b for b in blocks if b["kind"] == "event"]
+            # 正文只数到约会页之前：约会的地点（植物园 / 电影院…）也是 heading。
+            stop = next(i for i, b in enumerate(blocks) if b["text"] == "普通约会对话选项提示")
+            body = blocks[:stop]
+            self.assertEqual(len([b for b in body if b["kind"] == "heading"]), heads, slug)
+            event_blocks = [b for b in body if b["kind"] == "event"]
             self.assertEqual(len(event_blocks), events, slug)
             self.assertEqual([b["label"] for b in event_blocks if b.get("cg")], cgs, slug)
             # 效果标记已经从标题里摘掉（CG / 友好度上升都进了标记）。
@@ -658,6 +665,12 @@ class TestSweetGuide(unittest.TestCase):
         for slug, questions, answers, places, first_answer in (
             ("cheng-zhongxuan", 12, 13, 10, "赞成他的说法"),
             ("danisi", 20, 20, 14, "是否该改变造型？"),
+            ("ji-xiang", 11, 11, 8, "书店"),
+            ("murong-hexi", 13, 15, 9, "去林荫小径好了。"),
+            ("shen-weizhen", 22, 22, 12, "这不是我的弱点"),
+            ("shi-difen", 10, 10, 6, "啊！好可爱！"),
+            ("wei-ya", 20, 23, 10, "当然不会"),
+            ("yao-ziqi", 42, 45, 13, "不太习惯"),
         ):
             blocks = nodes[slug]["blocks"]
             start = next(i for i, b in enumerate(blocks) if b["text"] == "普通约会对话选项提示")
@@ -675,9 +688,40 @@ class TestSweetGuide(unittest.TestCase):
         # 一个问题两个都能过关的回答：源文本两行 A，存成一个换行分隔的 answer。
         multi = next(b for b in cheng if b["kind"] == "qa" and b["text"] == "今天想去什么地方？")
         self.assertEqual(multi["answer"], "唱片行\n服饰店")
-        # 地点名是「东门商店街」（原文 OCR 成「咚门」）。
-        self.assertTrue(any(b["text"] == "东门商店街" for b in cheng))
-        self.assertFalse(any("咚" in b["text"] for b in cheng))
+        # 地点名照原文写「咚门商店街」——游戏里就是咚门，不是东门的 OCR 错字（用户裁决）。
+        self.assertTrue(any(b["text"] == "咚门商店街" for b in cheng))
+        self.assertFalse(any("东门" in b["text"] for b in cheng))
+
+        # 八页的邀约门槛措辞各不相同（「开启约会条件 / 开启邀约条件」、「可连续约会上限
+        # 周数 / 可连续约会周数」、「达上限后无法邀约周数 / …无法邀约的周数」），
+        # 都按「四行一组接在基础信息后面」处理，不靠字面匹配。
+        invite = re.compile(r"^(开启约会|开启邀约|无法邀约|可连续约会|达上限后)")
+        for slug in nodes:
+            blocks = nodes[slug]["blocks"]
+            head = [b for b in blocks if b["group"] == blocks[0]["group"]]
+            if not any("普通约会对话选项提示" in str(b.get("text")) for b in blocks):
+                continue
+            self.assertEqual(len([b for b in head if invite.match(b["text"])]), 4, slug)
+
+        # 小节名后面带不带冒号各页不一致（卫亚全角、姚子奇半角），入库时统一去掉。
+        for slug in ("wei-ya", "yao-ziqi"):
+            self.assertEqual(
+                [b["text"] for b in nodes[slug]["blocks"] if b["kind"] == "section"][-2:],
+                ["普通约会对话选项提示", "亲密约会对话选项提示"],
+                slug,
+            )
+
+        # 「提示：…」是挂在某个地点下面的附加门槛（慕容和希购物中心那条），走 note 不走地点。
+        notes = [b["text"] for b in nodes["murong-hexi"]["blocks"] if b["kind"] == "note"]
+        self.assertIn("提示：杜云芊歌唱、才智、体力总和400以上，好感才会上升。", notes)
+        self.assertFalse(
+            any(b["text"].startswith("提示：") for b in nodes["murong-hexi"]["blocks"] if b["kind"] == "heading")
+        )
+
+        # 姚子奇的疑问句被 OCR 成书名号「好，先到哪去》」，已按问号出。
+        yao = nodes["yao-ziqi"]["blocks"]
+        self.assertTrue(any(b["text"] == "好，先到哪去？" for b in yao))
+        self.assertFalse(any("》" in b["text"] for b in yao if b["kind"] == "qa"))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []
