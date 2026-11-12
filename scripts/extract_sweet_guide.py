@@ -197,8 +197,8 @@ CATEGORIES: list[dict] = [
         "description": "经纪人相关的主线与经营事件：投资、骗局、摩登时代、公司改建、落日",
         "children": [
             ("main-story", "主线攻略"),
-            ("company", "公司改建攻略", "从第 2 年的请客买单到气派大楼落成，共 9 个事件"),
-            ("abroad-notices", "国外通告接拍条件", "东京、好莱坞、伦敦、米兰、纽约五个城市的接拍门槛"),
+            ("company", "公司改建攻略"),
+            ("abroad-notices", "国外通告接拍条件"),
             ("self-notices", "自制通告一览"),
             ("outfits", "服装获得方法和剧情"),
             ("festivals", "三大节日相关"),

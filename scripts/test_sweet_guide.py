@@ -140,7 +140,8 @@ class TestSweetGuide(unittest.TestCase):
 
     def test_company_page(self) -> None:
         self.assertEqual(self.company["status"], "ready")
-        self.assertEqual(self.company["description"], "从第 2 年的请客买单到气派大楼落成，共 9 个事件")
+        # 副标题只来自原文首行（与标题重复时丢弃），不写自拟概述。
+        self.assertNotIn("description", self.company)
 
         blocks = self.company["blocks"]
         # 「4.改建」里的章节号不进标题，和主线攻略的「投资」「骗局」保持同一种写法。
@@ -163,9 +164,7 @@ class TestSweetGuide(unittest.TestCase):
 
     def test_abroad_notices_table(self) -> None:
         self.assertEqual(self.abroad["status"], "ready")
-        self.assertEqual(
-            self.abroad["description"], "东京、好莱坞、伦敦、米兰、纽约五个城市的接拍门槛"
-        )
+        self.assertNotIn("description", self.abroad)
         self.assertEqual(len(self.abroad["blocks"]), 1)
 
         block = self.abroad["blocks"][0]
