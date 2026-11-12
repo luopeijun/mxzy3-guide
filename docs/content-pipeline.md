@@ -11,6 +11,17 @@
 - `sources/character-stats.txt`：18 位可签约艺人（含资料片新增）的初始属性，**以游戏内「初始属性(女)」「初始属性(男)」两张截图为准**。源文件保持截图的行列形状：一段以角色名开头，随后是属性行与紧跟其后的 `成长` 行；女、男两段合并成**一张表**（`table` 块）而不分性别——一人一行、一项一列，每个格子上面是初始值、下面一行小字是成长加成。姓名列在窄屏横向滑动时保持固定；每列最高的数值套浅粉胶囊，成长加成的最高值用金色，**并列第一不标**。
 - 文档里确实没有收录的条目（物品总览、贺总相关事件等）保留在树中并标注「待补充」，重跑脚本不会丢位置。
 
+## 甜蜜乐章（sweet 站）
+
+甜蜜乐章是与原站平级的第二个站点（`sweet.html`），共用同一套组件与设计令牌，但**数据、目录顺序、进度键全部另起一套**——改这边的正文永远不会碰到原站的 `public/data/guide.json`。
+
+- `sources/sweet/main-story.txt`：主线攻略（落日相关）。原始资料是本地 GBK 繁体 TXT，导入时转成 UTF-8 简体（`zhconv` 转码，`「」`一并落成原站的 `“”` 风格），全角数字与连接号统一成 ASCII，入了 `sources/` 之后这份就是唯一来源，**不再回读本地原文件**。
+- `python scripts/extract_sweet_guide.py` → `public/data/sweet/guide.json`：目录结构（类目 / 每节标题 / 顺序）写在脚本的 `CATEGORIES` 里，正文按节名读 `sources/sweet/<slug>.txt`；没有对应 txt 的节点保留 `status: "missing"`，页面给「这一页还没整理」的占位提示。新增一节 = 加一条 `CATEGORIES` 条目 + 放一份 txt + 在 `PARSERS` 里登记解析函数。
+- 节内解析规则：首行是正文页副标题（渲染在标题下方）；不带编号的行是章节（`section`）；`数字-数字．标题` 是事件（编号进 pill、标题进卡头，句尾的 `．．` 统一成 `…`）；缩进行按前缀决定类型——`时间：` / `概要：` 是普通段落，`提示：` 与 `（…` 是金色备注。文末不带编号但含冒号的行视为作者注解，连同其缩进续行收进「结局分歧」一节。
+- 目录按用户裁决：第一类叫「**经纪人事件簿**」（10 节，**不含「角色介绍」**），角色攻略 8 位（感情线与约会选项合并成同一个角色页），支线攻略 6 条，合计 24 节。
+- `scripts/test_sweet_guide.py`：锁住「提交的 guide.json 与脚本重算完全一致」+ 4 章 23 个事件且编号连续 + 每个事件都带时间与概要 + 三类目录结构，防手改 JSON 导致的静默回退。
+- 界面回归 `scripts/cdp_sweet_entry.mjs`：站点身份（标题 / `data-game="sweet"` / 粉色令牌）、目录 10-8-6、主线攻略 23 张事件卡 + 5 条本页小节、跨站胶囊，以及原站五个页签未受影响。
+
 ## 通告数据
 
 通告库是**另一条独立管线**，和攻略正文互不影响：
@@ -117,9 +128,10 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项），共 59 项 |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章（9 项），共 68 项 |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
+| `python scripts/extract_sweet_guide.py` | 重生成甜蜜乐章的 `public/data/sweet/guide.json` |
 
 **解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
 
@@ -155,21 +167,27 @@ public/data/guide.json       生成的结构化攻略数据（运行时加载）
 public/data/notices.json     生成的通告数据（进入通告 tab 才加载）
 public/data/specials.json    生成的六大通告条件表（进入六大通告 tab 才加载）
 public/data/cg.json          生成的 CG 图鉴数据（含 CG → 攻略落点）
+public/data/sweet/guide.json 甜蜜乐章的结构化攻略数据（另一条管线）
 public/images/cg/*.webp      压缩后的 CG 图片（进仓库）
 sources/*.txt                补充攻略的纯文本来源（UTF-8，可重跑）
+sources/sweet/*.txt          甜蜜乐章的正文来源（UTF-8 简体，按节名对应节点）
 sources/notices/*.xls|xlsx   通告原始表格（重生成数据的输入）
 sources/special-notices.tsv  六大通告条件表（手写，BOM + LF）
 sources/cg-links.tsv         事件 → CG 的一对一映射（手写）
 sources/cg-node-links.tsv    CG → 事件 / 页面的多对一映射（手写）
 scripts/extract_guide.py     docx + sources → guide.json（零第三方依赖）
+scripts/extract_sweet_guide.py  甜蜜乐章目录 + 正文 → sweet/guide.json
 scripts/extract_notices.py   表格 → notices.json（需 openpyxl / xlrd）
 scripts/extract_specials.py  六大通告条件表 → specials.json
 scripts/extract_cg.py        CG 素材 → cg.json + webp（需 Pillow）
 scripts/test_extract.py      攻略解析回归测试
+scripts/test_sweet_guide.py  甜蜜乐章数据回归测试
 scripts/test_notices.py      通告数据回归测试
 scripts/test_cg_links.py     事件 → CG 映射回归测试
 scripts/test_cg_node_links.py  CG → 事件 / 页面映射回归测试
 scripts/cdp_*.mjs            浏览器端到端验证脚本
+src/sweet/                   甜蜜乐章站点入口（sweet.html 挂载，只做攻略浏览）
+src/ui/                      两站共用的顶栏与页签
 src/components/              攻略阅读页组件
 src/components/notices/      通告库（筛选、详情、能力对照）
 src/components/tracker/      事件追踪器

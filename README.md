@@ -16,6 +16,7 @@
 - 组件、令牌、页面骨架只有一份（`src/ui` + `src/components` + `src/styles/global.css`），甜蜜乐章只额外加载 `src/styles/theme-sweet.css` 覆盖颜色与阴影，字号/间距/断点/卡片版式完全共用。
 - 两站互不干扰：数据文件、目录拖拽顺序（`guide.tree-order.v1` / `sweet.tree-order.v1`）各自独立；顶栏右上角的胶囊可以整页跳到另一站。
 - 构建时两个 HTML 一起产出（`vite.config.ts` 的 `rollupOptions.input`）。
+- 甜蜜乐章走自己的内容管线：`sources/sweet/main-story.txt` → `scripts/extract_sweet_guide.py` → `public/data/sweet/guide.json`。目录为 经纪人事件簿 10 节 / 角色攻略 8 位 / 支线攻略 6 条，目前「主线攻略」（落日相关，4 章 23 个事件）已导入，其余节点先占位。
 
 ## 界面预览
 

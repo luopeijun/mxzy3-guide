@@ -2,37 +2,460 @@
   "meta": {
     "title": "明星志愿3 甜蜜乐章 · 攻略助手",
     "source": "sources/sweet",
-    "generatedBy": "手工骨架（等待正文导入）",
+    "generatedBy": "scripts/extract_sweet_guide.py",
     "stats": {
       "categories": 3,
-      "items": 25,
-      "blocks": 0,
-      "readyItems": 0,
-      "missingItems": 25,
-      "sourceParagraphs": 0
+      "items": 24,
+      "blocks": 80,
+      "readyItems": 1,
+      "missingItems": 23,
+      "sourceParagraphs": 80
     }
   },
   "categories": [
     {
       "id": "sweet-guide",
-      "title": "攻略",
-      "description": "本作通用攻略：主线、公司、通告、服装、节日与结局",
+      "title": "经纪人事件簿",
+      "description": "经纪人相关的主线与经营事件：投资、骗局、摩登时代、落日",
       "status": "ready",
       "blocks": [],
       "children": [
         {
-          "id": "sweet-guide/intro",
-          "title": "角色介绍",
-          "status": "missing",
-          "blocks": [],
-          "children": []
-        },
-        {
           "id": "sweet-guide/main-story",
           "title": "主线攻略",
-          "status": "missing",
-          "blocks": [],
-          "children": []
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "section",
+              "text": "投资",
+              "group": 1,
+              "depth": 0
+            },
+            {
+              "kind": "event",
+              "text": "可别乱花我的钱！",
+              "group": 2,
+              "label": "1-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第一年五月",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜司臣前来拜访，告诫杜云芊用钱千万要小心。",
+              "group": 2
+            },
+            {
+              "kind": "event",
+              "text": "你都怎么理财的？",
+              "group": 3,
+              "label": "1-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第一年五月～六月",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：跟旗下艺人沟通理财方面的事，可以了解艺人对钱的看法。",
+              "group": 3
+            },
+            {
+              "kind": "event",
+              "text": "关于华扬这间公司…",
+              "group": 4,
+              "label": "1-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：1-2发生后～第一年七月",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊到酒馆或公园，有机会遇到八卦记者跟他探听消息。",
+              "group": 4
+            },
+            {
+              "kind": "event",
+              "text": "金先生有何指教？",
+              "group": 5,
+              "label": "1-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第一年八月",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：工作结束后，遇见金皓薰与华扬的特别助理在讨论股价飙涨的事情。",
+              "group": 5
+            },
+            {
+              "kind": "event",
+              "text": "好，我就认了！",
+              "group": 6,
+              "label": "1-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第一年九月～十月",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：工作结束后，华扬公司的特别助理主动找杜云芊认股，要花一百万！",
+              "group": 6
+            },
+            {
+              "kind": "section",
+              "text": "骗局",
+              "group": 7,
+              "depth": 0
+            },
+            {
+              "kind": "event",
+              "text": "我担心是场骗局…",
+              "group": 8,
+              "label": "2-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第一年十一月～十二月",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰主动拜访，透露华扬这家公司背景很让人怀疑。",
+              "group": 8
+            },
+            {
+              "kind": "event",
+              "text": "赌了！加码再买五百万！",
+              "group": 9,
+              "label": "2-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年一月",
+              "group": 9
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：在事件1-5中选择认股，华扬特助就会前来追讨欠款。",
+              "group": 9
+            },
+            {
+              "kind": "note",
+              "text": "提示：若资金不足四百万，公司倒闭（身上一定要有900万以上，才能再加码500万！！）",
+              "group": 9
+            },
+            {
+              "kind": "event",
+              "text": "没想到预感竟然成真",
+              "group": 10,
+              "label": "2-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年二月",
+              "group": 10
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰主动拜访，表示传出财务危机的公司已经被收购了。",
+              "group": 10
+            },
+            {
+              "kind": "event",
+              "text": "你算幸运的了…",
+              "group": 11,
+              "label": "2-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年四月",
+              "group": 11
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件2-2中还完钱后选择加码，工作结束后遇到八卦记者，被冷嘲热讽了一番。",
+              "group": 11
+            },
+            {
+              "kind": "event",
+              "text": "反正不是第一次借你钱…",
+              "group": 12,
+              "label": "2-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年五月",
+              "group": 12
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：工作结束后，看到贺总纠缠金皓薰的场面，两人关系暧昧！",
+              "group": 12
+            },
+            {
+              "kind": "section",
+              "text": "摩登时代",
+              "group": 13,
+              "depth": 0
+            },
+            {
+              "kind": "event",
+              "text": "摩登时代成立！",
+              "group": 14,
+              "label": "3-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年六月",
+              "group": 14
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：此则新闻自动发生，知名艺人纷纷跳槽。",
+              "group": 14
+            },
+            {
+              "kind": "event",
+              "text": "死没良心的摩登时代…",
+              "group": 15,
+              "label": "3-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年七月",
+              "group": 15
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件2-5之后，在电视公司可以再次看到贺总纠缠金皓（就像我最之前说的，一定要主动去电视公司！）。",
+              "group": 15
+            },
+            {
+              "kind": "event",
+              "text": "演艺圈已经够黑暗了…",
+              "group": 16,
+              "label": "3-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年六月～八月",
+              "group": 16
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：前往电视、电影、广告、唱片公司，可以听到艺人们在讨论华扬倒闭与摩登时代的八卦。",
+              "group": 16
+            },
+            {
+              "kind": "event",
+              "text": "这种鬼话你也信！？",
+              "group": 17,
+              "label": "3-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：3-2发生后～第二年九月",
+              "group": 17
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰带着贺总前来拜访，得知贺总所属的巨子娱国际被诓骗的经过。",
+              "group": 17
+            },
+            {
+              "kind": "note",
+              "text": "提示：公司知名度八百以上，金钱一千万以上，杜云芊得过一个奖以上才会触发。",
+              "group": 17
+            },
+            {
+              "kind": "event",
+              "text": "考虑得怎么样了？",
+              "group": 18,
+              "label": "3-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年十月",
+              "group": 18
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：到旗下艺人的工作地点，会发现有人想挖角旗下艺人（这边不触发也可。）",
+              "group": 18
+            },
+            {
+              "kind": "event",
+              "text": "华扬倒闭的秘密…",
+              "group": 19,
+              "label": "3-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第二年十月～十二月",
+              "group": 19
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：主动找八卦记者打听消息，并得到关键证据。",
+              "group": 19
+            },
+            {
+              "kind": "note",
+              "text": "提示：金钱一百万以上才能看到完整事件（这边是你要在之前加码五百万后才有的！）。",
+              "group": 19
+            },
+            {
+              "kind": "section",
+              "text": "落日",
+              "group": 20,
+              "depth": 0
+            },
+            {
+              "kind": "event",
+              "text": "通告又被抢了…",
+              "group": 21,
+              "label": "4-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第三年一月～二月",
+              "group": 21
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：金皓薰前来拜访，对摩登时代抢通告一事表达不满。",
+              "group": 21
+            },
+            {
+              "kind": "note",
+              "text": "提示：事件3-6中选择花钱买证据才会触发。",
+              "group": 21
+            },
+            {
+              "kind": "event",
+              "text": "一个愿打一个愿挨",
+              "group": 22,
+              "label": "4-2"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第三年一月～三月",
+              "group": 22
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：直接到摩登时代递交证据，对方会正式提出合伙邀约，代价是一千万。",
+              "group": 22
+            },
+            {
+              "kind": "event",
+              "text": "请制作国际级的电影！",
+              "group": 23,
+              "label": "4-3"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第三年四月",
+              "group": 23
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：摩登时代负责人来访，谈双方合作事宜",
+              "group": 23
+            },
+            {
+              "kind": "event",
+              "text": "合作案备受瞩目！",
+              "group": 24,
+              "label": "4-4"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第三年五月",
+              "group": 24
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：事件4-2中选择合作，就会看到此则新闻。",
+              "group": 24
+            },
+            {
+              "kind": "event",
+              "text": "“落日”是否已经开拍？",
+              "group": 25,
+              "label": "4-5"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-3发生后～第三年六月",
+              "group": 25
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：杜云芊完成创作“落日”并且开拍后，摩登时代负责人会前来拜访。",
+              "group": 25
+            },
+            {
+              "kind": "note",
+              "text": "（个人注解：若到七月尚未开拍，合作便会消失，即使后来拍出落日也是一样）",
+              "group": 25
+            },
+            {
+              "kind": "event",
+              "text": "“落日”气势如宏！",
+              "group": 26,
+              "label": "4-6"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：4-5发生后～第三年十月",
+              "group": 26
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：“落日”上映后，就会看到此则新闻。",
+              "group": 26
+            },
+            {
+              "kind": "event",
+              "text": "哥哥会以我为荣吧！",
+              "group": 27,
+              "label": "4-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：第三年十二月",
+              "group": 27
+            },
+            {
+              "kind": "paragraph",
+              "text": "概要：摩登时代负责人前来拜访，祝贺“落日”的成功，并且预祝双方海外事业版图顺利扩张。",
+              "group": 27
+            },
+            {
+              "kind": "section",
+              "text": "结局分歧",
+              "depth": 0,
+              "group": 28
+            },
+            {
+              "kind": "note",
+              "text": "个人注解：拿证据若给贺总，与巨子揭发摩登，结局为“迈向国际的经纪公司”\n但若与摩登合作，拍完落日并上映，则会为“顶尖国际经纪公司”",
+              "group": 29
+            }
+          ],
+          "children": [],
+          "description": "主线任务（落日相关）"
         },
         {
           "id": "sweet-guide/company",
@@ -109,66 +532,66 @@
         {
           "id": "sweet-characters/cheng-zhongxuan",
           "title": "城仲瑄",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         },
         {
           "id": "sweet-characters/danisi",
           "title": "丹尼斯",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         },
         {
           "id": "sweet-characters/ji-xiang",
           "title": "纪翔",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         },
         {
           "id": "sweet-characters/murong-hexi",
           "title": "慕容和希",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         },
         {
           "id": "sweet-characters/shen-weizhen",
           "title": "沈惟真",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         },
         {
           "id": "sweet-characters/shi-difen",
           "title": "史蒂芬",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         },
         {
           "id": "sweet-characters/wei-ya",
           "title": "卫亚",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         },
         {
           "id": "sweet-characters/yao-ziqi",
           "title": "姚子奇",
-          "description": "感情线与约会选项",
           "status": "missing",
           "blocks": [],
-          "children": []
+          "children": [],
+          "description": "感情线与约会选项"
         }
       ]
     },
