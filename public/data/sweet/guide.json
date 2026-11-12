@@ -3445,32 +3445,38 @@
             {
               "kind": "paragraph",
               "text": "歌唱：600↑",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "演技：600↑",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "仪态：500↑",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "自信：700↑",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "名气：700↑",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "人气：5↑",
-              "group": 13
+              "group": 13,
+              "bullet": true
             },
             {
               "kind": "heading",
@@ -3523,22 +3529,30 @@
             {
               "kind": "paragraph",
               "text": "金星奖（2月29日）：最佳模特儿奖",
-              "group": 16
+              "group": 16,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "金钟奖（5月30日）：最佳演员奖、最佳主持人奖",
-              "group": 16
+              "group": 16,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "金曲奖（8月30日）：最佳演唱人奖",
-              "group": 16
+              "group": 16,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "金像奖（11月30日）：最佳男主角奖、最佳女主角奖",
-              "group": 16
+              "group": 16,
+              "bullet": true,
+              "depth": 1
             }
           ],
           "children": []

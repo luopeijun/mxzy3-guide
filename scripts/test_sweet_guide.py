@@ -353,6 +353,27 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("知名度过1500而又没有创作10部以上上市", texts)
         self.assertIn("金像奖（11月30日）：最佳男主角奖、最佳女主角奖", texts)
 
+        # 六项数值与四个奖项都是并列名单 → 圆点；奖项缩进一级挂在引导句下面。
+        bulleted = [b for b in blocks if b.get("bullet")]
+        self.assertEqual(
+            [b["text"] for b in bulleted],
+            [
+                "歌唱：600↑",
+                "演技：600↑",
+                "仪态：500↑",
+                "自信：700↑",
+                "名气：700↑",
+                "人气：5↑",
+                "金星奖（2月29日）：最佳模特儿奖",
+                "金钟奖（5月30日）：最佳演员奖、最佳主持人奖",
+                "金曲奖（8月30日）：最佳演唱人奖",
+                "金像奖（11月30日）：最佳男主角奖、最佳女主角奖",
+            ],
+        )
+        self.assertEqual([b.get("depth") for b in bulleted], [None] * 6 + [1] * 4)
+        # 带数字序号的通告 / 其他条件不加圆点（序号本身已是标记）。
+        self.assertFalse(any(b.get("bullet") for b in blocks if "电影6" in b["text"] or "演唱会2场" in b["text"]))
+
     def test_endings_table(self) -> None:
         node = _node(self.data, "endings")
         self.assertEqual(len(node["blocks"]), 1)

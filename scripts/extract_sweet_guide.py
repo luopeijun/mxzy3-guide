@@ -463,13 +463,25 @@ def parse_festivals(path: Path) -> tuple[list[dict], str]:
 # 「天王巨星：女主角的称号为超级天后」——结局名 + 达成条件，一个结局一张卡。
 CAREER_ENDING_RE = re.compile(r"^([^：:]{2,12})[：:](.+)$")
 
+# 「歌唱：600↑」——巨星的六项数值门槛，是并列名单，渲染成圆点条目。
+GIANT_STAT_RE = re.compile(r"^(歌唱|演技|仪态|自信|名气|人气)[：:]")
+
+# 「金星奖（2月29日）：最佳模特儿奖」——四个奖项，缩进挂在「☆必须为以下奖项：」下面。
+GIANT_AWARD_RE = re.compile(r"^金[星钟曲像]奖[（(]")
+
 
 def parse_career_endings(path: Path) -> tuple[list[dict], str]:
-    """女主事业结局达成条件 → 11 个结局各一张卡，后面接「巨星条件」四项细则。"""
+    """女主事业结局达成条件 → 11 个结局各一张卡，后面接「巨星条件」四项细则。
+
+    「巨星条件」里的六项数值与四个奖项都是并列名单，加圆点；带数字序号的
+    通告 / 其他条件不加（序号本身已经是标记），奖项再缩进一级。
+    """
     lines = _read_lines(path)
     blocks: list[dict] = []
     group = 0
     in_giant = False
+    giant_block = ""  # 当前处在「巨星条件」的哪一项细则下
+    in_awards = False  # 是否已越过「☆必须为以下奖项：」这一行引导句
 
     def push(kind: str, text: str, **extra) -> None:
         blocks.append({"kind": kind, "text": text, "group": group, **extra})
@@ -484,8 +496,23 @@ def parse_career_endings(path: Path) -> tuple[list[dict], str]:
 
         if text.startswith("●"):
             group += 1
-            push("heading", text.lstrip("●").strip(), depth=1)
+            giant_block = text.lstrip("●").strip()
+            in_awards = False
+            push("heading", giant_block, depth=1)
             continue
+
+        if in_giant and GIANT_STAT_RE.match(text):
+            push("paragraph", text, bullet=True)
+            continue
+
+        if in_giant and giant_block == "奖项条件":
+            if text.startswith("☆"):
+                push("paragraph", text)
+                in_awards = True
+                continue
+            if in_awards and GIANT_AWARD_RE.match(text):
+                push("paragraph", text, bullet=True, depth=1)
+                continue
 
         ending = CAREER_ENDING_RE.match(text) if not in_giant else None
         if ending:
