@@ -57,6 +57,9 @@ export interface ContentBlock {
   depth?: number;
   /** Marks a `paragraph` as a list item, rendered with a leading round dot. */
   bullet?: boolean;
+  /** Draws the block (and the rest of its group) inside a white card. Used by the
+   *  甜蜜乐章 role lists, where each artist is a box of conditions. */
+  card?: boolean;
   /** Inline site links inside a `note` (《标题》 pointing at another node). */
   links?: { text: string; target: string }[];
   /** Marks a `bullet` as special (source `*` prefix), rendered with a gold diamond. */

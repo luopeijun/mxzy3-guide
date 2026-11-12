@@ -52,12 +52,13 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
 
     ▲主角生日▲               ← 分章（section），源文本没有整页标题
     第一年生日                ← 小标题（heading）
-    1.如果有交往对象，…        ← 列表项与箭头流程都是普通段落，编号原样保留
+    沈惟真：沈惟真的蓝色缎带    ← 名单行用圆点；带序号的行不用（序号本身就是标记）
+    第1年-不限次数            ← 年份门槛缩进一级，挂在「约会次数要求：」下面
 
 **结局页**（女主事业结局达成条件）
 
     女主事业结局达成条件      ← 首行，与页面标题同名 → 不当副标题
-    天王巨星：女主角的称号…    ← 一个结局一张卡：结局名进卡头，条件单列一行
+    天王巨星：女主角的称号…    ← 每个结局都是一个大标题（section），条件跟在下面
     巨星条件                  ← 分章（section）
     ●数值条件                 ← 小标题（heading）
     歌唱：600↑                ← 门槛数值都是普通段落
@@ -71,11 +72,13 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
 
 **清单页（按角色）**（甜蜜模式的影响 / 角色喜爱物品一览）
 
-    启动方法 / 影响           ← 分章（section）；甜蜜模式这页没有页面总标题
+    影响                      ← 分章（section）；甜蜜模式这页没有页面总标题
+    a.哥哥送钱剧情…           ← 「影响」的条目，次级标题（heading depth 1）
     #以下列出使用甜蜜模式时…   ← 作者注释（note）
-    沈惟真： 收到喜欢的礼物…    ← 角色进卡头，同一角色的续行留在卡里
-    4-1.约会2次以上…          ← 告白条件用攻略本的事件编号当 pill
-    玫瑰之星、爱神巧克力、…    ← 喜爱物品：一个角色一行（用顿号分隔判断）
+    沈惟真： 收到喜欢的礼物…    ← 艺人包在白底卡片里（heading depth 2 + card），
+                                续行是卡内的细则
+    4-1.约会2次以上…          ← 告白条件：编号单独进 tag，正文跟在后面
+    玫瑰之星、爱神巧克力、…    ← 喜爱物品：一个角色一个大标题（section）
 """
 
 from __future__ import annotations
@@ -394,10 +397,19 @@ def parse_outfits(path: Path) -> tuple[list[dict], str]:
 
 
 FESTIVAL_SECTION_RE = re.compile(r"^▲(.+)▲$")
+# 「沈惟真：沈惟真的蓝色缎带」——名单行用圆点；带序号的行不用，序号本身就是标记。
+FESTIVAL_ITEM_RE = re.compile(r"^[^\s：:\d]{2,10}[：:]")
+# 「第1年-不限次数」——年份门槛挂在「约会次数要求：」下面，缩进一级。
+FESTIVAL_YEAR_RE = re.compile(r"^第\d+年[-－]")
 
 
 def parse_festivals(path: Path) -> tuple[list[dict], str]:
-    """三大节日相关 → ▲…▲ 分章，其余是短标题与说明段落（源文本没有页面总标题）。"""
+    """三大节日相关 → ▲…▲ 分章，其余是短标题与说明段落（源文本没有页面总标题）。
+
+    这一页大半是名单：生日礼物 8 个人、情人节 CG 8 个人、两组邀约条件里的编号条目。
+    「谁：什么」这种名单行渲染成圆点条目；带序号的行不加圆点（序号已经是标记），
+    年份门槛再缩进一级挂在「约会次数要求：」下面。
+    """
     lines = _read_lines(path)
     blocks: list[dict] = []
     group = 0
@@ -415,6 +427,18 @@ def parse_festivals(path: Path) -> tuple[list[dict], str]:
         if _is_heading(text):
             group += 1
             push("heading", text, depth=1)
+            continue
+
+        if text.startswith("注："):
+            push("note", text)
+            continue
+
+        if FESTIVAL_YEAR_RE.match(text):
+            push("paragraph", text, bullet=True, depth=1)
+            continue
+
+        if FESTIVAL_ITEM_RE.match(text):
+            push("paragraph", text, bullet=True)
             continue
 
         push("paragraph", text)
@@ -452,7 +476,8 @@ def parse_career_endings(path: Path) -> tuple[list[dict], str]:
         ending = CAREER_ENDING_RE.match(text) if not in_giant else None
         if ending:
             group += 1
-            push("event", ending.group(1).strip())
+            # 每个结局是一个大标题（天王巨星 … 公司倒闭），条件跟在下面一行。
+            push("section", ending.group(1).strip())
             push("paragraph", ending.group(2).strip())
             continue
 
@@ -505,72 +530,86 @@ def parse_endings(path: Path) -> tuple[list[dict], str]:
 SWEET_MODE_SECTIONS = {"启动方法", "使用时机", "影响"}
 # 「沈惟真： 收到喜欢的礼物5个以上。」——角色名 + 该角色的条件。
 SWEET_MODE_ROLE_RE = re.compile(r"^([^\s：:]{2,6})[：:]\s*(.*)$")
-# 「4-1.约会2次以上…」——告白条件按攻略本的事件编号列出。
+# 「4-1.约会2次以上…」——告白条件按攻略本的事件编号列出，编号进 tag。
 SWEET_MODE_EVENT_RE = re.compile(r"^(\d+-\d+)[.](.+)$")
-# 「a.哥哥送钱剧情…」——「影响」的条目，见到就说明上面的角色清单结束了。
-SWEET_MODE_IMPACT_RE = re.compile(r"^[a-f][.．]")
+# 「a.哥哥送钱剧情…」——「影响」与「使用时机」的条目编号。
+SWEET_MODE_LETTER_RE = re.compile(r"^([a-f])[.．]\s*(.+)$")
 
 
 def parse_sweet_mode(path: Path) -> tuple[list[dict], str]:
     """甜蜜模式的影响 → 三段正文 + 两张「结婚 / 告白条件」清单。
 
-    那两个 # 开头的注释后面跟的是按角色列的条件表：结婚那张是一角色一卡，
-    告白那张先给角色小标题、再给带编号的事件卡。`a.`~`f.` 开头的行是「影响」
-    的条目，出现即说明该清单结束了。
+    层级是这一页的重点：`a.`~`f.` 是「影响」的六个条目，属于次级标题一级；
+    挂在 `c.` / `d.` 下面的结婚、告白清单是它们的细则，要退到更淡更小的一级，
+    不能反过来比 `a.`~`f.` 更抢眼（之前做成白底卡片就犯了这个错）。
     """
     lines = _read_lines(path)
     blocks: list[dict] = []
     group = 0
-    section = ""  # "" / "marriage" / "confession"
+    part = ""  # 当前大标题：启动方法 / 使用时机 / 影响
+    zone = ""  # "" / "marriage" / "confession"：当前是否在某张清单里
 
     def push(kind: str, text: str, **extra) -> None:
         blocks.append({"kind": kind, "text": text, "group": group, **extra})
 
     for text in lines:
         if text in SWEET_MODE_SECTIONS:
-            section = ""
+            part, zone = text, ""
             group += 1
             push("section", text)
             continue
 
         if text.startswith("#"):
-            # 注释行与前后的角色卡不共用 group，否则会渲染进上一张卡里。
-            section = "confession" if "告白" in text else "marriage"
+            # 注释行与前后的角色清单不共用 group，否则会渲染进上一条里。
+            zone = "confession" if "告白" in text else "marriage"
             group += 1
             push("note", text.lstrip("#").strip())
             continue
 
-        if SWEET_MODE_IMPACT_RE.match(text):
-            section = ""
-            group += 1
-            push("paragraph", text)
+        letter = SWEET_MODE_LETTER_RE.match(text)
+        if letter:
+            # 见到 a.~f. 就说明上面的清单结束了。
+            zone = ""
+            if part == "使用时机":
+                push("paragraph", text, bullet=True)
+            else:
+                group += 1
+                push("heading", text, depth=1)
             continue
 
-        role = SWEET_MODE_ROLE_RE.match(text)
-        if section == "marriage" and role and role.group(2):
-            group += 1
-            push("event", role.group(1).strip())
-            push("paragraph", role.group(2).strip())
+        if zone == "marriage":
+            role = SWEET_MODE_ROLE_RE.match(text)
+            if role:
+                group += 1
+                push("heading", role.group(1).strip(), depth=2, card=True)
+                if role.group(2).strip():
+                    push("paragraph", role.group(2).strip(), depth=2)
+                continue
+            push("paragraph", text, depth=2)
             continue
 
-        if section == "confession":
+        if zone == "confession":
+            role = SWEET_MODE_ROLE_RE.match(text)
+            if role and not role.group(2).strip():
+                group += 1
+                push("heading", role.group(1).strip(), depth=2, card=True)
+                continue
+            # 「4-1.约会2次以上…」：编号进 tag，正文留在后面。
             event = SWEET_MODE_EVENT_RE.match(text)
             if event:
-                group += 1
-                push("event", event.group(2).strip(), label=event.group(1))
+                push("paragraph", event.group(2).strip(), label=event.group(1), depth=2)
                 continue
-            if role and not role.group(2):
-                group += 1
-                push("heading", role.group(1).strip(), depth=1)
-                continue
+            push("paragraph", text, depth=2)
+            continue
 
-        push("paragraph", text)
+        # 「影响」下 e./f. 年份门槛这类细则。
+        push("paragraph", text, depth=2 if part == "影响" else 0)
 
     return blocks, ""
 
 
 def parse_favorite_gifts(path: Path) -> tuple[list[dict], str]:
-    """角色喜爱物品一览 → 一个角色一张卡，卡里是该角色喜欢的物品（顿号分隔）。"""
+    """角色喜爱物品一览 → 一个角色一个大标题，下面一行是顿号分隔的物品。"""
     lines = _read_lines(path)
     blocks: list[dict] = []
     group = 0
@@ -584,7 +623,7 @@ def parse_favorite_gifts(path: Path) -> tuple[list[dict], str]:
             push("paragraph", text)
         else:
             group += 1
-            push("event", text)
+            push("section", text)
 
     return blocks, lines[0]
 

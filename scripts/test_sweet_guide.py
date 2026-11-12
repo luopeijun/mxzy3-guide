@@ -303,18 +303,45 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("城仲瑄：杜云芊穿着春夏洋装", texts)
         self.assertIn("2.该艺人2月14日当天没有特殊行程和约会", texts)
 
+        # 名单行（谁：什么）用圆点；带序号的行不用，序号本身就是标记。
+        dots = [b["text"] for b in blocks if b["kind"] == "paragraph" and b.get("bullet")]
+        named = [t for t in dots if "：" in t and not t[0].isdigit() and not t.startswith("第")]
+        self.assertEqual(len(named), 16)  # 生日礼物 8 + 情人节 CG 8
+        self.assertFalse(any(t[0].isdigit() for t in dots), f"带序号的行不该有圆点：{dots}")
+        # 年份门槛缩进一级挂在「约会次数要求：」/「好感度要求：」下面。
+        years = [b for b in blocks if b["kind"] == "paragraph" and str(b["text"]).startswith("第")]
+        self.assertEqual(len(years), 6)
+        self.assertTrue(all(y.get("bullet") and y.get("depth") == 1 for y in years))
+        numbered = [t for t in texts if t[0].isdigit()]
+        self.assertEqual(len(numbered), 14)  # 生日 4 + 情人节 5 + 圣诞节 5
+        self.assertFalse(any(t.startswith(("第", "沈惟真：")) for t in numbered))
+        # 作者注是便签，不是圆点条目。
+        self.assertEqual(
+            [b["kind"] for b in blocks if b["text"].startswith("注：")], ["note"]
+        )
+        # 普通说明句不该带圆点（第一年生日那句）。
+        solo = next(b for b in blocks if b["text"].startswith("只有杜司臣"))
+        self.assertFalse(solo.get("bullet"))
+
     def test_career_endings(self) -> None:
         node = _node(self.data, "career-endings")
         blocks = node["blocks"]
         self.assertNotIn("description", node)  # 首行与页面标题同名
 
-        # 前 11 条事业结局：结局名进卡头，条件单列一行。
-        cards = [b["text"] for b in blocks if b["kind"] == "event"]
-        self.assertEqual(len(cards), 11)
-        self.assertEqual((cards[0], cards[-1]), ("天王巨星", "公司倒闭"))
+        # 前 11 条事业结局：每条都是一个大标题，条件跟在下面一行。
+        sections = [b["text"] for b in blocks if b["kind"] == "section"]
+        self.assertEqual(len(sections), 12)  # 11 个结局 + 巨星条件
+        self.assertEqual((sections[0], sections[10], sections[-1]), ("天王巨星", "公司倒闭", "巨星条件"))
+        by_group: dict[int, list[dict]] = {}
+        for block in blocks:
+            by_group.setdefault(block["group"], []).append(block)
+        giant = next(b for b in blocks if b["text"] == "天王巨星")
+        self.assertEqual(
+            [b["text"] for b in by_group[giant["group"]] if b["kind"] == "paragraph"],
+            ["女主角的称号为超级天后"],
+        )
 
         # 「巨星条件」之后是四个块，各自一个小标题。
-        self.assertEqual([b["text"] for b in blocks if b["kind"] == "section"], ["巨星条件"])
         self.assertEqual(
             [b["text"] for b in blocks if b["kind"] == "heading"],
             ["数值条件", "通告条件（1或2）", "其他条件（1和2）", "奖项条件"],
@@ -358,49 +385,73 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(len(notes), 2)
         self.assertTrue(notes[0].startswith("以下列出使用甜蜜模式时结婚事件"), notes[0])
 
-        # 结婚清单：一个角色一张卡，续行留在同一张卡里。
+        # 「影响」的 a.~f. 是这一页的一级条目：必须是次级标题，不能是正文。
         self.assertEqual(
-            [b["text"] for b in blocks if b["kind"] == "event" and "label" not in b],
-            ["沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄"],
+            [(b["text"][:2], b.get("depth")) for b in blocks if b["kind"] == "heading" and b.get("depth") == 1],
+            [("a.", 1), ("b.", 1), ("c.", 1), ("d.", 1), ("e.", 1), ("f.", 1)],
         )
+        # 「使用时机」那两条 a./b. 没有下级内容，用圆点条目。
+        self.assertEqual(
+            [b["text"][:2] for b in blocks if b["kind"] == "paragraph" and b.get("bullet")],
+            ["a.", "b."],
+        )
+
+        # 结婚清单：角色退到三级标题（depth 2）并包在白底卡片里，条件比角色更内一层。
+        cards = [b for b in blocks if b["kind"] == "heading" and b.get("card")]
+        self.assertEqual(
+            [b["text"] for b in cards],
+            [
+                "沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄",
+                "沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄",
+            ],
+        )
+        self.assertTrue(all(b["depth"] == 2 for b in cards))
+
         by_group: dict[int, list[dict]] = {}
         for block in blocks:
             by_group.setdefault(block["group"], []).append(block)
-        first = next(b for b in blocks if b["kind"] == "event" and b["text"] == "沈惟真")
+        first = next(b for b in blocks if b["text"] == "沈惟真")
         self.assertEqual(
             [b["text"] for b in by_group[first["group"]] if b["kind"] == "paragraph"],
             ["收到喜欢的礼物5个以上。", "邀约25次以上。", "沈惟真跟记者坦承与女主角交往"],
         )
-
-        # 告白清单：角色当小标题，攻略本的事件编号进 pill。
-        self.assertEqual(
-            [b["text"] for b in blocks if b["kind"] == "heading"][:2], ["沈惟真", "丹尼斯"]
+        self.assertTrue(
+            all(b.get("depth") == 2 for b in by_group[first["group"]] if b["kind"] == "paragraph")
         )
-        labels = [b["label"] for b in blocks if b["kind"] == "event" and "label" in b]
-        self.assertEqual(len(labels), 22)
-        self.assertEqual(labels[:3], ["4-1", "4-3", "4-5"])
-        self.assertIn("7-10", labels)
 
-        # d./e./f. 是「影响」的条目，不能并进上一张角色卡里。
-        for prefix in ("d.告白相关事件门槛降低", "e.情人节邀约门槛降低。"):
-            group = by_group[next(b for b in blocks if b["text"] == prefix)["group"]]
-            self.assertEqual(group[0]["text"], prefix)
-            self.assertNotIn("event", [b["kind"] for b in group])
+        # 告白清单：编号单独进 tag，正文里不再带「4-1.」。
+        numbered = [
+            b for b in blocks if b["kind"] == "paragraph" and b.get("label")
+        ]
+        self.assertEqual(len(numbered), 22)
+        self.assertEqual([b["label"] for b in numbered][:3], ["4-1", "4-3", "4-5"])
+        self.assertTrue(numbered[0]["text"].startswith("约会2次以上"))
+        self.assertTrue(any(b["label"] == "7-10" for b in numbered))
+        self.assertTrue(all(b["depth"] == 2 for b in numbered))
+        self.assertFalse(any(b["text"][:2].startswith("4-") for b in numbered))
+
+        # e./f. 的年份门槛挂在各自条目下面。
+        e_group = by_group[next(b for b in blocks if b["text"].startswith("e.情人节"))["group"]]
+        self.assertEqual(
+            [b["text"] for b in e_group if b["kind"] == "paragraph"],
+            ["第二年：前四个月约会超过4次→2次", "第三年：前四个月约会超过5次→3次"],
+        )
 
     def test_favorite_gifts(self) -> None:
         node = _node(self.data, "favorite-gifts")
         blocks = node["blocks"]
         self.assertNotIn("description", node)
+        # 一个角色一个大标题，物品清单跟在下面。
         self.assertEqual(
-            [b["text"] for b in blocks if b["kind"] == "event"],
+            [b["text"] for b in blocks if b["kind"] == "section"],
             ["沈惟真", "城仲瑄", "卫亚", "慕容和希", "姚子奇", "纪翔", "史蒂芬", "丹尼斯"],
         )
-        self.assertEqual(len(blocks), 16)  # 8 个角色 ×（卡头 + 一行物品）
+        self.assertEqual(len(blocks), 16)  # 8 个角色 ×（大标题 + 一行物品）
 
         by_group: dict[int, list[dict]] = {}
         for block in blocks:
             by_group.setdefault(block["group"], []).append(block)
-        danisi = next(b for b in blocks if b["kind"] == "event" and b["text"] == "丹尼斯")
+        danisi = next(b for b in blocks if b["kind"] == "section" and b["text"] == "丹尼斯")
         items = by_group[danisi["group"]][1]["text"]
         # 原文写成「蓝色咖啡额」，多出来的「额」是错字，已补正。
         self.assertTrue(items.startswith("大宇啤酒、蓝色咖啡、海蓝色休闲头巾"), items[:24])

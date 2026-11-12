@@ -2548,42 +2548,50 @@
             {
               "kind": "paragraph",
               "text": "沈惟真：沈惟真的蓝色缎带",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "丹尼斯：丹尼斯的手表",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "史蒂芬：史蒂芬的徽章",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "姚子奇：姚子奇的避邪手链",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "慕容和希：慕容和希的乐谱",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "卫亚：卫亚的素描",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "纪翔：纪翔的相簿",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "城仲瑄：城仲瑄的围巾",
-              "group": 4
+              "group": 4,
+              "bullet": true
             },
             {
               "kind": "section",
@@ -2635,17 +2643,23 @@
             {
               "kind": "paragraph",
               "text": "第1年-不限次数",
-              "group": 7
+              "group": 7,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "第2年-近4个月内约会4次以上",
-              "group": 7
+              "group": 7,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "第3年-近4个月内约会5次以上",
-              "group": 7
+              "group": 7,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "heading",
@@ -2656,42 +2670,50 @@
             {
               "kind": "paragraph",
               "text": "沈惟真：杜云芊穿着春夏洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "丹尼斯：杜云芊穿着秋冬洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "史蒂芬：杜云芊穿着秋冬洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "姚子奇：杜云芊穿着秋冬洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "慕容和希：杜云芊穿着春夏洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "卫亚：杜云芊穿着春夏洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "纪翔：杜云芊穿着秋冬洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "城仲瑄：杜云芊穿着春夏洋装",
-              "group": 8
+              "group": 8,
+              "bullet": true
             },
             {
               "kind": "section",
@@ -2738,17 +2760,23 @@
             {
               "kind": "paragraph",
               "text": "第1年-不限制好感",
-              "group": 11
+              "group": 11,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "第2年-与该艺人要“很有好感”才能够触发邀约沟通",
-              "group": 11
+              "group": 11,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "第3年-与该艺人要“究极好感”才能够触发邀约沟通",
-              "group": 11
+              "group": 11,
+              "bullet": true,
+              "depth": 1
             },
             {
               "kind": "paragraph",
@@ -2756,7 +2784,7 @@
               "group": 11
             },
             {
-              "kind": "paragraph",
+              "kind": "note",
               "text": "注：圣诞节事件没有CG图或任何特殊物品称号达成条件。",
               "group": 11
             }
@@ -2776,7 +2804,8 @@
             {
               "kind": "paragraph",
               "text": "在游戏进行中，点选右上角‘系统’→‘系统设定’，将‘甜蜜模式’从预设的设为‘关闭’改为‘开启’。",
-              "group": 1
+              "group": 1,
+              "depth": 0
             },
             {
               "kind": "section",
@@ -2786,347 +2815,415 @@
             {
               "kind": "paragraph",
               "text": "a.游戏中可随时切换一般模式和甜蜜模式。",
-              "group": 3
+              "group": 2,
+              "bullet": true
             },
             {
               "kind": "paragraph",
               "text": "b.无法在游戏外进行设定。",
-              "group": 4
+              "group": 2,
+              "bullet": true
             },
             {
               "kind": "section",
               "text": "影响",
-              "group": 5
+              "group": 3
             },
             {
-              "kind": "paragraph",
+              "kind": "heading",
               "text": "a.哥哥送钱剧情、父母送钱剧情，金额加倍。",
-              "group": 6
+              "group": 4,
+              "depth": 1
             },
             {
-              "kind": "paragraph",
+              "kind": "heading",
               "text": "b.在办公室邀约艺人，取消连续邀约次数上限和友好度门槛。",
-              "group": 7
+              "group": 5,
+              "depth": 1
             },
             {
-              "kind": "paragraph",
+              "kind": "heading",
               "text": "c.结婚结局门槛降低。",
-              "group": 8
+              "group": 6,
+              "depth": 1
             },
             {
               "kind": "note",
               "text": "以下列出使用甜蜜模式时结婚事件的判断条件",
-              "group": 9
+              "group": 7
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "沈惟真",
-              "group": 10
+              "group": 8,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "收到喜欢的礼物5个以上。",
-              "group": 10
+              "group": 8,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "邀约25次以上。",
-              "group": 10
+              "group": 8,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "沈惟真跟记者坦承与女主角交往",
-              "group": 10
+              "group": 8,
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "丹尼斯",
-              "group": 11
+              "group": 9,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "SD从来没有解散过。",
-              "group": 11
+              "group": 9,
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "史蒂芬",
-              "group": 12
+              "group": 10,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "SD已经解散了。",
-              "group": 12
+              "group": 10,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "史蒂芬喜欢的礼物超过10个。",
-              "group": 12
+              "group": 10,
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "姚子奇",
-              "group": 13
+              "group": 11,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "看过姚子奇与女主角共度情人节事件图。",
-              "group": 13
+              "group": 11,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "曾经和女主角共度圣诞节。",
-              "group": 13
+              "group": 11,
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "慕容和希",
-              "group": 14
+              "group": 12,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "女主角办过个人巡回演唱会。",
-              "group": 14
+              "group": 12,
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "卫亚",
-              "group": 15
+              "group": 13,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "邀约次数25次以上。",
-              "group": 15
+              "group": 13,
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "纪翔",
-              "group": 16
+              "group": 14,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "邀约20次以上。",
-              "group": 16
+              "group": 14,
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "heading",
               "text": "城仲瑄",
-              "group": 17
+              "group": 15,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
               "text": "公司结局为顶尖国际经纪公司或迈向国际的经纪公司。",
-              "group": 17
+              "group": 15,
+              "depth": 2
             },
             {
-              "kind": "paragraph",
+              "kind": "heading",
               "text": "d.告白相关事件门槛降低",
-              "group": 18
+              "group": 16,
+              "depth": 1
             },
             {
               "kind": "note",
               "text": "以下列出使用甜蜜模式时告白事件的判断条件（事件编号以攻略本为主）：",
-              "group": 19
+              "group": 17
             },
             {
               "kind": "heading",
               "text": "沈惟真",
-              "group": 20,
-              "depth": 1
+              "group": 18,
+              "depth": 2,
+              "card": true
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会2次以上，女主角才智高于250。",
-              "group": 21,
-              "label": "4-1"
+              "group": 18,
+              "label": "4-1",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "取消友好度与称号检查。",
-              "group": 22,
-              "label": "4-3"
+              "group": 18,
+              "label": "4-3",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "取消称号检查。",
-              "group": 23,
-              "label": "4-5"
+              "group": 18,
+              "label": "4-5",
+              "depth": 2
             },
             {
               "kind": "heading",
               "text": "丹尼斯",
-              "group": 24,
-              "depth": 1
+              "group": 19,
+              "depth": 2,
+              "card": true
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "不一定要发生事件5-6。",
-              "group": 25,
-              "label": "7-3"
+              "group": 19,
+              "label": "7-3",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "取消票房检查。",
-              "group": 26,
-              "label": "7-10"
+              "group": 19,
+              "label": "7-10",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "取消两人称号都是实力派的检查。",
-              "group": 27,
-              "label": "8-5"
+              "group": 19,
+              "label": "8-5",
+              "depth": 2
             },
             {
               "kind": "heading",
               "text": "史蒂芬",
-              "group": 28,
-              "depth": 1
+              "group": 20,
+              "depth": 2,
+              "card": true
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会2次以上，并取消友好度检查。",
-              "group": 29,
-              "label": "4-1"
+              "group": 20,
+              "label": "4-1",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会5次以上，并取消友好度检查。",
-              "group": 30,
-              "label": "4-2"
+              "group": 20,
+              "label": "4-2",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "两人名气高于199。",
-              "group": 31,
-              "label": "4-3"
+              "group": 20,
+              "label": "4-3",
+              "depth": 2
             },
             {
               "kind": "heading",
               "text": "姚子奇",
-              "group": 32,
-              "depth": 1
+              "group": 21,
+              "depth": 2,
+              "card": true
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "降低友好度要求。",
-              "group": 33,
-              "label": "8-5"
+              "group": 21,
+              "label": "8-5",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "女主角录过1首姚子奇的歌，约会10次。",
-              "group": 34,
-              "label": "9-1"
+              "group": 21,
+              "label": "9-1",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会15次，并取消友好度检查。",
-              "group": 35,
-              "label": "9-5"
+              "group": 21,
+              "label": "9-5",
+              "depth": 2
             },
             {
               "kind": "heading",
               "text": "慕容和希",
-              "group": 36,
-              "depth": 1
+              "group": 22,
+              "depth": 2,
+              "card": true
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "女主角邀约被拒绝次数达3次。",
-              "group": 37,
-              "label": "6-3"
+              "group": 22,
+              "label": "6-3",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会次数达15次以上。",
-              "group": 38,
-              "label": "7-1"
+              "group": 22,
+              "label": "7-1",
+              "depth": 2
             },
             {
               "kind": "heading",
               "text": "卫亚",
-              "group": 39,
-              "depth": 1
+              "group": 23,
+              "depth": 2,
+              "card": true
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会5次以上，取消友好度检查。",
-              "group": 40,
-              "label": "6-1"
+              "group": 23,
+              "label": "6-1",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "取消友好度检查。",
-              "group": 41,
-              "label": "6-2"
+              "group": 23,
+              "label": "6-2",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "女主角、卫亚人气各250以上。",
-              "group": 42,
-              "label": "8-1"
+              "group": 23,
+              "label": "8-1",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会12次、取消友好度检查、卫亚演技才智达600、自信300、两人皆拍过2部以上电影。",
-              "group": 43,
-              "label": "8-2"
+              "group": 23,
+              "label": "8-2",
+              "depth": 2
             },
             {
               "kind": "heading",
               "text": "纪翔",
-              "group": 44,
-              "depth": 1
+              "group": 24,
+              "depth": 2,
+              "card": true
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会3次以上、取消友好度检查。",
-              "group": 45,
-              "label": "5-1"
+              "group": 24,
+              "label": "5-1",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会8次以上，人气199。",
-              "group": 46,
-              "label": "6-3"
+              "group": 24,
+              "label": "6-3",
+              "depth": 2
             },
             {
-              "kind": "event",
+              "kind": "paragraph",
               "text": "约会10次、取消友好度检查、纪翔有8部作品、得过1次奖、取消舞台剧和时装秀条件。",
-              "group": 47,
-              "label": "7-6"
+              "group": 24,
+              "label": "7-6",
+              "depth": 2
             },
             {
               "kind": "heading",
               "text": "城仲瑄",
-              "group": 48,
-              "depth": 1
-            },
-            {
-              "kind": "event",
-              "text": "取消友好度检查、约会10次、女主角作品10部、得过1次奖、公司知名度150、公司满2人。",
-              "group": 49,
-              "label": "6-2"
+              "group": 25,
+              "depth": 2,
+              "card": true
             },
             {
               "kind": "paragraph",
+              "text": "取消友好度检查、约会10次、女主角作品10部、得过1次奖、公司知名度150、公司满2人。",
+              "group": 25,
+              "label": "6-2",
+              "depth": 2
+            },
+            {
+              "kind": "heading",
               "text": "e.情人节邀约门槛降低。",
-              "group": 50
+              "group": 26,
+              "depth": 1
             },
             {
               "kind": "paragraph",
               "text": "第二年：前四个月约会超过4次→2次",
-              "group": 50
+              "group": 26,
+              "depth": 2
             },
             {
               "kind": "paragraph",
               "text": "第三年：前四个月约会超过5次→3次",
-              "group": 50
+              "group": 26,
+              "depth": 2
             },
             {
-              "kind": "paragraph",
+              "kind": "heading",
               "text": "f.圣诞节邀约友好度门槛降低。",
-              "group": 51
+              "group": 27,
+              "depth": 1
             }
           ],
           "children": []
@@ -3137,7 +3234,7 @@
           "status": "ready",
           "blocks": [
             {
-              "kind": "event",
+              "kind": "section",
               "text": "沈惟真",
               "group": 1
             },
@@ -3147,7 +3244,7 @@
               "group": 1
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "城仲瑄",
               "group": 2
             },
@@ -3157,7 +3254,7 @@
               "group": 2
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "卫亚",
               "group": 3
             },
@@ -3167,7 +3264,7 @@
               "group": 3
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "慕容和希",
               "group": 4
             },
@@ -3177,7 +3274,7 @@
               "group": 4
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "姚子奇",
               "group": 5
             },
@@ -3187,7 +3284,7 @@
               "group": 5
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "纪翔",
               "group": 6
             },
@@ -3197,7 +3294,7 @@
               "group": 6
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "史蒂芬",
               "group": 7
             },
@@ -3207,7 +3304,7 @@
               "group": 7
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "丹尼斯",
               "group": 8
             },
@@ -3225,7 +3322,7 @@
           "status": "ready",
           "blocks": [
             {
-              "kind": "event",
+              "kind": "section",
               "text": "天王巨星",
               "group": 1
             },
@@ -3235,7 +3332,7 @@
               "group": 1
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "演员",
               "group": 2
             },
@@ -3245,7 +3342,7 @@
               "group": 2
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "模特儿",
               "group": 3
             },
@@ -3255,7 +3352,7 @@
               "group": 3
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "歌手/偶像",
               "group": 4
             },
@@ -3265,7 +3362,7 @@
               "group": 4
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "主持人",
               "group": 5
             },
@@ -3275,7 +3372,7 @@
               "group": 5
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "经纪人",
               "group": 6
             },
@@ -3285,7 +3382,7 @@
               "group": 6
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "打工达人",
               "group": 7
             },
@@ -3295,7 +3392,7 @@
               "group": 7
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "千金小姐",
               "group": 8
             },
@@ -3305,7 +3402,7 @@
               "group": 8
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "自由工作者",
               "group": 9
             },
@@ -3315,7 +3412,7 @@
               "group": 9
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "制作人",
               "group": 10
             },
@@ -3325,7 +3422,7 @@
               "group": 10
             },
             {
-              "kind": "event",
+              "kind": "section",
               "text": "公司倒闭",
               "group": 11
             },

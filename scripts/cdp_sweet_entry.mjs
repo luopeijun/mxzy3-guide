@@ -243,6 +243,11 @@ async function main() {
     cards: document.querySelectorAll('[data-event-label]').length,
     // 没有编号的事件卡不会有 data-event-label（属性为空就不渲染），按 id 数总数。
     cardTotal: document.querySelectorAll('main [id^="ev"]').length,
+    // 圆点条目（名单行）与白底卡片组（甜蜜乐章里一位艺人的条件清单）。
+    bullets: [...document.querySelectorAll('main p[data-bullet]')].map((p) => p.innerText.trim()),
+    boxes: document.querySelectorAll('main [data-card]').length,
+    // 段落前面那个「4-1」式的编号标签。
+    nums: [...document.querySelectorAll('main [data-num]')].map((s) => s.textContent.trim()),
     firstCard: document.querySelector('[data-event-label]')?.innerText ?? '',
     notes: [...document.querySelectorAll('main p')]
       .filter((p) => p.className.includes('bg-note-soft'))
@@ -303,6 +308,16 @@ async function main() {
     'ok',
   );
   check(
+    '名单行用圆点、带序号的行不用',
+    festivals.bullets.length === 22 && !festivals.bullets.some((t) => /^\d/.test(t)),
+    `${festivals.bullets.length} 个圆点`,
+  );
+  check(
+    '年份门槛缩进成子条目',
+    festivals.text.includes('第2年-近4个月内约会4次以上'),
+    'ok',
+  );
+  check(
     '原文错字已补正（春夏洋装 / 约会）',
     festivals.text.includes('城仲瑄：杜云芊穿着春夏洋装')
       && festivals.text.includes('没有特殊行程和约会'),
@@ -313,11 +328,17 @@ async function main() {
   await openNode('sweet-guide/career-endings');
   const career = await readPage();
   check('点女主事业结局写入深链', career.hash === '#/guide/sweet-guide/career-endings', career.hash);
-  check('11 个事业结局各一张卡', career.cardTotal === 11, `cards=${career.cardTotal}`);
+  check(
+    '11 个事业结局各是一个大标题',
+    career.heads.slice(0, 3).join('/') === '天王巨星/演员/模特儿'
+      && career.heads[10] === '公司倒闭'
+      && career.heads.length === 16,
+    `${career.heads.length} 个标题`,
+  );
   check(
     '巨星条件四项都在',
-    career.heads.join('/') === '巨星条件/数值条件/通告条件（1或2）/其他条件（1和2）/奖项条件',
-    JSON.stringify(career.heads),
+    career.heads.slice(-5).join('/') === '巨星条件/数值条件/通告条件（1或2）/其他条件（1和2）/奖项条件',
+    JSON.stringify(career.heads.slice(-5)),
   );
   check('全角数字已归一（歌唱：600↑）', career.text.includes('歌唱：600↑'), 'ok');
 
@@ -357,14 +378,24 @@ async function main() {
     mode.heads.slice(0, 3).join('/') === '启动方法/使用时机/影响',
     JSON.stringify(mode.heads.slice(0, 3)),
   );
-  check('结婚 8 张卡 + 告白 22 张卡', mode.cardTotal === 30, `cards=${mode.cardTotal}`);
-  check('告白条件带编号 pill', mode.text.includes('取消票房检查'), 'ok');
+  check('结婚 8 张卡 + 告白 8 张卡（白底盒子）', mode.boxes === 16, `boxes=${mode.boxes}`);
+  check('告白条件编号渲染成 tag', mode.nums.length === 22 && mode.nums[0] === '4-1', JSON.stringify(mode.nums.slice(0, 3)));
+  check(
+    'a.~f. 是一级条目（比艺人卡更显眼）',
+    mode.heads.indexOf('a.哥哥送钱剧情、父母送钱剧情，金额加倍。') > 0
+      && mode.heads.includes('f.圣诞节邀约友好度门槛降低。'),
+    JSON.stringify(mode.heads.filter((h) => /^[a-f][.]/.test(h)).length),
+  );
   check('两段作者注释渲染成便签', mode.notes.length === 2, `notes=${mode.notes.length}`);
 
   await openNode('sweet-guide/favorite-gifts');
   const gifts = await readPage();
   check('点喜爱物品写入深链', gifts.hash === '#/guide/sweet-guide/favorite-gifts', gifts.hash);
-  check('8 位角色各一张卡', gifts.cardTotal === 8, `cards=${gifts.cardTotal}`);
+  check(
+    '8 位角色各一个大标题',
+    gifts.heads.join('/') === '沈惟真/城仲瑄/卫亚/慕容和希/姚子奇/纪翔/史蒂芬/丹尼斯',
+    JSON.stringify(gifts.heads),
+  );
   check(
     '原文错字「蓝色咖啡额」已补正',
     !gifts.text.includes('蓝色咖啡额') && gifts.text.includes('蓝色咖啡'),

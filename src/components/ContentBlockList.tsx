@@ -56,6 +56,11 @@ function eventCardClasses(cg: boolean): string {
   return `rounded-ui-sm border px-3 py-2.5 ${cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface'}`;
 }
 
+/** 整组内容的白底卡片外壳（甜蜜乐章里一位艺人的条件清单）。
+ *  `[&>h3:first-child]:mt-0` 抹掉标题自带的顶部间距，否则盒子上方会空一条。 */
+const cardBox =
+  'mb-2.5 rounded-ui-sm border border-line bg-surface px-3 py-2.5 [&>h3:first-child]:mt-0';
+
 /** 事件卡首行：编号 pill + 类型 tag + CG 徽标 + 正文。
  *  有映射的 CG 徽标直接是去图鉴的链接（`#/cg/<id>`）；没映射的仍是不带链接的标记，
  *  因为那张图可能不是这个事件出的，不能给人一条死路。
@@ -322,6 +327,16 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
     case 'item':
       return <ItemCard block={block} />;
     default: {
+      // A shape-only tag in front of the text (e.g. 攻略本的事件编号 4-1).
+      // 与主线事件卡头上的编号同一个样式：四方圆角、浅底、居中定宽。
+      const label = block.label ? (
+        <span
+          data-num=""
+          className="mr-1.5 inline-block min-w-[30px] rounded-ui-xs bg-brand-soft px-[5px] text-center align-[1px] text-ui-2xs font-bold leading-[1.7] text-brand-strong"
+        >
+          {block.label}
+        </span>
+      ) : null;
       // A list item carries a round dot in the gutter and a hanging indent, so
       // a run of names/types reads as separate entries instead of one text wall.
       // Nested entries step in one level per `depth` so 歌曲 / 子项 read as a
@@ -329,7 +344,10 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
       if (block.bullet) {
         const step = block.depth === 2 ? 'ml-[42px]' : block.depth === 1 ? 'ml-[19px]' : '';
         return (
-          <p className={`relative mb-1 mt-2 pl-[19px] ${step} text-ui-md leading-[1.9] break-words text-ink`}>
+          <p
+            data-bullet=""
+            className={`relative mb-1 mt-2 pl-[19px] ${step} text-ui-md leading-[1.9] break-words text-ink`}
+          >
             {/* 特殊条目（源文本 `*` 前缀，如萧依莉「无价的相遇」仅能靠事件获得）
                 用金色菱形与普通圆点区分。 */}
             <span
@@ -349,6 +367,7 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
       if (block.depth === 2) {
         return (
           <p className="mb-1 ml-[42px] text-ui-sm leading-[1.85] break-words text-ink-muted">
+            {label}
             <HighlightText text={block.text} />
           </p>
         );
@@ -356,12 +375,14 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
       if (block.depth === 1) {
         return (
           <p className="mb-1 ml-[19px] text-ui-md leading-[1.9] break-words text-ink">
+            {label}
             <HighlightText text={block.text} />
           </p>
         );
       }
       return (
         <p className="mb-1 text-ui-md leading-[1.9] break-words text-ink">
+          {label}
           <HighlightText text={block.text} />
         </p>
       );
@@ -428,7 +449,7 @@ export default function ContentBlockList({ blocks, onJump, nestSubEvents }: Prop
         return (
           <Fragment key={group.group}>
             {sectionRule}
-            <section className="mb-4">
+            <section className={first.card ? cardBox : 'mb-4'} data-card={first.card ? '' : undefined}>
               {group.blocks.map((block) => <BlockView key={block.index} block={block} bigHeadings={flat} />)}
             </section>
           </Fragment>
