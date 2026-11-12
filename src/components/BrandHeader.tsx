@@ -2,6 +2,7 @@ import type { GuideNode } from '../types/guide';
 import { cn } from '../lib/cn';
 import { HIGHLIGHT_ENABLED } from '../hooks/useHighlightPref';
 import HighlightSwitch from './HighlightSwitch';
+import GameHeader from '../ui/GameHeader';
 import ViewTabs, { type ViewMode } from './ViewTabs';
 
 interface Props {
@@ -17,33 +18,30 @@ interface Props {
   onMenuClick: () => void;
 }
 
+/** 明星志愿3 的顶栏：骨架在 `ui/GameHeader`，这里只填站名、五个页签、
+ *  攻略分类胶囊和跨站入口。 */
 export default function BrandHeader({
   categories, activeCategoryId, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg,
   onViewSpecials, onSelect, onMenuClick,
 }: Props) {
-  return (
-    <header className="relative z-20 h-16 shrink-0 border-b border-line bg-surface shadow-soft">
-      <div className="flex h-full items-center gap-6 px-6 nav:gap-3 nav:px-[14px]">
-        {mode === 'guide' && (
-          <button
-            className="hidden h-[34px] w-[34px] items-center justify-center rounded-ui-sm border border-line text-[17px] text-brand nav:flex"
-            type="button"
-            onClick={onMenuClick}
-            aria-label="打开目录"
-          >
-            ☰
-          </button>
-        )}
-        <button className="flex min-w-0 items-center gap-[11px]" type="button" onClick={() => onSelect('')}>
-          <img
-            src={`${import.meta.env.BASE_URL}favicon.ico`}
-            alt=""
-            className="h-[26px] w-[26px] shrink-0 rounded-[6px]"
-            aria-hidden="true"
-          />
-          <span className="whitespace-nowrap text-ui-md font-bold tracking-[0.02em]">明星志愿3 · 攻略助手</span>
-        </button>
+  const menuButton = mode === 'guide' ? (
+    <button
+      className="hidden h-[34px] w-[34px] items-center justify-center rounded-ui-sm border border-line text-[17px] text-brand nav:flex"
+      type="button"
+      onClick={onMenuClick}
+      aria-label="打开目录"
+    >
+      ☰
+    </button>
+  ) : null;
 
+  return (
+    <GameHeader
+      title="明星志愿3 · 攻略助手"
+      logoSrc={`${import.meta.env.BASE_URL}favicon.ico`}
+      onBrandClick={() => onSelect('')}
+      menuButton={menuButton}
+      tabs={(
         <ViewTabs
           mode={mode}
           onViewGuide={onViewGuide}
@@ -52,8 +50,14 @@ export default function BrandHeader({
           onViewCg={onViewCg}
           onViewSpecials={onViewSpecials}
         />
-
-        <div className="ml-auto flex items-center gap-4 nav:gap-3">
+      )}
+      crossLink={{
+        href: `${import.meta.env.BASE_URL}sweet.html`,
+        label: '甜蜜乐章 ›',
+        hint: '打开 明星志愿3 甜蜜乐章 攻略助手',
+      }}
+      right={(
+        <>
           {mode === 'guide' && (
             <nav className="flex items-center gap-1 tab:gap-0 nav:hidden" aria-label="攻略分类">
               {categories.map((category) => (
@@ -75,8 +79,8 @@ export default function BrandHeader({
           )}
 
           {HIGHLIGHT_ENABLED && <HighlightSwitch />}
-        </div>
-      </div>
-    </header>
+        </>
+      )}
+    />
   );
 }

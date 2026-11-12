@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { GuideNode } from '../types/guide';
-import type { OrderMap, Place } from '../lib/treeOrder';
+import type { OrderMap, OrderStoreOptions, Place } from '../lib/treeOrder';
 import {
   applyOrder,
   moveIds,
@@ -15,9 +15,14 @@ import {
  * Only the levels the reader actually moved are stored (parent id -> child ids),
  * so regenerating guide.json never invalidates the rest of the tree; unknown ids
  * are ignored and new nodes fall back to their source position at the end.
+ *
+ * `options` carries the storage key, so a second game keeps its own order
+ * instead of rewriting this one.
  */
-export function useTreeOrder(source: GuideNode[]) {
-  const [order, setOrder] = useState<OrderMap>(readOrder);
+export function useTreeOrder(source: GuideNode[], options: OrderStoreOptions = {}) {
+  const { key, hoistCategory } = options;
+  const store = useMemo<OrderStoreOptions>(() => ({ key, hoistCategory }), [key, hoistCategory]);
+  const [order, setOrder] = useState<OrderMap>(() => readOrder(store));
   const categories = useMemo(() => applyOrder(source, order), [source, order]);
 
   const move = useCallback(
@@ -28,17 +33,17 @@ export function useTreeOrder(source: GuideNode[]) {
       if (!ids) return;
       setOrder((previous) => {
         const next = { ...previous, [parentKey]: ids };
-        writeOrder(next);
+        writeOrder(next, store);
         return next;
       });
     },
-    [categories],
+    [categories, store],
   );
 
   const reset = useCallback(() => {
     setOrder({});
-    writeOrder({});
-  }, []);
+    writeOrder({}, store);
+  }, [store]);
 
   return {
     categories,

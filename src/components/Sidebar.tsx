@@ -7,6 +7,7 @@ import GuideTree from './GuideTree';
 import SearchBox from './SearchBox';
 import SearchResults from './SearchResults';
 import { cn } from '../lib/cn';
+import type { ReactNode } from 'react';
 
 interface Props {
   categories: GuideNode[];
@@ -23,11 +24,14 @@ interface Props {
   onQueryChange: (value: string) => void;
   onReorder: (request: ReorderRequest) => void;
   onResetOrder: () => void;
+  /** 页脚第二行：默认提事件追踪，另一款游戏可以换成自己的说明。 */
+  footerNote?: ReactNode;
 }
 
 export default function Sidebar({
   categories, selectedId, expandedIds, query, hits, open, summary, customized,
   onToggle, onSelect, onQueryChange, onReorder, onResetOrder,
+  footerNote = '已支持事件追踪 · 顶栏「事件追踪」进入',
 }: Props) {
   const navRef = useRef<HTMLElement>(null);
 
@@ -102,7 +106,7 @@ export default function Sidebar({
       <div className="border-t border-line px-4 pt-[10px] pb-[14px] text-ui-2xs leading-[1.6] text-ink-faint">
         共 {summary.items} 个条目 · 约 {formatCount(summary.chars)} 字
         <br />
-        已支持事件追踪 · 顶栏「事件追踪」进入
+        {footerNote}
       </div>
     </aside>
   );

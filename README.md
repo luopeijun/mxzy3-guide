@@ -4,6 +4,19 @@
 
 > 当前版本：**v1.5.0**
 
+## 两个站点
+
+同一个仓库、同一套设计系统，两个平级站点：
+
+| 入口 | 站点 | 数据 | 主题 |
+| --- | --- | --- | --- |
+| `index.html`（`/`） | 明星志愿3 · 攻略助手 | `public/data/*.json` | 玫瑰粉（`--color-brand: #a8506e`） |
+| `sweet.html`（`/sweet.html`） | 明星志愿3 甜蜜乐章 · 攻略助手 | `public/data/sweet/guide.json` | 糖果粉（`--color-brand: #c0306f`） |
+
+- 组件、令牌、页面骨架只有一份（`src/ui` + `src/components` + `src/styles/global.css`），甜蜜乐章只额外加载 `src/styles/theme-sweet.css` 覆盖颜色与阴影，字号/间距/断点/卡片版式完全共用。
+- 两站互不干扰：数据文件、目录拖拽顺序（`guide.tree-order.v1` / `sweet.tree-order.v1`）各自独立；顶栏右上角的胶囊可以整页跳到另一站。
+- 构建时两个 HTML 一起产出（`vite.config.ts` 的 `rollupOptions.input`）。
+
 ## 界面预览
 
 **攻略浏览**

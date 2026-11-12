@@ -2,7 +2,15 @@ import type { GuideNode } from '../types/guide';
 
 /** Key of the top level (the four categories). */
 export const ROOT_KEY = 'root';
-const STORAGE_KEY = 'guide.tree-order.v1';
+/** 明星志愿3 的顺序存档键。另一款游戏必须换 key，否则两站会互相打乱目录。 */
+export const STORAGE_KEY = 'guide.tree-order.v1';
+
+export interface OrderStoreOptions {
+  /** localStorage 键，默认明星志愿3 的 `guide.tree-order.v1`。 */
+  key?: string;
+  /** 是否套用「路欧桑提升为独立类目」的老存档迁移；只有明星志愿3 需要。 */
+  hoistCategory?: boolean;
+}
 
 export type Place = 'before' | 'after';
 /** parent key -> ordered child ids. Levels never moved are simply absent. */
@@ -47,23 +55,26 @@ function withHoistedCategory(order: OrderMap): OrderMap {
   return { ...order, [ROOT_KEY]: next };
 }
 
-export function readOrder(): OrderMap {
+export function readOrder(options: OrderStoreOptions = {}): OrderMap {
+  const { key = STORAGE_KEY, hoistCategory = true } = options;
   try {
-    const raw = storage()?.getItem(STORAGE_KEY);
+    const raw = storage()?.getItem(key);
     if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
-    return isOrderMap(parsed) ? withHoistedCategory(parsed) : {};
+    if (!isOrderMap(parsed)) return {};
+    return hoistCategory ? withHoistedCategory(parsed) : parsed;
   } catch {
     return {};
   }
 }
 
-export function writeOrder(order: OrderMap): void {
+export function writeOrder(order: OrderMap, options: OrderStoreOptions = {}): void {
+  const { key = STORAGE_KEY } = options;
   try {
     const target = storage();
     if (!target) return;
-    if (Object.keys(order).length === 0) target.removeItem(STORAGE_KEY);
-    else target.setItem(STORAGE_KEY, JSON.stringify(order));
+    if (Object.keys(order).length === 0) target.removeItem(key);
+    else target.setItem(key, JSON.stringify(order));
   } catch {
     /* quota exceeded — keep the in-memory order */
   }

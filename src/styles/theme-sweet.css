@@ -1,0 +1,33 @@
+/* 甜蜜乐章主题：结构与尺度（字号、间距、圆角、断点）全部沿用 `global.css`
+   的令牌，这里只覆盖「颜色 + 阴影色温」，让两个站点一眼能分清在哪一站。
+   主色取偏亮的糖果粉（#c0306f），比原站偏暗的玫瑰粉（#a8506e）更年轻、更甜，
+   在粉白底上仍是 5.4:1，链接文字可以直接用。
+   选择器挂在 `html[data-game="sweet"]`（见 sweet.html），两份样式即使打进同一
+   产物也互不干扰；语义色（备注琥珀、成长绿、警示红）刻意不动 —— 它们表达含义，
+   不该跟着品牌换色。 */
+
+html[data-game='sweet'] {
+  /* Surfaces & lines — 粉白底，比原站更亮一档 */
+  --color-canvas: #fdf5f9;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fffafd;
+  --color-sidebar: #fbe8f2;
+  --color-line: #f4dce8;
+  --color-line-strong: #e6c1d4;
+
+  /* Text — 粉底上取到 AA */
+  --color-ink: #1f1219;
+  --color-ink-muted: #4d3742;
+  --color-ink-faint: #6d5563;
+
+  /* Brand */
+  --color-brand: #c0306f;
+  --color-brand-strong: #8c1b4e;
+  --color-brand-soft: #fce3ef;
+  --color-brand-line: #f3c2d8;
+
+  /* Elevation — 阴影带一点玫红，避免冷灰把粉底压脏 */
+  --shadow-soft: 0 1px 2px rgba(72, 20, 44, 0.05);
+  --shadow-card: 0 6px 20px rgba(72, 20, 44, 0.08);
+  --shadow-float: 0 14px 36px rgba(72, 20, 44, 0.14);
+}

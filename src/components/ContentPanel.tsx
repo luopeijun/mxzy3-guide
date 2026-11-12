@@ -10,7 +10,7 @@ import Breadcrumbs from './Breadcrumbs';
 import ChildLinks from './ChildLinks';
 import ContentBlockList from './ContentBlockList';
 import EmptyState from './EmptyState';
-import Overview from './Overview';
+import Overview, { type OverviewHero } from './Overview';
 import PageRail from './PageRail';
 import PrevNextNav from './PrevNextNav';
 import RequirementsCard from './RequirementsCard';
@@ -23,13 +23,24 @@ interface Props {
   prev: GuideNode | null;
   next: GuideNode | null;
   onSelect: (id: string) => void;
+  /** 空条目的提示文案：默认是明星志愿3 的来源说明，另一款游戏可以换掉。 */
+  emptyHint?: { title: string; text: string };
+  /** 首页大卡片的文案：不传就是明星志愿3。 */
+  overviewHero?: OverviewHero;
 }
 
-export default function ContentPanel({ data, node, path, prev, next, onSelect }: Props) {
+const DEFAULT_EMPTY_HINT = {
+  title: '这个条目还没有内容',
+  text: '原攻略目录里有这一节，但《明星志愿3攻略.docx》中暂未收录对应正文。分级位置已保留，补充内容后会自动显示。',
+};
+
+export default function ContentPanel({
+  data, node, path, prev, next, onSelect, emptyHint = DEFAULT_EMPTY_HINT, overviewHero,
+}: Props) {
   const jump = useAnchorJump(node?.id ?? '');
   const { wide } = useReaderLayout();
 
-  if (!node) return <Overview data={data} onSelect={onSelect} />;
+  if (!node) return <Overview data={data} onSelect={onSelect} hero={overviewHero} />;
 
   const isCategory = path.length === 1;
   const showEmpty = node.status === 'missing'
@@ -65,10 +76,7 @@ export default function ContentPanel({ data, node, path, prev, next, onSelect }:
           />
         )}
         {showEmpty && (
-          <EmptyState
-            title="这个条目还没有内容"
-            text="原攻略目录里有这一节，但《明星志愿3攻略.docx》中暂未收录对应正文。分级位置已保留，补充内容后会自动显示。"
-          />
+          <EmptyState title={emptyHint.title} text={emptyHint.text} />
         )}
         <PrevNextNav prev={prev} next={next} onSelect={onSelect} />
       </div>

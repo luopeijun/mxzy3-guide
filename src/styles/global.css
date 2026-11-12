@@ -142,18 +142,19 @@
 /* Touch screens cannot drag HTML5 elements, so rows expose ↑↓ buttons there. */
 @custom-variant touch (@media (pointer: coarse));
 
-/* Feedback for in-page anchor jumps (see useAnchorJump). */
+/* Feedback for in-page anchor jumps (see useAnchorJump). The ring is mixed from
+   `--color-brand` rather than a fixed rgba so a per-game theme carries over. */
 @keyframes anchorFlash {
   0%,
   35% {
     box-shadow:
-      0 0 0 3px rgba(168, 80, 110, 0.42),
-      0 0 0 9px rgba(168, 80, 110, 0.12);
+      0 0 0 3px color-mix(in srgb, var(--color-brand) 42%, transparent),
+      0 0 0 9px color-mix(in srgb, var(--color-brand) 12%, transparent);
   }
   100% {
     box-shadow:
-      0 0 0 3px rgba(168, 80, 110, 0),
-      0 0 0 9px rgba(168, 80, 110, 0);
+      0 0 0 3px color-mix(in srgb, var(--color-brand) 0%, transparent),
+      0 0 0 9px color-mix(in srgb, var(--color-brand) 0%, transparent);
   }
 }
 
