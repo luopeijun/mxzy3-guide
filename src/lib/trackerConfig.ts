@@ -16,8 +16,8 @@ export interface TrackerSiteConfig {
   backupKey: string;
   /** Free-form memo list key (independent of progress by design). */
   memoKey: string;
-  /** Roster cap: 明星志愿3 lets you sign 4 artists, 甜蜜乐章 only 3 — the
-   *  protagonist is one of them, being both the agent and an artist. */
+  /** Roster cap: 明星志愿3 lets you sign 4 artists, 甜蜜乐章 also caps at 4
+   *  (the locked protagonist + 3 signed artists). */
   maxArtists: number;
   /** Node-id prefix that marks an artist page (drives TaskLine.kind). */
   artistPrefix: string;
@@ -44,9 +44,10 @@ export interface TrackerSiteConfig {
    *  整段正文；甜蜜乐章把「时间 / 概要 / 提示」拆成 paragraph / note 跟在
    *  事件标题后面，把它们收进步骤详情，折叠箭头点开才显示。 */
   stepDetails?: boolean;
-  /** A locked artist who is always under contract. 甜蜜乐章's protagonist is
-   *  played by the user: agent and artist at once, not releasable. */
-  protagonist?: { id: string; title: string; avatar?: string; hint: string };
+  /** A locked artist who is always under contract (甜蜜乐章's protagonist).
+   *  `hint` is optional: without it no explanatory callout renders in the
+   *  picker and the button tooltip falls back to the artist's name. */
+  protagonist?: { id: string; title: string; avatar?: string; hint?: string };
   /** Copy under the expanded artist picker. */
   setupIntro: string;
   /** Tooltip of the overview's 「包含已解约」 switch. */
@@ -103,7 +104,7 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
   storageKey: 'sweet.progress.v1',
   backupKey: 'sweet.progress.backup.v1',
   memoKey: 'sweet.memo.v1',
-  // 主角既当经纪人又当艺人，恒占一个签约位：还能再签 3 位艺人，共 4 位。
+  // 主角恒占一个签约位：还能再签 3 位艺人，共 4 位。
   maxArtists: 4,
   artistPrefix: 'sweet-characters/',
   artistCategoryId: 'sweet-characters',
@@ -129,10 +130,9 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
     // 别再拿卫亚的头像：两人长得完全不像，之前复制错过一次。
     title: '杜云芊',
     avatar: 'images/sweet/protagonist-logo.png',
-    hint: '杜云芊（主角）就是我们自己——既扮演经纪人也是旗下艺人，本周目固定在签约名单里，不能解约。',
   },
   setupIntro:
-    '旗下最多 4 位，主角杜云芊固定占一位（我们既当经纪人也是艺人），还能再签 3 位；解约的艺人仍会留在追踪名单里，任务线与已勾选的进度都保留。点按钮＝加入 / 移出追踪，点右上角角标＝解约 / 复签。',
+    '旗下最多 4 位，主角杜云芊固定占一位，还能再签 3 位；解约的艺人仍会留在追踪名单里，任务线与已勾选的进度都保留。点按钮＝加入 / 移出追踪，点右上角角标＝解约 / 复签。',
   includeReleasedTip: '已解约艺人的线仍在事件池里，只是默认不计入完成度',
   archiveFormat: 'sweet-tracker-save',
   archiveFilePrefix: '甜蜜乐章',

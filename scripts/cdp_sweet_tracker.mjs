@@ -148,8 +148,9 @@ async function main() {
       disabled: p?.disabled ?? false,
       text: p?.textContent?.trim() ?? '',
       badge: !!p?.parentElement?.querySelector('[data-artist-status-toggle]'),
+      hintNode: !!app.querySelector('[data-protagonist-hint]'),
       hint: app.querySelector('[data-protagonist-hint]')?.textContent?.trim() ?? '',
-      intro: app.querySelector('[data-protagonist-hint]')?.previousElementSibling?.textContent?.trim() ?? '',
+      intro: app.querySelector('[data-setup-intro]')?.textContent?.trim() ?? '',
       avatar: p?.querySelector('img')?.getAttribute('src') ?? '',
     };
   })()`);
@@ -167,7 +168,10 @@ async function main() {
     .filter((f) => f.endsWith('-logo.png') && f !== 'protagonist-logo.png')
     .filter((f) => fs.readFileSync(new URL(f, imgDir)).equals(protagonistPng));
   check('主角头像不与任何角色头像重复（杜云芊 ≠ 卫亚）', duplicated.length === 0, duplicated.join(','));
-  check('展开区说明主角既当经纪人也是艺人', picker.hint.includes('既扮演经纪人也是旗下艺人'), picker.hint);
+  check('展开区不再显示主角身份说明，选择器说明也不带括号注释',
+    !picker.hintNode && picker.hint === '' &&
+      !picker.intro.includes('既当经纪人也是艺人') && !picker.intro.includes('既扮演经纪人也是旗下艺人'),
+    JSON.stringify({ hintNode: picker.hintNode, hint: picker.hint, intro: picker.intro }));
   check('选择器说明写的是最多 4 位', picker.intro.includes('最多 4 位'), picker.intro);
 
   // 5. 点主角无效

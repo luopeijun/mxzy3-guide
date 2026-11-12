@@ -107,7 +107,7 @@ export default function TrackerSetup({ data }: Props) {
                   type="button"
                   disabled={locked}
                   onClick={() => toggleArtist(id)}
-                  title={locked ? protagonist?.hint ?? title : `移出追踪 ${title}`}
+                  title={locked ? protagonist?.hint || title : `移出追踪 ${title}`}
                   aria-label={locked ? `固定成员 ${title}` : `取消追踪 ${title}`}
                   className="rounded-full ring-2 ring-surface transition-transform hover:z-10 hover:scale-110 disabled:cursor-default disabled:hover:scale-100"
                 >
@@ -131,8 +131,8 @@ export default function TrackerSetup({ data }: Props) {
 
       {open && (
         <div className="border-t border-line px-4 pb-4 pt-3">
-          <p className="text-ui-2xs leading-[1.7] text-ink-muted">{config.setupIntro}</p>
-          {protagonist && (
+          <p data-setup-intro className="text-ui-2xs leading-[1.7] text-ink-muted">{config.setupIntro}</p>
+          {protagonist?.hint && (
             <p
               data-protagonist-hint
               className="mt-2 rounded-ui-sm border border-brand-line bg-brand-soft/60 px-2.5 py-1.5 text-ui-2xs leading-[1.7] text-brand-strong"
@@ -170,7 +170,7 @@ export default function TrackerSetup({ data }: Props) {
                     onClick={() => addOrDrop(artist.id, artist.title)}
                     title={
                       locked
-                        ? protagonist?.hint
+                        ? protagonist?.hint || artist.title
                         : active
                           ? `移出追踪 ${artist.title}`
                           : released
