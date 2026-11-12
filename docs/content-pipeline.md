@@ -95,9 +95,9 @@
 ### 双站点事件追踪器
 
 - `src/lib/trackerConfig.ts` 是两站追踪器**唯一**的差异来源：`MAIN_TRACKER_CONFIG` / `SWEET_TRACKER_CONFIG` 各自持有进度 / 备忘 / 备份的 localStorage 键、签约上限、艺人节点前缀、分组 chips 与文案、存档信封 format。所有 lib 函数默认取主站配置，共享组件从 `useTracker().config` 读取；甜站只在 `SweetApp` 把配置传给 `TrackerProvider`，**原站行为零变化**（共享组件里不写 `if (site === ...)`）。
-- 甜蜜乐章：旗下最多 **3 位**，`protagonist`（主角，`public/images/sweet/protagonist-logo.png`）恒占一位——用户既扮演经纪人也是艺人。她没有攻略节点，作为固定项插进选择器，`normaliseArtists()` 在读存档 / 重置 / 导入三条路径都保证归位；被主角挤掉的艺人转为「已解约」而不是消失，进度线照常保留。点击主角按钮、解约角标都不生效。
+- 甜蜜乐章：旗下最多 **3 位**，`protagonist` 即主角 **杜云芊**（红发双马尾），恒占一位——用户既扮演经纪人也是艺人。头像 `public/images/sweet/protagonist-logo.png` 来自 `E:/Pictures/mxzy3/甜蜜乐章/2/620-1.bmp`，**不是卫亚那张**；回归会逐字节比对，防止再复制错图。她没有攻略节点，作为固定项插进选择器，`normaliseArtists()` 在读存档 / 重置 / 导入三条路径都保证归位；被主角挤掉的艺人转为「已解约」而不是消失，进度线照常保留。点击主角按钮、解约角标都不生效。
 - 甜站的 `poolSkip` / `branchPrefix` 为空（没有路欧桑分支），`config.groups` 给出三组 chips（经纪人事件簿 / 角色攻略 / 支线攻略）；`unifiedSave: false` 让存档面板导出 tracker-only 信封（`sweet-tracker-save`）、不带 CG 与六大通告段，文件名前缀「甜蜜乐章」。
-- 回归 `scripts/cdp_sweet_tracker.mjs`（29 项）覆盖两个页签与 `#/tracker`、主角锁死与 3 人上限、四组 chips、事件池前缀、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜站的进度 / 备忘键，可反复运行。
+- 回归 `scripts/cdp_sweet_tracker.mjs`（31 项）覆盖两个页签与 `#/tracker`、主角姓名与头像（不与任何角色头像重复）、主角锁死与 3 人上限、三组 chips、事件池前缀、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜站的进度 / 备忘键，可反复运行。
 
 ## 锚点跳转
 

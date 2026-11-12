@@ -118,12 +118,14 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
   poolSkip: {},
   protagonist: {
     id: 'protagonist',
-    title: '主角',
+    // 主角是杜云芊（红发双马尾），头像取自 甜蜜乐章/2/620-1.bmp。
+    // 别再拿卫亚的头像：两人长得完全不像，之前复制错过一次。
+    title: '杜云芊',
     avatar: 'images/sweet/protagonist-logo.png',
-    hint: '主角就是我们自己——既扮演经纪人也是旗下艺人，本周目固定在签约名单里，不能解约。',
+    hint: '杜云芊（主角）就是我们自己——既扮演经纪人也是旗下艺人，本周目固定在签约名单里，不能解约。',
   },
   setupIntro:
-    '旗下最多 3 位，主角固定占一位（我们既当经纪人也是艺人）；解约的艺人仍会留在追踪名单里，任务线与已勾选的进度都保留。点按钮＝加入 / 移出追踪，点右上角角标＝解约 / 复签。',
+    '旗下最多 3 位，主角杜云芊固定占一位（我们既当经纪人也是艺人）；解约的艺人仍会留在追踪名单里，任务线与已勾选的进度都保留。点按钮＝加入 / 移出追踪，点右上角角标＝解约 / 复签。',
   includeReleasedTip: '已解约艺人的线仍在事件池里，只是默认不计入完成度',
   archiveFormat: 'sweet-tracker-save',
   archiveFilePrefix: '甜蜜乐章',

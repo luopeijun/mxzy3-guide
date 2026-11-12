@@ -157,6 +157,15 @@ async function main() {
     picker.exists && picker.id === 'protagonist' && picker.disabled && picker.text.includes('固定') && !picker.badge,
     JSON.stringify(picker));
   check('主角头像在人名左边', picker.avatar.includes('protagonist-logo'), picker.avatar);
+  check('主角按钮显示姓名「杜云芊」', picker.text.includes('杜云芊'), picker.text);
+  // 主角是杜云芊（甜蜜乐章/2/620-1.bmp），曾误用卫亚的头像：锁死不能与
+  // 任何角色头像重复。直接从仓库里比字节，不依赖外部素材目录。
+  const imgDir = new URL('../public/images/sweet/', import.meta.url);
+  const protagonistPng = fs.readFileSync(new URL('protagonist-logo.png', imgDir));
+  const duplicated = fs.readdirSync(imgDir)
+    .filter((f) => f.endsWith('-logo.png') && f !== 'protagonist-logo.png')
+    .filter((f) => fs.readFileSync(new URL(f, imgDir)).equals(protagonistPng));
+  check('主角头像不与任何角色头像重复（杜云芊 ≠ 卫亚）', duplicated.length === 0, duplicated.join(','));
   check('展开区说明主角既当经纪人也是艺人', picker.hint.includes('既扮演经纪人也是旗下艺人'), picker.hint);
   check('选择器说明写的是最多 3 位', picker.intro.includes('最多 3 位'), picker.intro);
 
