@@ -5,14 +5,14 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 102,
-    "conditions": 74,
+    "rows": 101,
+    "conditions": 73,
     "notes": 28,
     "scopeCounts": {
       "artist": 32,
       "global": 29,
       "group": 7,
-      "notice": 3,
+      "notice": 2,
       "role": 3
     },
     "eventAnchorsChecked": 2013
@@ -31,7 +31,7 @@
       "id": "proud-of-the-world",
       "title": "笑傲天际",
       "guideNode": "notices/proud-of-the-world",
-      "conditionCount": 11,
+      "conditionCount": 10,
       "noteCount": 5,
       "slots": [
         "main"
@@ -115,25 +115,6 @@
         "href": "#/guide/notices/kunlun-adventure~ev0",
         "node": "notices/kunlun-adventure",
         "event": "62"
-      }
-    },
-    {
-      "id": "proud.male",
-      "notice": "proud-of-the-world",
-      "slot": "main",
-      "phase": "trigger",
-      "kind": "condition",
-      "type": "flag",
-      "scope": "notice",
-      "name": "旗下男艺人 ≥1",
-      "target": "1",
-      "hint": "通告为男主角；男配角不算特殊国际通告",
-      "source": "表+攻略",
-      "link": {
-        "kind": "guide",
-        "href": "#/guide/notices/proud-of-the-world~ev19",
-        "node": "notices/proud-of-the-world",
-        "event": "92"
       }
     },
     {

@@ -65,8 +65,8 @@ class TestSpecialsJson(unittest.TestCase):
     def test_counts_match_the_reviewed_table(self):
         data = _json()
         s = data["stats"]
-        self.assertEqual(s["rows"], 102)
-        self.assertEqual(s["conditions"], 74)
+        self.assertEqual(s["rows"], 101)
+        self.assertEqual(s["conditions"], 73)
         self.assertEqual(s["notes"], 28)
         self.assertEqual(len(data["notices"]), 7)
         self.assertEqual(

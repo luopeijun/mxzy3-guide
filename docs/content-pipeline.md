@@ -33,7 +33,7 @@
 
 这是**第三条独立管线**，和通告库、攻略正文都不共用解析脚本。它服务 `#/specials` 条件看板，刻意不自动从攻略正文抽条件（条件散在提醒句、括号、区间、否定和时间窗里，抽不准且改一句就崩）：
 
-- `sources/special-notices.tsv`：人工维护的唯一内容来源，102 行 × 13 列（BOM + LF），六个通告各一列拆成行。**条件行 74 条**（计入达标数）、**只读备注行 28 条**（时间线与「注」，零状态、不计数、只跳事件追踪器）。`verify` 列保留 10 条裁决的依据；只要还有 `?` 开头的疑点，运行时数据就拒绝生成。改这张表时按字节补，别手抄整份（弯引号会被改成直引号）。
+- `sources/special-notices.tsv`：人工维护的唯一内容来源，101 行 × 13 列（BOM + LF），六个通告各一列拆成行。**条件行 73 条**（计入达标数）、**只读备注行 28 条**（时间线与「注」，零状态、不计数、只跳事件追踪器）。`verify` 列保留 10 条裁决的依据；只要还有 `?` 开头的疑点，运行时数据就拒绝生成。改这张表时按字节补，别手抄整份（弯引号会被改成直引号）。
 - `scripts/build_specials_review.py`：校验表结构、把 `节点id#事件号` 逐条对到 `guide.json` 的事件块、生成 `outputs/specials-review.html` 审阅页（不入库）。10 条裁决记录在 `DECISIONS` 常量里，改表时可回查。
 - `scripts/extract_specials.py` → `public/data/specials.json`（约 56KB，进入「六大通告」tab 才 fetch）。生成时**复用审阅页那份节点与深链校验**，把 `notices/angel#3` 直接算成 `#/guide/notices/angel~ev19`；`tracker:` 开头的行落成 `#/tracker`。守护测试在 `scripts/test_extract_specials.py`（7 项），其中两条是硬拦：表里塞未裁决疑点、或事件号写成不存在的 `#9999`，都必须直接失败。
 - 每行字段：`id / notice / slot / phase / kind / type / scope / name / target / hint / link / source / verify`。`slot` 是槽位骨架（`main` / `group` / `role:男主` 等），`scope` 只写「这条该读谁的数值」这条**规则**——`global` 公司共享、`artist` 按艺人、`group` 按团体、`role` 按角色位、`notice` 仅本通告。**表里绝不写艺人名**，具体是谁由前端「指派艺人」在运行时产生。

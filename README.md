@@ -131,7 +131,7 @@ npm run test:guide  # 数据校验
   - 同名证书 / 公司数值改一处多卡同步，带「共享」徽标
   - 时间线备注只读、零状态，每条跳回事件追踪器
   - 进度独立存档 `guide.specials.v1`，与追踪器、CG 图鉴互不干扰
-- 数据管线新增 `sources/special-notices.tsv` → `scripts/extract_specials.py` → `public/data/specials.json`（74 条条件 + 28 条只读备注，深链逐条对过攻略事件号）
+- 数据管线新增 `sources/special-notices.tsv` → `scripts/extract_specials.py` → `public/data/specials.json`（73 条条件 + 28 条只读备注，深链逐条对过攻略事件号）
 
 ### v1.4.2
 

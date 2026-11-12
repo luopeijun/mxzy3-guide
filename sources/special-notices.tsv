@@ -1,6 +1,5 @@
 ﻿id	notice	slot	phase	kind	type	scope	name	target	hint	link	source	verify
 _global.paydebt	_global	-	prepare	note	flag	global	还清贺总欠款 → 公园找塔罗小魔女，开启六大	-	只有昆仑历险刚需；其他通告不触发该对话亦可正常进行	notices/kunlun-adventure#62	表+攻略	-
-proud.male	proud-of-the-world	main	trigger	condition	flag	notice	旗下男艺人 ≥1	1	通告为男主角；男配角不算特殊国际通告	notices/proud-of-the-world#92	表+攻略	-
 proud.medicine4	proud-of-the-world	-	trigger	condition	count	global	给金父送药	4	第二年送药 4 次后公园找老爸	notices/proud-of-the-world#87	表+攻略	-
 proud.fathersday2	proud-of-the-world	-	trigger	condition	count	global	过完父亲节（8.8）	2	送第四次药且过完第二次父亲节后触发	notices/proud-of-the-world#87	表+攻略	-
 proud.xiake5	proud-of-the-world	-	trigger	condition	count	global	侠客行事件触发	5	专辑可不拿，但第 1 次一定要触发；攻略写触发第 5 次时赠歌	notices/proud-of-the-world#76	表+攻略	-
