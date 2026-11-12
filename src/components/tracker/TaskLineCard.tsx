@@ -106,6 +106,7 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
         </span>
         {step.label && (
           <span
+            data-step-label
             className={cn(
               'mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs px-[5px] text-center text-ui-2xs font-bold leading-[1.7]',
               skipped
@@ -167,6 +168,8 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
           {details.map((detail, i) => {
             // 原文一字不改，只按前缀分层次：时间做成行内小标签，概要当正文，
             // 提示单独一行用细线标出（不再整块黄底，一屏多个便签会太花）。
+            // 时间标签刻意用冷调蓝灰而不是品牌粉：和上方编号 pill（粉底）、
+            // 提示（金）三种不同色系，避免两个粉色小块被误认成同一类信息。
             const role = /^时间[：:]/.test(detail.text)
               ? 'time'
               : detail.kind === 'note' || /^提示[：:]/.test(detail.text)
@@ -181,7 +184,7 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
                 className={cn(
                   'text-ui-xs leading-[1.8] break-words',
                   role === 'time' &&
-                    'shrink-0 rounded-ui-xs border border-brand-line bg-brand-soft px-1.5 text-ui-2xs font-semibold text-brand-strong',
+                    'shrink-0 rounded-ui-xs border border-tag-news/35 bg-tag-news-soft px-1.5 text-ui-2xs font-semibold text-tag-news',
                   role === 'body' && 'min-w-[180px] flex-1 text-ink',
                   role === 'tip' && 'basis-full border-l-2 border-gold-line pl-2 text-gold',
                 )}

@@ -3,7 +3,8 @@ import fs from 'node:fs';
 
 /* 甜蜜乐章事件追踪器回归：两个页签与 #/tracker 路由、主角恒占一个签约位
    （最多 4 人＝主角 + 3 位艺人、不可解约、头像在人名左边）、事件步骤的
-   时间 / 概要 / 提示常驻显示在步骤卡里（无展开 / 收起按钮与单步箭头）、
+   时间 / 概要 / 提示常驻显示在步骤卡里（无展开 / 收起按钮与单步箭头，
+   时间标签用蓝灰、与粉色编号 pill 区分底色）、
    头部只剩置顶 / 放弃 / 移出池子、事件池
    按甜站类目分组（经纪人事件簿只收主线 / 公司改建 / 服装三页）、进度与
    存档键和明星志愿3 完全隔离、存档面板不带 CG / 六大通告。
@@ -329,6 +330,8 @@ async function main() {
     const boxes = [...(card?.querySelectorAll('[data-step-details]') ?? [])];
     const details = [...scope.querySelectorAll('[data-step-detail]')];
     const tip = details.find(d => d.dataset.stepDetailRole === 'tip');
+    const timeTag = details.find(d => d.dataset.stepDetailRole === 'time');
+    const labelPill = scope.querySelector('[data-step-label]');
     const toolbar = [...(card?.firstElementChild?.querySelectorAll('button') ?? [])]
       .map(b => b.textContent.trim())
       .filter(t => /置顶|放弃|移出池子|恢复进池|恢复追踪|展开全部|收起全部/.test(t));
@@ -342,6 +345,8 @@ async function main() {
       text: details.map(d => d.textContent.trim()).join(' '),
       tipBg: tip ? getComputedStyle(tip).backgroundColor : null,
       tipBorderLeft: tip ? getComputedStyle(tip).borderLeftWidth : null,
+      timeBg: timeTag ? getComputedStyle(timeTag).backgroundColor : null,
+      labelBg: labelPill ? getComputedStyle(labelPill).backgroundColor : null,
       arrows: scope.querySelectorAll('[data-step-expand]').length,
       expandAll: scope.querySelectorAll('[data-line-expand-all]').length,
       collapseAll: scope.querySelectorAll('[data-line-collapse-all]').length,
@@ -372,6 +377,10 @@ async function main() {
       /rgba\(0, 0, 0, 0\)|transparent/.test(flat.tipBg ?? '') &&
       parseFloat(flat.tipBorderLeft ?? '') >= 2,
     JSON.stringify({ roles: flat.roles, tipBg: flat.tipBg, border: flat.tipBorderLeft }));
+  check('时间标签与编号 pill 明显区分（不是同款粉底）',
+    !!flat.timeBg && !!flat.labelBg && flat.timeBg !== flat.labelBg &&
+      !/transparent|rgba\(0, 0, 0, 0\)/.test(flat.timeBg),
+    JSON.stringify({ time: flat.timeBg, label: flat.labelBg }));
   check('没有详情的步骤不渲染空详情框',
     flat.rows >= flat.rowsWithDetails && flat.boxes === flat.rowsWithDetails,
     JSON.stringify({ rows: flat.rows, boxes: flat.boxes }));

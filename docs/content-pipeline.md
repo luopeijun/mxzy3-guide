@@ -98,12 +98,12 @@
 - 甜蜜乐章：旗下最多 **4 位**（主角 + 还能再签 3 位艺人），`protagonist` 即主角 **杜云芊**（红发双马尾），恒占一位。头像 `public/images/sweet/protagonist-logo.png` 来自 `E:/Pictures/mxzy3/甜蜜乐章/2/620-1.bmp`，**不是卫亚那张**；回归会逐字节比对，防止再复制错图。她没有攻略节点，作为固定项插进选择器，`normaliseArtists()` 在读存档 / 重置 / 导入三条路径都保证归位；被主角挤掉的艺人转为「已解约」而不是消失，进度线照常保留。点击主角按钮、解约角标都不生效。
 - 选择器展开区**只保留一行操作说明**：不写 `protagonist.hint` 就不渲染主角说明框，`setupIntro` 也不要再加「既当经纪人也是艺人」之类的括注；`cdp_sweet_tracker.mjs` 会断言这两段文案都不出现。
 - **事件详情常驻**：甜站 event 块只放标题，「时间 / 概要 / 提示」是紧随其后、同一 `group` 的 `paragraph` / `note` 块（明星志愿3 的 `event.text` 本身就是整段正文）。`stepDetails: true` 让 `extractLines()` 把这些行收进 `TaskStep.details`，`TaskLineCard` **直接常驻渲染在步骤标题下方**，不折叠、不存展开状态——追踪器是逐条对照打勾用的，详情本来就该一眼看到；搜索也会命中详情文本。
-  - 详情区 `data-step-details` 用 `flex-wrap` 分三层：`data-step-detail-role` ＝ `time`（`时间：` 开头，浅色行内小标签）/ `body`（`概要：` 与无前缀正文，深色小字）/ `tip`（note 或 `提示：` 开头，独占一行、左侧 2px 金色细线 + 小字）。原文一字不改，只按前缀分样式；提示**不再用整块黄底**（122 步带提示，全平铺后一屏多个黄块会太花）。没有详情的 148 步不渲染详情区，步骤行靠 `min-h-[44px]` 保底不显得参差。
+  - 详情区 `data-step-details` 用 `flex-wrap` 分三层：`data-step-detail-role` ＝ `time`（`时间：` 开头，`bg-tag-news-soft` / `text-tag-news` 冷调蓝灰行内小标签）/ `body`（`概要：` 与无前缀正文，深色小字）/ `tip`（note 或 `提示：` 开头，独占一行、左侧 2px 金色细线 + 小字）。**时间标签刻意不用品牌粉**：上方编号 pill 是 `bg-brand-soft` 粉底，两个粉块挨着容易被误认成同一类信息，所以编号＝粉、时间＝蓝灰、提示＝金各占一种色系；`cdp_sweet_tracker.mjs` 会读 computed style 比对 `data-step-label` 与时间标签底色，防止改回撞色。原文一字不改，只按前缀分样式；提示**不再用整块黄底**（122 步带提示，全平铺后一屏多个黄块会太花）。没有详情的 148 步不渲染详情区，步骤行靠 `min-h-[44px]` 保底不显得参差。
   - 头部工具按钮因此只剩「置顶 / 放弃 / 移出池子」三个；**线级「展开全部 / 收起全部」、单步 `data-step-expand` 箭头、整份 `expandedSteps` 状态全部删除**，卡片本身仍可点标题折叠整条线。
   - 主站不开开关、没有 `details` → 详情区 / 层次属性都不渲染，行为零变化；`cdp_tracker_content.mjs` 有防呆断言。
 - **经纪人事件簿白名单**：`poolNodeAllowlist: { 'sweet-guide': [...] }` 只放行 `main-story` 主线攻略、`company` 公司改建攻略、`outfits` 服装获得方法和剧情三页（及其后代）；`extractLines()` 对配了白名单的类目跳过其它节点，没配的类目全收。「自制通告一览」等资料页也用 `event` 块排版（每个通告一条），原先被拆成 24 条人名重复的怪线，现在不进池；其它资料页本来就没有 event。攻略目录 / 正文一个字没动，只是追踪器不再把它们当待办。经纪人组从 35 条线降到 11 条（主线 4 + 改建 1 + 服装 6），池总数 83 → 59。
 - 甜站的 `poolSkip` / `branchPrefix` 为空（没有路欧桑分支），`config.groups` 给出三组 chips（经纪人事件簿 / 角色攻略 / 支线攻略）；`unifiedSave: false` 让存档面板导出 tracker-only 信封（`sweet-tracker-save`）、不带 CG 与六大通告段，文件名前缀「甜蜜乐章」。
-- 回归 `scripts/cdp_sweet_tracker.mjs`（41 项）覆盖两个页签与 `#/tracker`、主角姓名与头像（不与任何角色头像重复）、主角锁死与 4 人上限、详情常驻且折叠控件已彻底移除、时间 / 概要 / 提示三层样式、头部只剩三个按钮、卡片仍可折叠、三组 chips、事件池前缀与经纪人三页白名单（无自制通告线）、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜站的进度 / 备忘键，可反复运行。
+- 回归 `scripts/cdp_sweet_tracker.mjs`（42 项）覆盖两个页签与 `#/tracker`、主角姓名与头像（不与任何角色头像重复）、主角锁死与 4 人上限、详情常驻且折叠控件已彻底移除、时间 / 概要 / 提示三层样式、时间标签与编号 pill 不同底色、头部只剩三个按钮、卡片仍可折叠、三组 chips、事件池前缀与经纪人三页白名单（无自制通告线）、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜站的进度 / 备忘键，可反复运行。
 
 ## 锚点跳转
 
