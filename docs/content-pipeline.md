@@ -132,8 +132,8 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章（11 项），共 70 项 |
-| `npm run test:sweet` | 只跑甜蜜乐章的解析回归（11 项） |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章（23 项），共 82 项 |
+| `npm run test:sweet` | 只跑甜蜜乐章的解析回归（23 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 | `python scripts/extract_sweet_guide.py` | 重生成甜蜜乐章的 `public/data/sweet/guide.json` |
