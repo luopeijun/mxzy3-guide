@@ -168,8 +168,9 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
           {details.map((detail, i) => {
             // 原文一字不改，只按前缀分层次：时间做成行内小标签，概要当正文，
             // 提示单独一行用细线标出（不再整块黄底，一屏多个便签会太花）。
-            // 时间标签刻意用冷调蓝灰而不是品牌粉：和上方编号 pill（粉底）、
-            // 提示（金）三种不同色系，避免两个粉色小块被误认成同一类信息。
+            // 时间标签刻意压到最淡：近乎白的底 + 一圈淡边 + 灰字，和上方
+            // 实心粉编号 pill 靠「实心 / 空心」区分，不再叠第二个彩色块。
+            // 之前试过冷调蓝灰，太抢眼；这块只是元信息，不该比编号还重。
             const role = /^时间[：:]/.test(detail.text)
               ? 'time'
               : detail.kind === 'note' || /^提示[：:]/.test(detail.text)
@@ -184,7 +185,7 @@ function StepRow({ lineId, step, query }: { lineId: string; step: TaskStep; quer
                 className={cn(
                   'text-ui-xs leading-[1.8] break-words',
                   role === 'time' &&
-                    'shrink-0 rounded-ui-xs border border-tag-news/35 bg-tag-news-soft px-1.5 text-ui-2xs font-semibold text-tag-news',
+                    'shrink-0 rounded-ui-xs border border-line-strong bg-surface-soft px-1.5 text-ui-2xs font-medium text-ink-muted',
                   role === 'body' && 'min-w-[180px] flex-1 text-ink',
                   role === 'tip' && 'basis-full border-l-2 border-gold-line pl-2 text-gold',
                 )}

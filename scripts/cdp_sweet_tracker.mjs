@@ -4,7 +4,7 @@ import fs from 'node:fs';
 /* 甜蜜乐章事件追踪器回归：两个页签与 #/tracker 路由、主角恒占一个签约位
    （最多 4 人＝主角 + 3 位艺人、不可解约、头像在人名左边）、事件步骤的
    时间 / 概要 / 提示常驻显示在步骤卡里（无展开 / 收起按钮与单步箭头，
-   时间标签用蓝灰、与粉色编号 pill 区分底色）、
+   时间标签极淡中性描边、与实心粉编号 pill 区分）、
    头部只剩置顶 / 放弃 / 移出池子、事件池
    按甜站类目分组（经纪人事件簿只收主线 / 公司改建 / 服装三页）、进度与
    存档键和明星志愿3 完全隔离、存档面板不带 CG / 六大通告。
@@ -346,6 +346,14 @@ async function main() {
       tipBg: tip ? getComputedStyle(tip).backgroundColor : null,
       tipBorderLeft: tip ? getComputedStyle(tip).borderLeftWidth : null,
       timeBg: timeTag ? getComputedStyle(timeTag).backgroundColor : null,
+      timeRgb: (() => {
+        if (!timeTag) return null;
+        // 注意：这段跑在模板字符串里，别写 \d —— 反斜杠会被外层吃掉。
+        const raw = getComputedStyle(timeTag).backgroundColor;
+        const parts = raw.slice(raw.indexOf('(') + 1, raw.lastIndexOf(')'))
+          .split(',').map(s => Number(s.trim()));
+        return parts.length >= 3 ? { r: parts[0], g: parts[1], b: parts[2] } : null;
+      })(),
       labelBg: labelPill ? getComputedStyle(labelPill).backgroundColor : null,
       arrows: scope.querySelectorAll('[data-step-expand]').length,
       expandAll: scope.querySelectorAll('[data-line-expand-all]').length,
@@ -381,6 +389,13 @@ async function main() {
     !!flat.timeBg && !!flat.labelBg && flat.timeBg !== flat.labelBg &&
       !/transparent|rgba\(0, 0, 0, 0\)/.test(flat.timeBg),
     JSON.stringify({ time: flat.timeBg, label: flat.labelBg }));
+  // 用户否决了冷调蓝灰（嫌抢眼），时间标签要保持「近乎白 + 中性」：
+  // 三通道差值 ≤12 且整体够亮，彩色填充（粉 / 蓝灰）都会被挡住。
+  check('时间标签保持极淡中性色，不再上彩色填充',
+    !!flat.timeRgb && flat.timeRgb.r >= 240 &&
+      Math.max(flat.timeRgb.r, flat.timeRgb.g, flat.timeRgb.b) -
+        Math.min(flat.timeRgb.r, flat.timeRgb.g, flat.timeRgb.b) <= 12,
+    JSON.stringify(flat.timeRgb));
   check('没有详情的步骤不渲染空详情框',
     flat.rows >= flat.rowsWithDetails && flat.boxes === flat.rowsWithDetails,
     JSON.stringify({ rows: flat.rows, boxes: flat.boxes }));
