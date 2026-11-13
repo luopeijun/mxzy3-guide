@@ -45,7 +45,7 @@ export const SWEET_CG_CONFIG: CgSiteConfig = {
   archive: false,
   showCondition: false,
   showName: false,
-  metaNote: ' · 图片陆续导入中',
+  metaNote: '',
   missingImageNote: '张图片待导入',
   emptyText: '这一组还没有 CG。图片按人物放进素材目录后重新生成，这里会自动出现。',
   emptyFilteredText: '这一组已经全部收集完了。',

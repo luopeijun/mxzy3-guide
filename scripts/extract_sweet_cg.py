@@ -1,36 +1,42 @@
-"""Build the 甜蜜乐章 CG gallery from one folder per character.
+"""Build the 甜蜜乐章 CG gallery from the organised source folder.
 
 The source images arrive one by one with **no name and no unlock condition**;
-the file name is the only label we have, so it doubles as the displayed
-number::
+the user sorts them into one folder per character::
 
-    outputs/sweet-cg/<groupSlug>/<code>.<bmp|png|jpg|webp>
-        -> public/images/sweet-cg/<groupSlug>/<code>.webp
+    E:/Pictures/mxzy3/甜蜜乐章/cg/<人物名>/<原编号>.<bmp|png|jpg|webp>
+        -> public/images/sweet-cg/<slug>/<原编号>.webp   (每个角色独立)
+        -> public/images/sweet-cg/_shared/<md5前8位>.webp  (两人共用的同一张)
         -> public/data/sweet/cg.json
 
-``groupSlug`` is the tail of the guide node id (``cheng-zhongxuan``, …), plus
-``protagonist`` for 杜云芊 (she has no guide node).  ``code`` is sorted with a
-natural key so ``1, 2, 10`` stays in that order.  The script is a **full
-rebuild**: keep every image you have been sent in ``outputs/sweet-cg/`` (that
-folder is ignored by git), then rerun it after each batch.
+``<人物名>`` 是中文（杜云芊、丹尼斯…），脚本用 ``FOLDER_MAP`` 翻译成
+攻略节点 slug（protagonist、danisi…）。``<原编号>`` 只是文件名，不参与展示——
+展示用的「全新序号」由脚本按文件名**自然序**给每个角色重新从 1 编，所以图片文件名
+用的是稳定的「原编号」而不是序号，以后调顺序只动 json 里的 order/code，不搬家图片。
 
-Group names and circular avatars come from ``public/data/sweet/guide.json``'s
-character nodes, exactly like ``extract_cg.py`` does for the main site.  Items
-carry only an id / group / order / code / image; ``name`` and ``condition`` are
-empty strings and there is no ``guide`` link yet — 攻略跳转 is a later step.
-``width`` / ``height`` stay 0 because the gallery never consumes them (this
-also keeps ``test_sweet_cg.py`` free of any Pillow dependency).
+**共用 CG**：整批文件按 MD5 去重。同一张图若出现在两个角色文件夹里（已确认只有
+丹尼斯 / 史蒂芬 的 ``561-1``），只生成一张 webp（落在 ``_shared/``），两个角色的条目
+共享同一个 ``collectionId``，于是「收集」只点一次就两边同时点亮。单纯游戏编号撞了、
+但字节不同（杜云芊 / 沈 的 83-1、杜云芊 / 纪翔 的 125~128）不算共用，各自保留。
+
+分组、圆形头像、guideId 全部来自 ``public/data/sweet/guide.json`` 的角色节点，和
+``extract_cg.py`` 处理主站一样。条目只带 id / group / order / code / image /
+collectionId；``name`` 与 ``condition`` 留空、没有 ``guide`` 链接（攻略跳转是以后步骤）。
+``width`` / ``height`` 恒为 0：画廊不消费它们，也避免 ``test_sweet_cg.py`` 依赖 Pillow。
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-import shutil
+from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "outputs" / "sweet-cg"
+# 用户整理好的源目录；不存在时退化到仓库内（gitignored）的副本，保证脚本可移植。
+PICTURES_SOURCE = Path(r"E:/Pictures/mxzy3/甜蜜乐章/cg")
+FALLBACK_SOURCE = ROOT / "outputs" / "sweet-cg"
+SRC = PICTURES_SOURCE if PICTURES_SOURCE.is_dir() else FALLBACK_SOURCE
 OUT_IMAGES = ROOT / "public" / "images" / "sweet-cg"
 OUT_GROUPS = ROOT / "public" / "data" / "sweet" / "cg.json"
 GUIDE_DATA = ROOT / "public" / "data" / "sweet" / "guide.json"
@@ -40,7 +46,20 @@ IMAGE_EXTS = {".bmp", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
 MAX_EDGE = 1400
 QUALITY = 82
 
-# 主角没有攻略节点，头像单独固定（620-1.bmp 转出来的那张，不是卫亚）。
+# 源文件夹的中文名 -> 攻略节点 slug。杜云芊没有攻略节点，单独固定为 protagonist。
+FOLDER_MAP = {
+    "杜云芊": "protagonist",
+    "丹尼斯": "danisi",
+    "卫亚": "wei-ya",
+    "史蒂芬": "shi-difen",
+    "城仲瑄": "cheng-zhongxuan",
+    "姚子奇": "yao-ziqi",
+    "慕容": "murong-hexi",
+    "沈": "shen-weizhen",
+    "纪翔": "ji-xiang",
+}
+
+# 主角没有攻略节点，头像固定（620-1.bmp 转出来的那张，不是卫亚）。
 PROTAGONIST = {
     "id": "protagonist",
     "name": "杜云芊",
@@ -50,7 +69,6 @@ PROTAGONIST = {
 }
 
 # 支线五位也有圆圈头像；确认她们有 CG 后把开关翻成 True，分组就会一起出现。
-# 单独放着，免得框架阶段侧栏挂五个永远 0/0 的空组。
 ENABLE_EXTRA_GROUPS = False
 EXTRA_GROUPS = [
     ("tian-qing", "天晴"),
@@ -65,10 +83,27 @@ def read_text(path: Path) -> str:
     return path.read_bytes().decode("utf-8-sig")
 
 
+def md5_hex(path: Path) -> str:
+    digest = hashlib.md5()
+    digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
 def natural_key(code: str) -> list[object]:
-    """`1`, `2`, `10` instead of `1`, `10`, `2`."""
-    return [int(part) if part.isdigit() else part.lower()
-            for part in re.split(r"(\d+)", code)]
+    """`1`, `2`, `10` 而非 `1`, `10`, `2`；且对「1」与「561-1」这种混合型也能比较。
+
+    每一项统一成 ``(类型, 数字, 文本)`` 三元组：纯数字段 type=0，文本段 type=1，
+    因此任意两个 key 都可比，不会在 ``10-1``（首段空串）与 ``1``（首段 1）之间崩 TypeError。
+    """
+    parts: list[object] = []
+    for token in re.split(r"(\d+)", code):
+        if not token:
+            continue
+        if token.isdigit():
+            parts.append((0, int(token), ""))
+        else:
+            parts.append((1, 0, token.lower()))
+    return parts
 
 
 def build_groups() -> list[dict]:
@@ -113,20 +148,27 @@ def build_groups() -> list[dict]:
     return groups
 
 
-def scan_sources(groups: list[dict]) -> list[dict]:
-    """Return one job per source image, already in display order."""
+def scan_sources(groups: list[dict]) -> tuple[list[dict], dict[str, Path]]:
+    """Return (items, image_jobs).
+
+    ``items`` 已按「分组优先、组内按自然序」排好，可直接写进 cg.json。
+    ``image_jobs`` 是 webp 路径 -> 源文件，共享图只出现一次。
+    """
     known = {group["id"]: group for group in groups}
-    jobs: list[dict] = []
-    seen: set[str] = set()
+    folder_entries: dict[str, list[tuple[str, Path, str]]] = {}
 
     for folder in sorted(SRC.iterdir()) if SRC.is_dir() else []:
         if not folder.is_dir() or folder.name.startswith("."):
             continue
-        if folder.name not in known:
+        if folder.name not in FOLDER_MAP:
             raise SystemExit(
                 f"unknown CG group folder {folder.name!r}; expected one of "
-                + ", ".join(known)
+                + ", ".join(FOLDER_MAP)
             )
+        slug = FOLDER_MAP[folder.name]
+        if slug not in known:
+            raise SystemExit(f"folder {folder.name!r} maps to unknown group {slug!r}")
+
         by_code: dict[str, Path] = {}
         for source in folder.iterdir():
             if not source.is_file() or source.suffix.lower() not in IMAGE_EXTS:
@@ -141,45 +183,77 @@ def scan_sources(groups: list[dict]) -> list[dict]:
                 )
             by_code[code] = source
 
+        # 同角色内若同一张图出现两次（不同扩展名等），按自然序保第一个、其余丢弃。
+        entries: list[tuple[str, Path, str]] = []
+        seen_md5: set[str] = set()
         for code in sorted(by_code, key=natural_key):
-            item_id = f"{folder.name}-{code}"
-            if item_id in seen:
+            source = by_code[code]
+            digest = md5_hex(source)
+            if digest in seen_md5:
+                continue
+            seen_md5.add(digest)
+            entries.append((code, source, digest))
+        folder_entries[slug] = entries
+
+    # 全局 MD5 -> 出现于哪些角色；>1 个角色即「共用 CG」，共享一个收集位。
+    md5_slugs: dict[str, set[str]] = defaultdict(set)
+    for slug, entries in folder_entries.items():
+        for _code, _source, digest in entries:
+            md5_slugs[digest].add(slug)
+
+    items: list[dict] = []
+    image_jobs: dict[str, Path] = {}
+    seen_ids: set[str] = set()
+
+    for slug, entries in folder_entries.items():
+        for seq, (code, source, digest) in enumerate(entries, start=1):
+            slugs = sorted(md5_slugs[digest])
+            shared = len(slugs) > 1
+            if shared:
+                collection_id = f"shared-{digest[:8]}"
+                image = f"images/sweet-cg/_shared/{digest[:8]}.webp"
+            else:
+                collection_id = f"{slug}-{seq}"
+                image = f"images/sweet-cg/{slug}/{code}.webp"
+            item_id = f"{slug}-{seq}"
+            if item_id in seen_ids:
                 raise SystemExit(f"duplicate CG id {item_id!r}")
-            seen.add(item_id)
-            jobs.append({
-                "groupId": folder.name,
+            seen_ids.add(item_id)
+            items.append({
                 "id": item_id,
-                "code": code,
-                "source": by_code[code],
-                "target": OUT_IMAGES / folder.name / f"{code}.webp",
-                "image": f"images/sweet-cg/{folder.name}/{code}.webp",
+                "groupId": slug,
+                "order": seq,
+                "code": f"CG {seq:02d}",
+                "name": "",
+                "condition": "",
+                "image": image,
+                "collectionId": collection_id,
+                "width": 0,
+                "height": 0,
             })
-    return jobs
+            image_jobs.setdefault(image, source)
+
+    # 重新按「分组优先、组内按序号」排，画廊按数组顺序渲染。
+    ordered: list[dict] = []
+    for group in groups:
+        ordered.extend(sorted(
+            (it for it in items if it["groupId"] == group["id"]),
+            key=lambda it: it["order"],
+        ))
+    return ordered, image_jobs
 
 
-def build_payload(groups: list[dict], jobs: list[dict]) -> dict:
-    """Pure metadata — safe for the unit tests to recompute without Pillow."""
+def build_payload(groups: list[dict], items: list[dict]) -> dict:
+    """Pure metadata — 单测无需 Pillow 即可重算。"""
     counts = {group["id"]: 0 for group in groups}
-    for job in jobs:
-        counts[job["groupId"]] += 1
+    for item in items:
+        counts[item["groupId"]] += 1
     ordered_groups = [{**group, "count": counts[group["id"]]} for group in groups]
-
-    items = [{
-        "id": job["id"],
-        "groupId": job["groupId"],
-        "order": index,
-        "code": job["code"],
-        "name": "",
-        "condition": "",
-        "image": job["image"],
-        "width": 0,
-        "height": 0,
-    } for index, job in enumerate(jobs, start=1)]
-
+    unique_collectibles = {item["collectionId"] for item in items}
     return {
         "version": 1,
         "meta": {
-            "itemCount": len(items),
+            "itemCount": len(unique_collectibles),
             "groupCount": len(ordered_groups),
             "missingImageCount": sum(1 for item in items if item["image"] is None),
         },
@@ -188,40 +262,44 @@ def build_payload(groups: list[dict], jobs: list[dict]) -> dict:
     }
 
 
-def write_images(jobs: list[dict]) -> int:
+def write_images(image_jobs: dict[str, Path]) -> int:
     """Full rebuild: drop the old webp tree, then convert every source image."""
     from PIL import Image
 
     if OUT_IMAGES.is_dir():
+        import shutil
         shutil.rmtree(OUT_IMAGES)
     total = 0
-    for job in jobs:
-        job["target"].parent.mkdir(parents=True, exist_ok=True)
-        with Image.open(job["source"]) as opened:
-            image = opened.convert("RGB")
-            image.thumbnail((MAX_EDGE, MAX_EDGE), Image.LANCZOS)
-            image.save(job["target"], "WEBP", quality=QUALITY, method=6)
-        total += job["target"].stat().st_size
+    for image, source in image_jobs.items():
+        target = ROOT / "public" / image
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with Image.open(source) as opened:
+            picture = opened.convert("RGB")
+            picture.thumbnail((MAX_EDGE, MAX_EDGE), Image.LANCZOS)
+            picture.save(target, "WEBP", quality=QUALITY, method=6)
+        total += target.stat().st_size
     return total
 
 
 def main() -> None:
     groups = build_groups()
-    jobs = scan_sources(groups)
-    payload = build_payload(groups, jobs)
-    total_bytes = write_images(jobs)
+    items, image_jobs = scan_sources(groups)
+    payload = build_payload(groups, items)
+    total_bytes = write_images(image_jobs)
     OUT_GROUPS.parent.mkdir(parents=True, exist_ok=True)
-    # 与 public/data/*.json 的现有写法一致（Windows 上落 CRLF）；单测比对时
-    # 会把 CRLF 归一成 LF，避免平台差异造成假红。
-    OUT_GROUPS.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    # 与 public/data/*.json 的现有写法一致：按字节写、固定 LF，避免 Windows 上
+    # 写出的 CRLF 让单测比对时漂。
+    OUT_GROUPS.write_bytes(
+        (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
     )
     per_group = ", ".join(f"{g['name']} {g['count']}" for g in payload["groups"] if g["count"])
+    shared = sorted({it["collectionId"] for it in items if it["collectionId"].startswith("shared-")})
     print(
-        f"wrote {OUT_GROUPS.relative_to(ROOT)}: {len(payload['items'])} items / "
-        f"{len(payload['groups'])} groups, images {total_bytes / 1024:.0f} KB"
+        f"wrote {OUT_GROUPS.relative_to(ROOT)}: {len(payload['items'])} 条条目 / "
+        f"{len(payload['groups'])} 组 / {payload['meta']['itemCount']} 张唯一图"
+        + (f"，共用 {len(shared)} 张" if shared else "")
     )
-    print(f"groups with images: {per_group or '(none yet)'}")
+    print(f"分组张数：{per_group or '(none yet)'}")
 
 
 if __name__ == "__main__":

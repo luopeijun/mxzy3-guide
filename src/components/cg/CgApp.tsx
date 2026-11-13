@@ -43,6 +43,10 @@ function flashCard(id: string) {
   return () => cancelAnimationFrame(frame);
 }
 
+/** 一个条目的真实收集键：共享 CG 用 collectionId（两人同图同键，点一次双方亮），
+ *  其余用自身 id。主站条目无 collectionId，自然退化为 id，行为零变化。 */
+const collectionKey = (item: CgItem): string => item.collectionId ?? item.id;
+
 interface Props {
   data: CgData;
   /** 站点差异（存储键、攻略跳转、存档、文案）。省略即主站，行为零变化。 */
@@ -106,7 +110,17 @@ function GroupAvatar(
  *  「全部」才需要分页。收集开关在卡片底部信息栏，和「点图片看大图」互不干扰；
  *  右上角只留一个不点击的已收状态点，方便一眼扫过去。 */
 export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
-  const validIds = useMemo(() => new Set(data.items.map((item) => item.id)), [data.items]);
+  /** 收集键可能是共享 CG 的 `collectionId`（不在 item.id 里），所以白名单要
+   *  把每个条目的 id 与 collectionId 都收进来，`sanitiseCg` 才不会把共享键当
+   *  作脏数据丢掉。主站条目没有 collectionId，`?? id` 使其等价于原逻辑。 */
+  const validIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of data.items) {
+      set.add(item.id);
+      set.add(item.collectionId ?? item.id);
+    }
+    return set;
+  }, [data.items]);
   const [collected, setCollected] = useState<Set<string>>(() => readCg(validIds, config.storageKey));
   /** 分组记在 URL 里（`#/cg/group/<id>`），刷新、复制链接回来还是同一个人物。 */
   const [groupId, setGroupId] = useState(() => cgGroupId() || 'all');
@@ -207,14 +221,16 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
     setClearedSnapshot(null);
   };
 
-  /** 一键收集当前分组（「全部」页就是全部 204 张）里还没收的 CG；已收的不重复加。 */
+  /** 一键收集当前分组（「全部」页就是全部）里还没收的 CG；已收的不重复加。
+   *  按 collectionId 去重：共享 CG 只加一次。 */
   const collectAll = () => {
     if (groupItems.length - groupDone <= 0) return;
     const next = new Set(collected);
     let added = 0;
     for (const item of groupItems) {
-      if (!next.has(item.id)) {
-        next.add(item.id);
+      const key = collectionKey(item);
+      if (!next.has(key)) {
+        next.add(key);
         added += 1;
       }
     }
@@ -319,7 +335,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
     for (const item of data.items) {
       const entry = counts.get(item.groupId) ?? { total: 0, done: 0 };
       entry.total += 1;
-      if (collected.has(item.id)) entry.done += 1;
+      if (collected.has(collectionKey(item))) entry.done += 1;
       counts.set(item.groupId, entry);
     }
     return counts;
@@ -332,12 +348,12 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
     [data.items, groupId],
   );
   const groupDone = useMemo(
-    () => groupItems.reduce((sum, item) => sum + (collected.has(item.id) ? 1 : 0), 0),
+    () => groupItems.reduce((sum, item) => sum + (collected.has(collectionKey(item)) ? 1 : 0), 0),
     [groupItems, collected],
   );
   const filtered = useMemo(
     () => (onlyMissing
-      ? groupItems.filter((item) => !collected.has(item.id))
+      ? groupItems.filter((item) => !collected.has(collectionKey(item)))
       : groupItems),
     [groupItems, onlyMissing, collected],
   );
@@ -347,8 +363,10 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
   const activeName = groupId === 'all'
     ? '全部'
     : (data.groups.find((group) => group.id === groupId)?.name ?? '全部');
-  const percent = data.items.length
-    ? Math.round((collected.size / data.items.length) * 100)
+  // 总数用唯一的「可收集张数」（共享 CG 只算一次），而不是条目数；主站无共享，
+  // meta.itemCount 即条目数，因此主站这一行与原行为完全一致。
+  const percent = data.meta.itemCount
+    ? Math.round((collected.size / data.meta.itemCount) * 100)
     : 0;
 
   /** 切分组：状态与 URL 一起改，刷新后仍停在这一组。 */
@@ -413,7 +431,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
         </span>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1.5 text-ui-2xs tabular-nums text-ink-faint">
           <span data-cg-progress className="shrink-0 whitespace-nowrap">
-            已收集 {collected.size} / {data.items.length}
+            已收集 {collected.size} / {data.meta.itemCount}
           </span>
           <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-line phone:hidden">
             <span
@@ -492,7 +510,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
           className="flex w-[210px] shrink-0 flex-col overflow-y-auto rounded-ui-md border border-line bg-surface p-2 [scrollbar-gutter:stable] tab:w-full tab:overflow-x-auto tab:p-1.5"
         >
           <div className="flex flex-col gap-0.5 tab:flex-row tab:gap-1.5">
-            {groupButton('all', '全部', data.items.length, collected.size, undefined, true)}
+            {groupButton('all', '全部', data.meta.itemCount, collected.size, undefined, true)}
             {data.groups.map((group) => {
               const count = groupCounts.get(group.id) ?? { total: group.count, done: 0 };
               return groupButton(group.id, group.name, count.total, count.done, group.avatar);
@@ -546,17 +564,18 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
                 >
                   {visible.map((item) => {
                     const link = linkFor(item);
+                    const key = collectionKey(item);
                     return (
                       <li key={item.id}>
                         <CgCard
                           item={item}
-                          collected={collected.has(item.id)}
+                          collected={collected.has(key)}
                           size={size}
                           group={groupId === 'all' ? groupById.get(item.groupId) : undefined}
                           guideHref={link ? cgGuideHref(link) : undefined}
                           guideTitle={link ? cgGuideTitle(link) : undefined}
                           showName={config.showName}
-                          onToggle={() => toggle(item.id)}
+                          onToggle={() => toggle(key)}
                           onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
                         />
                       </li>
@@ -585,7 +604,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
         <CgLightbox
           item={lightboxItem}
           groupName={data.groups.find((group) => group.id === lightboxItem.groupId)?.name ?? '全部'}
-          collected={collected.has(lightboxItem.id)}
+          collected={collected.has(collectionKey(lightboxItem))}
           position={lightboxIndex + 1}
           total={lightbox.ids.length}
           hasPrev={lightboxIndex > 0}
@@ -598,7 +617,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
           showCondition={config.showCondition}
           onPrev={() => stepLightbox(-1)}
           onNext={() => stepLightbox(1)}
-          onToggle={() => toggle(lightboxItem.id)}
+          onToggle={() => toggle(collectionKey(lightboxItem))}
           onClose={closeLightbox}
         />
       )}
@@ -635,7 +654,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
               清除全部已收集？
             </h2>
             <p className="mt-2.5 text-ui-xs leading-[1.8] text-ink-muted">
-              会取消当前已收集的 {collected.size} 张（共 {data.items.length} 张）的勾选。
+              会取消当前已收集的 {collected.size} 张（共 {data.meta.itemCount} 张）的勾选。
               只清空 CG 收集，事件追踪进度与备忘录都不受影响；想留底的话，先在「全部存档」导出。
             </p>
             <div className="mt-4 flex gap-2">

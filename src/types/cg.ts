@@ -23,6 +23,11 @@ export interface CgItem {
   condition: string;
   /** 站点未提供图片时为 null，画廊渲染占位格但条目仍然可收集。 */
   image: string | null;
+  /** 收集去重键：两位人物的 CG 若是同一张图（MD5 相同），共享同一个
+   *  `collectionId`，于是「收集」只点一次就两个人物同时点亮。普通条目
+   *  （主站、以及人物专属 CG）没有这个字段；前端一律用 `collectionId ?? id`
+   *  作为收集键，主站因此零变化。 */
+  collectionId?: string;
   width: number;
   height: number;
   /** 攻略落点。`anchor` 缺省表示整页落点（一张 CG 散落在多个分支里时，锚到哪个都不对）。 */

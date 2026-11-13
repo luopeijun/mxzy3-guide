@@ -2,11 +2,13 @@ import http from 'node:http';
 import fs from 'node:fs';
 
 /* 甜蜜乐章 CG 图鉴回归：三个页签与 #/cg 路由、按人物分组的侧栏（主角杜云芊
-   头像不与卫亚撞图）、空清单时的骨架与提示、只有编号（无名称 / 获得条件 /
-   攻略跳转 / 存档面板）、收集进度写 sweet.cg.v1 且不动 guide.cg.v1。
+   头像不与卫亚撞图）、真实已导入数据下的顶栏计数（83 张唯一收集 / 9 个分组）、
+   共用 CG 在 DOM 与收集态上「只此一张」（丹尼斯 / 史蒂芬 的 561-1）、收集进度
+   写 sweet.cg.v1 且不动 guide.cg.v1。
 
-   仓库里的 cg.json 目前是空清单，所以脚本用第二段「假数据 + 覆盖 fetch」的
-   tab 验证卡片、勾选、灯箱、撤销等真实交互；假数据不入库、不改页面代码。
+   第一段用仓库真实 cg.json（已导入 83 张唯一、9 组、1 张共用）验证框架与共用
+   去重；第二段用「假数据 + 覆盖 fetch」验证卡片、勾选、共用 CG 只收集一次、
+   灯箱、撤销等真实交互。假数据不入库、不改页面代码。
 
    Usage: node scripts/cdp_sweet_cg.mjs [shot-prefix.png]
    前置：dev server 5173 + Chrome 调试端口 9339。 */
@@ -17,24 +19,35 @@ const SWEET = `${BASE}/sweet.html`;
 const CG_JSON = new URL('../public/data/sweet/cg.json', import.meta.url);
 const real = JSON.parse(fs.readFileSync(CG_JSON, 'utf8'));
 
+// 真实数据里的共用 CG：两条条目共享同一个 collectionId（落在 _shared/）。
+const realShared = real.items.filter((it) => it.collectionId?.startsWith('shared-'));
+const SHARED_COLL = realShared.length ? realShared[0].collectionId : null;
+
+// 第二段用的假数据：两张丹尼斯 / 史蒂芬 共用一张（collectionId 相同），验证
+// 「只收集一次、两边一起亮」。meta.itemCount 是「唯一可收集张数」，共享只算一次。
 const FIXTURE = {
   ...real,
   meta: { itemCount: 3, groupCount: real.groups.length, missingImageCount: 0 },
   items: [
     {
-      id: 'protagonist-1', groupId: 'protagonist', order: 1, code: '1',
+      id: 'protagonist-1', groupId: 'protagonist', order: 1, code: 'CG 01',
       name: '', condition: '', image: 'images/sweet/protagonist-logo.png',
       width: 0, height: 0,
     },
     {
-      id: 'protagonist-2', groupId: 'protagonist', order: 2, code: '2',
-      name: '', condition: '', image: 'images/sweet/wei-ya-logo.png',
+      id: 'protagonist-2', groupId: 'protagonist', order: 2, code: 'CG 02',
+      name: '', condition: '', image: 'images/sweet/protagonist-logo.png',
       width: 0, height: 0,
     },
     {
-      id: 'danisi-10', groupId: 'danisi', order: 3, code: '10',
+      id: 'danisi-2', groupId: 'danisi', order: 2, code: 'CG 02',
       name: '', condition: '', image: 'images/sweet/danisi-logo.png',
-      width: 0, height: 0,
+      width: 0, height: 0, collectionId: 'shared-test',
+    },
+    {
+      id: 'shi-difen-2', groupId: 'shi-difen', order: 2, code: 'CG 02',
+      name: '', condition: '', image: 'images/sweet/shi-difen-logo.png',
+      width: 0, height: 0, collectionId: 'shared-test',
     },
   ],
 };
@@ -124,28 +137,11 @@ async function connect(url, { onNewDocument } = {}) {
 }
 
 async function main() {
-  // ---------- 第一段：仓库真实数据（空清单）下的框架 ----------
+  // ---------- 第一段：仓库真实数据（已导入 83 张唯一 / 9 组 / 1 张共用）----------
   const shell = await connect(SWEET);
   const { evaluate, screenshot } = shell;
-  await evaluate(`(() => {
-    localStorage.removeItem('sweet.cg.v1');
-    // 早期版本曾把甜站样例 id 误写进主站键；只剔除这几个样例，
-    // 玩家真实的主站收集状态一条都不动，保证下面的隔离断言有干净基线。
-    const raw = localStorage.getItem('guide.cg.v1');
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        const before = parsed.collected || [];
-        const kept = before.filter(
-          (id) => !['protagonist-1', 'protagonist-2', 'danisi-10'].includes(id),
-        );
-        if (kept.length !== before.length) {
-          localStorage.setItem('guide.cg.v1', JSON.stringify({ ...parsed, collected: kept }));
-        }
-      } catch { /* 手改坏的主站存档交给页面自己 sanitise */ }
-    }
-    return 1;
-  })()`);
+  await evaluate(`(() => { localStorage.removeItem('sweet.cg.v1'); return 1; })()`);
+  // 第一段不写主站键，仅读取；用基线比对保证隔离断言成立。
   const mainKeyBefore = await evaluate(`localStorage.getItem('guide.cg.v1')`);
 
   const tabs = await evaluate(
@@ -166,9 +162,10 @@ async function main() {
   })`);
   check('点 CG 图鉴页签写入 #/cg 并打开整页图鉴',
     opened.hash === '#/cg' && opened.app && opened.title === 'CG 图鉴', JSON.stringify(opened));
-  check('空清单顶栏写明 9 个分组且提示图片陆续导入',
-    opened.meta.includes('共 0 张') && opened.meta.includes('9 个分组') &&
-    opened.meta.includes('图片陆续导入中') && !opened.meta.includes('站点未提供图片'),
+  check('顶栏写明真实张数（共 83 张 · 9 个分组），不再提示「陆续导入」',
+    opened.meta.includes(`共 ${real.meta.itemCount} 张`) &&
+    opened.meta.includes(`${real.meta.groupCount} 个分组`) &&
+    !opened.meta.includes('图片陆续导入中') && !opened.meta.includes('站点未提供图片'),
     opened.meta);
 
   const groups = await evaluate(`(() => {
@@ -180,6 +177,8 @@ async function main() {
       })),
       protagonistAvatar: app.querySelector('[data-cg-group-id="protagonist"] img')?.getAttribute('src') ?? '',
       aggregateIcon: !!app.querySelector('[data-avatar-aggregate]'),
+      allTotal: app.querySelector('[data-cg-group-id="all"]')?.textContent?.trim() ?? '',
+      sharedImgs: app.querySelectorAll('[data-cg-card] img[src*="_shared/"]').length,
     };
   })()`);
   const expectedNames = ['全部', ...real.groups.map((g) => g.name)];
@@ -192,38 +191,71 @@ async function main() {
     groups.protagonistAvatar.includes('images/sweet/protagonist-logo.png') &&
     !groups.protagonistAvatar.includes('wei-ya'), groups.protagonistAvatar);
   check('「全部」用汇总图标而不是硬取一个头像', groups.aggregateIcon, String(groups.aggregateIcon));
-
-  const emptyState = await evaluate(`(() => {
+  const allTotalMatch = groups.allTotal.replace(/\s/g, '').match(/(\d+)\/(\d+)/);
+  check('「全部」计数分母 = 唯一可收集张数（共享只算一次）',
+    !!allTotalMatch && Number(allTotalMatch[2]) === real.meta.itemCount,
+    groups.allTotal);
+  // 默认「全部」只渲染前 60 张，共用 CG 的史蒂芬那条在后面几页；先「加载更多」
+  // 把 84 张全铺开，两条共用条目才都在 DOM 里，便于验证去重与跨卡点亮。
+  await evaluate(`(() => { const b = document.querySelector('[data-cg-load-more]'); if (b) b.click(); return 1; })()`);
+  await sleep(700);
+  const sharedDom = await evaluate(`(() => {
     const app = document.querySelector('[data-cg-app]');
     return {
-      text: app.querySelector('[data-cg-panel] p')?.textContent?.trim() ?? '',
-      cards: app.querySelectorAll('[data-cg-card]').length,
-      guideLinks: app.querySelectorAll('[data-cg-guide-link]').length,
-      archive: app.querySelectorAll('[data-cg-archive]').length,
-      archiveModal: app.querySelectorAll('[data-cg-archive-modal]').length,
-      collectDisabled: app.querySelector('[data-cg-collect-all]')?.disabled ?? null,
-      clearDisabled: app.querySelector('[data-cg-clear]')?.disabled ?? null,
-      sizeButtons: app.querySelectorAll('[data-cg-size-btn]').length,
+      sharedImgs: app.querySelectorAll('[data-cg-card] img[src*="_shared/"]').length,
+      hasDanisi: !!app.querySelector('[data-cg-card][data-cg-id="danisi-2"]'),
+      hasShi: !!app.querySelector('[data-cg-card][data-cg-id="shi-difen-2"]'),
     };
   })()`);
-  check('空分组给出「图片导入后自动出现」的提示',
-    emptyState.text.includes('还没有 CG') && emptyState.text.includes('重新生成'), emptyState.text);
-  check('空清单不渲染卡片 / 攻略跳转 / 存档面板',
-    emptyState.cards === 0 && emptyState.guideLinks === 0 &&
-    emptyState.archive === 0 && emptyState.archiveModal === 0, JSON.stringify(emptyState));
-  check('没内容时「全部收集」「清除已收集」都禁用',
-    emptyState.collectDisabled === true && emptyState.clearDisabled === true,
-    JSON.stringify(emptyState));
-  check('大 / 中 / 小三档卡片尺寸按钮齐全', emptyState.sizeButtons === 3,
-    String(emptyState.sizeButtons));
+  check('共用 CG 在画廊里只占一张图（两条条目指向同一张 _shared webp）',
+    !!SHARED_COLL && sharedDom.sharedImgs === 2 && sharedDom.hasDanisi && sharedDom.hasShi,
+    JSON.stringify({ shared: SHARED_COLL, ...sharedDom }));
+
+  // 「全部」视图下两条共用条目都可见：点丹尼斯那张，史蒂芬那张也应一起点亮，
+  // 且只落一条收集记录（共享 collectionId）。随后清掉，避免污染后面的断言。
+  if (SHARED_COLL) {
+    const sharedToggle = await evaluate(`(() => {
+      const card = document.querySelector('[data-cg-card][data-cg-id="danisi-2"]');
+      if (!card) return { found: false };
+      card.querySelector('[data-cg-toggle]').click();
+      return { found: true };
+    })()`);
+    await sleep(350);
+    const sharedState = await evaluate(`(() => {
+      const app = document.querySelector('[data-cg-app]');
+      const danisi = app.querySelector('[data-cg-card][data-cg-id="danisi-2"]');
+      const shi = app.querySelector('[data-cg-card][data-cg-id="shi-difen-2"]');
+      const raw = JSON.parse(localStorage.getItem('sweet.cg.v1') || 'null');
+      return {
+        danisi: danisi?.getAttribute('data-cg-collected'),
+        shi: shi?.getAttribute('data-cg-collected'),
+        raw: raw ? raw.collected : null,
+      };
+    })()`);
+    check('共用 CG 点丹尼斯那张，史蒂芬那张也点亮（收集只一次）',
+      sharedToggle.found && sharedState.danisi === 'true' && sharedState.shi === 'true' &&
+      sharedState.raw.length === 1 && sharedState.raw[0] === SHARED_COLL,
+      JSON.stringify(sharedState));
+    await evaluate(`(() => { localStorage.removeItem('sweet.cg.v1'); return 1; })()`);
+  }
 
   if (shot) await screenshot(shot.replace(/\.png$/, '') + '-shell.png');
 
   await evaluate(`document.querySelector('[data-cg-group-id="protagonist"]').click(); 1`);
-  await sleep(400);
-  const groupHash = await evaluate(`location.hash`);
-  check('点人物分组写进 #/cg/group/<id>',
-    groupHash === '#/cg/group/protagonist', groupHash);
+  await sleep(500);
+  const protagonist = await evaluate(`(() => {
+    const app = document.querySelector('[data-cg-app]');
+    return {
+      hash: location.hash,
+      cards: app.querySelectorAll('[data-cg-card]').length,
+      firstCode: app.querySelector('[data-cg-code]')?.textContent?.trim() ?? '',
+      title: app.querySelector('[data-cg-panel] h2')?.textContent?.trim() ?? '',
+    };
+  })()`);
+  check('点人物分组写进 #/cg/group/<id> 并展示该人物全部 CG',
+    protagonist.hash === '#/cg/group/protagonist' && protagonist.cards === 31 &&
+    protagonist.firstCode === 'CG 01' && protagonist.title === '杜云芊',
+    JSON.stringify(protagonist));
 
   await shell.send('Page.navigate', { url: `${SWEET}#/cg/group/protagonist` });
   await sleep(1400);
@@ -238,10 +270,9 @@ async function main() {
   await sleep(300);
   const filtered = await evaluate(`({
     label: document.querySelector('[data-cg-filter]')?.textContent?.trim(),
-    text: document.querySelector('[data-cg-panel] p')?.textContent?.trim() ?? '',
   })`);
-  check('「只看未收集」切换成「显示全部」并给出收集完的提示',
-    filtered.label === '显示全部' && filtered.text.includes('全部收集完'), JSON.stringify(filtered));
+  check('「只看未收集」切换成「显示全部」',
+    filtered.label === '显示全部', JSON.stringify(filtered));
 
   await evaluate(`(() => {
     const t = [...document.querySelectorAll('[role="tab"]')].find(x => x.textContent.trim() === '攻略');
@@ -252,37 +283,37 @@ async function main() {
   const closed = await evaluate(`({ hash: location.hash, app: !!document.querySelector('[data-cg-app]') })`);
   check('点攻略页签退出图鉴', closed.app === false && closed.hash !== '#/cg',
     JSON.stringify(closed));
-  check('空清单页没有动原站的 CG 收集键',
+  check('第一段没动原站的 CG 收集键',
     (await evaluate(`localStorage.getItem('guide.cg.v1')`)) === mainKeyBefore,
     String(mainKeyBefore));
   shell.ws.close();
 
-  // ---------- 第二段：注入 3 张假 CG，验证真实交互 ----------
+  // ---------- 第二段：注入 4 张假 CG（含 1 对共用），验证真实交互 ----------
   const tab = await connect(`${SWEET}#/cg`, { onNewDocument: FETCH_HOOK });
   const { evaluate: ev, screenshot: shotFixture } = tab;
   await ev(`(() => { localStorage.removeItem('sweet.cg.v1'); return 1; })()`);
   const probe = await ev(
     `fetch('/data/sweet/cg.json').then(r => r.json()).then(d => d.items.length)`,
   );
-  check('假数据注入生效（3 张样例 CG）', probe === 3, String(probe));
+  check('假数据注入生效（4 张样例 CG，含一对共用）', probe === 4, String(probe));
 
   const cards = await ev(`(() => {
     const app = document.querySelector('[data-cg-app]');
     return {
       count: app.querySelectorAll('[data-cg-card]').length,
       ids: [...app.querySelectorAll('[data-cg-card]')].map(c => c.dataset.cgId),
-      codes: [...app.querySelectorAll('[data-cg-card]')].map(c => c.querySelector('[data-cg-code]')?.textContent?.trim()),
+      codes: [...app.querySelectorAll('[data-cg-code]')].map(c => c.textContent.trim()),
       names: app.querySelectorAll('[data-cg-name]').length,
       guideLinks: app.querySelectorAll('[data-cg-guide-link]').length,
       progress: app.querySelector('[data-cg-progress]')?.textContent?.trim() ?? '',
     };
   })()`);
-  check('假数据渲染 3 张卡片，编号按 1 / 2 / 10 排列',
-    cards.count === 3 && cards.ids.join(',') === 'protagonist-1,protagonist-2,danisi-10' &&
-    cards.codes.join(',') === '1,2,10', JSON.stringify(cards));
+  check('假数据渲染 4 张卡片，编号按 CG 01 / CG 02 / CG 02 / CG 02 排列',
+    cards.count === 4 && cards.ids.join(',') === 'protagonist-1,protagonist-2,danisi-2,shi-difen-2' &&
+    cards.codes.join(',') === 'CG 01,CG 02,CG 02,CG 02', JSON.stringify(cards));
   check('只有编号：卡片不显示名称、不显示攻略入口',
     cards.names === 0 && cards.guideLinks === 0, JSON.stringify(cards));
-  check('顶栏进度从 0 / 3 起算', cards.progress.includes('0 / 3'), cards.progress);
+  check('顶栏进度从 0 / 3 起算（唯一可收集 3 张）', cards.progress.includes('0 / 3'), cards.progress);
 
   await ev(`document.querySelector('[data-cg-card] [data-cg-toggle]').click(); 1`);
   await sleep(350);
@@ -310,9 +341,28 @@ async function main() {
   await ev(`document.querySelector('[data-cg-filter]').click(); 1`);
   await sleep(300);
   const missingOnly = await ev(`document.querySelectorAll('[data-cg-card]').length`);
-  check('「只看未收集」只留 2 张', missingOnly === 2, String(missingOnly));
+  check('「只看未收集」只留 3 张（已收 1 张）', missingOnly === 3, String(missingOnly));
   await ev(`document.querySelector('[data-cg-filter]').click(); 1`);
   await sleep(300);
+
+  // 共用 CG：点丹尼斯那张，史蒂芬那张也点亮，且只落一条收集记录。
+  await ev(`document.querySelector('[data-cg-card][data-cg-id="danisi-2"] [data-cg-toggle]').click(); 1`);
+  await sleep(350);
+  const shared = await ev(`(() => {
+    const app = document.querySelector('[data-cg-app]');
+    const danisi = app.querySelector('[data-cg-card][data-cg-id="danisi-2"]');
+    const shi = app.querySelector('[data-cg-card][data-cg-id="shi-difen-2"]');
+    return {
+      danisi: danisi?.getAttribute('data-cg-collected'),
+      shi: shi?.getAttribute('data-cg-collected'),
+      raw: JSON.parse(localStorage.getItem('sweet.cg.v1') || 'null').collected,
+      progress: app.querySelector('[data-cg-progress]')?.textContent?.trim() ?? '',
+    };
+  })()`);
+  check('共用 CG 只收集一次：点丹尼斯那张，史蒂芬那张也点亮',
+    shared.danisi === 'true' && shared.shi === 'true' &&
+    shared.raw.length === 2 && shared.raw.includes('shared-test') &&
+    shared.progress.includes('2 / 3'), JSON.stringify(shared));
 
   await ev(`document.querySelector('[data-cg-collect-all]').click(); 1`);
   await sleep(350);
@@ -321,13 +371,13 @@ async function main() {
     toast: !!document.querySelector('[data-cg-collect-undo-toast]'),
     raw: JSON.parse(localStorage.getItem('sweet.cg.v1') || 'null').collected,
   }))()`);
-  check('「全部收集」补齐剩余 2 张并弹出撤销条',
+  check('「全部收集」补齐剩余 1 张并弹出撤销条',
     collectAll.progress.includes('3 / 3') && collectAll.toast && collectAll.raw.length === 3,
     JSON.stringify(collectAll));
   await ev(`document.querySelector('[data-cg-collect-undo]').click(); 1`);
   await sleep(300);
   const undo = await ev(`document.querySelector('[data-cg-progress]')?.textContent?.trim() ?? ''`);
-  check('撤销「全部收集」回到 1 / 3', undo.includes('1 / 3'), undo);
+  check('撤销「全部收集」回到 2 / 3', undo.includes('2 / 3'), undo);
 
   if (shot) await shotFixture(shot.replace(/\.png$/, '') + '-fixture.png');
 
@@ -345,7 +395,7 @@ async function main() {
     };
   })()`);
   check('点图片开灯箱，标题就是编号',
-    lightbox.open && lightbox.title === '1' && lightbox.image, JSON.stringify(lightbox));
+    lightbox.open && lightbox.title === 'CG 01' && lightbox.image, JSON.stringify(lightbox));
   check('灯箱没有「获得条件」与「看攻略」',
     lightbox.condition === 0 && lightbox.guide === 0, JSON.stringify(lightbox));
 
@@ -371,7 +421,7 @@ async function main() {
   await ev(`document.querySelector('[data-cg-clear-undo]').click(); 1`);
   await sleep(300);
   const undone = await ev(`document.querySelector('[data-cg-progress]')?.textContent?.trim() ?? ''`);
-  check('撤销清除回到 1 / 3', undone.includes('1 / 3'), undone);
+  check('撤销清除回到 2 / 3', undone.includes('2 / 3'), undone);
 
   await ev(`document.querySelector('[data-cg-group-id="danisi"]').click(); 1`);
   await sleep(350);
@@ -380,8 +430,8 @@ async function main() {
     cards: document.querySelectorAll('[data-cg-card]').length,
     codes: [...document.querySelectorAll('[data-cg-code]')].map(c => c.textContent.trim()),
   }))()`);
-  check('切到丹尼斯分组只剩编号 10 那张',
-    danisi.hash === '#/cg/group/danisi' && danisi.cards === 1 && danisi.codes[0] === '10',
+  check('切到丹尼斯分组只剩编号 2 那张',
+    danisi.hash === '#/cg/group/danisi' && danisi.cards === 1 && danisi.codes[0] === 'CG 02',
     JSON.stringify(danisi));
 
   const finalKeys = await ev(`({
@@ -390,7 +440,9 @@ async function main() {
   })`);
   check('全程只写甜站键，原站 CG 进度一字未动',
     finalKeys.main === mainKeyBefore &&
-    finalKeys.sweet.collected.every((id) => id.startsWith('protagonist-') || id.startsWith('danisi-')),
+    (finalKeys.sweet?.collected ?? []).every((id) =>
+      id === 'shared-test' || id.startsWith('protagonist-') || id.startsWith('danisi-') ||
+      id.startsWith('shi-difen-')),
     JSON.stringify(finalKeys));
   tab.ws.close();
 

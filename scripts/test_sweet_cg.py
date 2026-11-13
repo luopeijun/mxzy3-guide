@@ -27,7 +27,8 @@ CG_JSON = ROOT / "public" / "data" / "sweet" / "cg.json"
 
 def payload() -> dict:
     groups = esc.build_groups()
-    return esc.build_payload(groups, esc.scan_sources(groups))
+    items, _ = esc.scan_sources(groups)
+    return esc.build_payload(groups, items)
 
 
 class SweetCgTests(unittest.TestCase):
@@ -39,7 +40,11 @@ class SweetCgTests(unittest.TestCase):
     def test_meta_counts_agree_with_items(self):
         data = payload()
         meta = data["meta"]
-        self.assertEqual(meta["itemCount"], len(data["items"]))
+        # itemCount 是「唯一可收集张数」：共享 CG 只算一次，因此可能小于条目数。
+        self.assertEqual(
+            meta["itemCount"],
+            len({item["collectionId"] for item in data["items"]}),
+        )
         self.assertEqual(meta["groupCount"], len(data["groups"]))
         self.assertEqual(
             meta["missingImageCount"],
@@ -80,27 +85,47 @@ class SweetCgTests(unittest.TestCase):
     def test_items_are_number_only(self):
         data = payload()
         group_ids = {group["id"] for group in data["groups"]}
-        seen: set[str] = set()
-        for order, item in enumerate(data["items"], start=1):
+        seen_ids: set[str] = set()
+        # order 是「人物内」从 1 起的连续序号，不是全局扁平下标；按组累计校验。
+        group_order: dict[str, int] = {}
+        for item in data["items"]:
             self.assertEqual(
                 set(item),
                 {"id", "groupId", "order", "code", "name", "condition",
-                 "image", "width", "height"},
+                 "image", "collectionId", "width", "height"},
             )
-            self.assertEqual(item["order"], order)
+            expected_order = group_order.get(item["groupId"], 0) + 1
+            self.assertEqual(item["order"], expected_order)
+            group_order[item["groupId"]] = expected_order
             self.assertEqual(item["name"], "")
             self.assertEqual(item["condition"], "")
             self.assertEqual(item["width"], 0)
             self.assertEqual(item["height"], 0)
             self.assertNotIn("guide", item)
             self.assertIn(item["groupId"], group_ids)
-            self.assertEqual(item["id"], f"{item['groupId']}-{item['code']}")
-            self.assertEqual(
-                item["image"],
-                f"images/sweet-cg/{item['groupId']}/{item['code']}.webp",
-            )
-            self.assertNotIn(item["id"], seen)
-            seen.add(item["id"])
+            # id 用纯数字序号（f"{slug}-{seq}"），code 才是展示用的「CG 01」标签。
+            self.assertEqual(item["id"], f"{item['groupId']}-{item['order']}")
+            self.assertEqual(item["code"], f"CG {item['order']:02d}")
+            if item["collectionId"].startswith("shared-"):
+                # 两人共用的同一张图：落到 _shared/，collectionId 前 8 位与文件名一致。
+                self.assertEqual(
+                    item["image"],
+                    f"images/sweet-cg/_shared/{item['collectionId'][len('shared-'):]}.webp",
+                )
+            else:
+                # 人物专属 CG：collectionId 就是自身 id，图落在各自的 slug 目录。
+                # 注意图片文件名用的是「原始游戏编号」（稳定、调顺序不搬家），
+                # 与展示用的全新序号 code 无关，这里只校验目录结构。
+                self.assertEqual(item["collectionId"], item["id"])
+                prefix = f"images/sweet-cg/{item['groupId']}/"
+                self.assertTrue(
+                    item["image"].startswith(prefix)
+                    and item["image"].endswith(".webp")
+                    and "_shared/" not in item["image"],
+                    item["image"],
+                )
+            self.assertNotIn(item["id"], seen_ids)
+            seen_ids.add(item["id"])
 
     def test_generated_images_match_items(self):
         """No stale webp left behind after a full rebuild."""
@@ -113,6 +138,32 @@ class SweetCgTests(unittest.TestCase):
         actual = set((ROOT / "public" / "images" / "sweet-cg").glob("*/*.webp")) \
             if (ROOT / "public" / "images" / "sweet-cg").is_dir() else set()
         self.assertEqual(actual, expected)
+
+    def test_shared_cg_dedup(self):
+        """全批量只有一张真正共用的 CG（丹尼斯 / 史蒂芬 的 561-1）。
+
+        它拆成两条条目（分属两个人物），但共享同一个 collectionId 与同一张
+        webp，因此只能收集一次。其余条目都是人物专属，collectionId 等于自身 id。
+        单纯游戏编号撞了、但字节不同（杜云芊 / 沈 的 83-1 等）不算共用。"""
+        data = payload()
+        shared = [item for item in data["items"]
+                  if item["collectionId"].startswith("shared-")]
+        self.assertEqual(len(shared), 2, shared)
+        self.assertEqual(len({item["id"] for item in shared}), 2)
+        self.assertEqual(len({item["groupId"] for item in shared}), 2)
+        self.assertEqual(
+            {item["collectionId"] for item in shared},
+            {shared[0]["collectionId"]},
+        )
+        self.assertEqual(
+            {item["image"] for item in shared},
+            {f"images/sweet-cg/_shared/{shared[0]['collectionId'][len('shared-'):]}.webp"},
+        )
+        non_shared = [item for item in data["items"]
+                      if not item["collectionId"].startswith("shared-")]
+        self.assertTrue(non_shared)
+        for item in non_shared:
+            self.assertEqual(item["collectionId"], item["id"])
 
     def test_natural_number_order(self):
         codes = ["10", "2", "1", "1-2", "1-10", "20", "3"]
@@ -137,7 +188,7 @@ class SweetCgTests(unittest.TestCase):
         original = esc.SRC
         with tempfile.TemporaryDirectory() as tmp:
             esc.SRC = Path(tmp) / "sweet-cg"
-            folder = esc.SRC / "protagonist"
+            folder = esc.SRC / "丹尼斯"
             folder.mkdir(parents=True)
             (folder / "1.bmp").write_bytes(b"x")
             (folder / "1.png").write_bytes(b"x")
