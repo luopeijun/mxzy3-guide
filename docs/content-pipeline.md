@@ -103,13 +103,14 @@
   - 头部工具按钮因此只剩「置顶 / 放弃 / 移出池子」三个；**线级「展开全部 / 收起全部」、单步 `data-step-expand` 箭头、整份 `expandedSteps` 状态全部删除**，卡片本身仍可点标题折叠整条线。
   - 主站不开开关、没有 `details` → 详情区 / 层次属性都不渲染，行为零变化；`cdp_tracker_content.mjs` 有防呆断言。
 - **经纪人事件簿白名单**：`poolNodeAllowlist: { 'sweet-guide': [...] }` 只放行 `main-story` 主线攻略、`company` 公司改建攻略、`outfits` 服装获得方法和剧情三页（及其后代）；`extractLines()` 对配了白名单的类目跳过其它节点，没配的类目全收。「自制通告一览」等资料页也用 `event` 块排版（每个通告一条），原先被拆成 24 条人名重复的怪线，现在不进池；其它资料页本来就没有 event。攻略目录 / 正文一个字没动，只是追踪器不再把它们当待办。经纪人组从 35 条线降到 11 条（主线 4 + 改建 1 + 服装 6），池总数 83 → 59。
-- 甜站的 `poolSkip` / `branchPrefix` 为空（没有路欧桑分支），`config.groups` 给出三组 chips（经纪人事件簿 / 角色攻略 / 支线攻略）；`unifiedSave: false` 让存档面板导出 tracker-only 信封（`sweet-tracker-save`）、不带 CG 与六大通告段，文件名前缀「甜蜜乐章」。
+- 甜站的 `poolSkip` / `branchPrefix` 为空（没有路欧桑分支），`config.groups` 给出三组 chips（经纪人事件簿 / 角色攻略 / 支线攻略）。存档走和原站同一套统一信封，只是标记换成 `sweet-save`、文件名前缀「甜蜜乐章」：`saveFormat` / `cgStorageKey` / `hasSpecials` 三个字段（`hasSpecials: false` 让导出省略六大通告段、摘要与提示也不提）决定甜站装什么，`archiveFormat` 只留作「旧版 `sweet-tracker-save` 仍认」的兼容标记。`SaveArchivePanel` 因此没有 `if (site === ...)`，两站共用。
+- 回归 `scripts/cdp_sweet_archive.mjs`（16 项）覆盖 CG 图鉴顶栏「全部存档」入口、弹窗里同一个面板、面板文案只说「进度与 CG 收藏」、导出信封为 `sweet-save`（含 tracker + cg、不含 specials、文件名「甜蜜乐章-存档-….json」）、导入只含 CG 的存档取并集写 `sweet.cg.v1` 且不碰 `guide.cg.v1`、主站 `mxzy3-save` 被拒、旧版 `sweet-tracker-save` 仍能读并标明「不含 CG 收集」、Esc 关弹窗。
 - 回归 `scripts/cdp_sweet_tracker.mjs`（43 项）覆盖两个页签与 `#/tracker`、主角姓名与头像（不与任何角色头像重复）、主角锁死与 4 人上限、详情常驻且折叠控件已彻底移除、时间 / 概要 / 提示三层样式、时间标签与编号 pill 不同底色且保持极淡中性（三通道差 ≤12、亮度 ≥240）、头部只剩三个按钮、卡片仍可折叠、三组 chips、事件池前缀与经纪人三页白名单（无自制通告线）、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜站的进度 / 备忘键，可反复运行。
 
 ### 甜蜜乐章 CG 图鉴
 
 - **配置驱动**：`src/lib/cgConfig.ts` 是两站 CG 图鉴唯一的差异来源（`MAIN_CG_CONFIG` / `SWEET_CG_CONFIG`）。`CgApp` / `CgCard` / `CgLightbox` 共用主站那套组件，只从 `config` 读差异；`readCg` / `writeCg` 与 `useCgData` 都加了省略即主站的可选参数。甜站只在 `SweetApp` 传配置，**组件里不写 `if (site === ...)`，主站默认配置下 DOM 与行为零变化**。
-- 甜站差异：收集进度存 `sweet.cg.v1`（不碰 `guide.cg.v1`）、清单读 `data/sweet/cg.json`、`archive: false`（不渲染「全部存档」）、`showName` / `guideLinks` 为 `true`（名称与「攻略 ›」都启用）、`showCondition: false`（没有获得条件文案）、`allowReorder: false`。
+- 甜站差异：收集进度存 `sweet.cg.v1`（不碰 `guide.cg.v1`）、清单读 `data/sweet/cg.json`、`archive: true`（顶栏「全部存档」和原站同一个面板，装甜站自己的进度 + CG）、`showName` / `guideLinks` 为 `true`（名称与「攻略 ›」都启用）、`showCondition: false`（没有获得条件文案）、`allowReorder: false`。
 - **编号每人一套**：item 的 `code` 是展示用的 `CG 01`…`CG NN`（组内连续），`id` 是稳定的 `<slug>-<自然序号>`（调顺序不搬家、图片路径也不动）；`order` 是组内展示序，1 起连续。`meta.itemCount` 统计**唯一可收集数**，不是条目数。
 - **共用一张 CG 去重**：按图片字节的 MD5 判重，同图跨人物只建一个 `collectionId`（`shared-<md5前8>`），图片落到 `_shared/<md5前8>.webp`，两条线的 item 共用同一个 `collectionId`；前端 `collectionKey(item) = item.collectionId ?? item.id`，收集一次两边都亮，主站没有该字段时回落 `id`，行为零变化。当前只有丹尼斯 / 史蒂芬的 `561-1` 命中。
 - **顺序写死在数据里**：`public/data/sweet/sweet-cg-order.json`（应用内「导出顺序」下载的文件）是顺序的唯一真源，`extract_sweet_cg.py` 的 `apply_order_override()` 按它重排每组再重算 `order` / `code`，所以重跑管线不会把人工微调冲回自然序；文件缺失时退回自然序。
