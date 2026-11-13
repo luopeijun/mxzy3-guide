@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -88,6 +89,14 @@ class SweetCgTests(unittest.TestCase):
         seen_ids: set[str] = set()
         # order 是「人物内」从 1 起的连续序号，不是全局扁平下标；按组累计校验。
         group_order: dict[str, int] = {}
+        # 若仓库带甜站顺序覆盖文件，锁死「烘焙后的顺序 == 导出文件里的顺序」。
+        override_path = ROOT / "public" / "data" / "sweet" / "sweet-cg-order.json"
+        override = {}
+        if override_path.is_file():
+            override = json.loads(
+                override_path.read_bytes().decode("utf-8-sig")
+            ).get("order", {})
+        group_seq_ids: dict[str, list[str]] = {}
         for item in data["items"]:
             self.assertEqual(
                 set(item),
@@ -103,9 +112,12 @@ class SweetCgTests(unittest.TestCase):
             self.assertEqual(item["height"], 0)
             self.assertNotIn("guide", item)
             self.assertIn(item["groupId"], group_ids)
-            # id 用纯数字序号（f"{slug}-{seq}"），code 才是展示用的「CG 01」标签。
-            self.assertEqual(item["id"], f"{item['groupId']}-{item['order']}")
+            # id 仍是稳定的「slug-自然序号」：调顺序只改 order/code，不搬家图片。
+            self.assertRegex(
+                item["id"], r"^" + re.escape(item["groupId"]) + r"-\d+$"
+            )
             self.assertEqual(item["code"], f"CG {item['order']:02d}")
+            group_seq_ids.setdefault(item["groupId"], []).append(item["id"])
             if item["collectionId"].startswith("shared-"):
                 # 两人共用的同一张图：落到 _shared/，collectionId 前 8 位与文件名一致。
                 self.assertEqual(
@@ -126,6 +138,9 @@ class SweetCgTests(unittest.TestCase):
                 )
             self.assertNotIn(item["id"], seen_ids)
             seen_ids.add(item["id"])
+        # 锁死烘焙顺序：每个分组的 id 序列必须和导出文件完全一致，防止被悄悄回退。
+        for gid, ids in group_seq_ids.items():
+            self.assertEqual(ids, override.get(gid, ids), f"group {gid} order drift")
 
     def test_generated_images_match_items(self):
         """No stale webp left behind after a full rebuild."""

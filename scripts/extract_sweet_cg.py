@@ -40,6 +40,10 @@ SRC = PICTURES_SOURCE if PICTURES_SOURCE.is_dir() else FALLBACK_SOURCE
 OUT_IMAGES = ROOT / "public" / "images" / "sweet-cg"
 OUT_GROUPS = ROOT / "public" / "data" / "sweet" / "cg.json"
 GUIDE_DATA = ROOT / "public" / "data" / "sweet" / "guide.json"
+# 用户导出的「人物内 CG 顺序」——由应用里「导出顺序」下载，是顺序的唯一真源。
+# 脚本生成 cg.json 时按它重排每个分组内的 order/code，使手动微调写死进数据；
+# 之后重跑管线也不会把顺序冲掉。缺省（文件不存在）时退回自然序。
+ORDER_OVERRIDE = ROOT / "public" / "data" / "sweet" / "sweet-cg-order.json"
 
 CHARACTER_CATEGORY = "sweet-characters"
 IMAGE_EXTS = {".bmp", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
@@ -234,6 +238,7 @@ def scan_sources(groups: list[dict]) -> tuple[list[dict], dict[str, Path]]:
             image_jobs.setdefault(image, source)
 
     # 重新按「分组优先、组内按序号」排，画廊按数组顺序渲染。
+    items = apply_order_override(items, groups)
     ordered: list[dict] = []
     for group in groups:
         ordered.extend(sorted(
@@ -241,6 +246,53 @@ def scan_sources(groups: list[dict]) -> tuple[list[dict], dict[str, Path]]:
             key=lambda it: it["order"],
         ))
     return ordered, image_jobs
+
+
+def apply_order_override(items: list[dict], groups: list[dict]) -> list[dict]:
+    """把 ``sweet-cg-order.json`` 里的顺序写死进 items 的 ``order`` / ``code``。
+
+    覆盖文件按 ``groupId -> [itemId...]`` 给出期望序列；命中覆盖的条目按该序列重排
+    并连续编号 ``CG 01..``，未被点名（理论上不应出现）的条目按原自然序追加在末尾。
+    ``id`` 保持 ``slug-{自然序号}`` 不变（稳定、调顺序不搬家），只有 ``order`` /
+    ``code`` 变。文件缺失或损坏时原样返回，退回自然序。
+    """
+    if not ORDER_OVERRIDE.is_file():
+        return items
+    try:
+        override = json.loads(read_text(ORDER_OVERRIDE)).get("order", {})
+    except (ValueError, OSError):
+        return items
+    overrides = {k: v for k, v in override.items() if isinstance(v, list)}
+    if not overrides:
+        return items
+
+    by_id = {it["id"]: it for it in items}
+    out: list[dict] = []
+    for group in groups:
+        gid = group["id"]
+        wanted = overrides.get(gid, [])
+        seen: set[str] = set()
+        seq = 0
+        for mid in wanted:
+            it = by_id.get(mid)
+            if it is None or it["groupId"] != gid or mid in seen:
+                continue
+            seq += 1
+            patched = dict(it)
+            patched["order"] = seq
+            patched["code"] = f"CG {seq:02d}"
+            seen.add(mid)
+            out.append(patched)
+        for it in sorted(
+            (x for x in items if x["groupId"] == gid and x["id"] not in seen),
+            key=lambda x: x["order"],
+        ):
+            seq += 1
+            patched = dict(it)
+            patched["order"] = seq
+            patched["code"] = f"CG {seq:02d}"
+            out.append(patched)
+    return out
 
 
 def build_payload(groups: list[dict], items: list[dict]) -> dict:

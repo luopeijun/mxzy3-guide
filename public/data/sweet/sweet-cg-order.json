@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "order": {
+    "protagonist": [
+      "protagonist-1",
+      "protagonist-2",
+      "protagonist-23",
+      "protagonist-24",
+      "protagonist-6",
+      "protagonist-7",
+      "protagonist-9",
+      "protagonist-8",
+      "protagonist-10",
+      "protagonist-4",
+      "protagonist-26",
+      "protagonist-27",
+      "protagonist-22",
+      "protagonist-11",
+      "protagonist-14",
+      "protagonist-13",
+      "protagonist-15",
+      "protagonist-12",
+      "protagonist-5",
+      "protagonist-31",
+      "protagonist-16",
+      "protagonist-17",
+      "protagonist-18",
+      "protagonist-19",
+      "protagonist-20",
+      "protagonist-21",
+      "protagonist-28",
+      "protagonist-29",
+      "protagonist-3",
+      "protagonist-30",
+      "protagonist-25"
+    ],
+    "cheng-zhongxuan": [
+      "cheng-zhongxuan-2",
+      "cheng-zhongxuan-3",
+      "cheng-zhongxuan-4",
+      "cheng-zhongxuan-5",
+      "cheng-zhongxuan-6",
+      "cheng-zhongxuan-1"
+    ],
+    "danisi": [
+      "danisi-2",
+      "danisi-3",
+      "danisi-4",
+      "danisi-5",
+      "danisi-6",
+      "danisi-1"
+    ],
+    "ji-xiang": [
+      "ji-xiang-1",
+      "ji-xiang-3",
+      "ji-xiang-4",
+      "ji-xiang-5",
+      "ji-xiang-6",
+      "ji-xiang-7",
+      "ji-xiang-2"
+    ],
+    "murong-hexi": [
+      "murong-hexi-2",
+      "murong-hexi-3",
+      "murong-hexi-4",
+      "murong-hexi-5",
+      "murong-hexi-6",
+      "murong-hexi-7",
+      "murong-hexi-1"
+    ],
+    "shen-weizhen": [
+      "shen-weizhen-2",
+      "shen-weizhen-3",
+      "shen-weizhen-4",
+      "shen-weizhen-5",
+      "shen-weizhen-6",
+      "shen-weizhen-7",
+      "shen-weizhen-1"
+    ],
+    "shi-difen": [
+      "shi-difen-2",
+      "shi-difen-3",
+      "shi-difen-4",
+      "shi-difen-5",
+      "shi-difen-6",
+      "shi-difen-1"
+    ],
+    "wei-ya": [
+      "wei-ya-2",
+      "wei-ya-3",
+      "wei-ya-4",
+      "wei-ya-5",
+      "wei-ya-6",
+      "wei-ya-7",
+      "wei-ya-8",
+      "wei-ya-1"
+    ],
+    "yao-ziqi": [
+      "yao-ziqi-2",
+      "yao-ziqi-3",
+      "yao-ziqi-4",
+      "yao-ziqi-5",
+      "yao-ziqi-6",
+      "yao-ziqi-1"
+    ]
+  }
+}

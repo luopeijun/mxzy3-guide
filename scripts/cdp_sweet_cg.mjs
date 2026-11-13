@@ -459,148 +459,38 @@ async function main() {
       id.startsWith('shi-difen-')),
     JSON.stringify(finalKeys));
 
-  // ---------- 第三段：调整人物内顺序（应用内排序模式）----------
-  // 主角分组有 2 张，足以验证 ↑/↓ 与编号实时重排。
-  const reorderOnChar = await ev(`(() => {
+  // ---------- 第三段：排序 UI 已隐藏（顺序已烘焙进 cg.json 定死）----------
+  // 用户把顺序导出后烘焙进 cg.json；allowReorder 关掉后排序入口应完全消失，
+  // 但顺序本身仍按烘焙值展示（假数据主角分组 CG 01 / CG 02）。
+  await ev(`document.querySelector('[data-cg-group-id="protagonist"]').click(); 1`);
+  await sleep(350);
+  const reorderHidden = await ev(`(() => {
     const app = document.querySelector('[data-cg-app]');
     return {
       btn: !!app.querySelector('[data-cg-reorder]'),
-      arrows: app.querySelectorAll('[data-cg-move-up]').length,
+      arrows: app.querySelectorAll('[data-cg-move-up],[data-cg-move-down]').length,
+      draggable: app.querySelectorAll('[data-cg-card][data-cg-draggable="true"]').length,
+      filterShown: !!app.querySelector('[data-cg-filter]'),
+      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
+      code2: app.querySelector('[data-cg-card][data-cg-id="protagonist-2"] [data-cg-code]')?.textContent.trim(),
     };
   })()`);
-  check('角色分组出现「调整顺序」按钮，未进排序模式时卡片不显示 ↑/↓',
-    reorderOnChar.btn && reorderOnChar.arrows === 0, JSON.stringify(reorderOnChar));
+  check('排序功能已隐藏：角色分组无「调整顺序」按钮、无 ↑/↓、卡片不可拖拽，「只看未收集」照常显示',
+    !reorderHidden.btn && reorderHidden.arrows === 0 && reorderHidden.draggable === 0 &&
+    reorderHidden.filterShown, JSON.stringify(reorderHidden));
+  check('顺序仍按烘焙值展示（protagonist-1=CG 01、protagonist-2=CG 02）',
+    reorderHidden.code1 === 'CG 01' && reorderHidden.code2 === 'CG 02', JSON.stringify(reorderHidden));
 
   await ev(`document.querySelector('[data-cg-group-id="all"]').click(); 1`);
   await sleep(300);
-  const noBtnOnAll = await ev(`!document.querySelector('[data-cg-reorder]')`);
-  check('「全部」分组不显示「调整顺序」按钮',
-    noBtnOnAll === true, String(noBtnOnAll));
-
-  await ev(`document.querySelector('[data-cg-group-id="protagonist"]').click(); 1`);
-  await sleep(350);
-  await ev(`document.querySelector('[data-cg-reorder]').click(); 1`);
-  await sleep(300);
-  const reorderState = await ev(`(() => {
+  const allHidden = await ev(`(() => {
     const app = document.querySelector('[data-cg-app]');
     return {
-      arrows: app.querySelectorAll('[data-cg-move-up]').length,
-      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
-      code2: app.querySelector('[data-cg-card][data-cg-id="protagonist-2"] [data-cg-code]')?.textContent.trim(),
-      filterHidden: !app.querySelector('[data-cg-filter]'),
+      btn: !!app.querySelector('[data-cg-reorder]'),
+      arrows: app.querySelectorAll('[data-cg-move-up],[data-cg-move-down]').length,
     };
   })()`);
-  check('进入排序模式：每张卡出现 ↑/↓、默认 CG 01/CG 02、且「只看未收集」被隐藏',
-    reorderState.arrows === 2 && reorderState.code1 === 'CG 01' && reorderState.code2 === 'CG 02' &&
-    reorderState.filterHidden, JSON.stringify(reorderState));
-
-  // 把 protagonist-1 下移一位：列表 [1,2] → [2,1]，编号随之重排。
-  await ev(`document.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-move-down]').click(); 1`);
-  await sleep(300);
-  const moved = await ev(`(() => {
-    const app = document.querySelector('[data-cg-app]');
-    return {
-      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
-      code2: app.querySelector('[data-cg-card][data-cg-id="protagonist-2"] [data-cg-code]')?.textContent.trim(),
-    };
-  })()`);
-  check('下移后编号实时重排：protagonist-1 → CG 02、protagonist-2 → CG 01',
-    moved.code1 === 'CG 02' && moved.code2 === 'CG 01', JSON.stringify(moved));
-
-  await ev(`document.querySelector('[data-cg-reorder-save]').click(); 1`);
-  await sleep(300);
-  const saved = await ev(`(() => {
-    const app = document.querySelector('[data-cg-app]');
-    const order = JSON.parse(localStorage.getItem('sweet.cg.order.v1') || 'null');
-    return {
-      order,
-      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
-      code2: app.querySelector('[data-cg-card][data-cg-id="protagonist-2"] [data-cg-code]')?.textContent.trim(),
-      arrows: app.querySelectorAll('[data-cg-move-up]').length,
-    };
-  })()`);
-  check('保存后顺序落盘 sweet.cg.order.v1（protagonist: [2,1]）且退出排序模式',
-    saved.order && saved.order.version === 1 &&
-    saved.order.order.protagonist.join(',') === 'protagonist-2,protagonist-1' &&
-    saved.code1 === 'CG 02' && saved.code2 === 'CG 01' && saved.arrows === 0,
-    JSON.stringify(saved));
-
-  // 刷新后仍停在自定义顺序（落在 sweet.cg.order.v1，不在 cg.json）。
-  await tab.send('Page.navigate', { url: `${SWEET}#/cg/group/protagonist` });
-  await sleep(1400);
-  const persisted = await ev(`(() => {
-    const app = document.querySelector('[data-cg-app]');
-    return {
-      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
-      code2: app.querySelector('[data-cg-card][data-cg-id="protagonist-2"] [data-cg-code]')?.textContent.trim(),
-    };
-  })()`);
-  check('刷新后自定义顺序仍在：protagonist-1 仍为 CG 02',
-    persisted.code1 === 'CG 02' && persisted.code2 === 'CG 01', JSON.stringify(persisted));
-
-  // 取消排序应丢弃草稿、回到已保存顺序（不落盘）。
-  await ev(`document.querySelector('[data-cg-reorder]').click(); 1`);
-  await sleep(250);
-  await ev(`document.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-move-up]').click(); 1`);
-  await sleep(250);
-  const duringDraft = await ev(
-    `document.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim()`);
-  check('草稿中 protagonist-1 上移 → CG 01（尚未保存）', duringDraft === 'CG 01', String(duringDraft));
-  await ev(`document.querySelector('[data-cg-reorder-cancel]').click(); 1`);
-  await sleep(250);
-  const afterCancel = await ev(`(() => {
-    const app = document.querySelector('[data-cg-app]');
-    const saved = JSON.parse(localStorage.getItem('sweet.cg.order.v1') || 'null');
-    return {
-      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
-      saved: saved?.order?.protagonist?.join(','),
-    };
-  })()`);
-  check('取消丢弃草稿、回到已保存 [2,1]（protagonist-1 仍是 CG 02，落盘不变）',
-    afterCancel.code1 === 'CG 02' && afterCancel.saved === 'protagonist-2,protagonist-1',
-    JSON.stringify(afterCancel));
-
-  // 拖拽排序：进入排序模式后，把 protagonist-1 拖到 protagonist-2 之前，验证拖拽换位 + 序号实时重排。
-  await ev(`document.querySelector('[data-cg-reorder]').click(); 1`);
-  await sleep(250);
-  const draggableCount = await ev(`document.querySelectorAll('[data-cg-card][data-cg-draggable="true"]').length`);
-  check('进入排序模式后所有卡片都可拖拽（draggable=true）', draggableCount === 2, String(draggableCount));
-  await ev(`(() => {
-    const dt = new DataTransfer();
-    const src = document.querySelector('[data-cg-card][data-cg-id="protagonist-1"]');
-    const dst = document.querySelector('[data-cg-card][data-cg-id="protagonist-2"]');
-    src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
-    dst.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
-    dst.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
-    src.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt }));
-    return true;
-  })()`);
-  await sleep(250);
-  const afterDrag = await ev(`(() => {
-    const app = document.querySelector('[data-cg-app]');
-    return {
-      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
-      code2: app.querySelector('[data-cg-card][data-cg-id="protagonist-2"] [data-cg-code]')?.textContent.trim(),
-      dragging: !!app.querySelector('[data-cg-dragging="true"]'),
-      dragOver: !!app.querySelector('[data-cg-drag-over="true"]'),
-    };
-  })()`);
-  // 之前已保存 [2,1]（protagonist-2 在前）；把 1 拖到 2 之前 → [1,2]，编号互换。
-  check('拖拽：protagonist-1 拖到 protagonist-2 之前 → CG 01/CG 02 互换，且拖拽高亮已清除',
-    afterDrag.code1 === 'CG 01' && afterDrag.code2 === 'CG 02' && !afterDrag.dragging && !afterDrag.dragOver,
-    JSON.stringify(afterDrag));
-  await ev(`document.querySelector('[data-cg-reorder-save]').click(); 1`);
-  await sleep(250);
-  const afterDragSave = await ev(`(() => {
-    const saved = JSON.parse(localStorage.getItem('sweet.cg.order.v1') || 'null');
-    return {
-      code1: document.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
-      order: saved?.order?.protagonist?.join(','),
-    };
-  })()`);
-  check('拖拽结果保存落盘：protagonist-1 仍为 CG 01 且顺序为 [1,2]',
-    afterDragSave.code1 === 'CG 01' && afterDragSave.order === 'protagonist-1,protagonist-2',
-    JSON.stringify(afterDragSave));
+  check('「全部」分组同样无排序入口', !allHidden.btn && allHidden.arrows === 0, JSON.stringify(allHidden));
 
   tab.ws.close();
 

@@ -15,7 +15,9 @@ export interface CgSiteConfig {
   /** 顶栏「全部存档」。主站是进度 + CG + 六大通告的统一信封；甜站以后单独接。 */
   archive: boolean;
   /** 是否开放「调整人物内 CG 顺序」的排序模式（甜站分批收图、需要人工微调顺序；
-   *  主站顺序来自游戏原表，关掉保持零变化）。 */
+   *  主站顺序来自游戏原表，关掉保持零变化）。
+   *  注：甜站的顺序已由 sweet-cg-order.json 烘焙进 cg.json 并定死，排序 UI 暂隐藏
+   *  （allowReorder=false）；代码全保留，以后要再调顺序翻回 true 即可。 */
   allowReorder: boolean;
   /** 灯箱里的「获得条件」一行。 */
   showCondition: boolean;
@@ -47,7 +49,7 @@ export const SWEET_CG_CONFIG: CgSiteConfig = {
   storageKey: 'sweet.cg.v1',
   guideLinks: false,
   archive: false,
-  allowReorder: true,
+  allowReorder: false,
   showCondition: false,
   showName: false,
   metaNote: '',
