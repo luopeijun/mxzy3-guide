@@ -9,12 +9,9 @@ import {
   type ReanchorReport,
 } from '../../lib/trackerReanchor';
 import {
-  archiveFileName,
   createArchive,
   describeSummary,
   formatArchiveTime,
-  parseArchive,
-  serialiseArchive,
   type ArchiveOpts,
   type TrackerArchive,
 } from '../../lib/trackerTransfer';
@@ -27,6 +24,7 @@ import {
   saveArchiveFileName,
   serialiseSaveArchive,
   type SaveArchive,
+  type SaveOpts,
 } from '../../lib/saveArchive';
 import { readCgRaw } from '../../lib/cg';
 import { applySpecialsToLocal, readSpecialsForExport } from '../../lib/specialsState';
@@ -34,10 +32,8 @@ import { applySpecialsToLocal, readSpecialsForExport } from '../../lib/specialsS
 type Notice = { tone: 'ok' | 'error'; text: string };
 
 interface PendingImport {
-  /** The whole unified save (明星志愿3), so the preview can show both halves. */
+  /** The whole unified save, so the preview can show every half this site has. */
   archive: SaveArchive | null;
-  /** Tracker-only save (甜蜜乐章): no CG / specials sections to show. */
-  simpleTracker: TrackerArchive | null;
   /** Tracker progress after indices were re-pointed at the right events. */
   trackerData: TrackerData | null;
   /** `null` when the archive predates step snapshots and cannot be checked. */
@@ -56,16 +52,19 @@ function downloadText(text: string, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** A single backup file carrying both the event-tracker progress and the CG
- *  collection, so one export/import moves every local save between devices.
- *  The tracker half keeps its re-anchor + merge/replace machinery; the CG half
- *  is always merged (never replaced) so a ticked CG can never be dropped. */
+/** A single backup file carrying the event-tracker progress and the CG
+ *  collection (plus the 六大通告 board on 明星志愿3), so one export/import moves
+ *  every local save between devices. The tracker half keeps its re-anchor +
+ *  merge/replace machinery; the CG half is always merged (never replaced) so a
+ *  ticked CG can never be dropped.
+ *
+ *  两站共用这个面板：信封标记、CG 存储键、文件名前缀、有没有六大通告都来自
+ *  `TrackerSiteConfig`，组件里不写站点判断。 */
 export default function SaveArchivePanel() {
   const { config, snapshot, importProgress, backup, undoBackup, dismissBackup } = useTracker();
   const guide = useGuideContext();
-  // 甜蜜乐章没有 CG 图鉴 / 六大通告，导出的是 tracker-only 存档，面板文案与
-  // 预览也只讲进度；明星志愿3 继续用「进度 + CG + 通告」的统一存档，零变化。
-  const simple = !config.unifiedSave;
+  // 追踪器那一半的规则（签约上限 / 主角 / 旧格式标记），存档内嵌的 tracker 段
+  // 继续用它，导入旧版 tracker-only 文件也靠它判「是不是本站的」。
   const archiveOpts: ArchiveOpts = useMemo(
     () => ({
       format: config.archiveFormat,
@@ -74,6 +73,32 @@ export default function SaveArchivePanel() {
       filePrefix: config.archiveFilePrefix,
     }),
     [config],
+  );
+  const saveOpts: SaveOpts = useMemo(
+    () => ({
+      format: config.saveFormat,
+      filePrefix: config.archiveFilePrefix,
+      cgKey: config.cgStorageKey,
+      tracker: archiveOpts,
+    }),
+    [config, archiveOpts],
+  );
+  /** 面板文案：甜站没有六大通告，摘要与提示里一个字都不提。 */
+  const copy = useMemo(
+    () => (config.hasSpecials
+      ? {
+          parts: '进度、CG 收藏与六大通告配置',
+          exportOk: '存档文件已下载，传到另一台设备后导入即可（含进度、CG 收集与六大通告配置）。',
+          mergeOk: '已合并存档，本机原有进度、CG 收藏与六大通告配置都保留着。',
+          replaceOk: '已用存档覆盖本机进度（CG 收集与六大通告仍按合并处理，不会丢失）。',
+        }
+      : {
+          parts: '进度与 CG 收藏',
+          exportOk: '存档文件已下载，传到另一台设备后导入即可（含进度与 CG 收藏）。',
+          mergeOk: '已合并存档，本机原有进度与 CG 收藏都保留着。',
+          replaceOk: '已用存档覆盖本机进度（CG 收藏仍按合并处理，不会丢失）。',
+        }),
+    [config.hasSpecials],
   );
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<PendingImport | null>(null);
@@ -93,23 +118,16 @@ export default function SaveArchivePanel() {
     return createArchive(save, captureStepRefs(allLines, save), now, archiveOpts);
   };
 
-  const buildSaveText = (now: Date, pretty: boolean): string => {
-    if (simple) {
-      const save = snapshot();
-      return serialiseArchive(save, captureStepRefs(allLines, save), now, pretty, archiveOpts);
-    }
-    return serialiseSaveArchive(
-      createSaveArchive(buildTrackerArchive(now), buildCgPart(), buildSpecialsPart(), now),
+  const buildSaveText = (now: Date, pretty: boolean): string =>
+    serialiseSaveArchive(
+      createSaveArchive(buildTrackerArchive(now), buildCgPart(), buildSpecialsPart(), now, saveOpts),
       pretty,
     );
-  };
 
-  const saveFileName = (now: Date): string =>
-    simple ? archiveFileName(now, config.archiveFilePrefix) : saveArchiveFileName(now);
-
-  const buildCgPart = () => ({ version: 1 as const, collected: readCgRaw() });
+  const buildCgPart = () => ({ version: 1 as const, collected: readCgRaw(saveOpts.cgKey) });
 
   const buildSpecialsPart = () => {
+    if (!config.hasSpecials) return undefined;
     const state = readSpecialsForExport();
     return state ? ({ version: 1 as const, state } as const) : undefined;
   };
@@ -118,15 +136,7 @@ export default function SaveArchivePanel() {
     const { data, report } = archive.tracker
       ? reanchorProgress(archive.tracker.data, archive.tracker.steps, allLines)
       : { data: null, report: null };
-    setPending({ archive, simpleTracker: null, trackerData: data, report });
-    setNotice(null);
-    setConfirmReplace(false);
-    setPasteOpen(false);
-  };
-
-  const applySimpleArchive = (tracker: TrackerArchive) => {
-    const { data, report } = reanchorProgress(tracker.data, tracker.steps, allLines);
-    setPending({ archive: null, simpleTracker: tracker, trackerData: data, report });
+    setPending({ archive, trackerData: data, report });
     setNotice(null);
     setConfirmReplace(false);
     setPasteOpen(false);
@@ -134,8 +144,7 @@ export default function SaveArchivePanel() {
 
   const readText = (text: string) => {
     try {
-      if (simple) applySimpleArchive(parseArchive(text, archiveOpts));
-      else applyArchive(parseSaveArchive(text));
+      applyArchive(parseSaveArchive(text, saveOpts));
     } catch (error) {
       setPending(null);
       setNotice({ tone: 'error', text: error instanceof Error ? error.message : '存档读取失败。' });
@@ -144,13 +153,8 @@ export default function SaveArchivePanel() {
 
   const handleExport = () => {
     const now = new Date();
-    downloadText(buildSaveText(now, true), saveFileName(now));
-    setNotice({
-      tone: 'ok',
-      text: simple
-        ? '进度文件已下载，传到另一台设备后导入即可。'
-        : '存档文件已下载，传到另一台设备后导入即可（含进度、CG 收集与六大通告配置）。',
-    });
+    downloadText(buildSaveText(now, true), saveArchiveFileName(now, saveOpts.filePrefix));
+    setNotice({ tone: 'ok', text: copy.exportOk });
   };
 
   const handleCopy = async () => {
@@ -181,15 +185,9 @@ export default function SaveArchivePanel() {
       return;
     }
     if (pending.trackerData) importProgress(pending.trackerData, mode);
-    if (pending.archive?.cg) applyCgToLocal(pending.archive.cg.collected);
+    if (pending.archive?.cg) applyCgToLocal(pending.archive.cg.collected, saveOpts.cgKey);
     if (pending.archive?.specials) applySpecialsToLocal(pending.archive.specials.state, mode);
-    const base = simple
-      ? mode === 'merge'
-        ? '已合并存档，本机原有进度都保留着。'
-        : '已用存档覆盖本机进度。'
-      : mode === 'merge'
-        ? '已合并存档，本机原有进度、CG 收集与六大通告配置都保留着。'
-        : '已用存档覆盖本机进度（CG 收集与六大通告仍按合并处理，不会丢失）。';
+    const base = mode === 'merge' ? copy.mergeOk : copy.replaceOk;
     const extra = pending.report ? describeReport(pending.report) : '';
     setNotice({ tone: 'ok', text: extra ? `${base} ${extra}。` : base });
     setPending(null);
@@ -212,9 +210,7 @@ export default function SaveArchivePanel() {
         <span className="text-ui-2xs text-ink-faint">多端同步</span>
       </div>
       <p className="mt-2 text-ui-2xs leading-[1.7] text-ink-faint">
-        {simple
-          ? '事件追踪进度只保存在本机浏览器。导出存档后在另一台设备导入，就能接着之前的记录继续。'
-          : '进度、CG 收藏与六大通告配置只保存在本机浏览器。导出存档后在另一台设备导入，就能接着之前的记录继续。'}
+        {copy.parts}只保存在本机浏览器。导出存档后在另一台设备导入，就能接着之前的记录继续。
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -286,18 +282,18 @@ export default function SaveArchivePanel() {
         >
           <p className="text-ui-2xs font-medium text-brand-strong">准备导入的存档</p>
           <p className="mt-1 text-ui-2xs text-ink-muted">
-            {pending.archive?.exportedAt || pending.simpleTracker?.exportedAt
-              ? `${formatArchiveTime(pending.archive?.exportedAt || pending.simpleTracker?.exportedAt || '')} 导出`
+            {pending.archive?.exportedAt
+              ? `${formatArchiveTime(pending.archive.exportedAt)} 导出`
               : '存档未标注导出时间'}
           </p>
           {pending.archive && (
             <p className="mt-0.5 text-ui-2xs text-ink-faint">
-              {describeSaveSummary(pending.archive.summary)}
+              {describeSaveSummary(pending.archive.summary, config.hasSpecials)}
             </p>
           )}
-          {(pending.archive?.tracker || pending.simpleTracker) && (
+          {pending.archive?.tracker && (
             <p className="mt-0.5 text-ui-2xs text-ink-faint">
-              {describeSummary((pending.archive?.tracker ?? pending.simpleTracker)!.summary)}
+              {describeSummary(pending.archive.tracker.summary)}
             </p>
           )}
           {pending.report === null ? (

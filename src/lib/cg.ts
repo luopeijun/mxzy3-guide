@@ -1,6 +1,8 @@
 /** CG 收集状态。像备忘录一样独立于 `guide.progress.v1`：重置事件追踪进度、
- *  导入旧存档都不该把玩家勾过的 CG 清掉。以后接进存档导出时再单独处理。 */
+ *  导入旧存档都不该把玩家勾过的 CG 清掉；两站各自一份，互不覆盖。 */
 export const CG_KEY = 'guide.cg.v1';
+/** 甜蜜乐章的收集键：统一存档写入哪一边由站点配置（`cgStorageKey`）决定。 */
+export const SWEET_CG_KEY = 'sweet.cg.v1';
 
 /** Fired (on `window`) after a save import writes the CG collection back to
  *  localStorage, so the mounted CG view can re-read without a reload. */
@@ -42,9 +44,9 @@ export function writeCg(collected: Set<string>, key: string = CG_KEY): void {
  *  the live item list. Used by the unified save so an export/import never needs
   * the CG data to be loaded first (and cannot accidentally drop ids if it is
   * not). `readCg` still scrubs anything stale on the next read. */
-export function readCgRaw(): string[] {
+export function readCgRaw(key: string = CG_KEY): string[] {
   try {
-    const raw = localStorage.getItem(CG_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as { collected?: unknown };
     return Array.isArray(parsed.collected)

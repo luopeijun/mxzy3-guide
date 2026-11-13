@@ -5,15 +5,18 @@
  *
  *  甜蜜乐章：CG 名称取自「这张图对应的攻略事件标题」（`sweet/cg.json` 的 `name`，
  *  由 `sources/sweet/cg-links.tsv` 决定），攻略双向跳转已接通，所以 `showName` /
- *  `guideLinks` 都开着；获得条件仍然没有（`showCondition: false`）。 */
-import { CG_KEY } from './cg';
+ *  `guideLinks` 都开着；获得条件仍然没有（`showCondition: false`）。图鉴顶栏的
+ *  「全部存档」和追踪器共用同一个面板，装的是甜站自己的 `sweet-save`（进度 +
+ *  CG），与主站 `mxzy3-save` 互不覆盖。 */
+import { CG_KEY, SWEET_CG_KEY } from './cg';
 
 export interface CgSiteConfig {
   /** 收集进度存到哪个 localStorage 键，两站绝不共用。 */
   storageKey: string;
   /** 卡片 / 灯箱上的「攻略 ›」入口。需要 `cgIds` 或 `item.guide` 映射。 */
   guideLinks: boolean;
-  /** 顶栏「全部存档」。主站是进度 + CG + 六大通告的统一信封；甜站以后单独接。 */
+  /** 顶栏「全部存档」。两站都是统一信封（进度 + CG 收集，主站另含六大通告），
+   *  抽屉里渲染的是同一个 `SaveArchivePanel`。 */
   archive: boolean;
   /** 是否开放「调整人物内 CG 顺序」的排序模式（甜站分批收图、需要人工微调顺序；
    *  主站顺序来自游戏原表，关掉保持零变化）。
@@ -47,9 +50,9 @@ export const MAIN_CG_CONFIG: CgSiteConfig = {
 };
 
 export const SWEET_CG_CONFIG: CgSiteConfig = {
-  storageKey: 'sweet.cg.v1',
+  storageKey: SWEET_CG_KEY,
   guideLinks: true,
-  archive: false,
+  archive: true,
   allowReorder: false,
   showCondition: false,
   showName: true,
