@@ -116,11 +116,12 @@
 - **顺序写死在数据里**：`public/data/sweet/sweet-cg-order.json`（应用内「导出顺序」下载的文件）是顺序的唯一真源，`extract_sweet_cg.py` 的 `apply_order_override()` 按它重排每组再重算 `order` / `code`，所以重跑管线不会把人工微调冲回自然序；文件缺失时退回自然序。
 - **数据管线**：源图放 `E:/Pictures/mxzy3/甜蜜乐章/cg/<人物>/<原编号>.<ext>`（本地素材，不入库；目录不存在时退化到仓库内被忽略的 `outputs/sweet-cg/`），`scripts/extract_sweet_cg.py` 生成 `public/images/sweet-cg/<slug>/<原编号>.webp` 与 `public/data/sweet/cg.json`。编号按自然排序（`1, 2, 10` 不会变成 `1, 10, 2`），同一编号两种扩展名、分组文件夹名不认识都会直接报错；`--skip-images` 只重写 JSON（图片字节没变时用，避开全量重建）。
   - 分组从 `public/data/sweet/guide.json` 的 `sweet-characters` 带 `avatar` 的子节点派生（顺序、姓名、圆圈头像跟攻略一致），主角杜云芊是固定的第一组 `protagonist`（`images/sweet/protagonist-logo.png`）。**头像易错**：主角用 `620-1.bmp`、丹尼斯用 `695-1.bmp`，两张别对调（丹尼斯曾误用沈惟真那张）。支线五位定义在 `EXTRA_GROUPS`，`ENABLE_EXTRA_GROUPS` 翻成 `True` 才加组。当前 9 组 / 84 条 / 83 张唯一。
-- **攻略 ⇄ CG 双向**：`sources/sweet/cg-links.tsv` 是唯一事实来源（由核对表 xlsx 经 `scripts/build_sweet_cg_links.py` 生成），**必须先跑 `extract_sweet_guide.py`**（给事件块补 `cgIds` 与 `anchor="ev<块下标>"`），**再跑 `extract_sweet_cg.py`**（反查事件标题写 `item.name` 与 `item.guide`）。当前 41 条映射、41 张有名称。攻略页 CG 徽标跳 `#/cg/<cgId>`，图鉴「攻略 ›」跳 `#/guide/<nodeId>~ev<n>`。
+- **攻略 ⇄ CG 双向**：`sources/sweet/cg-links.tsv` 是唯一事实来源（由核对表 xlsx 经 `scripts/build_sweet_cg_links.py` 生成），**必须先跑 `extract_sweet_guide.py`**（给事件块补 `cgIds` 与 `anchor="ev<块下标>"`），**再跑 `extract_sweet_cg.py`**（反查事件标题写 `item.name` 与 `item.guide`）。当前 41 条映射、41 张有事件名（加上手填的 9 张结局，共 50 张有名称）。攻略页 CG 徽标跳 `#/cg/<cgId>`，图鉴「攻略 ›」跳 `#/guide/<nodeId>~ev<n>`。
+- **结局类名称手填**：事业结局这类没有对应攻略事件、拿不到事件标题的 CG，名字写在 `sources/sweet/cg-names.tsv`（3 列：`cgId / 源图编号 / 名称`，`#` 开头是注释）。`extract_sweet_cg.py` 的 `apply_manual_names()` 在事件标题之后应用（**手填优先**），并核对第 2 列与 `item.image` 的文件名（`<原编号>.webp`）一致——管线重排导致 id 与图错位时直接 `SystemExit`，不会把名字悄悄贴到别的图上；`shared-` 共用图没有人物目录下的原编号，本表不收。当前 9 条（杜云芊 CG 14/15/18/19/21/22/23/24/25 的事业结局）。
 - **排序 UI 默认隐藏**：`allowReorder: false` 时「调整顺序」按钮、卡片 ↑/↓、拖拽全部不渲染，但 `CgApp` 里的整套实现（`draftOrder` / `savedOrder` / `sweet.cg.order.v1` / 拖拽落点从 `dataTransfer` 取 id / 导出 `sweet-cg-order.json`）一行没删；以后要改顺序把开关翻回 `true` 即可，不必重写。
-- `scripts/test_sweet_cg.py`（10 项）锁住「提交的 cg.json 与脚本重算结果一致」、分组来自攻略、`CG NN` 编号与组内连续、共用图只出现一次、每组 `id` 序列与 `sweet-cg-order.json` 一致、图片路径与已生成 webp 一一对应、自然排序与两类报错。测试不依赖 Pillow。
+- `scripts/test_sweet_cg.py`（11 项）锁住「提交的 cg.json 与脚本重算结果一致」、分组来自攻略、`CG NN` 编号与组内连续、共用图只出现一次、每组 `id` 序列与 `sweet-cg-order.json` 一致、图片路径与已生成 webp 一一对应、自然排序与两类报错，以及「手填结局名称的源图编号对得上、九张结局的展示编号正好是 14/15/18/19/21/22/23/24/25」。测试不依赖 Pillow。
 - 入口：`SweetApp` 第三个页签「CG 图鉴」→ `#/cg`，分组写 `#/cg/group/<id>`（复用主站的 `cgTabHash` / `rememberCgGroup`），刷新仍停在同一人物。
-- 回归 `scripts/cdp_sweet_cg.mjs`（43 项）：第一段用仓库真实数据验三个页签、9 组头像（主角不是卫亚那张）、顶栏「共 83 张 · 9 个分组」、真实映射的 CG 名称与「攻略 ›」往返（`#/guide/...~ev23` 落到同一条事件）、共用图在 DOM 里只渲染一份且两处共用、分类胶囊在追踪 / CG 页不出现、原站 `guide.cg.v1` 一字未动、排序 UI 已隐藏；第二段用 `Page.addScriptToEvaluateOnNewDocument` 覆盖 `fetch` 注入 4 张假 CG 验卡片编号、共用图收集一次两边亮、勾选只写 `sweet.cg.v1`。**脚本必须开 `about:blank` 再导航**，否则同 URL 的 fragment 跳转不会重跑注入脚本；两段开头都清 `sweet.cg.v1` 与 `sweet.cg.order.v1`，否则上轮残留会串味。
+- 回归 `scripts/cdp_sweet_cg.mjs`（45 项）：第一段用仓库真实数据验三个页签、9 组头像（主角不是卫亚那张）、顶栏「共 83 张 · 9 个分组」、真实映射的 CG 名称与「攻略 ›」往返（`#/guide/...~ev23` 落到同一条事件）、手填的结局名称（CG 14/15/25 文案对得上且名称格有高度、没填的 CG 16 保持空白）、共用图在 DOM 里只渲染一份且两处共用、分类胶囊在追踪 / CG 页不出现、原站 `guide.cg.v1` 一字未动、排序 UI 已隐藏；第二段用 `Page.addScriptToEvaluateOnNewDocument` 覆盖 `fetch` 注入 4 张假 CG 验卡片编号、共用图收集一次两边亮、勾选只写 `sweet.cg.v1`。**脚本必须开 `about:blank` 再导航**，否则同 URL 的 fragment 跳转不会重跑注入脚本；两段开头都清 `sweet.cg.v1` 与 `sweet.cg.order.v1`，否则上轮残留会串味。
 
 ## 锚点跳转
 
@@ -162,8 +163,8 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ 攻略 ⇄ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章攻略（26 项）+ 甜蜜乐章 CG（10 项），共 **95 项** |
-| `npm run test:sweet` | 只跑甜蜜乐章两套回归（攻略 26 + CG 10，共 36 项） |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ 攻略 ⇄ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章攻略（26 项）+ 甜蜜乐章 CG（11 项），共 **96 项** |
+| `npm run test:sweet` | 只跑甜蜜乐章两套回归（攻略 26 + CG 11，共 37 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 | `python scripts/extract_sweet_guide.py` | 重生成甜蜜乐章的 `public/data/sweet/guide.json` |
@@ -219,6 +220,7 @@ sources/special-notices.tsv  六大通告条件表（手写，BOM + LF）
 sources/cg-links.tsv         事件 → CG 的一对一映射（手写）
 sources/cg-node-links.tsv    CG → 事件 / 页面的多对一映射（手写）
 sources/sweet/cg-links.tsv   甜蜜乐章 攻略事件 → CG 的映射（由核对表 xlsx 生成）
+sources/sweet/cg-names.tsv   甜蜜乐章 结局类 CG 的手填名称（cgId / 源图编号 / 名称）
 scripts/extract_guide.py     docx + sources → guide.json（零第三方依赖）
 scripts/extract_sweet_guide.py  甜蜜乐章目录 + 正文 → sweet/guide.json
 scripts/extract_notices.py   表格 → notices.json（需 openpyxl / xlrd）

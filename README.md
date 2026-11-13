@@ -121,6 +121,7 @@
 - **每人一套新编号**：不管原图的游戏编号是几，组内一律从 `CG 01` 起连号，顺序按人工微调后的结果写死在数据里；调整时的拖拽排序功能保留在代码里，默认隐藏（`allowReorder`），以后要改翻回开关即可
 - **共用一张 CG**：丹尼斯与史蒂芬线里那张图内容完全相同，只收一份、只算一张，两条线的卡片都指向同一张、点亮一次两边都亮
 - **攻略 ⇄ CG 双向可跳**：41 张能对上具体事件的 CG 以事件标题作名称（卡面单行截断、悬停看全名、灯箱显示全名），卡片底部「攻略 ›」跳回原文那条事件并滚到该块闪一下；攻略页的 CG 徽标反向点进图鉴，直接定位到那一张。支线事件一般落到主角的 CG 上
+- **结局类 CG 名字手填**：杜云芊的事业结局没有对应事件，名称写在 `sources/sweet/cg-names.tsv`（CG 14 天王巨星 / 15 歌手、偶像 / 18 演员 / 19 经纪人 / 21 打工达人 / 22 自由工作者 / 23 制作人 / 24 千金小姐 / 25 公司倒闭）；管线应用时核对源图编号，改错行会直接报错，手填优先于事件标题
 - 收集进度存 `sweet.cg.v1`，与原站 `guide.cg.v1` 完全隔离；顶栏显示总张数与分组数
 - 顶栏和原站一样有「全部存档」：勾过的 CG 与追踪进度打进同一个文件（`甜蜜乐章-存档-<时间戳>.json`，信封 `sweet-save`），换设备导入即可接着收集
 
@@ -150,6 +151,7 @@
 - 甜蜜乐章攻略：`sources/sweet/*.txt` → `scripts/extract_sweet_guide.py` → `public/data/sweet/guide.json`
 - 甜蜜乐章 CG：`E:/Pictures/mxzy3/甜蜜乐章/cg/<人物>/<原编号>.<ext>`（本地素材，不入库；该目录不存在时退化到仓库内 `outputs/sweet-cg/` 的副本）→ `scripts/extract_sweet_cg.py`（需 Pillow）→ `public/data/sweet/cg.json` 与 `public/images/sweet-cg/*.webp`。人物内顺序读 `public/data/sweet/sweet-cg-order.json`（应用里「导出顺序」下发的文件），重跑管线不会把手工微调冲掉
 - 甜蜜乐章 攻略 ⇄ CG：`sources/sweet/cg-links.tsv` 是唯一事实来源（由核对表 xlsx 经 `scripts/build_sweet_cg_links.py` 生成）。**先跑 `extract_sweet_guide.py`**（给事件块写 `cgIds` / `anchor`），**再跑 `extract_sweet_cg.py`**（反查事件标题填 CG 名称）
+- 甜蜜乐章 结局 CG 名称：`sources/sweet/cg-names.tsv`（`cgId / 源图编号 / 名称`）手填，结局没有对应事件可取名。`extract_sweet_cg.py` 应用时会核对源图编号（`public/images/sweet-cg/<人物>/<原编号>.webp`），顺序或编号漂移会直接报错而不是把名字贴到别的图上；手填名称优先于事件标题
 - 校验：`npm run test:guide`（Python unittest，交叉核对抽取结果与原表）；只改甜站时 `npm run test:sweet`
 - 界面验证：`scripts/cdp_*.mjs`（需 dev server 与 Chrome 调试端口）
 
