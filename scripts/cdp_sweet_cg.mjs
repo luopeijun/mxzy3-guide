@@ -560,6 +560,48 @@ async function main() {
     afterCancel.code1 === 'CG 02' && afterCancel.saved === 'protagonist-2,protagonist-1',
     JSON.stringify(afterCancel));
 
+  // 拖拽排序：进入排序模式后，把 protagonist-1 拖到 protagonist-2 之前，验证拖拽换位 + 序号实时重排。
+  await ev(`document.querySelector('[data-cg-reorder]').click(); 1`);
+  await sleep(250);
+  const draggableCount = await ev(`document.querySelectorAll('[data-cg-card][data-cg-draggable="true"]').length`);
+  check('进入排序模式后所有卡片都可拖拽（draggable=true）', draggableCount === 2, String(draggableCount));
+  await ev(`(() => {
+    const dt = new DataTransfer();
+    const src = document.querySelector('[data-cg-card][data-cg-id="protagonist-1"]');
+    const dst = document.querySelector('[data-cg-card][data-cg-id="protagonist-2"]');
+    src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+    dst.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
+    dst.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
+    src.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt }));
+    return true;
+  })()`);
+  await sleep(250);
+  const afterDrag = await ev(`(() => {
+    const app = document.querySelector('[data-cg-app]');
+    return {
+      code1: app.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
+      code2: app.querySelector('[data-cg-card][data-cg-id="protagonist-2"] [data-cg-code]')?.textContent.trim(),
+      dragging: !!app.querySelector('[data-cg-dragging="true"]'),
+      dragOver: !!app.querySelector('[data-cg-drag-over="true"]'),
+    };
+  })()`);
+  // 之前已保存 [2,1]（protagonist-2 在前）；把 1 拖到 2 之前 → [1,2]，编号互换。
+  check('拖拽：protagonist-1 拖到 protagonist-2 之前 → CG 01/CG 02 互换，且拖拽高亮已清除',
+    afterDrag.code1 === 'CG 01' && afterDrag.code2 === 'CG 02' && !afterDrag.dragging && !afterDrag.dragOver,
+    JSON.stringify(afterDrag));
+  await ev(`document.querySelector('[data-cg-reorder-save]').click(); 1`);
+  await sleep(250);
+  const afterDragSave = await ev(`(() => {
+    const saved = JSON.parse(localStorage.getItem('sweet.cg.order.v1') || 'null');
+    return {
+      code1: document.querySelector('[data-cg-card][data-cg-id="protagonist-1"] [data-cg-code]')?.textContent.trim(),
+      order: saved?.order?.protagonist?.join(','),
+    };
+  })()`);
+  check('拖拽结果保存落盘：protagonist-1 仍为 CG 01 且顺序为 [1,2]',
+    afterDragSave.code1 === 'CG 01' && afterDragSave.order === 'protagonist-1,protagonist-2',
+    JSON.stringify(afterDragSave));
+
   tab.ws.close();
 
   // ---------- 第四段：主站零变化（allowReorder=false，绝不渲染排序 UI）----------

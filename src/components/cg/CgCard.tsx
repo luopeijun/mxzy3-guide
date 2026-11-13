@@ -19,7 +19,7 @@ interface Props {
   guideTitle?: string;
   /** 站点配置：甜蜜乐章的 CG 只有编号，没有名称，底栏不渲染名称那一格。 */
   showName?: boolean;
-  /** 排序模式：开启后底栏右侧出现 ↑/↓，供调整人物内顺序。主站恒不传，行为零变化。 */
+  /** 排序模式：开启后整张卡可拖拽，底栏右侧出现 ↑/↓，供调整人物内顺序。主站恒不传，行为零变化。 */
   reorder?: boolean;
   /** 上移一位（仅排序模式下有效）。 */
   onMoveUp?: () => void;
@@ -28,6 +28,15 @@ interface Props {
   /** 已在最前 / 最后，禁用对应箭头。 */
   moveUpDisabled?: boolean;
   moveDownDisabled?: boolean;
+  /** 拖拽排序：拖拽开始 / 悬停于本卡 / 落在本卡 / 拖拽结束。仅排序模式下由 CgApp 传入。
+   *  onDropCard 收到被拖卡片的 id（从 dataTransfer 取，不依赖 React 状态时序）。 */
+  onDragStartCard?: () => void;
+  onDragOverCard?: () => void;
+  onDropCard?: (draggedId: string) => void;
+  onDragEndCard?: () => void;
+  /** 当前卡正被拖拽 / 正作为落点高亮（仅排序模式下生效）。 */
+  isDragging?: boolean;
+  isDragOver?: boolean;
   onToggle: () => void;
   onOpen: (trigger: HTMLButtonElement) => void;
 }
@@ -38,7 +47,9 @@ interface Props {
 export default function CgCard({
   item, collected, size = 'md', group, guideHref, guideTitle,
   showName = true, reorder = false, onMoveUp, onMoveDown,
-  moveUpDisabled = false, moveDownDisabled = false, onToggle, onOpen,
+  moveUpDisabled = false, moveDownDisabled = false,
+  onDragStartCard, onDragOverCard, onDropCard, onDragEndCard,
+  isDragging = false, isDragOver = false, onToggle, onOpen,
 }: Props) {
   const isSm = size === 'sm';
   const isLg = size === 'lg';
@@ -83,9 +94,19 @@ export default function CgCard({
       data-cg-card
       data-cg-id={item.id}
       data-cg-collected={collected ? 'true' : 'false'}
+      data-cg-draggable={reorder ? 'true' : undefined}
+      data-cg-dragging={reorder && isDragging ? 'true' : undefined}
+      data-cg-drag-over={reorder && isDragOver ? 'true' : undefined}
+      draggable={reorder}
+      onDragStart={reorder ? (event) => { onDragStartCard?.(); if (event.dataTransfer) { event.dataTransfer.setData('text/plain', item.id); event.dataTransfer.effectAllowed = 'move'; } } : undefined}
+      onDragOver={reorder ? (event) => { event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'; onDragOverCard?.(); } : undefined}
+      onDrop={reorder ? (event) => { event.preventDefault(); const id = event.dataTransfer?.getData('text/plain') ?? ''; onDropCard?.(id); } : undefined}
+      onDragEnd={reorder ? () => onDragEndCard?.() : undefined}
       className={cn(
         'scroll-mt-[88px] overflow-hidden rounded-ui-md border bg-surface transition-all duration-200 hover:border-brand-line',
         collected ? 'border-brand-line shadow-soft' : 'border-line',
+        reorder && isDragging && 'opacity-40',
+        reorder && isDragOver && 'border-brand ring-2 ring-brand/60',
       )}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-soft">

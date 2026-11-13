@@ -171,6 +171,10 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
   const [reorderMode, setReorderMode] = useState(false);
   /** 编辑中的顺序草稿：仅影响当前分组，未保存不落盘。 */
   const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
+  /** 拖拽中的卡片 id 与当前悬停落点 id，只用于视觉高亮。落点的真实移动靠
+   *  onDrop 里读 dataTransfer 携带的被拖 id，不依赖这两个 state 的时序。 */
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // 攻略 → CG 的落点索引（事件块的 cgIds 是数据来源，这里只是反查表）。
   const guideData = useGuideContext();
@@ -270,6 +274,20 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
     const to = from + dir;
     if (from < 0 || to < 0 || to >= list.length) return;
     [list[from], list[to]] = [list[to], list[from]];
+    setDraftOrder(list);
+  };
+
+  /** 把被拖卡片 id 移动到 targetId 之前（拖到哪张卡之前就插到它前面）；
+   *  跨长距离一次到位，不必一次次点 ↑/↓。 */
+  const moveItemTo = (gid: string, id: string, targetId: string) => {
+    if (id === targetId) return;
+    const list = [...orderIdsFor(gid)];
+    const from = list.indexOf(id);
+    const to = list.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    list.splice(from, 1);
+    const insertAt = list.indexOf(targetId);
+    list.splice(insertAt, 0, id);
     setDraftOrder(list);
   };
 
@@ -662,7 +680,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
             </span>
             {reorderMode ? (
               <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-ui-2xs">
-                <span className="text-ink-faint">用 ↑/↓ 调整「{activeName}」内的 CG 顺序</span>
+                <span className="text-ink-faint">拖动卡片（或 ↑/↓）调整「{activeName}」内的 CG 顺序</span>
                 <button
                   type="button"
                   data-cg-reorder-export
@@ -757,6 +775,16 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
                           onMoveDown={() => moveItem(groupId, item.id, 1)}
                           moveUpDisabled={reorderMode && pos <= 0}
                           moveDownDisabled={reorderMode && pos >= liveOrderIds.length - 1}
+                          onDragStartCard={() => setDragId(item.id)}
+                          onDragOverCard={() => { if (dragId && dragId !== item.id) setDragOverId(item.id); }}
+                          onDropCard={(draggedId) => {
+                            setDragId(null);
+                            setDragOverId(null);
+                            if (draggedId) moveItemTo(groupId, draggedId, item.id);
+                          }}
+                          onDragEndCard={() => { setDragId(null); setDragOverId(null); }}
+                          isDragging={reorderMode && dragId === item.id}
+                          isDragOver={reorderMode && dragOverId === item.id}
                           onToggle={() => toggle(key)}
                           onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
                         />
