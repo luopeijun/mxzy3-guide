@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "meta": {
+    "itemCount": 0,
+    "groupCount": 9,
+    "missingImageCount": 0
+  },
+  "groups": [
+    {
+      "id": "protagonist",
+      "name": "杜云芊",
+      "kind": "agent",
+      "avatar": "images/sweet/protagonist-logo.png",
+      "guideId": "",
+      "count": 0
+    },
+    {
+      "id": "cheng-zhongxuan",
+      "name": "城仲瑄",
+      "kind": "artist",
+      "avatar": "images/sweet/cheng-zhongxuan-logo.png",
+      "guideId": "sweet-characters/cheng-zhongxuan",
+      "count": 0
+    },
+    {
+      "id": "danisi",
+      "name": "丹尼斯",
+      "kind": "artist",
+      "avatar": "images/sweet/danisi-logo.png",
+      "guideId": "sweet-characters/danisi",
+      "count": 0
+    },
+    {
+      "id": "ji-xiang",
+      "name": "纪翔",
+      "kind": "artist",
+      "avatar": "images/sweet/ji-xiang-logo.png",
+      "guideId": "sweet-characters/ji-xiang",
+      "count": 0
+    },
+    {
+      "id": "murong-hexi",
+      "name": "慕容和希",
+      "kind": "artist",
+      "avatar": "images/sweet/murong-hexi-logo.png",
+      "guideId": "sweet-characters/murong-hexi",
+      "count": 0
+    },
+    {
+      "id": "shen-weizhen",
+      "name": "沈惟真",
+      "kind": "artist",
+      "avatar": "images/sweet/shen-weizhen-logo.png",
+      "guideId": "sweet-characters/shen-weizhen",
+      "count": 0
+    },
+    {
+      "id": "shi-difen",
+      "name": "史蒂芬",
+      "kind": "artist",
+      "avatar": "images/sweet/shi-difen-logo.png",
+      "guideId": "sweet-characters/shi-difen",
+      "count": 0
+    },
+    {
+      "id": "wei-ya",
+      "name": "卫亚",
+      "kind": "artist",
+      "avatar": "images/sweet/wei-ya-logo.png",
+      "guideId": "sweet-characters/wei-ya",
+      "count": 0
+    },
+    {
+      "id": "yao-ziqi",
+      "name": "姚子奇",
+      "kind": "artist",
+      "avatar": "images/sweet/yao-ziqi-logo.png",
+      "guideId": "sweet-characters/yao-ziqi",
+      "count": 0
+    }
+  ],
+  "items": []
+}
