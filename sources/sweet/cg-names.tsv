@@ -1,0 +1,13 @@
+﻿# 甜蜜乐章：不来自攻略事件的 CG 名称（手填，例如结局 CG）。
+# 大部分 CG 的名字由 `cg-links.tsv` 反查攻略事件标题得到；结局类没有对应事件，
+# 名字在这里补。`extract_sweet_cg.py` 读本表，**手填名称优先于事件标题**。
+# 列：cgId / 源图编号（`public/images/sweet-cg/<人物>/<原编号>.webp` 的文件名，防呆用） / 名称
+protagonist-11	52-1	事业结局（天王巨星）
+protagonist-14	55-1	事业结局（歌手、偶像）
+protagonist-12	53-1	事业结局（演员）
+protagonist-5	6-1	事业结局（经纪人）
+protagonist-16	58-1	事业结局（打工达人）
+protagonist-17	59-1	事业结局（自由工作者）
+protagonist-18	60-1	事业结局（制作人）
+protagonist-19	62-1	事业结局（千金小姐）
+protagonist-20	63-1	事业结局（公司倒闭）

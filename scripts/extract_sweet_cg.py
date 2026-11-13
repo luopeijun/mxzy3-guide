@@ -21,7 +21,9 @@ the user sorts them into one folder per character::
 分组、圆形头像、guideId 全部来自 ``public/data/sweet/guide.json`` 的角色节点，和
 ``extract_cg.py`` 处理主站一样。条目带 id / group / order / code / image /
 collectionId；``name`` 取「这张图对应的攻略事件标题」（见 ``cg_names()``，来源是
-``guide.json`` 里挂了该 ``cgId`` 的块），没有对应事件时留空；``condition`` 留空。
+``guide.json`` 里挂了该 ``cgId`` 的块）；结局这类没有对应事件的 CG，名字手写在
+``sources/sweet/cg-names.tsv``（见 ``apply_manual_names()``，手填优先），两边都没有
+时留空；``condition`` 留空。
 ``width`` / ``height`` 恒为 0：画廊不消费它们，也避免 ``test_sweet_cg.py`` 依赖 Pillow。
 
 **与攻略的映射**：``sources/sweet/cg-links.tsv`` 是唯一真源（由
@@ -51,6 +53,10 @@ GUIDE_DATA = ROOT / "public" / "data" / "sweet" / "guide.json"
 # 脚本生成 cg.json 时按它重排每个分组内的 order/code，使手动微调写死进数据；
 # 之后重跑管线也不会把顺序冲掉。缺省（文件不存在）时退回自然序。
 ORDER_OVERRIDE = ROOT / "public" / "data" / "sweet" / "sweet-cg-order.json"
+# 没有对应攻略事件的 CG（结局类）的名字，手写在这张表里：cgId / 源图编号 / 名称。
+# 源图编号就是 `public/images/sweet-cg/<人物>/<原编号>.webp` 的文件名，应用时核对，
+# 顺序或编号漂移会直接报错而不是把名字贴到别的图上。
+MANUAL_NAMES = ROOT / "sources" / "sweet" / "cg-names.tsv"
 CHARACTER_CATEGORY = "sweet-characters"
 IMAGE_EXTS = {".bmp", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
 MAX_EDGE = 1400
@@ -140,6 +146,50 @@ def cg_names() -> dict[str, str]:
     for category in guide.get("categories") or []:
         walk(category)
     return names
+
+
+def manual_names() -> dict[str, tuple[str, str]]:
+    """``cgId -> (源图编号, 名称)``：结局这类没有对应事件的 CG 的手填名称。
+
+    文件缺失时返回空表（画廊退回只有事件标题 + 编号）。``源图编号`` 是
+    ``images/sweet-cg/<人物>/<原编号>.webp`` 的文件名，用来在应用时核对名字有没有
+    贴错图；``shared-`` 开头的共用图没有人物目录下的原编号，本表不收。
+    """
+    if not MANUAL_NAMES.is_file():
+        return {}
+    table: dict[str, tuple[str, str]] = {}
+    for raw in read_text(MANUAL_NAMES).splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) != 3:
+            raise SystemExit(f"cg-names.tsv 格式错误（需要 3 列）：{line!r}")
+        cg_id, source, name = (part.strip() for part in parts)
+        if not cg_id or not source or not name:
+            raise SystemExit(f"cg-names.tsv 有空列：{line!r}")
+        if cg_id in table:
+            raise SystemExit(f"cg-names.tsv 重复的 cgId：{cg_id}")
+        table[cg_id] = (source, name)
+    return table
+
+
+def apply_manual_names(items: list[dict]) -> None:
+    """把手填名称写进条目（手填优先于事件标题），并核对每行的源图编号。"""
+    table = manual_names()
+    if not table:
+        return
+    by_id = {item["id"]: item for item in items}
+    for cg_id, (source, name) in table.items():
+        item = by_id.get(cg_id)
+        if item is None:
+            raise SystemExit(f"cg-names.tsv 指向了不存在的 CG：{cg_id}")
+        actual = Path(item["image"]).stem
+        if item["collectionId"].startswith("shared-") or actual != source:
+            raise SystemExit(
+                f"cg-names.tsv 源图编号对不上：{cg_id} 期望 {source}，实际 {actual}"
+            )
+        item["name"] = name
 
 
 def build_groups() -> list[dict]:
@@ -274,6 +324,9 @@ def scan_sources(groups: list[dict]) -> tuple[list[dict], dict[str, Path]]:
     names = cg_names()
     for item in items:
         item["name"] = names.get(item["id"], "")
+    # 手填的结局名称排在后面：与事件标题冲突时以手填为准（本表就是为「没有事件可取名」
+    # 的条目准备的，显式写下的一定是想要的）。
+    apply_manual_names(items)
     ordered: list[dict] = []
     for group in groups:
         ordered.extend(sorted(
