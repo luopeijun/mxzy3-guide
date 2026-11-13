@@ -424,11 +424,11 @@ async function main() {
     folded.found && folded.open === 'false' && folded.boxes === 0,
     JSON.stringify(folded));
 
-  // 10. 存档面板只讲进度
+  // 10. 存档面板：进度 + CG 收集（甜站没有六大通告，一个字都不该提）
   const archiveText = await evaluate(`document.querySelector('[data-transfer-panel]')?.textContent ?? ''`);
-  check('存档面板说明只讲事件追踪进度', archiveText.includes('事件追踪进度只保存在本机浏览器'), archiveText.slice(0, 90));
-  check('存档面板不提 CG 收藏 / 六大通告', !archiveText.includes('CG 收藏') && !archiveText.includes('六大通告'),
+  check('存档面板说明含进度与 CG 收藏', archiveText.includes('进度与 CG 收藏只保存在本机浏览器'),
     archiveText.slice(0, 90));
+  check('存档面板不提六大通告', !archiveText.includes('六大通告'), archiveText.slice(0, 90));
 
   if (shot) {
     const png = await send('Page.captureScreenshot', { format: 'png' });
