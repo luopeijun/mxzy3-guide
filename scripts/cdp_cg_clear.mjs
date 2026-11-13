@@ -12,7 +12,10 @@ import http from 'node:http';
 const PORT = '9339';
 const BASE = `http://127.0.0.1:${PORT}`;
 const URL_CG = 'http://localhost:5173/#/cg';
-const TRACKER_SEED = '{"version":1,"selectedArtists":[],"lines":{},"order":[],"pinned":[]}';
+// TrackerProvider 启动时会自动补 releasedArtists / orderEpoch；seed 要写成
+// 迁移后的形态，否则「tracker untouched」会被这个与应用无关的字段误判。
+// 脚本里的 trackerOk() 仍会剔除每次加载都会变的 orderEpoch。
+const TRACKER_SEED = '{"version":1,"selectedArtists":[],"releasedArtists":[],"lines":{},"order":[],"pinned":[]}';
 
 function jsonPut(target, payload) {
   return new Promise((resolve, reject) => {

@@ -105,6 +105,17 @@
 - 甜站的 `poolSkip` / `branchPrefix` 为空（没有路欧桑分支），`config.groups` 给出三组 chips（经纪人事件簿 / 角色攻略 / 支线攻略）；`unifiedSave: false` 让存档面板导出 tracker-only 信封（`sweet-tracker-save`）、不带 CG 与六大通告段，文件名前缀「甜蜜乐章」。
 - 回归 `scripts/cdp_sweet_tracker.mjs`（43 项）覆盖两个页签与 `#/tracker`、主角姓名与头像（不与任何角色头像重复）、主角锁死与 4 人上限、详情常驻且折叠控件已彻底移除、时间 / 概要 / 提示三层样式、时间标签与编号 pill 不同底色且保持极淡中性（三通道差 ≤12、亮度 ≥240）、头部只剩三个按钮、卡片仍可折叠、三组 chips、事件池前缀与经纪人三页白名单（无自制通告线）、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜站的进度 / 备忘键，可反复运行。
 
+### 甜蜜乐章 CG 图鉴
+
+- **配置驱动**：`src/lib/cgConfig.ts` 是两站 CG 图鉴唯一的差异来源（`MAIN_CG_CONFIG` / `SWEET_CG_CONFIG`）。`CgApp` / `CgCard` / `CgLightbox` 共用主站那套组件，只从 `config` 读差异；`readCg` / `writeCg` 与 `useCgData` 都加了省略即主站的可选参数。甜站只在 `SweetApp` 传配置，**组件里不写 `if (site === ...)`，主站默认配置下 DOM 与行为零变化**。
+- 甜站差异：收集进度存 `sweet.cg.v1`（不碰 `guide.cg.v1`）、清单读 `data/sweet/cg.json`、不渲染「攻略 ›」与「全部存档」、卡片与灯箱只有编号（无名称、无「获得条件」）、顶栏补「图片陆续导入中」、空态提示「图片按人物放进素材目录后重新生成」。攻略跳转与存档面板开关先关着，以后打开即可，不必改组件。
+- **只有编号的数据管线**：用户是一张一张发图、没有名称与获得条件，所以「文件名＝编号」，源图放 `outputs/sweet-cg/<分组slug>/<编号>.<ext>`（该目录被 `.gitignore` 忽略，须长期保留全部已发图）。`scripts/extract_sweet_cg.py` **全量重建** `public/images/sweet-cg/<slug>/<编号>.webp` 与 `public/data/sweet/cg.json`：编号走自然排序（`1, 2, 10` 不会变成 `1, 10, 2`），同一编号出现两种扩展名、分组文件夹名字不认识都会直接报错。item 只写 `id / groupId / order / code / image`，`name` 与 `condition` 为空串、`width` / `height` 恒 0（前端不消费）、不写 `guide` 字段。
+  - 分组从 `public/data/sweet/guide.json` 的 `sweet-characters` 带 `avatar` 的子节点派生（顺序、姓名、圆圈头像都跟攻略一致），主角杜云芊是固定的第一组 `protagonist`（`images/sweet/protagonist-logo.png`）。支线五位定义在 `EXTRA_GROUPS`，确认有 CG 后把 `ENABLE_EXTRA_GROUPS` 翻成 `True` 即可加组。
+  - **批量导入流程**：把这一批图按人物放进 `outputs/sweet-cg/`，跑 `python scripts/extract_sweet_cg.py`，刷新甜站 CG 页签就会自动出现新卡片。当前 9 组、`items: []` 是刻意留的空清单。
+- `scripts/test_sweet_cg.py`（8 项）锁住「提交的 cg.json 与脚本重算结果一致」、分组来自攻略、编号只有数字、图片路径与已生成 webp 一一对应（不留陈旧图）、自然排序与两类报错。测试不依赖 Pillow，Pillow 只在转换图片时延迟导入。
+- 入口：`SweetApp` 第三个页签「CG 图鉴」→ `#/cg`，分组写 `#/cg/group/<id>`（复用主站的 `cgTabHash` / `rememberCgGroup`），刷新仍停在同一人物。
+- 回归 `scripts/cdp_sweet_cg.mjs`（33 项）：第一段用仓库真实空清单验三个页签、9 组头像（主角不是卫亚那张）、空态、禁用按钮、分组 hash 与刷新恢复；第二段用 `Page.addScriptToEvaluateOnNewDocument` 覆盖 `fetch` 注入 3 张假 CG（不入库），验卡片编号、勾选只写 `sweet.cg.v1`、全部收集 / 清除及撤销、灯箱无名称与获得条件、分组筛选、主站 `guide.cg.v1` 一字未动。**脚本必须开 `about:blank` 再导航**，否则同 URL 的 fragment 跳转不会重跑注入脚本。`cdp_sweet_tracker.mjs` 的页签断言同步改成三个。
+
 ## 锚点跳转
 
 攻略正文里带 `id` 的标题块可以在页内跳转，`target` 指向目标块的 `id`：
@@ -145,11 +156,12 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章（23 项），共 82 项 |
-| `npm run test:sweet` | 只跑甜蜜乐章的解析回归（23 项） |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ CG 映射（9 项）+ 六大通告 + 甜蜜乐章攻略（25 项）+ 甜蜜乐章 CG（8 项），共 **92 项** |
+| `npm run test:sweet` | 只跑甜蜜乐章攻略解析回归（25 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 | `python scripts/extract_sweet_guide.py` | 重生成甜蜜乐章的 `public/data/sweet/guide.json` |
+| `python scripts/extract_sweet_cg.py` | 全量重建甜蜜乐章 CG 清单与 webp（需 Pillow；源图放 `outputs/sweet-cg/<人物>/<编号>.<ext>`） |
 
 **测试范围**：只改甜蜜乐章的内容或组件时，跑 `npm run test:sweet` + `node scripts/cdp_sweet_entry.mjs` 就够了，不必跑全量 `test:guide` 和其它站点的 `cdp_*.mjs`。只有动到共享层（`global.css` 令牌、`patterns.ts`、`src/ui/*`、路由、`useGuideData`、`treeOrder`）时，才需要补跑原站回归。
 
@@ -188,7 +200,10 @@ public/data/notices.json     生成的通告数据（进入通告 tab 才加载�
 public/data/specials.json    生成的六大通告条件表（进入六大通告 tab 才加载）
 public/data/cg.json          生成的 CG 图鉴数据（含 CG → 攻略落点）
 public/data/sweet/guide.json 甜蜜乐章的结构化攻略数据（另一条管线）
+public/data/sweet/cg.json    甜蜜乐章的 CG 清单（只有编号，按人物分组）
 public/images/cg/*.webp      压缩后的 CG 图片（进仓库）
+public/images/sweet-cg/*/*.webp 甜蜜乐章 CG 图片（按人物分目录，进仓库）
+outputs/sweet-cg/            甜蜜乐章 CG 源图（按人物 / 编号命名，不入库）
 sources/*.txt                补充攻略的纯文本来源（UTF-8，可重跑）
 sources/sweet/*.txt          甜蜜乐章的正文来源（UTF-8 简体，按节名对应节点）
 sources/notices/*.xls|xlsx   通告原始表格（重生成数据的输入）
@@ -200,13 +215,15 @@ scripts/extract_sweet_guide.py  甜蜜乐章目录 + 正文 → sweet/guide.json
 scripts/extract_notices.py   表格 → notices.json（需 openpyxl / xlrd）
 scripts/extract_specials.py  六大通告条件表 → specials.json
 scripts/extract_cg.py        CG 素材 → cg.json + webp（需 Pillow）
+scripts/extract_sweet_cg.py  甜蜜乐章源图 → sweet/cg.json + webp（需 Pillow）
 scripts/test_extract.py      攻略解析回归测试
 scripts/test_sweet_guide.py  甜蜜乐章数据回归测试
+scripts/test_sweet_cg.py     甜蜜乐章 CG 清单回归测试
 scripts/test_notices.py      通告数据回归测试
 scripts/test_cg_links.py     事件 → CG 映射回归测试
 scripts/test_cg_node_links.py  CG → 事件 / 页面映射回归测试
 scripts/cdp_*.mjs            浏览器端到端验证脚本
-src/sweet/                   甜蜜乐章站点入口（sweet.html 挂载，只做攻略浏览）
+src/sweet/                   甜蜜乐章站点入口（sweet.html 挂载：攻略 / 事件追踪 / CG 图鉴）
 src/ui/                      两站共用的顶栏与页签
 src/components/              攻略阅读页组件
 src/components/notices/      通告库（筛选、详情、能力对照）

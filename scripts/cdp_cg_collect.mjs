@@ -12,7 +12,9 @@ import http from 'node:http';
 const PORT = '9339';
 const BASE = `http://127.0.0.1:${PORT}`;
 const URL_CG = 'http://localhost:5173/#/cg';
-const TRACKER_SEED = '{"version":1,"selectedArtists":[],"lines":{},"order":[],"pinned":[]}';
+// 与 cdp_cg_clear.mjs 相同：seed 要带上启动迁移会补的 releasedArtists，
+// 否则「tracker untouched」这条与 CG 操作无关的断言会假红。
+const TRACKER_SEED = '{"version":1,"selectedArtists":[],"releasedArtists":[],"lines":{},"order":[],"pinned":[]}';
 
 function jsonPut(target, payload) {
   return new Promise((resolve, reject) => {

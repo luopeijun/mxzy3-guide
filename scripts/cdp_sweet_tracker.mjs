@@ -1,7 +1,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 
-/* 甜蜜乐章事件追踪器回归：两个页签与 #/tracker 路由、主角恒占一个签约位
+/* 甜蜜乐章事件追踪器回归：三个页签（攻略 / 事件追踪 / CG 图鉴）与 #/tracker 路由、主角恒占一个签约位
    （最多 4 人＝主角 + 3 位艺人、不可解约、头像在人名左边）、事件步骤的
    时间 / 概要 / 提示常驻显示在步骤卡里（无展开 / 收起按钮与单步箭头，
    时间标签极淡中性描边、与实心粉编号 pill 区分）、
@@ -84,8 +84,9 @@ async function main() {
   const tabs = await evaluate(
     `[...document.querySelectorAll('[role="tab"]')].map(t => ({ label: t.textContent.trim(), key: t.dataset.tab || '' }))`,
   );
-  check('甜站有两个页签：攻略 / 事件追踪',
-    tabs.length === 2 && tabs[0].label === '攻略' && tabs[1].label === '事件追踪' && tabs[1].key === 'tracker',
+  check('甜站有三个页签：攻略 / 事件追踪 / CG 图鉴',
+    tabs.length === 3 && tabs[0].label === '攻略' && tabs[1].label === '事件追踪' &&
+    tabs[2].label === 'CG 图鉴' && tabs[1].key === 'tracker' && tabs[2].key === 'cg',
     JSON.stringify(tabs));
 
   // 2. 进入追踪器（顶栏保持挂载）
