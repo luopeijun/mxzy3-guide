@@ -19,6 +19,15 @@ interface Props {
   guideTitle?: string;
   /** 站点配置：甜蜜乐章的 CG 只有编号，没有名称，底栏不渲染名称那一格。 */
   showName?: boolean;
+  /** 排序模式：开启后底栏右侧出现 ↑/↓，供调整人物内顺序。主站恒不传，行为零变化。 */
+  reorder?: boolean;
+  /** 上移一位（仅排序模式下有效）。 */
+  onMoveUp?: () => void;
+  /** 下移一位（仅排序模式下有效）。 */
+  onMoveDown?: () => void;
+  /** 已在最前 / 最后，禁用对应箭头。 */
+  moveUpDisabled?: boolean;
+  moveDownDisabled?: boolean;
   onToggle: () => void;
   onOpen: (trigger: HTMLButtonElement) => void;
 }
@@ -28,7 +37,8 @@ interface Props {
  *  图片本身是「查看大图」按钮，整块可点，图上浮层是 pointer-events-none 不误触。 */
 export default function CgCard({
   item, collected, size = 'md', group, guideHref, guideTitle,
-  showName = true, onToggle, onOpen,
+  showName = true, reorder = false, onMoveUp, onMoveDown,
+  moveUpDisabled = false, moveDownDisabled = false, onToggle, onOpen,
 }: Props) {
   const isSm = size === 'sm';
   const isLg = size === 'lg';
@@ -182,6 +192,40 @@ export default function CgCard({
           >
             攻略<span aria-hidden className="ml-0.5">›</span>
           </a>
+        )}
+        {/* 排序模式下才出现的 ↑/↓：把当前 CG 在「人物内」上移 / 下移一位，
+         *  序号（CG 01/CG 02…）会实时跟着变化。主站不传 reorder，永不渲染。 */}
+        {reorder && (
+          <span className="ml-auto flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              data-cg-move-up
+              aria-label="上移一位"
+              disabled={moveUpDisabled}
+              onClick={(event) => { event.stopPropagation(); onMoveUp?.(); }}
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full border leading-none transition-colors',
+                fontPx,
+                moveUpDisabled
+                  ? 'cursor-not-allowed border-line/50 text-ink-faint/50'
+                  : 'border-brand-line text-brand-strong hover:bg-brand-soft',
+              )}
+            >↑</button>
+            <button
+              type="button"
+              data-cg-move-down
+              aria-label="下移一位"
+              disabled={moveDownDisabled}
+              onClick={(event) => { event.stopPropagation(); onMoveDown?.(); }}
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full border leading-none transition-colors',
+                fontPx,
+                moveDownDisabled
+                  ? 'cursor-not-allowed border-line/50 text-ink-faint/50'
+                  : 'border-brand-line text-brand-strong hover:bg-brand-soft',
+              )}
+            >↓</button>
+          </span>
         )}
       </div>
     </article>

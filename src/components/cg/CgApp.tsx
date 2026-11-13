@@ -47,6 +47,31 @@ function flashCard(id: string) {
  *  其余用自身 id。主站条目无 collectionId，自然退化为 id，行为零变化。 */
 const collectionKey = (item: CgItem): string => item.collectionId ?? item.id;
 
+/** 人物内顺序的自定义覆盖：groupId -> 有序的 itemId 数组，存 localStorage。
+ *  与 cg.json 的 order/code 解耦：重新生成脚本只动图片与原始编号，绝不读这里，
+ *  所以「在页面里微调的顺序」永远不会被下一次生成冲掉（显示层始终以它为准）。 */
+const CG_ORDER_KEY = 'sweet.cg.order.v1';
+const CG_ORDER_VERSION = 1;
+
+function readCgOrder(key: string): Record<string, string[]> {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as { order?: Record<string, string[]> };
+    return parsed.order && typeof parsed.order === 'object' ? parsed.order : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCgOrder(key: string, order: Record<string, string[]>): void {
+  try {
+    localStorage.setItem(key, JSON.stringify({ version: CG_ORDER_VERSION, order }));
+  } catch {
+    // 隐私模式 / 配额不足：本次会话内仍生效，只是不落盘。
+  }
+}
+
 interface Props {
   data: CgData;
   /** 站点差异（存储键、攻略跳转、存档、文案）。省略即主站，行为零变化。 */
@@ -139,6 +164,14 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
   const [focusId, setFocusId] = useState(() => cgItemId());
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
+  // 人物内顺序的自定义覆盖（仅甜站开启 allowReorder 时读取 / 渲染）。
+  const [savedOrder, setSavedOrder] = useState<Record<string, string[]>>(() =>
+    config.allowReorder ? readCgOrder(CG_ORDER_KEY) : {},
+  );
+  const [reorderMode, setReorderMode] = useState(false);
+  /** 编辑中的顺序草稿：仅影响当前分组，未保存不落盘。 */
+  const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
+
   // 攻略 → CG 的落点索引（事件块的 cgIds 是数据来源，这里只是反查表）。
   const guideData = useGuideContext();
   const guideLinks = useMemo(
@@ -219,6 +252,62 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
     writeCg(clearedSnapshot, config.storageKey);
     setCollected(clearedSnapshot);
     setClearedSnapshot(null);
+  };
+
+  /** 当前分组「按最终顺序排好的 itemId 列表」：编辑中用草稿，否则用已保存，
+   *  都没有时用 cg.json 的原始顺序。 */
+  const orderIdsFor = (gid: string): string[] => {
+    if (reorderMode && gid === groupId && gid !== 'all') {
+      return draftOrder ?? savedOrder[gid] ?? displayItems.sortedByGroup.get(gid)!.map((item) => item.id);
+    }
+    return savedOrder[gid] ?? displayItems.sortedByGroup.get(gid)!.map((item) => item.id);
+  };
+
+  /** 在分组内把某张 CG 上移 / 下移一位（dir = -1 上、+1 下）。 */
+  const moveItem = (gid: string, id: string, dir: -1 | 1) => {
+    const list = [...orderIdsFor(gid)];
+    const from = list.indexOf(id);
+    const to = from + dir;
+    if (from < 0 || to < 0 || to >= list.length) return;
+    [list[from], list[to]] = [list[to], list[from]];
+    setDraftOrder(list);
+  };
+
+  /** 进入排序模式：用当前最终顺序初始化草稿，避免从空草稿开始；
+   *  并把分页上限拉到极大，让整组卡片一次铺开，否则被隐藏的卡片没法挪动。 */
+  const enterReorder = () => {
+    if (groupId === 'all') return;
+    setDraftOrder([...orderIdsFor(groupId)]);
+    setLimit(Number.MAX_SAFE_INTEGER);
+    setReorderMode(true);
+  };
+
+  /** 退出排序模式：save=true 则把草稿落到已保存并落盘，否则丢弃草稿。
+   *  顺手把分页上限拨回默认，免得排序时拉满的全组卡在「全部/其他分组」页里。 */
+  const exitReorder = (save: boolean) => {
+    if (save && groupId !== 'all' && draftOrder) {
+      const next = { ...savedOrder, [groupId]: draftOrder };
+      setSavedOrder(next);
+      writeCgOrder(CG_ORDER_KEY, next);
+    }
+    setReorderMode(false);
+    setDraftOrder(null);
+    setLimit(PAGE_SIZE);
+  };
+
+  /** 导出全部自定义顺序为 JSON 文件，发给开发者即可烘焙进 cg.json（图片不动）。 */
+  const exportOrder = () => {
+    const blob = new Blob([JSON.stringify({ version: CG_ORDER_VERSION, order: savedOrder }, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'sweet-cg-order.json';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   };
 
   /** 一键收集当前分组（「全部」页就是全部）里还没收的 CG；已收的不重复加。
@@ -330,6 +419,38 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
     [data.groups],
   );
 
+  /** 把「人物内自定义顺序」套到数据上：返回每个 itemId 的最终 order / code，以及
+   *  每个分组按最终顺序排好的条目列表。编辑中的分组（reorderMode 且不是全部）用
+   *  draftOrder，其余用已保存的 savedOrder；都没有就退回 cg.json 的原始 order。
+   *  code 一律按最终位置重排成 CG 01 / CG 02…，所以调顺序后编号自动连号。 */
+  const displayItems = useMemo(() => {
+    const orderMap = new Map<string, { order: number; code: string }>();
+    const sortedByGroup = new Map<string, CgItem[]>();
+    for (const group of data.groups) {
+      const items = data.items.filter((item) => item.groupId === group.id);
+      const liveIds = reorderMode && groupId !== 'all' && group.id === groupId
+        ? (draftOrder ?? savedOrder[group.id] ?? null)
+        : (savedOrder[group.id] ?? null);
+      let ordered: CgItem[];
+      if (liveIds) {
+        const pos = new Map(liveIds.map((id, index) => [id, index]));
+        ordered = [...items].sort((a, b) => {
+          const pa = pos.has(a.id) ? (pos.get(a.id) as number) : Number.MAX_SAFE_INTEGER;
+          const pb = pos.has(b.id) ? (pos.get(b.id) as number) : Number.MAX_SAFE_INTEGER;
+          if (pa !== pb) return pa - pb;
+          return a.order - b.order;
+        });
+      } else {
+        ordered = [...items].sort((a, b) => a.order - b.order);
+      }
+      ordered.forEach((item, index) => {
+        orderMap.set(item.id, { order: index + 1, code: `CG ${String(index + 1).padStart(2, '0')}` });
+      });
+      sortedByGroup.set(group.id, ordered);
+    }
+    return { orderMap, sortedByGroup };
+  }, [data.items, data.groups, savedOrder, draftOrder, reorderMode, groupId]);
+
   const groupCounts = useMemo(() => {
     const counts = new Map<string, { total: number; done: number }>();
     for (const item of data.items) {
@@ -341,24 +462,36 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
     return counts;
   }, [data.items, collected]);
 
+  const orderedAll = useMemo(
+    () => data.groups.flatMap((group) => displayItems.sortedByGroup.get(group.id) ?? []),
+    [data.groups, displayItems],
+  );
   const groupItems = useMemo(
-    () => (groupId === 'all'
-      ? data.items
-      : data.items.filter((item) => item.groupId === groupId)),
-    [data.items, groupId],
+    () => (groupId === 'all' ? orderedAll : (displayItems.sortedByGroup.get(groupId) ?? [])),
+    [groupId, orderedAll, displayItems],
   );
   const groupDone = useMemo(
     () => groupItems.reduce((sum, item) => sum + (collected.has(collectionKey(item)) ? 1 : 0), 0),
     [groupItems, collected],
   );
+  // 排序模式下不叠加「只看未收集」，否则被隐藏的卡片没法挪动。
+  const effectiveOnlyMissing = reorderMode ? false : onlyMissing;
   const filtered = useMemo(
-    () => (onlyMissing
+    () => (effectiveOnlyMissing
       ? groupItems.filter((item) => !collected.has(collectionKey(item)))
       : groupItems),
-    [groupItems, onlyMissing, collected],
+    [groupItems, effectiveOnlyMissing, collected],
   );
-  const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
+  const visible = useMemo(
+    () => filtered.slice(0, limit).map((item) => ({
+      ...item,
+      code: displayItems.orderMap.get(item.id)?.code ?? item.code,
+    })),
+    [filtered, limit, displayItems],
+  );
   const visibleIds = useMemo(() => visible.map((item) => item.id), [visible]);
+  /** 排序模式下当前分组的实时顺序（草稿），用来判定每张卡是否还能上移 / 下移。 */
+  const liveOrderIds = reorderMode && groupId !== 'all' ? orderIdsFor(groupId) : [];
 
   const activeName = groupId === 'all'
     ? '全部'
@@ -527,20 +660,63 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
             <span className="text-ui-2xs tabular-nums text-ink-faint">
               {groupDone} / {groupItems.length} 已收集
             </span>
-            <button
-              type="button"
-              data-cg-filter
-              aria-pressed={onlyMissing}
-              onClick={() => setOnlyMissing((value) => !value)}
-              className={cn(
-                'ml-auto rounded-full border px-3 py-1 text-ui-2xs transition-colors',
-                onlyMissing
-                  ? 'border-brand-line bg-brand-soft font-semibold text-brand-strong'
-                  : 'border-line text-ink-muted hover:text-brand-strong',
-              )}
-            >
-              {onlyMissing ? '显示全部' : '只看未收集'}
-            </button>
+            {reorderMode ? (
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-ui-2xs">
+                <span className="text-ink-faint">用 ↑/↓ 调整「{activeName}」内的 CG 顺序</span>
+                <button
+                  type="button"
+                  data-cg-reorder-export
+                  onClick={exportOrder}
+                  className="shrink-0 whitespace-nowrap rounded-full border border-line px-3 py-1 text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+                >
+                  导出顺序
+                </button>
+                <button
+                  type="button"
+                  data-cg-reorder-cancel
+                  onClick={() => exitReorder(false)}
+                  className="shrink-0 whitespace-nowrap rounded-full border border-line px-3 py-1 text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  data-cg-reorder-save
+                  onClick={() => exitReorder(true)}
+                  className="shrink-0 whitespace-nowrap rounded-full border border-brand bg-brand px-3 py-1 font-semibold text-white transition-colors hover:bg-brand-strong"
+                >
+                  保存顺序
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  data-cg-filter
+                  aria-pressed={onlyMissing}
+                  onClick={() => setOnlyMissing((value) => !value)}
+                  className={cn(
+                    'ml-auto rounded-full border px-3 py-1 text-ui-2xs transition-colors',
+                    onlyMissing
+                      ? 'border-brand-line bg-brand-soft font-semibold text-brand-strong'
+                      : 'border-line text-ink-muted hover:text-brand-strong',
+                  )}
+                >
+                  {onlyMissing ? '显示全部' : '只看未收集'}
+                </button>
+                {config.allowReorder && groupId !== 'all' && (
+                  <button
+                    type="button"
+                    data-cg-reorder
+                    onClick={enterReorder}
+                    title={`调整「${activeName}」分组内 CG 的先后顺序`}
+                    className="shrink-0 whitespace-nowrap rounded-full border border-brand-line px-3 py-1 text-ui-2xs font-medium text-brand-strong transition-colors hover:bg-brand-soft"
+                  >
+                    调整顺序
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           <div
@@ -565,6 +741,7 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
                   {visible.map((item) => {
                     const link = linkFor(item);
                     const key = collectionKey(item);
+                    const pos = liveOrderIds.indexOf(item.id);
                     return (
                       <li key={item.id}>
                         <CgCard
@@ -575,6 +752,11 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
                           guideHref={link ? cgGuideHref(link) : undefined}
                           guideTitle={link ? cgGuideTitle(link) : undefined}
                           showName={config.showName}
+                          reorder={reorderMode}
+                          onMoveUp={() => moveItem(groupId, item.id, -1)}
+                          onMoveDown={() => moveItem(groupId, item.id, 1)}
+                          moveUpDisabled={reorderMode && pos <= 0}
+                          moveDownDisabled={reorderMode && pos >= liveOrderIds.length - 1}
                           onToggle={() => toggle(key)}
                           onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
                         />

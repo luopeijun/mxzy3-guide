@@ -14,6 +14,9 @@ export interface CgSiteConfig {
   guideLinks: boolean;
   /** 顶栏「全部存档」。主站是进度 + CG + 六大通告的统一信封；甜站以后单独接。 */
   archive: boolean;
+  /** 是否开放「调整人物内 CG 顺序」的排序模式（甜站分批收图、需要人工微调顺序；
+   *  主站顺序来自游戏原表，关掉保持零变化）。 */
+  allowReorder: boolean;
   /** 灯箱里的「获得条件」一行。 */
   showCondition: boolean;
   /** 卡片底栏与灯箱标题里的 CG 名称；关掉后只显示编号。 */
@@ -31,6 +34,7 @@ export const MAIN_CG_CONFIG: CgSiteConfig = {
   storageKey: CG_KEY,
   guideLinks: true,
   archive: true,
+  allowReorder: false,
   showCondition: true,
   showName: true,
   metaNote: '',
@@ -43,6 +47,7 @@ export const SWEET_CG_CONFIG: CgSiteConfig = {
   storageKey: 'sweet.cg.v1',
   guideLinks: false,
   archive: false,
+  allowReorder: true,
   showCondition: false,
   showName: false,
   metaNote: '',
