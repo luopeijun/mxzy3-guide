@@ -205,7 +205,7 @@ function SweetGuide({ data: source }: Props) {
           onSelect={(id) => (id === 'tracker' ? openTracker() : id === 'cg' ? openCg() : backToGuide())}
         />
       )}
-      right={(
+      right={mode === 'guide' ? (
         <nav className="flex items-center gap-1 tab:gap-0 nav:hidden" aria-label="攻略分类">
           {guide.categories.map((category) => (
             <button
@@ -223,7 +223,7 @@ function SweetGuide({ data: source }: Props) {
             </button>
           ))}
         </nav>
-      )}
+      ) : undefined}
       crossLink={{
         href: `${import.meta.env.BASE_URL}index.html`,
         label: '‹ 明星志愿3',

@@ -162,6 +162,20 @@ async function main() {
   })`);
   check('点 CG 图鉴页签写入 #/cg 并打开整页图鉴',
     opened.hash === '#/cg' && opened.app && opened.title === 'CG 图鉴', JSON.stringify(opened));
+  const catNavOnCg = await evaluate(
+    `[...document.querySelectorAll('nav[aria-label="攻略分类"] button')].map(b => b.textContent.trim())`,
+  );
+  check('切到 CG 图鉴后顶栏不再显示攻略分类胶囊', catNavOnCg.length === 0, JSON.stringify(catNavOnCg));
+  await evaluate(`[...document.querySelectorAll('[role="tab"]')].find(t => t.textContent.trim() === '攻略').click(); 1`);
+  await sleep(700);
+  const catNavOnGuide = await evaluate(
+    `[...document.querySelectorAll('nav[aria-label="攻略分类"] button')].map(b => b.textContent.trim())`,
+  );
+  check('切回攻略页顶栏恢复三个分类胶囊',
+    catNavOnGuide.length === 3 && catNavOnGuide.join(',') === '经纪人事件簿,角色攻略,支线攻略',
+    JSON.stringify(catNavOnGuide));
+  await evaluate(`document.querySelector('[data-tab="cg"]').click(); 1`);
+  await sleep(700);
   check('顶栏写明真实张数（共 83 张 · 9 个分组），不再提示「陆续导入」',
     opened.meta.includes(`共 ${real.meta.itemCount} 张`) &&
     opened.meta.includes(`${real.meta.groupCount} 个分组`) &&
