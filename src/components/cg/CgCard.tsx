@@ -17,6 +17,8 @@ interface Props {
   /** 有对应攻略事件时给出深链（`#/guide/<nodeId>~<anchor>`），否则不渲染入口。 */
   guideHref?: string;
   guideTitle?: string;
+  /** 站点配置：甜蜜乐章的 CG 只有编号，没有名称，底栏不渲染名称那一格。 */
+  showName?: boolean;
   onToggle: () => void;
   onOpen: (trigger: HTMLButtonElement) => void;
 }
@@ -24,9 +26,14 @@ interface Props {
 /** 一张 CG 卡：图片占主体，底部一行收集 + 名称 + 攻略（同一尺寸下所有卡片等高）。
  *  序号 / 归属标签按尺寸档位在「图片浮层」与「底栏」之间挪动，详见 Props.size 说明。
  *  图片本身是「查看大图」按钮，整块可点，图上浮层是 pointer-events-none 不误触。 */
-export default function CgCard({ item, collected, size = 'md', group, guideHref, guideTitle, onToggle, onOpen }: Props) {
+export default function CgCard({
+  item, collected, size = 'md', group, guideHref, guideTitle,
+  showName = true, onToggle, onOpen,
+}: Props) {
   const isSm = size === 'sm';
   const isLg = size === 'lg';
+  /** 无名称的站点只留编号，别让 aria / alt 拖着一个空尾巴。 */
+  const label = [item.code, item.name].filter(Boolean).join(' ');
   const fontPx = isSm ? 'text-[12px]' : 'text-[14px]';
   const btnH = isSm ? 'h-5' : 'h-6';
   // 归属标签：大档底栏一行放得下，留在底栏；小/中档浮到图片左上角（分组视图 group 为空则都不显示）。
@@ -75,7 +82,7 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
         <button
           type="button"
           data-cg-open
-          aria-label={`查看大图 ${item.code} ${item.name}`}
+          aria-label={`查看大图 ${label}`}
           title="查看大图"
           onClick={(event) => onOpen(event.currentTarget)}
           className="absolute inset-0 z-0 block h-full w-full cursor-pointer"
@@ -83,7 +90,7 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
           {item.image ? (
             <img
               src={`${import.meta.env.BASE_URL}${item.image}`}
-              alt={`${item.code} ${item.name}`}
+              alt={label}
               loading="lazy"
               decoding="async"
               className={cn(
@@ -129,7 +136,7 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
           type="button"
           data-cg-toggle
           aria-pressed={collected}
-          aria-label={`${collected ? '取消收集' : '标记已收集'} ${item.code} ${item.name}`}
+          aria-label={`${collected ? '取消收集' : '标记已收集'} ${label}`}
           title={collected ? '取消收集' : '标记已收集'}
           onClick={onToggle}
           className={cn(
@@ -159,11 +166,13 @@ export default function CgCard({ item, collected, size = 'md', group, guideHref,
         {!codeOnImage && (
           <span data-cg-code className={cn('shrink-0 font-semibold text-brand-strong', fontPx)}>{item.code}</span>
         )}
-        <span
-          data-cg-name
-          className={cn('min-w-0 truncate font-medium text-ink', fontPx)}
-          title={item.name}
-        >{item.name}</span>
+        {showName && (
+          <span
+            data-cg-name
+            className={cn('min-w-0 truncate font-medium text-ink', fontPx)}
+            title={item.name}
+          >{item.name}</span>
+        )}
         {guideHref && (
           <a
             data-cg-guide-link

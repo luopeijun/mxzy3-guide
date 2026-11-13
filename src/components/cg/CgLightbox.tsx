@@ -13,6 +13,9 @@ interface Props {
   hasNext: boolean;
   /** 有对应攻略事件时的深链；没有就不渲染这个入口。 */
   guideHref?: string;
+  /** 站点配置：甜蜜乐章只有编号，不显示名称与「获得条件」那一行。 */
+  showName?: boolean;
+  showCondition?: boolean;
   onPrev: () => void;
   onNext: () => void;
   onToggle: () => void;
@@ -24,9 +27,11 @@ interface Props {
  *  收集按钮自己立刻变「已收集」，因为点亮动画发生在被遮住的网格上，看不见。 */
 export default function CgLightbox({
   item, groupName, collected, position, total,
-  hasPrev, hasNext, guideHref, onPrev, onNext, onToggle, onClose,
+  hasPrev, hasNext, guideHref, showName = true, showCondition = true,
+  onPrev, onNext, onToggle, onClose,
 }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const label = [item.code, item.name].filter(Boolean).join(' ');
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -60,7 +65,7 @@ export default function CgLightbox({
       data-cg-lightbox-id={item.id}
       role="dialog"
       aria-modal="true"
-      aria-label={`${item.code} ${item.name} 大图`}
+      aria-label={`${label} 大图`}
       className="fixed inset-0 z-50 flex flex-col bg-black/85 text-white"
     >
       <div className="flex shrink-0 items-center gap-3 px-5 py-3 text-ui-xs text-white/70">
@@ -86,7 +91,7 @@ export default function CgLightbox({
             key={item.id}
             data-cg-lightbox-image
             src={`${import.meta.env.BASE_URL}${item.image}`}
-            alt={`${item.code} ${item.name}`}
+            alt={label}
             className="max-h-full max-w-full rounded-ui-sm object-contain shadow-2xl"
           />
         ) : (
@@ -120,20 +125,26 @@ export default function CgLightbox({
         <div className="mx-auto flex max-w-[900px] flex-wrap items-start gap-x-6 gap-y-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-ui-xs font-semibold text-brand-line">{item.code}</span>
-              <h2 className="text-ui-sm font-semibold" data-cg-lightbox-title>{item.name}</h2>
+              {showName && (
+                <span className="text-ui-xs font-semibold text-brand-line">{item.code}</span>
+              )}
+              <h2 className="text-ui-sm font-semibold" data-cg-lightbox-title>
+                {showName ? item.name : item.code}
+              </h2>
             </div>
             {/* 说明文字只在这里出现，完整保留；极长的条件最多占 7 行，
                 再长就在这一块内部滚动，不会把大图挤没。 */}
-            <div className="mt-2 flex items-start gap-2">
-              <span className="shrink-0 pt-0.5 text-ui-2xs text-white/50">获得条件</span>
-              <p
-                data-cg-lightbox-condition
-                className="cg-condition-scroll max-h-28 min-w-0 flex-1 overflow-y-auto text-ui-xs leading-relaxed text-white/80"
-              >
-                {item.condition || '—'}
-              </p>
-            </div>
+            {showCondition && (
+              <div className="mt-2 flex items-start gap-2">
+                <span className="shrink-0 pt-0.5 text-ui-2xs text-white/50">获得条件</span>
+                <p
+                  data-cg-lightbox-condition
+                  className="cg-condition-scroll max-h-28 min-w-0 flex-1 overflow-y-auto text-ui-xs leading-relaxed text-white/80"
+                >
+                  {item.condition || '—'}
+                </p>
+              </div>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {guideHref && (

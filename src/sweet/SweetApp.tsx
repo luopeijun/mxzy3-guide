@@ -3,10 +3,12 @@ import type { GuideData } from '../types/guide';
 import type { ReorderRequest } from '../lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from '../lib/guide';
 import { useGuideData } from '../hooks/useGuideData';
-import { guideNodeId, isTrackerRoute, useHashSelection } from '../hooks/useHashSelection';
+import { useCgData } from '../hooks/useCgData';
+import { cgTabHash, guideNodeId, isCgRoute, isTrackerRoute, useHashSelection } from '../hooks/useHashSelection';
 import { GuideDataContext } from '../hooks/useGuideContext';
 import { TrackerProvider } from '../hooks/useTracker';
 import { SWEET_TRACKER_CONFIG } from '../lib/trackerConfig';
+import { SWEET_CG_CONFIG } from '../lib/cgConfig';
 import { cn } from '../lib/cn';
 import { useTreeOrder } from '../hooks/useTreeOrder';
 import AppShell from '../components/AppShell';
@@ -14,6 +16,7 @@ import ContentPanel from '../components/ContentPanel';
 import EmptyState from '../components/EmptyState';
 import LoadingScreen from '../components/LoadingScreen';
 import Sidebar from '../components/Sidebar';
+import CgApp from '../components/cg/CgApp';
 import TrackerApp from '../components/tracker/TrackerApp';
 import GameHeader from '../ui/GameHeader';
 import TabBar, { type TabItem } from '../ui/TabBar';
@@ -21,11 +24,14 @@ import TabBar, { type TabItem } from '../ui/TabBar';
 /** 甜蜜乐章是独立站点（sweet.html），只共用设计系统与通用组件。
  *  数据、类目、顺序存档都另起一套，不和明星志愿3 的 guide.json 混。 */
 const DATA_FILE = 'data/sweet/guide.json';
+/** CG 清单同样独立，且只在切到图鉴页签时才请求。 */
+const CG_DATA_FILE = 'data/sweet/cg.json';
 /** 目录拖拽顺序另存一个键，否则会把另一个站的目录顺序打乱。 */
 const ORDER_STORE = { key: 'sweet.tree-order.v1', hoistCategory: false };
 const TABS: TabItem[] = [
   { id: 'guide', label: '攻略' },
   { id: 'tracker', label: '事件追踪', dataTab: 'tracker' },
+  { id: 'cg', label: 'CG 图鉴', dataTab: 'cg' },
 ];
 const EMPTY_HINT = {
   title: '这一页还没整理',
@@ -37,6 +43,37 @@ const OVERVIEW_HERO = {
   paragraphs: [],
   gradientClass: 'bg-[linear-gradient(118deg,#7d1f45,#b32f68_58%,#cf5a8e)]',
 };
+
+/** CG 清单只在切到图鉴时请求；加载 / 失败状态都关在这一页里，不拖慢攻略首屏。 */
+function SweetCgView() {
+  const { data, error } = useCgData(true, CG_DATA_FILE);
+  const shell = 'fixed inset-x-0 bottom-0 top-16 z-40 flex items-center justify-center bg-canvas p-6';
+
+  if (error) {
+    return (
+      <div className={shell}>
+        <div className="w-full max-w-[520px]">
+          <EmptyState
+            title="CG 数据加载失败"
+            text={`无法读取 public/${CG_DATA_FILE}（${error}）。请确认已运行 python scripts/extract_sweet_cg.py 生成数据。`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className={shell}>
+        <div className="w-full max-w-[520px]">
+          <EmptyState title="正在载入 CG 图鉴" text="正在读取 CG 清单与收集进度…" />
+        </div>
+      </div>
+    );
+  }
+
+  return <CgApp data={data} config={SWEET_CG_CONFIG} />;
+}
 
 interface Props {
   data: GuideData;
@@ -52,16 +89,20 @@ function SweetGuide({ data: source }: Props) {
   const validIds = useMemo(() => new Set(allNodes.map((node) => node.id)), [allNodes]);
   const { selectedId, select } = useHashSelection(validIds);
 
-  const [mode, setMode] = useState<'guide' | 'tracker'>(() =>
-    isTrackerRoute() ? 'tracker' : 'guide',
+  const [mode, setMode] = useState<'guide' | 'tracker' | 'cg'>(() =>
+    isCgRoute() ? 'cg' : isTrackerRoute() ? 'tracker' : 'guide',
   );
-  // 关掉追踪器时回到打开前那一页；从 URL 直接进入追踪器时留空。
-  const lastNodeRef = useRef<string>(isTrackerRoute() ? '' : guideNodeId());
+  // 关掉整页视图时回到打开前那一页；从 URL 直接进追踪器 / 图鉴时留空。
+  const lastNodeRef = useRef<string>(
+    isTrackerRoute() || isCgRoute() ? '' : guideNodeId(),
+  );
 
   useEffect(() => {
     const onChange = () => {
       if (isTrackerRoute()) {
         setMode('tracker');
+      } else if (isCgRoute()) {
+        setMode('cg');
       } else {
         setMode('guide');
         const id = guideNodeId();
@@ -125,7 +166,13 @@ function SweetGuide({ data: source }: Props) {
     setMode('tracker');
   }, []);
 
-  const closeTracker = useCallback(() => {
+  const openCg = useCallback(() => {
+    // 带上上次看的分组，别每次都复位到「全部」。
+    window.location.hash = cgTabHash();
+    setMode('cg');
+  }, []);
+
+  const backToGuide = useCallback(() => {
     const id = lastNodeRef.current;
     window.location.hash = id ? `/guide/${id}` : '/guide/';
     setMode('guide');
@@ -155,7 +202,7 @@ function SweetGuide({ data: source }: Props) {
           items={TABS}
           activeId={mode}
           ariaLabel="视图切换"
-          onSelect={(id) => (id === 'tracker' ? openTracker() : closeTracker())}
+          onSelect={(id) => (id === 'tracker' ? openTracker() : id === 'cg' ? openCg() : backToGuide())}
         />
       )}
       right={(
@@ -244,6 +291,7 @@ function SweetGuide({ data: source }: Props) {
           />
         </AppShell>
         {mode === 'tracker' && <TrackerApp data={guide} />}
+        {mode === 'cg' && <SweetCgView />}
       </TrackerProvider>
     </GuideDataContext.Provider>
   );

@@ -19,18 +19,20 @@ export function sanitiseCg(raw: unknown, validIds: Set<string>): Set<string> {
   return out;
 }
 
-export function readCg(validIds: Set<string>): Set<string> {
+/** `key` 由站点配置给出：主站 `guide.cg.v1`、甜蜜乐章 `sweet.cg.v1`。
+ *  省略时就是主站键，存档面板等原有调用方一个字都不用改。 */
+export function readCg(validIds: Set<string>, key: string = CG_KEY): Set<string> {
   try {
-    const raw = localStorage.getItem(CG_KEY);
+    const raw = localStorage.getItem(key);
     return raw ? sanitiseCg(JSON.parse(raw), validIds) : new Set<string>();
   } catch {
     return new Set<string>();
   }
 }
 
-export function writeCg(collected: Set<string>): void {
+export function writeCg(collected: Set<string>, key: string = CG_KEY): void {
   try {
-    localStorage.setItem(CG_KEY, JSON.stringify({ version: 1, collected: [...collected] }));
+    localStorage.setItem(key, JSON.stringify({ version: 1, collected: [...collected] }));
   } catch {
     // 隐私模式 / 配额不足：本次会话内仍然正常点亮，只是不落盘。
   }

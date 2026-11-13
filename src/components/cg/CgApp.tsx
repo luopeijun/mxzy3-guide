@@ -6,6 +6,7 @@ import type { CgGuideLink } from '../../lib/cgLinks';
 import { readCgOrigin } from '../../lib/cgOrigin';
 import { cgGroupId, cgItemId, rememberCgGroup, writeCgGroupHash } from '../../hooks/useHashSelection';
 import { useGuideContext } from '../../hooks/useGuideContext';
+import { MAIN_CG_CONFIG, type CgSiteConfig } from '../../lib/cgConfig';
 import type { CgData, CgItem } from '../../types/cg';
 import CgCard from './CgCard';
 import CgLightbox from './CgLightbox';
@@ -44,6 +45,8 @@ function flashCard(id: string) {
 
 interface Props {
   data: CgData;
+  /** 站点差异（存储键、攻略跳转、存档、文案）。省略即主站，行为零变化。 */
+  config?: CgSiteConfig;
 }
 
 interface LightboxState {
@@ -102,9 +105,9 @@ function GroupAvatar(
  *  分组是原表天然切好的 19 组，每组 6–13 张，比 204 张一次铺完更好查漏；
  *  「全部」才需要分页。收集开关在卡片底部信息栏，和「点图片看大图」互不干扰；
  *  右上角只留一个不点击的已收状态点，方便一眼扫过去。 */
-export default function CgApp({ data }: Props) {
+export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
   const validIds = useMemo(() => new Set(data.items.map((item) => item.id)), [data.items]);
-  const [collected, setCollected] = useState<Set<string>>(() => readCg(validIds));
+  const [collected, setCollected] = useState<Set<string>>(() => readCg(validIds, config.storageKey));
   /** 分组记在 URL 里（`#/cg/group/<id>`），刷新、复制链接回来还是同一个人物。 */
   const [groupId, setGroupId] = useState(() => cgGroupId() || 'all');
   const [onlyMissing, setOnlyMissing] = useState(false);
@@ -125,8 +128,10 @@ export default function CgApp({ data }: Props) {
   // 攻略 → CG 的落点索引（事件块的 cgIds 是数据来源，这里只是反查表）。
   const guideData = useGuideContext();
   const guideLinks = useMemo(
-    () => (guideData ? buildCgGuideLinks(guideData) : new Map<string, CgGuideLink[]>()),
-    [guideData],
+    () => (config.guideLinks && guideData
+      ? buildCgGuideLinks(guideData)
+      : new Map<string, CgGuideLink[]>()),
+    [config.guideLinks, guideData],
   );
 
   /**
@@ -138,6 +143,8 @@ export default function CgApp({ data }: Props) {
    */
   const linkFor = useCallback(
     (item: CgItem): CgGuideLink | undefined => {
+      // 甜蜜乐章的攻略跳转以后再做：现在连页面级落点也一概不渲染。
+      if (!config.guideLinks) return undefined;
       const candidates = guideLinks.get(item.id);
       if (candidates?.length) {
         const origin = readCgOrigin(item.id);
@@ -150,16 +157,16 @@ export default function CgApp({ data }: Props) {
         ? { nodeId: item.guide.nodeId, nodeTitle: item.guide.title, anchor: item.guide.anchor }
         : undefined;
     },
-    [guideLinks],
+    [guideLinks, config.guideLinks],
   );
 
   // A save import writes the CG collection straight to localStorage and fires
   // this event, so re-read instead of requiring a reload.
   useEffect(() => {
-    const onChanged = () => setCollected(readCg(validIds));
+    const onChanged = () => setCollected(readCg(validIds, config.storageKey));
     window.addEventListener(CG_CHANGED_EVENT, onChanged);
     return () => window.removeEventListener(CG_CHANGED_EVENT, onChanged);
-  }, [validIds]);
+  }, [validIds, config.storageKey]);
 
   useEffect(() => {
     if (!archiveOpen && !clearOpen) return;
@@ -177,7 +184,7 @@ export default function CgApp({ data }: Props) {
       const next = new Set(previous);
       if (next.has(id)) next.delete(id);
       else next.add(id);
-      writeCg(next);
+      writeCg(next, config.storageKey);
       return next;
     });
   };
@@ -187,7 +194,7 @@ export default function CgApp({ data }: Props) {
   const clearAll = () => {
     const previous = collected;
     const empty = new Set<string>();
-    writeCg(empty);
+    writeCg(empty, config.storageKey);
     setCollected(empty);
     setClearedSnapshot(previous.size > 0 ? previous : null);
     setClearOpen(false);
@@ -195,7 +202,7 @@ export default function CgApp({ data }: Props) {
 
   const undoClear = () => {
     if (!clearedSnapshot) return;
-    writeCg(clearedSnapshot);
+    writeCg(clearedSnapshot, config.storageKey);
     setCollected(clearedSnapshot);
     setClearedSnapshot(null);
   };
@@ -211,14 +218,14 @@ export default function CgApp({ data }: Props) {
         added += 1;
       }
     }
-    writeCg(next);
+    writeCg(next, config.storageKey);
     setCollected(next);
     setCollectUndo({ prev: collected, added });
   };
 
   const undoCollect = () => {
     if (!collectUndo) return;
-    writeCg(collectUndo.prev);
+    writeCg(collectUndo.prev, config.storageKey);
     setCollected(collectUndo.prev);
     setCollectUndo(null);
   };
@@ -401,8 +408,8 @@ export default function CgApp({ data }: Props) {
       <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="text-ui-lg font-bold text-brand-strong">CG 图鉴</h1>
         <span className="text-ui-2xs text-ink-faint">
-          共 {data.meta.itemCount} 张 · {data.meta.groupCount} 个分组
-          {data.meta.missingImageCount > 0 && ` · ${data.meta.missingImageCount} 张站点未提供图片`}
+          共 {data.meta.itemCount} 张 · {data.meta.groupCount} 个分组{config.metaNote}
+          {data.meta.missingImageCount > 0 && ` · ${data.meta.missingImageCount} ${config.missingImageNote}`}
         </span>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1.5 text-ui-2xs tabular-nums text-ink-faint">
           <span data-cg-progress className="shrink-0 whitespace-nowrap">
@@ -437,14 +444,16 @@ export default function CgApp({ data }: Props) {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            data-cg-archive
-            onClick={() => setArchiveOpen(true)}
-            className="shrink-0 whitespace-nowrap rounded-full border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
-          >
-            全部存档
-          </button>
+          {config.archive && (
+            <button
+              type="button"
+              data-cg-archive
+              onClick={() => setArchiveOpen(true)}
+              className="shrink-0 whitespace-nowrap rounded-full border border-line px-3 py-1 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            >
+              全部存档
+            </button>
+          )}
           <button
             type="button"
             data-cg-collect-all
@@ -522,7 +531,7 @@ export default function CgApp({ data }: Props) {
           >
             {filtered.length === 0 ? (
               <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-10 text-center text-ui-xs text-ink-faint">
-                {onlyMissing ? '这个分组已经全部收集完了。' : '这个分组暂时没有 CG。'}
+                {onlyMissing ? config.emptyFilteredText : config.emptyText}
               </p>
             ) : (
               <>
@@ -546,6 +555,7 @@ export default function CgApp({ data }: Props) {
                           group={groupId === 'all' ? groupById.get(item.groupId) : undefined}
                           guideHref={link ? cgGuideHref(link) : undefined}
                           guideTitle={link ? cgGuideTitle(link) : undefined}
+                          showName={config.showName}
                           onToggle={() => toggle(item.id)}
                           onOpen={(trigger) => openLightbox(item.id, visibleIds, trigger)}
                         />
@@ -584,6 +594,8 @@ export default function CgApp({ data }: Props) {
             const link = linkFor(lightboxItem);
             return link ? cgGuideHref(link) : undefined;
           })()}
+          showName={config.showName}
+          showCondition={config.showCondition}
           onPrev={() => stepLightbox(-1)}
           onNext={() => stepLightbox(1)}
           onToggle={() => toggle(lightboxItem.id)}
@@ -591,7 +603,7 @@ export default function CgApp({ data }: Props) {
         />
       )}
 
-      {archiveOpen && (
+      {config.archive && archiveOpen && (
         <div
           data-cg-archive-modal
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 py-6"
