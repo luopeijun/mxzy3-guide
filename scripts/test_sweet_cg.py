@@ -146,22 +146,53 @@ class SweetCgTests(unittest.TestCase):
     def test_names_come_from_linked_guide_events(self):
         """CG 名称 = 这张图对应的攻略事件标题（`cg-links.tsv` → guide.json 的 cgIds）。
 
-        没有对应事件的 CG 名称留空（画廊只显示编号）。
+        没有对应事件的 CG 名称留空（画廊只显示编号）；结局这类手填名称的条目
+        见 `test_manual_ending_names`，手填优先于事件标题。
         """
         data = payload()
         names = esc.cg_names()
+        manual = esc.manual_names()
         self.assertTrue(names, "guide.json 里没有 cgIds —— 请先跑 extract_sweet_guide.py")
         by_id = {item["id"]: item for item in data["items"]}
 
         # 映射表里点到的每个 cgId 都必须是一张真实存在的 CG，不能指向不存在的图。
         for cg_id, title in names.items():
             self.assertIn(cg_id, by_id, f"cg-links.tsv 指向了不存在的 CG：{cg_id}")
-            self.assertEqual(by_id[cg_id]["name"], title, cg_id)
-        # 反向：凡是没被映射点到的条目，名称必须为空，不许出现「来历不明的名字」。
+            if cg_id not in manual:
+                self.assertEqual(by_id[cg_id]["name"], title, cg_id)
+        # 反向：凡是没被映射点到、也没手填的条目，名称必须为空，不许出现「来历不明的名字」。
         for item in data["items"]:
-            if item["id"] not in names:
+            if item["id"] not in names and item["id"] not in manual:
                 self.assertEqual(item["name"], "", item["id"])
-        self.assertEqual(sum(1 for item in data["items"] if item["name"]), len(names))
+        self.assertEqual(
+            sum(1 for item in data["items"] if item["name"]),
+            len(set(names) | set(manual)),
+        )
+
+    def test_manual_ending_names(self):
+        """`cg-names.tsv`：结局类 CG 的手填名称，行里的源图编号必须对得上。
+
+        源图编号是 `images/sweet-cg/<人物>/<原编号>.webp` 的文件名，一旦管线重排
+        导致 id 与图错位，这条会先挂掉，而不是把名字悄悄贴到别的图上。
+        """
+        table = esc.manual_names()
+        self.assertTrue(table, "sources/sweet/cg-names.tsv 缺失或为空")
+        data = payload()
+        by_id = {item["id"]: item for item in data["items"]}
+        for cg_id, (source, name) in table.items():
+            self.assertIn(cg_id, by_id, f"cg-names.tsv 指向了不存在的 CG：{cg_id}")
+            item = by_id[cg_id]
+            self.assertEqual(Path(item["image"]).stem, source, cg_id)
+            self.assertEqual(item["name"], name, cg_id)
+        # 杜云芊的九个事业结局（CG 14/15/18/19/21/22/23/24/25）都在这张表里。
+        self.assertEqual(
+            {by_id[cg_id]["code"] for cg_id in table},
+            {"CG 14", "CG 15", "CG 18", "CG 19", "CG 21",
+             "CG 22", "CG 23", "CG 24", "CG 25"},
+        )
+        for _source, name in table.values():
+            self.assertTrue(name.startswith("事业结局（"), name)
+
 
     def test_generated_images_match_items(self):
         """No stale webp left behind after a full rebuild."""

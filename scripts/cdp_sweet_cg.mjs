@@ -271,6 +271,27 @@ async function main() {
     protagonist.firstCode === 'CG 01' && protagonist.title === '杜云芊',
     JSON.stringify(protagonist));
 
+  // 结局类 CG 没有对应攻略事件，名字手写在 sources/sweet/cg-names.tsv（管线烘焙进 cg.json）。
+  const endingNames = await evaluate(`(() => {
+    const app = document.querySelector('[data-cg-app]');
+    const pick = (id) => {
+      const card = app.querySelector('[data-cg-card][data-cg-id="' + id + '"]');
+      const el = card?.querySelector('[data-cg-name]');
+      return { name: el?.textContent?.trim() ?? '', h: el?.getBoundingClientRect().height ?? 0 };
+    };
+    return {
+      cg14: pick('protagonist-11'), cg15: pick('protagonist-14'),
+      cg16: pick('protagonist-13'), cg25: pick('protagonist-20'),
+    };
+  })()`);
+  check('杜云芊事业结局显示手填名称（CG 14/15/25 各对得上，名称格有高度）',
+    endingNames.cg14.name === '事业结局（天王巨星）' && endingNames.cg14.h > 0 &&
+    endingNames.cg15.name === '事业结局（歌手、偶像）' &&
+    endingNames.cg25.name === '事业结局（公司倒闭）',
+    JSON.stringify(endingNames));
+  check('没给名字的 CG（16）名称格保持为空',
+    endingNames.cg16.name === '', JSON.stringify(endingNames.cg16));
+
   await shell.send('Page.navigate', { url: `${SWEET}#/cg/group/protagonist` });
   await sleep(1400);
   const restored = await evaluate(`(() => {
