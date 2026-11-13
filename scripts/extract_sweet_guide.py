@@ -105,6 +105,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = ROOT / "sources" / "sweet"
 OUTPUT = ROOT / "public" / "data" / "sweet" / "guide.json"
+# CG ↔ 攻略事件的映射表（由 scripts/build_sweet_cg_links.py 从核对表 xlsx 生成）。
+# 四列：cgId / nodeId / event|text / key。命中后写到块上：`cgIds`（正向，前端据此
+# 反查图鉴落点）+ `anchor`（页内 DOM id，形如 `ev12`，与 ContentBlockList 的兜底
+# 同一套编号）。`event` 类还会补 `cg: true`，让卡片和原生标了（CG）的事件长得一样。
+CG_LINKS = SOURCES / "cg-links.tsv"
 # 角色头像按约定命名放在 public/images/sweet/：`<slug>-logo.*` 是目录与
 # 角色卡在人名左侧展示的圆圈头像（与主站 images/characters/ 同一套约定）。
 SWEET_IMAGES = ROOT / "public" / "images" / "sweet"
@@ -1041,7 +1046,55 @@ CATEGORIES: list[dict] = [
 ]
 
 
+def _read_cg_links() -> dict[str, list[tuple[str, str, str]]]:
+    """读 ``sources/sweet/cg-links.tsv``，按节点分组返回 ``[(cgId, kind, key)]``。
+
+    文件缺失时返回空表（映射是可选层，缺了就当没做跳转，别把整条管线卡死）。
+    """
+    if not CG_LINKS.exists():
+        return {}
+    table: dict[str, list[tuple[str, str, str]]] = {}
+    for raw in CG_LINKS.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) != 4:
+            raise SystemExit(f"cg-links.tsv 格式错误（需要 4 列）：{line!r}")
+        cg_id, node_id, kind, key = (part.strip() for part in parts)
+        table.setdefault(node_id, []).append((cg_id, kind, key))
+    return table
+
+
+def _apply_cg_links(node: dict, links: dict[str, list[tuple[str, str, str]]]) -> None:
+    """把 CG 映射写到节点的事件块上：`cgIds` + `anchor`（+ 事件类补 `cg`）。
+
+    ``anchor`` 用块下标拼成 ``ev<下标>``，和 ContentBlockList 里「没有 anchor
+    就按块下标兜底」的规则完全一致，所以深链一定落在同一个 DOM 上。
+    """
+    for cg_id, kind, key in links.get(node["id"], []):
+        for index, block in enumerate(node["blocks"]):
+            if kind == "event":
+                hit = block.get("kind") == "event" and block.get("label") == key
+            elif kind == "text":
+                hit = key in block.get("text", "")
+            else:  # pragma: no cover - 手改 tsv 才会出现
+                raise SystemExit(f"cg-links.tsv 未知 kind={kind!r}")
+            if not hit:
+                continue
+            ids = block.setdefault("cgIds", [])
+            if cg_id not in ids:
+                ids.append(cg_id)
+            block["anchor"] = f"ev{index}"
+            if kind == "event":
+                block["cg"] = True
+            break
+        else:
+            raise SystemExit(f"cg-links.tsv：{node['id']} 里找不到 {kind} {key!r}（cgId={cg_id}）")
+
+
 def build() -> dict:
+    links = _read_cg_links()
     categories: list[dict] = []
     for category in CATEGORIES:
         children: list[dict] = []
@@ -1067,6 +1120,8 @@ def build() -> dict:
             if parser is not None:
                 blocks, subtitle = parser(SOURCES / f"{slug}.txt")
                 node["blocks"] = _merge_date(slug, blocks)
+                # 合并完再做映射：anchor 用的是最终块下标。
+                _apply_cg_links(node, links)
                 node["status"] = "ready"
                 # 副标题只取原文首行；与页面标题重复（或原文没写）就不写，绝不自己编一句概述。
                 if subtitle and subtitle != title:

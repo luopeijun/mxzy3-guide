@@ -2333,7 +2333,11 @@
               "kind": "event",
               "text": "隔周周一到公园，必须身穿甜美小红帽装。安妤与主角冰释前嫌，得到CG",
               "group": 30,
-              "label": "1-5"
+              "label": "1-5",
+              "cgIds": [
+                "protagonist-29"
+              ],
+              "anchor": "ev68"
             },
             {
               "kind": "event",
@@ -2367,7 +2371,11 @@
             {
               "kind": "paragraph",
               "text": "第一次对话,会抱怨说拍摄总感觉缺少什么,不要以为对话完了就结束了,再次点击人物,会表示希望主角拍摄该特别企划,自动会答应,之后获得CG。",
-              "group": 34
+              "group": 34,
+              "cgIds": [
+                "protagonist-28"
+              ],
+              "anchor": "ev74"
             },
             {
               "kind": "event",
@@ -2474,7 +2482,11 @@
               "kind": "event",
               "text": "接上一个月后收到晚会海报，CG入手",
               "group": 51,
-              "label": "3-7"
+              "label": "3-7",
+              "cgIds": [
+                "protagonist-3"
+              ],
+              "anchor": "ev92"
             },
             {
               "kind": "event",
@@ -3862,7 +3874,11 @@
               "group": 5,
               "label": "1-2",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "cheng-zhongxuan-2"
+              ],
+              "anchor": "ev23"
             },
             {
               "kind": "paragraph",
@@ -4300,7 +4316,11 @@
               "group": 32,
               "label": "6-2",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "cheng-zhongxuan-5"
+              ],
+              "anchor": "ev103"
             },
             {
               "kind": "paragraph",
@@ -4466,7 +4486,11 @@
               "text": "请您听从我的建议",
               "group": 42,
               "label": "8-2",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "cheng-zhongxuan-3"
+              ],
+              "anchor": "ev133"
             },
             {
               "kind": "paragraph",
@@ -4921,7 +4945,11 @@
               "group": 5,
               "label": "1-2",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "danisi-2"
+              ],
+              "anchor": "ev23"
             },
             {
               "kind": "paragraph",
@@ -5526,7 +5554,11 @@
               "group": 44,
               "label": "7-3",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "danisi-3"
+              ],
+              "anchor": "ev134"
             },
             {
               "kind": "paragraph",
@@ -5741,7 +5773,11 @@
               "group": 57,
               "label": "8-5",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "danisi-4"
+              ],
+              "anchor": "ev174"
             },
             {
               "kind": "paragraph",
@@ -6565,7 +6601,11 @@
               "group": 26,
               "label": "5-2",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "ji-xiang-3"
+              ],
+              "anchor": "ev79"
             },
             {
               "kind": "paragraph",
@@ -6814,7 +6854,11 @@
               "text": "你能接受这样的情感吗？",
               "group": 41,
               "label": "7-6",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-xiang-5"
+              ],
+              "anchor": "ev125"
             },
             {
               "kind": "paragraph",
@@ -6880,7 +6924,11 @@
               "text": "你这无可救药的滥好人",
               "group": 45,
               "label": "8-2",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-xiang-4"
+              ],
+              "anchor": "ev137"
             },
             {
               "kind": "paragraph",
@@ -6978,7 +7026,11 @@
               "text": "我一直都喜欢着你…",
               "group": 51,
               "label": "9-1",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "ji-xiang-1"
+              ],
+              "anchor": "ev155"
             },
             {
               "kind": "paragraph",
@@ -7536,7 +7588,11 @@
               "group": 15,
               "label": "4-1",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "murong-hexi-2"
+              ],
+              "anchor": "ev49"
             },
             {
               "kind": "paragraph",
@@ -7600,7 +7656,11 @@
               "text": "让我握住你的手…",
               "group": 18,
               "label": "4-4",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "murong-hexi-3"
+              ],
+              "anchor": "ev61"
             },
             {
               "kind": "paragraph",
@@ -7890,7 +7950,11 @@
               "group": 37,
               "label": "7-4",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "murong-hexi-4"
+              ],
+              "anchor": "ev114"
             },
             {
               "kind": "paragraph",
@@ -8155,7 +8219,11 @@
               "text": "交往看看也没关系",
               "group": 53,
               "label": "9-5",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "murong-hexi-5"
+              ],
+              "anchor": "ev163"
             },
             {
               "kind": "paragraph",
@@ -8529,7 +8597,11 @@
               "text": "雨中重逢",
               "group": 4,
               "label": "1-1",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "shen-weizhen-2"
+              ],
+              "anchor": "ev19"
             },
             {
               "kind": "paragraph",
@@ -8631,7 +8703,11 @@
               "text": "你怎么还在工作？",
               "group": 11,
               "label": "2-1",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "shen-weizhen-4"
+              ],
+              "anchor": "ev37"
             },
             {
               "kind": "paragraph",
@@ -8880,7 +8956,11 @@
               "group": 26,
               "label": "4-6",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "shen-weizhen-3"
+              ],
+              "anchor": "ev83"
             },
             {
               "kind": "paragraph",
@@ -8956,7 +9036,11 @@
               "text": "你这个女人还顶嘴！",
               "group": 31,
               "label": "5-2",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "shen-weizhen-5"
+              ],
+              "anchor": "ev97"
             },
             {
               "kind": "paragraph",
@@ -9173,7 +9257,11 @@
               "group": 45,
               "label": "7-4",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "shen-weizhen-6"
+              ],
+              "anchor": "ev136"
             },
             {
               "kind": "paragraph",
@@ -9632,7 +9720,11 @@
               "group": 5,
               "label": "1-2",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "shi-difen-2"
+              ],
+              "anchor": "ev20"
             },
             {
               "kind": "paragraph",
@@ -10040,7 +10132,11 @@
               "group": 31,
               "label": "4-3",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "shi-difen-3"
+              ],
+              "anchor": "ev95"
             },
             {
               "kind": "paragraph",
@@ -10209,7 +10305,11 @@
               "group": 41,
               "label": "5-3",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "shi-difen-4"
+              ],
+              "anchor": "ev126"
             },
             {
               "kind": "paragraph",
@@ -10980,7 +11080,11 @@
               "group": 22,
               "label": "4-4",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "wei-ya-2"
+              ],
+              "anchor": "ev72"
             },
             {
               "kind": "paragraph",
@@ -11256,7 +11360,11 @@
               "group": 38,
               "label": "6-3",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "wei-ya-3"
+              ],
+              "anchor": "ev123"
             },
             {
               "kind": "paragraph",
@@ -11419,7 +11527,11 @@
               "text": "我不想将幸福拱手让人",
               "group": 48,
               "label": "8-2",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "wei-ya-6"
+              ],
+              "anchor": "ev153"
             },
             {
               "kind": "paragraph",
@@ -12444,7 +12556,11 @@
               "text": "好好睡一觉吧！",
               "group": 41,
               "label": "8-5",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "yao-ziqi-2"
+              ],
+              "anchor": "ev124"
             },
             {
               "kind": "paragraph",
@@ -12512,7 +12628,11 @@
               "group": 45,
               "label": "9-2",
               "cg": true,
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "cgIds": [
+                "yao-ziqi-3"
+              ],
+              "anchor": "ev136"
             },
             {
               "kind": "paragraph",
@@ -13217,7 +13337,11 @@
               "kind": "event",
               "text": "周末，苏嫚君送上照片，CG入手",
               "group": 15,
-              "label": "1-15"
+              "label": "1-15",
+              "cgIds": [
+                "protagonist-26"
+              ],
+              "anchor": "ev21"
             }
           ],
           "children": []
@@ -13408,7 +13532,12 @@
               "kind": "event",
               "text": "遇到路敏之后，请去公园(走靠近湖边，剧情自动)找天晴，穿春夏装，主角会说要唱歌给天晴听，得到CG一枚",
               "group": 27,
-              "label": "23"
+              "label": "23",
+              "cgIds": [
+                "protagonist-27"
+              ],
+              "anchor": "ev31",
+              "cg": true
             },
             {
               "kind": "event",
@@ -13522,7 +13651,12 @@
               "kind": "event",
               "text": "接下来就可以等到结束，就可以拿到结婚CG了",
               "group": 42,
-              "label": "37"
+              "label": "37",
+              "cgIds": [
+                "protagonist-30"
+              ],
+              "anchor": "ev51",
+              "cg": true
             }
           ],
           "children": [],
@@ -13567,13 +13701,22 @@
               "kind": "paragraph",
               "text": "公司结局：傲视全球的演艺帝国（与郭秘书CG1张）",
               "group": 1,
-              "bullet": true
+              "bullet": true,
+              "cgIds": [
+                "protagonist-23"
+              ],
+              "anchor": "ev6"
             },
             {
               "kind": "paragraph",
               "text": "感情结局：与夏以军结婚（舞会CG1张、结婚图CG1张）",
               "group": 1,
-              "bullet": true
+              "bullet": true,
+              "cgIds": [
+                "protagonist-24",
+                "protagonist-25"
+              ],
+              "anchor": "ev7"
             },
             {
               "kind": "section",
@@ -13905,7 +14048,12 @@
               "kind": "event",
               "text": "第二年一月底穿上晨袍，有拍戏剧通告，选择抄捷径回家，会遇上小混混和徐世杰，徐世杰见死不救。",
               "group": 5,
-              "label": "1-3"
+              "label": "1-3",
+              "cgIds": [
+                "protagonist-6"
+              ],
+              "anchor": "ev5",
+              "cg": true
             },
             {
               "kind": "event",
@@ -14007,7 +14155,12 @@
               "kind": "event",
               "text": "阿龙事件半个月后，杜乃上门要讨钻石项链，然后选“好不容易买到”，后选“我信得过你”(请穿着春夏服装)。",
               "group": 22,
-              "label": "1-20"
+              "label": "1-20",
+              "cgIds": [
+                "protagonist-7"
+              ],
+              "anchor": "ev22",
+              "cg": true
             },
             {
               "kind": "event",
@@ -14025,7 +14178,12 @@
               "kind": "event",
               "text": "主角在8月13日的行程是自由活动，会自动发生徐世杰被刺杀事件，但无选项。(请穿着古典晚礼服)",
               "group": 25,
-              "label": "1-23"
+              "label": "1-23",
+              "cgIds": [
+                "protagonist-9"
+              ],
+              "anchor": "ev25",
+              "cg": true
             },
             {
               "kind": "event",
@@ -14043,7 +14201,12 @@
               "kind": "event",
               "text": "最后如果玩到游戏结尾会出现主角和阿龙陪着徐世杰从医院出院。(请穿着秋冬服装)",
               "group": 28,
-              "label": "1-26"
+              "label": "1-26",
+              "cgIds": [
+                "protagonist-8"
+              ],
+              "anchor": "ev28",
+              "cg": true
             },
             {
               "kind": "section",
@@ -14199,7 +14362,11 @@
               "text": "我不要嫁给其他人！",
               "group": 5,
               "label": "4-5",
-              "cg": true
+              "cg": true,
+              "cgIds": [
+                "protagonist-4"
+              ],
+              "anchor": "ev13"
             },
             {
               "kind": "paragraph",

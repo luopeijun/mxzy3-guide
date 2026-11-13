@@ -458,6 +458,13 @@ async function main() {
     };
     const chips = (text) => [...document.querySelectorAll('main span')]
       .filter((s) => s.textContent.trim() === text).length;
+    // CG 徽标有两种形态：有映射的是 <a data-cg-link>（文字「CG›」），
+    // 没映射的仍是不带链接的 <span>「CG」。这里按文字认，别只数 span。
+    const cgBadges = () => [...document.querySelectorAll('main span, main a')]
+      .filter((el) => {
+        const text = el.textContent.replace(/\s/g, '');
+        return text.startsWith('CG') && text.length <= 3;
+      }).length;
     return {
       hash: location.hash,
       heads: [...document.querySelectorAll('main h3')].map((h) => h.textContent.trim()),
@@ -466,7 +473,7 @@ async function main() {
       diamonds: [...document.querySelectorAll('main p[data-bullet] span')]
         .filter((s) => s.className.includes('rotate-45')).length,
       friendChips: chips('友好度上升'),
-      cgChips: chips('CG'),
+      cgChips: cgBadges(),
       cgCardBg: bg('1-2'),
       plainCardBg: bg('1-1'),
       qaCount: document.querySelectorAll('[data-qa]').length,

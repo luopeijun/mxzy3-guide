@@ -5,6 +5,7 @@ import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from '../lib/
 import { useGuideData } from '../hooks/useGuideData';
 import { useCgData } from '../hooks/useCgData';
 import { cgTabHash, guideNodeId, isCgRoute, isTrackerRoute, useHashSelection } from '../hooks/useHashSelection';
+import { useAnchorJump } from '../hooks/useAnchorJump';
 import { GuideDataContext } from '../hooks/useGuideContext';
 import { TrackerProvider } from '../hooks/useTracker';
 import { SWEET_TRACKER_CONFIG } from '../lib/trackerConfig';
@@ -131,6 +132,10 @@ function SweetGuide({ data: source }: Props) {
 
   const currentNode = path[path.length - 1];
   const activeCategoryId = path[0]?.id ?? '';
+
+  // 图鉴点「攻略 ›」回来时落在 `#/guide/<nodeId>~<anchor>`：节点可能没变、只有锚点
+  // 变了，所以这里挂上钩子监听 hashchange，把目标事件滚到视野里并闪一下（与主站同一套）。
+  useAnchorJump(selectedId);
 
   useEffect(() => {
     if (!path.length) return;

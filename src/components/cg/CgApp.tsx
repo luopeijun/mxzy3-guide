@@ -194,7 +194,6 @@ export default function CgApp({ data, config = MAIN_CG_CONFIG }: Props) {
    */
   const linkFor = useCallback(
     (item: CgItem): CgGuideLink | undefined => {
-      // 甜蜜乐章的攻略跳转以后再做：现在连页面级落点也一概不渲染。
       if (!config.guideLinks) return undefined;
       const candidates = guideLinks.get(item.id);
       if (candidates?.length) {

@@ -63,6 +63,56 @@ class TestSweetGuide(unittest.TestCase):
         self.company = _node(self.data, "company")
         self.abroad = _node(self.data, "abroad-notices")
 
+    def test_cg_links_are_applied(self) -> None:
+        """CG ↔ 攻略映射：`sources/sweet/cg-links.tsv` 的每条都落在唯一的事件块上。
+
+        命中的块必须同时带 `cgIds`（正向，图鉴据此反查落点）与 `anchor`
+        （页内 DOM id，`ev<块下标>`，与前端兜底编号同一套）；`event` 类还要补
+        `cg`，让这些事件和原文标了（CG）的卡片长得一样。
+        """
+        links = esg._read_cg_links()
+        self.assertTrue(links, "sources/sweet/cg-links.tsv 缺失或为空")
+        total = sum(len(entries) for entries in links.values())
+        self.assertEqual(total, 41)
+
+        nodes = {n["id"]: n for c in self.data["categories"] for n in c["children"]}
+        seen: set[str] = set()
+        for node_id, entries in links.items():
+            node = nodes[node_id]
+            for cg_id, kind, key in entries:
+                hits = [
+                    i for i, b in enumerate(node["blocks"])
+                    if (
+                        (b.get("kind") == "event" and b.get("label") == key)
+                        if kind == "event"
+                        else key in b.get("text", "")
+                    )
+                ]
+                self.assertEqual(len(hits), 1, f"{node_id} {kind} {key!r}")
+                index = hits[0]
+                block = node["blocks"][index]
+                self.assertIn(cg_id, block["cgIds"], f"{node_id} ev{index}")
+                self.assertEqual(block["anchor"], f"ev{index}")
+                if kind == "event":
+                    self.assertTrue(block.get("cg"), f"{node_id} {key}")
+                seen.add(cg_id)
+        # 41 条映射各自对应一张不同的 CG（丹尼斯 / 史蒂芬 的共用图是两条不同条目）。
+        self.assertEqual(len(seen), total)
+
+        # 全表一致：凡是带 cgIds 的块都必须有 anchor，否则图鉴那边点不回来。
+        for node in nodes.values():
+            for block in node["blocks"]:
+                if block.get("cgIds"):
+                    self.assertTrue(block.get("anchor"), f"{node['id']} 缺 anchor")
+                    self.assertEqual(len(set(block["cgIds"])), len(block["cgIds"]))
+
+        # 徐世杰的四步原文没标（CG），是按用户核对表人工补进来的。
+        xu = nodes["sweet-side/xu-shijie"]
+        self.assertEqual(
+            [b["label"] for b in xu["blocks"] if b.get("cg")],
+            ["1-3", "1-20", "1-23", "1-26"],
+        )
+
     def test_committed_json_matches_build(self) -> None:
         committed = json.loads(GUIDE.read_text(encoding="utf-8"))
         self.assertEqual(committed, self.data, "guide.json 与脚本重算不一致，请重新生成")

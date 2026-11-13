@@ -300,6 +300,82 @@ async function main() {
   check('第一段没动原站的 CG 收集键',
     (await evaluate(`localStorage.getItem('guide.cg.v1')`)) === mainKeyBefore,
     String(mainKeyBefore));
+
+  // ---------- 第一段补：攻略 ↔ CG 双向跳转（真实映射 41 条）----------
+  // 攻略事件块带 cgIds + anchor，图鉴靠 buildCgGuideLinks 反查落点。
+  await shell.send('Page.navigate', { url: `${SWEET}#/guide/sweet-characters/cheng-zhongxuan` });
+  await sleep(1800);
+  const badge = await evaluate(`(() => {
+    const el = document.getElementById('ev23');
+    const a = el?.querySelector('[data-cg-link]');
+    return {
+      hasEvent: !!el,
+      label: el?.getAttribute('data-event-label') ?? '',
+      href: a?.getAttribute('href') ?? '',
+      badge: a?.textContent?.replace(/\\s/g, '') ?? '',
+    };
+  })()`);
+  check('攻略里标 CG 的事件带真链接（城仲瑄 1-2 → #/cg/cheng-zhongxuan-2）',
+    badge.hasEvent && badge.label === '1-2' && badge.href === '#/cg/cheng-zhongxuan-2' &&
+    badge.badge.startsWith('CG'), JSON.stringify(badge));
+
+  await evaluate(`document.querySelector('#ev23 [data-cg-link]').click(); 1`);
+  await sleep(1500);
+  const cgFromGuide = await evaluate(`(() => {
+    const app = document.querySelector('[data-cg-app]');
+    const card = app?.querySelector('[data-cg-card][data-cg-id="cheng-zhongxuan-2"]');
+    const link = card?.querySelector('[data-cg-guide-link]');
+    return {
+      hash: location.hash,
+      app: !!app,
+      group: app?.querySelector('[data-cg-group-id="cheng-zhongxuan"]')?.getAttribute('aria-pressed') ?? '',
+      hasCard: !!card,
+      code: card?.querySelector('[data-cg-code]')?.textContent?.trim() ?? '',
+      name: card?.querySelector('[data-cg-name]')?.textContent?.trim() ?? '',
+      guideHref: link?.getAttribute('href') ?? '',
+    };
+  })()`);
+  check('攻略点 CG 徽标：进图鉴并停在城仲瑄分组，卡片标出 CG 01 与该事件名',
+    cgFromGuide.hash === '#/cg/cheng-zhongxuan-2' && cgFromGuide.app && cgFromGuide.hasCard &&
+    cgFromGuide.group === 'true' && cgFromGuide.code === 'CG 01' &&
+    cgFromGuide.name === '我看你的外型不错…',
+    JSON.stringify(cgFromGuide));
+
+  await evaluate(`document.querySelector('[data-cg-card][data-cg-id="cheng-zhongxuan-2"] [data-cg-guide-link]').click(); 1`);
+  await sleep(1800);
+  const backToGuide = await evaluate(`(() => {
+    const el = document.getElementById('ev23');
+    const rect = el?.getBoundingClientRect();
+    return {
+      hash: decodeURIComponent(location.hash),
+      cgApp: !!document.querySelector('[data-cg-app]'),
+      hasEvent: !!el,
+      label: el?.getAttribute('data-event-label') ?? '',
+      text: el?.textContent?.replace(/\\s/g, '') ?? '',
+      nearTop: rect ? rect.top > -60 && rect.top < 420 : false,
+    };
+  })()`);
+  check('图鉴点「攻略 ›」回到同一条事件：URL 带 ~ev23、正文滚到该块、事件正是城仲瑄 1-2',
+    backToGuide.hash === '#/guide/sweet-characters/cheng-zhongxuan~ev23' &&
+    !backToGuide.cgApp && backToGuide.hasEvent && backToGuide.label === '1-2' &&
+    backToGuide.text.includes('我看你的外型不错') && backToGuide.nearTop,
+    JSON.stringify(backToGuide));
+
+  // 徐世杰的四步原文没标（CG），是按核对表人工补的：现在也是可点的 CG 徽标。
+  await shell.send('Page.navigate', { url: `${SWEET}#/guide/sweet-side/xu-shijie` });
+  await sleep(1600);
+  const xu = await evaluate(`(() => {
+    const links = [...document.querySelectorAll('[data-cg-link]')];
+    return {
+      labels: links.map((a) => a.closest('[data-event-label]')?.getAttribute('data-event-label') ?? ''),
+      hrefs: links.map((a) => a.getAttribute('href')),
+    };
+  })()`);
+  check('徐世杰 4 步人工补的 CG 都能点进图鉴（1-3/1-20/1-23/1-26 → 主角 CG 05~08）',
+    xu.labels.join(',') === '1-3,1-20,1-23,1-26' &&
+    xu.hrefs.join(',') === '#/cg/protagonist-6,#/cg/protagonist-7,#/cg/protagonist-9,#/cg/protagonist-8',
+    JSON.stringify(xu));
+
   shell.ws.close();
 
   // ---------- 第二段：注入 4 张假 CG（含 1 对共用），验证真实交互 ----------
@@ -318,15 +394,20 @@ async function main() {
       ids: [...app.querySelectorAll('[data-cg-card]')].map(c => c.dataset.cgId),
       codes: [...app.querySelectorAll('[data-cg-code]')].map(c => c.textContent.trim()),
       names: app.querySelectorAll('[data-cg-name]').length,
+      nameTexts: [...app.querySelectorAll('[data-cg-name]')].map(n => n.textContent.trim()),
       guideLinks: app.querySelectorAll('[data-cg-guide-link]').length,
+      guideIds: [...app.querySelectorAll('[data-cg-card]')]
+        .filter(c => c.querySelector('[data-cg-guide-link]')).map(c => c.dataset.cgId),
       progress: app.querySelector('[data-cg-progress]')?.textContent?.trim() ?? '',
     };
   })()`);
   check('假数据渲染 4 张卡片，编号按「每组各自从 CG 01 起」排列（主角 CG 01/CG 02，丹尼斯/史蒂芬各 CG 01）',
     cards.count === 4 && cards.ids.join(',') === 'protagonist-1,protagonist-2,danisi-2,shi-difen-2' &&
     cards.codes.join(',') === 'CG 01,CG 02,CG 01,CG 01', JSON.stringify(cards));
-  check('只有编号：卡片不显示名称、不显示攻略入口',
-    cards.names === 0 && cards.guideLinks === 0, JSON.stringify(cards));
+  check('假数据卡片没有事件映射：名称留空；丹尼斯/史蒂芬那两张仍按真实映射带攻略入口',
+    cards.names === 4 && cards.nameTexts.every((t) => t === '') &&
+    cards.guideLinks === 2 && cards.guideIds.join(',') === 'danisi-2,shi-difen-2',
+    JSON.stringify(cards));
   check('顶栏进度从 0 / 3 起算（唯一可收集 3 张）', cards.progress.includes('0 / 3'), cards.progress);
 
   await ev(`document.querySelector('[data-cg-card] [data-cg-toggle]').click(); 1`);

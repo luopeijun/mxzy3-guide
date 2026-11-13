@@ -1,8 +1,9 @@
 """`scripts/extract_sweet_cg.py` 的守护测试。
 
-甜蜜乐章 CG 只有编号、没有名称 / 获得条件，且图片是用户一张一张发来的：
+甜蜜乐章的 CG 图片是用户一张一张发来的，编号与顺序都由管线算出来：
 这里锁住「提交的 cg.json 与脚本按源目录重算的结果完全一致」以及分组、
-编号、图片路径的约定，避免手改 JSON 后下次生成被悄悄回退。
+编号、图片路径、名称（= 对应攻略事件标题）的约定，避免手改 JSON 后下次
+生成被悄悄回退。
 
 跑法（用项目 venv 的 Python）：
     python scripts/test_sweet_cg.py
@@ -106,7 +107,7 @@ class SweetCgTests(unittest.TestCase):
             expected_order = group_order.get(item["groupId"], 0) + 1
             self.assertEqual(item["order"], expected_order)
             group_order[item["groupId"]] = expected_order
-            self.assertEqual(item["name"], "")
+            self.assertIsInstance(item["name"], str)
             self.assertEqual(item["condition"], "")
             self.assertEqual(item["width"], 0)
             self.assertEqual(item["height"], 0)
@@ -141,6 +142,26 @@ class SweetCgTests(unittest.TestCase):
         # 锁死烘焙顺序：每个分组的 id 序列必须和导出文件完全一致，防止被悄悄回退。
         for gid, ids in group_seq_ids.items():
             self.assertEqual(ids, override.get(gid, ids), f"group {gid} order drift")
+
+    def test_names_come_from_linked_guide_events(self):
+        """CG 名称 = 这张图对应的攻略事件标题（`cg-links.tsv` → guide.json 的 cgIds）。
+
+        没有对应事件的 CG 名称留空（画廊只显示编号）。
+        """
+        data = payload()
+        names = esc.cg_names()
+        self.assertTrue(names, "guide.json 里没有 cgIds —— 请先跑 extract_sweet_guide.py")
+        by_id = {item["id"]: item for item in data["items"]}
+
+        # 映射表里点到的每个 cgId 都必须是一张真实存在的 CG，不能指向不存在的图。
+        for cg_id, title in names.items():
+            self.assertIn(cg_id, by_id, f"cg-links.tsv 指向了不存在的 CG：{cg_id}")
+            self.assertEqual(by_id[cg_id]["name"], title, cg_id)
+        # 反向：凡是没被映射点到的条目，名称必须为空，不许出现「来历不明的名字」。
+        for item in data["items"]:
+            if item["id"] not in names:
+                self.assertEqual(item["name"], "", item["id"])
+        self.assertEqual(sum(1 for item in data["items"] if item["name"]), len(names))
 
     def test_generated_images_match_items(self):
         """No stale webp left behind after a full rebuild."""

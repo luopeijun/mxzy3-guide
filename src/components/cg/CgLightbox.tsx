@@ -125,11 +125,13 @@ export default function CgLightbox({
         <div className="mx-auto flex max-w-[900px] flex-wrap items-start gap-x-6 gap-y-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-2">
-              {showName && (
+              {showName && item.name && (
                 <span className="text-ui-xs font-semibold text-brand-line">{item.code}</span>
               )}
+              {/* 甜站的名称来自「对应攻略事件」，没映射的 CG 名称是空的：
+                 那样就把编号当标题，别留一片空白。 */}
               <h2 className="text-ui-sm font-semibold" data-cg-lightbox-title>
-                {showName ? item.name : item.code}
+                {showName && item.name ? item.name : item.code}
               </h2>
             </div>
             {/* 说明文字只在这里出现，完整保留；极长的条件最多占 7 行，

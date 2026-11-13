@@ -19,9 +19,15 @@ the user sorts them into one folder per character::
 但字节不同（杜云芊 / 沈 的 83-1、杜云芊 / 纪翔 的 125~128）不算共用，各自保留。
 
 分组、圆形头像、guideId 全部来自 ``public/data/sweet/guide.json`` 的角色节点，和
-``extract_cg.py`` 处理主站一样。条目只带 id / group / order / code / image /
-collectionId；``name`` 与 ``condition`` 留空、没有 ``guide`` 链接（攻略跳转是以后步骤）。
+``extract_cg.py`` 处理主站一样。条目带 id / group / order / code / image /
+collectionId；``name`` 取「这张图对应的攻略事件标题」（见 ``cg_names()``，来源是
+``guide.json`` 里挂了该 ``cgId`` 的块），没有对应事件时留空；``condition`` 留空。
 ``width`` / ``height`` 恒为 0：画廊不消费它们，也避免 ``test_sweet_cg.py`` 依赖 Pillow。
+
+**与攻略的映射**：``sources/sweet/cg-links.tsv`` 是唯一真源（由
+``scripts/build_sweet_cg_links.py`` 从核对表 xlsx 生成）。正向（事件 → CG）由
+``extract_sweet_guide.py`` 写到事件块的 ``cgIds``；这里只反向取事件标题当 CG 名，
+所以**先跑 guide 抽取再跑本脚本**，否则名字会缺。
 """
 
 from __future__ import annotations
@@ -29,6 +35,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -44,7 +51,6 @@ GUIDE_DATA = ROOT / "public" / "data" / "sweet" / "guide.json"
 # 脚本生成 cg.json 时按它重排每个分组内的 order/code，使手动微调写死进数据；
 # 之后重跑管线也不会把顺序冲掉。缺省（文件不存在）时退回自然序。
 ORDER_OVERRIDE = ROOT / "public" / "data" / "sweet" / "sweet-cg-order.json"
-
 CHARACTER_CATEGORY = "sweet-characters"
 IMAGE_EXTS = {".bmp", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
 MAX_EDGE = 1400
@@ -108,6 +114,32 @@ def natural_key(code: str) -> list[object]:
         else:
             parts.append((1, 0, token.lower()))
     return parts
+
+
+def cg_names() -> dict[str, str]:
+    """``cgId -> 事件标题``：从 ``guide.json`` 里挂了该 ``cgId`` 的块取正文。
+
+    一张 CG 对应多个事件时取第一个（``setdefault``）；攻略还没生成 / 没做映射时
+    返回空表，CG 名称就留空，画廊退化成只有编号。
+    """
+    if not GUIDE_DATA.is_file():
+        return {}
+    try:
+        guide = json.loads(read_text(GUIDE_DATA))
+    except (ValueError, OSError):
+        return {}
+    names: dict[str, str] = {}
+
+    def walk(node: dict) -> None:
+        for block in node.get("blocks") or []:
+            for cg_id in block.get("cgIds") or []:
+                names.setdefault(cg_id, block["text"])
+        for child in node.get("children") or []:
+            walk(child)
+
+    for category in guide.get("categories") or []:
+        walk(category)
+    return names
 
 
 def build_groups() -> list[dict]:
@@ -239,6 +271,9 @@ def scan_sources(groups: list[dict]) -> tuple[list[dict], dict[str, Path]]:
 
     # 重新按「分组优先、组内按序号」排，画廊按数组顺序渲染。
     items = apply_order_override(items, groups)
+    names = cg_names()
+    for item in items:
+        item["name"] = names.get(item["id"], "")
     ordered: list[dict] = []
     for group in groups:
         ordered.extend(sorted(
@@ -333,11 +368,22 @@ def write_images(image_jobs: dict[str, Path]) -> int:
     return total
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    """``--skip-images``：只重建 cg.json，跳过 webp 全量重转。
+
+    图片字节没变（只改了名称 / 顺序这类元数据）时用它可以省掉一次几百张图的
+    解码编码；正常发版前的重建不要带这个开关。
+    """
+    args = sys.argv[1:] if argv is None else argv
+    skip_images = "--skip-images" in args
     groups = build_groups()
     items, image_jobs = scan_sources(groups)
     payload = build_payload(groups, items)
-    total_bytes = write_images(image_jobs)
+    total_bytes = 0 if skip_images else write_images(image_jobs)
+    if skip_images:
+        print("(--skip-images：图片保持原样)")
+    elif total_bytes:
+        print(f"图片总量 {total_bytes / 1024 / 1024:.1f} MB")
     OUT_GROUPS.parent.mkdir(parents=True, exist_ok=True)
     # 与 public/data/*.json 的现有写法一致：按字节写、固定 LF，避免 Windows 上
     # 写出的 CRLF 让单测比对时漂。
