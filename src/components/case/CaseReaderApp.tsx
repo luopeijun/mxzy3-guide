@@ -252,7 +252,7 @@ export default function CaseReaderApp() {
           />
           {!result && (
             <span className="text-ui-2xs text-ink-faint">
-              把 .sa2 存档拖到这里，或点上面的按钮选择。
+              把 明星志愿3游戏存档拖到这里，或点上面的按钮选择。
             </span>
           )}
           {result && (
