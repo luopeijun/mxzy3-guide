@@ -180,13 +180,15 @@
   animation: imageShimmer 1.6s linear infinite;
 }
 
-/* 灯箱原图加载完成后淡入，盖在已经可见的缩略图上。 */
+/* 灯箱原图加载完成后淡入，盖在已经可见的缩略图上。
+   两层图尺寸完全一致，这里只做「由糊变清晰」，不要任何缩放，
+   否则看起来像是小图突然放大。 */
 @keyframes cgFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.cg-fade-in { animation: cgFadeIn 0.25s ease-out; }
+.cg-fade-in { animation: cgFadeIn 0.4s ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
   .image-shimmer,

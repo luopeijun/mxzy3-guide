@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { cn } from '../../lib/cn';
 import SmartImage from '../../ui/SmartImage';
 import { IconChevronLeft, IconChevronRight } from '../icons';
@@ -32,9 +32,12 @@ export default function CgLightbox({
   onPrev, onNext, onToggle, onClose,
 }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const label = [item.code, item.name].filter(Boolean).join(' ');
-  /** 先显示已经缓存的缩略图，原图在后台加载完再叠上去，
-   *  避免点开大图盯着空黑屏等一两秒。 */
+  /** 先显示已经缓存的缩略图，原图在后台加载完再淡入盖上去，
+   *  避免点开大图盯着空黑屏等一两秒。两层图共用同一个铺满舞台的盒子，
+   *  object-contain 算出的内容矩形完全一致：原图到位时只是变清晰，
+   *  不会从「小图」突然放大成「大图」。 */
   const originalSrc = item.image ? `${import.meta.env.BASE_URL}${item.image}` : '';
   const [fullReady, setFullReady] = useState(false);
 
@@ -72,6 +75,24 @@ export default function CgLightbox({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, onPrev, onNext, hasPrev, hasNext]);
 
+  /** 图片元素铺满整块舞台后，「点黑底关闭」不能再靠 event.target 判断，
+   *  因为四周留白也是图片元素的一部分。按缩略图宽高比算出图片内容矩形，
+   *  只有点在矩形外才关灯箱，点在图上仍保持原样。 */
+  const handleStageClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const stage = stageRef.current;
+    const preview = stage?.querySelector<HTMLImageElement>('[data-cg-lightbox-image]');
+    if (!stage || !preview?.naturalWidth || !preview.naturalHeight) return;
+    const box = stage.getBoundingClientRect();
+    const scale = Math.min(box.width / preview.naturalWidth, box.height / preview.naturalHeight);
+    const width = preview.naturalWidth * scale;
+    const height = preview.naturalHeight * scale;
+    const left = box.left + (box.width - width) / 2;
+    const top = box.top + (box.height - height) / 2;
+    const onImage = event.clientX >= left && event.clientX <= left + width
+      && event.clientY >= top && event.clientY <= top + height;
+    if (!onImage) onClose();
+  };
+
   const arrowClass = 'absolute top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/45 text-white transition-colors hover:bg-black/70 disabled:opacity-30';
 
   return (
@@ -103,8 +124,9 @@ export default function CgLightbox({
       >
         {item.image ? (
           <div
-            className="relative flex h-full w-full items-center justify-center"
-            onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
+            ref={stageRef}
+            className="relative h-full w-full"
+            onClick={handleStageClick}
           >
             <SmartImage
               key={item.id}
@@ -112,7 +134,8 @@ export default function CgLightbox({
               priority
               data-cg-lightbox-image
               alt={label}
-              className="max-h-full max-w-full rounded-ui-sm object-contain shadow-2xl"
+              style={{ backgroundColor: 'transparent' }}
+              className="absolute inset-0 h-full w-full object-contain"
             />
             {fullReady && (
               <img
@@ -120,7 +143,7 @@ export default function CgLightbox({
                 src={originalSrc}
                 alt=""
                 aria-hidden="true"
-                className="cg-fade-in pointer-events-none absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 rounded-ui-sm object-contain"
+                className="cg-fade-in pointer-events-none absolute inset-0 h-full w-full object-contain"
               />
             )}
           </div>
