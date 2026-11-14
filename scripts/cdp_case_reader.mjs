@@ -421,7 +421,7 @@ async function main() {
     check(afterReset.notices === 11 && afterReset.resetGone,
       'reset restores all eleven notices', JSON.stringify(afterReset));
 
-    // 「可接」分两档。Auto 里 11 条中有 8 条还有空角色（3 条下周更新还没开放，
+    // 接取情况分两档。Auto 里 11 条中有 8 条还有未预约角色（3 条下周更新还没开放，
     // 不算），而这 8 条一条都接不上 —— 开局艺人九项数值差 2~4 项。
     const takeChips = JSON.parse(await evaluate(`JSON.stringify({
       slots: document.querySelector('[data-case-filter-slots]')?.innerText.replace(/\\s+/g, ' ') || '',
@@ -429,10 +429,10 @@ async function main() {
       pressed: [...document.querySelectorAll('[data-case-take-filter] [aria-pressed]')]
         .map(b => b.getAttribute('aria-pressed')).join(',')
     })`));
-    check(takeChips.slots.includes('有空位') && takeChips.slots.includes('8')
-      && takeChips.qualified.includes('够格能接') && takeChips.qualified.includes('0')
+    check(takeChips.slots.includes('未预约') && takeChips.slots.includes('8')
+      && takeChips.qualified.includes('满足条件') && takeChips.qualified.includes('0')
       && takeChips.pressed === 'false,false',
-      '「可接」两个标签分开计数：Auto 有空位 8 条、够格能接 0 条，默认都不选中',
+      '接取两档分开计数：Auto 未预约 8 条、满足条件 0 条，默认都不选中',
       JSON.stringify(takeChips));
 
     await evaluate(`document.querySelector('[data-case-filter-slots]').click()`);
@@ -447,14 +447,14 @@ async function main() {
     })`));
     check(bySlots.notices === 8 && bySlots.pressed === 'true'
       && bySlots.freeCells.every((n) => n > 0),
-      '点「有空位」只剩有空角色的 8 条，且每条都真有空位',
+      '点「未预约」只剩还有空角色的 8 条，且每条都真有空角色',
       `${bySlots.notices} 条 / ${bySlots.count} / 空位 ${bySlots.freeCells.join(',')}`);
     check(bySlots.count.includes('8 / 11'),
-      '筛「有空位」时计数写成 当前 8 / 11 条', bySlots.count);
+      '筛「未预约」时计数写成 当前 8 / 11 条', bySlots.count);
     check(bySlots.upcoming === 0,
-      '「有空位」把下周更新（还没开放）的通告排掉', `${bySlots.upcoming} 条下周更新`);
+      '「未预约」把下周更新（还没开放）的通告排掉', `${bySlots.upcoming} 条下周更新`);
 
-    // 同 8 条换成「够格能接」应该一条都不剩：空位不等于接得上。
+    // 同 8 条换成「满足条件」应该一条都不剩：未预约不等于接得上。
     await evaluate(`document.querySelector('[data-case-filter-qualified]').click()`);
     await sleep(300);
     const byQualified = JSON.parse(await evaluate(`JSON.stringify({
@@ -462,14 +462,14 @@ async function main() {
       empty: document.body.innerText.includes('没有符合条件的通告'),
       slotsPressed: document.querySelector('[data-case-filter-slots]')?.getAttribute('aria-pressed') || '',
       qualifiedPressed: document.querySelector('[data-case-filter-qualified]')?.getAttribute('aria-pressed') || '',
-      hint: document.querySelector('[data-case-take-hint]')?.innerText || ''
+      hint: !document.querySelector('[data-case-take-hint]')
     })`));
     check(byQualified.notices === 0 && byQualified.empty
       && byQualified.slotsPressed === 'false' && byQualified.qualifiedPressed === 'true',
-      'Auto 的 8 条空位一条都接不上（数值不够）→ 筛「够格能接」为空',
+      'Auto 的 8 条未预约一条都接不上（数值不够）→ 筛「满足条件」为空',
       `${byQualified.notices} 条 / ${byQualified.empty} / ${byQualified.slotsPressed},${byQualified.qualifiedPressed}`);
-    check(byQualified.hint.includes('九项数值'),
-      '「够格能接」旁边有一行说明判定口径', byQualified.hint || 'none');
+    check(byQualified.hint,
+      '选中「满足条件」不额外挂说明行（口径只写在 title 里）');
 
     await evaluate(`document.querySelector('[data-case-filter-qualified]').click()`);
     await sleep(300);
@@ -729,8 +729,8 @@ async function main() {
         'Story0055: 团体通告显示签约团体 沙啞之歌（队长 / 团员都在）',
         diy55.groups.join(' || ') || 'none');
 
-      // 同一个存档切回「筹备中」：后期艺人数值够了，9 条有空位就都够格能接，
-      // 与 Auto 那份「有空位 8 / 够格 0」正好是两个极端。
+      // 同一个存档切回「筹备中」：后期艺人数值够了，9 条未预约的就都满足条件，
+      // 与 Auto 那份「未预约 8 / 满足条件 0」正好是两个极端。
       await evaluate(`document.querySelector('[data-case-tab="open"]').click()`);
       await sleep(300);
       const take55 = JSON.parse(await evaluate(`JSON.stringify({
@@ -738,7 +738,7 @@ async function main() {
         qualified: document.querySelector('[data-case-filter-qualified]')?.innerText.replace(/\\s+/g, ' ') || ''
       })`));
       check(take55.slots.includes('9') && take55.qualified.includes('9'),
-        'Story0055: 有空位 9 条、够格能接 9 条（后期数值够）', JSON.stringify(take55));
+        'Story0055: 未预约 9 条、满足条件 9 条（后期数值够）', JSON.stringify(take55));
 
       await evaluate(`document.querySelector('[data-case-filter-qualified]').click()`);
       await sleep(300);
@@ -749,7 +749,7 @@ async function main() {
           .every(tb => tb.querySelector('[data-match-result="yes"]'))
       })`));
       check(qual55.notices === 9 && qual55.okRows && qual55.count.includes('9 / 11'),
-        'Story0055: 筛「够格能接」只剩 9 条，且每条都有「数值够」的艺人',
+        'Story0055: 筛「满足条件」只剩 9 条，且每条都有「数值够」的艺人',
         `${qual55.notices} 条 / ${qual55.count} / ok=${qual55.okRows}`);
       await evaluate(`document.querySelector('[data-case-filter-qualified]').click()`);
       await sleep(300);

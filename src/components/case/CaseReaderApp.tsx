@@ -130,7 +130,7 @@ export default function CaseReaderApp() {
   const [query, setQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterCompany, setFilterCompany] = useState('all');
-  /** 筹备中的接取筛选：全部 / 有空位 / 够格能接。 */
+  /** 筹备中的接取筛选：全部 / 未预约 / 满足条件。 */
   const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
   /** 三个页签：等档期的筹备中、已经接下的拍摄中、自家出品的自制通告。 */
   const [board, setBoard] = useState<'open' | 'shooting' | 'selfMade'>('open');
@@ -265,7 +265,7 @@ export default function CaseReaderApp() {
       && matchRole(role, item.artist, item.option.name, item.option.gender).canAccept);
   }, [activeGroups, artists, signedArtists]);
 
-  /** 两个「可接」标签的数字只按存档本身算，不受搜索 / 类别 / 公司影响。 */
+  /** 两个接取标签的数字只按存档本身算，不受搜索 / 类别 / 公司影响。 */
   const slotCount = useMemo(
     () => (result ? result.notices.filter(isAcceptable).length : 0),
     [result],
@@ -671,12 +671,12 @@ export default function CaseReaderApp() {
                       ))}
                     </select>
                   </label>
-                  {/* 「可接」拆两档：有空位（客观还有角色没人接）、够格能接
-                      （空位之外，我方还得有人性别与九项数值全达标）。 */}
+                  {/* 接取情况拆两档：未预约（还有角色没被预约）、满足条件
+                      （未预约之外，我方还得有人性别与九项数值全达标）。 */}
                   <div
                     data-case-take-filter
                     role="group"
-                    aria-label="按能不能接筛选"
+                    aria-label="按接取情况筛选"
                     className="flex shrink-0 items-center gap-1"
                   >
                     <button
@@ -684,10 +684,10 @@ export default function CaseReaderApp() {
                       data-case-filter-slots
                       aria-pressed={takeFilter === 'slots'}
                       onClick={() => setTakeFilter((value) => (value === 'slots' ? 'all' : 'slots'))}
-                      title="还有角色没被人预约，还没停止接取 —— 能不能接上另说"
+                      title="还有角色没被人预约，也还没停止接取 —— 我方数值够不够另说"
                       className={chipClass(takeFilter === 'slots')}
                     >
-                      有空位
+                      未预约
                       <span className={cn('tabular-nums', takeFilter === 'slots' ? 'text-white/80' : 'text-ink-faint')}>
                         {slotCount}
                       </span>
@@ -697,20 +697,15 @@ export default function CaseReaderApp() {
                       data-case-filter-qualified
                       aria-pressed={takeFilter === 'qualified'}
                       onClick={() => setTakeFilter((value) => (value === 'qualified' ? 'all' : 'qualified'))}
-                      title="还有空位，并且我方至少有一位艺人的性别与九项所需数值都达标"
+                      title="还有角色没被预约，并且我方至少有一位艺人的性别与九项所需数值都达标"
                       className={chipClass(takeFilter === 'qualified')}
                     >
-                      够格能接
+                      满足条件
                       <span className={cn('tabular-nums', takeFilter === 'qualified' ? 'text-white/80' : 'text-ink-faint')}>
                         {qualifiedCount}
                       </span>
                     </button>
                   </div>
-                  {takeFilter === 'qualified' && (
-                    <span data-case-take-hint className="whitespace-nowrap text-ui-2xs text-ink-faint">
-                      空位 + 我方艺人性别与九项数值全达标
-                    </span>
-                  )}
                   {filterDirty && (
                     <button
                       type="button"

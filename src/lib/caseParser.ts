@@ -193,16 +193,16 @@ export function freeRoleCount(notice: CaseNotice): number {
  *  「下周更新」的还没开放、已停止接取的也进不去，所以都不算；读不到角色记录的
  *  同样不算 —— 宁可漏掉，不要让人照着一条其实接不了的通告去排档期。
  *
- *  这是「有空位」那一档：**能不能接上另说**，能不能接还要看自家艺人够不够格，
- *  见 `canTakeNotice()`。 */
+ *  这是「未预约」那一档：只问还有没有角色没人接，**我方接不接得上另说**，
+ *  能不能接还要看自家艺人性别与数值，见 `canTakeNotice()`。 */
 export function isAcceptable(notice: CaseNotice): boolean {
   if (notice.status !== 'open' && notice.status !== 'closing') return false;
   return freeRoleCount(notice) > 0;
 }
 
-/** 「够格能接」：有空位，并且至少有一个空角色自家接得上。
+/** 「满足条件」：角色未预约，并且至少有一个空角色自家接得上。
  *  `fits` 由调用方给 —— 主站拿 `matchRole()` / `matchGroupRole()` 判断性别与九项
- *  数值是否都够，这里只管「空着 + 有人够格」这件事本身，方便单测。 */
+ *  数值是否都够，这里只管「未预约 + 有人达标」这件事本身，方便单测。 */
 export function canTakeNotice(
   notice: CaseNotice,
   fits: (role: RoleRecord) => boolean,
