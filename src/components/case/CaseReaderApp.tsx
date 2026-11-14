@@ -5,13 +5,15 @@ import { cn } from '../../lib/cn';
 import {
   ATTRS, DEFAULT_RESERVATIONS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
   matchRole, parseSave, toCsv,
-  type ArtistStats, type CaseNotice, type CaseTables, type ParseResult, type RoleRecord,
+  type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
+  type ParseResult, type RoleRecord,
 } from '../../lib/caseParser';
 
 const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
 const RESERVATION_KEY = 'case-reservations.v1';
-const ARTIST_MAP_KEY = 'case-artist-map.v1';
-const DEFAULT_ARTIST_NAMES = ['路风', '路敏', '萧依莉'];
+const SELECTION_KEY = 'case-artist-selection.v1';
+/** The roster panel shows at most four artists at once. */
+const MAX_ARTISTS = 4;
 
 const CATEGORY_CLASS: Record<string, string> = {
   唱片: 'bg-tag-talk-soft text-tag-talk',
@@ -24,7 +26,11 @@ const CATEGORY_CLASS: Record<string, string> = {
   特别: 'bg-alert-soft text-alert',
 };
 
-interface ArtistBinding { name: string; index: number }
+/** One selected artist plus the state block holding their numbers. */
+interface SelectedArtist {
+  option: ArtistOption;
+  artist: ArtistStats | null;
+}
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -35,9 +41,8 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-/** 当期通告数值：把 .sa2 存档拖进来，在浏览器里直接解出本局实抽的能力门槛。
- *  文件不会上传到任何服务器；读进内存的就是一份快照，游戏随后覆盖自动存档
- *  也不会影响页面上的结果。名称 / 等级 / 区间来自随站点打包的静态表。 */
+/** 存档解析：把 .sa2 拖进来，在浏览器里解出当期通告、日期与艺人数值。
+ *  文件不会上传；读进内存的就是一份快照，游戏随后覆盖自动存档也不影响。 */
 export default function CaseReaderApp() {
   const [tables, setTables] = useState<CaseTables>(EMPTY_TABLES);
   const [tablesReady, setTablesReady] = useState(false);
@@ -50,10 +55,10 @@ export default function CaseReaderApp() {
   const [reservations, setReservations] = useState<Record<string, string>>(
     () => readJson(RESERVATION_KEY, DEFAULT_RESERVATIONS),
   );
-  const [bindings, setBindings] = useState<ArtistBinding[]>(
-    () => readJson(ARTIST_MAP_KEY, DEFAULT_ARTIST_NAMES.map((name, i) => ({ name, index: i + 1 }))),
+  /** null = no manual choice yet; fall back to the artists the save marks as signed. */
+  const [selection, setSelection] = useState<number[] | null>(
+    () => readJson<number[] | null>(SELECTION_KEY, null),
   );
-  const [compareIndex, setCompareIndex] = useState(0);
   const [editingRole, setEditingRole] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
@@ -146,13 +151,16 @@ export default function CaseReaderApp() {
     setEditingRole('');
   }, [result]);
 
-  const updateBinding = useCallback((slot: number, patch: Partial<ArtistBinding>) => {
-    setBindings((previous) => {
-      const next = previous.map((item, i) => (i === slot ? { ...item, ...patch } : item));
-      window.localStorage.setItem(ARTIST_MAP_KEY, JSON.stringify(next));
+  const toggleArtist = useCallback((id: number) => {
+    setSelection((previous) => {
+      const current = previous ?? result?.signedArtistIds ?? [];
+      const next = current.includes(id)
+        ? current.filter((item) => item !== id)
+        : current.length >= MAX_ARTISTS ? current : [...current, id];
+      window.localStorage.setItem(SELECTION_KEY, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [result]);
 
   const notices = useMemo(() => {
     if (!result) return [];
@@ -169,8 +177,22 @@ export default function CaseReaderApp() {
     : 0;
   const closingCount = result?.notices.filter((n) => n.status === 'closing').length ?? 0;
   const artists = result?.artists ?? [];
-  const compareBinding = bindings[compareIndex] ?? bindings[0];
-  const compareArtist = artists.find((a) => a.index === compareBinding?.index) ?? null;
+
+  /** Every selected artist is compared against every role, not one global pick. */
+  const selectedArtists = useMemo<SelectedArtist[]>(() => {
+    if (!result) return [];
+    const ids = (selection ?? result.signedArtistIds).slice(0, MAX_ARTISTS);
+    return ids
+      .map((id) => result.artistDirectory.find((entry) => entry.id === id))
+      .filter((option): option is ArtistOption => Boolean(option))
+      .map((option) => ({
+        option,
+        artist: option.artistIndex === null
+          ? null
+          : artists.find((a) => a.index === option.artistIndex) ?? null,
+      }));
+  }, [result, selection, artists]);
+  const selectedIds = selectedArtists.map((item) => item.option.id);
 
   const exportCsv = useCallback(() => {
     if (!result) return;
@@ -196,9 +218,9 @@ export default function CaseReaderApp() {
       )}
     >
       <div className="mx-auto max-w-[1240px] px-6 pt-3 pb-10 nav:px-3">
-        {/* One compact toolbar: the upload control must not push the table down. */}
+        {/* One compact toolbar: no page-level title, and the upload control
+            must not push the content down. */}
         <div className="flex flex-wrap items-center gap-2 rounded-ui-md border border-line bg-surface px-3 py-2">
-          <span className="text-ui-sm font-bold text-brand-strong">当期通告 · 所需数值</span>
           <button
             type="button"
             disabled={!tablesReady}
@@ -300,54 +322,66 @@ export default function CaseReaderApp() {
               )}
             </div>
 
-            {/* 我方艺人：用一个框和下面的通告表区分开。 */}
+            {/* 我方艺人：18 位固定编号，最多挑 4 位看数据。存档会自动认出已签约的。 */}
             <section
               data-case-artists
               className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5"
             >
-              <div className="mb-2 flex flex-wrap items-center gap-2">
+              <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
                 <h2 className="text-ui-xs font-bold text-brand-strong">我方艺人</h2>
-                <span className="text-ui-2xs text-ink-faint">基本属性 + 通告统计，来自存档内的艺人状态块</span>
-                <span className="ml-auto flex items-center gap-1 text-ui-2xs text-ink-muted">
-                  数值对比
-                  <select
-                    aria-label="选一位艺人做数值对比"
-                    value={compareIndex}
-                    onChange={(event) => setCompareIndex(Number(event.target.value))}
-                    className="rounded border border-line bg-surface px-1.5 py-0.5 text-ui-2xs outline-none"
-                  >
-                    {bindings.map((binding, i) => (
-                      <option key={i} value={i}>{binding.name || `艺人 ${i + 1}`}</option>
-                    ))}
-                    <option value={-1}>不对比</option>
-                  </select>
+                <span className="text-ui-2xs text-ink-faint">
+                  编号对应游戏内可签约艺人；存档自动认出已签约
+                  {result.signedArtistIds.length ? ` ${result.signedArtistIds.length} 位` : ' 0 位'}
+                  ，最多同时看 {MAX_ARTISTS} 位（已选 {selectedIds.length}/{MAX_ARTISTS}）
                 </span>
               </div>
-              {artists.length === 0 ? (
-                <p className="text-ui-2xs text-ink-faint">这份存档里没有找到艺人状态块。</p>
+              <div data-case-artist-picker className="flex flex-wrap gap-1">
+                {result.artistDirectory.map((entry) => {
+                  const picked = selectedIds.includes(entry.id);
+                  const hasData = entry.artistIndex !== null;
+                  return (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      data-case-artist-chip
+                      data-selected={picked ? 'yes' : 'no'}
+                      onClick={() => toggleArtist(entry.id)}
+                      title={hasData
+                        ? `${entry.traditional} · 演技 ${entry.abilities[0] ?? '—'}${entry.signed ? ' · 已签约' : ''}`
+                        : `${entry.traditional} · 这份存档里还没有状态块`}
+                      className={cn(
+                        'rounded-full border px-2 py-0.5 text-ui-2xs transition-colors',
+                        picked
+                          ? 'border-brand-line bg-brand text-white'
+                          : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+                        !hasData && !picked && 'opacity-50',
+                      )}
+                    >
+                      <span className="font-semibold">{entry.id}</span> {entry.name}
+                      {entry.signed && <span className="ml-0.5">·签</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedArtists.length === 0 ? (
+                <p className="mt-2 text-ui-2xs text-ink-faint">上面点一位艺人，就能看到她的数据并参与下面每条通告的数值对比。</p>
               ) : (
-                <div data-case-artist-grid className="grid grid-cols-3 gap-2 tab:grid-cols-1">
-                  {bindings.map((binding, slot) => {
-                    const artist = artists.find((a) => a.index === binding.index) ?? artists[Math.min(slot, artists.length - 1)];
-                    return (
-                      <ArtistCard
-                        key={slot}
-                        binding={binding}
-                        artist={artist}
-                        artists={artists}
-                        onName={(name) => updateBinding(slot, { name })}
-                        onIndex={(index) => updateBinding(slot, { index })}
-                      />
-                    );
-                  })}
+                <div
+                  data-case-artist-grid
+                  className="mt-2 grid gap-2"
+                  style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))' }}
+                >
+                  {selectedArtists.map(({ option, artist }) => (
+                    <ArtistCard key={option.id} option={option} artist={artist} />
+                  ))}
                 </div>
               )}
-              <p className="mt-2 text-ui-2xs leading-[1.6] text-ink-faint">
-                存档没有把状态块和艺人名写在一起，所以默认按前三个状态块对应你签约的三位。点开「状态块」下拉可以按游戏里的演技数值找到对应的那一位，名字也能直接改；选择会记在本机。
+              <p className="mt-1.5 text-ui-2xs leading-[1.6] text-ink-faint">
+                数值直接按编号从存档里的艺人状态块读取，不用再对照状态块编号；选择会记在本机。下面每条角色都会逐一对比这里选中的每一位艺人。
               </p>
             </section>
 
-            {/* 各公司周一更新批次，含已排定与推测。 */}
+            {/* 各公司周一更新批次：只列存档已排定的，不外推下下周。 */}
             <details data-case-updates className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
               <summary className="cursor-pointer font-semibold text-brand-strong">
                 制作公司更新节奏 · 已排定 {result.batches.length} 批
@@ -372,16 +406,9 @@ export default function CaseReaderApp() {
                     <span className="ml-1 text-ink-faint">· {batch.codes.length} 条</span>
                   </span>
                 ))}
-                {result.forecastDate && (
-                  <span className="rounded border border-dashed border-line-strong px-2 py-1 leading-[1.5] text-ink-faint">
-                    <b>约 {result.forecastDate} 周一</b>
-                    <br />
-                    推测：按每周一更新推算，这批通告还没写进存档，公司需进游戏确认
-                  </span>
-                )}
               </div>
               <p className="mt-1.5 text-ui-2xs text-ink-faint">
-                上面每一批的日期和制作公司都直接读自存档里已排定的通告；只有虚线那批是按「每周一更新」外推的。
+                只列存档里已经排定的批次；下一次更新就是上面时钟条里那批，不再往后推算。
               </p>
             </details>
           </>
@@ -408,7 +435,7 @@ export default function CaseReaderApp() {
                     <Th className="w-[14%]">执行期间</Th>
                     <Th className="w-[6%]">角色</Th>
                     <Th className="w-[6%]">难度</Th>
-                    <Th className="w-[21%]">所需数值 / 艺人匹配</Th>
+                    <Th className="w-[21%]">所需数值 / 每位艺人对比</Th>
                     <Th className="w-[10%]">预约</Th>
                   </tr>
                 </thead>
@@ -416,8 +443,7 @@ export default function CaseReaderApp() {
                   <NoticeRows
                     key={`${notice.code}-${notice.firmSlot}`}
                     notice={notice}
-                    compareArtist={compareIndex >= 0 ? compareArtist : null}
-                    compareName={compareBinding?.name ?? ''}
+                    selected={selectedArtists}
                     roster={result.roster.map((r) => r.name).filter(Boolean)}
                     editingRole={editingRole}
                     setEditingRole={setEditingRole}
@@ -433,14 +459,15 @@ export default function CaseReaderApp() {
           <summary className="cursor-pointer font-semibold text-brand-strong">字段说明与数值来源</summary>
           <ul className="mt-2 space-y-1 pl-5 leading-[1.8] list-disc">
             <li><b>游戏时间</b>读自存档头部的 [年, 月, 日, 星期] 四元组；所有倒计时都用它算，而不是电脑当前时间。</li>
-            <li>每条通告在存档里有三个日期：<b>开放接取</b>（周一）、<b>执行开始</b>（周一）、<b>执行结束</b>（周日）。<b>停止接取</b>按你说的规则反推为执行开始的前一天，正好是周日。「7 天内停止接取」的行会高亮。</li>
+            <li>每条通告在存档里有三个日期：<b>开放接取</b>（周一）、<b>执行开始</b>（周一）、<b>执行结束</b>（周日）。<b>停止接取</b>按你说的规则反推为执行开始的前一天，正好是周日。「7 天内停止接取」的日期会标红。</li>
             <li><b>执行期间</b>给出起止日期和总天数；若游戏时间已落在期间内，会显示已执行 / 剩余天数。但存档里没有找到「哪位艺人当前挂着哪条通告」的可靠字段，所以这一栏是<b>通告本身</b>的进度，不是某个艺人的档期。</li>
-            <li><b>更新节奏</b>来自存档内所有已排定通告的开放接取日，按周一成批分组，制作公司名来自内置静态表。虚线那一批是按「每周一更新」外推的推测值。</li>
+            <li><b>更新节奏</b>来自存档内所有已排定通告的开放接取日，按周一成批分组，制作公司名来自内置静态表。只列已排定的批次，不外推更远的更新。</li>
             <li>「类型」按通告编号前缀区分大类（CD 唱片 / CF 广告 / MV 电影 / TV 电视剧 / SH 主持），下方小字是静态表里的细分节目类型。</li>
             <li>静态表只给区间（如三星 A 是 420–480），具体门槛是开局随机抽定后写进存档的，所以只改数值的修改器读不到。存档 <code>Case</code> 段里每条角色记录存着本局实抽的具体值，<code>CaseFirm</code> 段列出当期登记的通告编号。</li>
             <li>数值按 演技 / 口才 / 歌艺 / 名气 / 仪态 / 动感 / 体能 / 才智 / 自信 九项排列；难度为星级 1–5。数字后的字母是静态能力等级（难度区间彼此重叠，以静态等级为准）。</li>
-            <li><b>艺人匹配</b>用上方选中的艺人的九项能力逐项对照门槛，绿色表示能接，橙色列出还差多少。</li>
-            <li><b>预约</b>：存档里没有定位到通用的预约艺人字段，默认按你核对过的两条（守候 / 背叛的男主角被黎华预约）标注；点格子可以改成别的艺人或清空，改动会记在本机。</li>
+            <li><b>艺人对比</b>：上面选中的每一位艺人都会逐条对照这个角色的门槛，绿色表示能接，红色列出还差多少。改动上面的选择，整张表会一起更新。</li>
+            <li><b>我方艺人</b>：编号对应游戏内 18 位可签约艺人（1–12、65 姚子莹、72 克烈斯、74 新名纱雪、75 聆香、76 卫亚、77 原少纬）；存档在每个状态块前 16 字节写了同一套编号，值为 1 的合约标记就是当前签约艺人。没登场的艺人这份存档里没有状态块，会灰显。</li>
+            <li><b>预约</b>：存档里没有定位到通用的预约艺人字段，默认按你核对过的两条（守候 / 背叛的男主角被黎华预约）标注；点格子可以改成别的艺人或清空，改动会记在本机。只有被预约的那个角色位置会灰掉，不影响同一条通告的其他角色。</li>
             <li>内置静态表来源：{tables.source || '未加载'}；版本不同时编号可能匹配不上名称，但数值依然可用。</li>
             {result && (
               <li>本次快照：{result.saveName} · {result.saveSize.toLocaleString('zh-CN')} 字节 · 读取时间 {result.readAt} · 存档内共 {result.roleRecordCount} 条角色记录 / {result.artists.length} 个艺人状态块。</li>
@@ -452,36 +479,15 @@ export default function CaseReaderApp() {
   );
 }
 
-function ArtistCard({
-  binding, artist, artists, onName, onIndex,
-}: {
-  binding: ArtistBinding;
-  artist: ArtistStats | null;
-  artists: ArtistStats[];
-  onName: (name: string) => void;
-  onIndex: (index: number) => void;
-}) {
+function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {
   return (
     <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
-      <div className="flex items-center gap-1.5">
-        <input
-          value={binding.name}
-          onChange={(event) => onName(event.target.value)}
-          aria-label="艺人名字"
-          className="w-[76px] rounded border border-line bg-surface-soft px-1.5 py-0.5 text-ui-xs font-bold text-brand-strong outline-none focus:border-brand-line"
-        />
-        <select
-          value={artist?.index ?? binding.index}
-          onChange={(event) => onIndex(Number(event.target.value))}
-          aria-label="数值来源状态块"
-          className="ml-auto rounded border border-line bg-surface-soft px-1 py-0.5 text-ui-2xs text-ink-muted outline-none"
-        >
-          {artists.map((item) => (
-            <option key={item.index} value={item.index}>
-              状态块 #{item.index} · 演技 {item.abilities[0]}
-            </option>
-          ))}
-        </select>
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-ui-xs font-bold text-brand-strong">#{option.id} {option.name}</span>
+        {option.signed && (
+          <span className="rounded-full bg-tag-follow-soft px-1.5 text-ui-2xs text-tag-follow">已签约</span>
+        )}
+        {artist && <span className="ml-auto text-ui-2xs text-ink-faint">{artist.condition}</span>}
       </div>
       {artist ? (
         <>
@@ -494,7 +500,7 @@ function ArtistCard({
             ))}
           </div>
           <div className="mt-1 border-t border-line pt-1 text-ui-2xs leading-[1.7] text-ink-faint">
-            压力 {artist.stress} · 疲劳 {artist.fatigue} · 叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]} · 人气 {artist.social[3]} · 曝光 {artist.social[4]} · 礼物 {artist.gifts} · {artist.condition}
+            压力 {artist.stress} · 疲劳 {artist.fatigue} · 叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]} · 人气 {artist.social[3]} · 曝光 {artist.social[4]} · 礼物 {artist.gifts}
           </div>
           <div data-case-artist-counts className="mt-0.5 flex flex-wrap gap-1 text-ui-2xs">
             <span className="text-ink-faint">通告统计</span>
@@ -506,7 +512,7 @@ function ArtistCard({
           </div>
         </>
       ) : (
-        <p className="mt-1 text-ui-2xs text-ink-faint">没有读到状态块</p>
+        <p className="mt-1 text-ui-2xs text-ink-faint">这份存档里还没有这位的状态块，暂时无法参与数值对比。</p>
       )}
     </div>
   );
@@ -516,15 +522,14 @@ function Th({ children, className }: { children: ReactNode; className?: string }
   return <th className={cn('border-b border-line px-3 py-2 font-semibold', className)}>{children}</th>;
 }
 
-function Td({ children, className, rowSpan, colSpan, title }: {
-  children: ReactNode;
+function Td({ children, className, title, colSpan }: {
+  children?: ReactNode;
   className?: string;
-  rowSpan?: number;
-  colSpan?: number;
   title?: string;
+  colSpan?: number;
 }) {
   return (
-    <td rowSpan={rowSpan} colSpan={colSpan} title={title} className={cn('border-b border-line px-3 py-2 align-top', className)}>
+    <td title={title} colSpan={colSpan} className={cn('border-b border-line px-3 py-2 align-top', className)}>
       {children}
     </td>
   );
@@ -534,18 +539,15 @@ function starText(star: number): string {
   return '★'.repeat(star) + '☆'.repeat(Math.max(0, 5 - star));
 }
 
-function RequirementChips({
-  role, compareArtist, compareName,
-}: {
-  role: RoleRecord;
-  compareArtist: ArtistStats | null;
-  compareName: string;
-}) {
-  const match = compareArtist ? matchRole(role, compareArtist, compareName) : null;
+/** Requirement chips plus one comparison line for every selected artist. */
+function RequirementChips({ role, selected }: { role: RoleRecord; selected: SelectedArtist[] }) {
   if (role.requirements.length === 0) return <span className="text-ui-2xs text-ink-faint">无能力要求</span>;
+  const matches = selected
+    .filter((item) => item.artist)
+    .map((item) => matchRole(role, item.artist as ArtistStats, item.option.name));
   return (
     <>
-      <div className="flex flex-wrap gap-1" data-case-match={match ? (match.canAccept ? 'yes' : 'no') : undefined}>
+      <div className="flex flex-wrap gap-1">
         {role.requirements.map((req) => (
           <span
             key={req.attr}
@@ -561,40 +563,49 @@ function RequirementChips({
           </span>
         ))}
       </div>
-      {match && (
-        <div className={cn('mt-1 text-ui-2xs leading-[1.5]', match.canAccept ? 'text-tag-follow' : 'text-alert')}>
-          {match.canAccept ? (
-            <span>✓ {match.artistName} 全部达标，可以接</span>
-          ) : (
-            <span>
-              {match.artistName} 还差{' '}
-              {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${gap.diff}`).join(' · ')}
-            </span>
-          )}
+      {matches.length > 0 && (
+        <div className="mt-1 flex flex-col gap-0.5" data-case-match-list>
+          {matches.map((match) => (
+            <div
+              key={match.artistIndex}
+              data-case-match
+              data-case-match-artist
+              data-match-artist={match.artistName}
+              data-match-result={match.canAccept ? 'yes' : 'no'}
+              className={cn('text-ui-2xs leading-[1.5]', match.canAccept ? 'text-tag-follow' : 'text-alert')}
+            >
+              {match.canAccept ? (
+                <span className="font-semibold">✓ {match.artistName} 可以接</span>
+              ) : (
+                <span className="font-semibold">
+                  {match.artistName} 差{' '}
+                  {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${gap.diff}`).join(' · ')}
+                </span>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </>
   );
 }
 
-/** One <tbody> per notice so the notice-level cells can use rowspan, while the
- *  DOM still exposes one `[data-case-notice]` node per notice for regressions. */
+/** Notice-level data is repeated on every role row: no rowspan at all, so a
+ *  reserved role only dims its own four cells and never the whole notice. */
 function NoticeRows({
-  notice, compareArtist, compareName, roster, editingRole, setEditingRole, updateReservation,
+  notice, selected, roster, editingRole, setEditingRole, updateReservation,
 }: {
   notice: CaseNotice;
-  compareArtist: ArtistStats | null;
-  compareName: string;
+  selected: SelectedArtist[];
   roster: string[];
   editingRole: string;
   setEditingRole: (value: string) => void;
   updateReservation: (roleCode: string, name: string) => void;
 }) {
-  const rows = notice.roles.length || 1;
   const closing = notice.status === 'closing';
   const noticeCells = (
     <>
-      <Td rowSpan={rows} className="border-t border-line-strong">
+      <Td>
         <div className="font-semibold">{notice.name}</div>
         <div className="mt-0.5 text-ui-2xs text-ink-faint">{notice.code}</div>
         {closing && (
@@ -613,7 +624,7 @@ function NoticeRows({
           </span>
         )}
       </Td>
-      <Td rowSpan={rows} className="border-t border-line-strong">
+      <Td>
         <span className={cn(
           'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
           CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
@@ -622,8 +633,8 @@ function NoticeRows({
         </span>
         {notice.type && <div className="mt-1 text-ui-2xs text-ink-faint">{notice.type}</div>}
       </Td>
-      <Td rowSpan={rows} className="border-t border-line-strong">{notice.company || '—'}</Td>
-      <Td rowSpan={rows} className="border-t border-line-strong" title="开放接取与停止接取">
+      <Td>{notice.company || '—'}</Td>
+      <Td title="开放接取与停止接取">
         <div className="whitespace-nowrap text-ui-2xs leading-[1.7]">
           <div><span className="text-ink-faint">开放</span> <b className="text-ink-muted">{notice.openDate || '—'}</b></div>
           <div><span className="text-ink-faint">停止</span> <b className={closing ? 'text-alert' : 'text-ink-muted'}>{notice.deadline || '—'}</b></div>
@@ -637,7 +648,7 @@ function NoticeRows({
           </span>
         )}
       </Td>
-      <Td rowSpan={rows} className="border-t border-line-strong" title="通告执行期间">
+      <Td title="通告执行期间">
         <div className="whitespace-nowrap text-ui-2xs leading-[1.7]">
           <div><b className="text-ink-muted">{notice.periodStart || '—'}</b> <span className="text-ink-faint">~</span> <b className="text-ink-muted">{notice.periodEnd || '—'}</b></div>
           <div className="text-ink-faint">共 {notice.execDays} 天</div>
@@ -655,8 +666,17 @@ function NoticeRows({
     </>
   );
 
-  const reservationCell = (role: RoleRecord) => (
-    <Td className="border-t border-line-strong">
+  /** Continuation rows keep the notice columns blank (no rowspan, no repeated
+   *  text); the small arrow marks them as further roles of the same notice. */
+  const blankCells = (
+    <>
+      <Td className="text-ink-faint">↳</Td>
+      <Td /><Td /><Td /><Td />
+    </>
+  );
+
+  const reservationCell = (role: RoleRecord, reserved: boolean) => (
+    <Td className={reserved ? 'bg-surface-soft text-ink-faint' : undefined}>
       {editingRole === role.roleCode ? (
         <select
           autoFocus
@@ -693,10 +713,10 @@ function NoticeRows({
   if (notice.roles.length === 0) {
     return (
       <tbody data-case-notice data-case-status={notice.status}>
-        <tr data-case-role className="hover:bg-surface-soft">
+        <tr data-case-role className="border-t border-line-strong">
           {noticeCells}
-          <Td className="border-t border-line-strong text-ink-faint" colSpan={3}>存档里没有该通告的角色需求记录</Td>
-          <Td className="border-t border-line-strong text-ink-faint">—</Td>
+          <Td className="text-ink-faint" colSpan={3}>存档里没有该通告的角色需求记录</Td>
+          <Td className="text-ink-faint">—</Td>
         </tr>
       </tbody>
     );
@@ -706,29 +726,29 @@ function NoticeRows({
     <tbody data-case-notice data-case-status={notice.status}>
       {notice.roles.map((role, index) => {
         const reserved = Boolean(role.reservedBy);
+        // Only the four role-level cells dim; notice-level cells stay bright.
+        const roleCell = reserved
+          ? 'bg-surface-soft text-ink-faint opacity-60'
+          : undefined;
         return (
           <tr
             key={role.roleCode + role.offset}
             data-case-role
             data-case-reserved={reserved ? 'yes' : 'no'}
-            className={cn(
-              'hover:bg-surface-soft',
-              reserved && 'bg-surface-soft text-ink-faint opacity-60',
-              closing && !reserved && 'bg-alert-soft',
-            )}
+            className={cn('hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
           >
-            {index === 0 && noticeCells}
-            <Td className={index === 0 ? 'border-t border-line-strong' : undefined}>
+            {index === 0 ? noticeCells : blankCells}
+            <Td className={roleCell}>
               <span className="font-semibold">{role.role}</span>
               <span className="ml-1 text-ui-2xs text-ink-faint" title={role.roleCode}>{role.roleCode.slice(-1)}</span>
             </Td>
-            <Td className={cn('whitespace-nowrap text-gold', index === 0 && 'border-t border-line-strong')} title={`难度 ${role.star} 星`}>
+            <Td className={cn('whitespace-nowrap text-gold', roleCell)} title={`难度 ${role.star} 星`}>
               {starText(role.star)}
             </Td>
-            <Td className={index === 0 ? 'border-t border-line-strong' : undefined}>
-              <RequirementChips role={role} compareArtist={compareArtist} compareName={compareName} />
+            <Td className={roleCell}>
+              <RequirementChips role={role} selected={selected} />
             </Td>
-            {reservationCell(role)}
+            {reservationCell(role, reserved)}
           </tr>
         );
       })}

@@ -142,6 +142,18 @@ async function main() {
       reservedRows: document.querySelectorAll('[data-case-reserved="yes"]').length,
       reservedText: [...document.querySelectorAll('[data-case-reserved="yes"] [data-case-reservation]')].map(x => x.innerText).join('|'),
       matches: document.querySelectorAll('[data-case-match]').length,
+      matchArtists: document.querySelectorAll('[data-case-match-artist]').length,
+      chips: document.querySelectorAll('[data-case-artist-chip]').length,
+      picked: document.querySelectorAll('[data-case-artist-chip][data-selected="yes"]').length,
+      rowspans: document.querySelectorAll('[data-case-notice] td[rowspan]').length,
+      reservedDimCells: [...document.querySelectorAll('[data-case-reserved="yes"] td')]
+        .filter(td => td.className.includes('opacity-60') || td.className.includes('bg-surface-soft')).length,
+      reservedNoticeCellDim: (function(){
+        var r = document.querySelector('[data-case-reserved="yes"]');
+        return r ? r.querySelector('td').className.includes('opacity-60') : null;
+      })(),
+      hasStateBlockPicker: document.body.innerText.includes('状态块 #'),
+      hasPageTitle: document.body.innerText.includes('当期通告 · 所需数值'),
       firstNotice: document.querySelector('[data-case-notice]')?.innerText.slice(0, 260) || '',
       head: document.querySelector('table thead')?.innerText || '',
       hasFirmSlot: document.body.innerText.includes('公司槽'),
@@ -169,16 +181,32 @@ async function main() {
     check(/共 \d+ 天/.test(p.firstNotice), 'shooting length rendered');
     check(!p.hasFirmSlot, '公司槽 field is hidden');
 
-    // Artist panel and reservations.
+    // Artist panel: 18 numbered artists, signed ones auto-picked, no block picker.
+    check(!p.hasPageTitle, 'the page-level title is gone');
+    check(p.chips === 18 && p.picked === 3,
+      'all 18 roster numbers listed and the three signed artists auto-picked',
+      `${p.chips} / ${p.picked}`);
+    check(!p.hasStateBlockPicker, 'no anonymous state-block selector remains');
     check(p.artists === 3, 'three signed-artist cards', String(p.artists));
     check(p.artistAttrs === 3 && p.artistAttrsCount >= 27, 'nine abilities on every artist card',
       `${p.artistAttrs} / ${p.artistAttrsCount}`);
     check(p.artistCounts === 3, 'notice counts on every artist card', String(p.artistCounts));
+    check(p.matches >= p.roles * 3 && p.matchArtists === p.matches,
+      'every role is compared against every selected artist',
+      `${p.matches} comparisons / ${p.roles} roles`);
+
+    // No merged cells: a reserved role dims only its own four cells.
+    check(p.rowspans === 0, 'the notice table has no merged rows', String(p.rowspans));
     check(p.reservedRows === 2 && p.reservedText.includes('黎华（已预约）'),
       'the two 黎华 reservations render with the label', p.reservedText);
-    check(p.matches > 0, 'artist-to-requirement comparison rendered', String(p.matches));
-    check(p.updates.includes('已排定') && p.updates.includes('推测'),
-      'company refresh timeline separates scheduled and guessed batches');
+    check(p.reservedNoticeCellDim === false && p.reservedDimCells <= 4 * p.reservedRows,
+      'only the reserved role cells dim, not the whole notice',
+      `firstCell=${p.reservedNoticeCellDim} dimmed=${p.reservedDimCells}`);
+
+    // Only the four scheduled batches, no further extrapolation.
+    check(p.updates.includes('已排定 4 批') && !p.updates.includes('推测')
+      && !p.updates.includes('2/6'),
+      'company refresh timeline lists scheduled batches only');
 
     // React listens to the native input event; setting .value alone is ignored.
     await evaluate(`(function(){

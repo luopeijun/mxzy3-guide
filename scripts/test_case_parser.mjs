@@ -26,7 +26,7 @@ await build({
   format: 'esm',
   logLevel: 'silent',
 });
-const { parseSave, toCsv } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
+const { parseSave, toCsv, matchRole } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
 let checks = 0;
@@ -95,6 +95,15 @@ check((role?.requirements ?? []).every((r) => r.rolledGrade === r.staticGrade),
   'difficulty ranges agree with static grades');
 check(toCsv(result).includes('"TV021"') && toCsv(result).includes('演技325'), 'CSV export');
 check(result.unknownCodes.length === 0, 'no unknown notice codes');
+// Every selected artist is compared against the same role independently.
+const strong = { index: 1, abilities: [400, 0, 0, 500, 400, 0, 0, 0, 0] };
+const weak = { index: 2, abilities: [300, 0, 0, 400, 300, 0, 0, 0, 0] };
+const strongMatch = matchRole(role, strong, '路敏');
+const weakMatch = matchRole(role, weak, '路风');
+check(strongMatch.canAccept && weakMatch.missing === 3
+  && weakMatch.gaps.filter((g) => g.diff > 0).map((g) => g.diff).join(',') === '25,45,95',
+  'each artist gets an independent can-accept / shortfall result',
+  `${strongMatch.canAccept} / ${weakMatch.gaps.filter((g) => g.diff > 0).map((g) => g.diff).join(',')}`);
 
 const savePath = process.argv[2]
   ?? 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
@@ -152,6 +161,17 @@ if (fs.existsSync(savePath)) {
     && a.noticeCounts.length === 5 && a.social.length === 5),
     'artist state blocks carry nine abilities, five social stats and five notice counts',
     `${real.artists.length} blocks`);
+  check(real.artistDirectory.length === 18
+    && real.artistDirectory.find((a) => a.id === 72)?.name === '克烈斯'
+    && real.artistDirectory.find((a) => a.id === 74)?.name === '新名纱雪',
+    'the 18 signable artists are mapped by the save-editor roster number');
+  check(real.artists.every((a) => a.roleId > 0)
+    && real.artists.every((a) => real.artistDirectory.some((d) => d.id === a.roleId)),
+    'every state block carries a known roster number',
+    real.artists.map((a) => a.roleId).join(','));
+  check(real.artistDirectory.every((d) => d.artistIndex === null
+    || real.artists.some((a) => a.index === d.artistIndex && a.roleId === d.id)),
+    'directory entries point at the state block with the same number');
   check(real.roster.some((r) => r.name === '路風') && real.roster.some((r) => r.name === '黎華'),
     'roster table resolves the signed artists and the booking artist');
   check(real.notices.every((n) => n.roles.every((r) => typeof r.reservedBy === 'string')),
@@ -175,10 +195,19 @@ if (fs.existsSync(savePath)) {
       'exactly two notices close within 7 days');
     check(real.nextUpdate?.date === '2006/1/30' && real.nextUpdate.companies.length === 3
       && real.nextUpdate.kinds.includes('唱片'), 'next Monday refresh is the three record labels');
-    check(real.forecastDate === '2006/2/6', 'the extrapolated refresh after next');
+    check(real.batches.length === 4 && !('forecastDate' in real),
+      'only the four scheduled batches are kept, no further extrapolation');
     check(real.artists.some((a) => a.abilities[0] === 1886 && a.abilities[8] === 2838
       && a.stress === 76 && a.fatigue === 98),
       'the save-editor screenshot values are present in an artist block');
+    check(real.artists.length === 17,
+      'the two all-1111 placeholder blocks are excluded', `${real.artists.length} blocks`);
+    check(real.signedArtistIds.join(',') === '5,6,10',
+      'the save identifies 路敏 / 萧依莉 / 路风 as the signed artists',
+      real.signedArtistIds.join(','));
+    check(real.artistDirectory.find((a) => a.id === 6)?.abilities[0] === 1886
+      && real.artistDirectory.find((a) => a.id === 74)?.artistIndex === null,
+      '萧依莉 resolves to the screenshot block, 新名纱雪 has no block yet');
   }
 } else {
   console.log(`\nreal save not found (${savePath}), skipped live-save checks`);

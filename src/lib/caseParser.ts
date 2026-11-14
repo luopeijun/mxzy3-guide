@@ -35,6 +35,40 @@ export const DEFAULT_RESERVATIONS: Record<string, string> = {
   TV2211: '黎华',
 };
 
+/** The 18 signable artists, numbered as in the game's save-editor roster.
+ *  The number is the game's own role id; each artist state block stores that
+ *  same id 16 bytes before its nine abilities, so no guessing is needed. */
+export interface ArtistDirectoryEntry {
+  id: number;
+  name: string;
+  /** Traditional-Chinese spelling used by the save's Big5 name table. */
+  traditional: string;
+}
+
+export const ARTIST_DIRECTORY: ArtistDirectoryEntry[] = [
+  { id: 1, name: '林芬芬', traditional: '林芬芬' },
+  { id: 2, name: '桑禾蓓', traditional: '桑禾蓓' },
+  { id: 3, name: '欧怡青', traditional: '歐怡青' },
+  { id: 4, name: '苏嫚君', traditional: '蘇嫚君' },
+  { id: 5, name: '路敏', traditional: '路敏' },
+  { id: 6, name: '萧依莉', traditional: '蕭依莉' },
+  { id: 7, name: '天晴', traditional: '天晴' },
+  { id: 8, name: '陈奕夫', traditional: '陳奕夫' },
+  { id: 9, name: '关古威', traditional: '關古威' },
+  { id: 10, name: '路风', traditional: '路風' },
+  { id: 11, name: '纪翔', traditional: '紀翔' },
+  { id: 12, name: '姚子奇', traditional: '姚子奇' },
+  { id: 65, name: '姚子莹', traditional: '姚子瑩' },
+  { id: 72, name: '克烈斯', traditional: '克烈斯' },
+  { id: 74, name: '新名纱雪', traditional: '新名紗雪' },
+  { id: 75, name: '聆香', traditional: '聆香' },
+  { id: 76, name: '卫亚', traditional: '衛亞' },
+  { id: 77, name: '原少纬', traditional: '原少緯' },
+];
+
+/** Ids 78 / 79 are placeholder blocks whose nine abilities are all 1111. */
+export const PLACEHOLDER_ARTIST_IDS = [78, 79];
+
 const PREFIXES = ['CD', 'CF', 'MV', 'TV', 'SH', 'FS', 'TH', 'SP'];
 const NAME_BLOCKS = [
   'Case', 'CaseEnd', 'CaseFirm', 'CaseCreate', 'PrepareCase',
@@ -127,8 +161,22 @@ export interface ArtistStats {
   noticeCounts: number[];
   /** Short Big5 status label such as 正常. */
   condition: string;
+  /** The game's roster number, stored 16 bytes before the nine abilities. */
+  roleId: number;
+  /** 1 means this artist is currently signed by the player's company. */
+  signed: boolean;
   offset: number;
   index: number;
+}
+
+/** One selectable artist in the top panel: fixed roster number plus whichever
+ *  state block the save happens to contain for them. */
+export interface ArtistOption extends ArtistDirectoryEntry {
+  /** null when this artist has no state block in this save yet. */
+  artistIndex: number | null;
+  signed: boolean;
+  /** Nine abilities, for the roster chip tooltip. */
+  abilities: number[];
 }
 
 export interface RosterEntry {
@@ -168,6 +216,10 @@ export interface ParseResult {
   roleRecordCount: number;
   notices: CaseNotice[];
   artists: ArtistStats[];
+  /** The 18 signable artists, resolved against the state blocks in this save. */
+  artistDirectory: ArtistOption[];
+  /** Numbers of the artists the save marks as signed (1..4 of them). */
+  signedArtistIds: number[];
   /** Full 284-byte role-name table at the head of the save. */
   roster: RosterEntry[];
   /** Dates from the save header, used for all countdowns. */
@@ -176,8 +228,6 @@ export interface ParseResult {
   batches: UpdateBatch[];
   /** First batch strictly after today, i.e. the next company refresh. */
   nextUpdate: UpdateBatch | null;
-  /** Rough date of the refresh after next (always labelled as a guess). */
-  forecastDate: string;
   /** Codes in CaseFirm that the bundled static tables do not know. */
   unknownCodes: string[];
 }
@@ -441,9 +491,15 @@ function parseArtists(bytes: Uint8Array, view: DataView, start: number, end: num
     const gifts = view.getUint32(socialAt + 20, true);
     const noticeCounts = Array.from({ length: 5 }, (_, j) => view.getUint32(socialAt + 24 + 4 * j, true));
     if (!noticeCounts.every((v) => v <= 9999)) continue;
+    // Ids 78 / 79 are unused template blocks whose nine abilities are all 1111.
+    if (abilities.every((v) => v === abilities[0])) continue;
+    const roleId = o >= 16 ? view.getUint32(o - 16, true) : 0;
+    if (PLACEHOLDER_ARTIST_IDS.includes(roleId)) continue;
+    const signed = o >= 8 && view.getUint32(o - 8, true) === 1;
     index += 1;
     out.push({
-      abilities, stress, fatigue, social, gifts, noticeCounts, condition, offset: o, index,
+      abilities, stress, fatigue, social, gifts, noticeCounts, condition,
+      roleId, signed, offset: o, index,
     });
   }
   return out;
@@ -553,6 +609,18 @@ export function parseSave(
   const artistEnd = blocks.Firm ? blocks.Firm[0] : bytes.length;
   const artists = parseArtists(bytes, view, artistStart, artistEnd);
   const roster = parseRoster(bytes);
+  // The state block carries the game's roster number at -16, so the panel can
+  // show named artists instead of anonymous "状态块 #N" selectors.
+  const artistDirectory: ArtistOption[] = ARTIST_DIRECTORY.map((entry) => {
+    const block = artists.find((a) => a.roleId === entry.id) ?? null;
+    return {
+      ...entry,
+      artistIndex: block?.index ?? null,
+      signed: block?.signed ?? false,
+      abilities: block?.abilities ?? [],
+    };
+  });
+  const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
 
   /** code -> best [open, start, end] triple found anywhere in the Case block. */
   const datesByCode: Record<string, DateTuple[]> = {};
@@ -594,9 +662,6 @@ export function parseSave(
   const nextUpdate = Number.isFinite(today)
     ? batches.find((batch) => batch.dayNumber > today) ?? null
     : null;
-  const lastDay = batches.length ? batches[batches.length - 1].dayNumber : NaN;
-  const forecastDate = Number.isFinite(lastDay) ? dayText(lastDay + 7) : '';
-
   const unknownCodes: string[] = [];
   const notices: CaseNotice[] = firm.map((item) => {
     const info = tables.cases[item.code];
@@ -660,11 +725,12 @@ export function parseSave(
     roleRecordCount: roles.length,
     notices,
     artists,
+    artistDirectory,
+    signedArtistIds,
     roster,
     currentDate,
     batches,
     nextUpdate,
-    forecastDate,
     unknownCodes: [...new Set(unknownCodes)],
   };
 }
