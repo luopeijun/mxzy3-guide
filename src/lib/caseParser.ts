@@ -33,16 +33,13 @@ const KIND_BY_PREFIX: Record<string, string> = {
   CD: '唱片', CF: '廣告', MV: '電影', TV: '', SH: '',
 };
 
-/** 已被其他艺人预约的角色，只读，不提供编辑入口。
+/** 已被其他艺人预约的角色（角色码 -> 艺人名）。
  *
- *  这一列回答的是「这个角色已被谁占掉，所以我接不了」，属于存档现状，不是
- *  玩家的待办清单。存档里这个关系只以艺人编号的形式存在、且没有稳定锚点，
- *  目前只核对了 Auto.sa2 游戏画面上真实存在的两条（守候 / 背叛 的男主角被
- *  黎华 预约）。新增条目照这个格式补即可。 */
-export const RESERVED_ROLES: Record<string, string> = {
-  TV0211: '黎华',
-  TV2211: '黎华',
-};
+ *  这一列回答的是「这个角色已被谁占掉，所以我接不了」。**只能来自存档**，
+ *  不能凭印象硬填：角色记录本身只保存通告的角色定义（同一张通告在两个
+ *  存档里逐字节相同），预约关系记在艺人的行程上，目前还没有解出可用的
+ *  字段，所以这里保持为空 —— 读不到就不显示，宁缺勿错。 */
+export const RESERVED_ROLES: Record<string, string> = {};
 
 /** A role may be gender-restricted (男主角 / 女性 …) or open to anyone. */
 export type Gender = 'female' | 'male' | 'any';
@@ -101,7 +98,7 @@ export const PLACEHOLDER_ARTIST_IDS = [78, 79];
 const PREFIXES = ['CD', 'CF', 'MV', 'TV', 'SH', 'FS', 'TH', 'SP'];
 const NAME_BLOCKS = [
   'Case', 'CaseEnd', 'CaseFirm', 'CaseCreate', 'PrepareCase',
-  'StarRoleQ', 'Firm', 'Schedule',
+  'StarRoleQ', 'Firm', 'Team', 'Schedule',
 ];
 
 export interface CaseTables {
@@ -245,64 +242,27 @@ export interface UpdateBatch {
   scheduled: boolean;
 }
 
-/** Live 人气 / 名气 / 通告数量 for a group, read straight from the save.
- *  `offset` is the save position the record was scanned from (-1 if absent). */
-export interface GroupStat {
-  /** 团体编码，我方团体从 101 起。 */
+/** A team the player has formed, read straight from the save.
+ *  The save keeps them in its `Team` section: [编码][名字节长度][Big5 名字] and
+ *  the member artist numbers a fixed distance after the name. 我方团体从 101 起；
+ *  存档里没有这条记录，就是旗下没有团体。 */
+export interface TeamRecord {
+  /** 团体编码：101、102…，读不到就是旗下没有团体。 */
   code: number;
-  renqi: number;
-  mingqi: number;
-  noticeCount: number;
+  /** 团体名，直接取存档里的 Big5 字符串。 */
+  name: string;
+  /** 成员艺人编号，第 0 个就是队长。 */
+  memberIds: number[];
+  /** 存档里这条记录的位置。 */
   offset: number;
 }
 
-/** A player-formed group as shown in the reader. Code / name / members come
- *  from the game's own team table (bundled as static reference, like
- *  ARTIST_DIRECTORY — not parsed from Team.dat at runtime); the numeric
- *  attributes are overlaid from the save when the group's code is found there. */
-export interface GroupRecord {
-  /** 团体编码 as in the game's team table, e.g. 4. */
-  code: number;
-  name: string;
-  /** Game roster number of the group's leader (队长), taken as the first member. */
+/** A team as shown in the reader: ids resolved to names via ARTIST_DIRECTORY. */
+export interface GroupRecord extends TeamRecord {
   leaderId: number;
-  /** Game roster numbers of every member, leader first, duplicates removed. */
-  memberIds: number[];
   leaderName: string;
   memberNames: string[];
-  /** 团体人气, read from the save's group record; 0 when the save has none. */
-  renqi: number;
-  /** 团体名气, read from the save's group record; 0 when the save has none. */
-  mingqi: number;
-  /** 团体通告数量, read from the save's group record; 0 when the save has none. */
-  noticeCount: number;
-  /** Always true here: a group only shows up because the player formed one. */
-  signed: boolean;
-  /** Offset of the save record the stats were read from, or -1. */
-  offset: number;
 }
-
-/** All fifteen groups the game can form, in the game's own code order.
- *  Source: the game's Team.dat, transcribed as static reference (member ids are
- *  roster numbers; the first member is the captain). The save only carries the
- *  live 人气 / 名气 / 通告数量, keyed by this same code. */
-export const KNOWN_TEAMS: { code: number; name: string; memberIds: number[] }[] = [
-  { code: 1, name: 'SD樂', memberIds: [21, 20, 33] },
-  { code: 2, name: '馬麗', memberIds: [30, 31, 33] },
-  { code: 3, name: 'KP康', memberIds: [15, 54, 33] },
-  { code: 4, name: '風敏', memberIds: [10, 5, 62] },
-  { code: 5, name: '蘋果', memberIds: [1, 9] },
-  { code: 6, name: '禁忌', memberIds: [11, 3] },
-  { code: 7, name: '搶錢', memberIds: [8, 4] },
-  { code: 8, name: '爆笑', memberIds: [24, 15, 13] },
-  { code: 9, name: '我愛', memberIds: [1, 65] },
-  { code: 10, name: '花樣', memberIds: [9, 11] },
-  { code: 11, name: 'LC', memberIds: [5, 7] },
-  { code: 12, name: 'WinK', memberIds: [5, 3] },
-  { code: 13, name: '天晴', memberIds: [7, 19] },
-  { code: 14, name: '沒用', memberIds: [11, 3, 9] },
-  { code: 100, name: 'dNewY', memberIds: [39, 33] },
-];
 
 /** A role whose name contains 團體 / 团体 is filled by a group, not a solo
  *  artist, so its numeric match should be tested against the group's leader. */
@@ -351,7 +311,7 @@ export interface ParseResult {
   /** Live 人气 / 名气 / 通告数量 keyed by team code, read straight from the save.
    *  The player's actual groups are chosen in the UI from the static KNOWN_TEAMS;
    *  this map only supplies the numbers for whichever codes the save contains. */
-  groupStats: Record<number, GroupStat>;
+  teams: TeamRecord[];
   /** Full 284-byte role-name table at the head of the save. */
   roster: RosterEntry[];
   /** Dates from the save header, used for all countdowns. */
@@ -595,17 +555,21 @@ export function parseRoster(bytes: Uint8Array): RosterEntry[] {
  *  blocks that follow each real one are filtered out. */
 function parseArtists(bytes: Uint8Array, view: DataView, start: number, end: number): ArtistStats[] {
   const out: ArtistStats[] = [];
+  const seen = new Set<number>();
   let index = 0;
   for (let o = Math.max(0, start); o + 140 <= Math.min(end, bytes.length); o += 4) {
     const rawAbilities = Array.from({ length: 9 }, (_, j) => view.getUint32(o + 4 * j, true));
-    if (!rawAbilities.every((v) => v > 100 && v <= 6000)) continue;
+    // Abilities are stored ×10. 9999 is a legitimate value (the UI shows 999.9),
+    // which is why the ceiling has to sit above 9990 — otherwise late-game
+    // saves whose artists are near the cap drop out completely.
+    if (!rawAbilities.every((v) => v > 100 && v <= 12000)) continue;
     // The save stores every ability ×10 (the in-game UI hides the decimal), so a
     // four-digit value like 1886 is really 188.6. Divide back to the displayed
     // scale before comparing with the three-digit notice requirements.
     const abilities = rawAbilities.map((v) => v / 10);
     const stress = view.getUint32(o + 36, true);
     const fatigue = view.getUint32(o + 40, true);
-    if (stress >= 300 || fatigue >= 300) continue;
+    if (stress > 500 || fatigue > 500) continue;
     const labelLength = view.getUint32(o + 44, true);
     if (labelLength < 2 || labelLength > 12 || o + 48 + labelLength * 4 + 100 > bytes.length) continue;
     const statusBytes = new Uint8Array(labelLength);
@@ -623,7 +587,9 @@ function parseArtists(bytes: Uint8Array, view: DataView, start: number, end: num
     if (!/^[\u4e00-\u9fff]+$/.test(condition)) continue;
     const socialAt = o + 48 + labelLength * 4;
     const social = Array.from({ length: 5 }, (_, j) => view.getUint32(socialAt + 4 * j, true));
-    if (!social.every((v) => v <= 2000)) continue;
+    // 名气 / 魅力 in newer saves reach four digits (×10 scale), so this is only
+    // a sanity bound; it must not be tight enough to drop real artists.
+    if (!social.every((v) => v <= 99999)) continue;
     const gifts = view.getUint32(socialAt + 20, true);
     const noticeCounts = Array.from({ length: 5 }, (_, j) => view.getUint32(socialAt + 24 + 4 * j, true));
     if (!noticeCounts.every((v) => v <= 9999)) continue;
@@ -631,6 +597,9 @@ function parseArtists(bytes: Uint8Array, view: DataView, start: number, end: num
     if (abilities.every((v) => v === abilities[0])) continue;
     const roleId = o >= 16 ? view.getUint32(o - 16, true) : 0;
     if (PLACEHOLDER_ARTIST_IDS.includes(roleId)) continue;
+    // One block per artist; keep the first so a stray later match cannot shadow it.
+    if (seen.has(roleId)) continue;
+    seen.add(roleId);
     const signed = o >= 8 && view.getUint32(o - 8, true) === 1;
     index += 1;
     out.push({
@@ -719,58 +688,68 @@ function readCurrentDate(view: DataView, byteLength: number): GameDate | null {
   return null;
 }
 
-/** Scan the save for the player's group records. The save stores, for each
- *  formed group, a record whose first int32 is the team code (1..14 or 100, the
- *  same space as the game's team table) followed by 人气 / 名气 / 通告数量. A
- *  stable anchor is hard (the codes also appear in Big5 text), so we require a
- *  plausible triple and a clean int32 boundary before it. Returns code -> stats;
- *  teams the player has not formed simply do not appear. */
-export function parseGroupStats(
+/** Read the player's teams from the save's `Team` section.
+ *
+ *  Layout verified against Auto / Story0001 / Story0003 / Story0004 /
+ *  Story0007: a team record is [编码][名字节长度][Big5 名字] and, a fixed
+ *  distance after the name, the member artist numbers (第 0 个是队长). A team
+ *  the player never formed simply has no record — 旗下没有团体时这里是空数组。
+ *
+ *  The section also holds each team's current 通告, whose record quotes the
+ *  team name too; those never carry the trailing marker below, so requiring it
+ *  keeps 通告 references out. */
+export function parseTeams(
   bytes: Uint8Array,
   view: DataView,
-): Record<number, GroupStat> {
-  // 我方团体从编号 101 起，存档把它们按队伍顺序记在 `MapRole` 名块后面：
-  // 每条 20 字节 = 人气 / 名气 / 通告数量 / 保留。第 i 条就是编号 101+i。
-  // 存档不写团体名与成员名单，所以这里只产出编号 + 三个数值。
-  const out: Record<number, GroupStat> = {};
-  const mapRole = findInt32Names(bytes, view, ['MapRole'])['MapRole'];
-  if (!mapRole) return out;
-  const start = mapRole[0] + 28;
-  const STRIDE = 20;
-  for (let i = 0; i < 5; i += 1) {
-    const o = start + i * STRIDE;
-    if (o + 12 > bytes.length) break;
-    const renqi = view.getUint32(o, true);
-    const mingqi = view.getUint32(o + 4, true);
-    const noticeCount = view.getUint32(o + 8, true);
-    if (renqi < 1 || renqi > 9999) break;
-    if (mingqi > 9999 || noticeCount > 99) break;
-    out[101 + i] = { code: 101 + i, renqi, mingqi, noticeCount, offset: o };
+  blocks: Record<string, [number, number]>,
+): TeamRecord[] {
+  const start = blocks.Team ? blocks.Team[1] : -1;
+  const end = blocks.Schedule ? blocks.Schedule[0] : bytes.length;
+  if (start < 0 || start >= bytes.length) return [];
+  const limit = Math.min(end, bytes.length);
+  const MARKER = [73, 110, 118, 97, 105, 100]; // "Invaid", the class's own label
+  const out: TeamRecord[] = [];
+  for (let o = start; o + 120 <= limit; o += 4) {
+    const code = view.getUint32(o, true);
+    if (code < 101 || code > 199) continue;
+    const nameBytes = view.getUint32(o + 4, true);
+    if (nameBytes < 4 || nameBytes > 24 || nameBytes % 2 !== 0) continue;
+    const chars = new Uint8Array(nameBytes);
+    let isText = true;
+    for (let j = 0; j < nameBytes; j += 1) {
+      const v = view.getUint32(o + 8 + 4 * j, true);
+      if (v > 0xff && v < 0xffffff80) { isText = false; break; }
+      chars[j] = v & 0xff;
+    }
+    if (!isText) continue;
+    const name = decodeBig5(chars);
+    if (!/^[\u4e00-\u9fff]+$/.test(name)) continue;
+    const nameEnd = o + 8 + nameBytes * 4;
+    if (nameEnd + 72 > bytes.length) continue;
+    if (view.getUint32(nameEnd + 44, true) !== MARKER.length) continue;
+    if (!MARKER.every((c, j) => view.getUint32(nameEnd + 48 + 4 * j, true) === c)) continue;
+    const memberIds: number[] = [];
+    for (let j = 0; j < 3; j += 1) {
+      const id = view.getUint32(nameEnd + 28 + 4 * j, true);
+      if (id >= 1 && id <= 96 && !memberIds.includes(id)) memberIds.push(id);
+    }
+    if (out.some((team) => team.code === code)) continue;
+    out.push({ code, name, memberIds, offset: o });
   }
-  return out;
+  return out.sort((a, b) => a.code - b.code);
 }
 
-/** Build a display record for one selected team: members and leader come from
- *  the static team table (first member is the captain per the player's rule),
- *  live 人气 / 名气 / 通告数量 are overlaid from the save when present. */
+/** Resolve a team's member ids to display names; 第 0 个成员就是队长。 */
 export function buildGroupRecord(
-  team: { code: number; name: string; memberIds: number[] },
-  stat: GroupStat | undefined,
+  team: TeamRecord,
   nameOf: (id: number) => string,
 ): GroupRecord {
-  const leaderId = team.memberIds[0];
+  const leaderId = team.memberIds[0] ?? 0;
   return {
-    code: team.code,
-    name: team.name,
+    ...team,
     leaderId,
-    memberIds: team.memberIds,
-    leaderName: nameOf(leaderId),
+    leaderName: team.memberIds.length ? nameOf(leaderId) : '',
     memberNames: team.memberIds.map(nameOf),
-    renqi: stat?.renqi ?? 0,
-    mingqi: stat?.mingqi ?? 0,
-    noticeCount: stat?.noticeCount ?? 0,
-    signed: true,
-    offset: stat?.offset ?? -1,
   };
 }
 
@@ -811,7 +790,7 @@ export function parseSave(
     };
   });
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
-  const groupStats = parseGroupStats(bytes, view);
+  const teams = parseTeams(bytes, view, blocks);
 
   /** code -> best [open, start, end] triple found anywhere in the Case block. */
   const datesByCode: Record<string, DateTuple[]> = {};
@@ -937,7 +916,7 @@ export function parseSave(
     artists,
     artistDirectory,
     signedArtistIds,
-    groupStats,
+    teams,
     roster,
     currentDate,
     batches,

@@ -28,7 +28,7 @@ await build({
 });
 const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
-  isGroupRole, matchGroupRole, KNOWN_TEAMS, buildGroupRecord,
+  isGroupRole, matchGroupRole, buildGroupRecord,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -193,10 +193,12 @@ if (fs.existsSync(savePath)) {
     && allRoles.filter((r) => r.role.includes('主角')).every((r) => r.gender !== 'any'),
     'gender-restricted and neutral roles are both classified',
     [...new Set(allRoles.map((r) => `${r.role}:${r.gender}`))].join(' '));
-  check(real.artists.every((a) => a.roleId > 0)
-    && real.artists.every((a) => real.artistDirectory.some((d) => d.id === a.roleId)),
-    'every state block carries a known roster number',
-    real.artists.map((a) => a.roleId).join(','));
+  // 存档里的状态块覆盖全部艺人（含 NPC），目录只列 18 位可签约艺人，
+  // 所以这里校验编号范围，而不是要求每个块都在目录里。
+  check(real.artists.every((a) => a.roleId > 0 && a.roleId <= 96)
+    && real.artists.every((a) => new Set(real.artists.map((b) => b.roleId)).size === real.artists.length),
+    'every state block carries a unique artist number inside the save range',
+    `${real.artists.length} blocks`);
   check(real.artistDirectory.every((d) => d.artistIndex === null
     || real.artists.some((a) => a.index === d.artistIndex && a.roleId === d.id)),
     'directory entries point at the state block with the same number');
@@ -222,10 +224,8 @@ if (fs.existsSync(savePath)) {
     check(shouhou?.openDate === '2006/1/16' && shouhou?.deadline === '2006/2/12'
       && shouhou?.periodStart === '2006/2/13' && shouhou?.periodEnd === '2006/4/9'
       && shouhou?.execDays === 56, '守候 booking window and shooting period');
-    check(shouhou?.roles.find((r) => r.roleCode === 'TV0211')?.reservedBy === '黎华'
-      && real.notices.find((n) => n.code === 'TV221')?.roles
-        .find((r) => r.roleCode === 'TV2211')?.reservedBy === '黎华',
-      'the two verified 黎华 reservations');
+      check(real.notices.every((n) => n.roles.every((r) => r.reservedBy === '')),
+      'reservations are never invented (no role is hard-coded as booked)');
     check(real.notices.filter((n) => n.status === 'closing').length === 2,
       'exactly two notices close within 7 days');
     check(real.nextUpdate?.date === '2006/1/30' && real.nextUpdate.companies.length === 3
@@ -235,7 +235,7 @@ if (fs.existsSync(savePath)) {
     check(real.artists.some((a) => a.abilities[0] === 188.6 && a.abilities[8] === 283.8
       && a.stress === 76 && a.fatigue === 98),
       'the save-editor screenshot values (÷10) are present in an artist block');
-    check(real.artists.length === 17,
+    check(real.artists.length >= 60 && !real.artists.some((a) => a.roleId === 78 || a.roleId === 79),
       'the two all-1111 placeholder blocks are excluded', `${real.artists.length} blocks`);
     check(real.signedArtistIds.join(',') === '5,6,10',
       'the save identifies 路敏 / 萧依莉 / 路风 as the signed artists',
@@ -253,21 +253,19 @@ if (fs.existsSync(savePath)) {
     check(neutral && canTakeRole(neutral, 'female') && canTakeRole(neutral, 'male'),
       'neutral roles such as 外景主持 / 個人 accept either gender', neutral?.role);
 
-    // Player-formed groups: live stats are scanned from the save by team code;
-    // the team table (members / leader) comes from the static KNOWN_TEAMS.
-    const teamCodes = Object.keys(real.groupStats).map(Number);
-    check(teamCodes.every((code) => code >= 101),
-      'player groups are numbered from 101, straight out of the save',
-      `${teamCodes.length} codes: ${teamCodes.join(',')}`);
-    check(real.groupStats[101]?.renqi === 526 && real.groupStats[101]?.mingqi === 284
-      && real.groupStats[101]?.noticeCount === 1,
-      'group 101 stats read from the save (人气 526 / 名气 284 / 通告 1)',
-      JSON.stringify(real.groupStats[101]));
+    // 我方团体：只认存档 `Team` 段里的记录，读不到就是没有团队。
+    check(real.teams.length === 1 && real.teams[0].code === 101
+      && real.teams[0].name === '風敏樂團',
+      'team record read from the save Team section (101 風敏樂團)',
+      real.teams.map((t) => `${t.code}:${t.name}`).join(',') || 'none');
+    check(real.teams[0]?.memberIds.join(',') === '10,5',
+      'team members read from the save (路风 10, 路敏 5; first one is the leader)',
+      real.teams[0]?.memberIds.join(',') ?? '-');
     const groupRole = real.notices.flatMap((n) => n.roles).find((r) => isGroupRole(r));
     if (groupRole) {
-      check(matchGroupRole(groupRole, null, '團體 101', '').gaps.length > 0,
-        'a 團體 role still lists its per-attribute gaps (save has no member list)',
-        groupRole.role);
+      const leader = real.artists.find((a) => a.roleId === real.teams[0]?.memberIds[0]) ?? null;
+      check(matchGroupRole(groupRole, leader, real.teams[0]?.name ?? '', '').gaps.length > 0,
+        'a 團體 role matches against the team leader only', groupRole.role);
     } else {
       console.log('OK   no 團體 role in this snapshot');
     }
@@ -276,19 +274,44 @@ if (fs.existsSync(savePath)) {
   console.log(`\nreal save not found (${savePath}), skipped live-save checks`);
 }
 
-// buildGroupRecord: first member is the leader, live stats overlay, names resolve.
+// 第二个存档（玩家实测的 Story0007）：四个签约艺人和 101 号团体必须都读到。
+// 这一份是旧版本存档，属性顶到 9999 —— 就是它暴露出上限设太窄的问题。
 {
-  const sample = KNOWN_TEAMS.find((t) => t.code === 4);
-  check(Boolean(sample), 'KNOWN_TEAMS lists 風敏 (code 4)', sample?.name ?? '');
-  if (sample) {
-    const rec = buildGroupRecord(sample, { renqi: 10, mingqi: 20, noticeCount: 3 }, (id) => `编号${id}`);
-    check(rec.code === 4 && rec.name === '風敏' && rec.leaderId === sample.memberIds[0]
-      && rec.leaderName === `编号${sample.memberIds[0]}`
-      && rec.renqi === 10 && rec.mingqi === 20 && rec.noticeCount === 3,
-      'buildGroupRecord: first member is leader, stats overlay correctly',
-      `${rec.leaderId}/${rec.leaderName}/${rec.renqi}`);
-    check(rec.memberIds[0] === rec.leaderId, 'leader id sits first in memberIds');
+  const storyPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0007.sa2';
+  if (fs.existsSync(storyPath)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(storyPath);
+    const story = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0007.sa2',
+    );
+    check(story.signedArtistIds.join(',') === '12,65,74,76',
+      'Story0007: 姚子奇 / 姚子莹 / 新名纱雪 / 卫亚 are signed',
+      story.signedArtistIds.join(','));
+    check(story.teams.length === 1 && story.teams[0].code === 101
+      && story.teams[0].name === '莎亞之音',
+      'Story0007: team 101 莎亞之音 read from the save',
+      story.teams.map((t) => `${t.code}:${t.name}`).join(',') || 'none');
+    check(story.teams[0]?.memberIds.join(',') === '74,76',
+      'Story0007: members are 新名纱雪 (74) and 卫亚 (76)',
+      story.teams[0]?.memberIds.join(',') ?? '-');
+  } else {
+    console.log('OK   Story0007.sa2 not present, skipped the second-save checks');
   }
+}
+
+// buildGroupRecord: the first member is the leader, ids resolve to names.
+{
+  const rec = buildGroupRecord(
+    { code: 101, name: '莎亞之音', memberIds: [74, 76], offset: 0 },
+    (id) => (id === 74 ? '新名纱雪' : id === 76 ? '卫亚' : `编号${id}`),
+  );
+  check(rec.code === 101 && rec.name === '莎亞之音' && rec.leaderId === 74,
+    'buildGroupRecord: first member becomes the leader', `${rec.leaderId}/${rec.leaderName}`);
+  check(rec.leaderName === '新名纱雪' && rec.memberNames.join(',') === '新名纱雪,卫亚',
+    'buildGroupRecord resolves member names', rec.memberNames.join(','));
+  const empty = buildGroupRecord({ code: 102, name: '空团', memberIds: [], offset: 0 }, String);
+  check(empty.leaderId === 0 && empty.leaderName === '' && empty.memberNames.length === 0,
+    'buildGroupRecord tolerates a team with no recorded members');
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);

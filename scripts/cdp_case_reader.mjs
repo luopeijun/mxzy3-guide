@@ -293,8 +293,9 @@ async function main() {
 
     // No merged cells: a reserved role dims only its own cells.
     check(p.rowspans === 0, 'the notice table has no merged rows', String(p.rowspans));
-    check(p.reservedRows === 2 && p.reservedText.includes('黎华'),
-      'the two 黎华 reservations render as read-only names', p.reservedText);
+    // 预约只来自存档；读不到就不编，所以这里断言页面不出现凭印象写死的名字。
+    check(!p.reservedText.includes('黎华'),
+      'no hard-coded reservation names on the page', p.reservedText || '(none)');
     check(p.tableSelects === 0 && !p.reservePanel,
       'the reservation column is read-only: no dropdown, no settings panel',
       `selects=${p.tableSelects} panel=${p.reservePanel}`);
@@ -304,7 +305,8 @@ async function main() {
       && p.workDaysFirst.includes('每周'),
       'every notice shows its 工作天数 / 每周上限 from the Length table',
       `${p.workDays} badges / ${p.workDaysFirst.replace(/\s+/g, ' ')}`);
-    check(p.reservedNoticeCellDim === false && p.reservedDimCells <= 5 * p.reservedRows,
+    check(p.reservedRows === 0 || (p.reservedNoticeCellDim === false
+      && p.reservedDimCells <= 5 * p.reservedRows),
       'only the reserved role cells dim, not the whole notice',
       `firstCell=${p.reservedNoticeCellDim} dimmed=${p.reservedDimCells}`);
     check(!p.arrow, 'the continuation-row arrow is gone');
@@ -325,22 +327,25 @@ async function main() {
       && !p.updates.includes('2/6'),
       'company refresh timeline lists scheduled batches only');
 
-    // 我方团体：编号 101 起直接从存档读，不提供任何手动选择。
+    // 我方团体：名称与成员都来自存档的 Team 段，没有手动选择入口。
     const grp = JSON.parse(await evaluate(`JSON.stringify({
       groups: document.querySelectorAll('[data-case-group]').length,
       hasPicker: !!document.querySelector('[data-case-group-option]'),
       groupCode: document.querySelector('[data-case-group-code]')?.getAttribute('data-case-group-code') || '',
-      groupRenqi: document.querySelector('[data-case-group-renqi]')?.innerText || '',
-      groupMingqi: document.querySelector('[data-case-group-mingqi]')?.innerText || '',
-      groupCount: document.querySelector('[data-case-group-count]')?.innerText || '',
+      groupName: document.querySelector('[data-case-group] .font-semibold')?.innerText || '',
+      groupSize: document.querySelectorAll('[data-case-group] [data-case-group-member]').length,
+      groupLeader: document.querySelector('[data-case-group-leader]')?.innerText.replace(/\s+/g,'') || '',
+      groupMembers: [...document.querySelectorAll('[data-case-group] [data-case-group-member]')]
+        .map(x => x.innerText.replace(/\s+/g,'')).join('|'),
+      empty: !!document.querySelector('[data-case-groups-empty]'),
     })`));
-    check(grp.groups >= 1 && grp.groupCode === '101' && !grp.hasPicker,
-      '我方团体直接读存档：编号 101，且没有手动选择入口',
-      `${grp.groups} groups / code ${grp.groupCode} / picker ${grp.hasPicker}`);
-    check(grp.groupRenqi.includes('526') && grp.groupMingqi.includes('284')
-      && grp.groupCount.includes('1'),
-      '团体 人气 / 名气 / 通告数量 从存档读取 (526 / 284 / 1)',
-      `${grp.groupRenqi} / ${grp.groupMingqi} / ${grp.groupCount}`);
+    check(!grp.empty && grp.groupCode === '101' && grp.groupName === '風敏樂團' && !grp.hasPicker,
+      '我方团队从存档读：101 風敏樂團，且没有手动选择入口',
+      `${grp.groups} groups / code ${grp.groupCode} / name ${grp.groupName} / picker ${grp.hasPicker}`);
+    check(grp.groupSize === 2 && grp.groupLeader.includes('路风')
+      && grp.groupMembers.includes('路敏'),
+      '团体成员从存档读，第一个是队长',
+      `${grp.groupSize} members: ${grp.groupMembers}`);
 
     // Type and company filters intersect, and reset restores the full list.
     await evaluate(`document.querySelector('[data-case-cat="电视剧"]').click()`);

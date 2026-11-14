@@ -3,8 +3,8 @@ import type { ChangeEvent, DragEvent, ReactNode } from 'react';
 import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
-  ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
-  canTakeRole, isGroupRole, matchGroupRole, matchRole, parseSave, toCsv,
+  ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
+  buildGroupRecord, canTakeRole, isGroupRole, matchGroupRole, matchRole, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type ParseResult, type RoleRecord,
 } from '../../lib/caseParser';
@@ -182,24 +182,13 @@ export default function CaseReaderApp() {
       }));
   }, [result, artists]);
 
-  /** 我方团体：直接从存档读取（编号 101 起），有就展示，没有就说明旗下没有团体。 */
+  /** 我方团体：只认存档 `Team` 段里的记录（编号 101 起）。存档没记录就是
+   *  旗下没有团体 —— 这里不做任何猜测，也不预置默认值。 */
   const activeGroups = useMemo<GroupRecord[]>(() => {
     if (!result) return [];
-    return Object.values(result.groupStats)
-      .sort((a, b) => a.code - b.code)
-      .map((stat) => ({
-        code: stat.code,
-        name: `团体 ${stat.code}`,
-        leaderId: 0,
-        memberIds: [],
-        leaderName: '',
-        memberNames: [],
-        renqi: stat.renqi,
-        mingqi: stat.mingqi,
-        noticeCount: stat.noticeCount,
-        signed: true,
-        offset: stat.offset,
-      }));
+    const nameOf = (id: number): string =>
+      ARTIST_DIRECTORY.find((a) => a.id === id)?.name ?? `编号${id}`;
+    return result.teams.map((team) => buildGroupRecord(team, nameOf));
   }, [result]);
 
   const exportCsv = useCallback(() => {
@@ -353,10 +342,10 @@ export default function CaseReaderApp() {
             <details data-case-groups open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
               <summary data-case-groups-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
                 我方团体 · {activeGroups.length} 个
-                <span className="ml-2 font-normal text-ui-2xs text-ink-faint">数值从存档读取</span>
+                <span className="ml-2 font-normal text-ui-2xs text-ink-faint">名称与成员从存档读取</span>
               </summary>
               {activeGroups.length === 0 ? (
-                <p data-case-groups-empty className="mt-2 text-ui-2xs text-ink-faint">存档里没有团体记录，说明你旗下目前没有团体。</p>
+                <p data-case-groups-empty className="mt-2 text-ui-2xs text-ink-faint">存档里没有 101 号及以上的团体记录，说明你旗下目前没有团体。</p>
               ) : (
                 <div data-case-group-grid className="mt-2 flex flex-wrap gap-2">
                   {activeGroups.map((group) => (
@@ -366,16 +355,33 @@ export default function CaseReaderApp() {
                       data-case-group-code={group.code}
                       className="w-[340px] shrink-0 rounded-ui-md border border-line bg-surface px-3 py-2"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="text-ui-xs font-semibold text-ink">{group.name}</span>
                         <span className="rounded-full bg-brand px-2 py-0.5 text-ui-2xs font-semibold text-white">
                           团体编码 {group.code}
                         </span>
                       </div>
-                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-ui-2xs text-ink-muted">
-                        <span data-case-group-renqi>团体人气 <b className="text-ink">{group.renqi}</b></span>
-                        <span data-case-group-mingqi>团体名气 <b className="text-ink">{group.mingqi}</b></span>
-                        <span data-case-group-count>团体通告数量 <b className="text-ink">{group.noticeCount}</b></span>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <span className="text-ui-2xs text-ink-faint">成员</span>
+                        {group.memberNames.length === 0 && (
+                          <span className="text-ui-2xs text-ink-faint">存档未记录</span>
+                        )}
+                        {group.memberNames.map((name, idx) => (
+                          <span
+                            key={`${name}-${idx}`}
+                            data-case-group-member
+                            data-case-group-leader={idx === 0 ? name : undefined}
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-ui-2xs',
+                              idx === 0
+                                ? 'border-brand bg-brand-soft font-semibold text-brand-strong'
+                                : 'border-line bg-surface-soft text-ink-muted',
+                            )}
+                          >
+                            {name}
+                            {idx === 0 && <span className="text-[10px]">队长</span>}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -670,20 +676,20 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
         {groups.map((group) => (
           <div key={group.code} data-case-match data-match-result="info" className="flex items-center gap-1 text-ui-2xs leading-[1.4] text-ink-muted">
             <span className="select-none text-ink-faint" aria-hidden="true">•</span>
-            <span>{group.name}</span>
-            <span className="text-ink-faint">人气 {group.renqi} · 名气 {group.mingqi}</span>
+            <span>团体 {group.name}</span>
+            <span className="text-ink-faint">{group.memberNames.join(' · ') || '成员未记录'}</span>
           </div>
         ))}
       </Td>
     );
   }
-  // 被别的艺人预约的角色是「已占用」，不是「差多少数值」，直接给结论。
+  // 被别的艺人预约的角色是「已占用」，不是「差多少数值」。这里只留一条横杠，
+  // 谁占用的只写在「预约」列，避免同一句话说两遍。
   if (role.reservedBy) {
     return (
       <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
-        <div data-case-match data-match-result="no" className="flex items-center gap-1.5 text-ui-2xs text-ink-faint">
-          <span className="select-none" aria-hidden="true">—</span>
-          <span>预约 <b className="font-semibold text-ink-muted">{role.reservedBy}</b></span>
+        <div data-case-match data-match-result="no" className="text-ui-2xs text-ink-faint">
+          <span aria-label="已被预约" title="已被预约">—</span>
         </div>
       </Td>
     );
