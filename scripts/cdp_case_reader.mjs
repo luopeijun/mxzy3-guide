@@ -159,6 +159,17 @@ async function main() {
         return list ? [...list.querySelectorAll('[data-case-match]')]
           .map(x => x.getAttribute('data-match-artist')).join('|') : '';
       })(),
+      femaleLeadFirst: (function(){
+        var tbody = [...document.querySelectorAll('[data-case-notice]')].find(x => x.innerText.includes('守候'));
+        var r = tbody ? tbody.querySelector('[data-case-role][data-case-role-name="女主角"]') : null;
+        var first = r ? r.querySelector('[data-case-match]') : null;
+        if (!first) return '';
+        return JSON.stringify({
+          artist: first.getAttribute('data-match-artist'),
+          result: first.getAttribute('data-match-result'),
+          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-tag-follow'),
+        });
+      })(),
       neutralRole: (function(){
         var r = document.querySelector('[data-case-role][data-case-role-name="外景主持"]');
         var list = r ? r.querySelector('[data-case-match-group]') : null;
@@ -245,10 +256,14 @@ async function main() {
     check(p.head.includes('所需数值') && p.head.indexOf('数值对比') < p.head.indexOf('预约'),
       'the comparison column sits just before the reservation column',
       p.head.replace(/\s+/g, ' '));
-    check(p.matches > 0 && p.femaleLead === '路敏|萧依莉'
-      && p.neutralRole === '路敏|萧依莉|路风',
-      'gender-mismatched artists are dropped, neutral roles compare all',
+    check(p.matches > 0 && p.femaleLead === '萧依莉|路敏'
+      && p.neutralRole === '萧依莉|路敏|路风',
+      'gender-mismatched artists are dropped, can-accept artists sort first',
       `${p.matches} lines; female=${p.femaleLead}; neutral=${p.neutralRole}`);
+    check(p.femaleLeadFirst === JSON.stringify({
+      artist: '萧依莉', result: 'yes', greenBadge: true,
+    }), 'the first verdict is a green checkmark badge for the artist who can accept',
+      p.femaleLeadFirst);
 
     // No merged cells: a reserved role dims only its own cells.
     check(p.rowspans === 0, 'the notice table has no merged rows', String(p.rowspans));

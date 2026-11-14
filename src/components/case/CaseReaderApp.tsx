@@ -635,13 +635,15 @@ function MatchList({ role, signed, cellClass }: {
     .map((item) => ({
       option: item.option,
       match: matchRole(role, item.artist as ArtistStats, item.option.name, item.option.gender),
-    }));
+    }))
+    // 可以接的一位排在最上面，更显眼。
+    .sort((a, b) => Number(b.match.canAccept) - Number(a.match.canAccept));
   return (
     <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
       {rows.length === 0 ? (
         <span className="text-ui-2xs text-ink-faint">—</span>
       ) : (
-        <div data-case-match-group className="flex flex-col gap-0.5">
+        <div data-case-match-group className="flex flex-col gap-1">
           {rows.map(({ option, match }) => (
             <div
               key={option.id}
@@ -649,12 +651,24 @@ function MatchList({ role, signed, cellClass }: {
               data-case-match-artist
               data-match-artist={option.name}
               data-match-result={match.canAccept ? 'yes' : 'no'}
-              className={cn('text-ui-2xs leading-[1.45]', match.canAccept ? 'text-tag-follow' : 'text-alert')}
+              className={cn(
+                'flex items-center gap-1 text-ui-2xs leading-[1.4]',
+                match.canAccept ? 'font-semibold' : 'text-alert',
+              )}
             >
-              <b>{option.name}</b>{' '}
-              {match.canAccept
-                ? '可以接'
-                : `差 ${match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${gap.diff}`).join(' · ')}`}
+              {match.canAccept ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-tag-follow px-1.5 py-0.5 text-white">
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
+                    <path d="M2.5 6.2 4.8 8.5 9.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <b>{option.name}</b> 可以接
+                </span>
+              ) : (
+                <span>
+                  <b>{option.name}</b>{' '}
+                  差 {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${gap.diff}`).join(' · ')}
+                </span>
+              )}
             </div>
           ))}
         </div>
