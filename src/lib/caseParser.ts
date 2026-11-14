@@ -183,6 +183,34 @@ export interface CaseNotice {
   roles: RoleRecord[];
 }
 
+/** 这张通告上还有几个角色没被人接走。
+ *  存档里没有该通告的角色记录时也是 0 —— 那是「不知道」，不是「满了」。 */
+export function freeRoleCount(notice: CaseNotice): number {
+  return notice.roles.reduce((sum, role) => (role.reservedBy ? sum : sum + 1), 0);
+}
+
+/** 现在还能接取：还没停止接取（`open` / `closing`），并且至少有一个角色空着。
+ *  「下周更新」的还没开放、已停止接取的也进不去，所以都不算；读不到角色记录的
+ *  同样不算 —— 宁可漏掉，不要让人照着一条其实接不了的通告去排档期。
+ *
+ *  这是「有空位」那一档：**能不能接上另说**，能不能接还要看自家艺人够不够格，
+ *  见 `canTakeNotice()`。 */
+export function isAcceptable(notice: CaseNotice): boolean {
+  if (notice.status !== 'open' && notice.status !== 'closing') return false;
+  return freeRoleCount(notice) > 0;
+}
+
+/** 「够格能接」：有空位，并且至少有一个空角色自家接得上。
+ *  `fits` 由调用方给 —— 主站拿 `matchRole()` / `matchGroupRole()` 判断性别与九项
+ *  数值是否都够，这里只管「空着 + 有人够格」这件事本身，方便单测。 */
+export function canTakeNotice(
+  notice: CaseNotice,
+  fits: (role: RoleRecord) => boolean,
+): boolean {
+  if (!isAcceptable(notice)) return false;
+  return notice.roles.some((role) => !role.reservedBy && fits(role));
+}
+
 /** One artist state block, read straight from the uploaded save. Field order
  *  was checked field-by-field against the game's save-editor panel. */
 export interface ArtistStats {

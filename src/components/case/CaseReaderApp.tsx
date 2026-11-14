@@ -4,7 +4,7 @@ import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
-  buildGroupRecord, canTakeRole, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
+  buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
@@ -130,6 +130,8 @@ export default function CaseReaderApp() {
   const [query, setQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterCompany, setFilterCompany] = useState('all');
+  /** 筹备中的接取筛选：全部 / 有空位 / 够格能接。 */
+  const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
   /** 三个页签：等档期的筹备中、已经接下的拍摄中、自家出品的自制通告。 */
   const [board, setBoard] = useState<'open' | 'shooting' | 'selfMade'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -205,6 +207,7 @@ export default function CaseReaderApp() {
     setQuery('');
     setFilterCategory('all');
     setFilterCompany('all');
+    setTakeFilter('all');
     lastBufferRef.current = null;
   }, []);
 
@@ -223,32 +226,6 @@ export default function CaseReaderApp() {
       .sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
   }, [result]);
 
-  /** Search, category and company are independent filters; results intersect. */
-  const notices = useMemo(() => {
-    if (!result) return [];
-    const needle = query.trim().toLowerCase();
-    return result.notices.filter((notice) => {
-      if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
-      if (filterCompany !== 'all' && notice.company !== filterCompany) return false;
-      if (!needle) return true;
-      return [
-        notice.code, notice.name, notice.category, notice.type, notice.company,
-        ...notice.roles.map((role) => role.role),
-      ].some((text) => text.toLowerCase().includes(needle));
-    });
-  }, [result, query, filterCategory, filterCompany]);
-
-  const filterDirty = query.trim() !== '' || filterCategory !== 'all' || filterCompany !== 'all';
-  const resetFilters = useCallback(() => {
-    setQuery('');
-    setFilterCategory('all');
-    setFilterCompany('all');
-  }, []);
-
-  const requirementCount = result
-    ? result.notices.reduce((sum, n) => sum + n.roles.reduce((s, r) => s + r.requirements.length, 0), 0)
-    : 0;
-  const closingCount = result?.notices.filter((n) => n.status === 'closing').length ?? 0;
   const artists = result?.artists ?? [];
 
   /** The panel is fixed: every artist the save marks as signed, no picker. */
@@ -274,6 +251,60 @@ export default function CaseReaderApp() {
       ?? `编号${id}`;
     return result.teams.map((team) => buildGroupRecord(team, nameOf));
   }, [result, tables]);
+
+  /** 我方接不接得上这个角色：性别要对上，九项数值一项都不能差。
+   *  团体通告拿队长去比 —— 与右边「数值对比」列同一套判断，不能两处给出不同答案。 */
+  const fitsRole = useCallback((role: RoleRecord) => {
+    if (isGroupRole(role) && activeGroups.length > 0) {
+      return activeGroups.some((group) => {
+        const leader = artists.find((a) => a.roleId === group.leaderId) ?? null;
+        return matchGroupRole(role, leader, group.name, group.leaderName).canAccept;
+      });
+    }
+    return signedArtists.some((item) => item.artist
+      && matchRole(role, item.artist, item.option.name, item.option.gender).canAccept);
+  }, [activeGroups, artists, signedArtists]);
+
+  /** 两个「可接」标签的数字只按存档本身算，不受搜索 / 类别 / 公司影响。 */
+  const slotCount = useMemo(
+    () => (result ? result.notices.filter(isAcceptable).length : 0),
+    [result],
+  );
+  const qualifiedCount = useMemo(
+    () => (result ? result.notices.filter((notice) => canTakeNotice(notice, fitsRole)).length : 0),
+    [result, fitsRole],
+  );
+
+  /** Search, category, company and 接取情况 are independent filters; they intersect. */
+  const notices = useMemo(() => {
+    if (!result) return [];
+    const needle = query.trim().toLowerCase();
+    return result.notices.filter((notice) => {
+      if (takeFilter === 'slots' && !isAcceptable(notice)) return false;
+      if (takeFilter === 'qualified' && !canTakeNotice(notice, fitsRole)) return false;
+      if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
+      if (filterCompany !== 'all' && notice.company !== filterCompany) return false;
+      if (!needle) return true;
+      return [
+        notice.code, notice.name, notice.category, notice.type, notice.company,
+        ...notice.roles.map((role) => role.role),
+      ].some((text) => text.toLowerCase().includes(needle));
+    });
+  }, [result, query, filterCategory, filterCompany, takeFilter, fitsRole]);
+
+  const filterDirty = query.trim() !== '' || filterCategory !== 'all'
+    || filterCompany !== 'all' || takeFilter !== 'all';
+  const resetFilters = useCallback(() => {
+    setQuery('');
+    setFilterCategory('all');
+    setFilterCompany('all');
+    setTakeFilter('all');
+  }, []);
+
+  const requirementCount = result
+    ? result.notices.reduce((sum, n) => sum + n.roles.reduce((s, r) => s + r.requirements.length, 0), 0)
+    : 0;
+  const closingCount = result?.notices.filter((n) => n.status === 'closing').length ?? 0;
 
   const exportCsv = useCallback(() => {
     if (!result) return;
@@ -640,6 +671,46 @@ export default function CaseReaderApp() {
                       ))}
                     </select>
                   </label>
+                  {/* 「可接」拆两档：有空位（客观还有角色没人接）、够格能接
+                      （空位之外，我方还得有人性别与九项数值全达标）。 */}
+                  <div
+                    data-case-take-filter
+                    role="group"
+                    aria-label="按能不能接筛选"
+                    className="flex shrink-0 items-center gap-1"
+                  >
+                    <button
+                      type="button"
+                      data-case-filter-slots
+                      aria-pressed={takeFilter === 'slots'}
+                      onClick={() => setTakeFilter((value) => (value === 'slots' ? 'all' : 'slots'))}
+                      title="还有角色没被人预约，还没停止接取 —— 能不能接上另说"
+                      className={chipClass(takeFilter === 'slots')}
+                    >
+                      有空位
+                      <span className={cn('tabular-nums', takeFilter === 'slots' ? 'text-white/80' : 'text-ink-faint')}>
+                        {slotCount}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      data-case-filter-qualified
+                      aria-pressed={takeFilter === 'qualified'}
+                      onClick={() => setTakeFilter((value) => (value === 'qualified' ? 'all' : 'qualified'))}
+                      title="还有空位，并且我方至少有一位艺人的性别与九项所需数值都达标"
+                      className={chipClass(takeFilter === 'qualified')}
+                    >
+                      够格能接
+                      <span className={cn('tabular-nums', takeFilter === 'qualified' ? 'text-white/80' : 'text-ink-faint')}>
+                        {qualifiedCount}
+                      </span>
+                    </button>
+                  </div>
+                  {takeFilter === 'qualified' && (
+                    <span data-case-take-hint className="whitespace-nowrap text-ui-2xs text-ink-faint">
+                      空位 + 我方艺人性别与九项数值全达标
+                    </span>
+                  )}
                   {filterDirty && (
                     <button
                       type="button"

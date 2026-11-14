@@ -29,7 +29,7 @@ await build({
 const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
   isGroupRole, matchGroupRole, buildGroupRecord, riskOf, RISK_SLACK_DAYS, shootableDays,
-  moneyText,
+  moneyText, freeRoleCount, isAcceptable, canTakeNotice,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -677,6 +677,93 @@ if (fs.existsSync(savePath)) {
   const wrong = cases.filter(([value, text]) => moneyText(value) !== text);
   check(wrong.length === 0, 'moneyText: 资金按亿 / 万拆开写',
     wrong.map(([v, t]) => `${v}→${moneyText(v)}(期望 ${t})`).join(' ') || cases.map(([v]) => `${v}→${moneyText(v)}`).join(' '));
+}
+
+// 「还能接」筛选：至少一个角色空着，且还没停止接取（下周更新 / 已过截止不算）。
+{
+  const mk = (status, reserved) => ({
+    status, roles: reserved.map((r) => ({ reservedBy: r })),
+  });
+  const rows = [
+    [mk('open', []) , 0, false, '没有角色记录 → 不知道，不算可接'],
+    [mk('open', ['', '']), 2, true, '全空 → 可接'],
+    [mk('open', ['黎华', '']), 1, true, '只被占一个 → 还能接'],
+    [mk('open', ['黎华', '方若绮']), 0, false, '全被预约 → 不可接'],
+    [mk('closing', ['']), 1, true, '即将截止但还有空位 → 可接'],
+    [mk('upcoming', ['']), 1, false, '下周更新的还没开放 → 不算'],
+    [mk('expired', ['']), 1, false, '已停止接取 → 不算'],
+  ];
+  const bad = rows.filter(([notice, free, ok]) => freeRoleCount(notice) !== free || isAcceptable(notice) !== ok);
+  check(bad.length === 0, 'freeRoleCount / isAcceptable: 有空位 = 有空角色 且 还能接取',
+    bad.map(([n, free, ok]) => `${n.status}/${JSON.stringify(n.roles)}→${freeRoleCount(n)}/${isAcceptable(n)}(期望 ${free}/${ok})`).join(' ') || `${rows.length} 例`);
+
+  // 「够格能接」＝有空位 + 我方有人接得上。空位的角色全接不上就还是不能接。
+  const fitsAll = () => true;
+  const fitsNone = () => false;
+  const open2 = mk('open', ['', '']);
+  const qualifiedRows = [
+    [open2, fitsAll, true, '有空位且接得上 → 够格能接'],
+    [open2, fitsNone, false, '有空位但一条都接不上 → 不算'],
+    [mk('open', ['黎华', '方若绮']), fitsAll, false, '全被预约了，再够格也接不了'],
+    [mk('upcoming', ['']), fitsAll, false, '下周更新还没开放 → 不算'],
+    [mk('expired', ['']), fitsAll, false, '已停止接取 → 不算'],
+  ];
+  const badQualified = qualifiedRows.filter(
+    ([notice, fits, ok]) => canTakeNotice(notice, fits) !== ok,
+  );
+  check(badQualified.length === 0, 'canTakeNotice: 够格能接 = 有空位 且 我方有人接得上',
+    badQualified.map(([n, fits, ok]) => `${n.status}/${JSON.stringify(n.roles)}→${canTakeNotice(n, fits)}(期望 ${ok})`).join(' ')
+      || `${qualifiedRows.length} 例`);
+
+  // 只判空角色：被预约的那格就算接得上也不算数。
+  const half = mk('open', ['黎华', '']);
+  const asked = [];
+  check(canTakeNotice(half, (role) => { asked.push(role); return true; })
+    && half.roles.length - asked.length === 1,
+    'canTakeNotice 只问没人接的角色', `问了 ${asked.length} / ${half.roles.length}`);
+}
+
+// 真实存档上的可接条数：Auto 8 条（3 条下周更新不算）、Story0055 9 条（CD017 / CF137 已满）。
+for (const [save, expected, fullCodes, expectedQualified] of [
+  // Auto 是开局：8 条有空位，但九项数值差 2~4 项，一条都接不上。
+  ['Auto.sa2', 8, '', 0],
+  // Story0055 已到后期，有空位的 9 条都够格。
+  ['Story0055.sa2', 9, 'CD017,CF137', 9],
+]) {
+  const p = `D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/${save}`;
+  if (!fs.existsSync(p)) { console.log(`OK   ${save} not present, skipped the acceptable checks`); continue; }
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const raw = fs.readFileSync(p);
+  const save_ = parseSave(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, save);
+  const ok = save_.notices.filter(isAcceptable);
+  const full = save_.notices.filter((n) => n.roles.length > 0 && freeRoleCount(n) === 0)
+    .map((n) => n.code).join(',');
+  check(ok.length === expected, `${save}: 有空位 ${expected} 条`,
+    `${ok.length} :: ${ok.map((n) => n.code).join(',')}`);
+  check(full === fullCodes, `${save}: 角色全被预约的通告`, full || 'none');
+  // 够格能接：与页面上同一套判断（性别 + 九项数值，团体看队长）。
+  const groups = save_.teams.map((team) => buildGroupRecord(
+    team, (id) => ARTIST_DIRECTORY.find((a) => a.id === id)?.name ?? `编号${id}`));
+  const signed = save_.artistDirectory.filter((option) => option.signed)
+    .map((option) => ({
+      option,
+      artist: option.artistIndex === null
+        ? null
+        : save_.artists.find((a) => a.index === option.artistIndex) ?? null,
+    }));
+  const fits = (role) => {
+    if (isGroupRole(role) && groups.length > 0) {
+      return groups.some((group) => matchGroupRole(
+        role, save_.artists.find((a) => a.roleId === group.leaderId) ?? null,
+        group.name, group.leaderName,
+      ).canAccept);
+    }
+    return signed.some((item) => item.artist
+      && matchRole(role, item.artist, item.option.name, item.option.gender).canAccept);
+  };
+  const qualified = save_.notices.filter((n) => canTakeNotice(n, fits));
+  check(qualified.length === expectedQualified, `${save}: 够格能接 ${expectedQualified} 条`,
+    `${qualified.length} :: ${qualified.map((n) => n.code).join(',')}`);
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);
