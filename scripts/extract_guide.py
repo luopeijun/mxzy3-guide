@@ -42,6 +42,8 @@ DEFAULT_SD = SOURCES / "sd.txt"
 DEFAULT_FATHER = SOURCES / "father.txt"
 DEFAULT_HOLLYWOOD = SOURCES / "hollywood.txt"
 DEFAULT_WILL = SOURCES / "will.txt"
+# 页首提示卡：独立于 blocks，避免插入后把事件的块下标整体后移（追踪器按块下标存进度）。
+DEFAULT_WILL_NOTICE = SOURCES / "will-notice.txt"
 DEFAULT_EXPANSION = SOURCES / "expansion.txt"
 DEFAULT_SECRETARY = SOURCES / "secretary.txt"
 DEFAULT_MANYANG = SOURCES / "manyang.txt"
@@ -1779,6 +1781,30 @@ def build_stats_blocks(path: Path) -> list[dict]:
     }]
 
 
+def read_page_notice(path: Path) -> dict | None:
+    """页首提示卡：第一行标题，其余每行一条，`> ` 开头的是结局分支。
+
+    提示挂在节点的 `notice` 字段，不进 `blocks`。事件追踪器的 done / skipped
+    按事件块在数组里的下标存进度，往正文前面塞一个块会让老存档全部错位一格。
+    """
+    if not path.exists():
+        return None
+    lines = [ln.strip() for ln in _read_text(path).split("\n")]
+    lines = [ln for ln in lines if ln and not ln.startswith("#")]
+    if not lines:
+        return None
+    notice: dict = {"title": lines[0], "lines": []}
+    outcomes: list[str] = []
+    for line in lines[1:]:
+        if line.startswith("> "):
+            outcomes.append(line[2:].strip())
+        else:
+            notice["lines"].append(line)
+    if outcomes:
+        notice["outcomes"] = outcomes
+    return notice
+
+
 def make_node(
     node_id: str,
     title: str,
@@ -1786,6 +1812,7 @@ def make_node(
     aliases: list[str] | None = None,
     source_title: str | None = None,
     description: str | None = None,
+    notice: dict | None = None,
     blocks: list[dict] | None = None,
     children: list[dict] | None = None,
     requirements: dict | None = None,
@@ -1800,6 +1827,8 @@ def make_node(
         node["sourceTitle"] = source_title
     if description:
         node["description"] = description
+    if notice:
+        node["notice"] = notice
     if requirements:
         node["requirements"] = requirements
     if avatar:
@@ -2535,6 +2564,7 @@ def build(
     luousang_lufeng_events: Path,
     luousang_lufeng_sanghebei_events: Path,
     luousang_lufeng_ouyiqing_events: Path,
+    will_notice: Path = DEFAULT_WILL_NOTICE,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -2695,6 +2725,7 @@ def build(
             "other-events/will", "威尔相关事件",
             source_title="威尔相关事件.txt",
             blocks=build_will_blocks(will_events),
+            notice=read_page_notice(will_notice),
         ),
         make_node(
             "other-events/expansion", "资料片新增事件",
