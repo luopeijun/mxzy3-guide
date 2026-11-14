@@ -124,6 +124,15 @@ async function main() {
     await send('DOM.setFileInputFiles', { nodeId: q.nodeId, files: [SAVE] });
     await sleep(1600);
 
+    /** 再传一份存档：每次都重新查一次输入框，React 换存档时可能换掉节点。 */
+    const uploadSave = async (file) => {
+      const fresh = await send('DOM.getDocument', { depth: -1 });
+      const input = await send('DOM.querySelector', { nodeId: fresh.root.nodeId, selector: '[data-case-upload]' });
+      if (!input.nodeId) throw new Error('file input not found in DOM');
+      await send('DOM.setFileInputFiles', { nodeId: input.nodeId, files: [file] });
+      await sleep(1600);
+    };
+
     const parsed = await evaluate(`JSON.stringify({
       error: document.querySelector('[data-case-error]')?.innerText || '',
       notices: document.querySelectorAll('[data-case-notice]').length,
@@ -433,8 +442,8 @@ async function main() {
       })()
     })`));
     console.log('shooting:', JSON.stringify(shot));
-    check(shot.tabs === 2 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
-      '筹备中 / 拍摄中 两个页签可以切换', `${shot.tabs} tabs`);
+    check(shot.tabs === 3 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
+      '筹备中 / 拍摄中 / 已完成 三个页签可以切换', `${shot.tabs} tabs`);
     check(shot.rows === 1 && shot.codes[0] === 'CF014',
       '拍摄中只列 CF014 愛信電訊（萧依莉那条广告）', shot.codes.join(',') || 'none');
     check(shot.artists.join(',') === '蕭依莉',
@@ -467,7 +476,72 @@ async function main() {
     ));
     check(backOpen.notices === 11, '切回筹备中，表格恢复', JSON.stringify(backOpen));
 
-    // Same tab, same CDP session: no extra targets are created.
+    // 「已完成」页签：Auto 存档在最近一个月里没有拍完的通告，所以是空态。
+    await evaluate(`document.querySelector('[data-case-tab="finished"]').click()`);
+    await sleep(350);
+    const fin = JSON.parse(await evaluate(`JSON.stringify({
+      tabs: document.querySelectorAll('[data-case-tabs] [role="tab"]').length,
+      selected: document.querySelector('[data-case-tab="finished"]')?.getAttribute('aria-selected'),
+      rows: document.querySelectorAll('[data-case-shooting-row]').length,
+      text: document.body.innerText,
+      shootingHidden: document.querySelectorAll('[data-case-notice]').length
+    })`));
+    console.log('finished:', JSON.stringify({ ...fin, text: fin.text.slice(0, 60) }));
+    check(fin.tabs === 3 && fin.selected === 'true' && fin.shootingHidden === 0,
+      '已完成 是第三个页签，切过去会收起筹备中的表格', `${fin.tabs} tabs`);
+    check(fin.rows === 0 && fin.text.includes('最近没有拍完的通告'),
+      'Auto 存档最近没有拍完的通告，已完成页签显示空态', String(fin.rows));
+
+    // 换成 Story0027：「守候」里史蒂芬 / 方若綺不是旗下艺人，只该留克烈斯一行。
+    const ownPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0027.sa2';
+    if (fs.existsSync(ownPath)) {
+      const copy = path.join(root, '.tmp', 'case-e2e-own.sa2');
+      fs.copyFileSync(ownPath, copy);
+      await evaluate(`document.querySelector('[data-case-tab="shooting"]').click()`);
+      await sleep(200);
+      await uploadSave(copy);
+      const own = JSON.parse(await evaluate(`JSON.stringify({
+        artists: [...document.querySelectorAll('[data-case-shooting-artist]')].map(x => x.innerText),
+        codes: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.getAttribute('data-case-shooting-row')),
+        rows: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.innerText.replace(/\\s+/g, ' ').trim()),
+        text: document.querySelector('[data-case-shooting]')?.innerText || ''
+      })`));
+      console.log('own:', JSON.stringify(own.artists), own.codes.join(','));
+      check(!own.artists.includes('史蒂芬') && !own.artists.includes('方若綺'),
+        '对手公司的演员不进拍摄中', own.artists.join(',') || 'none');
+      check(own.artists.includes('克烈斯') && own.codes.includes('TV021'),
+        '自家艺人克烈斯仍在守候这一行', own.artists.join(','));
+      check(!own.text.includes('史蒂芬') && !own.text.includes('方若綺'),
+        '史蒂芬 / 方若綺 连名字都不出现在表里',
+        own.text.replace(/\s+/g, ' ').slice(0, 80));
+
+      // Story0024：CF728 今天刚拍满 6 天，应该出现在「已完成」。
+      const donePath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0024.sa2';
+      if (fs.existsSync(donePath)) {
+        const doneCopy = path.join(root, '.tmp', 'case-e2e-done.sa2');
+        fs.copyFileSync(donePath, doneCopy);
+        await uploadSave(doneCopy);
+        await evaluate(`document.querySelector('[data-case-tab="finished"]').click()`);
+        await sleep(350);
+        const done = JSON.parse(await evaluate(`JSON.stringify({
+          codes: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.getAttribute('data-case-shooting-row')),
+          statuses: [...document.querySelectorAll('[data-case-shooting-status]')].map(x => x.getAttribute('data-case-shooting-status')),
+          text: document.querySelector('[data-case-shooting]')?.innerText || ''
+        })`));
+        console.log('done:', done.codes.join(','), done.statuses.join(','));
+        check(done.codes.includes('CF728') && done.statuses.includes('done'),
+          '拍满天数的通告出现在已完成，行内标 已完成', `${done.codes.join(',')} / ${done.statuses.join(',')}`);
+        check(done.text.includes('已完成') && done.text.includes('已拍完'),
+          '已完成的行不再写「还差几天」，改标已拍完',
+          done.text.replace(/\s+/g, ' ').slice(0, 90));
+        await evaluate(`document.querySelector('[data-case-tab="shooting"]').click()`);
+        await sleep(300);
+      } else {
+        console.log('OK   Story0024.sa2 not present, skipped the finished-board checks');
+      }
+    } else {
+      console.log('OK   Story0027.sa2 not present, skipped the own-artist checks');
+    }
     await navigate('http://localhost:5173/sweet.html');
     const sweetState = JSON.parse(await evaluate(`JSON.stringify({
       tabs: document.querySelectorAll('[role="tab"]').length,

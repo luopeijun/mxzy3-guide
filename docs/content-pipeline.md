@@ -67,16 +67,19 @@
 
 独立的一页，只读明星志愿3 繁中三合一原版的 `.sa2`，甜蜜乐章不适用。文件用 `File.arrayBuffer()` 读进内存，不上传也不回写；游戏之后覆盖自动存档不影响已经解出来的那份快照。
 
-- 静态表 `public/data/case-tables.json` 由 `scripts/build_case_tables.py` 从游戏安装目录的 `data/` 烘焙：`*Case.dat`（通告名 / 类型 / 公司）、`NeedEffect.tab`（类型 × 对象 → 等级）、`Length.tab`（工作天数 / 每週上限）、`Difficulty.tab`（星级 → 数值区间）、`StarRole.dat`（艺人名字与性别）、`Firm.dat`（制作公司）。解析在 `src/lib/caseParser.ts`，渲染在 `src/components/case/CaseReaderApp.tsx`。
+- 静态表 `public/data/case-tables.json` 由 `scripts/build_case_tables.py` 从游戏安装目录的 `data/` 烘焙：`*Case.dat`（通告名 / 类型 / 公司）、`NeedEffect.tab`（类型 × 对象 → 等级）、`Difficulty.tab`（星级 → 数值区间）、`StarRole.dat`（艺人名字与性别）、`Firm.dat`（制作公司）。解析在 `src/lib/caseParser.ts`，渲染在 `src/components/case/CaseReaderApp.tsx`。
+- **工作天数 / 每週上限的真源是 `sources/notices/notice-length.csv`**（39 行，玩家整理，含甜蜜乐章的舞台剧 / 时装秀三条，繁中三合一的 `Length.tab` 里没有这两类）。脚本按简→繁映射喂进 `length` 表，并把结果与游戏自带的 `Length.tab` 逐条对照：数值不一致、`Length.tab` 里多一行而 CSV 缺、CSV 出现没登记过的类型写法，三种情况都直接报错退出。
 - **游戏当前日期在文件头 @60** 的 `[年, 月, 日, 星期]`。通告档期是**三个**四元组（开放接取的周一 / 开拍的周一 / 杀青的周日），停止接取 = 开拍前一天。别把 `BigActive` 的周末日历或艺人合约日期当成当前时间。
 - **两张表**：`CaseFirm` 段登记的是当期还能接的通告（筹备中）；某条被接走之后编码从 `CaseFirm` 消失，但 `Case` 段里那条通告块还在，并且多出一段接取记录 —— 这就是「拍摄中」的真源。
 - **接取记录是一条一位艺人**：24 字节 `[状态位 0~3][艺人编号][已完成天数][?][?][酬劳]`，编号后紧跟完成天数，编号后 16 字节才是这位艺人拿到的酬劳。**进度、酬劳、角色都是按人存的**，同一条通告上四位艺人各拍各的、各拿各的钱，所以页面上是「一位艺人一行」，通告信息只在该通告第一行用 `rowSpan` 显示。
 - **伪记录靠筛**：块尾的日期段里年份/日号会撞上 1、2、6 这类小艺人编号。判定条件是状态位 0~3、完成天数 ≤ 60、中间两字段 ≤ 99、酬劳要么 0 要么 ≥ 1000，同一艺人只取第一条。
 - **角色按性别落格**：存档只记「艺人 ↔ 通告」，没有「艺人 ↔ 角色」。按接取顺序把每位艺人放到第一个性别对得上、还没被占的角色上（男→男主角/男配角，女→女主角/女配角）；只有一个角色的通告全员共用该格。
 - **酬劳不进静态表**：同一个 CD089 在 Ending0009 记 950 万、在 Story0007 记 790 万，会随接演艺人变化，所以只认存档里的值。NPC 配角记 0，页面显示横杠。
-- **拍摄中的判定**要三条同时成立：块里有接取记录、编码已经不在 `CaseFirm`、今天不晚于杀青日。艺人的作品清单是**历史累积**（十几年旧作都留着），只按它反查会把早已杀青的旧块捞出来，必须叠加日期这一道。已经拍够 `Length` 天数的艺人不再占行，同通告其他人还在拍就保留整条。
+- **只列自家艺人**：同一部戏里对手公司的演员也有接取记录（`Story0027` 的「守候」记着史蒂芬 / 方若绮），但进度、酬劳、违约都跟玩家无关，所以 `casts` 只留 `signedArtistIds` 里的人；角色落格仍然带着全部接演人一起顺序分配，否则自家艺人会被挤到别人那格上。整条通告都没有自家艺人就整条不出现。
+- **拍摄中的判定**：块里有接取记录、编码已经不在 `CaseFirm`、自家艺人里还有人没拍够 `Length` 天数、且今天不晚于杀青日。艺人的作品清单是**历史累积**（十几年旧作都留着），只按它反查会把早已杀青的旧块捞出来，必须叠加日期这一道。
+- **已完成**：自家艺人都拍够天数就整条移到第三个页签，只留杀青日在最近一个月内的（`FINISHED_WINDOW_DAYS = 30`），再早的旧块不翻出来。行内状态因此有三档：`pending` 待开拍 / `shooting` 拍摄中 / `done` 已完成；拍完的那位不再算还差几天，也不出提醒。
 - **提示只有两档**（`riskOf()`，阈值 `RISK_SLACK_DAYS = 5`）：还差天数 = `Length` 表工作天数 − 存档完成天数，剩余额度 = 剩下的日历日按每週上限折算（`shootableDays()`）。`额度 − 还差 ≤ 5` 判「逾期风险」（余量太薄，艺人会失误），`额度 < 还差` 判「违约提醒」，其余不出提示。不写「排得下 / 刚好够」这类结论。
-- 回归：`scripts/test_case_parser.mjs`（64 项，含 Auto / Story0007 / Ending0009 三份快照）+ `scripts/cdp_case_reader.mjs`（58 项）。CDP 必须**全程复用一个 page tab**，反复 `/json/new` 会堆出上百个 tab 让 Chrome 卡死。
+- 回归：`scripts/test_case_parser.mjs`（74 项，含 Auto / Story0024 / Story0027 / Story0007 / Ending0009 五份快照与长度表对照）+ `scripts/cdp_case_reader.mjs`（65 项）。CDP 必须**全程复用一个 page tab**，反复 `/json/new` 会堆出上百个 tab 让 Chrome 卡死。
 
 ## 体量统计口径
 
@@ -277,7 +280,7 @@ src/components/              攻略阅读页组件
 src/components/notices/      通告库（筛选、详情、能力对照）
 src/components/tracker/      事件追踪器
 src/components/cg/           CG 图鉴
-src/components/case/         存档解析（.sa2 读取：筹备中 / 拍摄中）
+src/components/case/         存档解析（.sa2 读取：筹备中 / 拍摄中 / 已完成）
 src/hooks/                   数据加载、选中态、进度存储、锚点跳转
 src/lib/                     纯逻辑：内容解析、统计、排序、筛选、存档、CG 反向索引
 ```

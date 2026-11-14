@@ -305,8 +305,10 @@ export interface ParseResult {
   blocks: Record<string, [number, number]>;
   roleRecordCount: number;
   notices: CaseNotice[];
-  /** 已在拍 / 待开拍 / 已逾期的通告，来自存档里的接取记录。 */
+  /** 已在拍 / 待开拍的通告（只看自己旗下艺人），来自存档里的接取记录。 */
   shooting: ShootingNotice[];
+  /** 自家艺人都拍完了的通告，最近 FINISHED_WINDOW_DAYS 天内的。 */
+  finished: ShootingNotice[];
   artists: ArtistStats[];
   /** The 18 signable artists, resolved against the state blocks in this save. */
   artistDirectory: ArtistOption[];
@@ -836,7 +838,14 @@ function readNoticeCode(view: DataView, start: number, end: number): string[] {
  *  同一个 CD089 在 Ending0009 记 950 万、在 Story0007 记 790 万，会随接演
  *  艺人变化，所以只认存档里的值。 */
 export type ShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
-export type ShootingStatus = 'pending' | 'shooting' | 'finished';
+/** 一位接演艺人自己的进度状态：还没到开拍日 / 正在拍 / 已经拍够天数。 */
+export type ShootingStatus = 'pending' | 'shooting' | 'done';
+
+/** 已完成通告在「已完成」页签里保留多久（天）。
+ *
+ *  Case 段里躺着整段历史的旧通告块，接取记录也还在。全都列出来没意义，
+ *  所以只看杀青日在最近一个月内的 —— 再早的玩家早就不关心了。 */
+export const FINISHED_WINDOW_DAYS = 30;
 
 /** 排期余量的提醒阈值（天）。
  *
@@ -1125,11 +1134,16 @@ export function parseSave(
   });
 
   /** 已经在拍的通告。判定只认存档：通告块里留着接取记录（艺人 + 已完成天数
-   *  + 酬劳），并且这条编码出现在该艺人的作品清单里。没拍完的留下，
-   *  已杀青的数够天数的丢掉。 */
+   *  + 酬劳），并且这条编码出现在该艺人的作品清单里。只看自家艺人：
+   *  对手公司的演员也占角色坑位，但不进表、不算风险。 */
   const shooting: ShootingNotice[] = [];
+  /** 自己旗下艺人都拍完了的通告，单独一档给「已完成」页签。 */
+  const finished: ShootingNotice[] = [];
   const doneCodes = new Set<string>();
   const openCodes = new Set(firm.map((item) => item.code));
+  // 玩家只关心自己公司的艺人：同一部戏里对手公司的演员照样有接取记录，
+  // 但进度、酬劳、违约风险都跟玩家无关，不进表也不提醒。
+  const mineIds = new Set(signedArtistIds);
   for (const block of codeBlocks) {
     if (doneCodes.has(block.code)) continue;
     // 还挂在 CaseFirm 里的说明是「筹备中、可接取」，即便已经有艺人预约，
@@ -1143,9 +1157,9 @@ export function parseSave(
     if (!triple) continue;
     const startDay = triple[1].day;
     const endDay = triple[2].day;
-    // 只留「到杀青日为止还没过」的：存档的 Case 段里躺着大量早就杀青的旧块，
-    // 它们的接取记录同样非零（艺人作品清单是历史累积），靠日期把它们筛掉。
-    if (!Number.isFinite(today) || today > endDay) continue;
+    // 存档的 Case 段里躺着大量早就杀青的旧块，它们的接取记录同样非零
+    // （艺人作品清单是历史累积），所以只留杀青日在最近一个月内的旧块。
+    if (!Number.isFinite(today) || today > endDay + FINISHED_WINDOW_DAYS) continue;
     const daysLeft = endDay - today;
     const info = tables.cases[block.code];
     const [, type = '', subtype = '', company = ''] = info ?? [];
@@ -1156,6 +1170,8 @@ export function parseSave(
 
     // 一位艺人一个角色：按存档里的接取顺序分配，男/女主角先落到性别对得上的那一格。
     // 已经分配出去的角色不再给别人，所以同一段对手戏不会被两个艺人共用一格。
+    // 分配必须带着全部接演人一起走 —— 对手公司的演员也占着角色坑位，先把
+    // 自家艺人挑出来再分，就会把他错放到别人那格上。
     const claimed = new Set<string>();
     const casts: ShootingCast[] = [];
     for (const row of progress) {
@@ -1165,14 +1181,14 @@ export function parseSave(
       if (role) claimed.add(role.roleCode);
       // 只有一个角色的通告（团体、合唱一类），后接的人也占同一格。
       else if (noticeRoles.length === 1) role = noticeRoles[0];
+      // 没有签约名单可参照时不做过滤，避免整档「拍摄中」被清空。
+      if (mineIds.size > 0 && !mineIds.has(row.artistId)) continue;
       const length = (role ? lengthOf(block.code, info, role.role) : null) ?? fallbackLength;
       const workDays = length?.[0] ?? 0;
       const daysPerWeek = length?.[1] ?? 0;
-      const needDays = workDays > 0 ? Math.max(0, workDays - row.doneDays) : 0;
+      const done = workDays > 0 && row.doneDays >= workDays;
+      const needDays = done ? 0 : workDays > 0 ? Math.max(0, workDays - row.doneDays) : 0;
       const canShoot = shootableDays(daysLeft, daysPerWeek);
-      const risk = riskOf(needDays, canShoot, daysPerWeek);
-      // 拍够天数的这位已经交差，不再占一行；同通告其他艺人还在拍就留着。
-      if (workDays > 0 && row.doneDays >= workDays) continue;
       casts.push({
         artistId: row.artistId,
         artistName: owner?.name || `编号${row.artistId}`,
@@ -1181,19 +1197,24 @@ export function parseSave(
         doneDays: row.doneDays,
         pay: row.pay,
         needDays, canShootDays: canShoot,
-        risk,
-        status: today < startDay ? 'pending' : 'shooting',
+        risk: done ? 'ok' : riskOf(needDays, canShoot, daysPerWeek),
+        status: done ? 'done' : today < startDay ? 'pending' : 'shooting',
       });
     }
     if (casts.length === 0) continue;
+    // 自家艺人都交差了：整条通告进「已完成」，不再算风险。
+    const settled = casts.every((cast) => cast.status === 'done');
+    if (!settled && !(today <= endDay)) continue;
 
-    const risk = casts.some((c) => c.risk === 'late')
-      ? 'late'
-      : casts.some((c) => c.risk === 'tight') ? 'tight'
-        : casts.some((c) => c.risk === 'ok') ? 'ok' : 'unknown';
+    const open = casts.filter((cast) => cast.status !== 'done');
+    const risk = !open.length
+      ? 'ok'
+      : open.some((c) => c.risk === 'late') ? 'late'
+        : open.some((c) => c.risk === 'tight') ? 'tight'
+          : open.some((c) => c.risk === 'ok') ? 'ok' : 'unknown';
 
     doneCodes.add(block.code);
-    shooting.push({
+    (settled ? finished : shooting).push({
       code: block.code,
       name: info?.[0] || '（存档专有 / 自制通告）',
       category: categoryOf(block.code),
@@ -1213,6 +1234,8 @@ export function parseSave(
     if (rank[a.risk] !== rank[b.risk]) return rank[a.risk] - rank[b.risk];
     return (Number.isFinite(a.endDay) ? a.endDay : Infinity) - (Number.isFinite(b.endDay) ? b.endDay : Infinity);
   });
+  // 已完成：杀青日越近越靠前。
+  finished.sort((a, b) => b.endDay - a.endDay);
 
   return {
     saveName,
@@ -1222,6 +1245,7 @@ export function parseSave(
     roleRecordCount: roles.length,
     notices,
     shooting,
+    finished,
     artists,
     artistDirectory,
     signedArtistIds,

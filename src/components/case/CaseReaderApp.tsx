@@ -58,8 +58,7 @@ const RISK_LABEL: Record<string, string> = {
 const STATUS_LABEL: Record<string, string> = {
   shooting: '拍摄中',
   pending: '待开拍',
-  overdue: '已逾期',
-  finished: '已杀青',
+  done: '已完成',
 };
 
 /** 1,550 万 / 5,000：存档酬劳原值就是元，过万折成万更好读。 */
@@ -85,8 +84,8 @@ export default function CaseReaderApp() {
   const [query, setQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterCompany, setFilterCompany] = useState('all');
-  /** 上面两张表：还在等档期的筹备中通告，和已经接下的拍摄中通告。 */
-  const [board, setBoard] = useState<'open' | 'shooting'>('open');
+  /** 上面三张表：等档期的筹备中、已经接下的拍摄中、自家艺人拍完的已完成。 */
+  const [board, setBoard] = useState<'open' | 'shooting' | 'finished'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
@@ -459,7 +458,8 @@ export default function CaseReaderApp() {
         )}
 
         {result && !busy && (
-          result.notices.length === 0 && result.shooting.length === 0 ? (
+          result.notices.length === 0 && result.shooting.length === 0
+            && result.finished.length === 0 ? (
             <div className="mt-2">
               <EmptyState title="这份存档里没有当期通告" text="CaseFirm 段没有登记任何通告编号。换一份游戏进行中的存档再试。" />
             </div>
@@ -486,9 +486,25 @@ export default function CaseReaderApp() {
                 >
                   拍摄中 <span className="tabular-nums">{result.shooting.length}</span>
                 </button>
+                <button
+                  type="button"
+                  role="tab"
+                  data-case-tab="finished"
+                  aria-selected={board === 'finished'}
+                  onClick={() => setBoard('finished')}
+                  className={tabClass(board === 'finished')}
+                >
+                  已完成 <span className="tabular-nums">{result.finished.length}</span>
+                </button>
               </div>
-              {board === 'shooting' ? (
-                <ShootingPanel notices={result.shooting} />
+              {board === 'shooting' || board === 'finished' ? (
+                <ShootingPanel
+                  notices={board === 'shooting' ? result.shooting : result.finished}
+                  emptyTitle={board === 'shooting' ? '没有在拍的通告' : '最近没有拍完的通告'}
+                  emptyText={board === 'shooting'
+                    ? '这份存档里没有旗下艺人正在赶期的通告。'
+                    : '最近一个月内没有旗下艺人拍完的通告。'}
+                />
               ) : (
               <>
               {/* Search + type/company filters sit directly above the notice
@@ -645,18 +661,21 @@ function kindDetail(notice: ShootingNotice): string {
   return '';
 }
 
-/** 拍摄中：已经接下的通告。
+/** 拍摄中 / 已完成：已经接下的通告。
  *
  *  一条通告上不同艺人各拿一个角色、各拍各的天数、各拿各的酬劳，所以一
  *  位艺人一行；通告信息只在第一行给（rowSpan），后面几行只写这位艺人自
- *  己的进度。提醒只用存档里的数字算：
+ *  己的进度。表里只出现自己旗下的艺人 —— 同一部戏的对手公司演员不算进来。
+ *  提醒只用存档里的数字算：
  *  还差几天（Length 表工作天数 - 存档完成天数）对比「剩下的日子里按每週
  *  上限还能排几天」，排不下 = 违约提醒，余量 ≤ 5 天 = 逾期风险。 */
-function ShootingPanel({ notices }: { notices: ShootingNotice[] }) {
+function ShootingPanel({
+  notices, emptyTitle, emptyText,
+}: { notices: ShootingNotice[]; emptyTitle: string; emptyText: string }) {
   if (notices.length === 0) {
     return (
       <div className="mt-2">
-        <EmptyState title="没有在拍的通告" text="这份存档里没有已经接下的通告。" />
+        <EmptyState title={emptyTitle} text={emptyText} />
       </div>
     );
   }
@@ -758,14 +777,20 @@ function ShootingPanel({ notices }: { notices: ShootingNotice[] }) {
                   <div className="mt-0.5 text-ink-faint">每週 ≤ {cast.daysPerWeek || '—'} 天</div>
                 </Td>
                 <Td className="tabular-nums text-ui-2xs">
-                  <span className="text-ui-xs font-semibold text-ink">{cast.needDays}</span>
-                  <span className="text-ink-faint"> 天</span>
-                  <div className="mt-0.5 leading-tight text-ink-faint">
-                    <div className="whitespace-nowrap">能排 {cast.canShootDays} 天</div>
-                    <div className="whitespace-nowrap">
-                      距杀青 {Number.isFinite(notice.daysLeft) ? notice.daysLeft : '—'} 天
-                    </div>
-                  </div>
+                  {cast.status === 'done' ? (
+                    <span className="text-ui-2xs text-ink-faint">已拍完</span>
+                  ) : (
+                    <>
+                      <span className="text-ui-xs font-semibold text-ink">{cast.needDays}</span>
+                      <span className="text-ink-faint"> 天</span>
+                      <div className="mt-0.5 leading-tight text-ink-faint">
+                        <div className="whitespace-nowrap">能排 {cast.canShootDays} 天</div>
+                        <div className="whitespace-nowrap">
+                          距杀青 {Number.isFinite(notice.daysLeft) ? notice.daysLeft : '—'} 天
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </Td>
                 <Td className="tabular-nums text-ui-2xs text-ink-muted">{payText(cast.pay)}</Td>
                 <Td>

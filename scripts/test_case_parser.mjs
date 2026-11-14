@@ -122,6 +122,27 @@ check(!wrongGender.eligible && !wrongGender.canAccept
   && matchRole(neutralRole, strong, '路敏', 'female').eligible,
   'gender-restricted roles exclude mismatched artists, neutral roles allow all');
 
+// 长度表真源是 sources/notices/notice-length.csv（39 行）。烘焙出来的 JSON
+// 必须与之一致：影视四类按 subtype 查，主持按节目类型查，甜蜜乐章那三条
+// 只有 CSV 里有（繁中三合一的 Length.tab 没有）。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const rows = fs.readFileSync(path.join(root, 'sources/notices/notice-length.csv'), 'utf-8')
+    .replace(/^\uFEFF/, '').trim().split(/\r?\n/).slice(1);
+  check(Object.keys(tables.length).length === rows.length && rows.length === 39,
+    '长度表 39 条与 CSV 行数一致', `${Object.keys(tables.length).length} vs ${rows.length}`);
+  check(tables.length['連續劇|男主角']?.[0] === 45
+    && tables.length['廣告|男性']?.[0] === 6
+    && tables.length['運動競賽|外景主持']?.[1] === 3,
+    '长度表抽样数值与 CSV 一致（連續劇 45 / 廣告 6 / 外景主持每周 3）',
+    JSON.stringify([
+      tables.length['連續劇|男主角'], tables.length['廣告|男性'], tables.length['運動競賽|外景主持'],
+    ]));
+  check(tables.length['舞台劇|男主角']?.[0] === 40 && tables.length['時裝秀|男性']?.[0] === 40,
+    'CSV 里甜蜜乐章那三条也进了表（舞台劇 / 時裝秀 40 天）',
+    JSON.stringify([tables.length['舞台劇|男主角'], tables.length['時裝秀|男性']]));
+}
+
 const savePath = process.argv[2]
   ?? 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
 if (fs.existsSync(savePath)) {
@@ -342,6 +363,59 @@ if (fs.existsSync(savePath)) {
       `risk=${cast?.risk} need=${cast?.needDays} can=${cast?.canShootDays}`);
   } else {
     console.log('OK   Auto.sa2 not present, skipped the shooting checks');
+  }
+}
+
+// 第五个存档（Story0027）：在拍「守候」，但男主角史蒂芬、女主角方若綺都不是
+// 旗下艺人 —— 拍摄中只留 72 号克烈斯，角色也仍是存档里他那格男配角。
+{
+  const story27Path = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0027.sa2';
+  if (fs.existsSync(story27Path)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(story27Path);
+    const save = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0027.sa2',
+    );
+    const codes = save.shooting.map((n) => n.code);
+    const castIds = save.shooting.flatMap((n) => n.casts.map((c) => c.artistId));
+    check(save.signedArtistIds.join(',') === '1,9,72',
+      'Story0027: 旗下是 林芬芬 / 关古威 / 克烈斯', save.signedArtistIds.join(','));
+    check(castIds.every((id) => save.signedArtistIds.includes(id))
+      && !castIds.includes(20) && !castIds.includes(23),
+      'Story0027: 拍摄中只留旗下艺人，史蒂芬 / 方若綺不占行',
+      castIds.join(','));
+    const tv021 = save.shooting.find((n) => n.code === 'TV021');
+    check(tv021?.casts.length === 1 && tv021.casts[0].artistId === 72
+      && tv021.casts[0].role?.role === '男配角',
+      'Story0027: 守候只剩克烈斯一行，角色没被前面的对手公司演员挤错',
+      tv021?.casts.map((c) => `${c.artistName}:${c.role?.role}`).join(',') ?? 'none');
+    check(codes.includes('TV021') && codes.includes('CD294') && codes.includes('SH032'),
+      'Story0027: 三条在拍通告都还在拍摄中', codes.join(','));
+  } else {
+    console.log('OK   Story0027.sa2 not present, skipped the own-artist checks');
+  }
+}
+
+// 第六个存档（Story0024）：CF728 絲襪 勾引篇 已经拍满 6 天，杀青日就是今天，
+// 所以不该留在拍摄中，而要进「已完成」。
+{
+  const donePath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0024.sa2';
+  if (fs.existsSync(donePath)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(donePath);
+    const save = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0024.sa2',
+    );
+    const done = save.finished.find((n) => n.code === 'CF728');
+    check(!save.shooting.some((n) => n.code === 'CF728') && Boolean(done),
+      'Story0024: 拍完的 CF728 从拍摄中移到已完成',
+      save.finished.map((n) => n.code).join(',') || 'none');
+    check(done?.casts.every((c) => c.status === 'done' && c.needDays === 0 && c.risk === 'ok'),
+      'Story0024: 已完成的行标 done、还差 0 天、不出提醒',
+      done?.casts.map((c) => `${c.artistName}:${c.doneDays}/${c.workDays} ${c.status} ${c.risk}`).join(',') ?? '-');
+    check(done?.risk === 'ok', 'Story0024: 整条通告的风险归为 ok', String(done?.risk));
+  } else {
+    console.log('OK   Story0024.sa2 not present, skipped the finished-board checks');
   }
 }
 
