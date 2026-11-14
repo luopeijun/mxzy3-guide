@@ -546,9 +546,9 @@ if (fs.existsSync(savePath)) {
       `${cd726?.startDate} → ${cd726?.endDate} ${cd726?.status} left=${cd726?.daysLeft}`);
     // 拍摄天数按人算：同一部戏里男主角和女配角的天数本来就不一样，不能
     // 拿通告级的天数糊一行给四个人。
-    check(tv601?.casts.map((c) => c.workDays).join(',') === '21,21,14,14'
+    check(tv601?.casts.map((c) => c.workDays).join(',') === '45,45,20,20'
       && tv601?.casts.every((c) => c.needDays === 0 && c.doneDays === c.workDays),
-      'Ending0004: 握斧長龍 每人各算各的天数（拍完的记满，没有剩余）',
+      'Ending0004: 握斧長龍 每人按角色查长度表（男/女主角 45、配角 20），结局存档清零的按拍满补回',
       tv601?.casts.map((c) => `${c.artistName}:${c.doneDays}/${c.workDays}+${c.needDays}`).join(' '));
     check(diy.selfMade.every((n) => n.casts.every((c) => c.workDays === c.doneDays + c.needDays)),
       'Ending0004: 每条接演记录的天数都自洽（已完成 + 还差 = 需拍）',
@@ -557,7 +557,7 @@ if (fs.existsSync(savePath)) {
       '姚子奇:男主角 姚子莹:女主角 卫亚:男配角 新名纱雪:女配角',
       'Ending0004: 握斧長龍 四个人各拿各的角色，不合成一条',
       tv601?.casts.map((c) => `${c.artistName}:${c.role?.role}`).join(' ') ?? '-');
-    check(diy.selfMade.every((n) => ['pending', 'shooting', 'done', 'unknown'].includes(n.status)),
+    check(diy.selfMade.every((n) => ['pending', 'shooting', 'done', 'overdue', 'unknown'].includes(n.status)),
       'Ending0004: 每条自制通告都有合法状态',
       [...new Set(diy.selfMade.map((n) => n.status))].join(','));
   } else {
@@ -581,14 +581,14 @@ if (fs.existsSync(savePath)) {
       'Ending0005: 握斧長龍 还在档期内、四个人进组 → 拍摄中',
       `${tv601?.status} casts=${tv601?.casts.length}`);
     const keliesi = tv601?.casts.find((c) => c.artistName === '克烈斯');
-    check(keliesi?.role?.role === '男主角' && keliesi?.doneDays === 5
-      && keliesi?.needDays === 37 && keliesi?.workDays === 42,
-      'Ending0005: 克烈斯 男主角 已完成 5 天 / 还差 37 天（合计 42）',
+    check(keliesi?.role?.role === '男主角' && keliesi?.doneDays === 37
+      && keliesi?.needDays === 8 && keliesi?.workDays === 45,
+      'Ending0005: 克烈斯 男主角 已完成 37 天 / 还差 8 天（连续剧男主角 45 天）',
       `${keliesi?.role?.role} ${keliesi?.doneDays}/${keliesi?.workDays}+${keliesi?.needDays}`);
     const chenyifu = tv601?.casts.find((c) => c.artistName === '陈奕夫');
-    check(chenyifu?.role?.role === '男配角' && chenyifu?.doneDays === 0
-      && chenyifu?.workDays === 20,
-      'Ending0005: 陈奕夫 男配角 一天没拍（0/20）',
+    check(chenyifu?.role?.role === '男配角' && chenyifu?.doneDays === 20
+      && chenyifu?.workDays === 20 && chenyifu?.needDays === 0,
+      'Ending0005: 陈奕夫 男配角 已拍满（20/20）',
       `${chenyifu?.role?.role} ${chenyifu?.doneDays}/${chenyifu?.workDays}`);
     check(tv601?.casts.every((c) => c.workDays === c.doneDays + c.needDays)
       && new Set(tv601?.casts.map((c) => c.workDays)).size > 1,
@@ -600,6 +600,48 @@ if (fs.existsSync(savePath)) {
       `${mid.company?.name} ${mid.company?.image} ${mid.company?.fame}/${mid.company?.pr}`);
   } else {
     console.log('OK   Ending0005.sa2 not present, skipped the shooting self-made checks');
+  }
+}
+
+// 第六个存档（Story0055）：天数的真值核过游戏界面 —— 接演记录里 +8 是已完成、
+// +16 是还差，总天数以长度表为准（唱片 25 天）。这儿两条都是用户对着游戏看的。
+{
+  const p55 = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0055.sa2';
+  if (fs.existsSync(p55)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(p55);
+    const s55 = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0055.sa2',
+    );
+    const youpeng = s55.selfMade.find((n) => n.code === 'CD701');
+    const weiya = youpeng?.casts.find((c) => c.artistName === '卫亚');
+    check(weiya?.doneDays === 22 && weiya?.needDays === 3 && weiya?.workDays === 25,
+      'Story0055: 有朋自遠方來 卫亚 已完成 22 天 / 还差 3 天（唱片 25 天）',
+      `${weiya?.doneDays}/${weiya?.workDays}+${weiya?.needDays}`);
+    check(youpeng?.status === 'overdue',
+      'Story0055: 有朋自遠方來 档期过了还差 3 天 → 已逾期（不能说已完成）',
+      youpeng?.status);
+    const qingcheng = s55.selfMade.find((n) => n.code === 'CD757');
+    const lingxiang = qingcheng?.casts.find((c) => c.artistName === '聆香');
+    // 聆香的「还差」格写的是 5，实际还差 15 —— 所以总天数只能信长度表，
+    // 不能拿「已完成 + 还差」相加（那样会算成 15 天）。
+    check(lingxiang?.doneDays === 10 && lingxiang?.workDays === 25 && lingxiang?.needDays === 15,
+      'Story0055: 傾城之戀 聆香 已完成 10 天 / 还差 15 天（唱片 25 天，不是 15）',
+      `${lingxiang?.doneDays}/${lingxiang?.workDays}+${lingxiang?.needDays}`);
+    check(qingcheng?.status === 'shooting', 'Story0055: 傾城之戀 今天夹在档期里 → 拍摄中', qingcheng?.status);
+    // 团体通告：夢的十四行詩 是「團體」专辑，签的是沙啞之歌整个团（队长 新名纱雪、
+    // 团员 卫亚），不是新名纱雪一个人；天数仍按这位接演艺人算。
+    const meng = s55.selfMade.find((n) => n.code === 'CD754');
+    const xinming = meng?.casts.find((c) => c.artistName === '新名纱雪');
+    check(xinming?.group?.name === '沙啞之歌' && xinming?.group?.leaderName === '新名纱雪'
+      && xinming?.group?.memberNames.join(',') === '新名纱雪,卫亚',
+      'Story0055: 夢的十四行詩 显示签约团体 沙啞之歌（队长 新名纱雪 / 团员 卫亚）',
+      JSON.stringify(xinming?.group ?? null));
+    check(xinming?.doneDays === 15 && xinming?.workDays === 25 && xinming?.needDays === 10,
+      'Story0055: 夢的十四行詩 的进度按新名纱雪自己的天数算（15/25，还差 10）',
+      `${xinming?.doneDays}/${xinming?.workDays}+${xinming?.needDays}`);
+  } else {
+    console.log('OK   Story0055.sa2 not present, skipped the day-count checks');
   }
 }
 

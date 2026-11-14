@@ -1038,16 +1038,21 @@ export interface SelfMadeCast {
   pay: number;
   /** 是不是自己旗下的艺人。对手公司的演员只用来占角色格，不上表。 */
   mine: boolean;
-  /** 这位艺人自己已经拍完的天数。 */
+  /** 这位艺人自己已经拍完的天数（存档 +8 那一格）。 */
   doneDays: number;
-  /** 这位艺人还差几天；0 表示他那份拍完了。 */
+  /** 这位艺人还差几天 = 总天数 - 已完成；0 表示他那份拍完了。 */
   needDays: number;
-  /** 这位艺人这条通告上总共要拍几天 = 已完成 + 还差。 */
+  /** 这位艺人这条通告上总共要拍几天：优先取长度表，查不到才用存档的
+   *  「已完成 + 还差」。 */
   workDays: number;
+  /** 团体通告（角色名带「團體」）签约的是整个团，这里给出团名与成员；
+   *  个人通告为 null。天数仍然算在这位接演艺人（通常是团长）身上。 */
+  group: { name: string; leaderName: string; memberNames: string[] } | null;
 }
 
-/** 自制通告的档期状态，全部由块里的「开拍日 → 杀青日」推出来。 */
-export type SelfMadeStatus = 'pending' | 'shooting' | 'done' | 'unknown';
+/** 自制通告的档期状态，全部由块里的「开拍日 → 杀青日」推出来。
+ *  `overdue` = 档期已经过去，但还有艺人没拍完（存档里「还差」不是 0）。 */
+export type SelfMadeStatus = 'pending' | 'shooting' | 'done' | 'overdue' | 'unknown';
 
 /** 「自制通告及其他」里的一条：玩家自己出品（少数沿用原厂牌署名）的通告。
  *
@@ -1092,11 +1097,15 @@ export interface SelfMadeNotice {
 }
 
 /** 自制通告块里的一条接演记录长这样（24 字节）：
- *  [状态位 0..3][艺人编号 1..96][还差天数][?][已完成天数][酬劳]。
+ *  [状态位 0..3][艺人编号 1..96][已完成天数][?][还差天数][酬劳]。
  *
- *  跟拍摄中的记录同一个形状，只是自制通告把「还差几天」也写进来了，
- *  所以每位艺人的总天数 = 已完成 + 还差，不必再查长度表（自制通告的
- *  天数本来就是按艺人单独算的，同一部戏里男女主角都可能不一样）。
+ *  「已完成」在前（+8）、「还差」在后（+16）：Story0055 的卫亚（有朋自遠方來）
+ *  读出来是 22 / 3 —— 拍了 22 天、还差 3 天，跟游戏界面对得上。
+ *
+ *  总天数不从这两个数相加，而是**先查长度表**（`notice-length.csv`，唱片 25 天
+ *  这一类），因为「还差」那一格会被游戏中途改写（Story0055 的聆香已完成 10、
+ *  记录里却写着还差 5，实际还差 15），相加会算少。只有长度表查不到时才退回
+ *  「已完成 + 还差」。
  *
  *  块里还混着长度表、角色槽的一堆整数，单看形状会误报，所以要求酬劳是
  *  **万位整数**，并且只认连续排成一串的那一段（真接演总是连着的）。 */
@@ -1125,6 +1134,7 @@ function readSelfMadeCasts(
   names: Map<number, string>,
   genders: Map<number, Gender>,
   roles: RoleRecord[],
+  workOf: (role: RoleRecord | null) => number,
 ): SelfMadeCast[] {
   const limit = Math.min(end, view.byteLength);
   let bestStart = -1;
@@ -1154,8 +1164,14 @@ function readSelfMadeCasts(
     let role = roles.find((item) => !claimed.has(item.roleCode) && canTakeRole(item, gender)) ?? null;
     if (role) claimed.add(role.roleCode);
     else if (roles.length === 1) role = roles[0];
-    const needDays = view.getUint32(base + 8, true);
-    const doneDays = view.getUint32(base + 16, true);
+    const doneDays = view.getUint32(base + 8, true);
+    const savedNeed = view.getUint32(base + 16, true);
+    // 总天数以长度表为准（唱片 25 / 连续剧主角 45…），「还差」那一格只在长度表
+    // 查不到时才拿来兜底 —— 它会随进度被游戏改写，直接相加会少算。
+    const tableWork = workOf(role);
+    const workDays = tableWork > 0
+      ? Math.max(tableWork, doneDays)
+      : Math.max(doneDays, doneDays + savedNeed);
     rows.push({
       artistId,
       artistName: names.get(artistId) ?? `编号${artistId}`,
@@ -1163,8 +1179,9 @@ function readSelfMadeCasts(
       pay,
       mine: mineIds.has(artistId),
       doneDays,
-      needDays,
-      workDays: doneDays + needDays,
+      needDays: Math.max(0, workDays - doneDays),
+      workDays,
+      group: null,
     });
   }
   return rows;
@@ -1543,6 +1560,8 @@ export function parseSave(
   // 表查（data1 那份才全），天数 / 档期 / 接演记录来自 Case 段的第一块。
   const nameOfArtist = new Map(artistDirectory.map((entry) => [entry.id, entry.name]));
   const genderOfArtist = new Map(artistDirectory.map((entry) => [entry.id, entry.gender]));
+  const groupRecords = teams.map((team) =>
+    buildGroupRecord(team, (id) => nameOfArtist.get(id) ?? `编号${id}`));
   const selfMade: SelfMadeNotice[] = parseCaseCreate(view, blocks).map((code, index) => {
     const info = tables.cases[code];
     const [name = '', type = '', subtype = '', company = ''] = info ?? [];
@@ -1562,8 +1581,24 @@ export function parseSave(
     const startDay = start ? start.day : NaN;
     const endDay = finish ? finish.day : NaN;
     const casts = block
-      ? readSelfMadeCasts(view, block.start, block.end, mineIds, nameOfArtist, genderOfArtist, noticeRoles)
+      ? readSelfMadeCasts(
+        view, block.start, block.end, mineIds, nameOfArtist, genderOfArtist, noticeRoles,
+        (role) => ((role ? lengthOf(code, info, role.role) : null) ?? length)?.[0] ?? 0,
+      )
       : [];
+    // 团体通告（角色名带「團體」）签的是整个团，不是团长一个人：表里写团名，
+    // 天数仍算在这位接演艺人（一般就是团长）身上。
+    for (const cast of casts) {
+      if (!cast.role || !isGroupRole(cast.role)) continue;
+      const group = groupRecords.find((item) => item.memberIds.includes(cast.artistId));
+      if (group) {
+        cast.group = {
+          name: group.name,
+          leaderName: group.leaderName,
+          memberNames: group.memberNames,
+        };
+      }
+    }
     let status: SelfMadeStatus = 'unknown';
     if (start && finish && Number.isFinite(today)) {
       status = today < startDay ? 'pending' : today <= endDay ? 'shooting' : 'done';
@@ -1571,6 +1606,18 @@ export function parseSave(
     // 一个人都没接（连对手公司的都没有）就只能是「未开拍」—— 档期只是挂在
     // 通告列表上的排期，没人进组就谈不上拍摄中，更谈不上已完成。
     if (casts.length === 0) status = 'pending';
+    else if (status === 'done') {
+      // 结局存档会把已经杀青的通告的「已完成」清零（Ending0004 里全都是 0），
+      // 档期已过又写着 0 的按拍满处理，否则一条拍完的戏会显示「0 / 45 还差 45」。
+      for (const cast of casts) {
+        if (cast.doneDays === 0 && cast.workDays > 0) {
+          cast.doneDays = cast.workDays;
+          cast.needDays = 0;
+        }
+      }
+      // 档期过了却还有没拍完的人：不能算「已完成」，那是逾期。
+      if (casts.some((cast) => cast.needDays > 0)) status = 'overdue';
+    }
     return {
       seq: index + 1,
       code,

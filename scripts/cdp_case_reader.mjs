@@ -572,7 +572,9 @@ async function main() {
       // 拍摄天数必须一人一份：握斧長龍 四位自家艺人是 21/21/14/14，不是
       // 拿通告级的天数糊一行给四个人。
       const tv601Days = diy.days.filter((row) => row.code === 'TV601').map((row) => row.days);
-      check(tv601Days.join(',') === '21/21,21/21,14/14,14/14',
+      // 需拍天数按角色查长度表（连续剧男/女主角 45、配角 20），结局存档把
+      // 「已完成」清零了，页面上按拍满补回，所以是 45/45 与 20/20。
+      check(tv601Days.join(',') === '45/45,45/45,20/20,20/20',
         'Ending0004: 握斧長龍 一人一行，各带自己的完成 / 需拍天数',
         tv601Days.join(' ') || 'none');
       check(diy.text.includes('2008/6/30') && diy.text.includes('2008/9/1')
@@ -584,9 +586,9 @@ async function main() {
       check(diy.first.includes('CD701') && diy.first.includes('唱片')
         && diy.first.includes('25 天') && diy.first.includes('姚子奇'),
         '每行给名称 / 编码 / 类别 / 天数 / 接演艺人', diy.first.slice(0, 90));
-      check(diy.text.includes('握斧長龍') && diy.text.includes('15 天')
+      check(diy.text.includes('握斧長龍') && diy.text.includes('共 64 天')
         && diy.text.includes('还没有艺人接'),
-        '天数与「还没人接」的提示都在表里');
+        '档期天数与「还没人接」的提示都在表里');
       const emptyRows = diy.rows.filter((code, i) => diy.casts[i] === 0);
       check(new Set(emptyRows).size === 8,
         '12 条已接 / 8 条没人接，与存档一致',
@@ -636,6 +638,39 @@ async function main() {
       check(diy.noHorizontalScroll, '自制通告表不出现横向滚动');
     } else {
       console.log('SKIP Ending0004.sa2 not present, self-made table not checked');
+    }
+
+    // Story0055：天数真值按游戏界面核过 —— 卫亚 22/25 还差 3、聆香 10/25 还差 15。
+    const s55Path = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0055.sa2';
+    if (fs.existsSync(s55Path)) {
+      const copy = path.join(root, '.tmp', 'case-e2e-55.sa2');
+      fs.copyFileSync(s55Path, copy);
+      await evaluate(`document.querySelector('[data-case-tab="self-made"]').click()`);
+      await sleep(200);
+      await uploadSave(copy);
+      const diy55 = JSON.parse(await evaluate(`JSON.stringify({
+        days: [...document.querySelectorAll('[data-case-selfmade-row]')]
+          .map(r => r.querySelector('[data-case-selfmade-days]')?.getAttribute('data-case-selfmade-days') || ''),
+        statuses: [...new Set([...document.querySelectorAll('[data-case-selfmade-row]')]
+          .map(r => r.getAttribute('data-case-selfmade-status')))],
+        groups: [...document.querySelectorAll('[data-case-selfmade-group]')]
+          .map(x => x.getAttribute('data-case-selfmade-group') + '|' + x.innerText.replace(/\\s+/g, ' ')),
+        text: document.querySelector('[data-case-selfmade]')?.innerText.replace(/\\s+/g, ' ') || ''
+      })`));
+      check(diy55.days.includes('22/25') && diy55.days.includes('10/25'),
+        'Story0055: 需拍天数取长度表（有朋自遠方來 22/25、傾城之戀 10/25），不是自己相加',
+        diy55.days.join(' '));
+      check(diy55.text.includes('还差 3 天') && diy55.text.includes('还差 15 天'),
+        'Story0055: 还差天数由 总天数 - 已完成 算出（3 天 / 15 天）');
+      check(diy55.statuses.includes('overdue') && diy55.text.includes('已逾期'),
+        'Story0055: 档期已过还差 3 天的那条标成已逾期', diy55.statuses.join(','));
+      // 夢的十四行詩 是团体专辑：艺人列写团名 + 队长 / 团员，不写「新名纱雪」一个人。
+      check(diy55.groups.some((g) => g.startsWith('沙啞之歌|') && g.includes('队长 新名纱雪')
+        && g.includes('团员 卫亚')),
+        'Story0055: 团体通告显示签约团体 沙啞之歌（队长 / 团员都在）',
+        diy55.groups.join(' || ') || 'none');
+    } else {
+      console.log('SKIP Story0055.sa2 not present, day counts not checked');
     }
 
     // 换成 Story0027：「守候」里史蒂芬 / 方若綺不是旗下艺人，只该留克烈斯一行。

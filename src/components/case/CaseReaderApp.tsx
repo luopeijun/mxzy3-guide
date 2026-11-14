@@ -101,10 +101,11 @@ const SELF_MADE_STATUS_LABEL: Record<SelfMadeStatus, string> = {
   shooting: '拍摄中',
   pending: '未开拍',
   done: '已完成',
+  overdue: '已逾期',
   unknown: '无档期',
 };
 
-const SELF_MADE_STATUS_ORDER: SelfMadeStatus[] = ['shooting', 'pending', 'done', 'unknown'];
+const SELF_MADE_STATUS_ORDER: SelfMadeStatus[] = ['shooting', 'overdue', 'pending', 'done', 'unknown'];
 
 /** 1,550 万 / 5,000：存档酬劳原值就是元，过万折成万更好读。 */
 function payText(pay: number): string {
@@ -1048,15 +1049,6 @@ function SelfMadePanel({
                       {kindDetail(notice) && (
                         <span className="text-ui-2xs text-ink-faint">{kindDetail(notice)}</span>
                       )}
-                      {notice.days > 0 && (
-                        <span
-                          data-case-selfmade-notice-days={notice.days}
-                          title="通告列表里这条通告标的天数"
-                          className="tabular-nums text-ui-2xs text-ink-faint"
-                        >
-                          {notice.days} 天
-                        </span>
-                      )}
                     </div>
                   </Td>
                 )}
@@ -1077,7 +1069,9 @@ function SelfMadePanel({
                               ? notice.daysToStart > 0
                                 ? `还有 ${notice.daysToStart} 天开拍`
                                 : '档期已过，没人接'
-                              : `共 ${notice.endDay - notice.startDay + 1} 天`}
+                              : notice.status === 'overdue'
+                                ? `档期已过 ${-notice.daysLeft} 天`
+                                : `共 ${notice.endDay - notice.startDay + 1} 天`}
                         </div>
                       </>
                     ) : (
@@ -1093,7 +1087,9 @@ function SelfMadePanel({
                         'inline-flex whitespace-nowrap rounded-full px-1.5 py-0.5 text-ui-2xs',
                         notice.status === 'shooting'
                           ? 'bg-brand-soft font-semibold text-brand-strong'
-                          : 'bg-surface-soft text-ink-muted',
+                          : notice.status === 'overdue'
+                            ? 'bg-alert-soft font-semibold text-alert'
+                            : 'bg-surface-soft text-ink-muted',
                       )}
                     >
                       {SELF_MADE_STATUS_LABEL[notice.status]}
@@ -1109,12 +1105,25 @@ function SelfMadePanel({
                 </Td>
                 <Td>
                   {cast ? (
-                    <span
-                      data-case-selfmade-artist={cast.artistId}
-                      className="whitespace-nowrap text-ui-xs font-semibold text-ink"
-                    >
-                      {cast.artistName}
-                    </span>
+                    <>
+                      <span
+                        data-case-selfmade-artist={cast.artistId}
+                        className="whitespace-nowrap text-ui-xs font-semibold text-ink"
+                        title={cast.group ? `签约团体：${cast.group.name}` : cast.artistName}
+                      >
+                        {cast.group?.name ?? cast.artistName}
+                      </span>
+                      {cast.group && (
+                        <span
+                          data-case-selfmade-group={cast.group.name}
+                          className="mt-0.5 block text-ui-2xs leading-snug text-ink-faint"
+                        >
+                          团体 · 队长 {cast.group.leaderName}
+                          {cast.group.memberNames.length > 1
+                            && ` · 团员 ${cast.group.memberNames.slice(1).join(' · ')}`}
+                        </span>
+                      )}
+                    </>
                   ) : (
                     <span className="text-ui-2xs text-ink-faint">还没有艺人接</span>
                   )}
