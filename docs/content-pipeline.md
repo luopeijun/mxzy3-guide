@@ -63,6 +63,19 @@
 - 「提前准备」的道具 / 前置计数行把数据表里的 `hint` 直接常驻成一行淡灰纯文字备注（`data-item-source`，零状态、不可点、不加装饰符号）；证书行不铺备注，课程等级与属性缺口仍走 ▸ 展开。备注内容全部来自 `special-notices.tsv`，**不需要另造字段**。
 - 回归 `scripts/cdp_specials_board.mjs`（94 项）覆盖指派名额、单人换人、多人拆行、清单勾选、共享、按需课程、数值录入面板、昆仑三位、银河锁定、道具来源备注、备注零状态、存档持久化，以及右侧跳转导航（rail 存在、六入口齐全、点末张/首张滚到贴顶并高亮）；`scripts/cdp_specials_shot.mjs` 用来截看板界面；`scripts/cdp_save_archive.mjs`（11 项）覆盖六大通告并入统一存档的导入、合并与覆盖，以及六大通告页「全部存档」按钮 + 弹窗的存在与开关。
 
+## 存档解析（#/case）
+
+独立的一页，只读明星志愿3 繁中三合一原版的 `.sa2`，甜蜜乐章不适用。文件用 `File.arrayBuffer()` 读进内存，不上传也不回写；游戏之后覆盖自动存档不影响已经解出来的那份快照。
+
+- 静态表 `public/data/case-tables.json` 由 `scripts/build_case_tables.py` 从游戏安装目录的 `data/` 烘焙：`*Case.dat`（通告名 / 类型 / 公司）、`NeedEffect.tab`（类型 × 对象 → 等级）、`Length.tab`（工作天数 / 每週上限）、`Difficulty.tab`（星级 → 数值区间）、`StarRole.dat`（艺人名字与性别）、`Firm.dat`（制作公司）。解析在 `src/lib/caseParser.ts`，渲染在 `src/components/case/CaseReaderApp.tsx`。
+- **游戏当前日期在文件头 @60** 的 `[年, 月, 日, 星期]`。通告档期是**三个**四元组（开放接取的周一 / 开拍的周一 / 杀青的周日），停止接取 = 开拍前一天。别把 `BigActive` 的周末日历或艺人合约日期当成当前时间。
+- **两张表**：`CaseFirm` 段登记的是当期还能接的通告（筹备中）；某条被接走之后编码从 `CaseFirm` 消失，但 `Case` 段里那条通告块还在，并且多出一段接取记录 —— 这就是「拍摄中」的真源。
+- **接取记录的形状**：`[艺人编号][已完成天数][状态][?][酬劳]`，艺人后面紧跟已完成天数，再隔 12 字节是酬劳。在 Auto / Ending0009 / Story0007 三份存档上逐字节核对过（CF014 萧依莉 4 天 / 5000；CD090 0 天 / 820 万；MV031 34 天 / 1550 万）。
+- **酬劳不进静态表**：同一个 CD089 在 Ending0009 记 950 万、在 Story0007 记 790 万，会随接演艺人变化，所以只认存档里的值。
+- **拍摄中的判定**要三条同时成立：块里有接取记录（有进度或酬劳）、编码已经不在 `CaseFirm`、今天不晚于杀青日。艺人的作品清单是**历史累积**（十几年旧作都留着），只按它反查会把早已杀青的旧块捞出来，必须叠加日期这一道。
+- **逾期风险**：还差天数 = `Length` 表的工作天数 − 存档里的完成天数；剩余额度 = 剩下的日历日按每週上限折算（`shootableDays()`）。还差 > 额度判「赶不上」并整行标红，相等判「刚好够」。
+- 回归：`scripts/test_case_parser.mjs`（59 项，含 Auto / Story0007 / Ending0009 三份快照）+ `scripts/cdp_case_reader.mjs`（56 项）。CDP 必须**全程复用一个 page tab**，反复 `/json/new` 会堆出上百个 tab 让 Chrome 卡死。
+
 ## 体量统计口径
 
 页面上显示的是**字数**，不再是段落数：「约 X 字」取正文非空白字符数（含标点），`table` 块的单元格也算在内，分类页按「自身 + 全部子条目」累计；叶子条目只显示字数，没有子条目时不再显示「0 个子条目」。超过 1 万字折算成「1.2 万」，由 `src/lib/guide.ts` 的 `countChars` / `countCharsDeep` / `formatCount` 统一处理。
@@ -262,6 +275,7 @@ src/components/              攻略阅读页组件
 src/components/notices/      通告库（筛选、详情、能力对照）
 src/components/tracker/      事件追踪器
 src/components/cg/           CG 图鉴
+src/components/case/         存档解析（.sa2 读取：筹备中 / 拍摄中）
 src/hooks/                   数据加载、选中态、进度存储、锚点跳转
 src/lib/                     纯逻辑：内容解析、统计、排序、筛选、存档、CG 反向索引
 ```

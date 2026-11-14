@@ -28,7 +28,7 @@ await build({
 });
 const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
-  isGroupRole, matchGroupRole, buildGroupRecord,
+  isGroupRole, matchGroupRole, buildGroupRecord, shootableDays,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -216,6 +216,22 @@ if (fs.existsSync(savePath)) {
     '广告 resolves to 6 天 / 每周上限 5 次 (Length 表)',
     ads.map((n) => `${n.code}:${n.workDays}/${n.daysPerWeek}`).join(' ') || 'no ad in snapshot');
 
+  // 拍摄中：接取记录写在通告块里（[艺人][已完成][状态][?][酬劳]）。判定要求
+  // 「已经不在 CaseFirm 池里」+「到杀青日还没过」，所以它和上面那张表不会重叠。
+  const listed = new Set(real.notices.map((n) => n.code));
+  check(real.shooting.every((s) => !listed.has(s.code)),
+    '拍摄中 never repeats a 筹备中 notice',
+    real.shooting.filter((s) => listed.has(s.code)).map((s) => s.code).join(',') || 'disjoint');
+  check(real.shooting.every((s) => s.artists.length > 0 && s.doneDays >= 0),
+    'every shooting notice names its artist and done days',
+    real.shooting.map((s) => `${s.code}:${s.artists.map((a) => a.name).join('+')}:${s.doneDays}/${s.workDays}`).join(' ') || 'none');
+  check(real.shooting.every((s) => s.status !== 'finished'),
+    'shooting list drops notices that already wrapped',
+    real.shooting.map((s) => `${s.code}:${s.status}`).join(' ') || 'none');
+  check(shootableDays(21, 5) === 15 && shootableDays(3, 5) === 3
+    && shootableDays(0, 5) === 0 && shootableDays(8, 0) === 0,
+    '每周上限折算出「剩下这段日子最多还能排几天」');
+
   // Exact values only for the frozen investigation snapshot.
   if (path.basename(savePath) === 'probe.sa2') {
     check(real.currentDate?.text === '2006/1/29' && real.currentDate?.label === '周日',
@@ -281,6 +297,41 @@ if (fs.existsSync(savePath)) {
   }
 } else {
   console.log(`\nreal save not found (${savePath}), skipped live-save checks`);
+}
+
+// 第四个存档（Auto，玩家用来核对「拍摄中」）：只有萧依莉那条广告在拍，
+// 存档记的完成天数是 4 天，酬劳 5000。
+{
+  const autoPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
+  if (fs.existsSync(autoPath)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(autoPath);
+    const auto = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Auto.sa2',
+    );
+    check(auto.shooting.length === 1 && auto.shooting[0].code === 'CF014'
+      && auto.shooting[0].name === '愛信電訊 業務篇',
+      'Auto: 拍摄中只有 CF014 愛信電訊（萧依莉那条广告）',
+      auto.shooting.map((s) => `${s.code}:${s.name}`).join(',') || 'none');
+    const ad = auto.shooting[0];
+    check(ad?.artists.some((a) => a.id === 6 && a.name === '蕭依莉'),
+      'Auto: CF014 的接取艺人读出来是 6 号萧依莉',
+      ad?.artists.map((a) => `${a.id}:${a.name}`).join(',') ?? '-');
+    check(ad?.doneDays === 4 && ad?.workDays === 6 && ad?.daysPerWeek === 5,
+      'Auto: CF014 已完成 4 天 / 需拍 6 天 / 每周最多 5 天',
+      `${ad?.doneDays}/${ad?.workDays} perWeek=${ad?.daysPerWeek}`);
+    check(ad?.pay === 5000,
+      'Auto: CF014 的酬劳直接取存档里的值',
+      String(ad?.pay));
+    check(ad?.startDate === '2006/1/23' && ad?.endDate === '2006/2/19',
+      'Auto: CF014 开拍 1/23、杀青 2/19 从通告块的三段日期读出',
+      `${ad?.startDate}~${ad?.endDate}`);
+    check(ad?.risk === 'ok' && ad?.needDays === 2 && ad?.canShootDays === 15,
+      'Auto: 还差 2 天、剩下 21 个日历日按每周 5 天能排 15 天，判为排得下',
+      `risk=${ad?.risk} need=${ad?.needDays} can=${ad?.canShootDays}`);
+  } else {
+    console.log('OK   Auto.sa2 not present, skipped the shooting checks');
+  }
 }
 
 // 第二个存档（玩家实测的 Story0007）：四个签约艺人和 101 号团体必须都读到。

@@ -400,6 +400,58 @@ async function main() {
     const f = JSON.parse(filtered);
     check(f.notices === 0 && f.empty, 'search filters notices', filtered);
 
+    // 清空搜索，再切到「拍摄中」：Auto 存档里只有萧依莉那条广告，完成 4 天。
+    await evaluate(`(function(){
+      var i = document.querySelector('[data-case-search]');
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(i, '');
+      i.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`);
+    await sleep(300);
+    await evaluate(`document.querySelector('[data-case-tab="shooting"]').click()`);
+    await sleep(400);
+    const shot = JSON.parse(await evaluate(`JSON.stringify({
+      tabs: document.querySelectorAll('[data-case-tabs] [role="tab"]').length,
+      openSelected: document.querySelector('[data-case-tab="open"]')?.getAttribute('aria-selected'),
+      shootingSelected: document.querySelector('[data-case-tab="shooting"]')?.getAttribute('aria-selected'),
+      rows: document.querySelectorAll('[data-case-shooting-row]').length,
+      codes: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.getAttribute('data-case-shooting-row')),
+      artists: [...document.querySelectorAll('[data-case-shooting-artist]')].map(x => x.innerText),
+      roles: [...document.querySelectorAll('[data-case-shooting-role]')].map(x => x.innerText),
+      statuses: [...document.querySelectorAll('[data-case-shooting-status]')].map(x => x.getAttribute('data-case-shooting-status')),
+      risk: document.querySelector('[data-case-shooting-risk-label]')?.getAttribute('data-case-shooting-risk-label'),
+      text: document.querySelector('[data-case-shooting]')?.innerText || '',
+      noticesHidden: document.querySelectorAll('[data-case-notice]').length,
+      noHorizontalScroll: (function(){
+        var wrap = document.querySelector('[data-case-shooting]');
+        return !!wrap && wrap.scrollWidth <= wrap.clientWidth + 1;
+      })()
+    })`));
+    console.log('shooting:', JSON.stringify(shot));
+    check(shot.tabs === 2 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
+      '筹备中 / 拍摄中 两个页签可以切换', `${shot.tabs} tabs`);
+    check(shot.rows === 1 && shot.codes[0] === 'CF014',
+      '拍摄中只列 CF014 愛信電訊（萧依莉那条广告）', shot.codes.join(',') || 'none');
+    check(shot.artists.join(',') === '蕭依莉',
+      '拍摄中列出接演的艺人', shot.artists.join(',') || 'none');
+    check(shot.roles.length === 1 && shot.roles[0].includes('女性') && shot.roles[0].includes('1★'),
+      '角色类型和难度都显示在行里', shot.roles.join('|') || 'none');
+    check(shot.text.includes('1/23') && shot.text.includes('2/19'),
+      '开拍 / 杀青时间显示在行里');
+    check(shot.text.includes('4') && shot.text.includes('/ 6 天') && shot.text.includes('5,000'),
+      '完成天数、需拍天数和酬劳都显示', shot.text.replace(/\s+/g, ' ').slice(0, 90));
+    check(shot.risk === 'ok' && shot.text.includes('还差 2 天'),
+      '逾期风险按存档数字算出「还差几天 / 还能排几天」', shot.risk ?? 'none');
+    check(shot.noticesHidden === 0 && shot.noHorizontalScroll,
+      '切到拍摄中后筹备中的表格收起，切换页签不出现横向滚动');
+    await evaluate(`document.querySelector('[data-case-tab="open"]').click()`);
+    await sleep(300);
+    const backOpen = JSON.parse(await evaluate(
+      `JSON.stringify({ notices: document.querySelectorAll('[data-case-notice]').length })`,
+    ));
+    check(backOpen.notices === 11, '切回筹备中，表格恢复', JSON.stringify(backOpen));
+
     // Same tab, same CDP session: no extra targets are created.
     await navigate('http://localhost:5173/sweet.html');
     const sweetState = JSON.parse(await evaluate(`JSON.stringify({

@@ -305,6 +305,8 @@ export interface ParseResult {
   blocks: Record<string, [number, number]>;
   roleRecordCount: number;
   notices: CaseNotice[];
+  /** 已在拍 / 待开拍 / 已逾期的通告，来自存档里的接取记录。 */
+  shooting: ShootingNotice[];
   artists: ArtistStats[];
   /** The 18 signable artists, resolved against the state blocks in this save. */
   artistDirectory: ArtistOption[];
@@ -820,6 +822,91 @@ function readNoticeCode(view: DataView, start: number, end: number): string[] {
   return out;
 }
 
+/** 一条正在拍（或已拍完 / 已逾期）的通告。
+ *
+ *  筹备中的通告来自 CaseFirm（当期可接取列表），已经在拍的不在这里 ——
+ *  它们在 Case 段留着一条带「接取记录」的通告块。接取记录的形状在
+ *  Auto(CF014 蕭依莉)、Ending0009(CD089 / CD090 / MV031)、Story0007
+ *  (MV601) 上逐字节核对过：
+ *
+ *    [艺人编号][已完成天数][状态][?][酬劳]
+ *
+ *  即艺人后面紧跟已完成天数（样本里 4 / 23 / 34 / 0 全对得上），再隔
+ *  12 字节是这条通告的酬劳（5000 / 950 万 / 1550 万）。酬劳不进静态表：
+ *  同一个 CD089 在 Ending0009 记 950 万、在 Story0007 记 790 万，会随接演
+ *  艺人变化，所以只认存档里的值。 */
+export interface ShootingNotice {
+  code: string;
+  name: string;
+  category: string;
+  type: string;
+  subtype: string;
+  company: string;
+  firmName: string;
+  /** 角色与难度（星级），和筹备中表格同一套角色记录。 */
+  roles: RoleRecord[];
+  /** 接下这条通告的艺人；团体通告可能有多位。 */
+  artists: { id: number; name: string }[];
+  /** 这条通告要拍几天（Length 表），0 表示静态表没这条。 */
+  workDays: number;
+  /** 每週最多能排几天。 */
+  daysPerWeek: number;
+  /** 存档里记的已完成天数。 */
+  doneDays: number;
+  /** 存档里记的酬劳，0 表示没读到。 */
+  pay: number;
+  startDate: string;
+  endDate: string;
+  startDay: number;
+  endDay: number;
+  /** 到杀青还剩几个日历日；NaN 表示存档没有档期可读。 */
+  daysLeft: number;
+  /** 按每週上限折算，剩下的日子里最多还能排几天。 */
+  canShootDays: number;
+  /** 还要再拍几天。 */
+  needDays: number;
+  risk: 'ok' | 'tight' | 'late' | 'unknown';
+  status: 'pending' | 'shooting' | 'overdue' | 'finished';
+  offset: number;
+}
+
+/** 剩下 N 个日历日、每週最多 M 天，最多还能排几天。 */
+export function shootableDays(remaining: number, perWeek: number): number {
+  if (!(remaining > 0) || !(perWeek > 0)) return 0;
+  const weeks = Math.ceil(remaining / 7);
+  return Math.min(remaining, weeks * perWeek);
+}
+
+/** 从通告块里读接取记录：[艺人][已完成][状态][?][酬劳]。
+ *  只认 ownerIds 里的编号，且后两个字段必须是小整数，避免撞上块里别的数组。
+ *  另外要求「有进度或有酬劳」：艺人作品清单里本来就留着十几年前的旧作，
+ *  这些旧块里的编号大多是巧合（实测 TV501~MV514 全是 done=0、pay=0），
+ *  真正的接取记录至少有一头不为零。 */
+function readProgress(
+  view: DataView,
+  start: number,
+  end: number,
+  ownerIds: number[],
+): { artistId: number; doneDays: number; pay: number }[] {
+  const rows: { artistId: number; doneDays: number; pay: number }[] = [];
+  if (ownerIds.length === 0) return rows;
+  const wanted = new Set(ownerIds);
+  const from = start + 400;
+  for (let o = from; o + 24 <= end; o += 4) {
+    const id = view.getUint32(o, true);
+    if (!wanted.has(id)) continue;
+    const done = view.getUint32(o + 4, true);
+    const a = view.getUint32(o + 8, true);
+    const b = view.getUint32(o + 12, true);
+    const pay = view.getUint32(o + 16, true);
+    if (done > 60 || a > 60 || b > 60 || pay > 1e9) continue;
+    if (done === 0 && pay < 1000) continue;
+    if (rows.some((row) => row.artistId === id)) continue;
+    rows.push({ artistId: id, doneDays: done, pay });
+  }
+  return rows;
+}
+
 /** Parse one uploaded save. The buffer is a snapshot: the game may overwrite
  *  Auto.sa2 on disk at any moment, but this copy never changes. */
 export function parseSave(
@@ -989,6 +1076,82 @@ export function parseSave(
     };
   });
 
+  /** 已经在拍的通告。判定只认存档：通告块里留着接取记录（艺人 + 已完成天数
+   *  + 酬劳），并且这条编码出现在该艺人的作品清单里。没拍完的留下，
+   *  已杀青的数够天数的丢掉。 */
+  const shooting: ShootingNotice[] = [];
+  const doneCodes = new Set<string>();
+  const openCodes = new Set(firm.map((item) => item.code));
+  for (const block of codeBlocks) {
+    if (doneCodes.has(block.code)) continue;
+    // 还挂在 CaseFirm 里的说明是「筹备中、可接取」，即便已经有艺人预约，
+    // 也留在上面那张表里，不进拍摄中。
+    if (openCodes.has(block.code)) continue;
+    const owners = ownersByCode[block.code] ?? [];
+    if (owners.length === 0) continue;
+    const progress = readProgress(view, block.start, block.end, owners.map((o) => o.id));
+    if (progress.length === 0) continue;
+    const info = tables.cases[block.code];
+    const [, type = '', subtype = '', company = ''] = info ?? [];
+    const noticeRoles = roles.filter((role) => role.code === block.code);
+    const length = noticeRoles
+      .map((role) => lengthOf(block.code, info, role.role))
+      .find((hit): hit is number[] => Boolean(hit)) ?? null;
+    const workDays = length?.[0] ?? 0;
+    const daysPerWeek = length?.[1] ?? 0;
+    const doneDays = progress[0].doneDays;
+    const pay = progress[0].pay;
+    const triple = datesByCode[block.code];
+    if (!triple) continue;
+    const startDay = triple[1].day;
+    const endDay = triple[2].day;
+    // 只留「到杀青日为止还没过」的：存档的 Case 段里躺着大量早就杀青的旧块，
+    // 它们的接取记录同样非零（艺人作品清单是历史累积），靠日期把它们筛掉。
+    if (!Number.isFinite(today) || today > endDay) continue;
+    const daysLeft = endDay - today;
+    const needDays = workDays > 0 ? Math.max(0, workDays - doneDays) : 0;
+    const canShoot = Number.isFinite(daysLeft) ? shootableDays(daysLeft, daysPerWeek) : 0;
+
+    let status: ShootingNotice['status'] = 'shooting';
+    if (Number.isFinite(today) && Number.isFinite(startDay) && Number.isFinite(endDay)) {
+      if (today < startDay) status = 'pending';
+      else if (today > endDay) status = workDays > 0 && doneDays >= workDays ? 'finished' : 'overdue';
+    } else if (workDays > 0 && doneDays >= workDays) {
+      status = 'finished';
+    }
+    if (status === 'finished') continue;
+
+    let risk: ShootingNotice['risk'] = 'unknown';
+    if (needDays <= 0) risk = 'ok';
+    else if (Number.isFinite(daysLeft) && daysPerWeek > 0) {
+      if (canShoot < needDays) risk = 'late';
+      else if (canShoot === needDays) risk = 'tight';
+      else risk = 'ok';
+    }
+
+    doneCodes.add(block.code);
+    shooting.push({
+      code: block.code,
+      name: info?.[0] || '（存档专有 / 自制通告）',
+      category: categoryOf(block.code),
+      type, subtype, company,
+      firmName: '',
+      roles: noticeRoles,
+      artists: owners.map((owner) => ({ id: owner.id, name: owner.name })),
+      workDays, daysPerWeek, doneDays, pay,
+      startDate: triple ? fmtDate(triple[1]) : '',
+      endDate: triple ? fmtDate(triple[2]) : '',
+      startDay, endDay, daysLeft, canShootDays: canShoot, needDays,
+      risk, status,
+      offset: block.start,
+    });
+  }
+  shooting.sort((a, b) => {
+    const rank = { overdue: 0, shooting: 1, pending: 2, finished: 3 } as const;
+    if (rank[a.status] !== rank[b.status]) return rank[a.status] - rank[b.status];
+    return (Number.isFinite(a.endDay) ? a.endDay : Infinity) - (Number.isFinite(b.endDay) ? b.endDay : Infinity);
+  });
+
   return {
     saveName,
     saveSize: bytes.length,
@@ -996,6 +1159,7 @@ export function parseSave(
     blocks,
     roleRecordCount: roles.length,
     notices,
+    shooting,
     artists,
     artistDirectory,
     signedArtistIds,

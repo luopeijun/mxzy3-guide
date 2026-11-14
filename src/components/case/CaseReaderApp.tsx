@@ -6,7 +6,7 @@ import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
   buildGroupRecord, canTakeRole, isGroupRole, matchGroupRole, matchRole, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
-  type GroupRecord, type ParseResult, type RoleRecord,
+  type GroupRecord, type ParseResult, type RoleRecord, type ShootingNotice,
 } from '../../lib/caseParser';
 
 const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
@@ -37,6 +37,39 @@ function chipClass(active: boolean) {
   );
 }
 
+function tabClass(active: boolean) {
+  return cn(
+    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-t border-b-2 px-3 py-1.5 text-ui-xs transition-colors',
+    active
+      ? 'border-brand bg-surface font-bold text-brand-strong'
+      : 'border-transparent text-ink-muted hover:text-brand-strong',
+  );
+}
+
+const RISK_LABEL: Record<string, string> = {
+  ok: '排得下',
+  tight: '刚好够',
+  late: '赶不上',
+  unknown: '—',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  shooting: '拍摄中',
+  pending: '待开拍',
+  overdue: '已逾期',
+  finished: '已杀青',
+};
+
+/** 1,550 万 / 5,000：存档酬劳原值就是元，过万折成万更好读。 */
+function payText(pay: number): string {
+  if (!pay) return '—';
+  if (pay >= 10000) {
+    const wan = pay / 10000;
+    return `${Number.isInteger(wan) ? wan : wan.toFixed(1)} 万`;
+  }
+  return pay.toLocaleString('zh-CN');
+}
+
 /** 存档解析：把 .sa2 拖进来，在浏览器里解出当期通告、日期与艺人数值。
  *  文件不会上传；读进内存的就是一份快照，游戏随后覆盖自动存档也不影响。 */
 export default function CaseReaderApp() {
@@ -50,6 +83,8 @@ export default function CaseReaderApp() {
   const [query, setQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterCompany, setFilterCompany] = useState('all');
+  /** 上面两张表：还在等档期的筹备中通告，和已经接下的拍摄中通告。 */
+  const [board, setBoard] = useState<'open' | 'shooting'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
@@ -422,12 +457,38 @@ export default function CaseReaderApp() {
         )}
 
         {result && !busy && (
-          result.notices.length === 0 ? (
+          result.notices.length === 0 && result.shooting.length === 0 ? (
             <div className="mt-2">
               <EmptyState title="这份存档里没有当期通告" text="CaseFirm 段没有登记任何通告编号。换一份游戏进行中的存档再试。" />
             </div>
           ) : (
             <>
+              <div data-case-tabs className="mt-2 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="通告状态">
+                <button
+                  type="button"
+                  role="tab"
+                  data-case-tab="open"
+                  aria-selected={board === 'open'}
+                  onClick={() => setBoard('open')}
+                  className={tabClass(board === 'open')}
+                >
+                  筹备中 <span className="tabular-nums">{result.notices.length}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  data-case-tab="shooting"
+                  aria-selected={board === 'shooting'}
+                  onClick={() => setBoard('shooting')}
+                  className={tabClass(board === 'shooting')}
+                >
+                  拍摄中 <span className="tabular-nums">{result.shooting.length}</span>
+                </button>
+              </div>
+              {board === 'shooting' ? (
+                <ShootingPanel notices={result.shooting} />
+              ) : (
+              <>
               {/* Search + type/company filters sit directly above the notice
                   table, following the same intersection logic as 通告库. */}
               <div data-case-filters className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2">
@@ -552,6 +613,8 @@ export default function CaseReaderApp() {
                   </table>
                 </div>
               )}
+              </>
+              )}
             </>
           )
         )}
@@ -560,8 +623,168 @@ export default function CaseReaderApp() {
   );
 }
 
-function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {
+/** "2006/2/19" -> "2/19"，档期列放得下两行。 */
+function shortDate(text: string): string {
+  const parts = text.split('/');
+  return parts.length === 3 ? `${parts[1]}/${parts[2]}` : text;
+}
+
+/** 大类是简体（由编号前缀推出），细分是游戏原文的繁体，
+ *  比较前先把会重复的几个字归一，免得出现「电影 / 電影」两行。 */
+const T2S: Record<string, string> = { 電: '电', 視: '视', 劇: '剧', 廣: '广' };
+function normKind(text: string): string {
+  return text.replace(/[電視劇廣]/g, (ch) => T2S[ch] ?? ch);
+}
+
+/** 类型列的第二行：细分类型，跟大类同名就不重复写。 */
+function kindDetail(notice: ShootingNotice): string {
+  if (notice.subtype && normKind(notice.subtype) !== normKind(notice.category)) return notice.subtype;
+  if (notice.type && normKind(notice.type) !== normKind(notice.category)) return notice.type;
+  return '';
+}
+
+/** 拍摄中：已经接下的通告。逾期风险只用存档里的数字算 ——
+ *  还差几天（Length 表的工作天数 - 存档里的完成天数）对比「剩下的日子里
+ *  按每週上限还能排几天」，排不下就整行标红。 */
+function ShootingPanel({ notices }: { notices: ShootingNotice[] }) {
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title="没有在拍的通告" text="这份存档里没有已经接下的通告。" />
+      </div>
+    );
+  }
   return (
+    <div data-case-shooting className="mt-2 rounded-ui-md border border-line bg-surface">
+      <table className="w-full table-fixed border-collapse text-ui-xs">
+        <thead>
+          <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+            <Th className="w-[13%]">通告</Th>
+            <Th className="w-[8%]">类型</Th>
+            <Th className="w-[8%]">制作公司</Th>
+            <Th className="w-[13%]">开拍 → 杀青</Th>
+            <Th className="w-[14%]">角色 / 难度</Th>
+            <Th className="w-[12%]">艺人</Th>
+            <Th className="w-[9%]">完成 / 需拍</Th>
+            <Th className="w-[6%]">剩余</Th>
+            <Th className="w-[7%]">酬劳</Th>
+            <Th className="w-[10%]">逾期风险</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {notices.map((notice) => (
+            <tr
+              key={notice.code}
+              data-case-shooting-row={notice.code}
+              data-case-shooting-risk={notice.risk}
+              className={cn(
+                'border-l-[3px] align-top',
+                notice.risk === 'late'
+                  ? 'border-l-alert bg-alert-soft/50'
+                  : 'border-l-transparent',
+              )}
+            >
+              <Td>
+                <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
+                <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
+              </Td>
+              <Td className="text-ui-2xs">
+                <span className={cn(
+                  'inline-flex whitespace-nowrap rounded px-1.5 py-0.5',
+                  CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+                )}
+                >
+                  {notice.category}
+                </span>
+                {kindDetail(notice) && (
+                  <div className="mt-0.5 text-ink-faint">{kindDetail(notice)}</div>
+                )}
+              </Td>
+              <Td className="text-ui-2xs text-ink-muted">{notice.company || '—'}</Td>
+              <Td className="text-ui-2xs">
+                <div className="tabular-nums text-ink-muted">
+                  {shortDate(notice.startDate) || '—'} → {shortDate(notice.endDate) || '—'}
+                </div>
+                <div
+                  data-case-shooting-status={notice.status}
+                  className={cn(
+                    'mt-0.5 inline-flex rounded-full px-1.5 text-ui-2xs',
+                    notice.status === 'shooting'
+                      ? 'bg-brand-soft font-semibold text-brand-strong'
+                      : 'bg-surface-soft text-ink-faint',
+                  )}
+                >
+                  {STATUS_LABEL[notice.status]}
+                </div>
+              </Td>
+              <Td>
+                {notice.roles.length === 0 ? (
+                  <span className="text-ui-2xs text-ink-faint">—</span>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {notice.roles.map((role) => (
+                      <span
+                        key={role.roleCode}
+                        data-case-shooting-role={role.roleCode}
+                        className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border border-line-strong bg-surface px-2 py-0.5 text-ui-2xs text-ink-muted"
+                      >
+                        {role.role}
+                        <b className="text-ui-2xs text-brand-strong">{role.star}★</b>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Td>
+              <Td>
+                <div className="flex flex-wrap gap-1">
+                  {notice.artists.map((artist) => (
+                    <span
+                      key={artist.id}
+                      data-case-shooting-artist={artist.id}
+                      className="whitespace-nowrap rounded bg-surface-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-ink"
+                    >
+                      {artist.name}
+                    </span>
+                  ))}
+                </div>
+              </Td>
+              <Td className="tabular-nums text-ui-2xs">
+                <span className="text-ui-xs font-bold text-ink">{notice.doneDays}</span>
+                <span className="text-ink-faint"> / {notice.workDays || '—'} 天</span>
+              </Td>
+              <Td className="tabular-nums text-ui-2xs text-ink-muted">
+                {Number.isFinite(notice.daysLeft) ? `${notice.daysLeft} 天` : '—'}
+              </Td>
+              <Td className="tabular-nums text-ui-2xs text-ink-muted">{payText(notice.pay)}</Td>
+              <Td>
+                <span
+                  data-case-shooting-risk-label={notice.risk}
+                  className={cn(
+                    'inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-ui-2xs',
+                    notice.risk === 'late'
+                      ? 'border-alert-line bg-alert-soft font-bold text-alert'
+                      : notice.risk === 'tight'
+                        ? 'border-brand-line bg-brand-soft font-semibold text-brand-strong'
+                        : 'border-line bg-surface-soft text-ink-muted',
+                  )}
+                >
+                  {RISK_LABEL[notice.risk]}
+                </span>
+                {notice.risk !== 'unknown' && (
+                  <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">
+                    还差 {notice.needDays} 天 · 能排 {notice.canShootDays} 天
+                  </div>
+                )}
+              </Td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {  return (
     <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
       <div className="flex items-baseline gap-1.5">
         <span className="text-ui-xs font-bold text-brand-strong">#{option.id} {option.name}</span>
