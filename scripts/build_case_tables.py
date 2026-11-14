@@ -12,15 +12,19 @@ Usage:
 """
 
 import argparse
+import csv
 import json
 import os
 import re
 import struct
 import sys
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DATA = r"D:\Program Files (x86)\dayuzixun\mxzy3\tw\data"
-OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   "public", "data", "case-tables.json")
+OUT = os.path.join(ROOT, "public", "data", "case-tables.json")
+# 通告长度表的真源（玩家整理的简体表）。舞台剧 / 时装秀是甜蜜乐章的内容，
+# 繁中三合一装的 Length.tab 里没有这两条，所以只有这份表能覆盖全。
+LENGTH_CSV = os.path.join(ROOT, "sources", "notices", "notice-length.csv")
 CASE_FILES = ("CDCase.dat", "CFCase.dat", "MVCase.dat", "TVCase.dat", "SHCase.dat",
               "FSCase.dat", "THCase.dat", "SpecialCase.dat")
 CODE_RE = re.compile(r"[0-9A-Z]{3}")
@@ -83,16 +87,30 @@ def load_need_effect(data_dir):
     return out
 
 
-def load_length(data_dir):
-    """`notice kind|role` -> [工作天数, 每週上限].
+# 长度表里的简体写法 -> 游戏数据/存档里的繁体写法（存档里读到的是 Big5 繁体）。
+LENGTH_TRAD = {
+    "连续剧": "連續劇", "单元剧": "單元劇", "短片": "短片", "电影": "電影",
+    "唱片": "唱片", "广告": "廣告", "知性谈话": "知性談話", "运动竞赛": "運動競賽",
+    "歌舞综艺": "歌舞綜藝", "采访报导": "採訪報導", "益智休闲": "益智休閒",
+    "舞台剧": "舞台劇", "时装秀": "時裝秀",
+    "男主角": "男主角", "女主角": "女主角", "男配角": "男配角", "女配角": "女配角",
+    "个人": "個人", "团体": "團體", "原声带": "原聲帶", "男性": "男性", "女性": "女性",
+    "主持人": "主持人", "助理主持": "助理主持", "外景主持": "外景主持",
+}
+
+
+def load_length_tab(data_dir):
+    """Length.tab 的原样读数，只用来核对 CSV 没写错。
 
     Length.tab: 4-byte id, the kind and role Big5 strings packed into bytes
     4..24, then three ints at 24 / 28 / 32. The last one is 工作天數 (唱片 25 天、
-    電影 40 天), the middle one is 每週可排上限 (5 天，主持类 2~3 天).
+    電影 40 天), the middle one is 每週可排上限 (5 天，主持类 2~3 天)。
     """
-    records = read_table(os.path.join(data_dir, "Length.tab"))
+    path = os.path.join(data_dir, "Length.tab")
+    if not os.path.isfile(path):
+        return {}
     out = {}
-    for rec in records:
+    for rec in read_table(path):
         parts = [m.group().decode("big5", "replace")
                  for m in re.finditer(rb"[^\x00]+", rec[4:24])]
         if len(parts) < 2:
@@ -101,6 +119,38 @@ def load_length(data_dir):
         if not days or not per_week:
             continue
         out[parts[0] + "|" + parts[1]] = [days, per_week]
+    return out
+
+
+def load_length(data_dir):
+    """`notice kind|role` -> [工作天数, 每週上限]，真源是 sources/notices/notice-length.csv。
+
+    玩家的表用简体写（连续剧 / 男主角），存档里读出来的是繁体（連續劇 / 男主角），
+    所以按 LENGTH_TRAD 转一次；表里出现没登记过的写法就直接报错，免得悄悄漏行。
+    与游戏自带的 Length.tab 逐条对照，数值不一致也算错 —— 两边应当完全一致。
+    """
+    if not os.path.isfile(LENGTH_CSV):
+        raise SystemExit("notice length table not found: " + LENGTH_CSV)
+    tab = load_length_tab(data_dir)
+    out = {}
+    with open(LENGTH_CSV, encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            kind = row["通告类型"].strip()
+            role = row["角色"].strip()
+            if kind not in LENGTH_TRAD:
+                raise SystemExit("unknown notice kind in %s: %s" % (LENGTH_CSV, kind))
+            if role not in LENGTH_TRAD:
+                raise SystemExit("unknown role in %s: %s" % (LENGTH_CSV, role))
+            key = LENGTH_TRAD[kind] + "|" + LENGTH_TRAD[role]
+            value = [int(row["总天数"]), int(row["每周可排"])]
+            if key in out and out[key] != value:
+                raise SystemExit("duplicate row with different numbers in %s: %s" % (LENGTH_CSV, key))
+            out[key] = value
+    for key, value in tab.items():
+        if key not in out:
+            raise SystemExit("Length.tab has a row the csv is missing: " + key)
+        if out[key] != value:
+            raise SystemExit("csv and Length.tab disagree on %s: %s vs %s" % (key, out[key], value))
     return out
 
 
