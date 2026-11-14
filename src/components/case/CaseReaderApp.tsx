@@ -1393,7 +1393,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
       {rows.length === 0 ? (
         <span className="text-ui-2xs text-ink-faint">—</span>
       ) : (
-        <div data-case-match-group className="flex flex-col gap-1">
+        <div data-case-match-group className="flex flex-col gap-1.5">
           {rows.map(({ key, match, group }) => (
             <div
               key={key}
@@ -1401,38 +1401,39 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
               data-case-match-group={groupRole ? 'yes' : undefined}
               data-match-artist={match.artistName}
               data-match-result={match.canAccept ? 'yes' : 'no'}
-              // 圆点和文字必须在同一条行内流里：以前这里是 flex-wrap，
-              // 文字一长圆点就被挤成单独一行，长短两行看起来像两种样式。
-              // pl-3 + 负 text-indent = 悬挂缩进，折行的第二行与文字左缘对齐。
+              // 圆点当成固定窄栏（shrink-0），正文在它右边自然换行：圆点永远不会
+              // 被挤到单独一行，长文本也只在正文栏里折行，不会重叠或挤成一团。
               className={cn(
-                'pl-3 [text-indent:-0.75rem] text-ui-2xs leading-[1.5]',
+                'flex items-start gap-1.5 text-ui-2xs leading-[1.6]',
                 match.canAccept ? 'font-semibold' : 'text-alert',
               )}
             >
-              <span className="select-none text-ink-faint" aria-hidden="true">•</span>{' '}
-              {match.canAccept ? (
-                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-growth px-1.5 py-0.5 align-middle text-white">
-                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
-                    <path d="M2.5 6.2 4.8 8.5 9.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <b>{match.artistName}</b> 可以接
-                </span>
-              ) : (
-                <span>
-                  <b>{match.artistName}</b>{' '}
-                  差 {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${Math.ceil(gap.diff)}`).join(' · ')}
-                </span>
-              )}
-              {/* 团体通告是整团接的：队名在胶囊里，队长与团员另起一行列全。 */}
-              {group && group.memberNames.length > 0 && (
-                <span
-                  data-case-match-members
-                  className="mt-0.5 block pl-3 [text-indent:0] font-normal text-ink-faint"
-                >
-                  队长 {group.memberNames[0]}
-                  {group.memberNames.length > 1 && ` · 团员 ${group.memberNames.slice(1).join(' · ')}`}
-                </span>
-              )}
+              <span className="shrink-0 select-none leading-[1.6] text-ink-faint" aria-hidden="true">•</span>
+              <span className="min-w-0 flex-1">
+                {match.canAccept ? (
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-accept-line bg-accept-soft px-2 py-0.5 align-middle text-accept">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
+                      <path d="M2.5 6.2 4.8 8.5 9.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <b>{match.artistName}</b> 可以接
+                  </span>
+                ) : (
+                  <span>
+                    <b>{match.artistName}</b>{' '}
+                    差 {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${Math.ceil(gap.diff)}`).join(' · ')}
+                  </span>
+                )}
+                {/* 团体通告是整团接的：队长与团员另起一行列全。 */}
+                {group && group.memberNames.length > 0 && (
+                  <span
+                    data-case-match-members
+                    className="mt-1 block font-normal text-ink-faint"
+                  >
+                    队长 {group.memberNames[0]}
+                    {group.memberNames.length > 1 && ` · 团员 ${group.memberNames.slice(1).join(' · ')}`}
+                  </span>
+                )}
+              </span>
             </div>
           ))}
         </div>

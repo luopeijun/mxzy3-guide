@@ -70,6 +70,11 @@
   --color-growth-strong: #1f5c40;
   --color-growth-soft: #eef8f2;
   --color-growth-line: #c2e0d0;
+  /* 「可以接」徽章 — 比 growth 更亮更黄绿的阳光感：growth 是“数值涨了”的安静脚注，
+     这里是一个 yes/no 判定，要轻快、不沉闷。底色用明黄绿，文字保持 ≥4.8:1 对比度。 */
+  --color-accept: #3a7d20;
+  --color-accept-soft: #ecf9c8;
+  --color-accept-line: #c7e89b;
 
   /* Notice metadata — a second family beside the semantic tokens above, so the
      eleven company dots and four time tiers never repeat an existing hue

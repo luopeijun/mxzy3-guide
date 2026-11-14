@@ -200,7 +200,7 @@ async function main() {
         return JSON.stringify({
           artist: first.getAttribute('data-match-artist'),
           result: first.getAttribute('data-match-result'),
-          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-growth'),
+          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-accept-soft'),
         });
       })(),
       neutralRole: (function(){
@@ -263,7 +263,7 @@ async function main() {
           artist: first.getAttribute('data-match-artist'),
           result: first.getAttribute('data-match-result'),
           group: first.getAttribute('data-case-match-group'),
-          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-growth'),
+          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-accept-soft'),
         });
       })()
     })`);
