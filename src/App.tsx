@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GuideData } from './types/guide';
 import type { ReorderRequest } from './lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from './lib/guide';
-import { isCgRoute, isNoticesRoute, isSpecialsRoute, isTrackerRoute, guideNodeId, useHashSelection, cgTabHash } from './hooks/useHashSelection';
+import { isCgRoute, isCaseRoute, isNoticesRoute, isSpecialsRoute, isTrackerRoute, guideNodeId, useHashSelection, cgTabHash } from './hooks/useHashSelection';
 import { useGuideData } from './hooks/useGuideData';
 import { useNoticeData } from './hooks/useNoticeData';
 import { useCgData } from './hooks/useCgData';
@@ -22,6 +22,7 @@ import NoticesApp from './components/notices/NoticesApp';
 import TrackerApp from './components/tracker/TrackerApp';
 import SpecialsApp from './components/specials/SpecialsApp';
 import TipsView from './components/tips/TipsView';
+import CaseReaderApp from './components/case/CaseReaderApp';
 import type { ViewMode } from './components/ViewTabs';
 import type { GuideNode } from './types/guide';
 
@@ -44,9 +45,10 @@ interface GuideAppProps {
   onViewNotices: () => void;
   onViewCg: () => void;
   onViewSpecials: () => void;
+  onViewCase: () => void;
 }
 
-function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg, onViewSpecials }: GuideAppProps) {
+function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg, onViewSpecials, onViewCase }: GuideAppProps) {
   // The reader may drag levels of the tree around; everything below reads the
   // ordered copy so the header tabs, search and prev/next follow the new order.
   const { categories, move, reset, customized } = useTreeOrder(source.categories);
@@ -132,6 +134,7 @@ function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotice
           onViewNotices={onViewNotices}
           onViewCg={onViewCg}
           onViewSpecials={onViewSpecials}
+          onViewCase={onViewCase}
           onSelect={handleSelect}
           onMenuClick={() => setSidebarOpen(true)}
         />
@@ -269,13 +272,15 @@ export default function App() {
     isCgRoute() ? 'cg'
       : isSpecialsRoute() ? 'specials'
         : isNoticesRoute() ? 'notices'
-          : isTrackerRoute() ? 'tracker' : 'guide',
+          : isTrackerRoute() ? 'tracker'
+            : isCaseRoute() ? 'case' : 'guide',
   );
   // Last guide node id, so closing the tracker lands back where the reader was.
   // Seeded from the URL, because the hashchange listener below only fires on
   // later navigations, not on the load that opened this very page.
   const lastNodeRef = useRef<string>(
-    isTrackerRoute() || isNoticesRoute() || isCgRoute() || isSpecialsRoute() ? '' : guideNodeId(),
+    isTrackerRoute() || isNoticesRoute() || isCgRoute() || isSpecialsRoute() || isCaseRoute()
+      ? '' : guideNodeId(),
   );
 
   useEffect(() => {
@@ -288,6 +293,8 @@ export default function App() {
         setMode('specials');
       } else if (isCgRoute()) {
         setMode('cg');
+      } else if (isCaseRoute()) {
+        setMode('case');
       } else {
         setMode('guide');
         const nodeId = guideNodeId();
@@ -337,6 +344,10 @@ export default function App() {
     window.location.hash = '/specials';
   };
 
+  const openCase = () => {
+    window.location.hash = '/case';
+  };
+
   return (
     <GuideDataContext.Provider value={data}>
       <TrackerProvider>
@@ -349,11 +360,13 @@ export default function App() {
             onViewNotices={openNotices}
             onViewCg={openCg}
             onViewSpecials={openSpecials}
+            onViewCase={openCase}
           />
           {mode === 'tracker' && <TrackerApp data={data} />}
           {mode === 'notices' && <NoticesView />}
           {mode === 'cg' && <CgView />}
           {mode === 'specials' && <SpecialsView guide={data} />}
+          {mode === 'case' && <CaseReaderApp />}
         </HighlightProvider>
       </TrackerProvider>
     </GuideDataContext.Provider>

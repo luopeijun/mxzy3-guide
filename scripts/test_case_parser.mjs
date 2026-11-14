@@ -1,0 +1,188 @@
+/* Regression for src/lib/caseParser.ts.
+ *
+ * 1) A hand-built .sa2-shaped buffer with one TV021 男主角 record. Its rolled
+ *    values (325/445/395) must map to C/A/B from both the static grade table
+ *    and the three-star difficulty ranges. Self-contained, no game install.
+ * 2) When a real save is available, parse it and assert the same invariants
+ *    hold across every notice (skipped on machines without the game).
+ *
+ * Usage: node scripts/test_case_parser.mjs [path/to/save.sa2]
+ */
+
+import { build } from 'esbuild';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const tmp = path.join(root, '.tmp');
+fs.mkdirSync(tmp, { recursive: true });
+const bundle = path.join(tmp, 'case-parser.test.mjs');
+await build({
+  entryPoints: [path.join(root, 'src/lib/caseParser.ts')],
+  outfile: bundle,
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  logLevel: 'silent',
+});
+const { parseSave, toCsv } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
+
+let failures = 0;
+let checks = 0;
+const check = (ok, label, extra = '') => {
+  checks += 1;
+  console.log(`${ok ? 'OK  ' : 'FAIL'} ${label}${extra ? ` :: ${extra}` : ''}`);
+  if (!ok) failures += 1;
+};
+
+const TABLES = {
+  source: 'fixture',
+  cases: { TV021: ['守候', '愛情偶像劇', '單元劇', 'SoSa電視'] },
+  needEffect: { '愛情偶像劇|男主角': [3, 0, 0, 1, 2, 0, 0, 0, 0] },
+  difficulty: [
+    [[180, 300], [150, 250], [120, 200], [100, 160]],
+    [[330, 420], [280, 360], [210, 280], [160, 220]],
+    [[420, 480], [360, 420], [270, 330], [220, 300]],
+    [[540, 620], [470, 540], [360, 440], [290, 360]],
+    [[680, 780], [600, 680], [480, 570], [390, 470]],
+  ],
+  firms: { 4: '鉅子娛樂' },
+};
+
+function writeAsciiWords(view, offset, text) {
+  for (let i = 0; i < text.length; i += 1) view.setUint32(offset + 4 * i, text.charCodeAt(i), true);
+}
+
+function makeSave() {
+  const buffer = new ArrayBuffer(1024);
+  const bytes = new Uint8Array(buffer);
+  const view = new DataView(buffer);
+
+  // Case block marker (int32-ASCII), then a 192-byte role record at offset 32.
+  writeAsciiWords(view, 0, 'Case');
+  const rec = 32;
+  const tag = [0x54, 0x56, 0x30, 0x32, 0x31, 0x31]; // TV0211
+  tag.forEach((b, i) => { bytes[rec + 12 + i] = b; });
+  [0xa8, 0x6b, 0xa5, 0x44, 0xa8, 0xa4].forEach((b, i) => { bytes[rec + 20 + i] = b; }); // 男主角
+  view.setUint32(rec + 32, 3, true); // three stars
+  [325, 0, 0, 445, 395, 0, 0, 0, 0].forEach((v, i) => view.setUint32(rec + 40 + 4 * i, v, true));
+
+  // CaseEnd closes the block, CaseFirm lists TV021 under firm slot 4.
+  writeAsciiWords(view, 240, 'CaseEnd');
+  writeAsciiWords(view, 300, 'CaseFirm');
+  view.setUint32(332, 1, true);  // seq
+  view.setUint32(336, 4, true);  // firm slot
+  view.setUint32(340, 5, true);  // code length
+  writeAsciiWords(view, 344, 'TV021');
+  return buffer;
+}
+
+const result = parseSave(makeSave(), TABLES, 'fixture.sa2');
+check(result.blocks.Case?.[0] === 0, 'Case block located', JSON.stringify(result.blocks));
+check(result.notices.length === 1, 'one current notice');
+const notice = result.notices[0];
+check(notice?.code === 'TV021' && notice.name === '守候', 'notice joined with static name');
+check(notice?.type === '愛情偶像劇' && notice.company === 'SoSa電視', 'notice type and company');
+check(notice?.firmSlot === 4 && notice.firmName === '鉅子娛樂', 'firm slot joined with company name');
+check(result.roleRecordCount === 1 && notice?.roles.length === 1, 'one role record');
+const role = notice?.roles[0];
+check(role?.role === '男主角' && role.star === 3, 'Big5 role name and star');
+const expected = [['演技', 325, 'C'], ['名气', 445, 'A'], ['仪态', 395, 'B']];
+const actual = (role?.requirements ?? []).map((r) => [r.attr, r.value, r.staticGrade]);
+check(JSON.stringify(actual) === JSON.stringify(expected), 'rolled values and static grades', JSON.stringify(actual));
+check((role?.requirements ?? []).every((r) => r.rolledGrade === r.staticGrade),
+  'difficulty ranges agree with static grades');
+check(toCsv(result).includes('"TV021"') && toCsv(result).includes('演技325'), 'CSV export');
+check(result.unknownCodes.length === 0, 'no unknown notice codes');
+
+const savePath = process.argv[2]
+  ?? 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
+if (fs.existsSync(savePath)) {
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const data = fs.readFileSync(savePath);
+  const real = parseSave(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength), tables, path.basename(savePath));
+  const reqs = real.notices.flatMap((n) => n.roles.flatMap((r) => r.requirements));
+  const gradeIndex = { A: 0, B: 1, C: 2, D: 3 };
+  // The difficulty ranges overlap (2-star A is 320-400 and B is 280-360), so
+  // reverse-inferring a grade from a value is ambiguous. The real invariant is
+  // that every rolled value sits inside the range of its static grade.
+  const inRange = (notice, role, req) => {
+    const idx = gradeIndex[req.staticGrade];
+    if (idx === undefined) return true;
+    const range = tables.difficulty[role.star - 1]?.[idx];
+    return !range || (req.value >= range[0] && req.value <= range[1]);
+  };
+  const withGrade = real.notices.flatMap((n) => n.roles.flatMap((r) =>
+    r.requirements.filter((q) => q.staticGrade).map((q) => ({ n, r, q }))));
+  const outOfRange = withGrade.filter(({ n, r, q }) => !inRange(n, r, q));
+  console.log(`\nreal save: ${real.notices.length} notices / ${real.roleRecordCount} role records / ${reqs.length} requirements`);
+  check(real.notices.length > 0, 'real save has current notices');
+  check(reqs.length > 0, 'real save has rolled values');
+  check(reqs.every((r) => r.value >= 50 && r.value <= 999), 'all values in plausible range');
+  check(withGrade.length > 0 && outOfRange.length === 0,
+    'rolled values sit inside their static grade ranges',
+    `${withGrade.length} graded items, out of range: ${JSON.stringify(outOfRange.map(({ n, r, q }) => [n.code, r.role, q.attr, q.value, q.staticGrade]))}`);
+  check(real.unknownCodes.length <= real.notices.length / 2,
+    'most notice codes resolve in bundled tables', `unknown: ${real.unknownCodes.join(',') || 'none'}`);
+
+  // --- Dates, booking window, shooting progress, company refresh batches ---
+  check(real.currentDate !== null, 'in-game date read from the save header',
+    JSON.stringify(real.currentDate));
+  const withDates = real.notices.filter((n) => n.openDate && n.deadline && n.periodStart && n.periodEnd);
+  check(withDates.length === real.notices.length, 'every notice has its three date tuples',
+    `${withDates.length}/${real.notices.length}`);
+  const { parseDay, dayText } = await import(pathToFileURL(bundle).href);
+  check(withDates.every((n) => n.deadline === dayText(parseDay(n.periodStart) - 1)),
+    'deadline is the day before shooting starts');
+  check(withDates.every((n) => n.execDays === parseDay(n.periodEnd) - parseDay(n.periodStart) + 1),
+    'shooting length is inclusive of both ends');
+  check(withDates.every((n) => parseDay(n.openDate) < parseDay(n.periodStart)
+    && parseDay(n.periodStart) < parseDay(n.periodEnd)), 'dates are in order');
+  check(real.notices.some((n) => n.status === 'closing'),
+    'notices closing within 7 days are flagged');
+  check(real.batches.length > 0 && real.batches.every((b) => b.label === '周一'),
+    'company refresh batches all land on a Monday',
+    real.batches.map((b) => `${b.date} ${b.label}`).join(', '));
+  check(real.batches.every((b, i, all) => i === 0 || all[i - 1].dayNumber < b.dayNumber),
+    'refresh batches are sorted by date');
+  check(real.batches.every((b) => b.companies.length > 0),
+    'every refresh batch names its production companies');
+  check(real.artists.length > 0 && real.artists.every((a) => a.abilities.length === 9
+    && a.noticeCounts.length === 5 && a.social.length === 5),
+    'artist state blocks carry nine abilities, five social stats and five notice counts',
+    `${real.artists.length} blocks`);
+  check(real.roster.some((r) => r.name === '路風') && real.roster.some((r) => r.name === '黎華'),
+    'roster table resolves the signed artists and the booking artist');
+  check(real.notices.every((n) => n.roles.every((r) => typeof r.reservedBy === 'string')),
+    'every role carries a (possibly empty) reservation');
+  check(toCsv(real).includes('"停止接取"') && toCsv(real).includes('"执行天数"'),
+    'CSV includes the booking window and shooting length');
+
+  // Exact values only for the frozen investigation snapshot.
+  if (path.basename(savePath) === 'probe.sa2') {
+    check(real.currentDate?.text === '2006/1/29' && real.currentDate?.label === '周日',
+      'snapshot game date is 2006/1/29 (Sunday)');
+    const shouhou = real.notices.find((n) => n.code === 'TV021');
+    check(shouhou?.openDate === '2006/1/16' && shouhou?.deadline === '2006/2/12'
+      && shouhou?.periodStart === '2006/2/13' && shouhou?.periodEnd === '2006/4/9'
+      && shouhou?.execDays === 56, '守候 booking window and shooting period');
+    check(shouhou?.roles.find((r) => r.roleCode === 'TV0211')?.reservedBy === '黎华'
+      && real.notices.find((n) => n.code === 'TV221')?.roles
+        .find((r) => r.roleCode === 'TV2211')?.reservedBy === '黎华',
+      'the two verified 黎华 reservations');
+    check(real.notices.filter((n) => n.status === 'closing').length === 2,
+      'exactly two notices close within 7 days');
+    check(real.nextUpdate?.date === '2006/1/30' && real.nextUpdate.companies.length === 3
+      && real.nextUpdate.kinds.includes('唱片'), 'next Monday refresh is the three record labels');
+    check(real.forecastDate === '2006/2/6', 'the extrapolated refresh after next');
+    check(real.artists.some((a) => a.abilities[0] === 1886 && a.abilities[8] === 2838
+      && a.stress === 76 && a.fatigue === 98),
+      'the save-editor screenshot values are present in an artist block');
+  }
+} else {
+  console.log(`\nreal save not found (${savePath}), skipped live-save checks`);
+}
+
+console.log(`\n${checks - failures}/${checks} checks passed`);
+process.exit(failures ? 1 : 0);
