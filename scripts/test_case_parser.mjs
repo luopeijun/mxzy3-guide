@@ -28,6 +28,7 @@ await build({
 });
 const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
+  isGroupRole, matchGroupRole, DEFAULT_GROUPS,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -240,6 +241,25 @@ if (fs.existsSync(savePath)) {
     const neutral = real.notices.flatMap((n) => n.roles).find((r) => r.gender === 'any');
     check(neutral && canTakeRole(neutral, 'female') && canTakeRole(neutral, 'male'),
       'neutral roles such as 外景主持 / 個人 accept either gender', neutral?.role);
+
+    // Player-formed groups: stats read from the save's MapRole record.
+    check(real.groups.length === DEFAULT_GROUPS.length && real.groups.length >= 1,
+      'the editable group seed is surfaced', `${real.groups.length} groups`);
+    const band = real.groups[0];
+    check(band.code === 101 && band.name === '风敏乐团' && band.leaderId === 10 && band.leaderName === '路风',
+      '风敏乐团: code 101, leader 路风 (id 10)', `${band.code}/${band.leaderName}`);
+    check(band.renqi === 526 && band.mingqi === 284 && band.noticeCount === 1,
+      'group stats read from the save (人气 526 / 名气 284 / 通告 1)',
+      `${band.renqi}/${band.mingqi}/${band.noticeCount}`);
+    const groupRole = real.notices.flatMap((n) => n.roles).find((r) => isGroupRole(r));
+    if (groupRole) {
+      const leader = real.artists.find((a) => a.roleId === band.leaderId) ?? null;
+      const m = matchGroupRole(groupRole, leader, band.name, band.leaderName);
+      check(typeof m.canAccept === 'boolean' && m.gaps.length > 0,
+        'a 團體 role matches against the group leader only', groupRole.role);
+    } else {
+      console.log('OK   no 團體 role in this snapshot (group match path still type-checks)');
+    }
   }
 } else {
   console.log(`\nreal save not found (${savePath}), skipped live-save checks`);

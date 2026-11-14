@@ -4,9 +4,9 @@ import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
   ATTRS, DEFAULT_RESERVATIONS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
-  canTakeRole, matchRole, parseSave, toCsv,
+  canTakeRole, isGroupRole, matchGroupRole, matchRole, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
-  type ParseResult, type RoleRecord,
+  type GroupRecord, type ParseResult, type RoleRecord,
 } from '../../lib/caseParser';
 
 const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
@@ -359,6 +359,66 @@ export default function CaseReaderApp() {
               </div>
             </details>
 
+            {/* 我方团体：团体编码 / 人气 / 名气 / 通告数量从存档读取，
+                成员与队长来自可编辑的默认值（见 caseParser 的 DEFAULT_GROUPS）。 */}
+            {result.groups.length > 0 && (
+              <details data-case-groups open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+                <summary data-case-groups-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
+                  我方团体 · {result.groups.length} 个
+                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                    {result.groups.map((group) => group.name).join(' / ')}
+                  </span>
+                </summary>
+                <div
+                  data-case-group-grid
+                  className="mt-2 grid gap-2"
+                  style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}
+                >
+                  {result.groups.map((group) => (
+                    <div
+                      key={group.code}
+                      data-case-group
+                      data-case-group-code={group.code}
+                      className="rounded-ui-md border border-line bg-surface px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-ui-xs font-semibold text-ink">{group.name}</span>
+                        <span className="rounded-full bg-brand px-2 py-0.5 text-ui-2xs font-semibold text-white">
+                          团体编码 {group.code}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-ui-2xs text-ink-muted">
+                        <span data-case-group-renqi>团体人气 <b className="text-ink">{group.renqi}</b></span>
+                        <span data-case-group-mingqi>团体名气 <b className="text-ink">{group.mingqi}</b></span>
+                        <span data-case-group-count>团体通告数量 <b className="text-ink">{group.noticeCount}</b></span>
+                      </div>
+                      <div className="mt-1.5 text-ui-2xs text-ink-muted">
+                        队长
+                        <b className="ml-1 text-brand-strong" data-case-group-leader>{group.leaderName}</b>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {group.memberNames.map((name, idx) => (
+                          <span
+                            key={`${name}-${idx}`}
+                            data-case-group-member
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-ui-2xs',
+                              name === group.leaderName
+                                ? 'border-brand bg-brand-soft font-semibold text-brand-strong'
+                                : 'border-line bg-surface-soft text-ink-muted',
+                            )}
+                          >
+                            {name}
+                            {name === group.leaderName && <span className="text-[10px]">队长</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+
             {/* 各公司周一更新批次：只列存档已排定的，不外推下下周。 */}
             <details data-case-updates className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
               <summary className="cursor-pointer font-semibold text-brand-strong">
@@ -514,6 +574,8 @@ export default function CaseReaderApp() {
                         key={`${notice.code}-${notice.firmSlot}`}
                         notice={notice}
                         signed={signedArtists}
+                        groups={result.groups}
+                        artists={artists}
                         roster={result.roster.map((r) => r.name).filter(Boolean)}
                         editingRole={editingRole}
                         setEditingRole={setEditingRole}
@@ -624,32 +686,44 @@ function RequirementChips({ role }: { role: RoleRecord }) {
 }
 
 /** One column holds every signed artist's verdict, one line per artist.
- *  Artists ruled out by the role's gender are simply left out. */
-function MatchList({ role, signed, cellClass }: {
+ *  A 團體 role is matched against each group's leader instead, so only the
+ *  captain's numbers decide whether the group can take it. */
+function MatchList({ role, signed, groups, artists, cellClass }: {
   role: RoleRecord;
   signed: SignedArtist[];
+  groups: GroupRecord[];
+  artists: ArtistStats[];
   cellClass?: string;
 }) {
-  const rows = signed
-    .filter((item) => item.artist && canTakeRole(role, item.option.gender))
-    .map((item) => ({
-      option: item.option,
-      match: matchRole(role, item.artist as ArtistStats, item.option.name, item.option.gender),
-    }))
-    // 可以接的一位排在最上面，更显眼。
-    .sort((a, b) => Number(b.match.canAccept) - Number(a.match.canAccept));
+  const groupRole = isGroupRole(role);
+  const rows = groupRole
+    ? groups.map((group) => {
+        const leader = artists.find((a) => a.roleId === group.leaderId) ?? null;
+        return {
+          key: `group-${group.code}`,
+          match: matchGroupRole(role, leader, group.name, group.leaderName),
+        };
+      })
+    : signed
+      .filter((item) => item.artist && canTakeRole(role, item.option.gender))
+      .map((item) => ({
+        key: `artist-${item.option.id}`,
+        match: matchRole(role, item.artist as ArtistStats, item.option.name, item.option.gender),
+      }));
+  // 可以接的一位排在最上面，更显眼。
+  rows.sort((a, b) => Number(b.match.canAccept) - Number(a.match.canAccept));
   return (
     <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
       {rows.length === 0 ? (
         <span className="text-ui-2xs text-ink-faint">—</span>
       ) : (
         <div data-case-match-group className="flex flex-col gap-1">
-          {rows.map(({ option, match }) => (
+          {rows.map(({ key, match }) => (
             <div
-              key={option.id}
+              key={key}
               data-case-match
-              data-case-match-artist
-              data-match-artist={option.name}
+              data-case-match-group={groupRole ? 'yes' : undefined}
+              data-match-artist={match.artistName}
               data-match-result={match.canAccept ? 'yes' : 'no'}
               className={cn(
                 'flex items-center gap-1 text-ui-2xs leading-[1.4]',
@@ -657,15 +731,15 @@ function MatchList({ role, signed, cellClass }: {
               )}
             >
               {match.canAccept ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-tag-follow px-1.5 py-0.5 text-white">
+                <span className="inline-flex items-center gap-1 rounded-full bg-growth px-1.5 py-0.5 text-white">
                   <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
                     <path d="M2.5 6.2 4.8 8.5 9.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <b>{option.name}</b> 可以接
+                  <b>{match.artistName}</b> 可以接
                 </span>
               ) : (
                 <span>
-                  <b>{option.name}</b>{' '}
+                  <b>{match.artistName}</b>{' '}
                   差 {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${gap.diff}`).join(' · ')}
                 </span>
               )}
@@ -681,10 +755,12 @@ function MatchList({ role, signed, cellClass }: {
  *  those columns blank, with no arrow or repeated text. No rowspan, so a
  *  reserved role only dims its own cells and never the whole notice. */
 function NoticeRows({
-  notice, signed, roster, editingRole, setEditingRole, updateReservation,
+  notice, signed, groups, artists, roster, editingRole, setEditingRole, updateReservation,
 }: {
   notice: CaseNotice;
   signed: SignedArtist[];
+  groups: GroupRecord[];
+  artists: ArtistStats[];
   roster: string[];
   editingRole: string;
   setEditingRole: (value: string) => void;
@@ -831,7 +907,7 @@ function NoticeRows({
             <Td className={roleCell}>
               <RequirementChips role={role} />
             </Td>
-            <MatchList role={role} signed={signed} cellClass={roleCell} />
+            <MatchList role={role} signed={signed} groups={groups} artists={artists} cellClass={roleCell} />
             {reservationCell(role, reserved)}
           </tr>
         );

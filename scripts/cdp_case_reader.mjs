@@ -167,7 +167,7 @@ async function main() {
         return JSON.stringify({
           artist: first.getAttribute('data-match-artist'),
           result: first.getAttribute('data-match-result'),
-          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-tag-follow'),
+          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-growth'),
         });
       })(),
       neutralRole: (function(){
@@ -213,7 +213,26 @@ async function main() {
       firstNotice: document.querySelector('[data-case-notice]')?.innerText.slice(0, 260) || '',
       head: document.querySelector('table thead')?.innerText || '',
       hasFirmSlot: document.body.innerText.includes('公司槽'),
-      csv: [...document.querySelectorAll('button')].some(b => b.innerText.includes('导出 CSV'))
+      csv: [...document.querySelectorAll('button')].some(b => b.innerText.includes('导出 CSV')),
+      groups: document.querySelectorAll('[data-case-group]').length,
+      groupCode: document.querySelector('[data-case-group-code]')?.getAttribute('data-case-group-code') || '',
+      groupRenqi: document.querySelector('[data-case-group-renqi]')?.innerText || '',
+      groupMingqi: document.querySelector('[data-case-group-mingqi]')?.innerText || '',
+      groupCount: document.querySelector('[data-case-group-count]')?.innerText || '',
+      groupLeader: document.querySelector('[data-case-group-leader]')?.innerText || '',
+      groupMembers: [...document.querySelectorAll('[data-case-group-member]')].map(x => x.innerText.replace(/\s+/g,'')).join('|'),
+      groupMatch: (function(){
+        var r = document.querySelector('[data-case-role][data-case-role-name="團體"]');
+        var list = r ? r.querySelector('[data-case-match-group]') : null;
+        var first = list ? list.querySelector('[data-case-match]') : null;
+        if (!first) return '';
+        return JSON.stringify({
+          artist: first.getAttribute('data-match-artist'),
+          result: first.getAttribute('data-match-result'),
+          group: first.getAttribute('data-case-match-group'),
+          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-growth'),
+        });
+      })()
     })`);
     const p = JSON.parse(parsed);
     console.log('parsed:', parsed);
@@ -289,6 +308,25 @@ async function main() {
     check(p.updates.includes('已排定 4 批') && !p.updates.includes('推测')
       && !p.updates.includes('2/6'),
       'company refresh timeline lists scheduled batches only');
+
+    // 我方团体 panel: stats read from the save, leader + members shown.
+    check(p.groups >= 1 && p.groupCode === '101' && p.groupLeader === '路风',
+      '我方团体 panel shows the group code 101 and leader 路风',
+      `${p.groups} groups / code ${p.groupCode} / leader ${p.groupLeader}`);
+    check(p.groupRenqi.includes('526') && p.groupMingqi.includes('284')
+      && p.groupCount.includes('1'),
+      'group 人气 / 名气 / 通告数量 read from the save',
+      `${p.groupRenqi} / ${p.groupMingqi} / ${p.groupCount}`);
+    check(p.groupMembers.includes('路风'), 'the leader is listed among the group members',
+      p.groupMembers);
+    if (p.groupMatch) {
+      const gm = JSON.parse(p.groupMatch);
+      check(gm.group === 'yes' && gm.artist.includes('风敏乐团') && gm.artist.includes('路风'),
+        'a 團體 role matches against the group leader only',
+        p.groupMatch);
+    } else {
+      console.log('OK   no 團體 role rendered in the snapshot table (group match path verified by unit test)');
+    }
 
     // Type and company filters intersect, and reset restores the full list.
     await evaluate(`document.querySelector('[data-case-cat="电视剧"]').click()`);

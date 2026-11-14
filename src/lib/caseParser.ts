@@ -230,6 +230,74 @@ export interface UpdateBatch {
   scheduled: boolean;
 }
 
+/** A player-formed group, e.g. 风敏乐团. The save marks the roster number of
+ *  its leader and members, but the editor-style attributes (编码 / 人气 / 名气 /
+ *  通告数量) live in a dedicated record right after the `MapRole` name block. */
+export interface GroupSeed {
+  /** 团体编码 as shown in the save editor, e.g. 101. */
+  code: number;
+  name: string;
+  /** Game roster number of the group's leader (队长). */
+  leaderId: number;
+  /** Game roster numbers of every member, leader included. */
+  memberIds: number[];
+}
+
+/** Groups the reader knows about. The bundled seed is editable like the
+ *  reservation list; the player can change it in code. Only the numeric
+ *  attributes (人气 / 名气 / 通告数量) are read straight from the save. */
+export const DEFAULT_GROUPS: GroupSeed[] = [
+  // 队长 路风（编号 10）；成员名单由玩家补全。
+  { code: 101, name: '风敏乐团', leaderId: 10, memberIds: [10] },
+];
+
+export interface GroupRecord extends GroupSeed {
+  leaderName: string;
+  memberNames: string[];
+  /** 团体人气, read from the save's group record. */
+  renqi: number;
+  /** 团体名气, read from the save's group record. */
+  mingqi: number;
+  /** 团体通告数量, read from the save's group record. */
+  noticeCount: number;
+  /** Always true here: a group only shows up because the player formed one. */
+  signed: boolean;
+  /** Offset of the MapRole name block the stats were read from, or -1. */
+  offset: number;
+}
+
+/** A role whose name contains 團體 / 团体 is filled by a group, not a solo
+ *  artist, so its numeric match should be tested against the group's leader. */
+export function isGroupRole(role: RoleRecord): boolean {
+  return /團體|团体/.test(role.role);
+}
+
+/** Group-role match: only the leader's personal abilities matter; member
+ *  stats are irrelevant, per the player's rule. */
+export function matchGroupRole(
+  role: RoleRecord,
+  leader: ArtistStats | null,
+  groupName: string,
+  leaderName: string,
+): MatchResult {
+  const gaps = ATTRS
+    .filter((attr) => role.values[attr])
+    .map((attr) => {
+      const need = role.values[attr];
+      const have = leader?.abilities[ATTRS.indexOf(attr)] ?? 0;
+      return { attr, need, have, diff: need - have };
+    });
+  const missing = gaps.filter((gap) => gap.diff > 0);
+  return {
+    artistIndex: leader?.index ?? -1,
+    artistName: `${groupName}（队长 ${leaderName}）`,
+    eligible: true,
+    canAccept: missing.length === 0,
+    gaps,
+    missing: missing.length,
+  };
+}
+
 export interface ParseResult {
   saveName: string;
   saveSize: number;
@@ -242,6 +310,8 @@ export interface ParseResult {
   artistDirectory: ArtistOption[];
   /** Numbers of the artists the save marks as signed (1..4 of them). */
   signedArtistIds: number[];
+  /** Player-formed groups, with attributes read from the save. */
+  groups: GroupRecord[];
   /** Full 284-byte role-name table at the head of the save. */
   roster: RosterEntry[];
   /** Dates from the save header, used for all countdowns. */
@@ -606,6 +676,48 @@ function readCurrentDate(view: DataView, byteLength: number): GameDate | null {
   return null;
 }
 
+/** Read the player's groups. The 人气 / 名气 / 通告数量 live in a record that
+ *  starts 28 bytes after the `MapRole` name block; that triple is unique in the
+ *  save, so it is a stable anchor. Code, leader and members come from the
+ *  editable DEFAULT_GROUPS seed, since the save has no clean field for them. */
+function parseGroups(
+  bytes: Uint8Array,
+  view: DataView,
+  artistDirectory: ArtistOption[],
+): GroupRecord[] {
+  const nameOf = (id: number): string =>
+    artistDirectory.find((a) => a.id === id)?.name
+    ?? ARTIST_DIRECTORY.find((a) => a.id === id)?.name
+    ?? `编号${id}`;
+  const mapRole = findInt32Names(bytes, view, ['MapRole'])['MapRole'];
+  let offset = -1;
+  let renqi = 0;
+  let mingqi = 0;
+  let noticeCount = 0;
+  if (mapRole) {
+    const g = mapRole[0] + 28;
+    const r = view.getUint32(g, true);
+    const m = view.getUint32(g + 4, true);
+    const n = view.getUint32(g + 8, true);
+    if (r <= 9999 && m <= 9999 && n <= 999) {
+      renqi = r;
+      mingqi = m;
+      noticeCount = n;
+      offset = mapRole[0];
+    }
+  }
+  return DEFAULT_GROUPS.map((seed) => ({
+    ...seed,
+    leaderName: nameOf(seed.leaderId),
+    memberNames: seed.memberIds.map(nameOf),
+    renqi,
+    mingqi,
+    noticeCount,
+    signed: true,
+    offset,
+  }));
+}
+
 /** Parse one uploaded save. The buffer is a snapshot: the game may overwrite
  *  Auto.sa2 on disk at any moment, but this copy never changes. */
 export function parseSave(
@@ -644,6 +756,7 @@ export function parseSave(
     };
   });
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
+  const groups = parseGroups(bytes, view, artistDirectory);
 
   /** code -> best [open, start, end] triple found anywhere in the Case block. */
   const datesByCode: Record<string, DateTuple[]> = {};
@@ -750,6 +863,7 @@ export function parseSave(
     artists,
     artistDirectory,
     signedArtistIds,
+    groups,
     roster,
     currentDate,
     batches,
