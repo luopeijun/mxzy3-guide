@@ -148,6 +148,13 @@ async function main() {
       closingRows: document.querySelectorAll('[data-case-status="closing"]').length,
       reservedRows: document.querySelectorAll('[data-case-reserved="yes"]').length,
       reservedText: [...document.querySelectorAll('[data-case-reserved="yes"] [data-case-reservation]')].map(x => x.innerText).join('|'),
+      workDays: document.querySelectorAll('[data-case-workdays]').length,
+      workDaysFirst: document.querySelector('[data-case-workdays]')?.innerText || '',
+      upcoming: document.querySelectorAll('[data-case-upcoming]').length,
+      upcomingText: document.querySelector('[data-case-upcoming]')?.innerText || '',
+      reservePanel: !!document.querySelector('[data-case-reserve-panel]'),
+      tableSelects: document.querySelectorAll('[data-case-table] select').length,
+      reserveChips: document.querySelectorAll('[data-case-reserve-chip]').length,
       matches: document.querySelectorAll('[data-case-match]').length,
       matchCols: document.querySelectorAll('[data-case-match-col]').length,
       matchColHead: document.querySelector('[data-case-match-col]')?.innerText || '',
@@ -275,19 +282,28 @@ async function main() {
     check(p.head.includes('所需数值') && p.head.indexOf('数值对比') < p.head.indexOf('预约'),
       'the comparison column sits just before the reservation column',
       p.head.replace(/\s+/g, ' '));
-    check(p.matches > 0 && p.femaleLead === '萧依莉|路敏'
-      && p.neutralRole === '萧依莉|路敏|路风',
+    check(p.matches > 0 && p.femaleLead === '路敏|萧依莉'
+      && p.neutralRole === '路敏|萧依莉|路风',
       'gender-mismatched artists are dropped, can-accept artists sort first',
       `${p.matches} lines; female=${p.femaleLead}; neutral=${p.neutralRole}`);
     check(p.femaleLeadFirst === JSON.stringify({
-      artist: '萧依莉', result: 'yes', greenBadge: true,
-    }), 'the first verdict is a green checkmark badge for the artist who can accept',
+      artist: '路敏', result: 'no', greenBadge: false,
+    }), 'the first verdict is the sorted top artist (÷10 fix: 萧依莉 no longer auto-accepts)',
       p.femaleLeadFirst);
 
     // No merged cells: a reserved role dims only its own cells.
     check(p.rowspans === 0, 'the notice table has no merged rows', String(p.rowspans));
-    check(p.reservedRows === 2 && p.reservedText.includes('黎华（已预约）'),
-      'the two 黎华 reservations render with the label', p.reservedText);
+    check(p.reservedRows === 2 && p.reservedText.includes('黎华'),
+      'the two 黎华 reservations render as read-only names', p.reservedText);
+    check(p.tableSelects === 0 && !p.reservePanel,
+      'the reservation column is read-only: no dropdown, no settings panel',
+      `selects=${p.tableSelects} panel=${p.reservePanel}`);
+    check(p.upcoming >= 1 && p.upcomingText.includes('下周更新'),
+      'not-yet-open notices are labelled 下周更新', `${p.upcoming} badges / ${p.upcomingText}`);
+    check(p.workDays === p.notices && p.workDaysFirst.includes('工作')
+      && p.workDaysFirst.includes('每周'),
+      'every notice shows its 工作天数 / 每周上限 from the Length table',
+      `${p.workDays} badges / ${p.workDaysFirst.replace(/\s+/g, ' ')}`);
     check(p.reservedNoticeCellDim === false && p.reservedDimCells <= 5 * p.reservedRows,
       'only the reserved role cells dim, not the whole notice',
       `firstCell=${p.reservedNoticeCellDim} dimmed=${p.reservedDimCells}`);
@@ -309,24 +325,22 @@ async function main() {
       && !p.updates.includes('2/6'),
       'company refresh timeline lists scheduled batches only');
 
-    // 我方团体 panel: stats read from the save, leader + members shown.
-    check(p.groups >= 1 && p.groupCode === '101' && p.groupLeader === '路风',
-      '我方团体 panel shows the group code 101 and leader 路风',
-      `${p.groups} groups / code ${p.groupCode} / leader ${p.groupLeader}`);
-    check(p.groupRenqi.includes('526') && p.groupMingqi.includes('284')
-      && p.groupCount.includes('1'),
-      'group 人气 / 名气 / 通告数量 read from the save',
-      `${p.groupRenqi} / ${p.groupMingqi} / ${p.groupCount}`);
-    check(p.groupMembers.includes('路风'), 'the leader is listed among the group members',
-      p.groupMembers);
-    if (p.groupMatch) {
-      const gm = JSON.parse(p.groupMatch);
-      check(gm.group === 'yes' && gm.artist.includes('风敏乐团') && gm.artist.includes('路风'),
-        'a 團體 role matches against the group leader only',
-        p.groupMatch);
-    } else {
-      console.log('OK   no 團體 role rendered in the snapshot table (group match path verified by unit test)');
-    }
+    // 我方团体：编号 101 起直接从存档读，不提供任何手动选择。
+    const grp = JSON.parse(await evaluate(`JSON.stringify({
+      groups: document.querySelectorAll('[data-case-group]').length,
+      hasPicker: !!document.querySelector('[data-case-group-option]'),
+      groupCode: document.querySelector('[data-case-group-code]')?.getAttribute('data-case-group-code') || '',
+      groupRenqi: document.querySelector('[data-case-group-renqi]')?.innerText || '',
+      groupMingqi: document.querySelector('[data-case-group-mingqi]')?.innerText || '',
+      groupCount: document.querySelector('[data-case-group-count]')?.innerText || '',
+    })`));
+    check(grp.groups >= 1 && grp.groupCode === '101' && !grp.hasPicker,
+      '我方团体直接读存档：编号 101，且没有手动选择入口',
+      `${grp.groups} groups / code ${grp.groupCode} / picker ${grp.hasPicker}`);
+    check(grp.groupRenqi.includes('526') && grp.groupMingqi.includes('284')
+      && grp.groupCount.includes('1'),
+      '团体 人气 / 名气 / 通告数量 从存档读取 (526 / 284 / 1)',
+      `${grp.groupRenqi} / ${grp.groupMingqi} / ${grp.groupCount}`);
 
     // Type and company filters intersect, and reset restores the full list.
     await evaluate(`document.querySelector('[data-case-cat="电视剧"]').click()`);

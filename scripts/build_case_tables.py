@@ -83,6 +83,27 @@ def load_need_effect(data_dir):
     return out
 
 
+def load_length(data_dir):
+    """`notice kind|role` -> [工作天数, 每週上限].
+
+    Length.tab: 4-byte id, the kind and role Big5 strings packed into bytes
+    4..24, then three ints at 24 / 28 / 32. The last one is 工作天數 (唱片 25 天、
+    電影 40 天), the middle one is 每週可排上限 (5 天，主持类 2~3 天).
+    """
+    records = read_table(os.path.join(data_dir, "Length.tab"))
+    out = {}
+    for rec in records:
+        parts = [m.group().decode("big5", "replace")
+                 for m in re.finditer(rb"[^\x00]+", rec[4:24])]
+        if len(parts) < 2:
+            continue
+        _x, per_week, days = struct.unpack_from("<III", rec, 24)
+        if not days or not per_week:
+            continue
+        out[parts[0] + "|" + parts[1]] = [days, per_week]
+    return out
+
+
 def load_difficulty(data_dir):
     """Star 1..5 -> [[A lo, hi], [B lo, hi], [C lo, hi], [D lo, hi]]."""
     records = read_table(os.path.join(data_dir, "Difficulty.tab"))
@@ -118,6 +139,7 @@ def main():
         "source": "明星志愿3 繁中三合一（tw）",
         "cases": load_cases(args.data),
         "needEffect": load_need_effect(args.data),
+        "length": load_length(args.data),
         "difficulty": load_difficulty(args.data),
         "firms": load_firms(args.data),
     }
@@ -125,6 +147,7 @@ def main():
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
     print("cases        %d" % len(payload["cases"]))
     print("needEffect   %d" % len(payload["needEffect"]))
+    print("length       %d" % len(payload["length"]))
     print("difficulty   %d stars" % len(payload["difficulty"]))
     print("firms        %d" % len(payload["firms"]))
     print("written      %s (%d bytes)" % (OUT, os.path.getsize(OUT)))

@@ -3,14 +3,13 @@ import type { ChangeEvent, DragEvent, ReactNode } from 'react';
 import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
-  ATTRS, DEFAULT_RESERVATIONS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
+  ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
   canTakeRole, isGroupRole, matchGroupRole, matchRole, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type ParseResult, type RoleRecord,
 } from '../../lib/caseParser';
 
 const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
-const RESERVATION_KEY = 'case-reservations.v1';
 
 const CATEGORY_CLASS: Record<string, string> = {
   唱片: 'bg-tag-talk-soft text-tag-talk',
@@ -27,15 +26,6 @@ const CATEGORY_CLASS: Record<string, string> = {
 interface SignedArtist {
   option: ArtistOption;
   artist: ArtistStats | null;
-}
-
-function readJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) as T : fallback;
-  } catch {
-    return fallback;
-  }
 }
 
 function chipClass(active: boolean) {
@@ -60,17 +50,11 @@ export default function CaseReaderApp() {
   const [query, setQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterCompany, setFilterCompany] = useState('all');
-  const [reservations, setReservations] = useState<Record<string, string>>(
-    () => readJson(RESERVATION_KEY, DEFAULT_RESERVATIONS),
-  );
-  const [editingRole, setEditingRole] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
   const tablesRef = useRef(tables);
   tablesRef.current = tables;
-  const reservationsRef = useRef(reservations);
-  reservationsRef.current = reservations;
   const lastBufferRef = useRef<ArrayBuffer | null>(null);
 
   useEffect(() => {
@@ -95,7 +79,7 @@ export default function CaseReaderApp() {
   }, []);
 
   const parseBuffer = useCallback((buffer: ArrayBuffer, name: string) => {
-    setResult(parseSave(buffer, tablesRef.current, name, reservationsRef.current));
+    setResult(parseSave(buffer, tablesRef.current, name));
   }, []);
 
   const readFile = useCallback(async (file: File) => {
@@ -141,21 +125,6 @@ export default function CaseReaderApp() {
     setFilterCompany('all');
     lastBufferRef.current = null;
   }, []);
-
-  const updateReservation = useCallback((roleCode: string, name: string) => {
-    setReservations((previous) => {
-      const next = { ...previous };
-      if (name) next[roleCode] = name;
-      else delete next[roleCode];
-      window.localStorage.setItem(RESERVATION_KEY, JSON.stringify(next));
-      reservationsRef.current = next;
-      if (lastBufferRef.current && result) {
-        setResult(parseSave(lastBufferRef.current, tablesRef.current, result.saveName, next));
-      }
-      return next;
-    });
-    setEditingRole('');
-  }, [result]);
 
   const categories = useMemo<[string, number][]>(() => {
     if (!result) return [];
@@ -213,6 +182,26 @@ export default function CaseReaderApp() {
       }));
   }, [result, artists]);
 
+  /** 我方团体：直接从存档读取（编号 101 起），有就展示，没有就说明旗下没有团体。 */
+  const activeGroups = useMemo<GroupRecord[]>(() => {
+    if (!result) return [];
+    return Object.values(result.groupStats)
+      .sort((a, b) => a.code - b.code)
+      .map((stat) => ({
+        code: stat.code,
+        name: `团体 ${stat.code}`,
+        leaderId: 0,
+        memberIds: [],
+        leaderName: '',
+        memberNames: [],
+        renqi: stat.renqi,
+        mingqi: stat.mingqi,
+        noticeCount: stat.noticeCount,
+        signed: true,
+        offset: stat.offset,
+      }));
+  }, [result]);
+
   const exportCsv = useCallback(() => {
     if (!result) return;
     const blob = new Blob([toCsv(result)], { type: 'text/csv;charset=utf-8' });
@@ -250,7 +239,7 @@ export default function CaseReaderApp() {
             onClick={() => inputRef.current?.click()}
             className="shrink-0 rounded-full bg-brand px-3 py-1.5 text-ui-2xs font-semibold text-white transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {!tablesReady ? '准备中…' : result ? '换一个存档' : '选择 .sa2 存档'}
+            {!tablesReady ? '准备中…' : result ? '换一个存档' : '选择存档'}
           </button>
           <input
             ref={inputRef}
@@ -261,6 +250,11 @@ export default function CaseReaderApp() {
             onChange={onPick}
             aria-label="选择明星志愿3 存档文件"
           />
+          {!result && (
+            <span className="text-ui-2xs text-ink-faint">
+              把 .sa2 存档拖到这里，或点上面的按钮选择。
+            </span>
+          )}
           {result && (
             <>
               <span className="max-w-[180px] truncate text-ui-2xs text-ink-faint" title={result.saveName}>
@@ -293,11 +287,6 @@ export default function CaseReaderApp() {
           </span>
         </div>
 
-        {!result && !busy && !error && (
-          <div className="mt-2 rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-2.5 text-ui-2xs text-ink-muted">
-            把 <code className="rounded bg-surface px-1">.sa2</code> 存档拖到这里，或点上面的按钮选择。文件只在浏览器里读取。
-          </div>
-        )}
         {busy && <p className="mt-2 text-ui-2xs text-ink-muted">正在解析存档…</p>}
         {tablesError && (
           <p className="mt-2 rounded-ui-md border border-alert-line bg-alert-soft px-3 py-2 text-ui-2xs text-alert">
@@ -348,38 +337,34 @@ export default function CaseReaderApp() {
               </summary>
               <div
                 data-case-artist-grid
-                className="mt-2 grid gap-2"
-                style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))' }}
+                className="mt-2 flex flex-wrap gap-2"
               >
                 {signedArtists.length === 0 ? (
                   <p className="text-ui-2xs text-ink-faint">这份存档里没有识别到旗下艺人。</p>
                 ) : signedArtists.map(({ option, artist }) => (
-                  <ArtistCard key={option.id} option={option} artist={artist} />
+                  <div key={option.id} className="w-[320px] shrink-0">
+                    <ArtistCard option={option} artist={artist} />
+                  </div>
                 ))}
               </div>
             </details>
 
-            {/* 我方团体：团体编码 / 人气 / 名气 / 通告数量从存档读取，
-                成员与队长来自可编辑的默认值（见 caseParser 的 DEFAULT_GROUPS）。 */}
-            {result.groups.length > 0 && (
-              <details data-case-groups open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
-                <summary data-case-groups-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
-                  我方团体 · {result.groups.length} 个
-                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                    {result.groups.map((group) => group.name).join(' / ')}
-                  </span>
-                </summary>
-                <div
-                  data-case-group-grid
-                  className="mt-2 grid gap-2"
-                  style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}
-                >
-                  {result.groups.map((group) => (
+            {/* 我方团体：编号 101 起直接从存档读，存档没有就是旗下没有团体。 */}
+            <details data-case-groups open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+              <summary data-case-groups-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
+                我方团体 · {activeGroups.length} 个
+                <span className="ml-2 font-normal text-ui-2xs text-ink-faint">数值从存档读取</span>
+              </summary>
+              {activeGroups.length === 0 ? (
+                <p data-case-groups-empty className="mt-2 text-ui-2xs text-ink-faint">存档里没有团体记录，说明你旗下目前没有团体。</p>
+              ) : (
+                <div data-case-group-grid className="mt-2 flex flex-wrap gap-2">
+                  {activeGroups.map((group) => (
                     <div
                       key={group.code}
                       data-case-group
                       data-case-group-code={group.code}
-                      className="rounded-ui-md border border-line bg-surface px-3 py-2"
+                      className="w-[340px] shrink-0 rounded-ui-md border border-line bg-surface px-3 py-2"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-ui-xs font-semibold text-ink">{group.name}</span>
@@ -392,32 +377,11 @@ export default function CaseReaderApp() {
                         <span data-case-group-mingqi>团体名气 <b className="text-ink">{group.mingqi}</b></span>
                         <span data-case-group-count>团体通告数量 <b className="text-ink">{group.noticeCount}</b></span>
                       </div>
-                      <div className="mt-1.5 text-ui-2xs text-ink-muted">
-                        队长
-                        <b className="ml-1 text-brand-strong" data-case-group-leader>{group.leaderName}</b>
-                      </div>
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {group.memberNames.map((name, idx) => (
-                          <span
-                            key={`${name}-${idx}`}
-                            data-case-group-member
-                            className={cn(
-                              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-ui-2xs',
-                              name === group.leaderName
-                                ? 'border-brand bg-brand-soft font-semibold text-brand-strong'
-                                : 'border-line bg-surface-soft text-ink-muted',
-                            )}
-                          >
-                            {name}
-                            {name === group.leaderName && <span className="text-[10px]">队长</span>}
-                          </span>
-                        ))}
-                      </div>
                     </div>
                   ))}
                 </div>
-              </details>
-            )}
+              )}
+            </details>
 
             {/* 各公司周一更新批次：只列存档已排定的，不外推下下周。 */}
             <details data-case-updates className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
@@ -562,11 +526,10 @@ export default function CaseReaderApp() {
                         <Th className="w-[8%]">制作公司</Th>
                         <Th className="w-[11%]">接取时间</Th>
                         <Th className="w-[11%]">执行期间</Th>
-                        <Th className="w-[7%]">角色</Th>
-                        <Th className="w-[7%]">难度</Th>
-                        <Th className="w-[15%]">所需数值</Th>
-                        <Th className="w-[13%]" dataAttrs={{ 'data-case-match-col': 'yes' }}>数值对比</Th>
-                        <Th className="w-[9%]">预约</Th>
+                        <Th className="w-[14%]">角色 / 难度</Th>
+                        <Th className="w-[13%]">所需数值</Th>
+                        <Th className="w-[17%]" dataAttrs={{ 'data-case-match-col': 'yes' }}>数值对比</Th>
+                        <Th className="w-[7%]">预约</Th>
                       </tr>
                     </thead>
                     {notices.map((notice) => (
@@ -574,12 +537,8 @@ export default function CaseReaderApp() {
                         key={`${notice.code}-${notice.firmSlot}`}
                         notice={notice}
                         signed={signedArtists}
-                        groups={result.groups}
+                        groups={activeGroups}
                         artists={artists}
-                        roster={result.roster.map((r) => r.name).filter(Boolean)}
-                        editingRole={editingRole}
-                        setEditingRole={setEditingRole}
-                        updateReservation={updateReservation}
                       />
                     ))}
                   </table>
@@ -601,7 +560,19 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
         <span className="rounded-full bg-surface-soft px-1.5 text-ui-2xs text-ink-faint">
           {option.gender === 'female' ? '女' : '男'}
         </span>
-        {artist && <span className="ml-auto text-ui-2xs text-ink-faint">{artist.condition}</span>}
+        {artist && (
+          <span
+            data-case-artist-condition
+            className={cn(
+              'ml-auto rounded-full px-1.5 text-ui-2xs',
+              artist.condition && artist.condition !== '正常'
+                ? 'bg-alert-soft font-semibold text-alert'
+                : 'bg-surface-soft text-ink-faint',
+            )}
+          >
+            {artist.condition}
+          </span>
+        )}
       </div>
       {artist ? (
         <>
@@ -658,10 +629,6 @@ function Td({ children, className, title, colSpan, dataAttrs }: {
   );
 }
 
-function starText(star: number): string {
-  return '★'.repeat(star) + '☆'.repeat(Math.max(0, 5 - star));
-}
-
 /** Only the rolled thresholds; each artist's verdict lives in its own column. */
 function RequirementChips({ role }: { role: RoleRecord }) {
   if (role.requirements.length === 0) return <span className="text-ui-2xs text-ink-faint">无能力要求</span>;
@@ -696,6 +663,31 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
   cellClass?: string;
 }) {
   const groupRole = isGroupRole(role);
+  // 存档没有团体成员名单，只有团体数值：团体通告就只列团体本身，不硬凑差值。
+  if (groupRole && groups.length > 0 && groups.every((group) => !group.leaderId)) {
+    return (
+      <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
+        {groups.map((group) => (
+          <div key={group.code} data-case-match data-match-result="info" className="flex items-center gap-1 text-ui-2xs leading-[1.4] text-ink-muted">
+            <span className="select-none text-ink-faint" aria-hidden="true">•</span>
+            <span>{group.name}</span>
+            <span className="text-ink-faint">人气 {group.renqi} · 名气 {group.mingqi}</span>
+          </div>
+        ))}
+      </Td>
+    );
+  }
+  // 被别的艺人预约的角色是「已占用」，不是「差多少数值」，直接给结论。
+  if (role.reservedBy) {
+    return (
+      <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
+        <div data-case-match data-match-result="no" className="flex items-center gap-1.5 text-ui-2xs text-ink-faint">
+          <span className="select-none" aria-hidden="true">—</span>
+          <span>预约 <b className="font-semibold text-ink-muted">{role.reservedBy}</b></span>
+        </div>
+      </Td>
+    );
+  }
   const rows = groupRole
     ? groups.map((group) => {
         const leader = artists.find((a) => a.roleId === group.leaderId) ?? null;
@@ -730,6 +722,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
                 match.canAccept ? 'font-semibold' : 'text-alert',
               )}
             >
+              <span className="select-none text-ink-faint" aria-hidden="true">•</span>
               {match.canAccept ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-growth px-1.5 py-0.5 text-white">
                   <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
@@ -740,7 +733,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
               ) : (
                 <span>
                   <b>{match.artistName}</b>{' '}
-                  差 {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${gap.diff}`).join(' · ')}
+                  差 {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${Math.ceil(gap.diff)}`).join(' · ')}
                 </span>
               )}
             </div>
@@ -755,16 +748,12 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
  *  those columns blank, with no arrow or repeated text. No rowspan, so a
  *  reserved role only dims its own cells and never the whole notice. */
 function NoticeRows({
-  notice, signed, groups, artists, roster, editingRole, setEditingRole, updateReservation,
+  notice, signed, groups, artists,
 }: {
   notice: CaseNotice;
   signed: SignedArtist[];
   groups: GroupRecord[];
   artists: ArtistStats[];
-  roster: string[];
-  editingRole: string;
-  setEditingRole: (value: string) => void;
-  updateReservation: (roleCode: string, name: string) => void;
 }) {
   const closing = notice.status === 'closing';
   const noticeCells = (
@@ -778,8 +767,12 @@ function NoticeRows({
           </span>
         )}
         {notice.status === 'upcoming' && (
-          <span className="mt-1 inline-block rounded-full bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-faint">
-            尚未开放
+          <span
+            data-case-upcoming
+            title="这张通告会在下周一公司更新时开放接取"
+            className="mt-1 inline-block rounded-full bg-tag-follow-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-tag-follow"
+          >
+            下周更新
           </span>
         )}
         {notice.status === 'expired' && (
@@ -812,12 +805,24 @@ function NoticeRows({
           </span>
         )}
       </Td>
-      <Td title="通告执行期间">
+      <Td title="通告执行期间，以及这张通告实际需要的工作天数">
         <div className="text-ui-2xs leading-[1.7]">
           <div className="whitespace-nowrap">起 <b className="text-ink-muted">{notice.periodStart || '—'}</b></div>
-          <div className="whitespace-nowrap">止 <b className="text-ink-muted">{notice.periodEnd || '—'}</b></div>
-          <div className="text-ink-faint">共 {notice.execDays} 天</div>
+          <div className="whitespace-nowrap">
+            止 <b className="text-ink-muted">{notice.periodEnd || '—'}</b>
+            <span className="ml-1 text-ink-faint">共 {notice.execDays} 天</span>
+          </div>
         </div>
+        {notice.workDays > 0 && (
+          <div
+            data-case-workdays
+            title={`拍摄期共 ${notice.execDays} 天，其中需要工作 ${notice.workDays} 天，每周最多排 ${notice.daysPerWeek} 天`}
+            className="mt-1 inline-flex flex-wrap items-center gap-1 rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-brand-strong"
+          >
+            工作 {notice.workDays} 天
+            <span className="font-normal">每周 ≤{notice.daysPerWeek} 次</span>
+          </div>
+        )}
         {notice.executedDays > 0 && notice.remainingDays > 0 ? (
           <span className="mt-1 inline-block rounded-full bg-tag-follow-soft px-1.5 py-0.5 text-ui-2xs text-tag-follow">
             进行中 · 已执行 {notice.executedDays} 天 / 剩 {notice.remainingDays} 天
@@ -833,37 +838,15 @@ function NoticeRows({
 
   const blankCells = (<><Td /><Td /><Td /><Td /><Td /></>);
 
+  /** 只显示结果，不在这里编辑：设置入口在表格上方的「预约设置」。 */
   const reservationCell = (role: RoleRecord, reserved: boolean) => (
-    <Td className={reserved ? 'bg-surface-soft text-ink-faint' : undefined}>
-      {editingRole === role.roleCode ? (
-        <select
-          autoFocus
-          aria-label="设置预约艺人"
-          data-case-reservation-select
-          value={role.reservedBy}
-          onChange={(event) => updateReservation(role.roleCode, event.target.value)}
-          onBlur={() => setEditingRole('')}
-          className="w-full rounded border border-line bg-surface px-1 py-0.5 text-ui-2xs outline-none"
-        >
-          <option value="">（空）</option>
-          {['黎华', ...roster.filter((name) => name !== '黎华' && name !== '黎華')].map((name) => (
-            <option key={name} value={name}>{name}</option>
-          ))}
-        </select>
+    <Td className={reserved ? 'bg-surface-soft' : undefined}>
+      {role.reservedBy ? (
+        <span data-case-reservation className="whitespace-nowrap text-ui-2xs font-semibold text-brand-strong">
+          {role.reservedBy}
+        </span>
       ) : (
-        <button
-          type="button"
-          data-case-reservation
-          onClick={() => setEditingRole(role.roleCode)}
-          title="点击修改预约艺人"
-          className="whitespace-nowrap text-left text-ui-2xs"
-        >
-          {role.reservedBy ? (
-            <span className="font-semibold text-brand-strong">{role.reservedBy}（已预约）</span>
-          ) : (
-            <span className="text-ink-faint">—</span>
-          )}
-        </button>
+        <span className="text-ui-2xs text-ink-faint">—</span>
       )}
     </Td>
   );
@@ -898,11 +881,12 @@ function NoticeRows({
           >
             {index === 0 ? noticeCells : blankCells}
             <Td className={roleCell}>
-              <span className="font-semibold">{role.role}</span>
-              <span className="ml-1 text-ui-2xs text-ink-faint" title={role.roleCode}>{role.roleCode.slice(-1)}</span>
-            </Td>
-            <Td className={cn('whitespace-nowrap text-gold', roleCell)} title={`难度 ${role.star} 星`}>
-              {starText(role.star)}
+              <div className="text-ui-xs font-semibold text-ink" title={role.roleCode}>
+                {role.role}<span className="text-ink-muted">({role.roleCode.slice(-1)})</span>
+              </div>
+              <div className="mt-0.5 text-ui-xs text-gold" title={`难度 ${role.star} 星`} aria-label={`难度 ${role.star} 星`}>
+                {role.star}★
+              </div>
             </Td>
             <Td className={roleCell}>
               <RequirementChips role={role} />

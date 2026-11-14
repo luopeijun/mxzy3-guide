@@ -28,7 +28,7 @@ await build({
 });
 const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
-  isGroupRole, matchGroupRole, DEFAULT_GROUPS,
+  isGroupRole, matchGroupRole, KNOWN_TEAMS, buildGroupRecord,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -43,6 +43,7 @@ const TABLES = {
   source: 'fixture',
   cases: { TV021: ['守候', '愛情偶像劇', '單元劇', 'SoSa電視'] },
   needEffect: { '愛情偶像劇|男主角': [3, 0, 0, 1, 2, 0, 0, 0, 0] },
+  length: { '單元劇|男主角': [20, 5], '連續劇|男主角': [45, 5], '廣告|男性': [6, 5] },
   difficulty: [
     [[180, 300], [150, 250], [120, 200], [100, 160]],
     [[330, 420], [280, 360], [210, 280], [160, 220]],
@@ -99,6 +100,9 @@ const actual = (role?.requirements ?? []).map((r) => [r.attr, r.value, r.staticG
 check(JSON.stringify(actual) === JSON.stringify(expected), 'rolled values and static grades', JSON.stringify(actual));
 check((role?.requirements ?? []).every((r) => r.rolledGrade === r.staticGrade),
   'difficulty ranges agree with static grades');
+check(notice?.workDays === 20 && notice?.daysPerWeek === 5,
+  '工作天数 / 每周上限 come from the Length table (單元劇|男主角)',
+  `${notice?.workDays} 天 / 每周 ${notice?.daysPerWeek}`);
 check(toCsv(result).includes('"TV021"') && toCsv(result).includes('演技325'), 'CSV export');
 check(result.unknownCodes.length === 0, 'no unknown notice codes');
 // Every selected artist is compared against the same role independently.
@@ -202,6 +206,13 @@ if (fs.existsSync(savePath)) {
     'every role carries a (possibly empty) reservation');
   check(toCsv(real).includes('"停止接取"') && toCsv(real).includes('"执行天数"'),
     'CSV includes the booking window and shooting length');
+  check(real.notices.every((n) => n.workDays > 0 && n.daysPerWeek > 0),
+    'every listed notice resolves its 工作天数 / 每周上限 from the Length table',
+    real.notices.filter((n) => !n.workDays).map((n) => n.code).join(',') || 'all matched');
+  const ads = real.notices.filter((n) => n.category === '广告');
+  check(ads.length === 0 || ads.every((n) => n.workDays === 6 && n.daysPerWeek === 5),
+    '广告 resolves to 6 天 / 每周上限 5 次 (Length 表)',
+    ads.map((n) => `${n.code}:${n.workDays}/${n.daysPerWeek}`).join(' ') || 'no ad in snapshot');
 
   // Exact values only for the frozen investigation snapshot.
   if (path.basename(savePath) === 'probe.sa2') {
@@ -221,17 +232,17 @@ if (fs.existsSync(savePath)) {
       && real.nextUpdate.kinds.includes('唱片'), 'next Monday refresh is the three record labels');
     check(real.batches.length === 4 && !('forecastDate' in real),
       'only the four scheduled batches are kept, no further extrapolation');
-    check(real.artists.some((a) => a.abilities[0] === 1886 && a.abilities[8] === 2838
+    check(real.artists.some((a) => a.abilities[0] === 188.6 && a.abilities[8] === 283.8
       && a.stress === 76 && a.fatigue === 98),
-      'the save-editor screenshot values are present in an artist block');
+      'the save-editor screenshot values (÷10) are present in an artist block');
     check(real.artists.length === 17,
       'the two all-1111 placeholder blocks are excluded', `${real.artists.length} blocks`);
     check(real.signedArtistIds.join(',') === '5,6,10',
       'the save identifies 路敏 / 萧依莉 / 路风 as the signed artists',
       real.signedArtistIds.join(','));
-    check(real.artistDirectory.find((a) => a.id === 6)?.abilities[0] === 1886
+    check(real.artistDirectory.find((a) => a.id === 6)?.abilities[0] === 188.6
       && real.artistDirectory.find((a) => a.id === 74)?.artistIndex === null,
-      '萧依莉 resolves to the screenshot block, 新名纱雪 has no block yet');
+      '萧依莉 resolves to the screenshot block (÷10), 新名纱雪 has no block yet');
     const femaleLead = shouhou?.roles.find((r) => r.role === '女主角');
     const luFeng = real.artistDirectory.find((a) => a.id === 10);
     const luMin = real.artistDirectory.find((a) => a.id === 5);
@@ -242,27 +253,42 @@ if (fs.existsSync(savePath)) {
     check(neutral && canTakeRole(neutral, 'female') && canTakeRole(neutral, 'male'),
       'neutral roles such as 外景主持 / 個人 accept either gender', neutral?.role);
 
-    // Player-formed groups: stats read from the save's MapRole record.
-    check(real.groups.length === DEFAULT_GROUPS.length && real.groups.length >= 1,
-      'the editable group seed is surfaced', `${real.groups.length} groups`);
-    const band = real.groups[0];
-    check(band.code === 101 && band.name === '风敏乐团' && band.leaderId === 10 && band.leaderName === '路风',
-      '风敏乐团: code 101, leader 路风 (id 10)', `${band.code}/${band.leaderName}`);
-    check(band.renqi === 526 && band.mingqi === 284 && band.noticeCount === 1,
-      'group stats read from the save (人气 526 / 名气 284 / 通告 1)',
-      `${band.renqi}/${band.mingqi}/${band.noticeCount}`);
+    // Player-formed groups: live stats are scanned from the save by team code;
+    // the team table (members / leader) comes from the static KNOWN_TEAMS.
+    const teamCodes = Object.keys(real.groupStats).map(Number);
+    check(teamCodes.every((code) => code >= 101),
+      'player groups are numbered from 101, straight out of the save',
+      `${teamCodes.length} codes: ${teamCodes.join(',')}`);
+    check(real.groupStats[101]?.renqi === 526 && real.groupStats[101]?.mingqi === 284
+      && real.groupStats[101]?.noticeCount === 1,
+      'group 101 stats read from the save (人气 526 / 名气 284 / 通告 1)',
+      JSON.stringify(real.groupStats[101]));
     const groupRole = real.notices.flatMap((n) => n.roles).find((r) => isGroupRole(r));
     if (groupRole) {
-      const leader = real.artists.find((a) => a.roleId === band.leaderId) ?? null;
-      const m = matchGroupRole(groupRole, leader, band.name, band.leaderName);
-      check(typeof m.canAccept === 'boolean' && m.gaps.length > 0,
-        'a 團體 role matches against the group leader only', groupRole.role);
+      check(matchGroupRole(groupRole, null, '團體 101', '').gaps.length > 0,
+        'a 團體 role still lists its per-attribute gaps (save has no member list)',
+        groupRole.role);
     } else {
-      console.log('OK   no 團體 role in this snapshot (group match path still type-checks)');
+      console.log('OK   no 團體 role in this snapshot');
     }
   }
 } else {
   console.log(`\nreal save not found (${savePath}), skipped live-save checks`);
+}
+
+// buildGroupRecord: first member is the leader, live stats overlay, names resolve.
+{
+  const sample = KNOWN_TEAMS.find((t) => t.code === 4);
+  check(Boolean(sample), 'KNOWN_TEAMS lists 風敏 (code 4)', sample?.name ?? '');
+  if (sample) {
+    const rec = buildGroupRecord(sample, { renqi: 10, mingqi: 20, noticeCount: 3 }, (id) => `编号${id}`);
+    check(rec.code === 4 && rec.name === '風敏' && rec.leaderId === sample.memberIds[0]
+      && rec.leaderName === `编号${sample.memberIds[0]}`
+      && rec.renqi === 10 && rec.mingqi === 20 && rec.noticeCount === 3,
+      'buildGroupRecord: first member is leader, stats overlay correctly',
+      `${rec.leaderId}/${rec.leaderName}/${rec.renqi}`);
+    check(rec.memberIds[0] === rec.leaderId, 'leader id sits first in memberIds');
+  }
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);

@@ -27,10 +27,19 @@ export function categoryOf(code: string): string {
   return CATEGORY_BY_PREFIX[code.slice(0, 2)] ?? '其他';
 }
 
-/** Role reservations verified against the game screen for Auto.sa2. The save
- *  does not expose a reliable generic booking field, so the reader ships these
- *  two known cases and lets the player edit the mapping in the UI. */
-export const DEFAULT_RESERVATIONS: Record<string, string> = {
+/** Length 表用的通告种类。电视剧/主持的 subtype 本身就是种类，唱片则要把
+ *  個人/團體/原聲帶 归到「唱片」这一行，所以按前缀补一层。 */
+const KIND_BY_PREFIX: Record<string, string> = {
+  CD: '唱片', CF: '廣告', MV: '電影', TV: '', SH: '',
+};
+
+/** 已被其他艺人预约的角色，只读，不提供编辑入口。
+ *
+ *  这一列回答的是「这个角色已被谁占掉，所以我接不了」，属于存档现状，不是
+ *  玩家的待办清单。存档里这个关系只以艺人编号的形式存在、且没有稳定锚点，
+ *  目前只核对了 Auto.sa2 游戏画面上真实存在的两条（守候 / 背叛 的男主角被
+ *  黎华 预约）。新增条目照这个格式补即可。 */
+export const RESERVED_ROLES: Record<string, string> = {
   TV0211: '黎华',
   TV2211: '黎华',
 };
@@ -101,6 +110,8 @@ export interface CaseTables {
   cases: Record<string, string[]>;
   /** `type|role` -> nine ability grades (0 none, 1 A, 2 B, 3 C, 4 D) */
   needEffect: Record<string, number[]>;
+  /** `kind|role` -> [工作天数, 每週可排天数上限]. */
+  length?: Record<string, number[]>;
   /** star 1..5 -> [[A lo,hi], [B lo,hi], [C lo,hi], [D lo,hi]] */
   difficulty: number[][][];
   /** company id -> name */
@@ -108,7 +119,7 @@ export interface CaseTables {
 }
 
 export const EMPTY_TABLES: CaseTables = {
-  source: '', cases: {}, needEffect: {}, difficulty: [], firms: {},
+  source: '', cases: {}, needEffect: {}, length: {}, difficulty: [], firms: {},
 };
 
 export interface Requirement {
@@ -157,6 +168,10 @@ export interface CaseNotice {
   deadline: string;
   /** Inclusive length of the shooting period. */
   execDays: number;
+  /** 需要的工作天数 (游戏 Length 表), 0 when the table has no match. */
+  workDays: number;
+  /** 每週最多可排几天工作, 0 when unknown. */
+  daysPerWeek: number;
   /** Signed day counts relative to the game's current date. */
   daysToOpen: number;
   daysToDeadline: number;
@@ -230,41 +245,64 @@ export interface UpdateBatch {
   scheduled: boolean;
 }
 
-/** A player-formed group, e.g. 风敏乐团. The save marks the roster number of
- *  its leader and members, but the editor-style attributes (编码 / 人气 / 名气 /
- *  通告数量) live in a dedicated record right after the `MapRole` name block. */
-export interface GroupSeed {
-  /** 团体编码 as shown in the save editor, e.g. 101. */
+/** Live 人气 / 名气 / 通告数量 for a group, read straight from the save.
+ *  `offset` is the save position the record was scanned from (-1 if absent). */
+export interface GroupStat {
+  /** 团体编码，我方团体从 101 起。 */
   code: number;
-  name: string;
-  /** Game roster number of the group's leader (队长). */
-  leaderId: number;
-  /** Game roster numbers of every member, leader included. */
-  memberIds: number[];
+  renqi: number;
+  mingqi: number;
+  noticeCount: number;
+  offset: number;
 }
 
-/** Groups the reader knows about. The bundled seed is editable like the
- *  reservation list; the player can change it in code. Only the numeric
- *  attributes (人气 / 名气 / 通告数量) are read straight from the save. */
-export const DEFAULT_GROUPS: GroupSeed[] = [
-  // 队长 路风（编号 10）；成员名单由玩家补全。
-  { code: 101, name: '风敏乐团', leaderId: 10, memberIds: [10] },
-];
-
-export interface GroupRecord extends GroupSeed {
+/** A player-formed group as shown in the reader. Code / name / members come
+ *  from the game's own team table (bundled as static reference, like
+ *  ARTIST_DIRECTORY — not parsed from Team.dat at runtime); the numeric
+ *  attributes are overlaid from the save when the group's code is found there. */
+export interface GroupRecord {
+  /** 团体编码 as in the game's team table, e.g. 4. */
+  code: number;
+  name: string;
+  /** Game roster number of the group's leader (队长), taken as the first member. */
+  leaderId: number;
+  /** Game roster numbers of every member, leader first, duplicates removed. */
+  memberIds: number[];
   leaderName: string;
   memberNames: string[];
-  /** 团体人气, read from the save's group record. */
+  /** 团体人气, read from the save's group record; 0 when the save has none. */
   renqi: number;
-  /** 团体名气, read from the save's group record. */
+  /** 团体名气, read from the save's group record; 0 when the save has none. */
   mingqi: number;
-  /** 团体通告数量, read from the save's group record. */
+  /** 团体通告数量, read from the save's group record; 0 when the save has none. */
   noticeCount: number;
   /** Always true here: a group only shows up because the player formed one. */
   signed: boolean;
-  /** Offset of the MapRole name block the stats were read from, or -1. */
+  /** Offset of the save record the stats were read from, or -1. */
   offset: number;
 }
+
+/** All fifteen groups the game can form, in the game's own code order.
+ *  Source: the game's Team.dat, transcribed as static reference (member ids are
+ *  roster numbers; the first member is the captain). The save only carries the
+ *  live 人气 / 名气 / 通告数量, keyed by this same code. */
+export const KNOWN_TEAMS: { code: number; name: string; memberIds: number[] }[] = [
+  { code: 1, name: 'SD樂', memberIds: [21, 20, 33] },
+  { code: 2, name: '馬麗', memberIds: [30, 31, 33] },
+  { code: 3, name: 'KP康', memberIds: [15, 54, 33] },
+  { code: 4, name: '風敏', memberIds: [10, 5, 62] },
+  { code: 5, name: '蘋果', memberIds: [1, 9] },
+  { code: 6, name: '禁忌', memberIds: [11, 3] },
+  { code: 7, name: '搶錢', memberIds: [8, 4] },
+  { code: 8, name: '爆笑', memberIds: [24, 15, 13] },
+  { code: 9, name: '我愛', memberIds: [1, 65] },
+  { code: 10, name: '花樣', memberIds: [9, 11] },
+  { code: 11, name: 'LC', memberIds: [5, 7] },
+  { code: 12, name: 'WinK', memberIds: [5, 3] },
+  { code: 13, name: '天晴', memberIds: [7, 19] },
+  { code: 14, name: '沒用', memberIds: [11, 3, 9] },
+  { code: 100, name: 'dNewY', memberIds: [39, 33] },
+];
 
 /** A role whose name contains 團體 / 团体 is filled by a group, not a solo
  *  artist, so its numeric match should be tested against the group's leader. */
@@ -310,8 +348,10 @@ export interface ParseResult {
   artistDirectory: ArtistOption[];
   /** Numbers of the artists the save marks as signed (1..4 of them). */
   signedArtistIds: number[];
-  /** Player-formed groups, with attributes read from the save. */
-  groups: GroupRecord[];
+  /** Live 人气 / 名气 / 通告数量 keyed by team code, read straight from the save.
+   *  The player's actual groups are chosen in the UI from the static KNOWN_TEAMS;
+   *  this map only supplies the numbers for whichever codes the save contains. */
+  groupStats: Record<number, GroupStat>;
   /** Full 284-byte role-name table at the head of the save. */
   roster: RosterEntry[];
   /** Dates from the save header, used for all countdowns. */
@@ -420,7 +460,6 @@ function parseRoles(
   view: DataView,
   start: number,
   end: number,
-  reservations: Record<string, string>,
 ): RoleRecord[] {
   const rows: RoleRecord[] = [];
   let i = start;
@@ -468,7 +507,7 @@ function parseRoles(
       star,
       values,
       requirements: [],
-      reservedBy: reservations[tag] ?? '',
+      reservedBy: RESERVED_ROLES[tag] ?? '',
       offset: off,
     });
   }
@@ -558,8 +597,12 @@ function parseArtists(bytes: Uint8Array, view: DataView, start: number, end: num
   const out: ArtistStats[] = [];
   let index = 0;
   for (let o = Math.max(0, start); o + 140 <= Math.min(end, bytes.length); o += 4) {
-    const abilities = Array.from({ length: 9 }, (_, j) => view.getUint32(o + 4 * j, true));
-    if (!abilities.every((v) => v > 100 && v <= 6000)) continue;
+    const rawAbilities = Array.from({ length: 9 }, (_, j) => view.getUint32(o + 4 * j, true));
+    if (!rawAbilities.every((v) => v > 100 && v <= 6000)) continue;
+    // The save stores every ability ×10 (the in-game UI hides the decimal), so a
+    // four-digit value like 1886 is really 188.6. Divide back to the displayed
+    // scale before comparing with the three-digit notice requirements.
+    const abilities = rawAbilities.map((v) => v / 10);
     const stress = view.getUint32(o + 36, true);
     const fatigue = view.getUint32(o + 40, true);
     if (stress >= 300 || fatigue >= 300) continue;
@@ -676,46 +719,59 @@ function readCurrentDate(view: DataView, byteLength: number): GameDate | null {
   return null;
 }
 
-/** Read the player's groups. The 人气 / 名气 / 通告数量 live in a record that
- *  starts 28 bytes after the `MapRole` name block; that triple is unique in the
- *  save, so it is a stable anchor. Code, leader and members come from the
- *  editable DEFAULT_GROUPS seed, since the save has no clean field for them. */
-function parseGroups(
+/** Scan the save for the player's group records. The save stores, for each
+ *  formed group, a record whose first int32 is the team code (1..14 or 100, the
+ *  same space as the game's team table) followed by 人气 / 名气 / 通告数量. A
+ *  stable anchor is hard (the codes also appear in Big5 text), so we require a
+ *  plausible triple and a clean int32 boundary before it. Returns code -> stats;
+ *  teams the player has not formed simply do not appear. */
+export function parseGroupStats(
   bytes: Uint8Array,
   view: DataView,
-  artistDirectory: ArtistOption[],
-): GroupRecord[] {
-  const nameOf = (id: number): string =>
-    artistDirectory.find((a) => a.id === id)?.name
-    ?? ARTIST_DIRECTORY.find((a) => a.id === id)?.name
-    ?? `编号${id}`;
+): Record<number, GroupStat> {
+  // 我方团体从编号 101 起，存档把它们按队伍顺序记在 `MapRole` 名块后面：
+  // 每条 20 字节 = 人气 / 名气 / 通告数量 / 保留。第 i 条就是编号 101+i。
+  // 存档不写团体名与成员名单，所以这里只产出编号 + 三个数值。
+  const out: Record<number, GroupStat> = {};
   const mapRole = findInt32Names(bytes, view, ['MapRole'])['MapRole'];
-  let offset = -1;
-  let renqi = 0;
-  let mingqi = 0;
-  let noticeCount = 0;
-  if (mapRole) {
-    const g = mapRole[0] + 28;
-    const r = view.getUint32(g, true);
-    const m = view.getUint32(g + 4, true);
-    const n = view.getUint32(g + 8, true);
-    if (r <= 9999 && m <= 9999 && n <= 999) {
-      renqi = r;
-      mingqi = m;
-      noticeCount = n;
-      offset = mapRole[0];
-    }
+  if (!mapRole) return out;
+  const start = mapRole[0] + 28;
+  const STRIDE = 20;
+  for (let i = 0; i < 5; i += 1) {
+    const o = start + i * STRIDE;
+    if (o + 12 > bytes.length) break;
+    const renqi = view.getUint32(o, true);
+    const mingqi = view.getUint32(o + 4, true);
+    const noticeCount = view.getUint32(o + 8, true);
+    if (renqi < 1 || renqi > 9999) break;
+    if (mingqi > 9999 || noticeCount > 99) break;
+    out[101 + i] = { code: 101 + i, renqi, mingqi, noticeCount, offset: o };
   }
-  return DEFAULT_GROUPS.map((seed) => ({
-    ...seed,
-    leaderName: nameOf(seed.leaderId),
-    memberNames: seed.memberIds.map(nameOf),
-    renqi,
-    mingqi,
-    noticeCount,
+  return out;
+}
+
+/** Build a display record for one selected team: members and leader come from
+ *  the static team table (first member is the captain per the player's rule),
+ *  live 人气 / 名气 / 通告数量 are overlaid from the save when present. */
+export function buildGroupRecord(
+  team: { code: number; name: string; memberIds: number[] },
+  stat: GroupStat | undefined,
+  nameOf: (id: number) => string,
+): GroupRecord {
+  const leaderId = team.memberIds[0];
+  return {
+    code: team.code,
+    name: team.name,
+    leaderId,
+    memberIds: team.memberIds,
+    leaderName: nameOf(leaderId),
+    memberNames: team.memberIds.map(nameOf),
+    renqi: stat?.renqi ?? 0,
+    mingqi: stat?.mingqi ?? 0,
+    noticeCount: stat?.noticeCount ?? 0,
     signed: true,
-    offset,
-  }));
+    offset: stat?.offset ?? -1,
+  };
 }
 
 /** Parse one uploaded save. The buffer is a snapshot: the game may overwrite
@@ -724,7 +780,6 @@ export function parseSave(
   buffer: ArrayBuffer,
   tables: CaseTables,
   saveName: string,
-  reservations: Record<string, string> = DEFAULT_RESERVATIONS,
 ): ParseResult {
   const bytes = new Uint8Array(buffer);
   const view = new DataView(buffer);
@@ -734,7 +789,7 @@ export function parseSave(
   }
 
   const [caseStart, caseEnd] = [blocks.Case[1], blocks.CaseEnd[0]];
-  const roles = parseRoles(bytes, view, caseStart, caseEnd, reservations);
+  const roles = parseRoles(bytes, view, caseStart, caseEnd);
   const firm = blocks.CaseFirm ? parseCaseFirm(view, blocks.CaseFirm[1], bytes.length) : [];
   const codeBlocks = findCodeBlocks(view, caseStart, caseEnd);
   const currentDate = readCurrentDate(view, bytes.length);
@@ -756,7 +811,7 @@ export function parseSave(
     };
   });
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
-  const groups = parseGroups(bytes, view, artistDirectory);
+  const groupStats = parseGroupStats(bytes, view);
 
   /** code -> best [open, start, end] triple found anywhere in the Case block. */
   const datesByCode: Record<string, DateTuple[]> = {};
@@ -798,6 +853,20 @@ export function parseSave(
   const nextUpdate = Number.isFinite(today)
     ? batches.find((batch) => batch.dayNumber > today) ?? null
     : null;
+  /** 通告要拍几天、一周最多排几天，来自游戏的 Length 表。表的 key 是
+   *  「通告种类|角色」：电视剧按 連續劇/單元劇/短片，电影/广告/唱片按 subtype，
+   *  主持按节目类型（知性談話 等），唱片还要把 個人/團體 归到「唱片」下。 */
+  const lengthOf = (code: string, info: string[] | undefined, role: string): number[] | null => {
+    const type = info?.[1] ?? '';
+    const subtype = info?.[2] ?? '';
+    const kinds = [subtype, type, KIND_BY_PREFIX[code.slice(0, 2)] ?? ''];
+    for (const kind of kinds) {
+      if (!kind) continue;
+      const hit = tables.length?.[`${kind}|${role}`];
+      if (hit && hit[0]) return hit;
+    }
+    return null;
+  };
   const unknownCodes: string[] = [];
   const notices: CaseNotice[] = firm.map((item) => {
     const info = tables.cases[item.code];
@@ -815,6 +884,9 @@ export function parseSave(
           rolledGrade: gradeOf(role.values[attr], role.star, tables.difficulty),
         }));
     }
+    const length = noticeRoles
+      .map((role) => lengthOf(item.code, info, role.role))
+      .find((hit): hit is number[] => Boolean(hit)) ?? null;
     const triple = datesByCode[item.code];
     const openDate = triple ? fmtDate(triple[0]) : '';
     const periodStart = triple ? fmtDate(triple[1]) : '';
@@ -846,6 +918,8 @@ export function parseSave(
       firmName: tables.firms[String(item.firm)] ?? '',
       openDate, periodStart, periodEnd, deadline,
       execDays: Number.isFinite(execDays) ? execDays : 0,
+      workDays: length?.[0] ?? 0,
+      daysPerWeek: length?.[1] ?? 0,
       daysToOpen, daysToDeadline, daysToStart, daysToEnd,
       executedDays, remainingDays,
       status,
@@ -863,7 +937,7 @@ export function parseSave(
     artists,
     artistDirectory,
     signedArtistIds,
-    groups,
+    groupStats,
     roster,
     currentDate,
     batches,
@@ -913,6 +987,7 @@ export function toCsv(result: ParseResult): string {
   const lines = [[
     '游戏日期', '通告编号', '通告名称', '大类', '节目类型', '制作公司',
     '开放接取', '停止接取', '距截止(天)', '执行开始', '执行结束', '执行天数',
+    '工作天数', '每周上限',
     '已执行天数', '剩余天数', '角色', '预约艺人', '难度(星)', '所需数值', '静态等级',
   ]];
   for (const notice of result.notices) {
@@ -924,6 +999,8 @@ export function toCsv(result: ParseResult): string {
         notice.openDate, notice.deadline,
         Number.isFinite(notice.daysToDeadline) ? String(notice.daysToDeadline) : '',
         notice.periodStart, notice.periodEnd, String(notice.execDays),
+        notice.workDays ? String(notice.workDays) : '',
+        notice.daysPerWeek ? String(notice.daysPerWeek) : '',
         String(notice.executedDays), String(notice.remainingDays),
         role.role, role.reservedBy, String(role.star),
         req.map((x) => `${x.attr}${x.value}`).join(' '),
