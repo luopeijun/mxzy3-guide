@@ -121,7 +121,7 @@
 - **排序 UI 默认隐藏**：`allowReorder: false` 时「调整顺序」按钮、卡片 ↑/↓、拖拽全部不渲染，但 `CgApp` 里的整套实现（`draftOrder` / `savedOrder` / `sweet.cg.order.v1` / 拖拽落点从 `dataTransfer` 取 id / 导出 `sweet-cg-order.json`）一行没删；以后要改顺序把开关翻回 `true` 即可，不必重写。
 - `scripts/test_sweet_cg.py`（11 项）锁住「提交的 cg.json 与脚本重算结果一致」、分组来自攻略、`CG NN` 编号与组内连续、共用图只出现一次、每组 `id` 序列与 `sweet-cg-order.json` 一致、图片路径与已生成 webp 一一对应、自然排序与两类报错，以及「手填结局名称的源图编号对得上、九张结局的展示编号正好是 14/15/18/19/21/22/23/24/25」。测试不依赖 Pillow。
 - 入口：`SweetApp` 第三个页签「CG 图鉴」→ `#/cg`，分组写 `#/cg/group/<id>`（复用主站的 `cgTabHash` / `rememberCgGroup`），刷新仍停在同一人物。
-- 回归 `scripts/cdp_sweet_cg.mjs`（45 项）：第一段用仓库真实数据验三个页签、9 组头像（主角不是卫亚那张）、顶栏「共 83 张 · 9 个分组」、真实映射的 CG 名称与「攻略 ›」往返（`#/guide/...~ev23` 落到同一条事件）、手填的结局名称（CG 14/15/25 文案对得上且名称格有高度、没填的 CG 16 保持空白）、共用图在 DOM 里只渲染一份且两处共用、分类胶囊在追踪 / CG 页不出现、原站 `guide.cg.v1` 一字未动、排序 UI 已隐藏；第二段用 `Page.addScriptToEvaluateOnNewDocument` 覆盖 `fetch` 注入 4 张假 CG 验卡片编号、共用图收集一次两边亮、勾选只写 `sweet.cg.v1`。**脚本必须开 `about:blank` 再导航**，否则同 URL 的 fragment 跳转不会重跑注入脚本；两段开头都清 `sweet.cg.v1` 与 `sweet.cg.order.v1`，否则上轮残留会串味。
+- 回归 `scripts/cdp_sweet_cg.mjs`（46 项）：第一段用仓库真实数据验三个页签、9 组头像（主角不是卫亚那张）、顶栏「共 83 张 · 9 个分组」、真实映射的 CG 名称与「攻略 ›」往返（`#/guide/...~ev23` 落到同一条事件）、手填的结局名称（CG 14/15/25 文案对得上且名称格有高度、没填的 CG 16 保持空白）、共用图在 DOM 里只渲染一份且两处共用、分类胶囊在追踪 / CG 页不出现、原站 `guide.cg.v1` 一字未动、排序 UI 已隐藏、头像走缩略图；第二段用 `Page.addScriptToEvaluateOnNewDocument` 覆盖 `fetch` 注入 4 张假 CG 验卡片编号、共用图收集一次两边亮、勾选只写 `sweet.cg.v1`。**脚本必须开 `about:blank` 再导航**，否则同 URL 的 fragment 跳转不会重跑注入脚本；两段开头都清 `sweet.cg.v1` 与 `sweet.cg.order.v1`，否则上轮残留会串味。
 
 ## 锚点跳转
 
@@ -155,6 +155,14 @@
 - 响应式断点沿用原设计的向下阈值，用 `@custom-variant` 定义：`tab:`（≤980px）、`nav:`（≤860px，侧栏切换为抽屉）、`phone:`（≤520px）、`touch:`（`pointer: coarse`，触摸屏上的替代操作）。前三个是 **max-width** 变体，不是 Tailwind 默认的移动优先断点。
 - 卡片、栅格、版心等重复组合放在 `src/styles/patterns.ts` 的 `ui` 对象里；组件特有的类名就近写在 JSX 中，条件类用 `cn()` 拼接并尽量互斥，避免同属性类互相覆盖。
 
+## 图片加载与占位
+
+- 起因：GitHub Pages 从国内访问，一张 100KB 的图常要几秒（实测一张 128KB 头像 5.3s）。原图按最大尺寸入库（CG 1100px、角色头像 400×300 PNG、封面 1110px JPG），而卡片只显示 380px、侧栏头像只有 20px，等于每次都在下几倍用不上的像素。
+- `scripts/build_image_thumbs.py`（需 Pillow）把 `public/images/` 下每张原图生成统一 webp 缩略图，镜像到 `public/images/thumbs/`；**原图保留给灯箱看大图**。规则只有一条：`images/<dir>/<name>.<ext>` → `images/thumbs/<dir>/<name>.webp`。宽度上限 `*-logo` 128px、`*-cover` 800px、其余 560px，不放大，quality 74 / method 6。产物随仓库提交，构建时随 `public/` 进 `dist/`。当前 346 张：18.6MB → 7.4MB（2.5×），其中头像平均 2.8KB。
+- `src/ui/SmartImage.tsx` 是全站唯一的 `<img>` 出口（灯箱叠原图那一层除外）：按上述规则换缩略图、`loading="lazy"` + `decoding="async"`、缩略图失败静默退回原图、首屏 `priority` 用 eager + `fetchPriority=high`。`skeleton` 开启时，加载期间是淡色扫光 + 图片图标的占位层，到图后淡入；骨架只在 `IntersectionObserver`（`rootMargin: 600px`）判定接近视口时才渲染，避免一页几十个动画在后台空跑。`prefers-reduced-motion` 下动画停掉。
+- CG 灯箱先显示卡片已缓存的缩略图，后台用 `new Image()` 预载原图，完成再叠一层淡入（`data-cg-lightbox-full`），点开大图不用盯着黑屏等。
+- `scripts/test_image_thumbs.py`（4 项，零第三方依赖）锁「每张原图都有缩略图 / 是真 webp 且更小 / 无孤儿 / 总体积减半」；`scripts/cdp_image_loading.mjs`（10 项）用 CDP `Fetch` 暂停图片请求复现慢链路，验骨架出现与收起、缩略图路径、首屏下载体积、灯箱渐进加载、缩略图失败回退。
+
 ## 命令与验证
 
 | 命令 | 作用 |
@@ -163,15 +171,16 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ 攻略 ⇄ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章攻略（26 项）+ 甜蜜乐章 CG（11 项），共 **96 项** |
+| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ 攻略 ⇄ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章攻略（26 项）+ 甜蜜乐章 CG（11 项）+ 图片缩略图（4 项），共 **100 项** |
 | `npm run test:sweet` | 只跑甜蜜乐章两套回归（攻略 26 + CG 11，共 37 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
 | `python scripts/extract_sweet_guide.py` | 重生成甜蜜乐章的 `public/data/sweet/guide.json` |
 | `python scripts/extract_sweet_cg.py` | 全量重建甜蜜乐章 CG 清单与 webp（需 Pillow；源图在 `E:/Pictures/.../甜蜜乐章/cg/<人物>/`，缺省退化到 `outputs/sweet-cg/`；`--skip-images` 只重写 JSON） |
 | `python scripts/build_sweet_cg_links.py` | 从核对表 xlsx 生成 `sources/sweet/cg-links.tsv`（甜蜜乐章 攻略 ⇄ CG 映射） |
+| `python scripts/build_image_thumbs.py` | 全量重建 `public/images/thumbs/` 的小图（需 Pillow）；`--check` 只校验不写 |
 
-**测试范围**：只改甜蜜乐章的内容或组件时，跑 `npm run test:sweet` + `node scripts/cdp_sweet_entry.mjs` 就够了，不必跑全量 `test:guide` 和其它站点的 `cdp_*.mjs`。只有动到共享层（`global.css` 令牌、`patterns.ts`、`src/ui/*`、路由、`useGuideData`、`treeOrder`）时，才需要补跑原站回归。
+**测试范围**：只改甜蜜乐章的内容或组件时，跑 `npm run test:sweet` + `node scripts/cdp_sweet_entry.mjs` 就够了，不必跑全量 `test:guide` 和其它站点的 `cdp_*.mjs`。只有动到共享层（`global.css` 令牌、`patterns.ts`、`src/ui/*`、路由、`useGuideData`、`treeOrder`）时，才需要补跑原站回归。改图片管线或 `SmartImage` 额外跑 `python scripts/build_image_thumbs.py --check` + `node scripts/cdp_image_loading.mjs`。
 
 **解析回归**：解析脚本里积累了大量角色专属分支，改一个共享正则可能悄悄改坏别的角色页，所以 `test_extract.py` 会重跑真实管线，并断言产物与已提交的 `guide.json` **逐字节一致**。改完解析规则先重生成再测：
 
@@ -212,6 +221,7 @@ public/data/sweet/cg.json    甜蜜乐章的 CG 清单（编号 + 事件名 + �
 public/data/sweet/sweet-cg-order.json 甜蜜乐章人物内的 CG 顺序（管线输入，重跑不冲掉）
 public/images/cg/*.webp      压缩后的 CG 图片（进仓库）
 public/images/sweet-cg/*/*.webp 甜蜜乐章 CG 图片（按人物分目录，进仓库）
+public/images/thumbs/**    全站小尺寸展示用的 webp 缩略图（镜像目录，进仓库；原图留给灯箱）
 outputs/sweet-cg/            甜蜜乐章 CG 源图的仓库内副本（可选，按人物 / 原编号命名，不入库）
 sources/*.txt                补充攻略的纯文本来源（UTF-8，可重跑）
 sources/sweet/*.txt          甜蜜乐章的正文来源（UTF-8 简体，按节名对应节点）
@@ -228,14 +238,18 @@ scripts/extract_specials.py  六大通告条件表 → specials.json
 scripts/extract_cg.py        CG 素材 → cg.json + webp（需 Pillow）
 scripts/extract_sweet_cg.py  甜蜜乐章源图 → sweet/cg.json + webp（需 Pillow）
 scripts/build_sweet_cg_links.py  甜蜜乐章核对表 xlsx → sources/sweet/cg-links.tsv
+scripts/build_image_thumbs.py   public/images 原图 → thumbs/ 缩略图（需 Pillow）
+scripts/cdp_image_loading.mjs 图片加载 / 占位骨架 / 灯箱渐进 / 失败回退（10 项）
 scripts/test_extract.py      攻略解析回归测试
 scripts/test_sweet_guide.py  甜蜜乐章数据回归测试
 scripts/test_sweet_cg.py     甜蜜乐章 CG 清单回归测试
 scripts/test_notices.py      通告数据回归测试
 scripts/test_cg_links.py     事件 → CG 映射回归测试
 scripts/test_cg_node_links.py  CG → 事件 / 页面映射回归测试
+scripts/test_image_thumbs.py 缩略图产物完整性回归测试（4 项）
 scripts/cdp_*.mjs            浏览器端到端验证脚本
 src/sweet/                   甜蜜乐章站点入口（sweet.html 挂载：攻略 / 事件追踪 / CG 图鉴）
+src/ui/SmartImage.tsx        全站统一图片组件（缩略图 / 懒加载 / 占位 / 失败回退）
 src/ui/                      两站共用的顶栏与页签
 src/components/              攻略阅读页组件
 src/components/notices/      通告库（筛选、详情、能力对照）
