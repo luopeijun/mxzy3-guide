@@ -489,6 +489,45 @@ if (fs.existsSync(savePath)) {
   }
 }
 
+// 第四个存档（Ending0004）：自制通告 20 条，顺序和名字要与游戏「通告列表 →
+// 自制通告及其他」一致。名字不在 data1 之前的旧静态表里，10 条会读不到。
+{
+  const diyPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0004.sa2';
+  if (fs.existsSync(diyPath)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(diyPath);
+    const diy = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Ending0004.sa2',
+    );
+    check(diy.selfMade.length === 20,
+      'Ending0004: CaseCreate 列出 20 条自制通告', String(diy.selfMade.length));
+    check(diy.selfMade[0]?.code === 'CD701' && diy.selfMade[19]?.code === 'CD723',
+      'Ending0004: 顺序与游戏列表一致（CD701 … CD723）',
+      `${diy.selfMade[0]?.code} … ${diy.selfMade.at(-1)?.code}`);
+    const names = diy.selfMade.map((n) => n.name);
+    check(names.every((name) => name && name !== '（自制通告）'),
+      'Ending0004: 20 条都查到了名字（data1 那份静态表才全）',
+      names.filter((n) => n === '（自制通告）').length + ' missing');
+    const tv601 = diy.selfMade.find((n) => n.code === 'TV601');
+    check(tv601?.name === '握斧長龍' && tv601?.days === 15 && tv601?.roles.length === 4,
+      'Ending0004: 握斧長龍 15 天、四个角色',
+      `${tv601?.name}/${tv601?.days}/${tv601?.roles.length}`);
+    check(tv601?.casts.map((c) => c.artistName).join(',') === '姚子奇,姚子莹,卫亚,新名纱雪',
+      'Ending0004: 握斧長龍 四位自家艺人各接一个角色（带酬劳）',
+      tv601?.casts.map((c) => `${c.artistName}:${c.pay}`).join(' '));
+    // 同一首歌在不同存档里天数不同（Story0024 记 20、这里 25），所以只能断言
+    // 读到的是「这一份存档」的数，不能当静态值。
+    check(diy.selfMade.every((n) => n.days === 0 || (n.days > 0 && n.days < 400)),
+      'Ending0004: 每条的天数都在合理区间', diy.selfMade.map((n) => n.days).join(','));
+    const unsigned = diy.selfMade.filter((n) => n.casts.length === 0);
+    check(unsigned.length === 8 && diy.selfMade.every((n) => n.casts.every((c) => c.pay > 0)),
+      'Ending0004: 12 条已接 / 8 条没人接，接演记录都带酬劳',
+      `taken=${diy.selfMade.length - unsigned.length} empty=${unsigned.length}`);
+  } else {
+    console.log('OK   Ending0004.sa2 not present, skipped the self-made checks');
+  }
+}
+
 // buildGroupRecord: the first member is the leader, ids resolve to names.
 {
   const rec = buildGroupRecord(

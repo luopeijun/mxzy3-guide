@@ -20,13 +20,23 @@ import struct
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_DATA = r"D:\Program Files (x86)\dayuzixun\mxzy3\tw\data"
+DEFAULT_DATA = r"D:\Program Files (x86)\dayuzixun\mxzy3\tw"
+# 三合一装了两套数据目录：data（2005-2006 初版）与 data1（2007 更新版）。
+# 自制通告（CaseCreate 里那批 CD6xx / CD7xx、TV7xx）只有 data1 有名字，
+# 所以 data1 优先，data 只用来补 data1 留空的字段（CD274 就缺子类）。
+DATA_SUBDIRS = ("data1", "data")
 OUT = os.path.join(ROOT, "public", "data", "case-tables.json")
 # 通告长度表的真源（玩家整理的简体表）。舞台剧 / 时装秀是甜蜜乐章的内容，
 # 繁中三合一装的 Length.tab 里没有这两条，所以只有这份表能覆盖全。
 LENGTH_CSV = os.path.join(ROOT, "sources", "notices", "notice-length.csv")
 CASE_FILES = ("CDCase.dat", "CFCase.dat", "MVCase.dat", "TVCase.dat", "SHCase.dat",
               "FSCase.dat", "THCase.dat", "SpecialCase.dat")
+# 通告记录里出品公司的起点；名字 10、类型 50、子类 70 各表一致。
+# 不在这里的表（SpecialCase）结构不同，仍按文本段序号取。
+NOTICE_FIELDS = {
+    "CDCase.dat": 116, "SHCase.dat": 116,
+    "CFCase.dat": 108, "MVCase.dat": 108, "TVCase.dat": 108,
+}
 CODE_RE = re.compile(r"[0-9A-Z]{3}")
 
 
@@ -52,24 +62,40 @@ def text_segments(rec, limit=6):
     return parts
 
 
-def load_cases(data_dir):
+def load_cases(data_dirs):
     """Notice code -> [name, type, subtype, company].
 
     The long plot description is left out: the reader tab is about the rolled
     numbers, and dropping it keeps the bundled JSON small. The 通告 tab already
     carries the full static notice details.
+
+    字段是定长切片，不按文本段序号取：有些记录（CD274）子类留空，按段序号
+    会整体错位，把出品公司读成剧情描述。各表只有出品公司起点不同（唱片 /
+    主持 116，电视 / 电影 / 广告 108），名字 10、类型 50、子类 70 一致。
     """
     out = {}
-    for filename in CASE_FILES:
-        path = os.path.join(data_dir, filename)
-        if not os.path.isfile(path):
-            continue
-        for rec in read_table(path):
-            code = rec[:5].decode("ascii", "replace")
-            if len(code) != 5 or not code[:2].isalpha() or not CODE_RE.fullmatch(code[2:]):
+    for data_dir in data_dirs:
+        for filename in CASE_FILES:
+            path = os.path.join(data_dir, filename)
+            if not os.path.isfile(path):
                 continue
-            parts = text_segments(rec)
-            out[code] = parts[1:5]
+            company_at = NOTICE_FIELDS.get(filename)
+            for rec in read_table(path):
+                code = rec[:5].decode("ascii", "replace")
+                if len(code) != 5 or not code[:2].isalpha() or not CODE_RE.fullmatch(code[2:]):
+                    continue
+                if company_at is None:
+                    row = text_segments(rec)[1:5]
+                else:
+                    row = [
+                        big5(rec[10:50].split(b"\x00")[0]),
+                        big5(rec[50:70].split(b"\x00")[0]),
+                        big5(rec[70:company_at].split(b"\x00")[0]),
+                        big5(rec[company_at:company_at + 30].split(b"\x00")[0]),
+                    ]
+                previous = out.get(code)
+                # data1 在前：先到的值优先，后到的只补空字段。
+                out[code] = row if previous is None else [a or b for a, b in zip(previous, row)]
     return out
 
 
@@ -164,7 +190,7 @@ def load_difficulty(data_dir):
     return out
 
 
-def load_stars(data_dir):
+def load_stars(data_dirs):
     """艺人编号 -> [名字, 性别]（性别 1=男 0=女）。
 
     来源 StarRole.dat：每条 360 字节，名字在记录 +4 的 Big5 串里，性别在 +24。
@@ -172,17 +198,24 @@ def load_stars(data_dir):
     繁中三合一装的是旧版文件（只有 1..75 号），资料片新增的卫亚(76)、原少纬(77)
     在文件里没有记录 —— 76 由存档里「签约 + 团体成员 + 接下男主角」三处对得上，
     77 按角色表的相邻顺序补上。
+
+    data1 里也有一个 StarRole.dat，但记录布局完全不同（读出来全是控制字符），
+    所以要挑能读出整张名单的那一份，别按目录顺序取。
     """
-    path = os.path.join(data_dir, "StarRole.dat")
-    if not os.path.isfile(path):
-        return {}
     out = {}
-    for i, rec in enumerate(read_table(path)):
-        # 名字是定长字段，后面可能接着别的数据 —— 取到第一个 NUL 为止。
-        name = big5(rec[4:40].split(b"\x00")[0])
-        # 75 号是「千萬不要用」占位记录，不能当人名显示。
-        if i and name and "不要用" not in name:
-            out[str(i)] = [name, struct.unpack_from("<I", rec, 24)[0] and 1 or 0]
+    for data_dir in data_dirs:
+        path = os.path.join(data_dir, "StarRole.dat")
+        if not os.path.isfile(path):
+            continue
+        candidate = {}
+        for i, rec in enumerate(read_table(path)):
+            # 名字是定长字段，后面可能接着别的数据 —— 取到第一个 NUL 为止。
+            name = big5(rec[4:40].split(b"\x00")[0])
+            # 75 号是「千萬不要用」占位记录，不能当人名显示。
+            if i and name and "不要用" not in name:
+                candidate[str(i)] = [name, struct.unpack_from("<I", rec, 24)[0] and 1 or 0]
+        if len(candidate) > len(out):
+            out = candidate
     out.setdefault("76", ["衛亞", 1])
     out.setdefault("77", ["原少緯", 1])
     return out
@@ -203,20 +236,23 @@ def load_firms(data_dir):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default=DEFAULT_DATA, help="game data directory")
+    ap.add_argument("--data", default=DEFAULT_DATA,
+                    help="game data directory (either the tw folder or one data dir)")
     args = ap.parse_args()
     if not os.path.isdir(args.data):
         print("game data directory not found: " + args.data, file=sys.stderr)
         return 1
+    dirs = [os.path.join(args.data, sub) for sub in DATA_SUBDIRS]
+    dirs = [d for d in dirs if os.path.isdir(d)] or [args.data]
 
     payload = {
         "source": "明星志愿3 繁中三合一（tw）",
-        "cases": load_cases(args.data),
-        "needEffect": load_need_effect(args.data),
-        "length": load_length(args.data),
-        "difficulty": load_difficulty(args.data),
-        "stars": load_stars(args.data),
-        "firms": load_firms(args.data),
+        "cases": load_cases(dirs),
+        "needEffect": load_need_effect(dirs[0]),
+        "length": load_length(dirs[0]),
+        "difficulty": load_difficulty(dirs[0]),
+        "stars": load_stars(dirs),
+        "firms": load_firms(dirs[0]),
     }
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))

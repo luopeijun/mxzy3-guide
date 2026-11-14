@@ -309,6 +309,8 @@ export interface ParseResult {
   shooting: ShootingNotice[];
   /** 自家艺人都拍完了的通告，最近 FINISHED_WINDOW_DAYS 天内的。 */
   finished: ShootingNotice[];
+  /** 「自制通告及其他」：玩家自己出品的通告清单，按制作顺序。 */
+  selfMade: SelfMadeNotice[];
   artists: ArtistStats[];
   /** The 18 signable artists, resolved against the state blocks in this save. */
   artistDirectory: ArtistOption[];
@@ -913,6 +915,111 @@ export interface ShootingNotice {
   offset: number;
 }
 
+/** 一位接演艺人自己在这条自制通告上的记录。 */
+export interface SelfMadeCast {
+  artistId: number;
+  artistName: string;
+  /** 存档记的酬劳，0 表示没读到。 */
+  pay: number;
+  /** 存档记的已完成天数。 */
+  doneDays: number;
+}
+
+/** 「自制通告及其他」里的一条：玩家自己出品（少数沿用原厂牌署名）的通告。
+ *
+ *  真源是 CaseCreate 段 —— 段名后是 4 字节条数，然后每条 28 字节
+ *  [编码 5×int32][类别][天数]。这份列表按制作顺序累积，Ending0004 里正好
+ *  20 条，跟游戏「通告列表 → 自制通告及其他」的排列一一对应。
+ *
+ *  名字 / 类型 / 出品公司不在存档里，来自 data1 那份更全的静态表：三合一
+ *  同装的 data 目录缺 CD6xx / CD7xx 这一批，20 条里有 10 条读不到名字。
+ *
+ *  要注意自制通告不进 CaseFirm（当期可接取列表），块里也没有普通通告那种
+ *  「周一 / 周一 / 周日」三连档期，所以不能套拍摄中的风险算法；这里只列
+ *  清单、存档记的天数、角色，以及已经被哪位艺人接走。 */
+export interface SelfMadeNotice {
+  /** 在自制列表里的序号，1 起，就是游戏里的排列顺序。 */
+  seq: number;
+  code: string;
+  name: string;
+  category: string;
+  type: string;
+  subtype: string;
+  company: string;
+  /** 存档里记的天数，与游戏列表名字后面的括号数字一致；0 表示没读到。 */
+  days: number;
+  /** Length 表的每週上限，用来估算要排几周；0 表示查不到。 */
+  daysPerWeek: number;
+  roles: RoleRecord[];
+  /** 已经被接走的记录（存档里 pay > 0 的那几条）。 */
+  casts: SelfMadeCast[];
+  offset: number;
+}
+
+/** 自制通告块里的接演记录。
+ *
+ *  形状与普通通告一样（[状态位][艺人编号][已完成天数][?][?][酬劳]），但自制
+ *  通告的块里还混着一堆长度表 / 角色槽的整数，宽松筛会误报。这里只认**有
+ *  酬劳**的那几条 —— 真正接了才有钱，其余候选一律丢掉。仍只看自家艺人：
+ *  对手公司的接演跟玩家的排期无关。 */
+function readSelfMadeCasts(
+  view: DataView,
+  start: number,
+  end: number,
+  ownerIds: number[],
+  names: Map<number, string>,
+): SelfMadeCast[] {
+  const rows: SelfMadeCast[] = [];
+  if (ownerIds.length === 0) return rows;
+  const wanted = new Set(ownerIds);
+  const from = start + 400;
+  const limit = Math.min(end, view.byteLength);
+  for (let o = from; o + 20 <= limit; o += 4) {
+    const id = view.getUint32(o, true);
+    if (!wanted.has(id)) continue;
+    if (rows.some((row) => row.artistId === id)) continue;
+    const flag = view.getUint32(o - 4, true);
+    const done = view.getUint32(o + 4, true);
+    const a = view.getUint32(o + 8, true);
+    const b = view.getUint32(o + 12, true);
+    const pay = view.getUint32(o + 16, true);
+    if (flag > 3 || done > 60 || a > 99 || b > 99) continue;
+    if (pay <= 0 || pay > 1e9) continue;
+    rows.push({ artistId: id, artistName: names.get(id) ?? `艺人 #${id}`, pay, doneDays: done });
+  }
+  return rows;
+}
+
+/** CaseCreate 段：自制通告的编码清单，按制作顺序。
+ *
+ *  段名后面跟 4 字节条数，再 4 字节（固定值 5），然后每条 28 字节：
+ *  [编码 5×int32][类别 4=唱片 / 2=电视][天数]。最后一条只有 24 字节（少了
+ *  末尾那个字段），所以只读编码，天数另外从 Case 段的块头取。 */
+function parseCaseCreate(
+  view: DataView, blocks: Record<string, [number, number]>,
+): string[] {
+  const section = blocks.CaseCreate;
+  if (!section) return [];
+  const head = section[1];
+  if (head + 12 > view.byteLength) return [];
+  const count = view.getUint32(head, true);
+  if (count > 400) return [];
+  const out: string[] = [];
+  for (let k = 0; k < count; k += 1) {
+    const at = head + 8 + k * 28;
+    if (at + 20 > view.byteLength) break;
+    let code = '';
+    for (let j = 0; j < 5; j += 1) {
+      const v = view.getUint32(at + 4 * j, true);
+      if (v < 0x20 || v > 0x7a) { code = ''; break; }
+      code += String.fromCharCode(v);
+    }
+    if (!/^(?:CD|CF|MV|TV|SH|FS|TH|SP)[0-9A-Z]{3}$/.test(code)) break;
+    out.push(code);
+  }
+  return out;
+}
+
 /** 剩下 N 个日历日、每週最多 M 天，最多还能排几天。 */
 export function shootableDays(remaining: number, perWeek: number): number {
   if (!(remaining > 0) || !(perWeek > 0)) return 0;
@@ -1237,6 +1344,36 @@ export function parseSave(
   // 已完成：杀青日越近越靠前。
   finished.sort((a, b) => b.endDay - a.endDay);
 
+  // 自制通告及其它：CaseCreate 里列出来的、玩家自己出品的通告。名字要从静态
+  // 表查（data1 那份才全），天数 / 接演记录来自 Case 段的第一块。
+  const nameOfArtist = new Map(artistDirectory.map((entry) => [entry.id, entry.name]));
+  const selfMade: SelfMadeNotice[] = parseCaseCreate(view, blocks).map((code, index) => {
+    const info = tables.cases[code];
+    const [name = '', type = '', subtype = '', company = ''] = info ?? [];
+    const noticeRoles = roles.filter((role) => role.code === code);
+    // 同一编码在 Case 段常常留着好几块（历次接演各一块），第一块就是游戏
+    // 通告列表里显示的那条，天数也取它。
+    const block = codeBlocks.find((item) => item.code === code) ?? null;
+    const rawDays = block ? view.getUint32(block.start + 24, true) : 0;
+    const length = noticeRoles
+      .map((role) => lengthOf(code, info, role.role))
+      .find((hit): hit is number[] => Boolean(hit)) ?? null;
+    return {
+      seq: index + 1,
+      code,
+      name: name || '（自制通告）',
+      category: categoryOf(code),
+      type, subtype, company,
+      days: rawDays > 0 && rawDays < 400 ? rawDays : 0,
+      daysPerWeek: length?.[1] ?? 0,
+      roles: noticeRoles,
+      casts: block
+        ? readSelfMadeCasts(view, block.start, block.end, signedArtistIds, nameOfArtist)
+        : [],
+      offset: block?.start ?? 0,
+    };
+  });
+
   return {
     saveName,
     saveSize: bytes.length,
@@ -1246,6 +1383,7 @@ export function parseSave(
     notices,
     shooting,
     finished,
+    selfMade,
     artists,
     artistDirectory,
     signedArtistIds,

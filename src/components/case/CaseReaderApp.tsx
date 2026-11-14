@@ -6,7 +6,8 @@ import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
   buildGroupRecord, canTakeRole, isGroupRole, matchGroupRole, matchRole, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
-  type GroupRecord, type ParseResult, type RoleRecord, type ShootingNotice,
+  type GroupRecord, type ParseResult, type RoleRecord, type SelfMadeNotice,
+  type ShootingNotice,
 } from '../../lib/caseParser';
 
 const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
@@ -85,7 +86,7 @@ export default function CaseReaderApp() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterCompany, setFilterCompany] = useState('all');
   /** 上面三张表：等档期的筹备中、已经接下的拍摄中、自家艺人拍完的已完成。 */
-  const [board, setBoard] = useState<'open' | 'shooting' | 'finished'>('open');
+  const [board, setBoard] = useState<'open' | 'shooting' | 'finished' | 'selfMade'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
@@ -459,7 +460,7 @@ export default function CaseReaderApp() {
 
         {result && !busy && (
           result.notices.length === 0 && result.shooting.length === 0
-            && result.finished.length === 0 ? (
+            && result.finished.length === 0 && result.selfMade.length === 0 ? (
             <div className="mt-2">
               <EmptyState title="这份存档里没有当期通告" text="CaseFirm 段没有登记任何通告编号。换一份游戏进行中的存档再试。" />
             </div>
@@ -496,8 +497,24 @@ export default function CaseReaderApp() {
                 >
                   已完成 <span className="tabular-nums">{result.finished.length}</span>
                 </button>
+                <button
+                  type="button"
+                  role="tab"
+                  data-case-tab="self-made"
+                  aria-selected={board === 'selfMade'}
+                  onClick={() => setBoard('selfMade')}
+                  className={tabClass(board === 'selfMade')}
+                >
+                  自制通告及其他 <span className="tabular-nums">{result.selfMade.length}</span>
+                </button>
               </div>
-              {board === 'shooting' || board === 'finished' ? (
+              {board === 'selfMade' ? (
+                <SelfMadePanel
+                  notices={result.selfMade}
+                  emptyTitle="还没有自制通告"
+                  emptyText="这份存档的 CaseCreate 段里没有自制通告。自己制作唱片或戏剧之后再读一次。"
+                />
+              ) : board === 'shooting' || board === 'finished' ? (
                 <ShootingPanel
                   notices={board === 'shooting' ? result.shooting : result.finished}
                   emptyTitle={board === 'shooting' ? '没有在拍的通告' : '最近没有拍完的通告'}
@@ -655,7 +672,7 @@ function normKind(text: string): string {
 }
 
 /** 类型列的第二行：细分类型，跟大类同名就不重复写。 */
-function kindDetail(notice: ShootingNotice): string {
+function kindDetail(notice: { category: string; type: string; subtype: string }): string {
   if (notice.subtype && normKind(notice.subtype) !== normKind(notice.category)) return notice.subtype;
   if (notice.type && normKind(notice.type) !== normKind(notice.category)) return notice.type;
   return '';
@@ -824,8 +841,136 @@ function ShootingPanel({
   );
 }
 
-function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {  return (
-    <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
+/** 自制通告及其它：玩家自己出品的通告，按游戏里的排列顺序。
+ *
+ *  自制通告不进 CaseFirm，块里也没有普通通告那种「周一 / 周一 / 周日」三连
+ *  档期，所以拍摄中那套「还差几天 / 能排几天 / 逾期风险」在这里没有依据，
+ *  只能列存档里确实有的东西：角色与难度、存档记的天数、已经被谁接走（带
+ *  酬劳）、出品公司。接演只统计自家艺人。 */
+function SelfMadePanel({
+  notices, emptyTitle, emptyText,
+}: { notices: SelfMadeNotice[]; emptyTitle: string; emptyText: string }) {
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title={emptyTitle} text={emptyText} />
+      </div>
+    );
+  }
+  const byCategory = new Map<string, number>();
+  for (const notice of notices) {
+    byCategory.set(notice.category, (byCategory.get(notice.category) ?? 0) + 1);
+  }
+  const taken = notices.filter((notice) => notice.casts.length > 0).length;
+  return (
+    <div data-case-selfmade className="mt-2 rounded-ui-md border border-line bg-surface">
+      <div
+        data-case-selfmade-summary
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2 text-ui-2xs text-ink-faint"
+      >
+        <span className="text-ink-muted">共 {notices.length} 条</span>
+        {[...byCategory].map(([category, count]) => (
+          <span key={category} className="rounded-full bg-surface-soft px-1.5 py-0.5 text-ink-muted">
+            {category} {count}
+          </span>
+        ))}
+        <span className="ml-auto tabular-nums text-ink-muted">
+          旗下艺人已接 {taken} 条 · 还没人接 {notices.length - taken} 条
+        </span>
+      </div>
+      <table className="w-full table-fixed border-collapse text-ui-xs">
+        <thead>
+          <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+            <Th className="w-[27%]">通告</Th>
+            <Th className="w-[24%]">角色 / 难度</Th>
+            <Th className="w-[12%]">天数</Th>
+            <Th className="w-[21%]">接演艺人</Th>
+            <Th className="w-[16%]">出品</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {notices.map((notice) => (
+            <tr
+              key={notice.code}
+              data-case-selfmade-row={notice.code}
+              data-case-selfmade-cast={notice.casts.length}
+              className="border-t border-line align-top"
+            >
+              <Td>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="tabular-nums text-ui-2xs text-ink-faint">{notice.seq}</span>
+                  <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
+                </div>
+                <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  <span className={cn(
+                    'inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-ui-2xs',
+                    CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+                  )}
+                  >
+                    {notice.category}
+                  </span>
+                  {kindDetail(notice) && (
+                    <span className="text-ui-2xs text-ink-faint">{kindDetail(notice)}</span>
+                  )}
+                </div>
+              </Td>
+              <Td>
+                {notice.roles.length === 0 ? (
+                  <span className="text-ui-2xs text-ink-faint">—</span>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {notice.roles.map((role) => (
+                      <span
+                        key={role.roleCode}
+                        className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border border-line-strong bg-surface px-2 py-0.5 text-ui-2xs text-ink-muted"
+                      >
+                        {role.role}
+                        <b className="text-ui-2xs text-brand-strong">{role.star}★</b>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Td>
+              <Td className="tabular-nums text-ui-2xs">
+                <span className="text-ui-xs font-bold text-ink">{notice.days || '—'}</span>
+                <span className="text-ink-faint"> 天</span>
+                {notice.daysPerWeek > 0 && (
+                  <div className="mt-0.5 text-ink-faint">每週 ≤ {notice.daysPerWeek} 天</div>
+                )}
+              </Td>
+              <Td className="text-ui-2xs">
+                {notice.casts.length === 0 ? (
+                  <span className="text-ink-faint">还没有艺人接</span>
+                ) : (
+                  <div className="space-y-0.5">
+                    {notice.casts.map((cast) => (
+                      <div key={cast.artistId} className="flex items-baseline gap-1.5">
+                        <span
+                          data-case-selfmade-artist={cast.artistId}
+                          className="whitespace-nowrap font-semibold text-ink"
+                        >
+                          {cast.artistName}
+                        </span>
+                        <span className="tabular-nums text-ink-muted">{payText(cast.pay)}</span>
+                        {cast.doneDays > 0 && (
+                          <span className="tabular-nums text-ink-faint">已拍 {cast.doneDays} 天</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Td>
+              <Td className="text-ui-2xs text-ink-muted">{notice.company || '—'}</Td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {  return (    <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
       <div className="flex items-baseline gap-1.5">
         <span className="text-ui-xs font-bold text-brand-strong">#{option.id} {option.name}</span>
         <span className="rounded-full bg-surface-soft px-1.5 text-ui-2xs text-ink-faint">

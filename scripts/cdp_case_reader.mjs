@@ -442,8 +442,8 @@ async function main() {
       })()
     })`));
     console.log('shooting:', JSON.stringify(shot));
-    check(shot.tabs === 3 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
-      '筹备中 / 拍摄中 / 已完成 三个页签可以切换', `${shot.tabs} tabs`);
+    check(shot.tabs === 4 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
+      '筹备中 / 拍摄中 / 已完成 / 自制通告 四个页签可以切换', `${shot.tabs} tabs`);
     check(shot.rows === 1 && shot.codes[0] === 'CF014',
       '拍摄中只列 CF014 愛信電訊（萧依莉那条广告）', shot.codes.join(',') || 'none');
     check(shot.artists.join(',') === '蕭依莉',
@@ -487,10 +487,69 @@ async function main() {
       shootingHidden: document.querySelectorAll('[data-case-notice]').length
     })`));
     console.log('finished:', JSON.stringify({ ...fin, text: fin.text.slice(0, 60) }));
-    check(fin.tabs === 3 && fin.selected === 'true' && fin.shootingHidden === 0,
+    check(fin.tabs === 4 && fin.selected === 'true' && fin.shootingHidden === 0,
       '已完成 是第三个页签，切过去会收起筹备中的表格', `${fin.tabs} tabs`);
     check(fin.rows === 0 && fin.text.includes('最近没有拍完的通告'),
       'Auto 存档最近没有拍完的通告，已完成页签显示空态', String(fin.rows));
+
+    // 「自制通告及其他」页签：Auto 还没做过自制通告，应该是空态。
+    await evaluate(`document.querySelector('[data-case-tab="self-made"]').click()`);
+    await sleep(350);
+    const diyEmpty = JSON.parse(await evaluate(`JSON.stringify({
+      tabs: document.querySelectorAll('[data-case-tabs] [role="tab"]').length,
+      selected: document.querySelector('[data-case-tab="self-made"]')?.getAttribute('aria-selected'),
+      rows: document.querySelectorAll('[data-case-selfmade-row]').length,
+      text: document.body.innerText,
+      noticesHidden: document.querySelectorAll('[data-case-notice]').length
+    })`));
+    check(diyEmpty.tabs === 4 && diyEmpty.selected === 'true' && diyEmpty.noticesHidden === 0,
+      '自制通告及其他 是第四个页签，切过去会收起筹备中的表格', `${diyEmpty.tabs} tabs`);
+    check(diyEmpty.rows === 0 && diyEmpty.text.includes('还没有自制通告'),
+      'Auto 存档没有自制通告，页签显示空态', String(diyEmpty.rows));
+
+    // Ending0004：20 条自制通告，顺序 / 名字 / 天数 / 接演都要与游戏列表一致。
+    const diyPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0004.sa2';
+    if (fs.existsSync(diyPath)) {
+      const diyCopy = path.join(root, '.tmp', 'case-e2e-diy.sa2');
+      fs.copyFileSync(diyPath, diyCopy);
+      await uploadSave(diyCopy);
+      await evaluate(`document.querySelector('[data-case-tab="self-made"]').click()`);
+      await sleep(400);
+      const diy = JSON.parse(await evaluate(`JSON.stringify({
+        rows: [...document.querySelectorAll('[data-case-selfmade-row]')].map(r => r.getAttribute('data-case-selfmade-row')),
+        text: document.querySelector('[data-case-selfmade]')?.innerText || '',
+        summary: document.querySelector('[data-case-selfmade-summary]')?.innerText || '',
+        casts: [...document.querySelectorAll('[data-case-selfmade-cast]')].map(x => Number(x.getAttribute('data-case-selfmade-cast'))),
+        first: document.querySelector('[data-case-selfmade-row]')?.innerText.replace(/\\s+/g, ' ').trim() || '',
+        noHorizontalScroll: (function(){
+          var w = document.querySelector('[data-case-selfmade]');
+          return !!w && w.scrollWidth <= w.clientWidth + 1;
+        })()
+      })`));
+      console.log('self-made:', diy.rows.length, diy.first);
+      check(diy.rows.length === 20 && diy.rows[0] === 'CD701' && diy.rows[19] === 'CD723',
+        'Ending0004: 自制通告 20 条，顺序与游戏列表一致',
+        `${diy.rows.length} 条 / ${diy.rows[0]} … ${diy.rows.at(-1)}`);
+      check(diy.text.includes('有朋自遠方來') && diy.text.includes('握斧長龍')
+        && diy.text.includes('唐朝栗子') && diy.text.includes('新涼時節'),
+        '自制通告的名字都显示出来（含只有 data1 静态表才有的那批）');
+      check(diy.first.includes('CD701') && diy.first.includes('唱片')
+        && diy.first.includes('25 天') && diy.first.includes('姚子奇'),
+        '每行给名称 / 编码 / 类别 / 天数 / 接演艺人', diy.first.slice(0, 90));
+      check(diy.text.includes('握斧長龍') && diy.text.includes('15 天')
+        && diy.text.includes('还没有艺人接'),
+        '天数与「还没人接」的提示都在表里');
+      check(diy.casts.filter((n) => n === 0).length === 8,
+        '12 条已接 / 8 条没人接，与存档一致',
+        diy.casts.join(','));
+      check(diy.summary.includes('共 20 条') && diy.summary.includes('唱片 15')
+        && diy.summary.includes('电视剧 5') && diy.summary.includes('还没人接 8 条'),
+        '汇总条给出条数、类别分布与接演情况',
+        diy.summary.replace(/\s+/g, ' ').slice(0, 90));
+      check(diy.noHorizontalScroll, '自制通告表不出现横向滚动');
+    } else {
+      console.log('SKIP Ending0004.sa2 not present, self-made table not checked');
+    }
 
     // 换成 Story0027：「守候」里史蒂芬 / 方若綺不是旗下艺人，只该留克烈斯一行。
     const ownPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0027.sa2';
