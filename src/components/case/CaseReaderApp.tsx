@@ -187,9 +187,11 @@ export default function CaseReaderApp() {
   const activeGroups = useMemo<GroupRecord[]>(() => {
     if (!result) return [];
     const nameOf = (id: number): string =>
-      ARTIST_DIRECTORY.find((a) => a.id === id)?.name ?? `编号${id}`;
+      ARTIST_DIRECTORY.find((a) => a.id === id)?.name
+      ?? tables.stars?.[String(id)]?.[0]
+      ?? `编号${id}`;
     return result.teams.map((team) => buildGroupRecord(team, nameOf));
-  }, [result]);
+  }, [result, tables]);
 
   const exportCsv = useCallback(() => {
     if (!result) return;

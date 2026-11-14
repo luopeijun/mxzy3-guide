@@ -111,12 +111,14 @@ export interface CaseTables {
   length?: Record<string, number[]>;
   /** star 1..5 -> [[A lo,hi], [B lo,hi], [C lo,hi], [D lo,hi]] */
   difficulty: number[][][];
+  /** 艺人编号 -> [名字, 性别]（1 男 0 女），用来给「已被谁预约」署名。 */
+  stars?: Record<string, [string, number]>;
   /** company id -> name */
   firms: Record<string, string>;
 }
 
 export const EMPTY_TABLES: CaseTables = {
-  source: '', cases: {}, needEffect: {}, length: {}, difficulty: [], firms: {},
+  source: '', cases: {}, needEffect: {}, length: {}, difficulty: [], stars: {}, firms: {},
 };
 
 export interface Requirement {
@@ -691,13 +693,14 @@ function readCurrentDate(view: DataView, byteLength: number): GameDate | null {
 /** Read the player's teams from the save's `Team` section.
  *
  *  Layout verified against Auto / Story0001 / Story0003 / Story0004 /
- *  Story0007: a team record is [编码][名字节长度][Big5 名字] and, a fixed
- *  distance after the name, the member artist numbers (第 0 个是队长). A team
- *  the player never formed simply has no record — 旗下没有团体时这里是空数组。
+ *  Story0007 / Ending0009: a team record is [编码][名字节长度][Big5 名字] and,
+ *  a fixed distance after the name, the member artist numbers (第 0 个是队长).
+ *  A team the player never formed simply has no record — 旗下没有团体时这里是空数组。
  *
  *  The section also holds each team's current 通告, whose record quotes the
- *  team name too; those never carry the trailing marker below, so requiring it
- *  keeps 通告 references out. */
+ *  team name too. Two shapes count as a real team: the usual one ends with the
+ *  "Invaid" class label, and (Ending0009 的 101 大小姐) some records stop right
+ *  after the member numbers. 通告 references match neither, so they stay out. */
 export function parseTeams(
   bytes: Uint8Array,
   view: DataView,
@@ -726,8 +729,17 @@ export function parseTeams(
     if (!/^[\u4e00-\u9fff]+$/.test(name)) continue;
     const nameEnd = o + 8 + nameBytes * 4;
     if (nameEnd + 72 > bytes.length) continue;
-    if (view.getUint32(nameEnd + 44, true) !== MARKER.length) continue;
-    if (!MARKER.every((c, j) => view.getUint32(nameEnd + 48 + 4 * j, true) === c)) continue;
+    const hasMarker = view.getUint32(nameEnd + 44, true) === MARKER.length
+      && MARKER.every((c, j) => view.getUint32(nameEnd + 48 + 4 * j, true) === c);
+    const idA = view.getUint32(nameEnd + 28, true);
+    const idB = view.getUint32(nameEnd + 32, true);
+    const idC = view.getUint32(nameEnd + 36, true);
+    // 没有尾部标记的记录：名字后面先是一个小数值，再是两三个艺人编号，然后归零。
+    const shapeOk = view.getUint32(nameEnd + 24, true) <= 99
+      && idA >= 1 && idA <= 96 && idB >= 1 && idB <= 96
+      && (idC === 0 || (idC >= 1 && idC <= 96))
+      && view.getUint32(nameEnd + 40, true) === 0;
+    if (!hasMarker && !shapeOk) continue;
     const memberIds: number[] = [];
     for (let j = 0; j < 3; j += 1) {
       const id = view.getUint32(nameEnd + 28 + 4 * j, true);
@@ -751,6 +763,61 @@ export function buildGroupRecord(
     leaderName: team.memberIds.length ? nameOf(leaderId) : '',
     memberNames: team.memberIds.map(nameOf),
   };
+}
+
+/** 通告被谁接走了。
+ *
+ *  存档里没有「角色 → 艺人」的字段（192 字节的角色记录在两个存档间逐字节比对过，
+ *  除了 roll 出来的星级/数值，没有空位放艺人编号）。艺人与通告的对应写在
+ *  **艺人状态块后面那串「作品清单」**里：每条 28 字节，形如
+ *  `[类别][5 字符通告编码][子类]`，连续的清单一直排到下一个艺人块的表头。
+ *  所以按「块 N 之后到块 N+1 表头」切区间，把区间内出现的编码都算作块 N 的作品。
+ *
+ *  实测对上：Auto 存档里接了「守候 / 背叛」男主角的是 13 号（黎華），
+ *  Story0007 里接下「天才與白痴」男主角与「最後一次再想他」的是 76 号（衛亞）。
+ *  通告池里出现的编码只可能是当期的，所以命中的就是当前预约。 */
+export function parseCaseOwners(
+  bytes: Uint8Array,
+  view: DataView,
+  artists: ArtistStats[],
+  stars: CaseTables['stars'],
+  limit: number,
+): Record<string, { id: number; name: string; gender: Gender }[]> {
+  const out: Record<string, { id: number; name: string; gender: Gender }[]> = {};
+  const rows = [...artists].sort((a, b) => a.offset - b.offset);
+  for (let k = 0; k < rows.length; k += 1) {
+    const artist = rows[k];
+    // 清单排在块后面，到下一个块的表头（id 在能力值前 16 字节）为止。
+    const end = Math.min(k + 1 < rows.length ? rows[k + 1].offset - 16 : limit, bytes.length);
+    const entry = stars?.[String(artist.roleId)];
+    const gender: Gender = entry ? (entry[1] ? 'male' : 'female') : 'any';
+    const name = entry?.[0] ?? `艺人 #${artist.roleId}`;
+    const code = readNoticeCode(view, artist.offset, end);
+    for (const item of code) {
+      const list = (out[item] ??= []);
+      if (!list.some((owner) => owner.id === artist.roleId)) {
+        list.push({ id: artist.roleId, name, gender });
+      }
+    }
+  }
+  return out;
+}
+
+/** 5 个 ascii 字符挤在 20 字节里的通告编码，扫区间内每一个 4 字节位置。 */
+function readNoticeCode(view: DataView, start: number, end: number): string[] {
+  const out: string[] = [];
+  for (let o = start; o + 20 <= end; o += 4) {
+    let code = '';
+    for (let j = 0; j < 5; j += 1) {
+      const v = view.getUint32(o + 4 * j, true);
+      if (v < 0x20 || v > 0x7a) { code = ''; break; }
+      code += String.fromCharCode(v);
+    }
+    if (code.length !== 5 || !/^(?:CD|CF|MV|TV|SH)[0-9A-Z]{3}$/.test(code)) continue;
+    out.push(code);
+    o += 16;
+  }
+  return out;
 }
 
 /** Parse one uploaded save. The buffer is a snapshot: the game may overwrite
@@ -791,6 +858,8 @@ export function parseSave(
   });
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
   const teams = parseTeams(bytes, view, blocks);
+  // 每个艺人接下的通告编码，用来判断通告池里哪个角色已经被别人占住。
+  const ownersByCode = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
 
   /** code -> best [open, start, end] triple found anywhere in the Case block. */
   const datesByCode: Record<string, DateTuple[]> = {};
@@ -855,6 +924,17 @@ export function parseSave(
     if (!info) unknownCodes.push(item.code);
     const [name = '', type = '', subtype = '', company = ''] = info ?? [];
     const noticeRoles = roles.filter((role) => role.code === item.code);
+    // 通告池里的编码只可能是当期通告，命中的艺人就是把它接走的人。角色记录里
+    // 没有艺人编号，所以按性别落到第一个还对得上的角色（男→男主角，女→女主角）。
+    const taken = new Set<string>();
+    for (const owner of ownersByCode[item.code] ?? []) {
+      const target = noticeRoles.find(
+        (role) => !taken.has(role.roleCode) && canTakeRole(role, owner.gender),
+      );
+      if (!target) continue;
+      target.reservedBy = owner.name;
+      taken.add(target.roleCode);
+    }
     for (const role of noticeRoles) {
       const grades = tables.needEffect[`${type}|${role.role}`];
       role.requirements = ATTRS

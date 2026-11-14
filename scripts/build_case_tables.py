@@ -114,6 +114,30 @@ def load_difficulty(data_dir):
     return out
 
 
+def load_stars(data_dir):
+    """艺人编号 -> [名字, 性别]（性别 1=男 0=女）。
+
+    来源 StarRole.dat：每条 360 字节，名字在记录 +4 的 Big5 串里，性别在 +24。
+    编号就是存档里艺人状态块 -16 处的那个 id，也与团队记录的成员编号一致。
+    繁中三合一装的是旧版文件（只有 1..75 号），资料片新增的卫亚(76)、原少纬(77)
+    在文件里没有记录 —— 76 由存档里「签约 + 团体成员 + 接下男主角」三处对得上，
+    77 按角色表的相邻顺序补上。
+    """
+    path = os.path.join(data_dir, "StarRole.dat")
+    if not os.path.isfile(path):
+        return {}
+    out = {}
+    for i, rec in enumerate(read_table(path)):
+        # 名字是定长字段，后面可能接着别的数据 —— 取到第一个 NUL 为止。
+        name = big5(rec[4:40].split(b"\x00")[0])
+        # 75 号是「千萬不要用」占位记录，不能当人名显示。
+        if i and name and "不要用" not in name:
+            out[str(i)] = [name, struct.unpack_from("<I", rec, 24)[0] and 1 or 0]
+    out.setdefault("76", ["衛亞", 1])
+    out.setdefault("77", ["原少緯", 1])
+    return out
+
+
 def load_firms(data_dir):
     """Company id -> name, used only as a hint next to the save's slot number."""
     path = os.path.join(data_dir, "Firm.dat")
@@ -141,6 +165,7 @@ def main():
         "needEffect": load_need_effect(args.data),
         "length": load_length(args.data),
         "difficulty": load_difficulty(args.data),
+        "stars": load_stars(args.data),
         "firms": load_firms(args.data),
     }
     with open(OUT, "w", encoding="utf-8") as f:
@@ -149,6 +174,7 @@ def main():
     print("needEffect   %d" % len(payload["needEffect"]))
     print("length       %d" % len(payload["length"]))
     print("difficulty   %d stars" % len(payload["difficulty"]))
+    print("stars        %d" % len(payload["stars"]))
     print("firms        %d" % len(payload["firms"]))
     print("written      %s (%d bytes)" % (OUT, os.path.getsize(OUT)))
     return 0

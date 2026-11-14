@@ -293,9 +293,10 @@ async function main() {
 
     // No merged cells: a reserved role dims only its own cells.
     check(p.rowspans === 0, 'the notice table has no merged rows', String(p.rowspans));
-    // 预约只来自存档；读不到就不编，所以这里断言页面不出现凭印象写死的名字。
-    check(!p.reservedText.includes('黎华'),
-      'no hard-coded reservation names on the page', p.reservedText || '(none)');
+    // 预约只来自存档：Auto 存档里守候 / 背叛的男主角都写着黎華（存档里的繁体名）。
+    check(p.reservedText === '黎華|黎華' && !p.reservedText.includes('黎华'),
+      'the two booked roles show 黎華, read from the save (not hard-coded)',
+      p.reservedText || '(none)');
     check(p.tableSelects === 0 && !p.reservePanel,
       'the reservation column is read-only: no dropdown, no settings panel',
       `selects=${p.tableSelects} panel=${p.reservePanel}`);

@@ -224,8 +224,15 @@ if (fs.existsSync(savePath)) {
     check(shouhou?.openDate === '2006/1/16' && shouhou?.deadline === '2006/2/12'
       && shouhou?.periodStart === '2006/2/13' && shouhou?.periodEnd === '2006/4/9'
       && shouhou?.execDays === 56, '守候 booking window and shooting period');
-      check(real.notices.every((n) => n.roles.every((r) => r.reservedBy === '')),
-      'reservations are never invented (no role is hard-coded as booked)');
+    // 预约来自存档：艺人状态块后面那串作品清单里有当期通告编码，就是他把角色接走了。
+    const booked = real.notices.flatMap((n) => n.roles).filter((r) => r.reservedBy);
+    check(shouhou?.roles.find((r) => r.role === '男主角')?.reservedBy === '黎華'
+      && real.notices.find((n) => n.code === 'TV221')?.roles
+        .find((r) => r.role === '男主角')?.reservedBy === '黎華',
+      '守候 / 背叛 的男主角都由存档读出是黎華',
+      booked.map((r) => `${r.roleCode}:${r.reservedBy}`).join(',') || 'none');
+    check(booked.length === 2 && booked.every((r) => r.role === '男主角'),
+      '只有这两个角色被预约，其余角色都没有署名');
     check(real.notices.filter((n) => n.status === 'closing').length === 2,
       'exactly two notices close within 7 days');
     check(real.nextUpdate?.date === '2006/1/30' && real.nextUpdate.companies.length === 3
@@ -296,8 +303,38 @@ if (fs.existsSync(savePath)) {
     check(story.teams[0]?.memberIds.join(',') === '74,76',
       'Story0007: members are 新名纱雪 (74) and 卫亚 (76)',
       story.teams[0]?.memberIds.join(',') ?? '-');
+    const genius = story.notices.find((n) => n.code === 'TV086');
+    const lastSong = story.notices.find((n) => n.code === 'CD835');
+    check(genius?.roles.find((r) => r.role === '男主角')?.reservedBy === '衛亞'
+      && lastSong?.roles.find((r) => r.role === '個人')?.reservedBy === '衛亞',
+      'Story0007: 天才與白癡 男主角 / 最後一次再想他 都由存档读出是衛亞',
+      [genius, lastSong].map((n) => n?.roles.map((r) => `${r.role}:${r.reservedBy || '-'}`).join('|')).join(' / '));
   } else {
     console.log('OK   Story0007.sa2 not present, skipped the second-save checks');
+  }
+}
+
+// 第三个存档（Ending0009）：两个团体，101 大小姐 + 102 晴少爺。101 的记录没有
+// 尾部 "Invaid" 标记，早先按标记认记录时它整个被丢掉，只显示 102。
+{
+  const endingPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0009.sa2';
+  if (fs.existsSync(endingPath)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(endingPath);
+    const ending = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Ending0009.sa2',
+    );
+    check(ending.teams.length === 2
+      && ending.teams[0].code === 101 && ending.teams[0].name === '大小姐'
+      && ending.teams[1].code === 102 && ending.teams[1].name === '晴少爺',
+      'Ending0009: 两个团体都读到（101 大小姐 / 102 晴少爺）',
+      ending.teams.map((t) => `${t.code}:${t.name}`).join(',') || 'none');
+    check(ending.teams[0]?.memberIds.join(',') === '1,2'
+      && ending.teams[1]?.memberIds.join(',') === '7,77',
+      'Ending0009: 两个团体的成员编号都读到',
+      ending.teams.map((t) => t.memberIds.join('/')).join(' | '));
+  } else {
+    console.log('OK   Ending0009.sa2 not present, skipped the two-team checks');
   }
 }
 
