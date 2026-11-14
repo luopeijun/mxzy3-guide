@@ -389,10 +389,10 @@ export default function CaseReaderApp() {
               )}
             </details>
 
-            {/* 各公司周一更新批次：只列存档已排定的，不外推下下周。 */}
+            {/* 各公司开放节奏：只按上面列出的通告归并，历史批次不进这里。 */}
             <details data-case-updates className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
               <summary className="cursor-pointer font-semibold text-brand-strong">
-                制作公司更新节奏 · 已排定 {result.batches.length} 批
+                各公司开放节奏 · 按下面通告的接取日归并 {result.batches.length} 批
               </summary>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {result.batches.map((batch) => (

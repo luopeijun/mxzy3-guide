@@ -322,10 +322,12 @@ async function main() {
       'the wider content area keeps a modest side margin and no horizontal scrollbar',
       `width=${p.contentWidth} padding=${p.sidePadding} noScroll=${p.noHorizontalScroll}`);
 
-    // Only the four scheduled batches, no further extrapolation.
-    check(p.updates.includes('已排定 4 批') && !p.updates.includes('推测')
-      && !p.updates.includes('2/6'),
-      'company refresh timeline lists scheduled batches only');
+    // 批次只按表里通告的接取日归并：这三批正好是 1/16、1/23、1/30，
+    // 更早的历史批次（1/9）不再进面板，也不做任何推测。
+    check(p.updates.includes('归并 3 批') && !p.updates.includes('推测')
+      && p.updates.includes('2006/1/16') && p.updates.includes('2006/1/23')
+      && p.updates.includes('2006/1/30') && !p.updates.includes('2006/1/9'),
+      'batches come from the listed notices only (1/16 · 1/23 · 1/30)');
 
     // 我方团体：名称与成员都来自存档的 Team 段，没有手动选择入口。
     const grp = JSON.parse(await evaluate(`JSON.stringify({

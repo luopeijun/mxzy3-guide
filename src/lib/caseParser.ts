@@ -228,8 +228,8 @@ export interface GameDate {
   dayNumber: number;
 }
 
-/** One Monday update batch of a production company, read from every notice
- *  block in the save (not only the eleven currently registered ones). */
+/** One Monday update batch of a production company, built from the notices the
+ *  reader is actually showing (their 接取日 = 开放接取那个周一). */
 export interface UpdateBatch {
   date: string;
   dayNumber: number;
@@ -809,9 +809,12 @@ export function parseSave(
     });
   }
 
-  // Group every scheduled notice block by its Monday open date.
+  // 只按「表里真正列出来的通告」归并批次：存档的 Case 段里还留着大量早已
+  // 结束的历史通告，把它们算进来会冒出玩家根本没在等的批次（曾经显示 9 批）。
+  const shownCodes = new Set(firm.map((item) => item.code));
   const byDay = new Map<number, UpdateBatch>();
   for (const row of batchRows) {
+    if (!shownCodes.has(row.code)) continue;
     const day = row.dates[0].day;
     let batch = byDay.get(day);
     if (!batch) {

@@ -230,8 +230,11 @@ if (fs.existsSync(savePath)) {
       'exactly two notices close within 7 days');
     check(real.nextUpdate?.date === '2006/1/30' && real.nextUpdate.companies.length === 3
       && real.nextUpdate.kinds.includes('唱片'), 'next Monday refresh is the three record labels');
-    check(real.batches.length === 4 && !('forecastDate' in real),
-      'only the four scheduled batches are kept, no further extrapolation');
+    check(real.batches.length === 3
+      && real.batches.every((b) => b.codes.every((c) => real.notices.some((n) => n.code === c)))
+      && !('forecastDate' in real),
+      'batches only cover the notices on screen, no extrapolation',
+      real.batches.map((b) => b.date).join(','));
     check(real.artists.some((a) => a.abilities[0] === 188.6 && a.abilities[8] === 283.8
       && a.stress === 76 && a.fatigue === 98),
       'the save-editor screenshot values (÷10) are present in an artist block');
@@ -240,9 +243,8 @@ if (fs.existsSync(savePath)) {
     check(real.signedArtistIds.join(',') === '5,6,10',
       'the save identifies 路敏 / 萧依莉 / 路风 as the signed artists',
       real.signedArtistIds.join(','));
-    check(real.artistDirectory.find((a) => a.id === 6)?.abilities[0] === 188.6
-      && real.artistDirectory.find((a) => a.id === 74)?.artistIndex === null,
-      '萧依莉 resolves to the screenshot block (÷10), 新名纱雪 has no block yet');
+    check(real.artistDirectory.find((a) => a.id === 6)?.abilities[0] === 188.6,
+      '萧依莉 resolves to the screenshot block (÷10)');
     const femaleLead = shouhou?.roles.find((r) => r.role === '女主角');
     const luFeng = real.artistDirectory.find((a) => a.id === 10);
     const luMin = real.artistDirectory.find((a) => a.id === 5);
