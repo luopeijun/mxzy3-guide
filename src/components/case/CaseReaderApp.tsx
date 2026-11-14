@@ -46,10 +46,12 @@ function tabClass(active: boolean) {
   );
 }
 
+/** 两档提醒（玩家口径）：余量 ≤ 5 天算逾期风险，排不下才是违约。
+ *  其余情况不出提示，风险列只留一条横杠。 */
 const RISK_LABEL: Record<string, string> = {
-  ok: '排得下',
-  tight: '刚好够',
-  late: '赶不上',
+  ok: '—',
+  tight: '逾期风险',
+  late: '违约提醒',
   unknown: '—',
 };
 
@@ -643,9 +645,13 @@ function kindDetail(notice: ShootingNotice): string {
   return '';
 }
 
-/** 拍摄中：已经接下的通告。逾期风险只用存档里的数字算 ——
- *  还差几天（Length 表的工作天数 - 存档里的完成天数）对比「剩下的日子里
- *  按每週上限还能排几天」，排不下就整行标红。 */
+/** 拍摄中：已经接下的通告。
+ *
+ *  一条通告上不同艺人各拿一个角色、各拍各的天数、各拿各的酬劳，所以一
+ *  位艺人一行；通告信息只在第一行给（rowSpan），后面几行只写这位艺人自
+ *  己的进度。提醒只用存档里的数字算：
+ *  还差几天（Length 表工作天数 - 存档完成天数）对比「剩下的日子里按每週
+ *  上限还能排几天」，排不下 = 违约提醒，余量 ≤ 5 天 = 逾期风险。 */
 function ShootingPanel({ notices }: { notices: ShootingNotice[] }) {
   if (notices.length === 0) {
     return (
@@ -659,125 +665,134 @@ function ShootingPanel({ notices }: { notices: ShootingNotice[] }) {
       <table className="w-full table-fixed border-collapse text-ui-xs">
         <thead>
           <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
-            <Th className="w-[13%]">通告</Th>
-            <Th className="w-[8%]">类型</Th>
-            <Th className="w-[8%]">制作公司</Th>
-            <Th className="w-[13%]">开拍 → 杀青</Th>
-            <Th className="w-[14%]">角色 / 难度</Th>
-            <Th className="w-[12%]">艺人</Th>
-            <Th className="w-[9%]">完成 / 需拍</Th>
-            <Th className="w-[6%]">剩余</Th>
-            <Th className="w-[7%]">酬劳</Th>
+            <Th className="w-[20%]">通告</Th>
+            <Th className="w-[15%]">开拍 → 杀青</Th>
+            <Th className="w-[13%]">角色 / 难度</Th>
+            <Th className="w-[13%]">艺人</Th>
+            <Th className="w-[11%]">完成 / 需拍</Th>
+            <Th className="w-[12%]">剩余</Th>
+            <Th className="w-[8%]">酬劳</Th>
             <Th className="w-[10%]">逾期风险</Th>
           </tr>
         </thead>
         <tbody>
-          {notices.map((notice) => (
-            <tr
-              key={notice.code}
-              data-case-shooting-row={notice.code}
-              data-case-shooting-risk={notice.risk}
-              className={cn(
-                'border-l-[3px] align-top',
-                notice.risk === 'late'
-                  ? 'border-l-alert bg-alert-soft/50'
-                  : 'border-l-transparent',
-              )}
-            >
-              <Td>
-                <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
-                <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
-              </Td>
-              <Td className="text-ui-2xs">
-                <span className={cn(
-                  'inline-flex whitespace-nowrap rounded px-1.5 py-0.5',
-                  CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+          {notices.flatMap((notice) =>
+            notice.casts.map((cast, index) => (
+              <tr
+                key={`${notice.code}-${cast.artistId}`}
+                data-case-shooting-row={notice.code}
+                data-case-shooting-risk={cast.risk}
+                className={cn(
+                  'align-top',
+                  index === 0 ? 'border-t border-line' : '',
+                  cast.risk === 'late'
+                    ? 'border-l-[3px] border-l-alert bg-alert-soft/50'
+                    : cast.risk === 'tight'
+                      ? 'border-l-[3px] border-l-gold-line bg-gold-soft/40'
+                      : 'border-l-[3px] border-l-transparent',
                 )}
-                >
-                  {notice.category}
-                </span>
-                {kindDetail(notice) && (
-                  <div className="mt-0.5 text-ink-faint">{kindDetail(notice)}</div>
-                )}
-              </Td>
-              <Td className="text-ui-2xs text-ink-muted">{notice.company || '—'}</Td>
-              <Td className="text-ui-2xs">
-                <div className="tabular-nums text-ink-muted">
-                  {shortDate(notice.startDate) || '—'} → {shortDate(notice.endDate) || '—'}
-                </div>
-                <div
-                  data-case-shooting-status={notice.status}
-                  className={cn(
-                    'mt-0.5 inline-flex rounded-full px-1.5 text-ui-2xs',
-                    notice.status === 'shooting'
-                      ? 'bg-brand-soft font-semibold text-brand-strong'
-                      : 'bg-surface-soft text-ink-faint',
-                  )}
-                >
-                  {STATUS_LABEL[notice.status]}
-                </div>
-              </Td>
-              <Td>
-                {notice.roles.length === 0 ? (
-                  <span className="text-ui-2xs text-ink-faint">—</span>
-                ) : (
-                  <div className="flex flex-wrap gap-1">
-                    {notice.roles.map((role) => (
-                      <span
-                        key={role.roleCode}
-                        data-case-shooting-role={role.roleCode}
-                        className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border border-line-strong bg-surface px-2 py-0.5 text-ui-2xs text-ink-muted"
+              >
+                {index === 0 && (
+                  <Td rowSpan={notice.casts.length} className="border-b border-line">
+                    <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
+                    <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      <span className={cn(
+                        'inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-ui-2xs',
+                        CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+                      )}
                       >
-                        {role.role}
-                        <b className="text-ui-2xs text-brand-strong">{role.star}★</b>
+                        {notice.category}
                       </span>
-                    ))}
-                  </div>
+                      {kindDetail(notice) && (
+                        <span className="text-ui-2xs text-ink-faint">{kindDetail(notice)}</span>
+                      )}
+                    </div>
+                  </Td>
                 )}
-              </Td>
-              <Td>
-                <div className="flex flex-wrap gap-1">
-                  {notice.artists.map((artist) => (
+                {index === 0 && (
+                  <Td rowSpan={notice.casts.length} className="tabular-nums border-b border-line text-ui-2xs">
+                    <div className="text-ink-muted">
+                      {shortDate(notice.startDate) || '—'} → {shortDate(notice.endDate) || '—'}
+                    </div>
+                    <div className="mt-0.5 text-ink-faint">
+                      共 {notice.endDay - notice.startDay + 1} 天
+                    </div>
+                  </Td>
+                )}
+                <Td>
+                  {cast.role ? (
                     <span
-                      key={artist.id}
-                      data-case-shooting-artist={artist.id}
-                      className="whitespace-nowrap rounded bg-surface-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-ink"
+                      data-case-shooting-role={cast.role.roleCode}
+                      className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border border-line-strong bg-surface px-2 py-0.5 text-ui-2xs text-ink-muted"
                     >
-                      {artist.name}
+                      {cast.role.role}
+                      <b className="text-ui-2xs text-brand-strong">{cast.role.star}★</b>
                     </span>
-                  ))}
-                </div>
-              </Td>
-              <Td className="tabular-nums text-ui-2xs">
-                <span className="text-ui-xs font-bold text-ink">{notice.doneDays}</span>
-                <span className="text-ink-faint"> / {notice.workDays || '—'} 天</span>
-              </Td>
-              <Td className="tabular-nums text-ui-2xs text-ink-muted">
-                {Number.isFinite(notice.daysLeft) ? `${notice.daysLeft} 天` : '—'}
-              </Td>
-              <Td className="tabular-nums text-ui-2xs text-ink-muted">{payText(notice.pay)}</Td>
-              <Td>
-                <span
-                  data-case-shooting-risk-label={notice.risk}
-                  className={cn(
-                    'inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-ui-2xs',
-                    notice.risk === 'late'
-                      ? 'border-alert-line bg-alert-soft font-bold text-alert'
-                      : notice.risk === 'tight'
-                        ? 'border-brand-line bg-brand-soft font-semibold text-brand-strong'
-                        : 'border-line bg-surface-soft text-ink-muted',
+                  ) : (
+                    <span className="text-ui-2xs text-ink-faint">—</span>
                   )}
-                >
-                  {RISK_LABEL[notice.risk]}
-                </span>
-                {notice.risk !== 'unknown' && (
-                  <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">
-                    还差 {notice.needDays} 天 · 能排 {notice.canShootDays} 天
+                </Td>
+                <Td>
+                  <span
+                    data-case-shooting-artist={cast.artistId}
+                    className="whitespace-nowrap text-ui-xs font-semibold text-ink"
+                  >
+                    {cast.artistName}
+                  </span>
+                  <div
+                    data-case-shooting-status={cast.status}
+                    className={cn(
+                      'mt-0.5 inline-flex rounded-full px-1.5 text-ui-2xs',
+                      cast.status === 'shooting'
+                        ? 'bg-brand-soft font-semibold text-brand-strong'
+                        : 'bg-surface-soft text-ink-faint',
+                    )}
+                  >
+                    {STATUS_LABEL[cast.status]}
                   </div>
-                )}
-              </Td>
-            </tr>
-          ))}
+                </Td>
+                <Td className="tabular-nums text-ui-2xs">
+                  <span className="text-ui-xs font-bold text-ink">{cast.doneDays}</span>
+                  <span className="text-ink-faint"> / {cast.workDays || '—'} 天</span>
+                  <div className="mt-0.5 text-ink-faint">每週 ≤ {cast.daysPerWeek || '—'} 天</div>
+                </Td>
+                <Td className="tabular-nums text-ui-2xs">
+                  <span className="text-ui-xs font-semibold text-ink">{cast.needDays}</span>
+                  <span className="text-ink-faint"> 天</span>
+                  <div className="mt-0.5 leading-tight text-ink-faint">
+                    <div className="whitespace-nowrap">能排 {cast.canShootDays} 天</div>
+                    <div className="whitespace-nowrap">
+                      距杀青 {Number.isFinite(notice.daysLeft) ? notice.daysLeft : '—'} 天
+                    </div>
+                  </div>
+                </Td>
+                <Td className="tabular-nums text-ui-2xs text-ink-muted">{payText(cast.pay)}</Td>
+                <Td>
+                  {cast.risk === 'tight' || cast.risk === 'late' ? (
+                    <>
+                      <span
+                        data-case-shooting-risk-label={cast.risk}
+                        className={cn(
+                          'inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-ui-2xs',
+                          cast.risk === 'late'
+                            ? 'border-alert-line bg-alert-soft font-bold text-alert'
+                            : 'border-gold-line bg-gold-soft font-semibold text-gold',
+                        )}
+                      >
+                        {RISK_LABEL[cast.risk]}
+                      </span>
+                      {cast.risk === 'tight' && (
+                        <div className="mt-0.5 text-ui-2xs text-ink-faint">余量 ≤ 5 天</div>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-ui-2xs text-ink-faint">—</span>
+                  )}
+                </Td>
+              </tr>
+            )),
+          )}
         </tbody>
       </table>
     </div>
@@ -846,15 +861,22 @@ function Th({ children, className, dataAttrs }: {
   );
 }
 
-function Td({ children, className, title, colSpan, dataAttrs }: {
+function Td({ children, className, title, colSpan, rowSpan, dataAttrs }: {
   children?: ReactNode;
   className?: string;
   title?: string;
   colSpan?: number;
+  rowSpan?: number;
   dataAttrs?: Record<string, string>;
 }) {
   return (
-    <td title={title} colSpan={colSpan} {...dataAttrs} className={cn('border-b border-line px-3 py-2 align-top', className)}>
+    <td
+      title={title}
+      colSpan={colSpan}
+      rowSpan={rowSpan}
+      {...dataAttrs}
+      className={cn('border-b border-line px-3 py-2 align-top', className)}
+    >
       {children}
     </td>
   );

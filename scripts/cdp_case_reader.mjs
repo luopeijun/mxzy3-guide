@@ -420,7 +420,11 @@ async function main() {
       artists: [...document.querySelectorAll('[data-case-shooting-artist]')].map(x => x.innerText),
       roles: [...document.querySelectorAll('[data-case-shooting-role]')].map(x => x.innerText),
       statuses: [...document.querySelectorAll('[data-case-shooting-status]')].map(x => x.getAttribute('data-case-shooting-status')),
-      risk: document.querySelector('[data-case-shooting-risk-label]')?.getAttribute('data-case-shooting-risk-label'),
+      risk: document.querySelector('[data-case-shooting-risk-label]')?.getAttribute('data-case-shooting-risk-label') ?? null,
+      progresses: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => {
+        var cells = [...r.querySelectorAll('td')].map(td => td.innerText.replace(/\s+/g, ' ').trim());
+        return cells.join(' | ');
+      }),
       text: document.querySelector('[data-case-shooting]')?.innerText || '',
       noticesHidden: document.querySelectorAll('[data-case-notice]').length,
       noHorizontalScroll: (function(){
@@ -441,8 +445,19 @@ async function main() {
       '开拍 / 杀青时间显示在行里');
     check(shot.text.includes('4') && shot.text.includes('/ 6 天') && shot.text.includes('5,000'),
       '完成天数、需拍天数和酬劳都显示', shot.text.replace(/\s+/g, ' ').slice(0, 90));
-    check(shot.risk === 'ok' && shot.text.includes('还差 2 天'),
-      '逾期风险按存档数字算出「还差几天 / 还能排几天」', shot.risk ?? 'none');
+    check(shot.risk === null || shot.risk === undefined,
+      '余量充足时不出提醒，风险列只留横杠', String(shot.risk));
+    check(!shot.text.includes('排得下') && !shot.text.includes('刚好够')
+      && !shot.text.includes('赶不上'),
+      '不再出现「排得下 / 刚好够 / 赶不上」这类结论文案',
+      shot.text.replace(/\s+/g, ' ').slice(0, 120));
+    // 一位艺人一行：CF014 只有萧依莉，所以正好一行，且这一行要自己带完成 / 需拍与剩余。
+    check(shot.progresses.length === 1
+      && shot.progresses[0].includes('4 / 6 天')
+      && shot.progresses[0].includes('2 天')
+      && shot.progresses[0].includes('5,000'),
+      '每位艺人一行，完成 / 需拍 / 剩余 / 酬劳都在这位艺人自己那行',
+      shot.progresses[0] ?? 'none');
     check(shot.noticesHidden === 0 && shot.noHorizontalScroll,
       '切到拍摄中后筹备中的表格收起，切换页签不出现横向滚动');
     await evaluate(`document.querySelector('[data-case-tab="open"]').click()`);

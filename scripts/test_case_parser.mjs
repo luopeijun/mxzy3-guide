@@ -28,7 +28,7 @@ await build({
 });
 const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
-  isGroupRole, matchGroupRole, buildGroupRecord, shootableDays,
+  isGroupRole, matchGroupRole, buildGroupRecord, riskOf, RISK_SLACK_DAYS, shootableDays,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -222,15 +222,25 @@ if (fs.existsSync(savePath)) {
   check(real.shooting.every((s) => !listed.has(s.code)),
     '拍摄中 never repeats a 筹备中 notice',
     real.shooting.filter((s) => listed.has(s.code)).map((s) => s.code).join(',') || 'disjoint');
-  check(real.shooting.every((s) => s.artists.length > 0 && s.doneDays >= 0),
-    'every shooting notice names its artist and done days',
-    real.shooting.map((s) => `${s.code}:${s.artists.map((a) => a.name).join('+')}:${s.doneDays}/${s.workDays}`).join(' ') || 'none');
-  check(real.shooting.every((s) => s.status !== 'finished'),
-    'shooting list drops notices that already wrapped',
-    real.shooting.map((s) => `${s.code}:${s.status}`).join(' ') || 'none');
+  check(real.shooting.every((s) => s.casts.length > 0
+    && s.casts.every((c) => c.doneDays >= 0 && c.needDays >= 0)),
+    '每条拍摄中通告至少有一位艺人，且一人一条进度',
+    real.shooting.map((s) => `${s.code}:${s.casts.map((c) => `${c.artistName}${c.doneDays}/${c.workDays}`).join('+')}`).join(' ') || 'none');
+  check(real.shooting.every((s) => s.casts.every((c) => c.status !== 'finished')),
+    'shooting list drops casts that already wrapped',
+    real.shooting.flatMap((s) => s.casts.map((c) => `${s.code}:${c.artistName}:${c.status}`)).join(' ') || 'none');
+  check(real.shooting.every((s) => s.casts.every((c) => c.risk === riskOf(c.needDays, c.canShootDays, c.daysPerWeek))),
+    '每位艺人的提醒都按「余量 ≤ 5 天算逾期风险、排不下算违约」重算一致');
   check(shootableDays(21, 5) === 15 && shootableDays(3, 5) === 3
     && shootableDays(0, 5) === 0 && shootableDays(8, 0) === 0,
     '每周上限折算出「剩下这段日子最多还能排几天」');
+  // 提醒只有两档：余量 ≤ 5 天算逾期风险，排不下才算违约。
+  check(RISK_SLACK_DAYS === 5 && riskOf(20, 15, 5) === 'late'
+    && riskOf(10, 10, 5) === 'tight' && riskOf(10, 15, 5) === 'tight'
+    && riskOf(10, 16, 5) === 'ok' && riskOf(0, 0, 5) === 'ok'
+    && riskOf(6, 99, 0) === 'unknown',
+    '余量 5 天以内提示逾期风险，排不下才是违约，宽裕就不提示',
+    [riskOf(20, 15, 5), riskOf(10, 10, 5), riskOf(10, 15, 5), riskOf(10, 16, 5)].join(','));
 
   // Exact values only for the frozen investigation snapshot.
   if (path.basename(savePath) === 'probe.sa2') {
@@ -314,21 +324,22 @@ if (fs.existsSync(savePath)) {
       'Auto: 拍摄中只有 CF014 愛信電訊（萧依莉那条广告）',
       auto.shooting.map((s) => `${s.code}:${s.name}`).join(',') || 'none');
     const ad = auto.shooting[0];
-    check(ad?.artists.some((a) => a.id === 6 && a.name === '蕭依莉'),
+    const cast = ad?.casts.find((c) => c.artistId === 6);
+    check(cast?.artistName === '蕭依莉',
       'Auto: CF014 的接取艺人读出来是 6 号萧依莉',
-      ad?.artists.map((a) => `${a.id}:${a.name}`).join(',') ?? '-');
-    check(ad?.doneDays === 4 && ad?.workDays === 6 && ad?.daysPerWeek === 5,
+      ad?.casts.map((c) => `${c.artistId}:${c.artistName}`).join(',') ?? '-');
+    check(cast?.doneDays === 4 && cast?.workDays === 6 && cast?.daysPerWeek === 5,
       'Auto: CF014 已完成 4 天 / 需拍 6 天 / 每周最多 5 天',
-      `${ad?.doneDays}/${ad?.workDays} perWeek=${ad?.daysPerWeek}`);
-    check(ad?.pay === 5000,
+      `${cast?.doneDays}/${cast?.workDays} perWeek=${cast?.daysPerWeek}`);
+    check(cast?.pay === 5000,
       'Auto: CF014 的酬劳直接取存档里的值',
-      String(ad?.pay));
+      String(cast?.pay));
     check(ad?.startDate === '2006/1/23' && ad?.endDate === '2006/2/19',
       'Auto: CF014 开拍 1/23、杀青 2/19 从通告块的三段日期读出',
       `${ad?.startDate}~${ad?.endDate}`);
-    check(ad?.risk === 'ok' && ad?.needDays === 2 && ad?.canShootDays === 15,
-      'Auto: 还差 2 天、剩下 21 个日历日按每周 5 天能排 15 天，判为排得下',
-      `risk=${ad?.risk} need=${ad?.needDays} can=${ad?.canShootDays}`);
+    check(cast?.risk === 'ok' && cast?.needDays === 2 && cast?.canShootDays === 15,
+      'Auto: 还差 2 天、剩下 21 个日历日按每周 5 天能排 15 天，余量够大不提醒',
+      `risk=${cast?.risk} need=${cast?.needDays} can=${cast?.canShootDays}`);
   } else {
     console.log('OK   Auto.sa2 not present, skipped the shooting checks');
   }
@@ -384,6 +395,21 @@ if (fs.existsSync(savePath)) {
       && ending.teams[1]?.memberIds.join(',') === '7,77',
       'Ending0009: 两个团体的成员编号都读到',
       ending.teams.map((t) => t.memberIds.join('/')).join(' | '));
+    // 同一部电影上四位艺人各自进度不同：完成天数、酬劳、角色都要分开读。
+    const mv = ending.shooting.find((s) => s.code === 'MV031');
+    const rows = mv?.casts.map((c) => `${c.artistName}:${c.role?.role ?? '-'}:${c.doneDays}/${c.workDays}:${c.pay}`);
+    check(mv?.casts.length === 4,
+      'Ending0009: MV031 一条通告读出四位艺人的独立进度',
+      rows?.join(' | ') ?? 'none');
+    check(mv?.casts.every((c) => c.role !== null),
+      'Ending0009: MV031 四位艺人各占一个角色，没有两行抢同一格',
+      mv?.casts.map((c) => c.role?.roleCode ?? '-').join(','));
+    check(mv?.casts.find((c) => c.artistId === 77)?.doneDays === 34
+      && mv?.casts.find((c) => c.artistId === 77)?.pay === 15500000
+      && mv?.casts.find((c) => c.artistId === 1)?.doneDays === 22
+      && mv?.casts.find((c) => c.artistId === 1)?.pay === 1500000,
+      'Ending0009: 原少緯 34 天 / 1550 万，林芬芬 22 天 / 150 万，互不串位',
+      mv?.casts.map((c) => `${c.artistId}:${c.doneDays}:${c.pay}`).join(' '));
   } else {
     console.log('OK   Ending0009.sa2 not present, skipped the two-team checks');
   }

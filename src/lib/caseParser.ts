@@ -835,6 +835,52 @@ function readNoticeCode(view: DataView, start: number, end: number): string[] {
  *  12 字节是这条通告的酬劳（5000 / 950 万 / 1550 万）。酬劳不进静态表：
  *  同一个 CD089 在 Ending0009 记 950 万、在 Story0007 记 790 万，会随接演
  *  艺人变化，所以只认存档里的值。 */
+export type ShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
+export type ShootingStatus = 'pending' | 'shooting' | 'finished';
+
+/** 排期余量的提醒阈值（天）。
+ *
+ *  玩家口径：不判断「排得下 / 排不下」这种结论，只给两种提醒 ——
+ *  1) 剩下的日子按每周上限折算后，离「刚好够」还剩 ≤ 5 天 → 逾期风险
+ *     （艺人会失误、会生病，余量太薄就可能拖过杀青）；
+ *  2) 折算完还不够 → 违约提醒。 */
+export const RISK_SLACK_DAYS = 5;
+
+/** 按「还能排几天」和「还要拍几天」的差额给提醒。
+ *  多出来的余量 ≤ RISK_SLACK_DAYS 就算有逾期风险。 */
+export function riskOf(needDays: number, canShootDays: number, daysPerWeek: number): ShootingRisk {
+  if (needDays <= 0) return 'ok';
+  if (!(daysPerWeek > 0)) return 'unknown';
+  const slack = canShootDays - needDays;
+  if (slack < 0) return 'late';
+  return slack <= RISK_SLACK_DAYS ? 'tight' : 'ok';
+}
+
+/** 一条通告里某一位接演艺人的进度。
+ *
+ *  同一条通告上，不同艺人各拿一个角色、各拍各的天数、各拿各的酬劳，
+ *  所以进度必须按「通告 × 艺人」分开算 —— 拿 notice 上的合计值会错。 */
+export interface ShootingCast {
+  artistId: number;
+  artistName: string;
+  /** 该艺人在这条通告里拿到的角色；null 表示角色都已被别人占满。 */
+  role: RoleRecord | null;
+  /** 这条通告 + 这个角色要拍几天（Length 表），0 表示静态表没这条。 */
+  workDays: number;
+  /** 每週最多能排几天。 */
+  daysPerWeek: number;
+  /** 存档里记的、这位艺人的已完成天数。 */
+  doneDays: number;
+  /** 存档里记的、这位艺人的酬劳，0 表示没读到。 */
+  pay: number;
+  /** 这位艺人还要再拍几天。 */
+  needDays: number;
+  /** 按每週上限折算，剩下的日子里最多还能排几天。 */
+  canShootDays: number;
+  risk: ShootingRisk;
+  status: ShootingStatus;
+}
+
 export interface ShootingNotice {
   code: string;
   name: string;
@@ -845,28 +891,16 @@ export interface ShootingNotice {
   firmName: string;
   /** 角色与难度（星级），和筹备中表格同一套角色记录。 */
   roles: RoleRecord[];
-  /** 接下这条通告的艺人；团体通告可能有多位。 */
-  artists: { id: number; name: string }[];
-  /** 这条通告要拍几天（Length 表），0 表示静态表没这条。 */
-  workDays: number;
-  /** 每週最多能排几天。 */
-  daysPerWeek: number;
-  /** 存档里记的已完成天数。 */
-  doneDays: number;
-  /** 存档里记的酬劳，0 表示没读到。 */
-  pay: number;
+  /** 接演的艺人，一人一条进度。 */
+  casts: ShootingCast[];
   startDate: string;
   endDate: string;
   startDay: number;
   endDay: number;
   /** 到杀青还剩几个日历日；NaN 表示存档没有档期可读。 */
   daysLeft: number;
-  /** 按每週上限折算，剩下的日子里最多还能排几天。 */
-  canShootDays: number;
-  /** 还要再拍几天。 */
-  needDays: number;
-  risk: 'ok' | 'tight' | 'late' | 'unknown';
-  status: 'pending' | 'shooting' | 'overdue' | 'finished';
+  /** 这条通告最差的那位艺人的风险，用来给整条通告排序/标色。 */
+  risk: ShootingRisk;
   offset: number;
 }
 
@@ -877,11 +911,21 @@ export function shootableDays(remaining: number, perWeek: number): number {
   return Math.min(remaining, weeks * perWeek);
 }
 
-/** 从通告块里读接取记录：[艺人][已完成][状态][?][酬劳]。
- *  只认 ownerIds 里的编号，且后两个字段必须是小整数，避免撞上块里别的数组。
- *  另外要求「有进度或有酬劳」：艺人作品清单里本来就留着十几年前的旧作，
- *  这些旧块里的编号大多是巧合（实测 TV501~MV514 全是 done=0、pay=0），
- *  真正的接取记录至少有一头不为零。 */
+/** 从通告块里读接取记录，一位艺人一条。
+ *
+ *  记录是 24 字节一条：
+ *
+ *      [状态位][艺人编号][已完成天数][?][?][酬劳]
+ *
+ *  即编号后紧跟完成天数，编号前 4 字节是个 0~3 的状态位，编号后 16 字节
+ *  才是这位艺人拿到的酬劳。Auto(CF014 萧依莉 4 天 / 5000)、
+ *  Ending0009(MV031 原少緯 34 天 / 1550 万、桑禾蓓 29 天 / 1450 万、
+ *  天晴 22 天 / 31 万、林芬芬 22 天 / 150 万)、Story0007(MV601 衛亞 40 天 /
+ *  1500 万、姚子奇 25 天 / 810 万) 都按这个形状对上。
+ *
+ *  块后面还有日期段，里面的年份/日号会撞上 1、2、6 这类小艺人编号，所以
+ *  每条候选都要过筛：状态位 0~3、完成天数 ≤ 60、中间两个字段 ≤ 99、酬劳
+ *  要么 0 要么 ≥ 1000。筛过之后同一艺人只取第一条，避免串到邻近档期。 */
 function readProgress(
   view: DataView,
   start: number,
@@ -892,16 +936,20 @@ function readProgress(
   if (ownerIds.length === 0) return rows;
   const wanted = new Set(ownerIds);
   const from = start + 400;
-  for (let o = from; o + 24 <= end; o += 4) {
+  const limit = Math.min(end, view.byteLength);
+  for (let o = from; o + 20 <= limit; o += 4) {
     const id = view.getUint32(o, true);
     if (!wanted.has(id)) continue;
+    if (rows.some((row) => row.artistId === id)) continue;
+    const flag = view.getUint32(o - 4, true);
     const done = view.getUint32(o + 4, true);
     const a = view.getUint32(o + 8, true);
     const b = view.getUint32(o + 12, true);
     const pay = view.getUint32(o + 16, true);
-    if (done > 60 || a > 60 || b > 60 || pay > 1e9) continue;
-    if (done === 0 && pay < 1000) continue;
-    if (rows.some((row) => row.artistId === id)) continue;
+    if (flag > 3) continue;
+    if (done > 60 || a > 99 || b > 99) continue;
+    if (pay > 1e9) continue;
+    if (pay > 0 && pay < 1000) continue;
     rows.push({ artistId: id, doneDays: done, pay });
   }
   return rows;
@@ -1091,16 +1139,6 @@ export function parseSave(
     if (owners.length === 0) continue;
     const progress = readProgress(view, block.start, block.end, owners.map((o) => o.id));
     if (progress.length === 0) continue;
-    const info = tables.cases[block.code];
-    const [, type = '', subtype = '', company = ''] = info ?? [];
-    const noticeRoles = roles.filter((role) => role.code === block.code);
-    const length = noticeRoles
-      .map((role) => lengthOf(block.code, info, role.role))
-      .find((hit): hit is number[] => Boolean(hit)) ?? null;
-    const workDays = length?.[0] ?? 0;
-    const daysPerWeek = length?.[1] ?? 0;
-    const doneDays = progress[0].doneDays;
-    const pay = progress[0].pay;
     const triple = datesByCode[block.code];
     if (!triple) continue;
     const startDay = triple[1].day;
@@ -1109,25 +1147,50 @@ export function parseSave(
     // 它们的接取记录同样非零（艺人作品清单是历史累积），靠日期把它们筛掉。
     if (!Number.isFinite(today) || today > endDay) continue;
     const daysLeft = endDay - today;
-    const needDays = workDays > 0 ? Math.max(0, workDays - doneDays) : 0;
-    const canShoot = Number.isFinite(daysLeft) ? shootableDays(daysLeft, daysPerWeek) : 0;
+    const info = tables.cases[block.code];
+    const [, type = '', subtype = '', company = ''] = info ?? [];
+    const noticeRoles = roles.filter((role) => role.code === block.code);
+    const fallbackLength = noticeRoles
+      .map((role) => lengthOf(block.code, info, role.role))
+      .find((hit): hit is number[] => Boolean(hit)) ?? null;
 
-    let status: ShootingNotice['status'] = 'shooting';
-    if (Number.isFinite(today) && Number.isFinite(startDay) && Number.isFinite(endDay)) {
-      if (today < startDay) status = 'pending';
-      else if (today > endDay) status = workDays > 0 && doneDays >= workDays ? 'finished' : 'overdue';
-    } else if (workDays > 0 && doneDays >= workDays) {
-      status = 'finished';
+    // 一位艺人一个角色：按存档里的接取顺序分配，男/女主角先落到性别对得上的那一格。
+    // 已经分配出去的角色不再给别人，所以同一段对手戏不会被两个艺人共用一格。
+    const claimed = new Set<string>();
+    const casts: ShootingCast[] = [];
+    for (const row of progress) {
+      const owner = owners.find((o) => o.id === row.artistId);
+      const gender = owner?.gender ?? 'any';
+      let role = noticeRoles.find((r) => !claimed.has(r.roleCode) && canTakeRole(r, gender)) ?? null;
+      if (role) claimed.add(role.roleCode);
+      // 只有一个角色的通告（团体、合唱一类），后接的人也占同一格。
+      else if (noticeRoles.length === 1) role = noticeRoles[0];
+      const length = (role ? lengthOf(block.code, info, role.role) : null) ?? fallbackLength;
+      const workDays = length?.[0] ?? 0;
+      const daysPerWeek = length?.[1] ?? 0;
+      const needDays = workDays > 0 ? Math.max(0, workDays - row.doneDays) : 0;
+      const canShoot = shootableDays(daysLeft, daysPerWeek);
+      const risk = riskOf(needDays, canShoot, daysPerWeek);
+      // 拍够天数的这位已经交差，不再占一行；同通告其他艺人还在拍就留着。
+      if (workDays > 0 && row.doneDays >= workDays) continue;
+      casts.push({
+        artistId: row.artistId,
+        artistName: owner?.name || `编号${row.artistId}`,
+        role,
+        workDays, daysPerWeek,
+        doneDays: row.doneDays,
+        pay: row.pay,
+        needDays, canShootDays: canShoot,
+        risk,
+        status: today < startDay ? 'pending' : 'shooting',
+      });
     }
-    if (status === 'finished') continue;
+    if (casts.length === 0) continue;
 
-    let risk: ShootingNotice['risk'] = 'unknown';
-    if (needDays <= 0) risk = 'ok';
-    else if (Number.isFinite(daysLeft) && daysPerWeek > 0) {
-      if (canShoot < needDays) risk = 'late';
-      else if (canShoot === needDays) risk = 'tight';
-      else risk = 'ok';
-    }
+    const risk = casts.some((c) => c.risk === 'late')
+      ? 'late'
+      : casts.some((c) => c.risk === 'tight') ? 'tight'
+        : casts.some((c) => c.risk === 'ok') ? 'ok' : 'unknown';
 
     doneCodes.add(block.code);
     shooting.push({
@@ -1137,18 +1200,17 @@ export function parseSave(
       type, subtype, company,
       firmName: '',
       roles: noticeRoles,
-      artists: owners.map((owner) => ({ id: owner.id, name: owner.name })),
-      workDays, daysPerWeek, doneDays, pay,
-      startDate: triple ? fmtDate(triple[1]) : '',
-      endDate: triple ? fmtDate(triple[2]) : '',
-      startDay, endDay, daysLeft, canShootDays: canShoot, needDays,
-      risk, status,
+      casts,
+      startDate: fmtDate(triple[1]),
+      endDate: fmtDate(triple[2]),
+      startDay, endDay, daysLeft,
+      risk,
       offset: block.start,
     });
   }
   shooting.sort((a, b) => {
-    const rank = { overdue: 0, shooting: 1, pending: 2, finished: 3 } as const;
-    if (rank[a.status] !== rank[b.status]) return rank[a.status] - rank[b.status];
+    const rank: Record<ShootingRisk, number> = { late: 0, tight: 1, unknown: 2, ok: 3 };
+    if (rank[a.risk] !== rank[b.risk]) return rank[a.risk] - rank[b.risk];
     return (Number.isFinite(a.endDay) ? a.endDay : Infinity) - (Number.isFinite(b.endDay) ? b.endDay : Infinity);
   });
 
