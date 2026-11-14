@@ -202,8 +202,11 @@ async function main() {
     expectedNames.every((name) => groups.all.some((g) => g.label.includes(name))),
     JSON.stringify(groups.all.map((g) => g.id)));
   check('主角分组用杜云芊头像，不是卫亚那张',
-    groups.protagonistAvatar.includes('images/sweet/protagonist-logo.png') &&
+    groups.protagonistAvatar.includes('protagonist-logo') &&
     !groups.protagonistAvatar.includes('wei-ya'), groups.protagonistAvatar);
+  check('头像走缩略图（小体积 webp，不下载原图）',
+    groups.protagonistAvatar.includes('images/thumbs/') &&
+    groups.protagonistAvatar.endsWith('.webp'), groups.protagonistAvatar);
   check('「全部」用汇总图标而不是硬取一个头像', groups.aggregateIcon, String(groups.aggregateIcon));
   const allTotalMatch = groups.allTotal.replace(/\s/g, '').match(/(\d+)\/(\d+)/);
   check('「全部」计数分母 = 唯一可收集张数（共享只算一次）',
