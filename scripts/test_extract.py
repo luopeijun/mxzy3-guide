@@ -254,6 +254,20 @@ class TestParserBuild(unittest.TestCase):
     def test_output_matches_committed_guide_json(self):
         self.assertEqual(self.data, self.committed)
 
+    def test_will_notice_is_separate_from_blocks(self):
+        """页首提示挂在 notice 字段，不能挤进 blocks：追踪器按块下标存进度，
+        往正文前面加一个块会让玩家已有的勾选整体错位一格。"""
+        node = self._node("other-events/will")
+        self.assertEqual(node["notice"]["title"], "一个存档，打出两个结局")
+        self.assertEqual(len(node["notice"]["lines"]), 3)
+        self.assertEqual(len(node["notice"]["outcomes"]), 2)
+        self.assertEqual(len(node["blocks"]), 26)
+        self.assertEqual(node["blocks"][0]["kind"], "section")
+        self.assertEqual(sum(1 for b in node["blocks"] if b["kind"] == "event"), 22)
+        for n in self._walk(self.data["categories"]):
+            if n["id"] != "other-events/will":
+                self.assertNotIn("notice", n)
+
     # --- hierarchy locks (regressions the user has fixed before) ---------- #
     def test_lu_feng_romance_under_events(self):
         self.assertEqual(self._heading_depth("characters/lu-feng", "与桑禾蓓的感情"), 1)
