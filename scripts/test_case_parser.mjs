@@ -492,6 +492,14 @@ if (fs.existsSync(savePath)) {
       && mv?.casts.find((c) => c.artistId === 1)?.pay === 1500000,
       'Ending0009: 原少緯 34 天 / 1550 万，林芬芬 22 天 / 150 万，互不串位',
       mv?.casts.map((c) => `${c.artistId}:${c.doneDays}:${c.pay}`).join(' '));
+    // #75 在 StarRole.dat 里是「千萬不要用」占位记录，stars 表缺它 —— 必须回退到
+    // ARTIST_DIRECTORY 显示成 聆香，而不是裸的「艺人 #75」。Ending0009 里 TV807 的
+    // 女主角正是由 #75 预约。
+    const tv807by75 = ending.notices.find((n) => n.code === 'TV807')
+      ?.roles.find((r) => r.reservedBy === '聆香');
+    check(!!tv807by75,
+      'Ending0009: TV807 被 #75 预约，显示为 聆香 而非 艺人 #75',
+      tv807by75 ? `TV807 ${tv807by75.role} -> ${tv807by75.reservedBy}` : 'TV807 无 #75 预约');
   } else {
     console.log('OK   Ending0009.sa2 not present, skipped the two-team checks');
   }

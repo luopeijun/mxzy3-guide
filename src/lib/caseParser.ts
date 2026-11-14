@@ -942,9 +942,15 @@ export function parseCaseOwners(
     const artist = rows[k];
     // 清单排在块后面，到下一个块的表头（id 在能力值前 16 字节）为止。
     const end = Math.min(k + 1 < rows.length ? rows[k + 1].offset - 16 : limit, bytes.length);
+    // 命名优先用存档数据表 stars；但 StarRole.dat 在 #75 处是一条「千萬不要用」占位
+    // 记录，stars 表里没有它，于是回退到人工核对的 ARTIST_DIRECTORY（已含 #75 = 聆香）。
+    // 两个来源之外的编号才兜底成「艺人 #N」。性别同理。
     const entry = stars?.[String(artist.roleId)];
-    const gender: Gender = entry ? (entry[1] ? 'male' : 'female') : 'any';
-    const name = entry?.[0] ?? `艺人 #${artist.roleId}`;
+    const dirEntry = ARTIST_DIRECTORY.find((a) => a.id === artist.roleId);
+    const gender: Gender = entry
+      ? (entry[1] ? 'male' : 'female')
+      : (dirEntry ? dirEntry.gender : 'any');
+    const name = entry?.[0] ?? dirEntry?.name ?? `艺人 #${artist.roleId}`;
     const code = readNoticeCode(view, artist.offset, end);
     for (const item of code) {
       const list = (out[item] ??= []);
