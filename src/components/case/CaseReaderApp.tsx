@@ -1350,9 +1350,9 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
     return (
       <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
         {groups.map((group) => (
-          <div key={group.code} data-case-match data-match-result="info" className="flex items-center gap-1 text-ui-2xs leading-[1.4] text-ink-muted">
-            <span className="select-none text-ink-faint" aria-hidden="true">•</span>
-            <span>团体 {group.name}</span>
+          <div key={group.code} data-case-match data-match-result="info" className="text-ui-2xs leading-[1.5] text-ink-muted">
+            <span className="select-none text-ink-faint" aria-hidden="true">•</span>{' '}
+            <span>团体 {group.name}</span>{' '}
             <span className="text-ink-faint">{group.memberNames.join(' · ') || '成员未记录'}</span>
           </div>
         ))}
@@ -1401,14 +1401,17 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
               data-case-match-group={groupRole ? 'yes' : undefined}
               data-match-artist={match.artistName}
               data-match-result={match.canAccept ? 'yes' : 'no'}
+              // 圆点和文字必须在同一条行内流里：以前这里是 flex-wrap，
+              // 文字一长圆点就被挤成单独一行，长短两行看起来像两种样式。
+              // pl-3 + 负 text-indent = 悬挂缩进，折行的第二行与文字左缘对齐。
               className={cn(
-                'flex flex-wrap items-center gap-1 text-ui-2xs leading-[1.4]',
+                'pl-3 [text-indent:-0.75rem] text-ui-2xs leading-[1.5]',
                 match.canAccept ? 'font-semibold' : 'text-alert',
               )}
             >
-              <span className="select-none text-ink-faint" aria-hidden="true">•</span>
+              <span className="select-none text-ink-faint" aria-hidden="true">•</span>{' '}
               {match.canAccept ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-growth px-1.5 py-0.5 text-white">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-growth px-1.5 py-0.5 align-middle text-white">
                   <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
                     <path d="M2.5 6.2 4.8 8.5 9.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -1424,7 +1427,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
               {group && group.memberNames.length > 0 && (
                 <span
                   data-case-match-members
-                  className="w-full pl-3 font-normal text-ink-faint"
+                  className="mt-0.5 block pl-3 [text-indent:0] font-normal text-ink-faint"
                 >
                   队长 {group.memberNames[0]}
                   {group.memberNames.length > 1 && ` · 团员 ${group.memberNames.slice(1).join(' · ')}`}
