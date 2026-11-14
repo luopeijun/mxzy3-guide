@@ -396,8 +396,8 @@ if (fs.existsSync(savePath)) {
   }
 }
 
-// 第六个存档（Story0024）：CF728 絲襪 勾引篇 已经拍满 6 天，杀青日就是今天，
-// 所以不该留在拍摄中，而要进「已完成」。
+// 第六个存档（Story0024）：CF728 絲襪 勾引篇 已经拍满 6 天、杀青日就是今天，
+// 所以整条都不该留在拍摄中（没有在赶期的人），也不再单独开「已完成」页签。
 {
   const donePath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0024.sa2';
   if (fs.existsSync(donePath)) {
@@ -406,16 +406,14 @@ if (fs.existsSync(savePath)) {
     const save = parseSave(
       raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0024.sa2',
     );
-    const done = save.finished.find((n) => n.code === 'CF728');
-    check(!save.shooting.some((n) => n.code === 'CF728') && Boolean(done),
-      'Story0024: 拍完的 CF728 从拍摄中移到已完成',
-      save.finished.map((n) => n.code).join(',') || 'none');
-    check(done?.casts.every((c) => c.status === 'done' && c.needDays === 0 && c.risk === 'ok'),
-      'Story0024: 已完成的行标 done、还差 0 天、不出提醒',
-      done?.casts.map((c) => `${c.artistName}:${c.doneDays}/${c.workDays} ${c.status} ${c.risk}`).join(',') ?? '-');
-    check(done?.risk === 'ok', 'Story0024: 整条通告的风险归为 ok', String(done?.risk));
+    check(!save.shooting.some((n) => n.code === 'CF728'),
+      'Story0024: 拍满天数的 CF728 不再列进拍摄中',
+      save.shooting.map((n) => n.code).join(',') || 'none');
+    check(save.finished === undefined,
+      'ParseResult 不再有 finished 这一档（已完成页签已去掉）',
+      typeof save.finished);
   } else {
-    console.log('OK   Story0024.sa2 not present, skipped the finished-board checks');
+    console.log('OK   Story0024.sa2 not present, skipped the wrapped-cast checks');
   }
 }
 
@@ -523,8 +521,71 @@ if (fs.existsSync(savePath)) {
     check(unsigned.length === 8 && diy.selfMade.every((n) => n.casts.every((c) => c.pay > 0)),
       'Ending0004: 12 条已接 / 8 条没人接，接演记录都带酬劳',
       `taken=${diy.selfMade.length - unsigned.length} empty=${unsigned.length}`);
+    // 自制通告块里自带一段档期：第一个日期是开拍（周一），第二个是杀青。
+    // 状态由今天落在这段区间的哪一侧决定，跟拍摄中同一口径。
+    check(tv601?.startDate === '2008/6/30' && tv601?.endDate === '2008/9/1'
+      && tv601?.status === 'done',
+      'Ending0004: 握斧長龍 从块里读出开拍 / 杀青，今天已过杀青 → 已完成',
+      `${tv601?.startDate} → ${tv601?.endDate} ${tv601?.status}`);
+    const cd726 = diy.selfMade.find((n) => n.code === 'CD726');
+    // CD726 的档期跨年，但没人接演 —— 档期只是挂在列表上的排期，没人进组
+    // 就只能是「未开拍」，不能因为今天落在区间里就说人家在拍。
+    check(cd726?.startDate === '2008/12/1' && cd726?.endDate === '2009/2/7'
+      && cd726?.casts.length === 0 && cd726?.status === 'pending' && cd726?.daysLeft === 38,
+      'Ending0004: 紅色情熱 跨年档期读全（2008/12/1 → 2009/2/7），没人接 → 未开拍',
+      `${cd726?.startDate} → ${cd726?.endDate} ${cd726?.status} left=${cd726?.daysLeft}`);
+    // 拍摄天数按人算：同一部戏里男主角和女配角的天数本来就不一样，不能
+    // 拿通告级的天数糊一行给四个人。
+    check(tv601?.casts.map((c) => c.workDays).join(',') === '21,21,14,14'
+      && tv601?.casts.every((c) => c.needDays === 0 && c.doneDays === c.workDays),
+      'Ending0004: 握斧長龍 每人各算各的天数（拍完的记满，没有剩余）',
+      tv601?.casts.map((c) => `${c.artistName}:${c.doneDays}/${c.workDays}+${c.needDays}`).join(' '));
+    check(diy.selfMade.every((n) => n.casts.every((c) => c.workDays === c.doneDays + c.needDays)),
+      'Ending0004: 每条接演记录的天数都自洽（已完成 + 还差 = 需拍）',
+      diy.selfMade.flatMap((n) => n.casts).length + ' casts');
+    check(tv601?.casts.map((c) => `${c.artistName}:${c.role?.role}`).join(' ') ===
+      '姚子奇:男主角 姚子莹:女主角 卫亚:男配角 新名纱雪:女配角',
+      'Ending0004: 握斧長龍 四个人各拿各的角色，不合成一条',
+      tv601?.casts.map((c) => `${c.artistName}:${c.role?.role}`).join(' ') ?? '-');
+    check(diy.selfMade.every((n) => ['pending', 'shooting', 'done', 'unknown'].includes(n.status)),
+      'Ending0004: 每条自制通告都有合法状态',
+      [...new Set(diy.selfMade.map((n) => n.status))].join(','));
   } else {
     console.log('OK   Ending0004.sa2 not present, skipped the self-made checks');
+  }
+}
+
+// 第五个存档（Ending0005）：一条自制通告正在拍摄中，接演记录里每位艺人
+// 各有「已完成 / 还差」，两个人的天数可以不一样 —— 这正是不能拿通告级
+// 天数糊一整行的原因。
+{
+  const midPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0005.sa2';
+  if (fs.existsSync(midPath)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(midPath);
+    const mid = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Ending0005.sa2',
+    );
+    const tv601 = mid.selfMade.find((n) => n.code === 'TV601');
+    check(tv601?.status === 'shooting' && tv601?.casts.length === 4,
+      'Ending0005: 握斧長龍 还在档期内、四个人进组 → 拍摄中',
+      `${tv601?.status} casts=${tv601?.casts.length}`);
+    const keliesi = tv601?.casts.find((c) => c.artistName === '克烈斯');
+    check(keliesi?.role?.role === '男主角' && keliesi?.doneDays === 5
+      && keliesi?.needDays === 37 && keliesi?.workDays === 42,
+      'Ending0005: 克烈斯 男主角 已完成 5 天 / 还差 37 天（合计 42）',
+      `${keliesi?.role?.role} ${keliesi?.doneDays}/${keliesi?.workDays}+${keliesi?.needDays}`);
+    const chenyifu = tv601?.casts.find((c) => c.artistName === '陈奕夫');
+    check(chenyifu?.role?.role === '男配角' && chenyifu?.doneDays === 0
+      && chenyifu?.workDays === 20,
+      'Ending0005: 陈奕夫 男配角 一天没拍（0/20）',
+      `${chenyifu?.role?.role} ${chenyifu?.doneDays}/${chenyifu?.workDays}`);
+    check(tv601?.casts.every((c) => c.workDays === c.doneDays + c.needDays)
+      && new Set(tv601?.casts.map((c) => c.workDays)).size > 1,
+      'Ending0005: 同一条通告上各人的需拍天数不一样（按人算）',
+      tv601?.casts.map((c) => `${c.artistName}:${c.workDays}`).join(' '));
+  } else {
+    console.log('OK   Ending0005.sa2 not present, skipped the shooting self-made checks');
   }
 }
 

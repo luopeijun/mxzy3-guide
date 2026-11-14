@@ -422,6 +422,7 @@ async function main() {
     await sleep(400);
     const shot = JSON.parse(await evaluate(`JSON.stringify({
       tabs: document.querySelectorAll('[data-case-tabs] [role="tab"]').length,
+      hasFinishedTab: Boolean(document.querySelector('[data-case-tab="finished"]')),
       openSelected: document.querySelector('[data-case-tab="open"]')?.getAttribute('aria-selected'),
       shootingSelected: document.querySelector('[data-case-tab="shooting"]')?.getAttribute('aria-selected'),
       rows: document.querySelectorAll('[data-case-shooting-row]').length,
@@ -442,16 +443,19 @@ async function main() {
       })()
     })`));
     console.log('shooting:', JSON.stringify(shot));
-    check(shot.tabs === 4 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
-      '筹备中 / 拍摄中 / 已完成 / 自制通告 四个页签可以切换', `${shot.tabs} tabs`);
+    check(shot.tabs === 3 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
+      '筹备中 / 拍摄中 / 自制通告及其他 三个页签可以切换', `${shot.tabs} tabs`);
+    check(!shot.hasFinishedTab,
+      '已完成的页签已经去掉，拍完的通告不再单独一档', String(shot.hasFinishedTab));
     check(shot.rows === 1 && shot.codes[0] === 'CF014',
       '拍摄中只列 CF014 愛信電訊（萧依莉那条广告）', shot.codes.join(',') || 'none');
     check(shot.artists.join(',') === '蕭依莉',
       '拍摄中列出接演的艺人', shot.artists.join(',') || 'none');
     check(shot.roles.length === 1 && shot.roles[0].includes('女性') && shot.roles[0].includes('1★'),
       '角色类型和难度都显示在行里', shot.roles.join('|') || 'none');
-    check(shot.text.includes('1/23') && shot.text.includes('2/19'),
-      '开拍 / 杀青时间显示在行里');
+    check(shot.text.includes('2006/1/23') && shot.text.includes('2006/2/19'),
+      '开拍 / 杀青时间带年份显示（游戏跨三年，只写月日看不出来）',
+      shot.text.replace(/\s+/g, ' ').slice(0, 120));
     check(shot.text.includes('4') && shot.text.includes('/ 6 天') && shot.text.includes('5,000'),
       '完成天数、需拍天数和酬劳都显示', shot.text.replace(/\s+/g, ' ').slice(0, 90));
     check(shot.risk === null || shot.risk === undefined,
@@ -476,22 +480,6 @@ async function main() {
     ));
     check(backOpen.notices === 11, '切回筹备中，表格恢复', JSON.stringify(backOpen));
 
-    // 「已完成」页签：Auto 存档在最近一个月里没有拍完的通告，所以是空态。
-    await evaluate(`document.querySelector('[data-case-tab="finished"]').click()`);
-    await sleep(350);
-    const fin = JSON.parse(await evaluate(`JSON.stringify({
-      tabs: document.querySelectorAll('[data-case-tabs] [role="tab"]').length,
-      selected: document.querySelector('[data-case-tab="finished"]')?.getAttribute('aria-selected'),
-      rows: document.querySelectorAll('[data-case-shooting-row]').length,
-      text: document.body.innerText,
-      shootingHidden: document.querySelectorAll('[data-case-notice]').length
-    })`));
-    console.log('finished:', JSON.stringify({ ...fin, text: fin.text.slice(0, 60) }));
-    check(fin.tabs === 4 && fin.selected === 'true' && fin.shootingHidden === 0,
-      '已完成 是第三个页签，切过去会收起筹备中的表格', `${fin.tabs} tabs`);
-    check(fin.rows === 0 && fin.text.includes('最近没有拍完的通告'),
-      'Auto 存档最近没有拍完的通告，已完成页签显示空态', String(fin.rows));
-
     // 「自制通告及其他」页签：Auto 还没做过自制通告，应该是空态。
     await evaluate(`document.querySelector('[data-case-tab="self-made"]').click()`);
     await sleep(350);
@@ -502,8 +490,8 @@ async function main() {
       text: document.body.innerText,
       noticesHidden: document.querySelectorAll('[data-case-notice]').length
     })`));
-    check(diyEmpty.tabs === 4 && diyEmpty.selected === 'true' && diyEmpty.noticesHidden === 0,
-      '自制通告及其他 是第四个页签，切过去会收起筹备中的表格', `${diyEmpty.tabs} tabs`);
+    check(diyEmpty.tabs === 3 && diyEmpty.selected === 'true' && diyEmpty.noticesHidden === 0,
+      '自制通告及其他 是第三个页签，切过去会收起筹备中的表格', `${diyEmpty.tabs} tabs`);
     check(diyEmpty.rows === 0 && diyEmpty.text.includes('还没有自制通告'),
       'Auto 存档没有自制通告，页签显示空态', String(diyEmpty.rows));
 
@@ -520,16 +508,47 @@ async function main() {
         text: document.querySelector('[data-case-selfmade]')?.innerText || '',
         summary: document.querySelector('[data-case-selfmade-summary]')?.innerText || '',
         casts: [...document.querySelectorAll('[data-case-selfmade-cast]')].map(x => Number(x.getAttribute('data-case-selfmade-cast'))),
+        statuses: [...document.querySelectorAll('[data-case-selfmade-row]')].map(r => r.getAttribute('data-case-selfmade-status')),
+        artists: [...document.querySelectorAll('[data-case-selfmade-artist]')].map(x => x.innerText),
+        roles: [...document.querySelectorAll('[data-case-selfmade-role]')].map(x => x.innerText),
+        tv601: [...document.querySelectorAll('[data-case-selfmade-row="TV601"]')].map(r => r.innerText.replace(/\\s+/g, ' ').trim()),
+        days: [...document.querySelectorAll('[data-case-selfmade-row]')].map(r => ({
+          code: r.getAttribute('data-case-selfmade-row'),
+          days: r.querySelector('[data-case-selfmade-days]')?.getAttribute('data-case-selfmade-days') || ''
+        })),
+        filters: [...document.querySelectorAll('[data-case-selfmade-filter]')].map(b => b.getAttribute('data-case-selfmade-filter')),
         first: document.querySelector('[data-case-selfmade-row]')?.innerText.replace(/\\s+/g, ' ').trim() || '',
         noHorizontalScroll: (function(){
           var w = document.querySelector('[data-case-selfmade]');
           return !!w && w.scrollWidth <= w.clientWidth + 1;
         })()
       })`));
-      console.log('self-made:', diy.rows.length, diy.first);
-      check(diy.rows.length === 20 && diy.rows[0] === 'CD701' && diy.rows[19] === 'CD723',
+      const diyCodes = [...new Set(diy.rows)];
+      console.log('self-made:', diy.rows.length, 'rows /', diyCodes.length, 'notices');
+      check(diyCodes.length === 20 && diyCodes[0] === 'CD701' && diyCodes[19] === 'CD723',
         'Ending0004: 自制通告 20 条，顺序与游戏列表一致',
-        `${diy.rows.length} 条 / ${diy.rows[0]} … ${diy.rows.at(-1)}`);
+        `${diyCodes.length} 条 / ${diyCodes[0]} … ${diyCodes.at(-1)}`);
+      check(diy.rows.length > diyCodes.length,
+        '一条通告有几位自家艺人就占几行，不再挤成一条',
+        `${diy.rows.length} 行 / ${diyCodes.length} 条`);
+      check(diy.tv601.length === 4
+        && diy.tv601.map((row) => row.includes('男主角') || row.includes('女主角')
+          || row.includes('男配角') || row.includes('女配角')).every(Boolean),
+        'Ending0004: 握斧長龍 四位艺人各占一行，角色分别是男女主角 / 男女配角',
+        diy.tv601.map((row) => row.slice(0, 60)).join(' || ') || 'none');
+      check(diy.statuses.includes('done') && diy.statuses.includes('pending')
+        && diy.text.includes('已完成') && diy.text.includes('未开拍'),
+        'Ending0004: 状态由档期推出来（已完成 / 没人接的就是未开拍）',
+        [...new Set(diy.statuses)].join(','));
+      // 拍摄天数必须一人一份：握斧長龍 四位自家艺人是 21/21/14/14，不是
+      // 拿通告级的天数糊一行给四个人。
+      const tv601Days = diy.days.filter((row) => row.code === 'TV601').map((row) => row.days);
+      check(tv601Days.join(',') === '21/21,21/21,14/14,14/14',
+        'Ending0004: 握斧長龍 一人一行，各带自己的完成 / 需拍天数',
+        tv601Days.join(' ') || 'none');
+      check(diy.text.includes('2008/6/30') && diy.text.includes('2008/9/1')
+        && diy.text.includes('2008/12/1') && diy.text.includes('2009/2/7'),
+        'Ending0004: 自制通告的开拍 / 杀青也带年份，跨年档期能看出来');
       check(diy.text.includes('有朋自遠方來') && diy.text.includes('握斧長龍')
         && diy.text.includes('唐朝栗子') && diy.text.includes('新涼時節'),
         '自制通告的名字都显示出来（含只有 data1 静态表才有的那批）');
@@ -539,13 +558,52 @@ async function main() {
       check(diy.text.includes('握斧長龍') && diy.text.includes('15 天')
         && diy.text.includes('还没有艺人接'),
         '天数与「还没人接」的提示都在表里');
-      check(diy.casts.filter((n) => n === 0).length === 8,
+      const emptyRows = diy.rows.filter((code, i) => diy.casts[i] === 0);
+      check(new Set(emptyRows).size === 8,
         '12 条已接 / 8 条没人接，与存档一致',
-        diy.casts.join(','));
+        `empty=${new Set(emptyRows).size}`);
       check(diy.summary.includes('共 20 条') && diy.summary.includes('唱片 15')
         && diy.summary.includes('电视剧 5') && diy.summary.includes('还没人接 8 条'),
         '汇总条给出条数、类别分布与接演情况',
         diy.summary.replace(/\s+/g, ' ').slice(0, 90));
+      // 汇总条上的每个数字都是筛选标签：点一下只看这一类，再点一下还原。
+      check(['all', 'cat:唱片', 'cat:电视剧', 'status:done', 'status:pending']
+        .every((key) => diy.filters.includes(key)),
+        '汇总条上的每个数字都是可点的筛选标签', diy.filters.join(' '));
+      await evaluate(`document.querySelector('[data-case-selfmade-filter="cat:电视剧"]').click()`);
+      await sleep(300);
+      const filtered = JSON.parse(await evaluate(`JSON.stringify({
+        codes: [...new Set([...document.querySelectorAll('[data-case-selfmade-row]')]
+          .map(r => r.getAttribute('data-case-selfmade-row')))],
+        summary: document.querySelector('[data-case-selfmade-summary]')?.innerText.replace(/\\s+/g, ' ') || '',
+        pressed: document.querySelector('[data-case-selfmade-filter="cat:电视剧"]')?.getAttribute('aria-pressed')
+      })`));
+      check(filtered.codes.length === 5 && filtered.pressed === 'true'
+        && filtered.summary.includes('当前 5 / 20 条'),
+        '点「电视剧」只看电视剧，汇总条改成 当前 5 / 20 条',
+        `${filtered.codes.join(',')} | ${filtered.summary.slice(0, 50)}`);
+      await evaluate(`document.querySelector('[data-case-selfmade-filter="cat:电视剧"]').click()`);
+      await sleep(300);
+      const restored = JSON.parse(await evaluate(`JSON.stringify({
+        codes: [...new Set([...document.querySelectorAll('[data-case-selfmade-row]')]
+          .map(r => r.getAttribute('data-case-selfmade-row')))].length,
+        summary: document.querySelector('[data-case-selfmade-summary]')?.innerText.replace(/\\s+/g, ' ') || ''
+      })`));
+      check(restored.codes === 20 && restored.summary.includes('还没人接 8 条'),
+        '再点一次同一个标签就还原成全部 20 条', `${restored.codes} 条`);
+      await evaluate(`document.querySelector('[data-case-selfmade-filter="status:pending"]').click()`);
+      await sleep(300);
+      const pendingOnly = JSON.parse(await evaluate(`JSON.stringify({
+        statuses: [...new Set([...document.querySelectorAll('[data-case-selfmade-row]')]
+          .map(r => r.getAttribute('data-case-selfmade-status')))],
+        rows: document.querySelectorAll('[data-case-selfmade-row]').length
+      })`));
+      check(pendingOnly.statuses.length === 1 && pendingOnly.statuses[0] === 'pending'
+        && pendingOnly.rows > 0,
+        '按状态筛选只留「未开拍」的行',
+        `${pendingOnly.statuses.join(',')} / ${pendingOnly.rows} 行`);
+      await evaluate(`document.querySelector('[data-case-selfmade-filter="all"]').click()`);
+      await sleep(250);
       check(diy.noHorizontalScroll, '自制通告表不出现横向滚动');
     } else {
       console.log('SKIP Ending0004.sa2 not present, self-made table not checked');
@@ -574,29 +632,23 @@ async function main() {
         '史蒂芬 / 方若綺 连名字都不出现在表里',
         own.text.replace(/\s+/g, ' ').slice(0, 80));
 
-      // Story0024：CF728 今天刚拍满 6 天，应该出现在「已完成」。
+      // Story0024：CF728 今天刚拍满 6 天（杀青日就是今天），整条都不再列进拍摄中。
       const donePath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0024.sa2';
       if (fs.existsSync(donePath)) {
         const doneCopy = path.join(root, '.tmp', 'case-e2e-done.sa2');
         fs.copyFileSync(donePath, doneCopy);
         await uploadSave(doneCopy);
-        await evaluate(`document.querySelector('[data-case-tab="finished"]').click()`);
+        await evaluate(`document.querySelector('[data-case-tab="shooting"]').click()`);
         await sleep(350);
         const done = JSON.parse(await evaluate(`JSON.stringify({
           codes: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.getAttribute('data-case-shooting-row')),
-          statuses: [...document.querySelectorAll('[data-case-shooting-status]')].map(x => x.getAttribute('data-case-shooting-status')),
           text: document.querySelector('[data-case-shooting]')?.innerText || ''
         })`));
-        console.log('done:', done.codes.join(','), done.statuses.join(','));
-        check(done.codes.includes('CF728') && done.statuses.includes('done'),
-          '拍满天数的通告出现在已完成，行内标 已完成', `${done.codes.join(',')} / ${done.statuses.join(',')}`);
-        check(done.text.includes('已完成') && done.text.includes('已拍完'),
-          '已完成的行不再写「还差几天」，改标已拍完',
-          done.text.replace(/\s+/g, ' ').slice(0, 90));
-        await evaluate(`document.querySelector('[data-case-tab="shooting"]').click()`);
-        await sleep(300);
+        console.log('story0024:', done.codes.join(','));
+        check(!done.codes.includes('CF728'),
+          '拍满天数的 CF728 不再占拍摄中的行', done.codes.join(',') || 'none');
       } else {
-        console.log('OK   Story0024.sa2 not present, skipped the finished-board checks');
+        console.log('OK   Story0024.sa2 not present, skipped the wrapped-cast check');
       }
     } else {
       console.log('OK   Story0027.sa2 not present, skipped the own-artist checks');

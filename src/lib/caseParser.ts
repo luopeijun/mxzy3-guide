@@ -290,7 +290,8 @@ export function matchGroupRole(
   const missing = gaps.filter((gap) => gap.diff > 0);
   return {
     artistIndex: leader?.index ?? -1,
-    artistName: `${groupName}（队长 ${leaderName}）`,
+    // 团体通告是「整团」接的：名字写队名，队长与成员由 UI 另起一行列全。
+    artistName: groupName || leaderName,
     eligible: true,
     canAccept: missing.length === 0,
     gaps,
@@ -307,8 +308,6 @@ export interface ParseResult {
   notices: CaseNotice[];
   /** 已在拍 / 待开拍的通告（只看自己旗下艺人），来自存档里的接取记录。 */
   shooting: ShootingNotice[];
-  /** 自家艺人都拍完了的通告，最近 FINISHED_WINDOW_DAYS 天内的。 */
-  finished: ShootingNotice[];
   /** 「自制通告及其他」：玩家自己出品的通告清单，按制作顺序。 */
   selfMade: SelfMadeNotice[];
   artists: ArtistStats[];
@@ -843,12 +842,6 @@ export type ShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
 /** 一位接演艺人自己的进度状态：还没到开拍日 / 正在拍 / 已经拍够天数。 */
 export type ShootingStatus = 'pending' | 'shooting' | 'done';
 
-/** 已完成通告在「已完成」页签里保留多久（天）。
- *
- *  Case 段里躺着整段历史的旧通告块，接取记录也还在。全都列出来没意义，
- *  所以只看杀青日在最近一个月内的 —— 再早的玩家早就不关心了。 */
-export const FINISHED_WINDOW_DAYS = 30;
-
 /** 排期余量的提醒阈值（天）。
  *
  *  玩家口径：不判断「排得下 / 排不下」这种结论，只给两种提醒 ——
@@ -919,11 +912,22 @@ export interface ShootingNotice {
 export interface SelfMadeCast {
   artistId: number;
   artistName: string;
+  /** 这位艺人拿到的角色；null 表示角色格已经分配完。 */
+  role: RoleRecord | null;
   /** 存档记的酬劳，0 表示没读到。 */
   pay: number;
-  /** 存档记的已完成天数。 */
+  /** 是不是自己旗下的艺人。对手公司的演员只用来占角色格，不上表。 */
+  mine: boolean;
+  /** 这位艺人自己已经拍完的天数。 */
   doneDays: number;
+  /** 这位艺人还差几天；0 表示他那份拍完了。 */
+  needDays: number;
+  /** 这位艺人这条通告上总共要拍几天 = 已完成 + 还差。 */
+  workDays: number;
 }
+
+/** 自制通告的档期状态，全部由块里的「开拍日 → 杀青日」推出来。 */
+export type SelfMadeStatus = 'pending' | 'shooting' | 'done' | 'unknown';
 
 /** 「自制通告及其他」里的一条：玩家自己出品（少数沿用原厂牌署名）的通告。
  *
@@ -934,9 +938,10 @@ export interface SelfMadeCast {
  *  名字 / 类型 / 出品公司不在存档里，来自 data1 那份更全的静态表：三合一
  *  同装的 data 目录缺 CD6xx / CD7xx 这一批，20 条里有 10 条读不到名字。
  *
- *  要注意自制通告不进 CaseFirm（当期可接取列表），块里也没有普通通告那种
- *  「周一 / 周一 / 周日」三连档期，所以不能套拍摄中的风险算法；这里只列
- *  清单、存档记的天数、角色，以及已经被哪位艺人接走。 */
+ *  要注意自制通告不进 CaseFirm（当期可接取列表），但有**自己一套档期**：
+ *  块里按顺序躺着几个 [年][月][日][周几] 四元组，第一个永远是周一（开拍
+ *  日），第二个是杀青日，再往后（有的块有）是上档 / 下档。所以进度状态
+ *  完全由「今天」落在这段区间的哪一侧决定，跟拍摄中同一口径。 */
 export interface SelfMadeNotice {
   /** 在自制列表里的序号，1 起，就是游戏里的排列顺序。 */
   seq: number;
@@ -951,43 +956,117 @@ export interface SelfMadeNotice {
   /** Length 表的每週上限，用来估算要排几周；0 表示查不到。 */
   daysPerWeek: number;
   roles: RoleRecord[];
-  /** 已经被接走的记录（存档里 pay > 0 的那几条）。 */
+  /** 接演记录，按存档里的接取顺序；含对手公司的人，用 mine 区分。 */
   casts: SelfMadeCast[];
+  /** 开拍日 / 杀青日，空的表示这一块读不到档期。 */
+  startDate: string;
+  endDate: string;
+  startDay: number;
+  endDay: number;
+  /** 距杀青还有几个日历日；NaN 表示没有档期。 */
+  daysLeft: number;
+  /** 距开拍还有几个日历日；已经开拍时 ≤ 0，NaN 表示没有档期。 */
+  daysToStart: number;
+  status: SelfMadeStatus;
   offset: number;
 }
 
-/** 自制通告块里的接演记录。
+/** 自制通告块里的一条接演记录长这样（24 字节）：
+ *  [状态位 0..3][艺人编号 1..96][还差天数][?][已完成天数][酬劳]。
  *
- *  形状与普通通告一样（[状态位][艺人编号][已完成天数][?][?][酬劳]），但自制
- *  通告的块里还混着一堆长度表 / 角色槽的整数，宽松筛会误报。这里只认**有
- *  酬劳**的那几条 —— 真正接了才有钱，其余候选一律丢掉。仍只看自家艺人：
- *  对手公司的接演跟玩家的排期无关。 */
+ *  跟拍摄中的记录同一个形状，只是自制通告把「还差几天」也写进来了，
+ *  所以每位艺人的总天数 = 已完成 + 还差，不必再查长度表（自制通告的
+ *  天数本来就是按艺人单独算的，同一部戏里男女主角都可能不一样）。
+ *
+ *  块里还混着长度表、角色槽的一堆整数，单看形状会误报，所以要求酬劳是
+ *  **万位整数**，并且只认连续排成一串的那一段（真接演总是连着的）。 */
+function isSelfMadeCast(view: DataView, offset: number, limit: number): boolean {
+  if (offset < 0 || offset + 24 > limit) return false;
+  const flag = view.getUint32(offset, true);
+  const artistId = view.getUint32(offset + 4, true);
+  if (flag > 3 || artistId < 1 || artistId > 96) return false;
+  const a = view.getUint32(offset + 8, true);
+  const b = view.getUint32(offset + 12, true);
+  const c = view.getUint32(offset + 16, true);
+  const pay = view.getUint32(offset + 20, true);
+  if (a > 999 || b > 99 || c > 99) return false;
+  return pay >= 10000 && pay <= 100000000 && pay % 10000 === 0;
+}
+
+/** 读出这条自制通告的接演名单，并按接取顺序分配角色。
+ *
+ *  角色分配跟拍摄中完全一样：带着**全部**接演人一起走，对手公司的演员也
+ *  占一格，否则自家艺人会落到别人那格上（男主角 / 男配角错位）。 */
 function readSelfMadeCasts(
   view: DataView,
   start: number,
   end: number,
-  ownerIds: number[],
+  mineIds: Set<number>,
   names: Map<number, string>,
+  genders: Map<number, Gender>,
+  roles: RoleRecord[],
 ): SelfMadeCast[] {
-  const rows: SelfMadeCast[] = [];
-  if (ownerIds.length === 0) return rows;
-  const wanted = new Set(ownerIds);
-  const from = start + 400;
   const limit = Math.min(end, view.byteLength);
-  for (let o = from; o + 20 <= limit; o += 4) {
-    const id = view.getUint32(o, true);
-    if (!wanted.has(id)) continue;
-    if (rows.some((row) => row.artistId === id)) continue;
-    const flag = view.getUint32(o - 4, true);
-    const done = view.getUint32(o + 4, true);
-    const a = view.getUint32(o + 8, true);
-    const b = view.getUint32(o + 12, true);
-    const pay = view.getUint32(o + 16, true);
-    if (flag > 3 || done > 60 || a > 99 || b > 99) continue;
-    if (pay <= 0 || pay > 1e9) continue;
-    rows.push({ artistId: id, artistName: names.get(id) ?? `艺人 #${id}`, pay, doneDays: done });
+  let bestStart = -1;
+  let bestLen = 0;
+  for (let o = start + 16; o + 24 <= limit; o += 4) {
+    if (!isSelfMadeCast(view, o, limit)) continue;
+    let len = 1;
+    let p = o + 24;
+    while (isSelfMadeCast(view, p, limit)) {
+      len += 1;
+      p += 24;
+    }
+    if (len > bestLen) {
+      bestLen = len;
+      bestStart = o;
+    }
+  }
+  if (bestStart < 0) return [];
+
+  const rows: SelfMadeCast[] = [];
+  const claimed = new Set<string>();
+  for (let i = 0; i < bestLen; i += 1) {
+    const base = bestStart + i * 24;
+    const artistId = view.getUint32(base + 4, true);
+    const pay = view.getUint32(base + 20, true);
+    const gender = genders.get(artistId) ?? 'any';
+    let role = roles.find((item) => !claimed.has(item.roleCode) && canTakeRole(item, gender)) ?? null;
+    if (role) claimed.add(role.roleCode);
+    else if (roles.length === 1) role = roles[0];
+    const needDays = view.getUint32(base + 8, true);
+    const doneDays = view.getUint32(base + 16, true);
+    rows.push({
+      artistId,
+      artistName: names.get(artistId) ?? `编号${artistId}`,
+      role,
+      pay,
+      mine: mineIds.has(artistId),
+      doneDays,
+      needDays,
+      workDays: doneDays + needDays,
+    });
   }
   return rows;
+}
+
+/** 自制通告块里的档期四元组，按块内顺序。
+ *
+ *  第一个是开拍日（全库 446 个块无一例外都是周一），第二个是杀青日；
+ *  有的块后面还跟着上档 / 下档两个日期，这里一并返回，由调用方取前两个。 */
+function readSelfMadeDates(view: DataView, start: number, end: number): DateTuple[] {
+  const out: DateTuple[] = [];
+  const limit = Math.min(end, view.byteLength);
+  for (let o = start; o + 16 <= limit; o += 4) {
+    const y = view.getUint32(o, true);
+    const m = view.getUint32(o + 4, true);
+    const d = view.getUint32(o + 8, true);
+    const w = view.getUint32(o + 12, true);
+    if (y < 2000 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31 || w < 1 || w > 7) continue;
+    out.push({ y, m, d, w, day: Math.floor(Date.UTC(y, m - 1, d) / 86400000) });
+    o += 12;
+  }
+  return out;
 }
 
 /** CaseCreate 段：自制通告的编码清单，按制作顺序。
@@ -1240,12 +1319,11 @@ export function parseSave(
     };
   });
 
-  /** 已经在拍的通告。判定只认存档：通告块里留着接取记录（艺人 + 已完成天数
-   *  + 酬劳），并且这条编码出现在该艺人的作品清单里。只看自家艺人：
+  /** 各公司开放接取、已经接下、还没杀青的通告。判定只认存档：通告块里留着
+   *  接取记录（艺人 + 已完成天数 + 酬劳），并叠加「今天不晚于杀青日」。
+   *  自家艺人都拍满天数的那条直接不列 —— 没有在赶期的人。只看自家艺人：
    *  对手公司的演员也占角色坑位，但不进表、不算风险。 */
   const shooting: ShootingNotice[] = [];
-  /** 自己旗下艺人都拍完了的通告，单独一档给「已完成」页签。 */
-  const finished: ShootingNotice[] = [];
   const doneCodes = new Set<string>();
   const openCodes = new Set(firm.map((item) => item.code));
   // 玩家只关心自己公司的艺人：同一部戏里对手公司的演员照样有接取记录，
@@ -1265,8 +1343,8 @@ export function parseSave(
     const startDay = triple[1].day;
     const endDay = triple[2].day;
     // 存档的 Case 段里躺着大量早就杀青的旧块，它们的接取记录同样非零
-    // （艺人作品清单是历史累积），所以只留杀青日在最近一个月内的旧块。
-    if (!Number.isFinite(today) || today > endDay + FINISHED_WINDOW_DAYS) continue;
+    // （艺人作品清单是历史累积），所以杀青日一过就不再列。
+    if (!Number.isFinite(today) || today > endDay) continue;
     const daysLeft = endDay - today;
     const info = tables.cases[block.code];
     const [, type = '', subtype = '', company = ''] = info ?? [];
@@ -1309,19 +1387,16 @@ export function parseSave(
       });
     }
     if (casts.length === 0) continue;
-    // 自家艺人都交差了：整条通告进「已完成」，不再算风险。
-    const settled = casts.every((cast) => cast.status === 'done');
-    if (!settled && !(today <= endDay)) continue;
+    // 自家艺人都交差了就整条收起来：没有在赶期的人，写进表格只是噪音。
+    if (casts.every((cast) => cast.status === 'done')) continue;
 
     const open = casts.filter((cast) => cast.status !== 'done');
-    const risk = !open.length
-      ? 'ok'
-      : open.some((c) => c.risk === 'late') ? 'late'
-        : open.some((c) => c.risk === 'tight') ? 'tight'
-          : open.some((c) => c.risk === 'ok') ? 'ok' : 'unknown';
+    const risk = open.some((c) => c.risk === 'late') ? 'late'
+      : open.some((c) => c.risk === 'tight') ? 'tight'
+        : open.some((c) => c.risk === 'ok') ? 'ok' : 'unknown';
 
     doneCodes.add(block.code);
-    (settled ? finished : shooting).push({
+    shooting.push({
       code: block.code,
       name: info?.[0] || '（存档专有 / 自制通告）',
       category: categoryOf(block.code),
@@ -1341,23 +1416,40 @@ export function parseSave(
     if (rank[a.risk] !== rank[b.risk]) return rank[a.risk] - rank[b.risk];
     return (Number.isFinite(a.endDay) ? a.endDay : Infinity) - (Number.isFinite(b.endDay) ? b.endDay : Infinity);
   });
-  // 已完成：杀青日越近越靠前。
-  finished.sort((a, b) => b.endDay - a.endDay);
+
 
   // 自制通告及其它：CaseCreate 里列出来的、玩家自己出品的通告。名字要从静态
-  // 表查（data1 那份才全），天数 / 接演记录来自 Case 段的第一块。
+  // 表查（data1 那份才全），天数 / 档期 / 接演记录来自 Case 段的第一块。
   const nameOfArtist = new Map(artistDirectory.map((entry) => [entry.id, entry.name]));
+  const genderOfArtist = new Map(artistDirectory.map((entry) => [entry.id, entry.gender]));
   const selfMade: SelfMadeNotice[] = parseCaseCreate(view, blocks).map((code, index) => {
     const info = tables.cases[code];
     const [name = '', type = '', subtype = '', company = ''] = info ?? [];
     const noticeRoles = roles.filter((role) => role.code === code);
     // 同一编码在 Case 段常常留着好几块（历次接演各一块），第一块就是游戏
-    // 通告列表里显示的那条，天数也取它。
+    // 通告列表里显示的那条，天数与档期也取它。
     const block = codeBlocks.find((item) => item.code === code) ?? null;
     const rawDays = block ? view.getUint32(block.start + 24, true) : 0;
     const length = noticeRoles
       .map((role) => lengthOf(code, info, role.role))
       .find((hit): hit is number[] => Boolean(hit)) ?? null;
+    // 档期：块里第一个日期是开拍（周一），第二个是杀青；后两个是上档 / 下档，
+    // 不参与状态判断。开拍不是周一的块一律当没档期，宁可不显示也不猜。
+    const stamps = block ? readSelfMadeDates(view, block.start, block.end) : [];
+    const start = stamps[0] && stamps[0].w === 1 && stamps[1] ? stamps[0] : null;
+    const finish = start ? stamps[1] : null;
+    const startDay = start ? start.day : NaN;
+    const endDay = finish ? finish.day : NaN;
+    const casts = block
+      ? readSelfMadeCasts(view, block.start, block.end, mineIds, nameOfArtist, genderOfArtist, noticeRoles)
+      : [];
+    let status: SelfMadeStatus = 'unknown';
+    if (start && finish && Number.isFinite(today)) {
+      status = today < startDay ? 'pending' : today <= endDay ? 'shooting' : 'done';
+    }
+    // 一个人都没接（连对手公司的都没有）就只能是「未开拍」—— 档期只是挂在
+    // 通告列表上的排期，没人进组就谈不上拍摄中，更谈不上已完成。
+    if (casts.length === 0) status = 'pending';
     return {
       seq: index + 1,
       code,
@@ -1367,9 +1459,13 @@ export function parseSave(
       days: rawDays > 0 && rawDays < 400 ? rawDays : 0,
       daysPerWeek: length?.[1] ?? 0,
       roles: noticeRoles,
-      casts: block
-        ? readSelfMadeCasts(view, block.start, block.end, signedArtistIds, nameOfArtist)
-        : [],
+      casts,
+      startDate: start ? fmtDate(start) : '',
+      endDate: finish ? fmtDate(finish) : '',
+      startDay, endDay,
+      daysLeft: Number.isFinite(endDay) && Number.isFinite(today) ? endDay - today : NaN,
+      daysToStart: Number.isFinite(startDay) && Number.isFinite(today) ? startDay - today : NaN,
+      status,
       offset: block?.start ?? 0,
     };
   });
@@ -1382,7 +1478,6 @@ export function parseSave(
     roleRecordCount: roles.length,
     notices,
     shooting,
-    finished,
     selfMade,
     artists,
     artistDirectory,
