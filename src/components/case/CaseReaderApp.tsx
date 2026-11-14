@@ -241,7 +241,7 @@ export default function CaseReaderApp() {
           />
           {!result && (
             <span className="text-ui-2xs text-ink-faint">
-              把 明星志愿3游戏存档拖到这里，或点上面的按钮选择。
+              把明星志愿3游戏存档拖到这里，或点上面的按钮选择。
             </span>
           )}
           {result && (
@@ -345,7 +345,7 @@ export default function CaseReaderApp() {
                 <span className="ml-2 font-normal text-ui-2xs text-ink-faint">名称与成员从存档读取</span>
               </summary>
               {activeGroups.length === 0 ? (
-                <p data-case-groups-empty className="mt-2 text-ui-2xs text-ink-faint">存档里没有 101 号及以上的团体记录，说明你旗下目前没有团体。</p>
+                <p data-case-groups-empty className="mt-2 text-ui-2xs text-ink-faint">—</p>
               ) : (
                 <div data-case-group-grid className="mt-2 flex flex-wrap gap-2">
                   {activeGroups.map((group) => (
