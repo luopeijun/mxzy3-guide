@@ -230,6 +230,30 @@ export interface GameDate {
   dayNumber: number;
 }
 
+/** 我方公司的四件套。
+ *
+ *  公司名与主角姓名在存档头部的定长字段里（@4 20 字节 / @24 16 字节，Big5，
+ *  遇 NUL 截断）；资金是头部 @80 的 int32。形象 / 知名度 / 公关 不在头部，
+ *  而在 `Firm` 段：段体先是公司数量，然后每家一条
+ *  `[编号][形象字节数][每字节一个 int32][知名度][公关][0]`，编号 1 就是我方，
+ *  2..5 是对手公司（名字在游戏的 Firm.dat 里，存档只记数值）。 */
+export interface CompanyInfo {
+  /** 公司名称。 */
+  name: string;
+  /** 主角姓名。 */
+  protagonist: string;
+  /** 公司形象，例如「注入新血的」。 */
+  image: string;
+  /** 知名度。 */
+  fame: number;
+  /** 公关。 */
+  pr: number;
+  /** 资金，可能是负数（负债）。 */
+  money: number;
+  /** 这条记录在存档里的位置，排错用。 */
+  offset: number;
+}
+
 /** One Monday update batch of a production company, built from the notices the
  *  reader is actually showing (their 接取日 = 开放接取那个周一). */
 export interface UpdateBatch {
@@ -323,6 +347,8 @@ export interface ParseResult {
   roster: RosterEntry[];
   /** Dates from the save header, used for all countdowns. */
   currentDate: GameDate | null;
+  /** 我方公司：名称 / 主角 / 形象 / 知名度 / 公关 / 资金。 */
+  company: CompanyInfo | null;
   /** Monday notice-update batches, oldest first. */
   batches: UpdateBatch[];
   /** First batch strictly after today, i.e. the next company refresh. */
@@ -389,6 +415,23 @@ export function parseDay(text: string): number {
 export function dayText(day: number): string {
   const date = new Date(day * 86400000);
   return `${date.getUTCFullYear()}/${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
+}
+
+/** 钱按亿 / 万拆开写：12000 → 1万2000，110002000 → 1亿1000万2000，
+ *  不到一万原样给（5000 → 5000）。每一段都不再加千分位。 */
+export function moneyText(value: number): string {
+  if (!Number.isFinite(value)) return '—';
+  const sign = value < 0 ? '-' : '';
+  let rest = Math.abs(Math.round(value));
+  const yi = Math.floor(rest / 100000000);
+  rest -= yi * 100000000;
+  const wan = Math.floor(rest / 10000);
+  rest -= wan * 10000;
+  let out = '';
+  if (yi) out += `${yi}亿`;
+  if (wan) out += `${wan}万`;
+  if (rest || !out) out += `${rest}`;
+  return sign + out;
 }
 
 /** Locate named blocks whose characters are stored one ASCII int32 per char. */
@@ -693,6 +736,83 @@ function readCurrentDate(view: DataView, byteLength: number): GameDate | null {
     }
   }
   return null;
+}
+
+/** 定长 Big5 字段：遇 NUL 截断。玩家名短的后面是未初始化残留，解出控制字符
+ *  就整段丢掉 —— 宁可显示空白，也不把乱码糊到界面上。 */
+function readFixedText(bytes: Uint8Array, start: number, length: number): string {
+  if (start + length > bytes.length) return '';
+  const slice = bytes.subarray(start, start + length);
+  const stop = slice.indexOf(0);
+  const body = stop < 0 ? slice : slice.subarray(0, stop);
+  if (body.length < 2) return '';
+  const text = decodeBig5(body);
+  return /[\u0000-\u001f\ufffd]/.test(text) ? '' : text;
+}
+
+/** `Firm` 段体：先公司数量，然后每家一条
+ *  `[编号][形象字节数][每字节一个 int32][知名度][公关][0]`。编号 1 是我方，
+ *  2..5 是对手公司。形象里的字节是按**有符号** int32 存的，取低 8 位再拼。 */
+function readFirmStats(
+  bytes: Uint8Array,
+  view: DataView,
+  block: [number, number] | undefined,
+): { image: string; fame: number; pr: number; offset: number } | null {
+  if (!block) return null;
+  const body = block[1];
+  if (body + 4 > bytes.length) return null;
+  const count = view.getInt32(body, true);
+  if (count < 1 || count > 32) return null;
+  let o = body + 4;
+  for (let i = 0; i < count; i += 1) {
+    if (o + 12 > bytes.length) return null;
+    const id = view.getInt32(o, true);
+    const len = view.getInt32(o + 4, true);
+    if (id < 1 || id > 32 || len < 0 || len > 64) return null;
+    const dataAt = o + 8;
+    if (dataAt + len * 4 + 12 > bytes.length) return null;
+    if (id !== 1) {
+      // 不是我方就跳过，结构照样要按长度推。
+      o = dataAt + len * 4 + 12;
+      continue;
+    }
+    const chars = new Uint8Array(len);
+    for (let k = 0; k < len; k += 1) chars[k] = view.getInt32(dataAt + k * 4, true) & 0xff;
+    const fame = view.getInt32(dataAt + len * 4, true);
+    const pr = view.getInt32(dataAt + len * 4 + 4, true);
+    if (fame < 0 || fame > 99999999 || pr < 0 || pr > 99999999) return null;
+    const image = decodeBig5(chars).replace(/\0/g, '').trim();
+    return {
+      image: /[\ufffd]/.test(image) ? '' : image,
+      fame,
+      pr,
+      offset: o,
+    };
+  }
+  return null;
+}
+
+/** 公司信息：名字与主角在头部定长字段，形象 / 知名度 / 公关在 `Firm` 段，
+ *  资金在头部 @80（可以是负数）。 */
+export function parseCompany(
+  bytes: Uint8Array,
+  view: DataView,
+  firm: [number, number] | undefined,
+): CompanyInfo | null {
+  const name = readFixedText(bytes, 4, 20);
+  const protagonist = readFixedText(bytes, 24, 16);
+  const money = bytes.length >= 84 ? view.getInt32(80, true) : NaN;
+  const stats = readFirmStats(bytes, view, firm);
+  if (!name && !protagonist && !stats) return null;
+  return {
+    name,
+    protagonist,
+    image: stats?.image ?? '',
+    fame: stats?.fame ?? NaN,
+    pr: stats?.pr ?? NaN,
+    money,
+    offset: stats?.offset ?? 0,
+  };
 }
 
 /** Read the player's teams from the save's `Team` section.
@@ -1169,6 +1289,7 @@ export function parseSave(
   const firm = blocks.CaseFirm ? parseCaseFirm(view, blocks.CaseFirm[1], bytes.length) : [];
   const codeBlocks = findCodeBlocks(view, caseStart, caseEnd);
   const currentDate = readCurrentDate(view, bytes.length);
+  const company = parseCompany(bytes, view, blocks.Firm);
   const today = currentDate?.dayNumber ?? NaN;
 
   const artistStart = blocks.StarRoleQ ? blocks.StarRoleQ[1] : 0;
@@ -1485,6 +1606,7 @@ export function parseSave(
     teams,
     roster,
     currentDate,
+    company,
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],

@@ -143,6 +143,23 @@ async function main() {
       now: document.querySelector('[data-case-now]')?.innerText || '',
       closing: document.querySelector('[data-case-closing]')?.innerText || '',
       nextUpdate: document.querySelector('[data-case-next-update]')?.innerText || '',
+      company: (function(){
+        var box = document.querySelector('[data-case-company]');
+        if (!box) return null;
+        var pick = function(k){
+          var el = box.querySelector('[data-case-company-stat="' + k + '"]');
+          return el ? el.innerText.replace(/\\s+/g, ' ').trim() : '';
+        };
+        return JSON.stringify({
+          summary: (box.querySelector('[data-case-company-summary]')?.innerText || '').replace(/\\s+/g, ' ').trim(),
+          image: pick('image'), fame: pick('fame'), pr: pick('pr'),
+          money: pick('money'),
+          aboveArtists: (function(){
+            var a = document.querySelector('[data-case-artists]');
+            return !!a && !!(box.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING);
+          })()
+        });
+      })(),
       artists: document.querySelectorAll('[data-case-artist]').length,
       artistAttrs: document.querySelectorAll('[data-case-artist-attrs]').length,
       artistAttrsCount: document.querySelectorAll('[data-case-artist-attrs] span').length,
@@ -264,6 +281,18 @@ async function main() {
     check(p.closing.includes('2 条'), '7-day deadline warning counted', p.closing);
     check(p.nextUpdate.includes('2006/1/30') && p.nextUpdate.includes('周一'),
       'next company refresh shown', p.nextUpdate.slice(0, 120));
+    // 公司卡片：名字 / 主角在头部，形象 / 知名度 / 公关在 Firm 段，且排在「我方艺人」前面。
+    const comp = p.company ? JSON.parse(p.company) : null;
+    check(comp?.summary.includes('靠譜傳媒') && comp?.summary.includes('駱佩君'),
+      '公司卡片读出头部的公司名与主角姓名', comp?.summary ?? 'none');
+    check(comp?.image.includes('注入新血的') && comp?.fame.includes('670')
+      && comp?.pr.includes('539'),
+      '公司形象 / 知名度 / 公关 从 Firm 段读出来',
+      `${comp?.image ?? '-'} ${comp?.fame ?? '-'} ${comp?.pr ?? '-'}`);
+    check(comp?.money.includes('115万1527'),
+      '资金按亿 / 万拆开显示（1,151,527 → 115万1527）', comp?.money ?? 'none');
+    check(comp?.aboveArtists === true,
+      '公司卡片排在旗下艺人前面', String(comp?.aboveArtists));
     check(p.closingRows === 2, 'closing notices highlighted', String(p.closingRows));
     check(p.head.includes('接取时间') && p.head.includes('执行期间'),
       'booking window and shooting period columns present', p.head.replace(/\s+/g, ' '));

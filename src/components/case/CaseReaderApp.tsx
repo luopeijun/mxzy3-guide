@@ -4,7 +4,7 @@ import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
-  buildGroupRecord, canTakeRole, isGroupRole, matchGroupRole, matchRole, parseSave, toCsv,
+  buildGroupRecord, canTakeRole, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
@@ -36,6 +36,39 @@ function chipClass(active: boolean) {
       ? 'border-brand bg-brand font-semibold text-white'
       : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
   );
+}
+
+/** 公司信息里的一格：上面标签、下面数字。 */
+function CompanyStat({
+  label, value, attr, alert, hint,
+}: {
+  label: string;
+  value: string;
+  attr: string;
+  alert?: boolean;
+  /** 鼠标悬停时的完整数字（资金拆成亿 / 万后还能看到原值）。 */
+  hint?: string;
+}) {
+  return (
+    <div
+      data-case-company-stat={attr}
+      title={hint}
+      className="rounded-ui-md border border-line bg-surface px-2.5 py-1.5"
+    >
+      <div className="text-ui-2xs text-ink-faint">{label}</div>
+      <div className={cn(
+        'mt-0.5 whitespace-nowrap text-ui-sm font-bold tabular-nums',
+        alert ? 'text-alert' : 'text-ink',
+      )}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+/** 知名度 / 公关 这种整数；读不到就留个破折号，不要 NaN。 */
+function countText(value: number) {
+  return Number.isFinite(value) ? value.toLocaleString('en-US') : '未读出';
 }
 
 function tabClass(active: boolean) {
@@ -364,6 +397,36 @@ export default function CaseReaderApp() {
                 <span className="text-ink-faint">存档里没有更晚一批的通告</span>
               )}
             </div>
+
+            {/* 公司：名称与主角在存档头，形象 / 知名度 / 公关在 Firm 段。 */}
+            {result.company && (
+              <details data-case-company open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+                <summary data-case-company-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
+                  公司 · {result.company.name || '名称未记录'}
+                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                    主角 {result.company.protagonist || '未记录'}
+                  </span>
+                </summary>
+                <div data-case-company-stats className="mt-2 grid grid-cols-4 gap-2 phone:grid-cols-2">
+                  <CompanyStat
+                    label="公司形象"
+                    value={result.company.image || '未读出'}
+                    attr="image"
+                  />
+                  <CompanyStat label="知名度" value={countText(result.company.fame)} attr="fame" />
+                  <CompanyStat label="公关" value={countText(result.company.pr)} attr="pr" />
+                  <CompanyStat
+                    label="资金"
+                    value={moneyText(result.company.money)}
+                    hint={Number.isFinite(result.company.money)
+                      ? `¥${result.company.money.toLocaleString('en-US')}`
+                      : undefined}
+                    attr="money"
+                    alert={result.company.money < 0}
+                  />
+                </div>
+              </details>
+            )}
 
             {/* Fixed roster panel: every signed artist, collapsible like the
                 company refresh timeline below. */}

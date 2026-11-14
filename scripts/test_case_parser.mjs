@@ -29,6 +29,7 @@ await build({
 const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
   isGroupRole, matchGroupRole, buildGroupRecord, riskOf, RISK_SLACK_DAYS, shootableDays,
+  moneyText,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -361,6 +362,15 @@ if (fs.existsSync(savePath)) {
     check(cast?.risk === 'ok' && cast?.needDays === 2 && cast?.canShootDays === 15,
       'Auto: 还差 2 天、剩下 21 个日历日按每周 5 天能排 15 天，余量够大不提醒',
       `risk=${cast?.risk} need=${cast?.needDays} can=${cast?.canShootDays}`);
+    check(auto.company?.name === '靠譜傳媒' && auto.company?.protagonist === '駱佩君',
+      'Auto: 公司名 / 主角姓名取存档头的定长字段',
+      `${auto.company?.name} / ${auto.company?.protagonist}`);
+    check(auto.company?.image === '注入新血的' && auto.company?.fame === 670
+      && auto.company?.pr === 539,
+      'Auto: 形象 / 知名度 / 公关 取 Firm 段编号 1 那条（注入新血的 670 / 539）',
+      `${auto.company?.image} ${auto.company?.fame}/${auto.company?.pr}`);
+    check(auto.company?.money === 1151527,
+      'Auto: 资金取存档头 @80', String(auto.company?.money));
   } else {
     console.log('OK   Auto.sa2 not present, skipped the shooting checks');
   }
@@ -584,6 +594,10 @@ if (fs.existsSync(savePath)) {
       && new Set(tv601?.casts.map((c) => c.workDays)).size > 1,
       'Ending0005: 同一条通告上各人的需拍天数不一样（按人算）',
       tv601?.casts.map((c) => `${c.artistName}:${c.workDays}`).join(' '));
+    check(mid.company?.name === '君君傳媒' && mid.company?.image === '邁向國際的'
+      && mid.company?.fame === 45093 && mid.company?.pr === 1300,
+      'Ending0005: 公司换成 君君傳媒 后形象 / 知名度 / 公关 也跟着存档走',
+      `${mid.company?.name} ${mid.company?.image} ${mid.company?.fame}/${mid.company?.pr}`);
   } else {
     console.log('OK   Ending0005.sa2 not present, skipped the shooting self-made checks');
   }
@@ -602,6 +616,25 @@ if (fs.existsSync(savePath)) {
   const empty = buildGroupRecord({ code: 102, name: '空团', memberIds: [], offset: 0 }, String);
   check(empty.leaderId === 0 && empty.leaderName === '' && empty.memberNames.length === 0,
     'buildGroupRecord tolerates a team with no recorded members');
+}
+
+// 资金展示：不上一万原样给，上万拆成 万，上亿再拆 亿（每段不加千分位）。
+{
+  const cases = [
+    [5000, '5000'],
+    [0, '0'],
+    [12000, '1万2000'],
+    [10000, '1万'],
+    [1151527, '115万1527'],
+    [10000000, '1000万'],
+    [100000000, '1亿'],
+    [110002000, '1亿1000万2000'],
+    [231932039, '2亿3193万2039'],
+    [-981723, '-98万1723'],
+  ];
+  const wrong = cases.filter(([value, text]) => moneyText(value) !== text);
+  check(wrong.length === 0, 'moneyText: 资金按亿 / 万拆开写',
+    wrong.map(([v, t]) => `${v}→${moneyText(v)}(期望 ${t})`).join(' ') || cases.map(([v]) => `${v}→${moneyText(v)}`).join(' '));
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);
