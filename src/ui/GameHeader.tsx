@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import SmartImage from './SmartImage';
 
 interface CrossLink {
   href: string;
@@ -30,8 +31,10 @@ export default function GameHeader({
       <div className="flex h-full items-center gap-6 px-6 nav:gap-3 nav:px-[14px]">
         {menuButton}
         <button className="flex min-w-0 items-center gap-[11px]" type="button" onClick={onBrandClick}>
-          <img
+          <SmartImage
             src={logoSrc}
+            thumb={false}
+            priority
             alt=""
             className="h-[26px] w-[26px] shrink-0 rounded-[6px]"
             aria-hidden="true"

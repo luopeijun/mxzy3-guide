@@ -8,6 +8,7 @@ import { cgGroupId, cgItemId, rememberCgGroup, writeCgGroupHash } from '../../ho
 import { useGuideContext } from '../../hooks/useGuideContext';
 import { MAIN_CG_CONFIG, type CgSiteConfig } from '../../lib/cgConfig';
 import type { CgData, CgItem } from '../../types/cg';
+import SmartImage from '../../ui/SmartImage';
 import CgCard from './CgCard';
 import CgLightbox from './CgLightbox';
 import SaveArchivePanel from '../tracker/SaveArchivePanel';
@@ -91,9 +92,9 @@ function GroupAvatar(
 ) {
   if (avatar) {
     return (
-      <img
+      <SmartImage
         data-cg-group-avatar
-        src={`${import.meta.env.BASE_URL}${avatar}`}
+        src={avatar}
         alt=""
         aria-hidden="true"
         className="h-6 w-6 shrink-0 rounded-full border border-line-strong object-cover"

@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
+import SmartImage from '../../ui/SmartImage';
 import { IconChevronLeft, IconChevronRight } from '../icons';
 import type { CgItem } from '../../types/cg';
 
@@ -32,6 +33,20 @@ export default function CgLightbox({
 }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const label = [item.code, item.name].filter(Boolean).join(' ');
+  /** 先显示已经缓存的缩略图，原图在后台加载完再叠上去，
+   *  避免点开大图盯着空黑屏等一两秒。 */
+  const originalSrc = item.image ? `${import.meta.env.BASE_URL}${item.image}` : '';
+  const [fullReady, setFullReady] = useState(false);
+
+  useEffect(() => {
+    setFullReady(false);
+    if (!originalSrc) return;
+    const pre = new Image();
+    pre.onload = () => setFullReady(true);
+    pre.src = originalSrc;
+    if (pre.complete && pre.naturalWidth > 0) setFullReady(true);
+    return () => { pre.onload = null; };
+  }, [originalSrc]);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -87,13 +102,28 @@ export default function CgLightbox({
         onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
       >
         {item.image ? (
-          <img
-            key={item.id}
-            data-cg-lightbox-image
-            src={`${import.meta.env.BASE_URL}${item.image}`}
-            alt={label}
-            className="max-h-full max-w-full rounded-ui-sm object-contain shadow-2xl"
-          />
+          <div
+            className="relative flex h-full w-full items-center justify-center"
+            onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
+          >
+            <SmartImage
+              key={item.id}
+              src={item.image}
+              priority
+              data-cg-lightbox-image
+              alt={label}
+              className="max-h-full max-w-full rounded-ui-sm object-contain shadow-2xl"
+            />
+            {fullReady && (
+              <img
+                data-cg-lightbox-full
+                src={originalSrc}
+                alt=""
+                aria-hidden="true"
+                className="cg-fade-in pointer-events-none absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 rounded-ui-sm object-contain"
+              />
+            )}
+          </div>
         ) : (
           <div className="rounded-ui-md border border-dashed border-white/30 px-10 py-12 text-center text-ui-sm text-white/60">
             站点未提供图片

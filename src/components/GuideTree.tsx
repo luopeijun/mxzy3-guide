@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import SmartImage from '../ui/SmartImage';
 import type { DragEvent, KeyboardEvent } from 'react';
 import type { GuideNode } from '../types/guide';
 import type { Place, ReorderRequest } from '../lib/treeOrder';
@@ -165,8 +166,8 @@ function TreeNode({
           {hasChildren ? (expanded ? '▾' : '▸') : '·'}
         </button>
         {node.avatar && (
-          <img
-            src={`${import.meta.env.BASE_URL}${node.avatar}`}
+          <SmartImage
+            src={node.avatar}
             alt=""
             aria-hidden="true"
             draggable={false}

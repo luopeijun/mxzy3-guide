@@ -1,4 +1,5 @@
 import { cn } from '../../lib/cn';
+import SmartImage from '../../ui/SmartImage';
 import type { CgItem } from '../../types/cg';
 
 /** 卡片尺寸档位，由 CgApp 的「大/中/小」开关传入。 */
@@ -65,12 +66,10 @@ export default function CgCard({
   const groupTagInner = group ? (
     <>
       {group.avatar ? (
-        <img
-          src={`${import.meta.env.BASE_URL}${group.avatar}`}
+        <SmartImage
+          src={group.avatar}
           alt=""
           aria-hidden="true"
-          loading="lazy"
-          decoding="async"
           className={cn('shrink-0 rounded-full border border-line-strong object-cover', isSm ? 'h-4 w-4' : 'h-5 w-5')}
         />
       ) : (
@@ -119,11 +118,10 @@ export default function CgCard({
           className="absolute inset-0 z-0 block h-full w-full cursor-pointer"
         >
           {item.image ? (
-            <img
-              src={`${import.meta.env.BASE_URL}${item.image}`}
+            <SmartImage
+              src={item.image}
               alt={label}
-              loading="lazy"
-              decoding="async"
+              skeleton
               className={cn(
                 'h-full w-full object-cover transition-all duration-200',
                 !collected && 'grayscale',

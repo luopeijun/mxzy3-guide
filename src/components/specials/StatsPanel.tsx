@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SmartImage from '../../ui/SmartImage';
 import type { SpecialsState } from '../../lib/specialsState';
 import { ATTRIBUTES } from '../../lib/specials';
 import { cn } from '../../lib/cn';
@@ -73,8 +74,8 @@ export default function StatsPanel({ artists, state, groupRows, onStat, onValue 
                       <td className="sticky left-0 z-10 bg-surface px-2 py-1 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 text-ink-muted">
                           {artist.avatar && (
-                            <img
-                              src={`${import.meta.env.BASE_URL}${artist.avatar}`}
+                            <SmartImage
+                              src={artist.avatar}
                               alt=""
                               className="h-4 w-4 rounded-full object-cover"
                             />

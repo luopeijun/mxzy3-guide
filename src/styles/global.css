@@ -162,6 +162,37 @@
   animation: anchorFlash 1.7s ease-out;
 }
 
+/* 图片加载占位：极淡的主题色扫光。只在可见的骨架层上跑，
+   `prefers-reduced-motion` 下退化为静态底色。 */
+@keyframes imageShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.image-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 35%,
+    color-mix(in srgb, var(--color-brand) 9%, transparent) 50%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: imageShimmer 1.6s linear infinite;
+}
+
+/* 灯箱原图加载完成后淡入，盖在已经可见的缩略图上。 */
+@keyframes cgFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cg-fade-in { animation: cgFadeIn 0.25s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .image-shimmer,
+  .cg-fade-in { animation: none; }
+}
+
 @layer base {
   html,
   body,

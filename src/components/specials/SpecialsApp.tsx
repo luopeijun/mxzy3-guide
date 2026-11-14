@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import SmartImage from '../../ui/SmartImage';
 import type { GuideData } from '../../types/guide';
 import type { SpecialsData } from '../../types/specials';
 import { listArtists } from '../../lib/tracker';
@@ -254,7 +255,7 @@ export default function SpecialsApp({ data, guide }: Props) {
                 {rosterArtists.map((artist) => (
                   <span key={artist.id} data-roster-artist data-artist-id={artist.id} className="inline-flex items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-muted">
                     {artist.avatar && (
-                      <img src={`${import.meta.env.BASE_URL}${artist.avatar}`} alt="" className="h-4 w-4 rounded-full object-cover" />
+                      <SmartImage src={artist.avatar} alt="" className="h-4 w-4 rounded-full object-cover" />
                     )}
                     {artist.title}
                   </span>

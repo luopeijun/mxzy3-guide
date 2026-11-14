@@ -1,4 +1,5 @@
 import type { GuideNode } from '../types/guide';
+import SmartImage from '../ui/SmartImage';
 import { countCharsDeep, formatCount } from '../lib/guide';
 import StatusBadge from './StatusBadge';
 import { ui } from '../styles/patterns';
@@ -22,8 +23,8 @@ export default function ChildLinks({ nodes, onSelect, title = '下级条目' }: 
             {node.avatar ? (
               // 角色卡：头像在左，标题与说明在右，横排更像「人物卡片」。
               <div className="flex items-start gap-3.5">
-                <img
-                  src={`${import.meta.env.BASE_URL}${node.avatar}`}
+                <SmartImage
+                  src={node.avatar}
                   alt=""
                   aria-hidden="true"
                   className="h-16 w-16 shrink-0 rounded-ui-sm border border-line object-cover"

@@ -1,4 +1,5 @@
 import { cn } from '../../lib/cn';
+import SmartImage from '../../ui/SmartImage';
 
 interface Props {
   /** Relative path from guide.json (`images/characters/<slug>-logo.*`). */
@@ -20,9 +21,9 @@ const SIZE_CLASS: Record<NonNullable<Props['size']>, string> = {
 export default function ArtistAvatar({ avatar, label, size = 'sm', className }: Props) {
   if (avatar) {
     return (
-      <img
+      <SmartImage
         data-artist-avatar
-        src={`${import.meta.env.BASE_URL}${avatar}`}
+        src={avatar}
         alt={label}
         title={label}
         className={cn('shrink-0 rounded-full object-cover', SIZE_CLASS[size], className)}

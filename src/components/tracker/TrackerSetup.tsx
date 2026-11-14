@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import SmartImage from '../../ui/SmartImage';
 import type { GuideData } from '../../types/guide';
 import { listArtists } from '../../lib/tracker';
 import { useTracker } from '../../hooks/useTracker';
@@ -112,8 +113,8 @@ export default function TrackerSetup({ data }: Props) {
                   className="rounded-full ring-2 ring-surface transition-transform hover:z-10 hover:scale-110 disabled:cursor-default disabled:hover:scale-100"
                 >
                   {artist?.avatar ? (
-                    <img
-                      src={`${import.meta.env.BASE_URL}${artist.avatar}`}
+                    <SmartImage
+                      src={artist.avatar}
                       alt={title}
                       className="h-6 w-6 rounded-full object-cover"
                     />
@@ -191,8 +192,8 @@ export default function TrackerSetup({ data }: Props) {
                     )}
                   >
                     {artist.avatar && (
-                      <img
-                        src={`${import.meta.env.BASE_URL}${artist.avatar}`}
+                      <SmartImage
+                        src={artist.avatar}
                         alt=""
                         aria-hidden="true"
                         className={cn(

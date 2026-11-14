@@ -1,4 +1,5 @@
 import type { GuideData, GuideNode } from '../types/guide';
+import SmartImage from '../ui/SmartImage';
 import { outlineOf } from '../lib/guide';
 import { cn } from '../lib/cn';
 import { useAnchorJump } from '../hooks/useAnchorJump';
@@ -55,11 +56,15 @@ export default function ContentPanel({
         <Breadcrumbs path={path} onSelect={onSelect} />
         <ArticleHeader node={node} />
         {node.cover && (
-          <img
-            src={`${import.meta.env.BASE_URL}${node.cover}`}
-            alt={`${node.title} 封面`}
-            className="mb-6 w-full rounded-ui-md border border-line"
-          />
+          <div className="relative mb-6 aspect-[4/3] w-full overflow-hidden rounded-ui-md border border-line">
+            <SmartImage
+              src={node.cover}
+              alt={`${node.title} 封面`}
+              priority
+              skeleton
+              className="h-full w-full object-cover"
+            />
+          </div>
         )}
         {node.requirements && <RequirementsCard requirements={node.requirements} />}
         {!wide && <ArticleOutline items={outline} onJump={jump} />}
