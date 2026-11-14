@@ -107,7 +107,7 @@ async function main() {
       input: !!document.querySelector('[data-case-upload]'),
       uploadReady: !document.querySelector('[data-case-reader] button')?.disabled,
       hash: location.hash,
-      tableSource: [...document.querySelectorAll('details')].some(d => d.textContent.includes('繁中三合一')),
+      tableSource: document.querySelector('[data-case-toolbar]')?.getAttribute('data-tables-source') || '',
     })`);
     const s = JSON.parse(shell);
     console.log('shell:', shell);
@@ -115,7 +115,8 @@ async function main() {
     check(s.caseTab && s.caseActive === 'true', '存档解析 tab is active');
     check(s.reader && s.input, 'reader and upload input mounted');
     check(s.hash === '#/case', 'route is #/case', s.hash);
-    check(s.tableSource && s.uploadReady, 'bundled static tables loaded and upload enabled');
+    check(s.tableSource.includes('繁中三合一') && s.uploadReady,
+      'bundled static tables loaded and upload enabled', s.tableSource);
 
     const doc = await send('DOM.getDocument', { depth: -1 });
     const q = await send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: '[data-case-upload]' });
@@ -137,14 +138,44 @@ async function main() {
       artistAttrs: document.querySelectorAll('[data-case-artist-attrs]').length,
       artistAttrsCount: document.querySelectorAll('[data-case-artist-attrs] span').length,
       artistCounts: document.querySelectorAll('[data-case-artist-counts]').length,
+      artistCollapsible: (function(){
+        var d = document.querySelector('[data-case-artists]');
+        return !!d && d.tagName === 'DETAILS' && !!d.querySelector('summary');
+      })(),
+      artistSummary: document.querySelector('[data-case-artists-summary]')?.innerText || '',
+      picker: !!document.querySelector('[data-case-artist-picker]'),
       updates: (function(){ var d = document.querySelector('[data-case-updates]'); if (!d) return ''; d.open = true; return d.textContent || ''; })(),
       closingRows: document.querySelectorAll('[data-case-status="closing"]').length,
       reservedRows: document.querySelectorAll('[data-case-reserved="yes"]').length,
       reservedText: [...document.querySelectorAll('[data-case-reserved="yes"] [data-case-reservation]')].map(x => x.innerText).join('|'),
       matches: document.querySelectorAll('[data-case-match]').length,
-      matchArtists: document.querySelectorAll('[data-case-match-artist]').length,
-      chips: document.querySelectorAll('[data-case-artist-chip]').length,
-      picked: document.querySelectorAll('[data-case-artist-chip][data-selected="yes"]').length,
+      matchCols: document.querySelectorAll('[data-case-match-col]').length,
+      matchColHead: document.querySelector('[data-case-match-col]')?.innerText || '',
+      matchLists: document.querySelectorAll('[data-case-match-list]').length,
+      femaleLead: (function(){
+        var tbody = [...document.querySelectorAll('[data-case-notice]')].find(x => x.innerText.includes('守候'));
+        var r = tbody ? tbody.querySelector('[data-case-role][data-case-role-name="女主角"]') : null;
+        var list = r ? r.querySelector('[data-case-match-group]') : null;
+        return list ? [...list.querySelectorAll('[data-case-match]')]
+          .map(x => x.getAttribute('data-match-artist')).join('|') : '';
+      })(),
+      neutralRole: (function(){
+        var r = document.querySelector('[data-case-role][data-case-role-name="外景主持"]');
+        var list = r ? r.querySelector('[data-case-match-group]') : null;
+        return list ? [...list.querySelectorAll('[data-case-match]')]
+          .map(x => x.getAttribute('data-match-artist')).join('|') : '';
+      })(),
+      noHorizontalScroll: (function(){
+        var wrap = document.querySelector('[data-case-table]');
+        var doc = document.documentElement;
+        return !!wrap && wrap.scrollWidth <= wrap.clientWidth + 1
+          && doc.scrollWidth <= window.innerWidth + 1;
+      })(),
+      contentWidth: Math.round(document.querySelector('[data-case-content]')?.getBoundingClientRect().width || 0),
+      sidePadding: (function(){
+        var d = document.querySelector('[data-case-content]');
+        return d ? Math.round(parseFloat(getComputedStyle(d).paddingLeft)) : 0;
+      })(),
       rowspans: document.querySelectorAll('[data-case-notice] td[rowspan]').length,
       reservedDimCells: [...document.querySelectorAll('[data-case-reserved="yes"] td')]
         .filter(td => td.className.includes('opacity-60') || td.className.includes('bg-surface-soft')).length,
@@ -154,6 +185,20 @@ async function main() {
       })(),
       hasStateBlockPicker: document.body.innerText.includes('状态块 #'),
       hasPageTitle: document.body.innerText.includes('当期通告 · 所需数值'),
+      arrow: document.body.innerText.includes('↳'),
+      descriptions: ['数值直接按编号','只列存档里已经排定的批次','字段说明与数值来源','选择会记在本机']
+        .filter(x => document.body.innerText.includes(x)).join(','),
+      filterBar: !!document.querySelector('[data-case-filters]'),
+      searchAboveTable: (function(){
+        var s = document.querySelector('[data-case-search]');
+        var t = document.querySelector('table');
+        var bar = document.querySelector('[data-case-toolbar]');
+        return !!s && !!t && !!bar && !bar.contains(s)
+          && !!(s.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING);
+      })(),
+      catChips: document.querySelectorAll('[data-case-cat]').length,
+      companyOptions: document.querySelectorAll('[data-case-filter-company] option').length,
+      filterCount: document.querySelector('[data-case-filter-count]')?.innerText || '',
       firstNotice: document.querySelector('[data-case-notice]')?.innerText.slice(0, 260) || '',
       head: document.querySelector('table thead')?.innerText || '',
       hasFirmSlot: document.body.innerText.includes('公司槽'),
@@ -181,36 +226,91 @@ async function main() {
     check(/共 \d+ 天/.test(p.firstNotice), 'shooting length rendered');
     check(!p.hasFirmSlot, '公司槽 field is hidden');
 
-    // Artist panel: 18 numbered artists, signed ones auto-picked, no block picker.
+    // Artist panel: fixed signed roster, collapsible, no picker at all.
     check(!p.hasPageTitle, 'the page-level title is gone');
-    check(p.chips === 18 && p.picked === 3,
-      'all 18 roster numbers listed and the three signed artists auto-picked',
-      `${p.chips} / ${p.picked}`);
+    check(!p.picker && p.artistCollapsible && p.artistSummary.includes('3 位')
+      && p.artistSummary.includes('路敏') && p.artistSummary.includes('萧依莉')
+      && p.artistSummary.includes('路风'),
+      'signed artists show automatically in a collapsible panel, no picker',
+      p.artistSummary);
     check(!p.hasStateBlockPicker, 'no anonymous state-block selector remains');
     check(p.artists === 3, 'three signed-artist cards', String(p.artists));
     check(p.artistAttrs === 3 && p.artistAttrsCount >= 27, 'nine abilities on every artist card',
       `${p.artistAttrs} / ${p.artistAttrsCount}`);
     check(p.artistCounts === 3, 'notice counts on every artist card', String(p.artistCounts));
-    check(p.matches >= p.roles * 3 && p.matchArtists === p.matches,
-      'every role is compared against every selected artist',
-      `${p.matches} comparisons / ${p.roles} roles`);
+    check(p.matchCols === 1 && p.matchColHead.includes('数值对比')
+      && p.matchLists === p.roles,
+      'all artists share one comparison column',
+      `${p.matchCols} column / ${p.matchLists} cells / ${p.roles} roles`);
+    check(p.head.includes('所需数值') && p.head.indexOf('数值对比') < p.head.indexOf('预约'),
+      'the comparison column sits just before the reservation column',
+      p.head.replace(/\s+/g, ' '));
+    check(p.matches > 0 && p.femaleLead === '路敏|萧依莉'
+      && p.neutralRole === '路敏|萧依莉|路风',
+      'gender-mismatched artists are dropped, neutral roles compare all',
+      `${p.matches} lines; female=${p.femaleLead}; neutral=${p.neutralRole}`);
 
-    // No merged cells: a reserved role dims only its own four cells.
+    // No merged cells: a reserved role dims only its own cells.
     check(p.rowspans === 0, 'the notice table has no merged rows', String(p.rowspans));
     check(p.reservedRows === 2 && p.reservedText.includes('黎华（已预约）'),
       'the two 黎华 reservations render with the label', p.reservedText);
-    check(p.reservedNoticeCellDim === false && p.reservedDimCells <= 4 * p.reservedRows,
+    check(p.reservedNoticeCellDim === false && p.reservedDimCells <= 5 * p.reservedRows,
       'only the reserved role cells dim, not the whole notice',
       `firstCell=${p.reservedNoticeCellDim} dimmed=${p.reservedDimCells}`);
+    check(!p.arrow, 'the continuation-row arrow is gone');
+    check(p.descriptions === '', 'implementation descriptions are not shown on the page',
+      p.descriptions);
+
+    // Search and the type/company filters sit directly above the table.
+    check(p.filterBar && p.searchAboveTable && p.catChips >= 5 && p.companyOptions >= 9,
+      'search plus type/company filters sit above the notice table',
+      `${p.catChips} chips / ${p.companyOptions} companies`);
+    check(p.noHorizontalScroll && p.contentWidth > 1300
+      && p.sidePadding >= 32 && p.sidePadding <= 64,
+      'the wider content area keeps a modest side margin and no horizontal scrollbar',
+      `width=${p.contentWidth} padding=${p.sidePadding} noScroll=${p.noHorizontalScroll}`);
 
     // Only the four scheduled batches, no further extrapolation.
     check(p.updates.includes('已排定 4 批') && !p.updates.includes('推测')
       && !p.updates.includes('2/6'),
       'company refresh timeline lists scheduled batches only');
 
+    // Type and company filters intersect, and reset restores the full list.
+    await evaluate(`document.querySelector('[data-case-cat="电视剧"]').click()`);
+    await sleep(300);
+    const byCat = JSON.parse(await evaluate(`JSON.stringify({
+      notices: document.querySelectorAll('[data-case-notice]').length,
+      active: document.querySelector('[data-case-cat="电视剧"]')?.getAttribute('aria-pressed'),
+      count: document.querySelector('[data-case-filter-count]')?.innerText || ''
+    })`));
+    check(byCat.notices === 2 && byCat.active === 'true',
+      'type chip filters to the two TV dramas', JSON.stringify(byCat));
+
+    await evaluate(`(function(){
+      var s = document.querySelector('[data-case-filter-company]');
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set;
+      setter.call(s, 'SoSa電視');
+      s.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    })()`);
+    await sleep(300);
+    const byCompany = JSON.parse(await evaluate(`JSON.stringify({
+      notices: document.querySelectorAll('[data-case-notice]').length
+    })`));
+    check(byCompany.notices === 1, 'type and company filters intersect', JSON.stringify(byCompany));
+
+    await evaluate(`document.querySelector('[data-case-filter-reset]').click()`);
+    await sleep(300);
+    const afterReset = JSON.parse(await evaluate(`JSON.stringify({
+      notices: document.querySelectorAll('[data-case-notice]').length,
+      resetGone: !document.querySelector('[data-case-filter-reset]')
+    })`));
+    check(afterReset.notices === 11 && afterReset.resetGone,
+      'reset restores all eleven notices', JSON.stringify(afterReset));
+
     // React listens to the native input event; setting .value alone is ignored.
     await evaluate(`(function(){
-      var i = document.querySelector('input[type="search"]');
+      var i = document.querySelector('[data-case-search]');
       if (!i) return false;
       var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
       setter.call(i, '__no_such_notice__');
@@ -220,7 +320,7 @@ async function main() {
     await sleep(400);
     const filtered = await evaluate(`JSON.stringify({
       notices: document.querySelectorAll('[data-case-notice]').length,
-      empty: document.body.innerText.includes('没有匹配的通告')
+      empty: document.body.innerText.includes('没有符合条件的通告')
     })`);
     const f = JSON.parse(filtered);
     check(f.notices === 0 && f.empty, 'search filters notices', filtered);

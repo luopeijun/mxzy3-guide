@@ -26,7 +26,9 @@ await build({
   format: 'esm',
   logLevel: 'silent',
 });
-const { parseSave, toCsv, matchRole } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
+const {
+  parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
+} = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
 let checks = 0;
@@ -88,6 +90,9 @@ check(notice?.firmSlot === 4 && notice.firmName === '鉅子娛樂', 'firm slot j
 check(result.roleRecordCount === 1 && notice?.roles.length === 1, 'one role record');
 const role = notice?.roles[0];
 check(role?.role === '男主角' && role.star === 3, 'Big5 role name and star');
+check(role?.gender === 'male' && roleGender('女性') === 'female'
+  && roleGender('女配角') === 'female' && roleGender('個人') === 'any',
+  'role gender is derived from the Big5 role name');
 const expected = [['演技', 325, 'C'], ['名气', 445, 'A'], ['仪态', 395, 'B']];
 const actual = (role?.requirements ?? []).map((r) => [r.attr, r.value, r.staticGrade]);
 check(JSON.stringify(actual) === JSON.stringify(expected), 'rolled values and static grades', JSON.stringify(actual));
@@ -104,6 +109,13 @@ check(strongMatch.canAccept && weakMatch.missing === 3
   && weakMatch.gaps.filter((g) => g.diff > 0).map((g) => g.diff).join(',') === '25,45,95',
   'each artist gets an independent can-accept / shortfall result',
   `${strongMatch.canAccept} / ${weakMatch.gaps.filter((g) => g.diff > 0).map((g) => g.diff).join(',')}`);
+// A gender-restricted role rules out artists of the other gender entirely.
+const wrongGender = matchRole(role, strong, '路敏', 'female');
+const neutralRole = { ...role, gender: 'any' };
+check(!wrongGender.eligible && !wrongGender.canAccept
+  && canTakeRole(role, 'male') && !canTakeRole(role, 'female')
+  && matchRole(neutralRole, strong, '路敏', 'female').eligible,
+  'gender-restricted roles exclude mismatched artists, neutral roles allow all');
 
 const savePath = process.argv[2]
   ?? 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
@@ -165,6 +177,17 @@ if (fs.existsSync(savePath)) {
     && real.artistDirectory.find((a) => a.id === 72)?.name === '克烈斯'
     && real.artistDirectory.find((a) => a.id === 74)?.name === '新名纱雪',
     'the 18 signable artists are mapped by the save-editor roster number');
+  const femaleIds = ARTIST_DIRECTORY.filter((a) => a.gender === 'female').map((a) => a.id);
+  check(femaleIds.join(',') === '1,2,3,4,5,6,65,74,75'
+    && ARTIST_DIRECTORY.filter((a) => a.gender === 'male').length === 9,
+    'the roster splits into the nine women named by the player and nine men',
+    femaleIds.join(','));
+  const allRoles = real.notices.flatMap((n) => n.roles);
+  check(allRoles.every((r) => ['male', 'female', 'any'].includes(r.gender))
+    && allRoles.some((r) => r.gender === 'any')
+    && allRoles.filter((r) => r.role.includes('主角')).every((r) => r.gender !== 'any'),
+    'gender-restricted and neutral roles are both classified',
+    [...new Set(allRoles.map((r) => `${r.role}:${r.gender}`))].join(' '));
   check(real.artists.every((a) => a.roleId > 0)
     && real.artists.every((a) => real.artistDirectory.some((d) => d.id === a.roleId)),
     'every state block carries a known roster number',
@@ -208,6 +231,15 @@ if (fs.existsSync(savePath)) {
     check(real.artistDirectory.find((a) => a.id === 6)?.abilities[0] === 1886
       && real.artistDirectory.find((a) => a.id === 74)?.artistIndex === null,
       '萧依莉 resolves to the screenshot block, 新名纱雪 has no block yet');
+    const femaleLead = shouhou?.roles.find((r) => r.role === '女主角');
+    const luFeng = real.artistDirectory.find((a) => a.id === 10);
+    const luMin = real.artistDirectory.find((a) => a.id === 5);
+    check(femaleLead?.gender === 'female' && luFeng?.gender === 'male'
+      && !canTakeRole(femaleLead, luFeng.gender) && canTakeRole(femaleLead, luMin.gender),
+      '守候 女主角 rules 路风 out but stays open to 路敏');
+    const neutral = real.notices.flatMap((n) => n.roles).find((r) => r.gender === 'any');
+    check(neutral && canTakeRole(neutral, 'female') && canTakeRole(neutral, 'male'),
+      'neutral roles such as 外景主持 / 個人 accept either gender', neutral?.role);
   }
 } else {
   console.log(`\nreal save not found (${savePath}), skipped live-save checks`);

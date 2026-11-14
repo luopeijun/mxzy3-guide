@@ -35,35 +35,55 @@ export const DEFAULT_RESERVATIONS: Record<string, string> = {
   TV2211: '黎华',
 };
 
+/** A role may be gender-restricted (男主角 / 女性 …) or open to anyone. */
+export type Gender = 'female' | 'male' | 'any';
+
+/** Role names carry their own gender: 男主角/男配角/男性, 女主角/女配角/女性.
+ *  Names like 外景主持 / 助理主持 / 個人 / 團體 have no gender restriction. */
+export function roleGender(roleName: string): Gender {
+  if (roleName.includes('女')) return 'female';
+  if (roleName.includes('男')) return 'male';
+  return 'any';
+}
+
+/** A gender-restricted role is only comparable against matching artists.
+ *  'any' on either side means no restriction (also keeps the fixture tests
+ *  that call matchRole without a gender happy). */
+export function canTakeRole(role: RoleRecord, gender: Gender): boolean {
+  return gender === 'any' || role.gender === 'any' || role.gender === gender;
+}
+
 /** The 18 signable artists, numbered as in the game's save-editor roster.
  *  The number is the game's own role id; each artist state block stores that
- *  same id 16 bytes before its nine abilities, so no guessing is needed. */
+ *  same id 16 bytes before its nine abilities, so no guessing is needed.
+ *  Gender comes from the player's roster (9 women, 9 men). */
 export interface ArtistDirectoryEntry {
   id: number;
   name: string;
   /** Traditional-Chinese spelling used by the save's Big5 name table. */
   traditional: string;
+  gender: Gender;
 }
 
 export const ARTIST_DIRECTORY: ArtistDirectoryEntry[] = [
-  { id: 1, name: '林芬芬', traditional: '林芬芬' },
-  { id: 2, name: '桑禾蓓', traditional: '桑禾蓓' },
-  { id: 3, name: '欧怡青', traditional: '歐怡青' },
-  { id: 4, name: '苏嫚君', traditional: '蘇嫚君' },
-  { id: 5, name: '路敏', traditional: '路敏' },
-  { id: 6, name: '萧依莉', traditional: '蕭依莉' },
-  { id: 7, name: '天晴', traditional: '天晴' },
-  { id: 8, name: '陈奕夫', traditional: '陳奕夫' },
-  { id: 9, name: '关古威', traditional: '關古威' },
-  { id: 10, name: '路风', traditional: '路風' },
-  { id: 11, name: '纪翔', traditional: '紀翔' },
-  { id: 12, name: '姚子奇', traditional: '姚子奇' },
-  { id: 65, name: '姚子莹', traditional: '姚子瑩' },
-  { id: 72, name: '克烈斯', traditional: '克烈斯' },
-  { id: 74, name: '新名纱雪', traditional: '新名紗雪' },
-  { id: 75, name: '聆香', traditional: '聆香' },
-  { id: 76, name: '卫亚', traditional: '衛亞' },
-  { id: 77, name: '原少纬', traditional: '原少緯' },
+  { id: 1, name: '林芬芬', traditional: '林芬芬', gender: 'female' },
+  { id: 2, name: '桑禾蓓', traditional: '桑禾蓓', gender: 'female' },
+  { id: 3, name: '欧怡青', traditional: '歐怡青', gender: 'female' },
+  { id: 4, name: '苏嫚君', traditional: '蘇嫚君', gender: 'female' },
+  { id: 5, name: '路敏', traditional: '路敏', gender: 'female' },
+  { id: 6, name: '萧依莉', traditional: '蕭依莉', gender: 'female' },
+  { id: 7, name: '天晴', traditional: '天晴', gender: 'male' },
+  { id: 8, name: '陈奕夫', traditional: '陳奕夫', gender: 'male' },
+  { id: 9, name: '关古威', traditional: '關古威', gender: 'male' },
+  { id: 10, name: '路风', traditional: '路風', gender: 'male' },
+  { id: 11, name: '纪翔', traditional: '紀翔', gender: 'male' },
+  { id: 12, name: '姚子奇', traditional: '姚子奇', gender: 'male' },
+  { id: 65, name: '姚子莹', traditional: '姚子瑩', gender: 'female' },
+  { id: 72, name: '克烈斯', traditional: '克烈斯', gender: 'male' },
+  { id: 74, name: '新名纱雪', traditional: '新名紗雪', gender: 'female' },
+  { id: 75, name: '聆香', traditional: '聆香', gender: 'female' },
+  { id: 76, name: '卫亚', traditional: '衛亞', gender: 'male' },
+  { id: 77, name: '原少纬', traditional: '原少緯', gender: 'male' },
 ];
 
 /** Ids 78 / 79 are placeholder blocks whose nine abilities are all 1111. */
@@ -104,6 +124,8 @@ export interface RoleRecord {
   code: string;
   roleCode: string;
   role: string;
+  /** Gender required by this role, derived from its Big5 name. */
+  gender: Gender;
   star: number;
   values: Record<string, number>;
   requirements: Requirement[];
@@ -372,6 +394,7 @@ function parseRoles(
       code: tag.slice(0, 5),
       roleCode: tag,
       role,
+      gender: roleGender(role),
       star,
       values,
       requirements: [],
@@ -739,12 +762,19 @@ export function parseSave(
 export interface MatchResult {
   artistIndex: number;
   artistName: string;
+  /** false when the role's gender rules the artist out entirely. */
+  eligible: boolean;
   canAccept: boolean;
   gaps: { attr: string; need: number; have: number; diff: number }[];
   missing: number;
 }
 
-export function matchRole(role: RoleRecord, artist: ArtistStats, artistName: string): MatchResult {
+export function matchRole(
+  role: RoleRecord,
+  artist: ArtistStats,
+  artistName: string,
+  gender: Gender = 'any',
+): MatchResult {
   const gaps = ATTRS
     .filter((attr) => role.values[attr])
     .map((attr) => {
@@ -753,10 +783,12 @@ export function matchRole(role: RoleRecord, artist: ArtistStats, artistName: str
       return { attr, need, have, diff: need - have };
     });
   const missing = gaps.filter((gap) => gap.diff > 0);
+  const eligible = canTakeRole(role, gender);
   return {
     artistIndex: artist.index,
     artistName,
-    canAccept: missing.length === 0,
+    eligible,
+    canAccept: eligible && missing.length === 0,
     gaps,
     missing: missing.length,
   };
