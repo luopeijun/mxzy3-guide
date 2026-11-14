@@ -111,12 +111,23 @@ export interface NodeRequirements {
   note?: string;
 }
 
+/** Hand-written hint card pinned above the article body. Kept out of `blocks`
+ *  on purpose: the event tracker stores progress by block index, so inserting
+ *  a block at the top would shift every step in a player's existing save. */
+export interface GuideNotice {
+  title: string;
+  lines: string[];
+  /** Branch results, rendered as an indented list under a divider. */
+  outcomes?: string[];
+}
+
 export interface GuideNode {
   id: string;
   title: string;
   aliases?: string[];
   sourceTitle?: string;
   description?: string;
+  notice?: GuideNotice;
   /** Small portrait shown beside the sidebar tree row (character pages). */
   avatar?: string;
   /** Wide image shown at the top of the article content (character pages). */

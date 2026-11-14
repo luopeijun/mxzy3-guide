@@ -55,6 +55,29 @@ export default function ContentPanel({
       <div className={cn(ui.article, !wide && 'pr-6 nav:pr-[26px]')}>
         <Breadcrumbs path={path} onSelect={onSelect} />
         <ArticleHeader node={node} />
+        {node.notice && (
+          <section data-guide-notice className="mb-6 rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-4 py-3">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-gold-soft px-2 py-[2px] text-ui-2xs font-bold text-gold">攻略提示</span>
+              <h2 className="text-ui-sm font-bold text-note">{node.notice.title}</h2>
+            </div>
+            <div className="flex flex-col gap-[2px]">
+              {node.notice.lines.map((line) => (
+                <p key={line} className="whitespace-pre-line text-ui-sm leading-[1.8] text-note">{line}</p>
+              ))}
+            </div>
+            {(node.notice.outcomes?.length ?? 0) > 0 && (
+              <div className="mt-2 flex flex-col gap-[2px] border-t border-gold-line pt-2">
+                {node.notice.outcomes!.map((line) => (
+                  <p key={line} className="flex items-start gap-2 pl-2 text-ui-sm leading-[1.8] text-note">
+                    <span aria-hidden="true" className="mt-[9px] h-[5px] w-[5px] shrink-0 rounded-full bg-gold" />
+                    <span className="min-w-0 break-words">{line}</span>
+                  </p>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
         {node.cover && (
           <div className="relative mb-6 aspect-[4/3] w-full overflow-hidden rounded-ui-md border border-line">
             <SmartImage
