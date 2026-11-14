@@ -161,7 +161,7 @@
 - `scripts/build_image_thumbs.py`（需 Pillow）把 `public/images/` 下每张原图生成统一 webp 缩略图，镜像到 `public/images/thumbs/`；**原图保留给灯箱看大图**。规则只有一条：`images/<dir>/<name>.<ext>` → `images/thumbs/<dir>/<name>.webp`。宽度上限 `*-logo` 128px、`*-cover` 800px、其余 560px，不放大，quality 74 / method 6。产物随仓库提交，构建时随 `public/` 进 `dist/`。当前 346 张：18.6MB → 7.4MB（2.5×），其中头像平均 2.8KB。
 - `src/ui/SmartImage.tsx` 是全站唯一的 `<img>` 出口（灯箱叠原图那一层除外）：按上述规则换缩略图、`loading="lazy"` + `decoding="async"`、缩略图失败静默退回原图、首屏 `priority` 用 eager + `fetchPriority=high`。`skeleton` 开启时，加载期间是淡色扫光 + 图片图标的占位层，到图后淡入；骨架只在 `IntersectionObserver`（`rootMargin: 600px`）判定接近视口时才渲染，避免一页几十个动画在后台空跑。`prefers-reduced-motion` 下动画停掉。
 - CG 灯箱先显示卡片已缓存的缩略图，后台用 `new Image()` 预载原图，完成再叠一层淡入（`data-cg-lightbox-full`），点开大图不用盯着黑屏等。
-- `scripts/test_image_thumbs.py`（4 项，零第三方依赖）锁「每张原图都有缩略图 / 是真 webp 且更小 / 无孤儿 / 总体积减半」；`scripts/cdp_image_loading.mjs`（10 项）用 CDP `Fetch` 暂停图片请求复现慢链路，验骨架出现与收起、缩略图路径、首屏下载体积、灯箱渐进加载、缩略图失败回退。
+- `scripts/test_image_thumbs.py`（4 项，零第三方依赖）锁「每张原图都有缩略图 / 是真 webp 且更小 / 无孤儿 / 总体积减半」；`scripts/cdp_image_loading.mjs`（13 项）用 CDP `Fetch` 暂停图片请求复现慢链路，验骨架出现与收起、缩略图路径、首屏下载体积、灯箱渐进加载、缩略图失败回退，并额外覆盖明星志愿3 的 CG 图鉴与攻略封面（两个站点共用同一套组件，回归不能只测一个入口）。
 
 ## 命令与验证
 
@@ -239,7 +239,7 @@ scripts/extract_cg.py        CG 素材 → cg.json + webp（需 Pillow）
 scripts/extract_sweet_cg.py  甜蜜乐章源图 → sweet/cg.json + webp（需 Pillow）
 scripts/build_sweet_cg_links.py  甜蜜乐章核对表 xlsx → sources/sweet/cg-links.tsv
 scripts/build_image_thumbs.py   public/images 原图 → thumbs/ 缩略图（需 Pillow）
-scripts/cdp_image_loading.mjs 图片加载 / 占位骨架 / 灯箱渐进 / 失败回退（10 项）
+scripts/cdp_image_loading.mjs 图片加载 / 占位骨架 / 灯箱渐进 / 失败回退 / 双站覆盖（13 项）
 scripts/test_extract.py      攻略解析回归测试
 scripts/test_sweet_guide.py  甜蜜乐章数据回归测试
 scripts/test_sweet_cg.py     甜蜜乐章 CG 清单回归测试

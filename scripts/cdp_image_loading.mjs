@@ -15,6 +15,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASE = 'http://localhost:5173';
 const PAGE = `${BASE}/sweet.html#/cg/group/protagonist`;
+/** 同一套组件也服务明星志愿3：回归必须覆盖两个站点，防止主站改回原图。 */
+const MAIN_CG = `${BASE}/index.html#/cg`;
+const MAIN_GUIDE = `${BASE}/index.html#/guide/characters/lin-fenfen`;
 const [, , shot = ''] = process.argv;
 
 const results = [];
@@ -38,7 +41,7 @@ function jsonPut(target) {
   });
 }
 
-async function connect(url, { pauseImages = false, failThumbs = false } = {}) {
+async function connect(url = PAGE, { pauseImages = false, failThumbs = false } = {}) {
   // 先开 about:blank 再导航，避免同 URL fragment 跳转导致注入脚本不执行。
   const target = await jsonPut(
     `http://127.0.0.1:9339/json/new?${encodeURIComponent('about:blank')}`,
@@ -266,6 +269,51 @@ async function main() {
     fb.loaded === fb.attempted && fb.broken === 0,
     JSON.stringify(fb));
   fallback.ws.close();
+
+  // ---------- 第三段：明星志愿3 也走同一套缩略图 / 骨架 ----------
+  const mainCg = await connect(MAIN_CG, { pauseImages: true });
+  const mainState = await mainCg.evaluate(`(() => {
+    const cards = [...document.querySelectorAll('[data-cg-card]')];
+    const imgs = cards.map(c => c.querySelector('img')).filter(Boolean);
+    return {
+      cards: cards.length,
+      skeletons: document.querySelectorAll('[data-cg-card] [data-image-skeleton]').length,
+      thumbs: imgs.filter(i => (i.getAttribute('data-image-src') ?? '').includes('images/thumbs/')).length,
+      total: imgs.length,
+      raw: document.querySelectorAll('img:not([data-image-src])').length,
+    };
+  })()`);
+  check('明星志愿3 CG 图鉴慢链路有骨架，卡片全部用缩略图',
+    mainState.cards > 0 && mainState.skeletons > 0 &&
+    mainState.thumbs === mainState.total && mainState.raw === 0,
+    JSON.stringify(mainState));
+  await mainCg.release();
+  const mainRawRequests = mainCg.imageResponses.filter(
+    (u) => /\/images\//.test(u) && !u.includes('/images/thumbs/'),
+  );
+  check('明星志愿3 首屏不发 CG 原图请求', mainRawRequests.length === 0,
+    mainRawRequests.slice(0, 3).join(', '));
+  mainCg.ws.close();
+
+  const mainGuide = await connect(MAIN_GUIDE);
+  const guideState = await mainGuide.evaluate(`(() => {
+    const imgs = [...document.querySelectorAll('img')];
+    const cover = imgs.find(i => (i.getAttribute('data-image-src') ?? '').includes('-cover'));
+    return {
+      total: imgs.length,
+      raw: document.querySelectorAll('img:not([data-image-src])').length,
+      cover: cover?.getAttribute('data-image-src') ?? '',
+      thumbs: imgs.filter(i => (i.getAttribute('data-image-src') ?? '').includes('images/thumbs/')).length,
+      broken: imgs.filter(i => i.complete && i.naturalWidth === 0).length,
+    };
+  })()`);
+  check('明星志愿3 攻略页的封面与头像也走缩略图',
+    guideState.total > 0 && guideState.raw === 0 &&
+    guideState.cover.startsWith('images/thumbs/characters/') &&
+    guideState.cover.endsWith('-cover.webp') &&
+    guideState.thumbs >= guideState.total - 1 && guideState.broken === 0,
+    JSON.stringify(guideState));
+  mainGuide.ws.close();
 
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} passed`);
