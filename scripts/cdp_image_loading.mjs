@@ -222,6 +222,31 @@ async function main() {
     `缩略图 ${Math.round(thumbBytes / 1024)} KB / 原图 ${Math.round(originalBytes / 1024)} KB，共 ${urls.length} 个请求`);
 
   // 灯箱：先给已缓存的缩略图，原图到位后叠上来。
+  // object-contain 下「元素盒」是整块舞台，用户看到的其实是按宽高比缩放后的
+  // 内容矩形；两层图的这个矩形必须一模一样，否则会出现「先小后大」的跳变。
+  const LIGHTBOX_METRICS = `(() => {
+    const measure = (el) => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      const nw = el.naturalWidth, nh = el.naturalHeight;
+      const scale = nw && nh ? Math.min(r.width / nw, r.height / nh) : 0;
+      const w = nw * scale, h = nh * scale;
+      return {
+        boxW: Math.round(r.width), boxH: Math.round(r.height),
+        w: Math.round(w), h: Math.round(h),
+        left: Math.round(r.left + (r.width - w) / 2),
+        top: Math.round(r.top + (r.height - h) / 2),
+        naturalW: nw,
+      };
+    };
+    const preview = measure(document.querySelector('[data-cg-lightbox-image]'));
+    const full = measure(document.querySelector('[data-cg-lightbox-full]'));
+    const stage = document.querySelector('[data-cg-lightbox-image]')?.parentElement;
+    const sr = stage?.getBoundingClientRect();
+    return { preview, full, stage: sr ? {
+      w: Math.round(sr.width), h: Math.round(sr.height),
+    } : null };
+  })()`;
   await slow.evaluate(`document.querySelector('[data-cg-open]')?.click(); 1`);
   await sleep(350);
   const early = await slow.evaluate(`(() => ({
@@ -233,6 +258,13 @@ async function main() {
   check('点开大图立刻有一张可看的图（缩略图先顶上）',
     early.box && early.preview && early.previewSrc.includes('images/thumbs/'),
     JSON.stringify(early));
+  const earlyMetrics = await slow.evaluate(LIGHTBOX_METRICS);
+  check('预览图一上来就铺满舞台，按最终尺寸显示而不是它自己的小尺寸',
+    earlyMetrics.preview && earlyMetrics.stage &&
+    Math.abs(earlyMetrics.preview.boxW - earlyMetrics.stage.w) <= 1 &&
+    Math.abs(earlyMetrics.preview.boxH - earlyMetrics.stage.h) <= 1 &&
+    earlyMetrics.preview.w > 0,
+    JSON.stringify(earlyMetrics));
   await sleep(1600);
   const full = await slow.evaluate(`(() => {
     const f = document.querySelector('[data-cg-lightbox-full]');
@@ -243,6 +275,33 @@ async function main() {
   check('原图加载完后叠上来，分辨率更高',
     full.hasFull && !full.src.includes('thumbs/') && full.fullW > full.previewW,
     JSON.stringify(full));
+  const fullMetrics = await slow.evaluate(LIGHTBOX_METRICS);
+  check('原图与预览图的显示矩形完全一致，切换时不会突然放大',
+    earlyMetrics.preview && fullMetrics.full &&
+    Math.abs(earlyMetrics.preview.w - fullMetrics.full.w) <= 1 &&
+    Math.abs(earlyMetrics.preview.h - fullMetrics.full.h) <= 1 &&
+    Math.abs(earlyMetrics.preview.left - fullMetrics.full.left) <= 1 &&
+    Math.abs(earlyMetrics.preview.top - fullMetrics.full.top) <= 1,
+    JSON.stringify({ preview: earlyMetrics.preview, full: fullMetrics.full }));
+
+  // 图片元素铺满舞台后，点黑底关闭要按内容矩形判断，别把「点图」也当成关闭。
+  await slow.evaluate(`(() => { const s = document.querySelector('[data-cg-lightbox-image]')?.parentElement;
+    const r = s.getBoundingClientRect();
+    s.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.left + r.width / 2,
+      clientY: r.top + r.height / 2 })); return 1; })()`);
+  await sleep(150);
+  const stayedOnImage = await slow.evaluate(`!!document.querySelector('[data-cg-lightbox]')`);
+  if (stayedOnImage) {
+    await slow.evaluate(`(() => { const s = document.querySelector('[data-cg-lightbox-image]')?.parentElement;
+      const r = s.getBoundingClientRect();
+      s.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.left + 4,
+        clientY: r.top + 4 })); return 1; })()`);
+    await sleep(150);
+  }
+  const closedOnBackdrop = await slow.evaluate(`!document.querySelector('[data-cg-lightbox]')`);
+  check('点图片不关闭、点图片外的黑底仍可关闭灯箱',
+    stayedOnImage && closedOnBackdrop,
+    JSON.stringify({ stayedOnImage, closedOnBackdrop }));
   slow.ws.close();
 
   // ---------- 第二段：缩略图全部不可用时自动退回原图 ----------
@@ -293,6 +352,18 @@ async function main() {
   );
   check('明星志愿3 首屏不发 CG 原图请求', mainRawRequests.length === 0,
     mainRawRequests.slice(0, 3).join(', '));
+  // 灯箱是共用组件，但两个站的 CG 图源尺寸不同，尺寸一致性要各验一次。
+  await sleep(900);
+  await mainCg.evaluate(`document.querySelector('[data-cg-open]')?.click(); 1`);
+  await sleep(1500);
+  const mainLightbox = await mainCg.evaluate(LIGHTBOX_METRICS);
+  check('明星志愿3 灯箱同样是尺寸不变、只由糊变清晰',
+    mainLightbox.preview && mainLightbox.full &&
+    Math.abs(mainLightbox.preview.w - mainLightbox.full.w) <= 1 &&
+    Math.abs(mainLightbox.preview.h - mainLightbox.full.h) <= 1 &&
+    Math.abs(mainLightbox.preview.left - mainLightbox.full.left) <= 1 &&
+    Math.abs(mainLightbox.preview.top - mainLightbox.full.top) <= 1,
+    JSON.stringify(mainLightbox));
   mainCg.ws.close();
 
   const mainGuide = await connect(MAIN_GUIDE);
