@@ -163,6 +163,12 @@
 - CG 灯箱先显示卡片已缓存的缩略图，后台用 `new Image()` 预载原图，完成再叠一层淡入（`data-cg-lightbox-full`），点开大图不用盯着黑屏等。
 - `scripts/test_image_thumbs.py`（4 项，零第三方依赖）锁「每张原图都有缩略图 / 是真 webp 且更小 / 无孤儿 / 总体积减半」；`scripts/cdp_image_loading.mjs`（13 项）用 CDP `Fetch` 暂停图片请求复现慢链路，验骨架出现与收起、缩略图路径、首屏下载体积、灯箱渐进加载、缩略图失败回退，并额外覆盖明星志愿3 的 CG 图鉴与攻略封面（两个站点共用同一套组件，回归不能只测一个入口）。
 
+## 页首提示卡
+
+- 挂在正文上方的手写提示（如「威尔相关事件」一个存档打出两个结局的玩法）写在 `sources/will-notice.txt`：第一行是标题，其余每行一条，`> ` 开头的行作为结局分支单独排版。
+- `extract_guide.py` 的 `read_page_notice()` 把它写进节点的 `notice` 字段，**不进 `blocks`**；`ContentPanel` 在文章标题下方渲染一张淡金色提示卡，正文块从它下面开始。目前只有 `other-events/will` 配了提示。
+- 为什么不直接加一个 `note` 块：事件追踪器的 `done` / `skipped` 按事件块在 `blocks` 里的下标存进度，往页首插一个块会让玩家已有的勾选整体错位一格。`scripts/test_extract.py` 锁住 will 节点的 26 个块、22 个事件与首块类型不变。
+
 ## 命令与验证
 
 | 命令 | 作用 |
@@ -171,7 +177,7 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
-| `npm run test:guide` | Python 回归测试：攻略解析（30 项）+ 通告数据（13 项）+ 攻略 ⇄ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章攻略（26 项）+ 甜蜜乐章 CG（11 项）+ 图片缩略图（4 项），共 **100 项** |
+| `npm run test:guide` | Python 回归测试：攻略解析（31 项）+ 通告数据（13 项）+ 攻略 ⇄ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章攻略（26 项）+ 甜蜜乐章 CG（11 项）+ 图片缩略图（4 项），共 **101 项** |
 | `npm run test:sweet` | 只跑甜蜜乐章两套回归（攻略 26 + CG 11，共 37 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
 | `python scripts/extract_cg.py` | 重生成 CG 图鉴与图片（需 Pillow，素材放在 `outputs/`） |
@@ -231,6 +237,7 @@ sources/cg-links.tsv         事件 → CG 的一对一映射（手写）
 sources/cg-node-links.tsv    CG → 事件 / 页面的多对一映射（手写）
 sources/sweet/cg-links.tsv   甜蜜乐章 攻略事件 → CG 的映射（由核对表 xlsx 生成）
 sources/sweet/cg-names.tsv   甜蜜乐章 结局类 CG 的手填名称（cgId / 源图编号 / 名称）
+sources/will-notice.txt      威尔相关事件的页首提示卡（第一行标题，`> ` 开头为结局分支）
 scripts/extract_guide.py     docx + sources → guide.json（零第三方依赖）
 scripts/extract_sweet_guide.py  甜蜜乐章目录 + 正文 → sweet/guide.json
 scripts/extract_notices.py   表格 → notices.json（需 openpyxl / xlrd）
