@@ -254,3 +254,16 @@
 .cg-condition-scroll::-webkit-scrollbar {
   width: 4px;
 }
+
+/* 存档解析页的折叠区块：收起时真正把内容（含后代）藏起来，而不是只靠浏览器
+ * 默认的 details 布局隐藏 —— 后者下 getComputedStyle 仍报 block / table-row，
+ * 会让「收起态不可见」这类断言永远不成立，也不利于屏幕阅读器。 */
+[data-case-reader] details:not([open]) > :not(summary),
+[data-case-reader] details:not([open]) > :not(summary) * {
+  display: none;
+}
+
+/* 本页小结（左侧目录）跳转锚点：留出顶部固定栏的高度，避免跳过去被遮住。 */
+[data-case-reader] [data-case-toc-target] {
+  scroll-margin-top: 80px;
+}

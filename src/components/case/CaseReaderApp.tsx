@@ -6,7 +6,7 @@ import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
-  type GroupRecord, type ParseResult, type RoleRecord, type SelfMadeCast,
+  type GroupRecord, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
 } from '../../lib/caseParser';
 
@@ -115,6 +115,140 @@ function payText(pay: number): string {
     return `${Number.isInteger(wan) ? wan : wan.toFixed(1)} 万`;
   }
   return pay.toLocaleString('zh-CN');
+}
+
+/** 本页小结：右侧固定小导航（同「六大通告」右侧跳转栏的样式），列出存档解析页的
+ *  各个标题卡片，点一下平滑跳过去，滚动时高亮当前所在卡片。仅在较宽屏幕
+ *  （≥1120px）以右侧 sticky 小栏出现，窄屏隐藏以免挤压卡片宽度。 */
+function CaseToc({
+  result,
+  signedArtists,
+  activeGroups,
+}: {
+  result: ParseResult;
+  signedArtists: SignedArtist[];
+  activeGroups: GroupRecord[];
+}) {
+  const [active, setActive] = useState('');
+
+  const entries = useMemo(() => {
+    const list: { id: string; label: string; selector: string; summary: string }[] = [];
+    if (result.company) {
+      list.push({
+        id: 'company',
+        label: '公司',
+        selector: '[data-case-company]',
+        summary: `主角 ${result.company.protagonist || '未记录'}`,
+      });
+    }
+    list.push({
+      id: 'artists',
+      label: '我方艺人',
+      selector: '[data-case-artists]',
+      summary: `${signedArtists.length} 位`,
+    });
+    list.push({
+      id: 'groups',
+      label: '我方团体',
+      selector: '[data-case-groups]',
+      summary: `${activeGroups.length} 个`,
+    });
+    if (result.items.length > 0) {
+      list.push({
+        id: 'items',
+        label: '道具',
+        selector: '[data-case-items]',
+        summary: `${result.items.filter((it) => it.quantity > 0).length} 件`,
+      });
+    }
+    list.push({
+      id: 'updates',
+      label: '开放节奏',
+      selector: '[data-case-updates]',
+      summary: `归并 ${result.batches.length} 批`,
+    });
+    list.push({
+      id: 'notices',
+      label: '通告',
+      selector: '[data-case-tabs]',
+      summary: `${result.notices.length} 筹备 / ${result.shooting.length} 拍摄`,
+    });
+    return list;
+  }, [result, signedArtists.length, activeGroups.length]);
+
+  // 滚动时高亮当前所处的卡片（取视口内最靠上的那个）。
+  // root 必须是真正滚动的内容列（data-case-scroll），不是外层的 fixed 容器。
+  useEffect(() => {
+    const root = document.querySelector('[data-case-scroll]');
+    const observer = new IntersectionObserver(
+      (obs) => {
+        const visible = obs
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          const id = (visible[0].target as HTMLElement).getAttribute('data-case-toc-id');
+          if (id) setActive(id);
+        }
+      },
+      { root: root as Element | null, rootMargin: '-80px 0px -55% 0px', threshold: 0 },
+    );
+    entries.forEach((e) => {
+      const t = document.querySelector(e.selector);
+      if (t) {
+        t.setAttribute('data-case-toc-id', e.id);
+        observer.observe(t);
+      }
+    });
+    return () => observer.disconnect();
+  }, [entries]);
+
+  const jump = (entry: { id: string; selector: string }) => {
+    const el = document.querySelector(entry.selector) as HTMLElement | null;
+    if (!el) return;
+    // 目标若是收起的 details，先展开再滚，免得跳过去只看到标题。
+    if (el instanceof HTMLDetailsElement && !el.open) el.open = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActive(entry.id);
+  };
+
+  return (
+    <nav
+      data-case-toc
+      aria-label="本页小结"
+      className="rounded-ui-md border border-line bg-surface p-3 shadow-soft"
+    >
+      <p className="px-1 text-ui-2xs font-semibold text-ink-faint">本页小结</p>
+      <ul className="mt-2 flex flex-col gap-0.5">
+        {entries.map((e) => (
+          <li key={e.id}>
+            <button
+              type="button"
+              data-case-toc-link={e.id}
+              aria-current={active === e.id ? 'true' : undefined}
+              onClick={() => jump(e)}
+              className={cn(
+                'flex w-full items-center gap-2 rounded-ui-xs px-2 py-1.5 text-left text-ui-2xs transition-colors',
+                active === e.id
+                  ? 'bg-brand-soft font-semibold text-brand-strong'
+                  : 'text-ink-muted hover:bg-surface-soft hover:text-brand-strong',
+              )}
+            >
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 shrink-0 rounded-full',
+                  active === e.id ? 'bg-brand' : 'bg-line-strong',
+                )}
+              />
+              <span className="min-w-0 flex-1 truncate font-medium">{e.label}</span>
+              <span className={cn('shrink-0 tabular-nums', active === e.id ? 'text-brand-strong' : 'text-ink-faint')}>
+                {e.summary}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
 }
 
 /** 存档解析：把 .sa2 拖进来，在浏览器里解出当期通告、日期与艺人数值。
@@ -325,11 +459,19 @@ export default function CaseReaderApp() {
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
       className={cn(
-        'fixed inset-x-0 bottom-0 top-16 z-50 overflow-y-auto bg-canvas',
+        'fixed inset-x-0 bottom-0 top-16 z-50 overflow-hidden bg-canvas',
         dragging && 'ring-2 ring-inset ring-brand',
       )}
     >
-      <div data-case-content className="mx-auto w-full max-w-[1600px] px-10 pt-3 pb-10 nav:px-5">
+      {/* 内容列占满整屏滚动（滚动条自然落在视口最右）；
+          本页小结 fixed 钉在视口右侧，内容用右侧 padding 让出目录宽度，互不遮挡。
+          内容内部再限制 max-w，阅读宽度不过长。 */}
+      <div
+        data-case-scroll
+        data-case-content
+        className="absolute inset-0 overflow-y-auto px-8 pt-3 pb-10 nav:px-5 min-[1120px]:pr-[288px]"
+      >
+        <div className="mx-auto w-full max-w-[1600px]">
         {/* One compact toolbar: no page-level title, and the upload control
             must not push the content down. */}
         <div
@@ -432,7 +574,7 @@ export default function CaseReaderApp() {
 
             {/* 公司：名称与主角在存档头，形象 / 知名度 / 公关在 Firm 段。 */}
             {result.company && (
-              <details data-case-company open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+              <details data-case-company data-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
                 <summary data-case-company-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
                   公司 · {result.company.name || '名称未记录'}
                   <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
@@ -462,7 +604,7 @@ export default function CaseReaderApp() {
 
             {/* Fixed roster panel: every signed artist, collapsible like the
                 company refresh timeline below. */}
-            <details data-case-artists open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+            <details data-case-artists data-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
               <summary data-case-artists-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
                 我方艺人 · {signedArtists.length} 位
                 <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
@@ -484,7 +626,7 @@ export default function CaseReaderApp() {
             </details>
 
             {/* 我方团体：编号 101 起直接从存档读，存档没有就是旗下没有团体。 */}
-            <details data-case-groups open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+            <details data-case-groups data-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
               <summary data-case-groups-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
                 我方团体 · {activeGroups.length} 个
                 <span className="ml-2 font-normal text-ui-2xs text-ink-faint">名称与成员从存档读取</span>
@@ -534,8 +676,33 @@ export default function CaseReaderApp() {
               )}
             </details>
 
+            {/* 我拥有的道具：存档的道具清单块，默认收起。按类型分三个页签，
+                每个页签内部再分页（每页 10 件）。名称 / 说明 / 类型来自烘焙
+                的道具表（Item.dat）。数量 0 的不展示。 */}
+            {result.items.length > 0 && (
+              <details
+                data-case-items
+                data-case-toc-target
+                className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5"
+              >
+                <summary
+                  data-case-items-summary
+                  className="cursor-pointer text-ui-xs font-bold text-brand-strong"
+                >
+                  道具
+                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                    {result.items.filter((it) => it.quantity > 0).length} 件（数量 0 不计）
+                  </span>
+                </summary>
+                <ItemsPanel
+                  items={result.items}
+                  tableCount={Object.keys(tables.items).length}
+                />
+              </details>
+            )}
+
             {/* 各公司开放节奏：只按上面列出的通告归并，历史批次不进这里。 */}
-            <details data-case-updates className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
+            <details data-case-updates data-case-toc-target className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
               <summary className="cursor-pointer font-semibold text-brand-strong">
                 各公司开放节奏 · 按下面通告的接取日归并 {result.batches.length} 批
               </summary>
@@ -572,7 +739,7 @@ export default function CaseReaderApp() {
             </div>
           ) : (
             <>
-              <div data-case-tabs className="mt-2 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="通告状态">
+              <div data-case-tabs data-case-toc-target className="mt-2 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="通告状态">
                 <button
                   type="button"
                   role="tab"
@@ -755,13 +922,13 @@ export default function CaseReaderApp() {
                     <thead>
                       <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
                         <Th className="w-[11%]">通告</Th>
-                        <Th className="w-[8%]">类型</Th>
-                        <Th className="w-[8%]">制作公司</Th>
-                        <Th className="w-[11%]">接取时间</Th>
-                        <Th className="w-[11%]">执行期间</Th>
-                        <Th className="w-[14%]">角色 / 难度</Th>
-                        <Th className="w-[13%]">所需数值</Th>
-                        <Th className="w-[17%]" dataAttrs={{ 'data-case-match-col': 'yes' }}>数值对比</Th>
+                        <Th className="w-[7%]">类型</Th>
+                        <Th className="w-[7%]">制作公司</Th>
+                        <Th className="w-[10%]">接取时间</Th>
+                        <Th className="w-[10%]">执行期间</Th>
+                        <Th className="w-[10%]">角色 / 难度</Th>
+                        <Th className="w-[14%]">所需数值</Th>
+                        <Th className="w-[24%]" dataAttrs={{ 'data-case-match-col': 'yes' }}>数值对比</Th>
                         <Th className="w-[7%]">预约</Th>
                       </tr>
                     </thead>
@@ -782,7 +949,18 @@ export default function CaseReaderApp() {
             </>
           )
         )}
+        </div>
       </div>
+
+      {result && (
+        <aside className="fixed right-4 top-[76px] z-10 hidden w-[248px] min-[1120px]:block">
+          <CaseToc
+            result={result}
+            signedArtists={signedArtists}
+            activeGroups={activeGroups}
+          />
+        </aside>
+      )}
     </div>
   );
 }
@@ -1229,6 +1407,218 @@ function SelfMadePanel({
   );
 }
 
+/** 道具分类页签的固定顺序：一般 / 特殊 / 公司。 */
+const ITEM_CAT_ORDER = ['一般物品', '特殊物品', '公司物品'] as const;
+type ItemCat = typeof ITEM_CAT_ORDER[number];
+
+/** 分类胶囊：公司物品绿、特殊物品粉、一般物品中性描边，和表格里一致。 */
+function itemCategoryClass(category: string): string {
+  if (category === '公司物品') return 'bg-accept-soft text-accept';
+  if (category === '特殊物品') return 'border border-brand-line bg-brand-soft text-brand-strong';
+  return 'border border-line text-ink-faint';
+}
+
+/** 道具：按类型分三个页签，每个页签内部再分页（每页 10 件）。
+ *  数量 0 的不展示；名称 / 分类 / 说明来自烘焙的道具表（Item.dat）。
+ *  只渲染当前页的 10 行，翻页 / 切页签都在这张卡片内完成。 */
+function ItemsPanel({
+  items, tableCount,
+}: { items: OwnedItem[]; tableCount: number }) {
+  const owned = useMemo(
+    () => items.filter((it) => it.quantity > 0),
+    [items],
+  );
+  const [tab, setTab] = useState<ItemCat>('一般物品');
+  const [page, setPage] = useState(0);
+  const PAGE = 10;
+
+  const grouped = useMemo(() => {
+    const g: Record<string, OwnedItem[]> = {};
+    for (const cat of ITEM_CAT_ORDER) g[cat] = [];
+    for (const it of owned) {
+      const cat = it.category && (ITEM_CAT_ORDER as readonly string[]).includes(it.category)
+        ? it.category
+        : '一般物品';
+      g[cat].push(it);
+    }
+    for (const cat of ITEM_CAT_ORDER) g[cat].sort((a, b) => a.code - b.code);
+    return g;
+  }, [owned]);
+
+  const current = grouped[tab] ?? [];
+  const pageCount = Math.max(1, Math.ceil(current.length / PAGE));
+  const clampedPage = Math.min(page, pageCount - 1);
+  const pageRows = current.slice(clampedPage * PAGE, clampedPage * PAGE + PAGE);
+
+  const selectTab = (cat: ItemCat) => { setTab(cat); setPage(0); };
+  const goPage = (next: number) => setPage(Math.max(0, Math.min(next, pageCount - 1)));
+
+  return (
+    <div data-case-item-panel className="mt-2">
+      {/* 三个分类页签：每个带数量；默认停在「一般物品」。 */}
+      <div
+        data-case-item-tabs
+        role="tablist"
+        aria-label="道具分类"
+        className="flex flex-wrap gap-1.5"
+      >
+        {ITEM_CAT_ORDER.map((cat) => {
+          const active = tab === cat;
+          const count = grouped[cat]?.length ?? 0;
+          return (
+            <button
+              key={cat}
+              type="button"
+              role="tab"
+              data-case-item-tab={cat}
+              data-case-item-count={count}
+              aria-selected={active}
+              onClick={() => selectTab(cat)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-ui-2xs font-semibold transition-colors',
+                active
+                  ? 'bg-brand text-white'
+                  : 'border border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+              )}
+            >
+              {cat}
+              <span className={cn('tabular-nums', active ? 'text-white/80' : 'text-ink-faint')}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 当前页签的一页道具。始终渲染满页（10 行），末页不足用不可见的占位行
+          补齐，这样翻页 / 切分类时表格区高度恒定，翻页器不会上下跳。 */}
+      <div data-case-item-table className="mt-2 overflow-x-auto">
+        {current.length === 0 ? (
+          <p className="py-2 text-ui-2xs text-ink-faint">这个分类下没有数量大于 0 的道具。</p>
+        ) : (
+          <table className="w-full table-fixed border-collapse text-ui-xs">
+            <thead>
+              <tr className="text-left text-ink-faint">
+                <th className="w-16 py-1 pr-2 font-medium">编号</th>
+                <th className="py-1 pr-2 font-medium">名称</th>
+                <th className="w-24 py-1 pr-2 font-medium">类型</th>
+                <th className="w-16 py-1 pr-2 text-right font-medium">数量</th>
+                <th className="py-1 font-medium">说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: PAGE }, (_, i) => {
+                const it = pageRows[i];
+                if (!it) {
+                  // 占位行：拆成与真实行一致的 5 个单元格并填入不换行空格，
+                  // 这样它的高度 = 真实行高度（一行），翻到不满的末页时表格区
+                  // 高度恒定，翻页器不会上下跳。
+                  return (
+                    <tr key={`pad-${i}`} aria-hidden="true" className="border-t border-line">
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      <td className="py-1.5">&nbsp;</td>
+                    </tr>
+                  );
+                }
+                return (
+                <tr
+                  key={it.code}
+                  data-case-item
+                  data-case-item-code={it.code}
+                  data-case-item-qty={it.quantity}
+                  data-case-item-cat={it.category}
+                  className="border-t border-line align-top"
+                >
+                  <td className="py-1.5 pr-2 tabular-nums text-ink-muted">{it.code}</td>
+                  <td className="py-1.5 pr-2">
+                    <span data-case-item-name className="font-medium text-ink">{it.name}</span>
+                    {it.stats && (
+                      <span data-case-item-stats className="ml-2 text-ui-2xs text-brand-strong">
+                        {it.stats}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-1.5 pr-2">
+                    <span
+                      data-case-item-type
+                      className={cn('rounded-full px-2 py-0.5 text-ui-2xs', itemCategoryClass(it.category ?? ''))}
+                    >
+                      {it.category || '未知物品'}
+                    </span>
+                  </td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums font-semibold">×{it.quantity}</td>
+                  <td className="py-1.5 text-ink-muted">
+                    {it.desc ? (
+                      <span data-case-item-desc className="block truncate" title={it.desc}>{it.desc}</span>
+                    ) : (
+                      <span className="text-ink-faint">—</span>
+                    )}
+                  </td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* 翻页：按惯例放在列表下方，页码可直接点跳。 */}
+      {pageCount > 1 && (
+        <div
+          data-case-item-pager
+          className="mt-2 flex flex-wrap items-center justify-start gap-2 text-ui-2xs text-ink-muted"
+        >
+          <button
+            type="button"
+            data-case-item-prev
+            disabled={clampedPage <= 0}
+            onClick={() => goPage(clampedPage - 1)}
+            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            上一页
+          </button>
+          {Array.from({ length: pageCount }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              data-case-item-page={i + 1}
+              aria-current={clampedPage === i ? 'true' : undefined}
+              onClick={() => goPage(i)}
+              className={cn(
+                'h-6 min-w-6 rounded border px-1 text-ui-2xs tabular-nums transition-colors',
+                clampedPage === i
+                  ? 'border-brand bg-brand-soft font-bold text-brand-strong'
+                  : 'border-line bg-surface text-ink-faint hover:border-brand-line hover:text-brand-strong',
+              )}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            data-case-item-next
+            disabled={clampedPage >= pageCount - 1}
+            onClick={() => goPage(clampedPage + 1)}
+            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            下一页
+          </button>
+          <span data-case-item-pageinfo className="ml-1 tabular-nums">
+            第 {clampedPage + 1} / {pageCount} 页 · 共 {current.length} 件
+          </span>
+        </div>
+      )}
+
+      <p className="mt-2 text-ui-2xs text-ink-faint">
+        编号与数量取自存档；名称 / 分类 / 说明来自烘焙进站点的道具表（Item.dat），共 {tableCount} 件。
+      </p>
+    </div>
+  );
+}
+
 function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {  return (    <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
       <div className="flex items-baseline gap-1.5">
         <span className="text-ui-xs font-bold text-brand-strong">#{option.id} {option.name}</span>
@@ -1393,7 +1783,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
       {rows.length === 0 ? (
         <span className="text-ui-2xs text-ink-faint">—</span>
       ) : (
-        <div data-case-match-group className="flex flex-col gap-1.5">
+        <div data-case-match-group className="flex flex-col gap-1">
           {rows.map(({ key, match, group }) => (
             <div
               key={key}
@@ -1404,7 +1794,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
               // 圆点当成固定窄栏（shrink-0），正文在它右边自然换行：圆点永远不会
               // 被挤到单独一行，长文本也只在正文栏里折行，不会重叠或挤成一团。
               className={cn(
-                'flex items-start gap-1.5 text-ui-2xs leading-[1.6]',
+                'flex items-start gap-1.5 text-ui-2xs leading-[1.5]',
                 match.canAccept ? 'font-semibold' : 'text-alert',
               )}
             >
