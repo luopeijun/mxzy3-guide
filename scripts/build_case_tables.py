@@ -234,6 +234,93 @@ def load_firms(data_dir):
     return out
 
 
+# 道具类型编号（Item.dat 记录的 type 字段）-> 中文分类。
+# 以游戏内物品窗口的三个页签为准：type=1 的鱼缸 / 白板类摆设出现在「公司物品」，
+# type=3 的借据 / 角色纪念物出现在「特殊物品」（2026-11-14 玩家截图核对）。
+ITEM_TYPE = {1: "公司物品", 2: "一般物品", 3: "特殊物品"}
+
+
+def _decode_item_text(values):
+    """道具名称 / 说明的字节流：每个 uint32 的低 8 位存原文一个字节（Big5 繁体）。
+
+    Item.dat 里字符串不是连续字节，而是「一个字符一个 uint32」，所以按
+    连续 cp950 字节去搜永远搜不到；这里把每 4 字节的低 8 位拼回原始字节流再解码。
+    """
+    bs = bytes(v & 0xFF for v in values)
+    return bs.decode("big5", "replace")
+
+
+def parse_item_dat(path):
+    """解析 Item.dat：返回 code -> [名称, 分类, 说明, 属性行]。
+
+    记录布局（区别于其它定长表）：
+      [编号][类型][名称字节数 N] [N 个 uint32 名称字节] [27 个固定字段]
+      [说明字节数 M] [M 个 uint32 说明字节] [属性行字节数 K] [K 个 uint32 属性字节]
+    名称 / 说明 / 属性行各自按「一字节一 uint32」存放。
+    """
+    with open(path, "rb") as f:
+        raw = f.read()
+    if len(raw) < 12:
+        return {}
+    count = struct.unpack_from("<I", raw, 4)[0]
+    out = {}
+    off = 12
+    # 以文件头和 count 做上限保护；实际按记录自我界定的长度往下走。
+    for _ in range(count + 1):
+        if off + 12 > len(raw):
+            break
+        code = struct.unpack_from("<I", raw, off)[0]
+        typ = struct.unpack_from("<I", raw, off + 4)[0]
+        nlen = struct.unpack_from("<I", raw, off + 8)[0]
+        if nlen <= 0 or nlen > 200 or off + 12 + nlen * 4 + 108 + 4 > len(raw):
+            break
+        name = _decode_item_text(
+            struct.unpack_from("<I", raw, off + 12 + i * 4)[0] for i in range(nlen)
+        )
+        q = off + 12 + nlen * 4          # 27 个固定字段起点
+        desc_len = struct.unpack_from("<I", raw, q + 108)[0]
+        desc_off = q + 112
+        if desc_off + desc_len * 4 + 4 > len(raw):
+            break
+        desc = _decode_item_text(
+            struct.unpack_from("<I", raw, desc_off + i * 4)[0] for i in range(desc_len)
+        )
+        p2 = desc_off + desc_len * 4
+        stats_len = struct.unpack_from("<I", raw, p2)[0]
+        stats_off = p2 + 4
+        if stats_off + stats_len * 4 > len(raw):
+            break
+        stats = _decode_item_text(
+            struct.unpack_from("<I", raw, stats_off + i * 4)[0] for i in range(stats_len)
+        )
+        out[code] = [name, ITEM_TYPE.get(typ, "未知物品"), desc, stats]
+        off = stats_off + stats_len * 4
+    return out
+
+
+def load_items(data_dirs):
+    """从各 data 目录的 Item.dat 解析道具表，data1（324 条）优先，data（258 条）补空。
+
+    编号就是存档道具清单里的 code；名称 / 说明 / 分类供 #/case 的「我拥有的道具」直接展示。
+    """
+    merged = {}
+    for data_dir in data_dirs:
+        path = os.path.join(data_dir, "Item.dat")
+        if not os.path.isfile(path):
+            continue
+        parsed = parse_item_dat(path)
+        if not parsed:
+            continue
+        # 记录多的那份是完整数据（data1=324），先到优先，后到的只补空。
+        if len(parsed) > len(merged):
+            merged = parsed
+        else:
+            for k, v in parsed.items():
+                if k not in merged or not merged[k][0]:
+                    merged.setdefault(k, v)
+    return merged
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default=DEFAULT_DATA,
@@ -253,6 +340,7 @@ def main():
         "difficulty": load_difficulty(dirs[0]),
         "stars": load_stars(dirs),
         "firms": load_firms(dirs[0]),
+        "items": load_items(dirs),
     }
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
@@ -262,6 +350,7 @@ def main():
     print("difficulty   %d stars" % len(payload["difficulty"]))
     print("stars        %d" % len(payload["stars"]))
     print("firms        %d" % len(payload["firms"]))
+    print("items        %d" % len(payload["items"]))
     print("written      %s (%d bytes)" % (OUT, os.path.getsize(OUT)))
     return 0
 

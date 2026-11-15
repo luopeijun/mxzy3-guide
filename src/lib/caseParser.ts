@@ -115,10 +115,12 @@ export interface CaseTables {
   stars?: Record<string, [string, number]>;
   /** company id -> name */
   firms: Record<string, string>;
+  /** 道具 code -> [名称, 分类, 说明, 属性行]，来自 Item.dat 烘焙。 */
+  items: Record<string, string[]>;
 }
 
 export const EMPTY_TABLES: CaseTables = {
-  source: '', cases: {}, needEffect: {}, length: {}, difficulty: [], stars: {}, firms: {},
+  source: '', cases: {}, needEffect: {}, length: {}, difficulty: [], stars: {}, firms: {}, items: {},
 };
 
 export interface Requirement {
@@ -351,6 +353,27 @@ export function matchGroupRole(
   };
 }
 
+/** One row of the save's owned-item list.
+ *
+ *  存档里这是一段连续的 16 字节小端记录：`[编号, 状态码, 数量, 附字段]`，
+ *  一段通常几十到上百条。编号是游戏里统一的道具 id（例如 917 = 附着唇印的卡片）；
+ *  `数量` 为 0 表示背包里没有（UI 不展示）。名称 / 分类 / 说明 / 属性行来自烘焙进
+ *  case-tables.json 的道具表（Item.dat），存档本身不带这些文本。 */
+export interface OwnedItem {
+  code: number;
+  flag: number;
+  quantity: number;
+  meta: number;
+  /** 道具名称（来自道具表，缺省回退为「道具 <code>」）。 */
+  name?: string;
+  /** 分类：一般物品 / 特殊物品 / 公司物品（来自道具表的 type 字段）。 */
+  category?: string;
+  /** 物品说明（来自道具表，可能为空）。 */
+  desc?: string;
+  /** 属性行，如「儀態+5  自信+5」（来自道具表，可能为空）。 */
+  stats?: string;
+}
+
 export interface ParseResult {
   saveName: string;
   saveSize: number;
@@ -383,6 +406,8 @@ export interface ParseResult {
   nextUpdate: UpdateBatch | null;
   /** Codes in CaseFirm that the bundled static tables do not know. */
   unknownCodes: string[];
+  /** 存档里解析出的整段道具清单（含数量 0 的），UI 只展示数量 > 0 的。 */
+  items: OwnedItem[];
 }
 
 let decoder: TextDecoder | null = null;
@@ -1321,6 +1346,72 @@ function readProgress(
   return rows;
 }
 
+/** 从存档里抠出「我拥有的道具」清单。
+ *
+ *  存档没有给这段数据起段名，定位靠形态：一段连续的 16 字节小端记录
+ *  `[编号, 状态码, 数量, 附字段]`。难点在于这段数据由密集的小整数堆成，
+ *  从任意 4 字节偏移读都「长得像」一条记录，所以必须按 16 字节一步去扩段、
+ *  并且要求编号**非递减**（真实清单 2→…→2038 是升序的，错位的读取会立刻
+ *  出现 0 / 乱序而断掉）。取最长的一段即为道具清单。长度不够就当没找到。
+ *
+ *  注意：状态码**不能**拿来当过滤条件——它不是道具类型（类型在 Item.dat），
+ *  存档里取值五花八门（Auto 里就见过 0/1/2/3/4/7/30/97/0xffffffff，其中
+ *  0xffffffff 是借據、男孩的劇本这类剧情道具，97 是爱神巧克力）。按状态码
+ *  白名单过滤会把清单从中间断成几段，「最长一段」就丢东西了（2026-11-14
+ *  与游戏物品窗口截图核对：Auto 整段应检出 21 件拥有）。
+ *
+ *  数量 0 的行（店里的、曾经有过但用完的）也在这段里，调用方按需要过滤。 */
+export function parseItems(view: DataView, bytes: Uint8Array): OwnedItem[] {
+  const n = bytes.length;
+  const isItemRow = (o: number): boolean => {
+    if (o + 16 > n) return false;
+    const code = view.getUint32(o, true);
+    const qty = view.getUint32(o + 8, true);
+    const meta = view.getUint32(o + 12, true);
+    return (
+      code > 0 && code < 100000 &&
+      qty >= 0 && qty < 100000 &&
+      meta >= 0 && meta < 1000
+    );
+  };
+  let bestStart = -1;
+  let bestLen = 0;
+  let i = 0;
+  while (i + 16 <= n) {
+    if (!isItemRow(i)) {
+      i += 4;
+      continue;
+    }
+    let len = 0;
+    let o = i;
+    let lastCode = 0;
+    while (o + 16 <= n && isItemRow(o)) {
+      const code = view.getUint32(o, true);
+      if (code < lastCode) break; // 编号必须非递减，错位读取会立刻断掉
+      lastCode = code;
+      len += 1;
+      o += 16;
+    }
+    if (len > bestLen) {
+      bestLen = len;
+      bestStart = i;
+    }
+    i = o > i + 16 ? o : i + 4;
+  }
+  if (bestLen < 15) return [];
+  const items: OwnedItem[] = [];
+  for (let k = 0; k < bestLen; k += 1) {
+    const o = bestStart + k * 16;
+    items.push({
+      code: view.getUint32(o, true),
+      flag: view.getUint32(o + 4, true),
+      quantity: view.getUint32(o + 8, true),
+      meta: view.getUint32(o + 12, true),
+    });
+  }
+  return items;
+}
+
 /** Parse one uploaded save. The buffer is a snapshot: the game may overwrite
  *  Auto.sa2 on disk at any moment, but this copy never changes. */
 export function parseSave(
@@ -1362,6 +1453,16 @@ export function parseSave(
   const teams = parseTeams(bytes, view, blocks);
   // 每个艺人接下的通告编码，用来判断通告池里哪个角色已经被别人占住。
   const ownersByCode = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
+  const items = parseItems(view, bytes).map((it) => {
+    const meta = tables.items?.[String(it.code)];
+    return {
+      ...it,
+      name: meta?.[0] ?? `道具 ${it.code}`,
+      category: meta?.[1] ?? '',
+      desc: meta?.[2] ?? '',
+      stats: meta?.[3] ?? '',
+    };
+  });
 
   /** code -> best [open, start, end] triple found anywhere in the Case block. */
   const datesByCode: Record<string, DateTuple[]> = {};
@@ -1691,6 +1792,7 @@ export function parseSave(
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],
+    items,
   };
 }
 
