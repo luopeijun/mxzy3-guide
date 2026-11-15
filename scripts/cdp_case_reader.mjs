@@ -220,6 +220,12 @@ async function main() {
         var d = document.querySelector('[data-case-content]');
         return d ? Math.round(parseFloat(getComputedStyle(d).paddingLeft)) : 0;
       })(),
+      tocLinks: document.querySelectorAll('[data-case-toc-link]').length,
+      tocHasNotices: !!document.querySelector('[data-case-toc-link="notices"]'),
+      tocTop: (function(){
+        var n = document.querySelector('[data-case-toc]');
+        return n ? Math.round(n.getBoundingClientRect().top) : -1;
+      })(),
       rowspans: document.querySelectorAll('[data-case-notice] td[rowspan]').length,
       reservedDimCells: [...document.querySelectorAll('[data-case-reserved="yes"] td')]
         .filter(td => td.className.includes('opacity-60') || td.className.includes('bg-surface-soft')).length,
@@ -235,7 +241,7 @@ async function main() {
       filterBar: !!document.querySelector('[data-case-filters]'),
       searchAboveTable: (function(){
         var s = document.querySelector('[data-case-search]');
-        var t = document.querySelector('table');
+        var t = document.querySelector('[data-case-table] table');
         var bar = document.querySelector('[data-case-toolbar]');
         return !!s && !!t && !!bar && !bar.contains(s)
           && !!(s.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -244,7 +250,7 @@ async function main() {
       companyOptions: document.querySelectorAll('[data-case-filter-company] option').length,
       filterCount: document.querySelector('[data-case-filter-count]')?.innerText || '',
       firstNotice: document.querySelector('[data-case-notice]')?.innerText.slice(0, 260) || '',
-      head: document.querySelector('table thead')?.innerText || '',
+      head: document.querySelector('[data-case-table] table thead')?.innerText || '',
       hasFirmSlot: document.body.innerText.includes('公司槽'),
       csv: [...document.querySelectorAll('button')].some(b => b.innerText.includes('导出 CSV')),
       groups: document.querySelectorAll('[data-case-group]').length,
@@ -293,6 +299,106 @@ async function main() {
       '资金按亿 / 万拆开显示（1,151,527 → 115万1527）', comp?.money ?? 'none');
     check(comp?.aboveArtists === true,
       '公司卡片排在旗下艺人前面', String(comp?.aboveArtists));
+    // 道具：默认收起，标题改为「道具」；按类型分三个页签，每页 10 件内部分页。
+    const items = JSON.parse(await evaluate(`(function(){
+      var d = document.querySelector('[data-case-items]');
+      if (!d) return JSON.stringify({ exists:false });
+      var summary = d.querySelector('[data-case-items-summary]')?.innerText.replace(/\\s+/g,' ') || '';
+      return JSON.stringify({ exists:true, open: d.hasAttribute('open'), summary: summary });
+    })()`));
+    check(items.exists && !items.open,
+      '道具默认收起（在我方团体下方）', JSON.stringify(items));
+    check(items.summary.includes('道具') && items.summary.includes('21 件'),
+      '收起态概要写出「道具 21 件」', items.summary ?? 'none');
+    // 展开后再读页签与默认页内容（收起时元素 display:none，innerText 为空）。
+    await evaluate(`document.querySelector('[data-case-items-summary]').click()`);
+    await sleep(250);
+    const tabInfo = JSON.parse(await evaluate(`(function(){
+      var tabs = [...document.querySelectorAll('[data-case-item-tab]')].map(function(t){
+        return {
+          cat: t.getAttribute('data-case-item-tab'),
+          count: parseInt(t.getAttribute('data-case-item-count') || '-1', 10),
+          active: t.getAttribute('aria-selected') === 'true',
+          text: (t.innerText || '').replace(/\\s+/g, ' '),
+        };
+      });
+      var rows = [...document.querySelectorAll('[data-case-item]')];
+      var pager = document.querySelector('[data-case-item-pager]');
+      return JSON.stringify({ tabs: tabs, count: rows.length, hasPager: !!pager });
+    })()`));
+    check(tabInfo.tabs.length === 3, '道具分三个分类页签', JSON.stringify(tabInfo.tabs.map(t => t.cat)));
+    const tabCounts = {};
+    tabInfo.tabs.forEach((t) => { tabCounts[t.cat] = t.count; });
+    check(tabCounts['一般物品'] === 4 && tabCounts['特殊物品'] === 15 && tabCounts['公司物品'] === 2,
+      '三个页签计数 = 一般4 / 特殊15 / 公司2', JSON.stringify(tabCounts));
+    const activeTab = tabInfo.tabs.find((t) => t.active);
+    check(activeTab && activeTab.cat === '一般物品' && tabInfo.count === 4 && !tabInfo.hasPager,
+      '默认激活「一般物品」，列出 4 件且无需翻页', JSON.stringify({ active: activeTab && activeTab.cat, count: tabInfo.count, pager: tabInfo.hasPager }));
+
+    // 切到「特殊物品」：15 件 → 第 1 页 10 行 + 翻页。
+    await evaluate(`[...document.querySelectorAll('[data-case-item-tab]')].find(t => t.getAttribute('data-case-item-tab') === '特殊物品').click()`);
+    await sleep(200);
+    const special1 = JSON.parse(await evaluate(`(function(){
+      var rows = [...document.querySelectorAll('[data-case-item]')];
+      var info = document.querySelector('[data-case-item-pageinfo]')?.innerText.replace(/\\s+/g, ' ') || '';
+      var tr = document.querySelectorAll('[data-case-item-table] tbody tr').length;
+      return JSON.stringify({ count: rows.length, info: info, tr: tr });
+    })()`));
+    check(special1.count === 10 && /第 1 \/ 2 页/.test(special1.info) && special1.tr === 10,
+      '特殊物品第 1 页 10 件、分页显示「第 1 / 2 页」、表格恒为 10 行不跳动', JSON.stringify(special1));
+
+    // 防跳动回归：第 1 页与第 2 页的表格容器高度必须一致（翻页器才不上下跳）。
+    const h1 = await evaluate(`document.querySelector('[data-case-item-table]').getBoundingClientRect().height`);
+    await evaluate(`document.querySelector('[data-case-item-next]').click()`);
+    await sleep(200);
+    const h2 = await evaluate(`document.querySelector('[data-case-item-table]').getBoundingClientRect().height`);
+    check(Math.abs(h1 - h2) <= 2, '特殊物品翻页时表格容器高度恒定（翻页器不跳动）', `h1=${Math.round(h1)} h2=${Math.round(h2)}`);
+    await evaluate(`document.querySelector('[data-case-item-prev]').click()`);
+    await sleep(200);
+
+    // 在特殊物品两个页里找 917；先第 1 页，没有就翻下一页。
+    let nine17 = await evaluate(`(function(){
+      var r = [...document.querySelectorAll('[data-case-item]')].find(x => x.getAttribute('data-case-item-code') === '917');
+      if (r) return JSON.stringify({ found: true, qty: r.getAttribute('data-case-item-qty'), name: r.querySelector('[data-case-item-name]').innerText, cat: r.getAttribute('data-case-item-cat') });
+      return JSON.stringify({ found: false });
+    })()`);
+    nine17 = JSON.parse(nine17);
+    if (!nine17.found) {
+      await evaluate(`document.querySelector('[data-case-item-next]').click()`);
+      await sleep(200);
+      nine17 = JSON.parse(await evaluate(`(function(){
+        var r = [...document.querySelectorAll('[data-case-item]')].find(x => x.getAttribute('data-case-item-code') === '917');
+        return JSON.stringify({ found: true, qty: r.getAttribute('data-case-item-qty'), name: r.querySelector('[data-case-item-name]').innerText, cat: r.getAttribute('data-case-item-cat') });
+      })()`));
+    }
+    check(nine17.found && nine17.qty === '1' && nine17.name.includes('唇印') && nine17.cat === '特殊物品',
+      '编号 917 在特殊物品页签内：附着唇印的卡片 / 特殊物品 / 数量 1', JSON.stringify(nine17));
+
+    // 翻到最后一页应是 5 行且下一页禁用。
+    const specialLast = JSON.parse(await evaluate(`(function(){
+      var btn = document.querySelector('[data-case-item-next]');
+      var guard = 0;
+      while (btn && !btn.disabled && guard < 10) { btn.click(); guard++; }
+      var rows = [...document.querySelectorAll('[data-case-item]')];
+      var info = document.querySelector('[data-case-item-pageinfo]')?.innerText.replace(/\\s+/g, ' ') || '';
+      var tr = document.querySelectorAll('[data-case-item-table] tbody tr').length;
+      return JSON.stringify({ count: rows.length, info: info, nextDisabled: document.querySelector('[data-case-item-next]').disabled, tr: tr });
+    })()`));
+    check(specialLast.count === 5 && /第 2 \/ 2 页/.test(specialLast.info) && specialLast.nextDisabled && specialLast.tr === 10,
+      '特殊物品最后一页 5 件、下一页按钮禁用、表格恒为 10 行不跳动', JSON.stringify(specialLast));
+
+    // 切到「公司物品」：2 件，编号 4 白板与 301 鱼缸均为公司物品。
+    await evaluate(`[...document.querySelectorAll('[data-case-item-tab]')].find(t => t.getAttribute('data-case-item-tab') === '公司物品').click()`);
+    await sleep(200);
+    const company = JSON.parse(await evaluate(`(function(){
+      var rows = [...document.querySelectorAll('[data-case-item]')];
+      function cat(el) { return el ? el.getAttribute('data-case-item-cat') : 'missing'; }
+      var board = rows.find(r => r.getAttribute('data-case-item-code') === '4');
+      var tank = rows.find(r => r.getAttribute('data-case-item-code') === '301');
+      return JSON.stringify({ count: rows.length, boardCat: cat(board), tankCat: cat(tank) });
+    })()`));
+    check(company.count === 2 && company.boardCat === '公司物品' && company.tankCat === '公司物品',
+      '公司物品列出 2 件：编号 4 白板 / 301 鱼缸 均为公司物品', JSON.stringify(company));
     check(p.closingRows === 2, 'closing notices highlighted', String(p.closingRows));
     check(p.head.includes('接取时间') && p.head.includes('执行期间'),
       'booking window and shooting period columns present', p.head.replace(/\s+/g, ' '));
@@ -356,10 +462,39 @@ async function main() {
     check(p.filterBar && p.searchAboveTable && p.catChips >= 5 && p.companyOptions >= 9,
       'search plus type/company filters sit above the notice table',
       `${p.catChips} chips / ${p.companyOptions} companies`);
-    check(p.noHorizontalScroll && p.contentWidth > 1300
+    check(p.noHorizontalScroll && p.contentWidth > 1000
       && p.sidePadding >= 32 && p.sidePadding <= 64,
-      'the wider content area keeps a modest side margin and no horizontal scrollbar',
+      'wide content area keeps modest side margin and no horizontal scroll (right TOC occupies the gutter)',
       `width=${p.contentWidth} padding=${p.sidePadding} noScroll=${p.noHorizontalScroll}`);
+    check(p.tocLinks === 6 && p.tocHasNotices,
+      '本页小结目录列出 6 个标题卡片（含通告）', `links=${p.tocLinks}`);
+
+    // 点目录里的「通告」应平滑滚到通告页签；滚完后该页签贴近视口顶部。
+    await evaluate(`document.querySelector('[data-case-toc-link="notices"]').click()`);
+    await sleep(600);
+    const tocJump = JSON.parse(await evaluate(`(function(){
+      var t = document.querySelector('[data-case-tabs]');
+      var active = document.querySelector('[data-case-toc-link][aria-current="true"], [data-case-toc-link].bg-brand-soft')
+        || [...document.querySelectorAll('[data-case-toc-link]')].find(b => b.className.includes('bg-brand-soft'));
+      var nav = document.querySelector('[data-case-toc]');
+      var navTop = nav ? Math.round(nav.getBoundingClientRect().top) : -1;
+      var scroll = document.querySelector('[data-case-scroll]');
+      return JSON.stringify({
+        top: t ? Math.round(t.getBoundingClientRect().top) : -1,
+        active: active ? active.getAttribute('data-case-toc-link') : null,
+        navTop: navTop, navBottom: nav ? Math.round(nav.getBoundingClientRect().bottom) : -1,
+        scrollTop: scroll ? Math.round(scroll.scrollTop) : -1,
+      });
+    })()`));
+    check(tocJump.top >= 40 && tocJump.top <= 320 && tocJump.active === 'notices',
+      '点目录「通告」平滑跳转到通告页签且高亮当前卡片', JSON.stringify(tocJump));
+    // 本页小结是 fixed 钉在视口右侧（不再是滚动容器的兄弟节点）：内容列滚到通告后，
+    // navTop 相对视口恒定、面板完整可见 —— 修的是「滚动到通告时目录跟着滚走消失」这个回归。
+    // fixed 下 navTop 恒为 76，前后相等即证明不随滚动移动；滚动条落在视口最右。
+    check(tocJump.scrollTop > 100 && tocJump.navTop === p.tocTop
+      && tocJump.navTop >= 64 && tocJump.navBottom <= 900,
+      '内容列滚到通告后「本页小结」仍固定可见、不随滚动消失',
+      `nav ${p.tocTop}→${tocJump.navTop}, bottom=${tocJump.navBottom}, scrollTop=${tocJump.scrollTop}`);
 
     // 批次只按表里通告的接取日归并：这三批正好是 1/16、1/23、1/30，
     // 更早的历史批次（1/9）不再进面板，也不做任何推测。

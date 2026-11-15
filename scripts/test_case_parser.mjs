@@ -371,6 +371,47 @@ if (fs.existsSync(savePath)) {
       `${auto.company?.image} ${auto.company?.fame}/${auto.company?.pr}`);
     check(auto.company?.money === 1151527,
       'Auto: 资金取存档头 @80', String(auto.company?.money));
+    // 道具清单：整段解析出来，过滤数量 0 后的「我拥有」条目。
+    // 2026-11-14 与游戏物品窗口截图逐件核对：Auto 应有 21 件
+    // （一般 4 + 特殊 15 + 公司 2，爱神巧克力 x2）。
+    check(auto.items.length >= 300,
+      'Auto: 道具清单整段解析出来（一整段 ~323 行，不再被状态码截断）', String(auto.items.length));
+    const owned = auto.items.filter((it) => it.quantity > 0);
+    check(owned.length === 21,
+      'Auto: 数量为 0 的不计入，我拥有 21 件', String(owned.length));
+    const card = auto.items.find((it) => it.code === 917);
+    check(card && card.quantity === 1,
+      'Auto: 编号 917（附着唇印的卡片）数量 1',
+      card ? `${card.code}:${card.quantity}` : '未找到');
+    check(card && card.name === '附著唇印的卡片' && card.category === '特殊物品',
+      'Auto: 917 名称 / 分类从道具表解析出来（附著唇印的卡片 / 特殊物品）',
+      card ? `${card.name} / ${card.category}` : '未找到');
+    check(card && card.desc.startsWith('紅豔的唇印'),
+      'Auto: 917 物品说明也来自道具表', card ? card.desc.slice(0, 12) : '未找到');
+    // 玩家截图点名的三件：白板 / 鱼缸在公司物品，借据在特殊物品（flag=0xffffffff 的剧情道具）。
+    const board = auto.items.find((it) => it.code === 4);
+    check(board && board.name === '十年前的白板' && board.quantity === 1 && board.category === '公司物品',
+      'Auto: 编号 4 十年前的白板 x1（公司物品）',
+      board ? `${board.name} x${board.quantity} / ${board.category}` : '未找到');
+    const tank = auto.items.find((it) => it.code === 301);
+    check(tank && tank.name === '風水魚缸' && tank.quantity === 1 && tank.category === '公司物品',
+      'Auto: 编号 301 風水魚缸 x1（公司物品）',
+      tank ? `${tank.name} x${tank.quantity} / ${tank.category}` : '未找到');
+    const iou = auto.items.find((it) => it.code === 96);
+    check(iou && iou.name === '借據' && iou.quantity === 1 && iou.category === '特殊物品',
+      'Auto: 编号 96 借據 x1（特殊物品；状态码 0xffffffff 必须放行）',
+      iou ? `${iou.name} x${iou.quantity} / ${iou.category}` : '未找到');
+    const choco = auto.items.find((it) => it.code === 317);
+    check(choco && choco.quantity === 2,
+      'Auto: 爱神巧克力 x2（状态码 97 这类非常规值也不能截断清单）',
+      choco ? `${choco.name} x${choco.quantity}` : '未找到');
+    // 名称 / 分类对空表（EMPTY_TABLES）有回退，不会崩。
+    check(owned.every((it) => typeof it.name === 'string' && typeof it.category === 'string'),
+      'Auto: 每件拥有道具都有 name / category 字段（来自道具表或回退）',
+      owned.map((it) => `${it.code}=${it.name}`).slice(0, 4).join(','));
+    check(auto.items.every((it, idx, arr) => idx === 0 || it.code >= arr[idx - 1].code),
+      'Auto: 道具清单编号非递减（解析没错位）',
+      auto.items.map((it) => it.code).slice(0, 6).join(',') + ' …');
   } else {
     console.log('OK   Auto.sa2 not present, skipped the shooting checks');
   }
