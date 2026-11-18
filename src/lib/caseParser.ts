@@ -61,37 +61,47 @@ export function canTakeRole(role: RoleRecord, gender: Gender): boolean {
   return gender === 'any' || role.gender === 'any' || role.gender === gender;
 }
 
+/** Artist gender comes only from the game data table StarRole.dat (baked into
+ *  `tables.stars`), which also covers NPCs. The save itself stores no gender
+ *  field for artists, and the hand-written directory no longer carries one.
+ *  Unknown ids fall back to 'any' so they never get locked out of a role. */
+export function starGender(roleId: number, stars: CaseTables['stars'] | undefined): Gender {
+  const entry = stars?.[String(roleId)];
+  if (!entry) return 'any';
+  return entry[1] ? 'male' : 'female';
+}
+
 /** The 18 signable artists, numbered as in the game's save-editor roster.
  *  The number is the game's own role id; each artist state block stores that
  *  same id 16 bytes before its nine abilities, so no guessing is needed.
- *  Gender comes from the player's roster (9 women, 9 men). */
+ *  Gender is NOT stored here: it comes from the game's StarRole.dat (baked into
+ *  `tables.stars`), which also covers every NPC. */
 export interface ArtistDirectoryEntry {
   id: number;
   name: string;
   /** Traditional-Chinese spelling used by the save's Big5 name table. */
   traditional: string;
-  gender: Gender;
 }
 
 export const ARTIST_DIRECTORY: ArtistDirectoryEntry[] = [
-  { id: 1, name: '林芬芬', traditional: '林芬芬', gender: 'female' },
-  { id: 2, name: '桑禾蓓', traditional: '桑禾蓓', gender: 'female' },
-  { id: 3, name: '欧怡青', traditional: '歐怡青', gender: 'female' },
-  { id: 4, name: '苏嫚君', traditional: '蘇嫚君', gender: 'female' },
-  { id: 5, name: '路敏', traditional: '路敏', gender: 'female' },
-  { id: 6, name: '萧依莉', traditional: '蕭依莉', gender: 'female' },
-  { id: 7, name: '天晴', traditional: '天晴', gender: 'male' },
-  { id: 8, name: '陈奕夫', traditional: '陳奕夫', gender: 'male' },
-  { id: 9, name: '关古威', traditional: '關古威', gender: 'male' },
-  { id: 10, name: '路风', traditional: '路風', gender: 'male' },
-  { id: 11, name: '纪翔', traditional: '紀翔', gender: 'male' },
-  { id: 12, name: '姚子奇', traditional: '姚子奇', gender: 'male' },
-  { id: 65, name: '姚子莹', traditional: '姚子瑩', gender: 'female' },
-  { id: 72, name: '克烈斯', traditional: '克烈斯', gender: 'male' },
-  { id: 74, name: '新名纱雪', traditional: '新名紗雪', gender: 'female' },
-  { id: 75, name: '聆香', traditional: '聆香', gender: 'female' },
-  { id: 76, name: '卫亚', traditional: '衛亞', gender: 'male' },
-  { id: 77, name: '原少纬', traditional: '原少緯', gender: 'male' },
+  { id: 1, name: '林芬芬', traditional: '林芬芬' },
+  { id: 2, name: '桑禾蓓', traditional: '桑禾蓓' },
+  { id: 3, name: '欧怡青', traditional: '歐怡青' },
+  { id: 4, name: '苏嫚君', traditional: '蘇嫚君' },
+  { id: 5, name: '路敏', traditional: '路敏' },
+  { id: 6, name: '萧依莉', traditional: '蕭依莉' },
+  { id: 7, name: '天晴', traditional: '天晴' },
+  { id: 8, name: '陈奕夫', traditional: '陳奕夫' },
+  { id: 9, name: '关古威', traditional: '關古威' },
+  { id: 10, name: '路风', traditional: '路風' },
+  { id: 11, name: '纪翔', traditional: '紀翔' },
+  { id: 12, name: '姚子奇', traditional: '姚子奇' },
+  { id: 65, name: '姚子莹', traditional: '姚子瑩' },
+  { id: 72, name: '克烈斯', traditional: '克烈斯' },
+  { id: 74, name: '新名纱雪', traditional: '新名紗雪' },
+  { id: 75, name: '聆香', traditional: '聆香' },
+  { id: 76, name: '卫亚', traditional: '衛亞' },
+  { id: 77, name: '原少纬', traditional: '原少緯' },
 ];
 
 /** Ids 78 / 79 are placeholder blocks whose nine abilities are all 1111. */
@@ -259,7 +269,9 @@ export interface ArtistStats {
   /** [叛逆, 性感, 亲和, 人气, 曝光] */
   social: number[];
   gifts: number;
-  /** 电视 / 电影 / 唱片 / 广告 / 主持 completed counts. */
+  /** 电视 / 电影 / 唱片 / 广告 / 主持 已完成作品数。
+   *  直接用游戏自己算好的那 5 个数字（状态块 +248 起），它已经包含加入公司
+   *  之前的履历，也不把还在拍的通告算进去。 */
   noticeCounts: number[];
   /** Short Big5 status label such as 正常. */
   condition: string;
@@ -282,6 +294,8 @@ export interface ArtistStats {
 /** One selectable artist in the top panel: fixed roster number plus whichever
  *  state block the save happens to contain for them. */
 export interface ArtistOption extends ArtistDirectoryEntry {
+  /** 来自游戏数据表 StarRole.dat；表里没有的编号是 'any'。 */
+  gender: Gender;
   /** null when this artist has no state block in this save yet. */
   artistIndex: number | null;
   signed: boolean;
@@ -796,6 +810,7 @@ function parseArtists(
   friendship: Record<number, number>,
   titles: Record<string, string>,
   titleMeta: Record<string, TitleMeta>,
+  stars: CaseTables['stars'],
 ): ArtistStats[] {
   const out: ArtistStats[] = [];
   const seen = new Set<number>();
@@ -834,12 +849,22 @@ function parseArtists(
     // a sanity bound; it must not be tight enough to drop real artists.
     if (!social.every((v) => v <= 99999)) continue;
     const gifts = view.getUint32(socialAt + 20, true);
-    const noticeCounts = Array.from({ length: 5 }, (_, j) => view.getUint32(socialAt + 24 + 4 * j, true));
-    if (!noticeCounts.every((v) => v <= 9999)) continue;
+    // 这里 5 个 int32 只是 0/1 标志位，不是作品数（Auto 里萧依莉 3 支广告却全是 0）。
+    // 作品数在块后的清单里，由 parseCaseOwners 数出来再回填。
+    const flagSlots = Array.from({ length: 5 }, (_, j) => view.getUint32(socialAt + 24 + 4 * j, true));
+    if (!flagSlots.every((v) => v <= 9999)) continue;
     // Ids 78 / 79 are unused template blocks whose nine abilities are all 1111.
     if (abilities.every((v) => v === abilities[0])) continue;
     const roleId = o >= 16 ? view.getUint32(o - 16, true) : 0;
     if (PLACEHOLDER_ARTIST_IDS.includes(roleId)) continue;
+    // 作品数五个一组，固定在状态块 +248：电视 / 电影 / 唱片 / 广告 / 主持。
+    // 这是游戏自己维护的「已完成作品」统计 —— 四份存档上逐位核对过
+    // （Story0034 林芬芬 0/1/3/2/1、關古威 8/3/6/10/0、新名紗雪 1/3/1/3/0、
+    //  克烈斯 7/1/0/9/1 与玩家看到的界面完全一致）。它已经包含艺人加入公司
+    //  之前在原公司的履历，也不把还在拍的通告算进来，比自己数清单更可靠。
+    if (o + 268 > end) continue;
+    const noticeCounts = Array.from({ length: 5 }, (_, j) => view.getUint32(o + 248 + 4 * j, true));
+    if (!noticeCounts.every((v) => v <= 999)) continue;
     // 称号编号紧跟在角色编号后面（块头 `[编号][称号][公司][?]`）。
     // 0 表示还没有称号：刚签下、还没作品时会读到 0，不是解析失败。
     const titleId = o >= 16 ? view.getUint32(o - 12, true) : 0;
@@ -850,14 +875,15 @@ function parseArtists(
     index += 1;
     out.push({
       friendship: roleId in friendship ? friendship[roleId] : null,
-      abilities, stress, fatigue, social, gifts, noticeCounts, condition,
+      abilities, stress, fatigue, social, gifts, condition,
+      noticeCounts,
       titleId, title: (titleId > 0 && titles[String(titleId)]) || '',
       titleMeta: (titleId > 0 && titleMeta[String(titleId)]) || null,
       titleNext: titleId > 0
         ? nextTitle(
           titleMeta, titles, titleId,
           { abilities, social },
-          ARTIST_DIRECTORY.find((entry) => entry.id === roleId)?.gender,
+          starGender(roleId, stars),
         )
         : null,
       roleId, signed, offset: o, index,
@@ -1101,43 +1127,48 @@ export function buildGroupRecord(
  *  存档里没有「角色 → 艺人」的字段（192 字节的角色记录在两个存档间逐字节比对过，
  *  除了 roll 出来的星级/数值，没有空位放艺人编号）。艺人与通告的对应写在
  *  **艺人状态块后面那串「作品清单」**里：每条 28 字节，形如
- *  `[类别][5 字符通告编码][子类]`，连续的清单一直排到下一个艺人块的表头。
- *  所以按「块 N 之后到块 N+1 表头」切区间，把区间内出现的编码都算作块 N 的作品。
+ *  `[5][5 字符通告编码][类别]`，连续的清单一直排到下一个艺人块的表头，条数写在
+ *  清单最前面。所以按「块 N 之后到块 N+1 表头」切区间，把区间内出现的编码都
+ *  算作块 N 的作品。
  *
  *  实测对上：Auto 存档里接了「守候 / 背叛」男主角的是 13 号（黎華），
  *  Story0007 里接下「天才與白痴」男主角与「最後一次再想他」的是 76 号（衛亞）。
- *  通告池里出现的编码只可能是当期的，所以命中的就是当前预约。 */
+ *  通告池里出现的编码只可能是当期的，所以命中的就是当前预约。
+ *
+ *  作品数**不**在这里数：清单记的是「参与记录」，同一部片子会因为语种/版次
+ *  重复出现好几条，也在接取那一刻就写进去了。游戏自己统计好的数字在状态块
+ *  +248（见 parseArtists 的 noticeCounts），那份才是界面上的作品数。 */
+export interface ArtistWorks {
+  owners: Record<string, { id: number; name: string; gender: Gender }[]>;
+}
+
 export function parseCaseOwners(
   bytes: Uint8Array,
   view: DataView,
   artists: ArtistStats[],
   stars: CaseTables['stars'],
   limit: number,
-): Record<string, { id: number; name: string; gender: Gender }[]> {
-  const out: Record<string, { id: number; name: string; gender: Gender }[]> = {};
+): ArtistWorks {
+  const owners: ArtistWorks['owners'] = {};
   const rows = [...artists].sort((a, b) => a.offset - b.offset);
   for (let k = 0; k < rows.length; k += 1) {
     const artist = rows[k];
     // 清单排在块后面，到下一个块的表头（id 在能力值前 16 字节）为止。
     const end = Math.min(k + 1 < rows.length ? rows[k + 1].offset - 16 : limit, bytes.length);
-    // 命名优先用存档数据表 stars；但 StarRole.dat 在 #75 处是一条「千萬不要用」占位
-    // 记录，stars 表里没有它，于是回退到人工核对的 ARTIST_DIRECTORY（已含 #75 = 聆香）。
-    // 两个来源之外的编号才兜底成「艺人 #N」。性别同理。
+    // 名字与性别都只认游戏数据表 stars（StarRole.dat）；表里没有的编号才
+    // 回退到人工目录的名字，再兜底成「艺人 #N」。
     const entry = stars?.[String(artist.roleId)];
-    const dirEntry = ARTIST_DIRECTORY.find((a) => a.id === artist.roleId);
-    const gender: Gender = entry
-      ? (entry[1] ? 'male' : 'female')
-      : (dirEntry ? dirEntry.gender : 'any');
-    const name = entry?.[0] ?? dirEntry?.name ?? `艺人 #${artist.roleId}`;
-    const code = readNoticeCode(view, artist.offset, end);
-    for (const item of code) {
-      const list = (out[item] ??= []);
+    const gender = starGender(artist.roleId, stars);
+    const name = entry?.[0] || ARTIST_DIRECTORY.find((a) => a.id === artist.roleId)?.name
+      || `艺人 #${artist.roleId}`;
+    for (const item of readNoticeCode(view, artist.offset, end)) {
+      const list = (owners[item] ??= []);
       if (!list.some((owner) => owner.id === artist.roleId)) {
         list.push({ id: artist.roleId, name, gender });
       }
     }
   }
-  return out;
+  return { owners };
 }
 
 /** 5 个 ascii 字符挤在 20 字节里的通告编码，扫区间内每一个 4 字节位置。 */
@@ -1592,7 +1623,7 @@ export function parseSave(
   const friendship = parseFriendship(view, bytes);
   const artists = parseArtists(
     bytes, view, artistStart, artistEnd, friendship,
-    tables.titles ?? {}, tables.titleMeta ?? {},
+    tables.titles ?? {}, tables.titleMeta ?? {}, tables.stars,
   );
   const roster = parseRoster(bytes);
   // The state block carries the game's roster number at -16, so the panel can
@@ -1601,6 +1632,7 @@ export function parseSave(
     const block = artists.find((a) => a.roleId === entry.id) ?? null;
     return {
       ...entry,
+      gender: starGender(entry.id, tables.stars),
       artistIndex: block?.index ?? null,
       signed: block?.signed ?? false,
       title: block?.title ?? '',
@@ -1610,7 +1642,7 @@ export function parseSave(
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
   const teams = parseTeams(bytes, view, blocks);
   // 每个艺人接下的通告编码，用来判断通告池里哪个角色已经被别人占住。
-  const ownersByCode = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
+  const { owners: ownersByCode } = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
   // 精确到角色号的预约关系（存档里的 52 字节角色预约表）。
   const roleReservations = parseRoleReservations(bytes, view);
   const items = parseItems(view, bytes).map((it) => {
@@ -1867,6 +1899,8 @@ export function parseSave(
     return (Number.isFinite(a.endDay) ? a.endDay : Infinity) - (Number.isFinite(b.endDay) ? b.endDay : Infinity);
   });
 
+  // 作品数不需要在这里修正：游戏自己的统计（状态块 +248）本来就只算已完成的
+  // 通告，Auto 里陈奕夫在拍 SH067、萧依莉在拍 SH068 都没被算进去。
 
   // 自制通告及其它：CaseCreate 里列出来的、玩家自己出品的通告。名字要从静态
   // 表查（data1 那份才全），天数 / 档期 / 接演记录来自 Case 段的第一块。

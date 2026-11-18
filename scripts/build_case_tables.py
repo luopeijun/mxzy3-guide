@@ -211,9 +211,12 @@ def load_stars(data_dirs):
         for i, rec in enumerate(read_table(path)):
             # 名字是定长字段，后面可能接着别的数据 —— 取到第一个 NUL 为止。
             name = big5(rec[4:40].split(b"\x00")[0])
-            # 75 号是「千萬不要用」占位记录，不能当人名显示。
-            if i and name and "不要用" not in name:
-                candidate[str(i)] = [name, struct.unpack_from("<I", rec, 24)[0] and 1 or 0]
+            if not i or not name:
+                continue
+            gender = struct.unpack_from("<I", rec, 24)[0] and 1 or 0
+            # 75 号的名字是「千萬不要用」占位串，但这一条就是聆香（玩家已确认），
+            # 性别字段也是有效的；把占位名换掉，让 stars 成为唯一真源。
+            candidate[str(i)] = ["聆香" if "不要用" in name else name, gender]
         if len(candidate) > len(out):
             out = candidate
     out.setdefault("76", ["衛亞", 1])

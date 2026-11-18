@@ -32,7 +32,7 @@ await build({
   logLevel: 'silent',
 });
 const {
-  parseSave, toCsv, matchRole, canTakeRole, roleGender, ARTIST_DIRECTORY,
+  parseSave, toCsv, matchRole, canTakeRole, roleGender, starGender, ARTIST_DIRECTORY,
   isGroupRole, matchGroupRole, buildGroupRecord, riskOf, RISK_SLACK_DAYS, shootableDays,
   moneyText, freeRoleCount, isAcceptable, canTakeNotice,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
@@ -208,11 +208,18 @@ if (fs.existsSync(savePath)) {
     && real.artistDirectory.find((a) => a.id === 72)?.name === '克烈斯'
     && real.artistDirectory.find((a) => a.id === 74)?.name === '新名纱雪',
     'the 18 signable artists are mapped by the save-editor roster number');
-  const femaleIds = ARTIST_DIRECTORY.filter((a) => a.gender === 'female').map((a) => a.id);
+  const femaleIds = ARTIST_DIRECTORY.map((a) => a.id)
+    .filter((id) => starGender(id, tables.stars) === 'female');
   check(femaleIds.join(',') === '1,2,3,4,5,6,65,74,75'
-    && ARTIST_DIRECTORY.filter((a) => a.gender === 'male').length === 9,
-    'the roster splits into the nine women named by the player and nine men',
+    && ARTIST_DIRECTORY.filter((a) => starGender(a.id, tables.stars) === 'male').length === 9,
+    'gender comes from the game StarRole table, not a hand-written roster',
     femaleIds.join(','));
+  check(tables.stars['75']?.[0] === '聆香' && starGender(75, tables.stars) === 'female'
+    && tables.stars['75']?.[0] !== '千萬不要用',
+    'id 75 resolves to 聆香 (the game table stores a placeholder name there)');
+  check(real.artistDirectory.find((a) => a.id === 75)?.gender === 'female'
+    && real.artistDirectory.find((a) => a.id === 76)?.gender === 'male',
+    'roster options inherit gender from the game table');
   const allRoles = real.notices.flatMap((n) => n.roles);
   check(allRoles.every((r) => ['male', 'female', 'any'].includes(r.gender))
     && allRoles.some((r) => r.gender === 'any')
@@ -1033,6 +1040,41 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       check(role?.reservedBy === name, `Story0004 ${roleCode} 仍是 ${name}（对照组不回退）`,
         `实际 ${role?.reservedBy || '（空）'}`);
     }
+  }
+  // 作品数真值：玩家在游戏「藝人資料」里逐条抄下来的四组数字。
+  const s34 = load('Story0034.sa2');
+  if (s34) {
+    const get = (id) => s34.artists.find((a) => a.roleId === id);
+    for (const [id, name, want] of [
+      [1, '林芬芬', '0,1,3,2,1'],
+      [9, '關古威', '8,3,6,10,0'],
+      [74, '新名紗雪', '1,3,1,3,0'],
+      [72, '克烈斯', '7,1,0,9,1'],
+    ]) {
+      check(get(id)?.noticeCounts.join(',') === want,
+        `Story0034 ${name} 作品数 电视/电影/唱片/广告/主持 = ${want}`,
+        JSON.stringify(get(id)?.noticeCounts));
+    }
+  } else {
+    console.log('OK   Story0034.sa2 snapshot not present, skipped the work-count checks');
+  }
+  const auto = load('Auto.sa2');
+  if (auto) {
+    const get = (id) => auto.artists.find((a) => a.roleId === id);
+    check(auto.currentDate?.text === '2006/4/2', 'Auto 快照日期 2006/4/2',
+      auto.currentDate?.text ?? '缺日期');
+    // 作品数取游戏自己算好的那一组（状态块 +248），只算已完成的通告。
+    check(get(6)?.noticeCounts.join(',') === '0,0,0,3,0',
+      'Auto 萧依莉 3 支广告、0 主持（在拍的 SH068 不计入）',
+      JSON.stringify(get(6)?.noticeCounts));
+    check(get(8)?.noticeCounts.join(',') === '0,0,0,1,2',
+      'Auto 陈奕夫 1 支广告 2 个主持（含加入公司前的履历）',
+      JSON.stringify(get(8)?.noticeCounts));
+    // 马智文是 NPC、从未签约，作品数照样有值 —— 统计里含他在别家公司、
+    // 以及加入公司之前的作品，所以不能靠数我方的接演记录。
+    check(get(14)?.noticeCounts.join(',') === '7,15,0,6,0',
+      'Auto 马智文历史作品 7 电视 15 电影 6 广告（含加入公司前）',
+      JSON.stringify(get(14)?.noticeCounts));
   }
 }
 
