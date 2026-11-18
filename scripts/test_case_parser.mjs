@@ -815,5 +815,57 @@ for (const [save, expected, fullCodes, expectedQualified] of [
     `${qualified.length} :: ${qualified.map((n) => n.code).join(',')}`);
 }
 
+// 友好度表：Story0002 萧依莉(#6)=141、Story0003=92，两个真实存档交叉验证。
+for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) {
+  const p = `D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/${save}`;
+  if (!fs.existsSync(p)) { console.log(`OK   ${save} not present, skipped the friendship check`); continue; }
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const raw = fs.readFileSync(p);
+  const save_ = parseSave(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, save);
+  const xiao = save_.artists.find((a) => a.roleId === 6);
+  check(xiao?.friendship === expected, `${save}: 萧依莉友好度 ${expected}`,
+    `实际 ${xiao?.friendship ?? '缺失'}`);
+  check(save_.friendship[6] === expected, `${save}: 友好度表 #6 = ${expected}`,
+    `实际 ${save_.friendship[6] ?? '缺失'}`);
+  check(Object.keys(save_.friendship).length >= 18, `${save}: 友好度表覆盖 ${18} 位以上`,
+    `${Object.keys(save_.friendship).length} 位`);
+}
+
+// 角色社交接演门槛（叛逆/性感/亲和）：Story0004 的 CF234 味美 解說篇要求亲和 ≥ 650，
+// 这个门槛存在角色记录 off+76/80/84，静态 special 表也有但存档才是真源。
+{
+  const p = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0004.sa2';
+  if (!fs.existsSync(p)) {
+    console.log('OK   Story0004.sa2 not present, skipped the social-threshold check');
+  } else {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(p);
+    const save_ = parseSave(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0004.sa2');
+    const cf234 = save_.notices.find((n) => n.code === 'CF234');
+    const female = cf234?.roles.find((r) => r.roleCode === 'CF2341');
+    check(female?.social?.affinity === 650, 'Story0004 CF2341 从存档读到亲和门槛 650',
+      `实际 ${female?.social?.affinity ?? '缺失'}`);
+    const affinityReq = female?.requirements.find((req) => req.attr === '亲和');
+    check(affinityReq?.value === 650, 'CF2341 所需数值含「亲和 650」隐藏条件',
+      `实际 ${JSON.stringify(female?.requirements ?? [])}`);
+    check(affinityReq?.staticGrade === '' && affinityReq?.rolledGrade === '',
+      '社交门槛不带能力等级（叛逆/性感/亲和没有 A/B/C 档）',
+      `static=${affinityReq?.staticGrade} rolled=${affinityReq?.rolledGrade}`);
+    // 对比：拿一位亲和 470 的艺人（萧依莉）去比，应差 180；亲和 700 的陈奕夫应达标。
+    const xiao = save_.artists.find((a) => a.roleId === 6);
+    const yiFu = save_.artists.find((a) => a.roleId === 8);
+    if (female && xiao && yiFu) {
+      const gXiao = matchRole(female, xiao, '萧依莉', 'female').gaps.find((g) => g.attr === '亲和');
+      const gYiFu = matchRole(female, yiFu, '陈奕夫', 'male').gaps.find((g) => g.attr === '亲和');
+      check(gXiao?.need === 650 && gXiao?.have === 470 && gXiao?.diff === 180,
+        '数值对比把萧依莉亲和 470 与门槛 650 比出差 180',
+        JSON.stringify(gXiao));
+      check(gYiFu?.need === 650 && gYiFu?.have === 700 && gYiFu?.diff === -50,
+        '数值对比把陈奕夫亲和 700 判为达标（差 -50）',
+        JSON.stringify(gYiFu));
+    }
+  }
+}
+
 console.log(`\n${checks - failures}/${checks} checks passed`);
 process.exit(failures ? 1 : 0);
