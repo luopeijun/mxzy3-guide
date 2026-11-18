@@ -54,6 +54,27 @@
   --color-tag-manual-soft: #e0d2f0;
   --color-tag-talk: #8f3358;
   --color-tag-talk-soft: #f8c8d8;
+  /* 艺人称号徽标：五类职业线各一个色相（唱片玫红 / 主持靛蓝 / 模特松绿 /
+     影视紫罗兰 / 天王巨星·超级天后金色），另加中性灰给过气、新人、未出道。
+     同一色相里 text 在 soft 上的对比度都 ≥5:1，小字号也读得清。 */
+  --color-title-music: #8f2f52;
+  --color-title-music-soft: #fbe0e8;
+  --color-title-music-line: #f0c2d2;
+  --color-title-host: #2f4a78;
+  --color-title-host-soft: #dde6f7;
+  --color-title-host-line: #c2d3ee;
+  --color-title-model: #0f5a52;
+  --color-title-model-soft: #d5ece5;
+  --color-title-model-line: #b3dfd3;
+  --color-title-screen: #4a3c86;
+  --color-title-screen-soft: #e4dffa;
+  --color-title-screen-line: #cdc4ee;
+  --color-title-star: #8a6114;
+  --color-title-star-soft: #fdf4dd;
+  --color-title-star-line: #f0dfb4;
+  --color-title-other: #5c5459;
+  --color-title-other-soft: #ece7ea;
+  --color-title-other-line: #d8d0d5;
   /* Alerts that must not read as brand rose — 「暴力」这类特殊要求用它，
      免得和「吻戏」的粉色、品牌色混成一团。 */
   --color-alert: #97351f;

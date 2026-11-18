@@ -11,6 +11,8 @@
  *  parse_case_values.py probe; keep the offsets in sync when either changes.
  */
 
+import { nextTitle, type TitleNext } from './titleLadder';
+
 export const ATTRS = ['演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信'] as const;
 /** 通告统计 in the game's own order (see the save editor's 通告統計 panel). */
 export const NOTICE_COUNT_LABELS = ['电视', '电影', '唱片', '广告', '主持'] as const;
@@ -101,6 +103,22 @@ const NAME_BLOCKS = [
   'StarRoleQ', 'Firm', 'Team', 'Schedule',
 ];
 
+/** 称号所属的职业线，页面按这个上色。 */
+export type TitleLine = 'music' | 'host' | 'model' | 'screen' | 'star' | 'other';
+
+/** Nickname.tab 里边角信息：线、媒介标签、男女限定、达标门槛。 */
+export interface TitleMeta {
+  line: TitleLine;
+  /** 作品媒介：CD 唱片 / SH 主持 / CF 广告 / MV 电影 / TV 电视 / 0 通用。 */
+  tag: string;
+  /** -1 通用、1 男、0 女。 */
+  sex: number;
+  /** [门槛名, 数值]：先是属性（0~1000），再是作品数。 */
+  need: [string, number][];
+  /** 本线第几档（0 起，越大越高）；过气艺人之类不在梯子上的是 null。 */
+  rank?: number | null;
+}
+
 export interface CaseTables {
   source: string;
   /** code -> [name, type, subtype, company] */
@@ -115,6 +133,8 @@ export interface CaseTables {
   stars?: Record<string, [string, number]>;
   /** 称号编号 -> 简体称号名，来自 Nickname.tab；存档艺人块 -12 处存的就是这个编号。 */
   titles?: Record<string, string>;
+  /** 称号编号 -> 线 / 媒介 / 门槛，用来给徽标上色和做 hover 说明。 */
+  titleMeta?: Record<string, TitleMeta>;
   /** company id -> name */
   firms: Record<string, string>;
   /** 道具 code -> [名称, 分类, 说明, 属性行]，来自 Item.dat 烘焙。 */
@@ -123,7 +143,7 @@ export interface CaseTables {
 
 export const EMPTY_TABLES: CaseTables = {
   source: '', cases: {}, needEffect: {}, length: {}, difficulty: [],
-  stars: {}, titles: {}, firms: {}, items: {},
+  stars: {}, titles: {}, titleMeta: {}, firms: {}, items: {},
 };
 
 export interface Requirement {
@@ -247,6 +267,10 @@ export interface ArtistStats {
   titleId: number;
   /** 称号名（简体），由 titleId 查烘焙进站点的 Nickname 表得来；读不到就是空串。 */
   title: string;
+  /** 称号的线与门槛；查不到就是 null（例如称号表里没有这个编号）。 */
+  titleMeta: TitleMeta | null;
+  /** 同一条线的下一档称号，以及离它差多少；已是本线最高档就是 null。 */
+  titleNext: TitleNext | null;
   /** The game's roster number, stored 16 bytes before the nine abilities. */
   roleId: number;
   /** 1 means this artist is currently signed by the player's company. */
@@ -474,11 +498,17 @@ function isDigit(byte: number): boolean {
   return byte >= 0x30 && byte <= 0x39;
 }
 
+/** 通告编号里的字符：数字，或剧情 / 自制通告用的大写字母（TVA62、CDAHF）。 */
+function isCodeChar(byte: number): boolean {
+  return isDigit(byte) || (byte >= 0x41 && byte <= 0x5a);
+}
+
 function isCode(text: string): boolean {
   if (text.length !== 5 && text.length !== 6) return false;
   if (!PREFIXES.includes(text.slice(0, 2))) return false;
   const digits = text.slice(2);
-  if (!/^\d{3,4}$/.test(digits)) return false;
+  // 剧情 / 自制通告的编号里会带字母（屈原列傳 = TVA62），不能只认纯数字。
+  if (!/^[0-9A-Z]{3,4}$/.test(digits)) return false;
   return true;
 }
 
@@ -565,7 +595,7 @@ function parseRoles(
       continue;
     }
     let length = 0;
-    while (length < 4 && i + 2 + length < end && isDigit(bytes[i + 2 + length])) length += 1;
+    while (length < 4 && i + 2 + length < end && isCodeChar(bytes[i + 2 + length])) length += 1;
     if (length < 3) {
       i += 1;
       continue;
@@ -693,6 +723,50 @@ export function parseRoster(bytes: Uint8Array): RosterEntry[] {
   return out;
 }
 
+/** 通告角色预约表：Case 段外另有一组 52 字节定长记录
+ *  [6][5×int32 ASCII 通告码][int32 ASCII 角色号][接演艺人编号][0×5]。
+ *  编号对应存档头部 284 字节名字表每条记录前 8 字节的那个编号，能覆盖
+ *  我方艺人与 NPC。只有真被预约/接走的角色才写编号，其余全 0。
+ *  有了它就能把预约精确落到角色号，不用再按性别猜第一个同性别角色
+ *  （小熊寶寶「女主角 / 女配角」就是那个坑）。 */
+function parseRoleReservations(bytes: Uint8Array, view: DataView): Map<string, string> {
+  const out = new Map<string, string>();
+  let base = -1;
+  for (let o = 0; o < 20000 - 568; o += 4) {
+    if (readBig5Name(bytes, o) && readBig5Name(bytes, o + 284) && readBig5Name(bytes, o + 568)) {
+      base = o;
+      break;
+    }
+  }
+  if (base < 8) return out;
+  const nameById = new Map<number, string>();
+  for (let k = 0; k < 60; k += 1) {
+    const at = base + k * 284;
+    const id = view.getUint32(at - 8, true);
+    const name = readBig5Name(bytes, at);
+    if (id > 0 && id < 200 && name && !nameById.has(id)) nameById.set(id, name);
+  }
+  const limit = bytes.length - 52;
+  for (let o = 0; o < limit; o += 4) {
+    if (view.getUint32(o, true) !== 6) continue;
+    let code = '';
+    let valid = true;
+    for (let j = 0; j < 5; j += 1) {
+      const c = view.getUint32(o + 4 + 4 * j, true);
+      if (c < 0x20 || c > 0x7a) { valid = false; break; }
+      code += String.fromCharCode(c);
+    }
+    if (!valid || !/^(?:CD|CF|MV|TV|SH)[0-9A-Z]{3}$/.test(code)) continue;
+    const digit = view.getUint32(o + 24, true);
+    if (digit < 0x30 || digit > 0x39) continue;
+    const artistId = view.getUint32(o + 28, true);
+    const name = artistId ? nameById.get(artistId) : undefined;
+    if (!name) continue;
+    out.set(`${code}${String.fromCharCode(digit)}`, name);
+  }
+  return out;
+}
+
 /** 友好度表：存档头部按 284 字节一条排列，字段为
  *  [友好度 int32][0][256/257][艺人编号 int32]。用编号反查，不依赖固定偏移。 */
 function parseFriendship(view: DataView, bytes: Uint8Array): Record<number, number> {
@@ -721,6 +795,7 @@ function parseArtists(
   end: number,
   friendship: Record<number, number>,
   titles: Record<string, string>,
+  titleMeta: Record<string, TitleMeta>,
 ): ArtistStats[] {
   const out: ArtistStats[] = [];
   const seen = new Set<number>();
@@ -777,6 +852,14 @@ function parseArtists(
       friendship: roleId in friendship ? friendship[roleId] : null,
       abilities, stress, fatigue, social, gifts, noticeCounts, condition,
       titleId, title: (titleId > 0 && titles[String(titleId)]) || '',
+      titleMeta: (titleId > 0 && titleMeta[String(titleId)]) || null,
+      titleNext: titleId > 0
+        ? nextTitle(
+          titleMeta, titles, titleId,
+          { abilities, social },
+          ARTIST_DIRECTORY.find((entry) => entry.id === roleId)?.gender,
+        )
+        : null,
       roleId, signed, offset: o, index,
     });
   }
@@ -1507,7 +1590,10 @@ export function parseSave(
   const artistStart = blocks.StarRoleQ ? blocks.StarRoleQ[1] : 0;
   const artistEnd = blocks.Firm ? blocks.Firm[0] : bytes.length;
   const friendship = parseFriendship(view, bytes);
-  const artists = parseArtists(bytes, view, artistStart, artistEnd, friendship, tables.titles ?? {});
+  const artists = parseArtists(
+    bytes, view, artistStart, artistEnd, friendship,
+    tables.titles ?? {}, tables.titleMeta ?? {},
+  );
   const roster = parseRoster(bytes);
   // The state block carries the game's roster number at -16, so the panel can
   // show named artists instead of anonymous "状态块 #N" selectors.
@@ -1525,6 +1611,8 @@ export function parseSave(
   const teams = parseTeams(bytes, view, blocks);
   // 每个艺人接下的通告编码，用来判断通告池里哪个角色已经被别人占住。
   const ownersByCode = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
+  // 精确到角色号的预约关系（存档里的 52 字节角色预约表）。
+  const roleReservations = parseRoleReservations(bytes, view);
   const items = parseItems(view, bytes).map((it) => {
     const meta = tables.items?.[String(it.code)];
     return {
@@ -1599,16 +1687,27 @@ export function parseSave(
     if (!info) unknownCodes.push(item.code);
     const [name = '', type = '', subtype = '', company = ''] = info ?? [];
     const noticeRoles = roles.filter((role) => role.code === item.code);
-    // 通告池里的编码只可能是当期通告，命中的艺人就是把它接走的人。角色记录里
-    // 没有艺人编号，所以按性别落到第一个还对得上的角色（男→男主角，女→女主角）。
+    // 通告池里的编码只可能是当期通告，命中的艺人就是把它接走的人。
+    // 优先用存档的角色预约表：它精确到「通告码 + 角色号」，读不到的才退回
+    // 按性别落到第一个还对得上的角色（男→男主角，女→女主角）。
     const taken = new Set<string>();
+    const usedOwners = new Set<string>();
+    for (const [roleCode, artistName] of roleReservations) {
+      const target = noticeRoles.find((role) => role.roleCode === roleCode);
+      if (!target || taken.has(roleCode)) continue;
+      target.reservedBy = artistName;
+      taken.add(roleCode);
+      usedOwners.add(artistName);
+    }
     for (const owner of ownersByCode[item.code] ?? []) {
+      if (usedOwners.has(owner.name)) continue;
       const target = noticeRoles.find(
         (role) => !taken.has(role.roleCode) && canTakeRole(role, owner.gender),
       );
       if (!target) continue;
       target.reservedBy = owner.name;
       taken.add(target.roleCode);
+      usedOwners.add(owner.name);
     }
     for (const role of noticeRoles) {
       const grades = tables.needEffect[`${type}|${role.role}`];

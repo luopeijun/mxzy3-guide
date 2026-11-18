@@ -9,7 +9,9 @@ import {
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
+  type TitleLine, type TitleMeta,
 } from '../../lib/caseParser';
+import type { TitleNext } from '../../lib/titleLadder';
 
 const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
 
@@ -1689,6 +1691,127 @@ function ItemsPanel({
   );
 }
 
+/** 称号按「职业线」上色：唱片 / 主持 / 模特 / 影视 / 天王·天后各一色，
+ *  过气、新人、未出道这类跨线状态用中性灰。 */
+const TITLE_LINE_LABEL: Record<TitleLine, string> = {
+  music: '唱片线', host: '主持线', model: '模特线', screen: '影视线',
+  star: '总称号', other: '其他',
+};
+
+const TITLE_LINE_HINT: Record<TitleLine, string> = {
+  music: 'CD 作品养成', host: '主持节目养成', model: 'CF 广告养成',
+  screen: '电视 / 电影养成', star: '演技 + 歌艺双线', other: '跨线状态',
+};
+
+const TITLE_LINE_TONE: Record<TitleLine, string> = {
+  music: 'border-title-music-line bg-title-music-soft text-title-music',
+  host: 'border-title-host-line bg-title-host-soft text-title-host',
+  model: 'border-title-model-line bg-title-model-soft text-title-model',
+  screen: 'border-title-screen-line bg-title-screen-soft text-title-screen',
+  star: 'border-title-star-line bg-title-star-soft text-title-star',
+  other: 'border-title-other-line bg-title-other-soft text-title-other',
+};
+
+const TITLE_LINE_TEXT: Record<TitleLine, string> = {
+  music: 'text-title-music', host: 'text-title-host', model: 'text-title-model',
+  screen: 'text-title-screen', star: 'text-title-star', other: 'text-title-other',
+};
+
+const TITLE_NEED_UNIT: Record<string, string> = {
+  电视作品: '部', 电影作品: '部', 专辑: '张', 广告: '支', 节目: '档', 作品总数: '部',
+};
+
+/** 称号徽标：颜色标线，hover / 键盘聚焦时展开这条线的门槛。 */
+function TitleBadge({ title, meta, next }: {
+  title: string; meta: TitleMeta | null; next: TitleNext | null;
+}) {
+  const line: TitleLine = meta?.line ?? 'other';
+  const need = meta?.need ?? [];
+  return (
+    <span className="group relative inline-flex" data-case-artist-title-wrap>
+      <span
+        data-case-artist-title
+        data-title-line={line}
+        tabIndex={0}
+        className={cn(
+          'cursor-help rounded-full border px-1.5 text-ui-2xs font-semibold outline-none',
+          'focus-visible:ring-2 focus-visible:ring-brand-line',
+          TITLE_LINE_TONE[line],
+        )}
+      >
+        {title}
+      </span>
+      <span
+        data-case-artist-title-card
+        role="tooltip"
+        className="pointer-events-none absolute left-0 top-full z-30 mt-1 w-[236px] rounded-ui-sm border border-line bg-surface p-2 text-left opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        <span className="flex items-baseline gap-1">
+          <b className={cn('text-ui-2xs', TITLE_LINE_TEXT[line])}>{TITLE_LINE_LABEL[line]}</b>
+          <span className="text-ui-2xs text-ink-faint">{TITLE_LINE_HINT[line]}</span>
+          {meta?.rank !== null && meta?.rank !== undefined && (
+            <span className="ml-auto text-ui-2xs text-ink-faint">第 {meta.rank + 1} 档</span>
+          )}
+        </span>
+        {need.length > 0 ? (
+          <span className="mt-1 flex flex-wrap gap-1">
+            {need.map(([label, value]) => (
+              <span key={label} className="rounded bg-surface-soft px-1 text-ui-2xs text-ink-muted">
+                {label} <b className="tabular-nums">{value}{TITLE_NEED_UNIT[label] ?? ''}</b>
+              </span>
+            ))}
+          </span>
+        ) : (
+          <span className="mt-1 block text-ui-2xs text-ink-faint">没有门槛：出道前的默认称号</span>
+        )}
+        {next ? (
+          <span
+            data-case-artist-title-next
+            className="mt-1.5 block border-t border-line pt-1.5"
+          >
+            <span className="flex items-baseline gap-1">
+              <span className="text-ui-2xs text-ink-faint">下一档</span>
+              <b className="text-ui-2xs text-ink">{next.name}</b>
+              {next.ready && (
+                <span className="text-ui-2xs font-semibold text-title-model">条件已够</span>
+              )}
+            </span>
+            <span className="mt-1 flex flex-wrap gap-1">
+              {next.items.map((item) => (
+                <span
+                  key={item.label}
+                  className={cn(
+                    'rounded px-1 text-ui-2xs tabular-nums',
+                    item.diff === 0
+                      ? 'bg-title-model-soft text-title-model'
+                      : item.diff === null
+                        ? 'bg-surface-soft text-ink-muted'
+                        : 'bg-alert-soft text-alert',
+                  )}
+                >
+                  {item.diff === 0
+                    ? `${item.label} 已够`
+                    : item.diff === null
+                      ? `${item.label} 需 ${item.need}${TITLE_NEED_UNIT[item.label] ?? ''}`
+                      : `${item.label} 还差 ${item.diff}`}
+                </span>
+              ))}
+            </span>
+          </span>
+        ) : meta?.rank !== null && meta?.rank !== undefined ? (
+          <span
+            data-case-artist-title-next
+            className="mt-1.5 block border-t border-line pt-1.5 text-ui-2xs text-ink-faint"
+          >
+            已经是本线最高档。
+          </span>
+        ) : null}
+        <span className="mt-1 block text-ui-2xs text-ink-faint">同一时间只挂一个称号。</span>
+      </span>
+    </span>
+  );
+}
+
 function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {
   return (
     <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
@@ -1698,13 +1821,7 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
           {option.gender === 'female' ? '女' : '男'}
         </span>
         {artist?.title && (
-          <span
-            data-case-artist-title
-            title={`存档里记录的称号（编号 ${artist.titleId}）`}
-            className="rounded-full border border-brand-line bg-surface px-1.5 text-ui-2xs font-semibold text-brand-strong"
-          >
-            {artist.title}
-          </span>
+          <TitleBadge title={artist.title} meta={artist.titleMeta} next={artist.titleNext} />
         )}
         {artist && (
           <span
