@@ -1812,20 +1812,31 @@ function TitleBadge({ title, meta, next }: {
             {next.branches.some((branch) => branch.items.length > 0) && (
               <span data-case-title-branches className="mt-1 block">
                 {next.branches.length > 1 && (
-                  <span className="block text-ui-2xs text-ink-faint">作品条件任一达成即可</span>
+                  <span className="block text-ui-2xs text-ink-faint">作品条件：任一套达成即可</span>
                 )}
                 {next.branches.map((branch, i) => (
                   <span
                     key={i}
                     data-case-title-branch={i}
-                    className="mt-0.5 flex flex-wrap items-baseline gap-1"
+                    className="mt-1 flex flex-wrap items-center gap-1"
                   >
+                    {/* 每支都以「或」起头，行行对齐；支内多项是「并」，用 + 连。 */}
                     {next.branches.length > 1 && (
-                      <span className="w-3 shrink-0 text-ui-2xs text-ink-faint">
-                        {i === 0 ? '' : '或'}
+                      <span
+                        data-case-title-or
+                        className="w-4 shrink-0 text-center text-ui-2xs font-semibold text-ink-muted"
+                      >
+                        或
                       </span>
                     )}
-                    {branch.items.map((item) => <GapChip key={item.label} item={item} />)}
+                    {branch.items.map((item, j) => (
+                      <Fragment key={item.label}>
+                        {j > 0 && (
+                          <span className="text-ui-2xs font-semibold text-ink-faint">+</span>
+                        )}
+                        <GapChip item={item} />
+                      </Fragment>
+                    ))}
                   </span>
                 ))}
               </span>
