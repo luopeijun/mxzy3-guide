@@ -166,6 +166,8 @@ async function main() {
       artistAttrs: document.querySelectorAll('[data-case-artist-attrs]').length,
       artistAttrsCount: document.querySelectorAll('[data-case-artist-attrs] span').length,
       artistCounts: document.querySelectorAll('[data-case-artist-counts]').length,
+      artistTitles: [...document.querySelectorAll('[data-case-artist-title]')]
+        .map(x => (x.innerText || '').replace(/\\s+/g, ' ').trim()),
       artistCollapsible: (function(){
         var d = document.querySelector('[data-case-artists]');
         return !!d && d.tagName === 'DETAILS' && !!d.querySelector('summary');
@@ -421,6 +423,11 @@ async function main() {
     check(p.artistAttrs === 3 && p.artistAttrsCount >= 27, 'nine abilities on every artist card',
       `${p.artistAttrs} / ${p.artistAttrsCount}`);
     check(p.artistCounts === 3, 'notice counts on every artist card', String(p.artistCounts));
+    // 称号来自存档块 -12 的编号 + 烘焙的 Nickname 表；probe 里路敏/萧依莉都是未出道新人，
+    // 路风那块编号是 0（还没有称号），所以只该出现两个徽标。
+    check(p.artistTitles.length === 2 && p.artistTitles.every((text) => text === '未出道新人'),
+      'artist cards show the title stored in the save (0 = none, no badge)',
+      p.artistTitles.join('|') || '(none)');
     check(p.matchCols === 1 && p.matchColHead.includes('数值对比')
       && p.matchLists === p.roles,
       'all artists share one comparison column',

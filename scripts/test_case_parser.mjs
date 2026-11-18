@@ -845,6 +845,49 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     `${Object.keys(save_.friendship).length} 位`);
 }
 
+// 艺人称号：存进艺人块起始前 12 字节，是 Nickname.tab 里的称号编号。
+// 真值来自玩家口述（陈奕夫=主持新人、萧依莉=广告新人、苏嫚君=未出道新人），
+// 三份冻结快照都对得上；顺带锁住「0 = 还没有称号」不是解析失败。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const titles = tables.titles ?? {};
+  check(Object.keys(titles).length >= 44, '称号表烘焙进 case-tables.json（>= 44 条）',
+    `${Object.keys(titles).length} 条`);
+  for (const [id, name] of [[622, '主持新人'], [623, '广告新人'], [701, '未出道新人'],
+    [241, '主持人'], [451, '电视演员'], [601, '知名艺人']]) {
+    check(titles[String(id)] === name, `称号 #${id} = ${name}`, titles[String(id)] ?? '缺失');
+  }
+  // 烘焙出来的名字不该再混着繁体（國际名模 这种）。
+  const traditional = [...new Set(Object.values(titles).join(''))]
+    .filter((ch) => '際國級綜藝戲劇員電視廣兒過氣實動'.includes(ch));
+  check(traditional.length === 0, '称号名全部转成简体', traditional.join(''));
+
+  for (const [save, expected] of [
+    ['Story0002.sa2', { 6: '未出道新人' }],
+    ['Story0004.sa2', { 6: '未出道新人', 8: '主持新人' }],
+    ['probe.sa2', { 5: '未出道新人', 6: '未出道新人' }],
+  ]) {
+    const p = path.join(SNAP, save);
+    if (!fs.existsSync(p)) { console.log(`OK   ${save} not present, skipped the title check`); continue; }
+    const raw = fs.readFileSync(p);
+    const save_ = parseSave(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, save);
+    for (const [roleId, name] of Object.entries(expected)) {
+      const artist = save_.artists.find((a) => a.roleId === Number(roleId));
+      check(artist?.title === name, `${save}: #${roleId} 称号 = ${name}`,
+        `实际 ${artist ? `${artist.titleId}/${artist.title || '（空）'}` : '缺块'}`);
+    }
+    // 结构不变式：凡是读了非 0 编号的，都必须能在表里查到名字。
+    const orphans = save_.artists.filter((a) => a.titleId > 0 && !titles[String(a.titleId)]);
+    check(orphans.length === 0, `${save}: 所有非 0 称号编号都能查到名字`,
+      orphans.map((a) => `${a.roleId}:${a.titleId}`).join(','));
+    // 艺人卡拿到的 option 也要带上同一个称号。
+    const sample = Object.keys(expected)[0];
+    const option = save_.artistDirectory.find((o) => o.id === Number(sample));
+    check(option?.title === expected[sample], `${save}: 艺人目录 #${sample} 同步带称号`,
+      option?.title ?? '缺失');
+  }
+}
+
 // 角色社交接演门槛（叛逆/性感/亲和）：Story0004 的 CF234 味美 解說篇要求亲和 ≥ 650，
 // 这个门槛存在角色记录 off+76/80/84，静态 special 表也有但存档才是真源。
 // 读冻结快照（玩家口述核对过 650），避免活档漂移。
