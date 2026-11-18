@@ -14,8 +14,14 @@
 import { nextTitle, type TitleNext } from './titleLadder';
 
 export const ATTRS = ['演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信'] as const;
-/** 通告统计 in the game's own order (see the save editor's 通告統計 panel). */
-export const NOTICE_COUNT_LABELS = ['电视', '电影', '唱片', '广告', '主持'] as const;
+/** 游戏「通告统计」用的那一套名字，顺序 = 存档状态块 +248 起那五个计数
+ *  （电视作品 / 电影作品 / 专辑 / 广告 / 节目）。称号门槛（Nickname.tab）里
+ *  写的也是这五个名字，所以两处共用这一份，免得同一个东西两个叫法。 */
+export const NOTICE_COUNT_LABELS = ['电视作品', '电影作品', '专辑', '广告', '节目'] as const;
+/** 与 NOTICE_COUNT_LABELS 同序，游戏界面上跟在数字后面的单位。 */
+export const NOTICE_COUNT_UNITS = ['部', '部', '张', '支', '档'] as const;
+/** 六项里的最后一项：上面五个数字相加（单位不齐，所以不带单位）。 */
+export const NOTICE_TOTAL_LABEL = '作品总数';
 const GRADES = ['', 'A', 'B', 'C', 'D'];
 const WEEKDAYS = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
@@ -850,7 +856,7 @@ function parseArtists(
     if (!social.every((v) => v <= 99999)) continue;
     const gifts = view.getUint32(socialAt + 20, true);
     // 这里 5 个 int32 只是 0/1 标志位，不是作品数（Auto 里萧依莉 3 支广告却全是 0）。
-    // 作品数在块后的清单里，由 parseCaseOwners 数出来再回填。
+    // 真正的作品数在块 +248，见下面的读取。
     const flagSlots = Array.from({ length: 5 }, (_, j) => view.getUint32(socialAt + 24 + 4 * j, true));
     if (!flagSlots.every((v) => v <= 9999)) continue;
     // Ids 78 / 79 are unused template blocks whose nine abilities are all 1111.
@@ -882,7 +888,7 @@ function parseArtists(
       titleNext: titleId > 0
         ? nextTitle(
           titleMeta, titles, titleId,
-          { abilities, social },
+          { abilities, social, noticeCounts },
           starGender(roleId, stars),
         )
         : null,

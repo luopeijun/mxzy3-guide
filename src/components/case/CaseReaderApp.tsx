@@ -4,14 +4,14 @@ import { createPortal } from 'react-dom';
 import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
-  ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS,
+  ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
   type TitleLine, type TitleMeta,
 } from '../../lib/caseParser';
-import type { TitleNext } from '../../lib/titleLadder';
+import type { TitleGapItem, TitleNext } from '../../lib/titleLadder';
 
 const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
 
@@ -1699,8 +1699,8 @@ const TITLE_LINE_LABEL: Record<TitleLine, string> = {
 };
 
 const TITLE_LINE_HINT: Record<TitleLine, string> = {
-  music: 'CD 作品养成', host: '主持节目养成', model: 'CF 广告养成',
-  screen: '电视 / 电影养成', star: '演技 + 歌艺双线', other: '跨线状态',
+  music: '专辑养成', host: '节目养成', model: '广告养成',
+  screen: '电视 / 电影作品养成', star: '演技 + 歌艺双线', other: '跨线状态',
 };
 
 const TITLE_LINE_TONE: Record<TitleLine, string> = {
@@ -1717,9 +1717,18 @@ const TITLE_LINE_TEXT: Record<TitleLine, string> = {
   screen: 'text-title-screen', star: 'text-title-star', other: 'text-title-other',
 };
 
-const TITLE_NEED_UNIT: Record<string, string> = {
-  电视作品: '部', 电影作品: '部', 专辑: '张', 广告: '支', 节目: '档', 作品总数: '部',
-};
+const TITLE_NEED_UNIT: Record<string, string> = Object.fromEntries(
+  NOTICE_COUNT_LABELS.map((label, i) => [label, NOTICE_COUNT_UNITS[i]]),
+);
+
+/** 门槛一律写成「节目 需 3 档，还差 2 档」这一句，跟游戏通告统计的名词对齐。 */
+function needGapText(item: TitleGapItem): string {
+  const unit = TITLE_NEED_UNIT[item.label] ?? '';
+  const need = `${item.need}${unit}`;
+  if (item.diff === null) return `${item.label} 需 ${need}`;
+  if (item.diff === 0) return `${item.label} 需 ${need}，已够`;
+  return `${item.label} 需 ${need}，还差 ${item.diff}${unit}`;
+}
 
 /** 称号徽标：颜色标线，hover / 键盘聚焦时展开这条线的门槛。 */
 function TitleBadge({ title, meta, next }: {
@@ -1789,11 +1798,7 @@ function TitleBadge({ title, meta, next }: {
                         : 'bg-alert-soft text-alert',
                   )}
                 >
-                  {item.diff === 0
-                    ? `${item.label} 已够`
-                    : item.diff === null
-                      ? `${item.label} 需 ${item.need}${TITLE_NEED_UNIT[item.label] ?? ''}`
-                      : `${item.label} 还差 ${item.diff}`}
+                  {needGapText(item)}
                 </span>
               ))}
             </span>
@@ -1857,9 +1862,12 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
             <span className="text-ink-faint">通告统计</span>
             {NOTICE_COUNT_LABELS.map((label, i) => (
               <span key={label} className="rounded bg-surface-soft px-1 text-ink-muted">
-                {label} <b>{artist.noticeCounts[i]}</b>
+                {label} <b>{artist.noticeCounts[i]}</b>{NOTICE_COUNT_UNITS[i]}
               </span>
             ))}
+            <span data-case-artist-count-total className="rounded bg-surface-soft px-1 text-ink-muted">
+              {NOTICE_TOTAL_LABEL} <b>{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
+            </span>
           </div>
         </>
       ) : (

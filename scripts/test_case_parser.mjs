@@ -940,7 +940,7 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
         artist.titleMeta.line);
     }
     // 「下一档」按烘焙的梯子走：主持新人 -> 主持人、广告新人 -> 模特儿、
-    // 未出道新人 -> 新人。门槛都算不出来时只给目标，不算差值。
+    // 未出道新人 -> 新人。属性门槛算当前值，作品门槛算「通告统计」里的数。
     const NEXT_BY_TITLE = { 主持新人: '主持人', 广告新人: '模特儿', 未出道新人: '新人' };
     for (const artist of save_.artists) {
       const want = NEXT_BY_TITLE[artist.title];
@@ -953,6 +953,27 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     const option = save_.artistDirectory.find((o) => o.id === Number(sample));
     check(option?.title === expected[sample], `${save}: 艺人目录 #${sample} 同步带称号`,
       option?.title ?? '缺失');
+  }
+
+  // 作品类门槛用的就是「通告统计」那五个数（电视作品 / 电影作品 / 专辑 / 广告 /
+  // 节目），作品总数是五项相加 —— 和称号 hover 卡上写的名字、单位完全一致。
+  {
+    const p = path.join(SNAP, 'Story0034.sa2');
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p);
+      const save_ = parseSave(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0034.sa2');
+      const get = (id) => save_.artists.find((a) => a.roleId === id);
+      const fen = get(1); // 林芬芬 0 电视 / 1 电影 / 3 专辑 / 2 广告 / 1 节目
+      const album = fen?.titleNext?.items.find((i) => i.label === '专辑');
+      check(fen?.noticeCounts.join(',') === '0,1,3,2,1'
+        && album?.need === 5 && album?.have === 3 && album?.diff === 2,
+        'Story0034: 偶像歌手 → 唱匠 要 5 张专辑，统计 3 张，还差 2 张',
+        JSON.stringify(album));
+      const kai = get(9); // 关古威 8 / 3 / 6 / 10 / 0
+      const total = kai?.titleNext?.items.find((i) => i.label === '作品总数');
+      check(total?.need === 10 && total?.have === 27 && total?.diff === 0,
+        'Story0034: 作品总数 = 五项相加（关古威 27）', JSON.stringify(total));
+    }
   }
 }
 
@@ -1065,10 +1086,10 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       auto.currentDate?.text ?? '缺日期');
     // 作品数取游戏自己算好的那一组（状态块 +248），只算已完成的通告。
     check(get(6)?.noticeCounts.join(',') === '0,0,0,3,0',
-      'Auto 萧依莉 3 支广告、0 主持（在拍的 SH068 不计入）',
+      'Auto 萧依莉 3 支广告、0 档节目（在拍的 SH068 不计入）',
       JSON.stringify(get(6)?.noticeCounts));
     check(get(8)?.noticeCounts.join(',') === '0,0,0,1,2',
-      'Auto 陈奕夫 1 支广告 2 个主持（含加入公司前的履历）',
+      'Auto 陈奕夫 1 支广告 2 档节目（含加入公司前的履历）',
       JSON.stringify(get(8)?.noticeCounts));
     // 马智文是 NPC、从未签约，作品数照样有值 —— 统计里含他在别家公司、
     // 以及加入公司之前的作品，所以不能靠数我方的接演记录。

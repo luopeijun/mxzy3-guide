@@ -1,6 +1,6 @@
 import type { TitleMeta } from './caseParser';
 
-/** 一个门槛项：当前值算不出来的（作品数按游戏内口径统计）have 为 null。 */
+/** 一个门槛项：当前值读不到时 have 为 null（只影响显示，不影响达成判断）。 */
 export interface TitleGapItem {
   label: string;
   need: number;
@@ -14,7 +14,7 @@ export interface TitleNext {
   name: string;
   rank: number;
   items: TitleGapItem[];
-  /** 所有能算的门槛都已达标（作品数不影响这个标记）。 */
+  /** 所有门槛都已达标（属性、社交、作品数都算）。 */
   ready: boolean;
 }
 
@@ -28,13 +28,32 @@ const SOCIAL_INDEX: Record<string, number> = {
   叛逆: 0, 性感: 1, 亲和: 2, 人气: 3, 曝光: 4,
 };
 
-function currentValue(label: string, stats: { abilities: number[]; social: number[] }): number | null {
+/** 作品门槛用的名字就是游戏「通告统计」那五个，与 NOTICE_COUNT_LABELS 同序。 */
+const WORKS_INDEX: Record<string, number> = {
+  电视作品: 0, 电影作品: 1, 专辑: 2, 广告: 3, 节目: 4,
+};
+
+interface TitleStats {
+  abilities: number[];
+  social: number[];
+  /** 五个已完成作品数；缺了就算不出作品类门槛。 */
+  noticeCounts?: number[];
+}
+
+function currentValue(label: string, stats: TitleStats): number | null {
   const ability = ABILITY_INDEX[label];
   if (ability !== undefined) return stats.abilities[ability] ?? null;
   const social = SOCIAL_INDEX[label];
   if (social !== undefined) return stats.social[social] ?? null;
-  // 电视 / 电影 / 专辑 / 广告 / 节目 / 作品总数：存档里那五个计数器是当期通告数，
-  // 不是累计作品数（广告新人也能是 0），拿它算差值会误导，所以只显示目标值。
+  // 作品类门槛直接读游戏自己统计的那五个数：它就是「通告统计」界面上
+  // 显示的值，含入司前的履历、不含在拍的通告。
+  const works = WORKS_INDEX[label];
+  if (works !== undefined) return stats.noticeCounts?.[works] ?? null;
+  // 作品总数 = 上面五项相加。
+  if (label === '作品总数') {
+    const counts = stats.noticeCounts;
+    return counts ? counts.slice(0, 5).reduce((sum, n) => sum + n, 0) : null;
+  }
   return null;
 }
 
@@ -50,7 +69,7 @@ export function nextTitle(
   catalog: Record<string, TitleMeta>,
   names: Record<string, string>,
   currentId: number,
-  stats: { abilities: number[]; social: number[] },
+  stats: TitleStats,
   gender?: string,
 ): TitleNext | null {
   const current = catalog[String(currentId)];
