@@ -221,6 +221,55 @@ def load_stars(data_dirs):
     return out
 
 
+# 称号名是 Big5 繁体，和站里其它中文一样转成简体再烘焙。
+# 只收录 Nickname.tab 里真实出现过的繁体字；漏一个字就会在下面直接报错，
+# 不会悄悄把繁体塞进页面。
+TITLE_TRAD = {
+    "級": "级", "綜": "综", "藝": "艺", "戲": "戏", "劇": "剧",
+    "員": "员", "電": "电", "視": "视", "廣": "广", "兒": "儿",
+    "過": "过", "氣": "气", "實": "实", "動": "动", "際": "际", "國": "国",
+}
+
+# 简体正文里不会出现的字。转换后还剩任何一个，就说明映射表漏了字 ——
+# 宁可直接报错，也不要把繁体混进页面（311「國際名模」漏过一个「際」）。
+TRAD_LEFTOVER = "際國級綜藝戲劇員電視廣兒過氣實動後個為於這說時間開關學覺麼樣應該進還選邊讓親愛業樂團專導層慶戰據擔敗"
+
+
+def simplify_title(name):
+    text = "".join(TITLE_TRAD.get(ch, ch) for ch in name)
+    left = [ch for ch in text if ch in TRAD_LEFTOVER]
+    if left:
+        raise SystemExit("unmapped traditional characters in title %r: %s" % (name, "".join(left)))
+    return text
+
+
+def load_titles(data_dirs):
+    """称号编号 -> 简体称号名，来自 Nickname.tab。
+
+    Nickname.tab 是定长表（55 条 × 168 字节），记录首 4 字节就是**称号编号**，
+    紧接着 40 字节是 Big5 名称。存档里艺人状态块 `o-12` 存的就是这个编号，
+    所以这里只烘焙「编号 -> 名字」这一层对应关系，不猜编号里的位含义。
+
+    两套 data 目录的内容不同：data 是 2005 初版（超級名模 > 名模 > 人氣偶像，
+    701 写作「未出道的新人」），data1 是 2007 更新版（國際名模 > 超級名模 > 名模，
+    701 是「未出道新人」）。玩家实际在跑的是更新版，称号也与之一致，
+    所以取第一份能读出来的表（调用方给的是 data1 优先）。
+    """
+    for data_dir in data_dirs:
+        path = os.path.join(data_dir, "Nickname.tab")
+        if not os.path.isfile(path):
+            continue
+        out = {}
+        for rec in read_table(path):
+            tid = struct.unpack_from("<i", rec, 0)[0]
+            name = big5(rec[4:44].split(b"\x00")[0])
+            if tid > 0 and name:
+                out[str(tid)] = simplify_title(name)
+        if out:
+            return out
+    return {}
+
+
 def load_firms(data_dir):
     """Company id -> name, used only as a hint next to the save's slot number."""
     path = os.path.join(data_dir, "Firm.dat")
@@ -339,6 +388,7 @@ def main():
         "length": load_length(dirs[0]),
         "difficulty": load_difficulty(dirs[0]),
         "stars": load_stars(dirs),
+        "titles": load_titles(dirs),
         "firms": load_firms(dirs[0]),
         "items": load_items(dirs),
     }
@@ -349,6 +399,7 @@ def main():
     print("length       %d" % len(payload["length"]))
     print("difficulty   %d stars" % len(payload["difficulty"]))
     print("stars        %d" % len(payload["stars"]))
+    print("titles       %d" % len(payload["titles"]))
     print("firms        %d" % len(payload["firms"]))
     print("items        %d" % len(payload["items"]))
     print("written      %s (%d bytes)" % (OUT, os.path.getsize(OUT)))
