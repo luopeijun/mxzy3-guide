@@ -618,7 +618,7 @@ export default function CaseReaderApp() {
                 {signedArtists.length === 0 ? (
                   <p className="text-ui-2xs text-ink-faint">这份存档里没有识别到旗下艺人。</p>
                 ) : signedArtists.map(({ option, artist }) => (
-                  <div key={option.id} className="w-[320px] shrink-0">
+                  <div key={option.id} className="w-[344px] shrink-0">
                     <ArtistCard option={option} artist={artist} />
                   </div>
                 ))}
@@ -864,7 +864,7 @@ export default function CaseReaderApp() {
                       data-case-filter-qualified
                       aria-pressed={takeFilter === 'qualified'}
                       onClick={() => setTakeFilter((value) => (value === 'qualified' ? 'all' : 'qualified'))}
-                      title="还有角色没被预约，并且我方至少有一位艺人的性别与九项所需数值都达标"
+                      title="还有角色没被预约，并且我方至少有一位艺人的性别、所需数值与社交门槛都达标"
                       className={chipClass(takeFilter === 'qualified')}
                     >
                       满足条件
@@ -1650,6 +1650,9 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
             ))}
           </div>
           <div className="mt-1 border-t border-line pt-1 text-ui-2xs leading-[1.7] text-ink-faint">
+            <span data-case-artist-friendship className="mr-1 rounded bg-brand-soft px-1 font-semibold text-brand-strong">
+              友好度 {artist.friendship ?? '—'}
+            </span>
             压力 {artist.stress} · 疲劳 {artist.fatigue} · 叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]} · 人气 {artist.social[3]} · 曝光 {artist.social[4]} · 礼物 {artist.gifts}
           </div>
           <div data-case-artist-counts className="mt-0.5 flex flex-wrap gap-1 text-ui-2xs">
@@ -1710,8 +1713,16 @@ function RequirementChips({ role }: { role: RoleRecord }) {
         <span
           key={req.attr}
           data-case-value
-          title={`${req.attr} ${req.value}，静态等级 ${req.staticGrade || '未标注'}`}
-          className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border border-line-strong bg-surface px-2 py-0.5 text-ui-2xs text-ink-muted"
+          data-case-social={req.social ? 'yes' : undefined}
+          title={req.social
+            ? `${req.attr} ≥ ${req.value}（角色接演门槛，从存档读取，无等级）`
+            : `${req.attr} ${req.value}，静态等级 ${req.staticGrade || '未标注'}`}
+          className={cn(
+            'inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-ui-2xs text-ink-muted',
+            req.social
+              ? 'border-brand-line bg-brand-soft text-brand-strong'
+              : 'border-line-strong bg-surface',
+          )}
         >
           {req.attr}
           <b className="text-ui-xs text-brand-strong">{req.value}</b>
