@@ -243,12 +243,103 @@ def simplify_title(name):
     return text
 
 
-def load_titles(data_dirs):
-    """称号编号 -> 简体称号名，来自 Nickname.tab。
+# 称号记录里「属性门槛」的列位置 -> 中文名。和存档里艺人九项能力 + 社交五项同序，
+# 靠实际数值反推：戲劇天王 +40=700（演技）、綜藝天王 +44=700（口才）、
+# 歌神 +48=700（歌艺）、國際名模 +56=700（仪态）、動感歌手 +60=400（动感）、
+# 反派演員 +76=600（叛逆）、性感歌手 / 性感演員 +80=600（性感）、偶像 +88=500（人气）。
+TITLE_ATTR_COLS = [
+    (40, "演技"), (44, "口才"), (48, "歌艺"), (52, "名气"), (56, "仪态"),
+    (60, "动感"), (64, "体能"), (68, "才智"), (72, "自信"), (76, "叛逆"),
+    (80, "性感"), (84, "亲和"), (88, "人气"), (92, "曝光"),
+]
 
-    Nickname.tab 是定长表（55 条 × 168 字节），记录首 4 字节就是**称号编号**，
-    紧接着 40 字节是 Big5 名称。存档里艺人状态块 `o-12` 存的就是这个编号，
-    所以这里只烘焙「编号 -> 名字」这一层对应关系，不猜编号里的位含义。
+# 作品数量门槛。104~120 五列靠「新人档」互相印证：電視新人 +104=1、電影新人 +108=1、
+# 歌唱新人 +112=1、廣告新人 +116=1、主持新人 +120=1。+124 是跨类型的总数。
+TITLE_WORK_COLS = [
+    (104, "电视作品"), (108, "电影作品"), (112, "专辑"),
+    (116, "广告"), (120, "节目"), (124, "作品总数"),
+]
+
+# 编号百位 = 职业线；1/2/11/12 是跨线总称号（要演技 + 歌艺都够）。
+TITLE_STAR_IDS = (1, 2, 11, 12)
+
+# 每条线内部的档位梯子，低 -> 高。同一档放多个编号＝并列变体
+# （男女版、不同作品来源的通用版、演员的喜感 / 反派 / 性感分支）。
+# 表里只给门槛不给「第几档」，这个顺序是照门槛高低 + 称号语义排的；
+# 下面 check_ladders() 会保证每个编号恰好出现一次，漏排或重排都会直接报错。
+TITLE_LADDERS = {
+    "music": [[621], [143], [141, 142], [131], [121], [101, 111]],
+    "host": [[622], [241], [231], [221], [201, 211]],
+    "model": [[623], [341], [331], [321], [311]],
+    "screen": [
+        [624, 625], [464, 461, 462, 463], [441, 451],
+        [431, 432], [421, 422, 423], [401, 411, 402, 412],
+    ],
+    "other": [[701], [611], [601]],
+    "star": [[1, 2, 11, 12]],
+}
+
+# 不在梯子上：过气艺人是掉档结果，不是升级方向。
+TITLE_NO_RANK = {501}
+
+
+def title_ranks():
+    """称号编号 -> 档位（0 起，越大越高）。"""
+    ranks = {}
+    for steps in TITLE_LADDERS.values():
+        for rank, ids in enumerate(steps):
+            for tid in ids:
+                if tid in ranks:
+                    raise SystemExit("title %d appears twice in the ladders" % tid)
+                ranks[tid] = rank
+    return ranks
+
+
+def check_ladders(ids):
+    """每个称号编号都必须排进梯子或被显式排除，避免表更新后悄悄漏排。"""
+    ranks = title_ranks()
+    missing = sorted(set(ids) - set(ranks) - TITLE_NO_RANK)
+    if missing:
+        raise SystemExit("titles missing from the ladders: %s" % missing)
+    extra = sorted(set(ranks) - set(ids))
+    if extra:
+        raise SystemExit("ladders reference unknown titles: %s" % extra)
+    return ranks
+
+
+def title_line(tid, tag):
+    """称号属于哪条线，决定页面上徽标的配色。
+
+    先认记录里的媒介标签（CD 唱片 / SH 主持 / CF 广告模特 / MV·TV 影视），
+    标签为「0」的通用版再按编号段判断：4xx 与 624 / 625 是影视，
+    其余（过气 / 知名 / 新人 / 未出道）归到「其他」。
+    """
+    if tid in TITLE_STAR_IDS:
+        return "star"
+    if tag == "CD":
+        return "music"
+    if tag == "SH":
+        return "host"
+    if tag == "CF":
+        return "model"
+    if tag in ("MV", "TV"):
+        return "screen"
+    if 400 <= tid <= 499 or tid in (624, 625):
+        return "screen"
+    return "other"
+
+
+def load_titles(data_dirs):
+    """称号编号 -> (简体称号名, 门槛元数据)，来自 Nickname.tab。
+
+    Nickname.tab 是定长表（55 条 × 168 字节）：
+    `+0` 编号 / `+4` 名称 20 字节 Big5 / `+24` 性别（-1 通用、1 男、0 女）/
+    `+28` 媒介标签（CD / SH / CF / MV / TV / 0 通用）/ 后面是属性与作品门槛。
+    存档里艺人状态块 `o-12` 存的就是这个编号。
+
+    同名的「媒介专属版」和「通用版」各占一条记录（例如戲劇天王 401 是 MV 版、
+    411 是通用版），名称相同但门槛不同。这里保留**媒介专属**那条，因为只有它
+    能说明这条线靠什么作品养成；通用版的数字留给解析时不看。
 
     两套 data 目录的内容不同：data 是 2005 初版（超級名模 > 名模 > 人氣偶像，
     701 写作「未出道的新人」），data1 是 2007 更新版（國際名模 > 超級名模 > 名模，
@@ -259,15 +350,36 @@ def load_titles(data_dirs):
         path = os.path.join(data_dir, "Nickname.tab")
         if not os.path.isfile(path):
             continue
-        out = {}
+        names = {}
+        meta = {}
         for rec in read_table(path):
             tid = struct.unpack_from("<i", rec, 0)[0]
             name = big5(rec[4:44].split(b"\x00")[0])
-            if tid > 0 and name:
-                out[str(tid)] = simplify_title(name)
-        if out:
-            return out
-    return {}
+            if tid <= 0 or not name:
+                continue
+            key = str(tid)
+            names[key] = simplify_title(name)
+            tag = rec[28:32].split(b"\x00")[0].decode("ascii", "replace")
+            # 已经有媒介专属版就不再被后面的通用版覆盖。
+            if key in meta and meta[key]["tag"] != "0":
+                continue
+            need = []
+            for off, label in TITLE_ATTR_COLS + TITLE_WORK_COLS:
+                value = struct.unpack_from("<i", rec, off)[0]
+                if value > 0:
+                    need.append([label, value])
+            meta[key] = {
+                "line": title_line(tid, tag),
+                "tag": tag,
+                "sex": struct.unpack_from("<i", rec, 24)[0],
+                "need": need,
+            }
+        if names:
+            ranks = check_ladders([int(k) for k in names])
+            for key, item in meta.items():
+                item["rank"] = ranks.get(int(key))
+            return names, meta
+    return {}, {}
 
 
 def load_firms(data_dir):
@@ -381,6 +493,7 @@ def main():
     dirs = [os.path.join(args.data, sub) for sub in DATA_SUBDIRS]
     dirs = [d for d in dirs if os.path.isdir(d)] or [args.data]
 
+    titles, title_meta = load_titles(dirs)
     payload = {
         "source": "明星志愿3 繁中三合一（tw）",
         "cases": load_cases(dirs),
@@ -388,7 +501,8 @@ def main():
         "length": load_length(dirs[0]),
         "difficulty": load_difficulty(dirs[0]),
         "stars": load_stars(dirs),
-        "titles": load_titles(dirs),
+        "titles": titles,
+        "titleMeta": title_meta,
         "firms": load_firms(dirs[0]),
         "items": load_items(dirs),
     }
@@ -399,7 +513,7 @@ def main():
     print("length       %d" % len(payload["length"]))
     print("difficulty   %d stars" % len(payload["difficulty"]))
     print("stars        %d" % len(payload["stars"]))
-    print("titles       %d" % len(payload["titles"]))
+    print("titles       %d (%d with meta)" % (len(payload["titles"]), len(payload["titleMeta"])))
     print("firms        %d" % len(payload["firms"]))
     print("items        %d" % len(payload["items"]))
     print("written      %s (%d bytes)" % (OUT, os.path.getsize(OUT)))
