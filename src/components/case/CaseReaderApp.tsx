@@ -5,6 +5,7 @@ import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
+  noticeLabel, noticeUnit,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
@@ -1699,8 +1700,8 @@ const TITLE_LINE_LABEL: Record<TitleLine, string> = {
 };
 
 const TITLE_LINE_HINT: Record<TitleLine, string> = {
-  music: '专辑养成', host: '节目养成', model: '广告养成',
-  screen: '电视 / 电影作品养成', star: '演技 + 歌艺双线', other: '跨线状态',
+  music: '唱片养成', host: '主持养成', model: '广告养成',
+  screen: '电视 / 电影养成', star: '演技 + 歌艺双线', other: '跨线状态',
 };
 
 const TITLE_LINE_TONE: Record<TitleLine, string> = {
@@ -1717,14 +1718,10 @@ const TITLE_LINE_TEXT: Record<TitleLine, string> = {
   screen: 'text-title-screen', star: 'text-title-star', other: 'text-title-other',
 };
 
-const TITLE_NEED_UNIT: Record<string, string> = Object.fromEntries(
-  NOTICE_COUNT_LABELS.map((label, i) => [label, NOTICE_COUNT_UNITS[i]]),
-);
-
 /** 门槛文案：达标的只写「名气 500」（绿色，不写「已够」），没达标的写清还差多少。 */
 function needGapText(item: TitleGapItem): string {
-  const unit = TITLE_NEED_UNIT[item.label] ?? '';
-  const need = `${item.label} ${item.need}${unit}`;
+  const unit = noticeUnit(item.label);
+  const need = `${noticeLabel(item.label)} ${item.need}${unit}`;
   if (item.diff === null || item.diff === 0) return need;
   return `${need}，还差 ${item.diff}${unit}`;
 }
@@ -1772,85 +1769,89 @@ function TitleBadge({ title, meta, next }: {
       <span
         data-case-artist-title-card
         role="tooltip"
-        className="pointer-events-none absolute left-0 top-full z-30 mt-1 w-[300px] rounded-ui-sm border border-line bg-surface p-2 text-left opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute left-0 top-full z-30 w-[300px] pt-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
       >
-        <span className="flex items-baseline gap-1">
-          <b className={cn('text-ui-2xs', TITLE_LINE_TEXT[line])}>{TITLE_LINE_LABEL[line]}</b>
-          <span className="text-ui-2xs text-ink-faint">{TITLE_LINE_HINT[line]}</span>
-          {meta?.rank !== null && meta?.rank !== undefined && (
-            <span className="ml-auto text-ui-2xs text-ink-faint">第 {meta.rank + 1} 档</span>
-          )}
-        </span>
-        {need.length > 0 ? (
-          <span className="mt-1 flex flex-wrap gap-1">
-            {need.map(([label, value]) => (
-              <span key={label} className="rounded bg-surface-soft px-1 text-ui-2xs text-ink-muted">
-                {label} <b className="tabular-nums">{value}{TITLE_NEED_UNIT[label] ?? ''}</b>
-              </span>
-            ))}
+        {/* 外层的 pt-1 顶住徽标与卡片之间的缝：鼠标挪到卡片上不闪退，
+            卡片本身也能选中 / 复制文字。 */}
+        <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
+          <span className="flex items-baseline gap-1">
+            <b className={cn('text-ui-2xs', TITLE_LINE_TEXT[line])}>{TITLE_LINE_LABEL[line]}</b>
+            <span className="text-ui-2xs text-ink-faint">{TITLE_LINE_HINT[line]}</span>
+            {meta?.rank !== null && meta?.rank !== undefined && (
+              <span className="ml-auto text-ui-2xs text-ink-faint">第 {meta.rank + 1} 档</span>
+            )}
           </span>
-        ) : (
-          <span className="mt-1 block text-ui-2xs text-ink-faint">没有门槛：出道前的默认称号</span>
-        )}
-        {next ? (
-          <span
-            data-case-artist-title-next
-            className="mt-1.5 block border-t border-line pt-1.5"
-          >
-            <span className="flex items-baseline gap-1">
-              <span className="text-ui-2xs text-ink-faint">下一档</span>
-              <b className="text-ui-2xs text-ink">{next.name}</b>
-              {next.ready && (
-                <span className="text-ui-2xs font-semibold text-title-model">条件已够</span>
+          {need.length > 0 ? (
+            <span className="mt-1 flex flex-wrap gap-1">
+              {need.map(([label, value]) => (
+                <span key={label} className="rounded bg-surface-soft px-1 text-ui-2xs text-ink-muted">
+                  {noticeLabel(label)} <b className="tabular-nums">{value}{noticeUnit(label)}</b>
+                </span>
+              ))}
+            </span>
+          ) : (
+            <span className="mt-1 block text-ui-2xs text-ink-faint">没有门槛：出道前的默认称号</span>
+          )}
+          {next ? (
+            <span
+              data-case-artist-title-next
+              className="mt-1.5 block border-t border-line pt-1.5"
+            >
+              <span className="flex items-baseline gap-1">
+                <span className="text-ui-2xs text-ink-faint">下一档</span>
+                <b className="text-ui-2xs text-ink">{next.name}</b>
+                {next.ready && (
+                  <span className="text-ui-2xs font-semibold text-title-model">数值已够</span>
+                )}
+              </span>
+              {next.shared.length > 0 && (
+                <span data-case-title-shared className="mt-1 flex flex-wrap gap-1">
+                  {next.shared.map((item) => <GapChip key={item.label} item={item} />)}
+                </span>
+              )}
+              {next.branches.some((branch) => branch.items.length > 0) && (
+                <span data-case-title-branches className="mt-1 block">
+                  {next.branches.length > 1 && (
+                    <span className="block text-ui-2xs text-ink-faint">作品条件：任一套达成即可</span>
+                  )}
+                  {next.branches.map((branch, i) => (
+                    <span
+                      key={i}
+                      data-case-title-branch={i}
+                      className="mt-1 flex flex-wrap items-center gap-1"
+                    >
+                      {/* 每支都以「或」起头，行行对齐；支内多项是「并」，用 + 连。 */}
+                      {next.branches.length > 1 && (
+                        <span
+                          data-case-title-or
+                          className="w-4 shrink-0 text-center text-ui-2xs font-semibold text-ink-muted"
+                        >
+                          或
+                        </span>
+                      )}
+                      {branch.items.map((item, j) => (
+                        <Fragment key={item.label}>
+                          {j > 0 && (
+                            <span className="text-ui-2xs font-semibold text-ink-faint">+</span>
+                          )}
+                          <GapChip item={item} />
+                        </Fragment>
+                      ))}
+                    </span>
+                  ))}
+                </span>
               )}
             </span>
-            {next.shared.length > 0 && (
-              <span data-case-title-shared className="mt-1 flex flex-wrap gap-1">
-                {next.shared.map((item) => <GapChip key={item.label} item={item} />)}
-              </span>
-            )}
-            {next.branches.some((branch) => branch.items.length > 0) && (
-              <span data-case-title-branches className="mt-1 block">
-                {next.branches.length > 1 && (
-                  <span className="block text-ui-2xs text-ink-faint">作品条件：任一套达成即可</span>
-                )}
-                {next.branches.map((branch, i) => (
-                  <span
-                    key={i}
-                    data-case-title-branch={i}
-                    className="mt-1 flex flex-wrap items-center gap-1"
-                  >
-                    {/* 每支都以「或」起头，行行对齐；支内多项是「并」，用 + 连。 */}
-                    {next.branches.length > 1 && (
-                      <span
-                        data-case-title-or
-                        className="w-4 shrink-0 text-center text-ui-2xs font-semibold text-ink-muted"
-                      >
-                        或
-                      </span>
-                    )}
-                    {branch.items.map((item, j) => (
-                      <Fragment key={item.label}>
-                        {j > 0 && (
-                          <span className="text-ui-2xs font-semibold text-ink-faint">+</span>
-                        )}
-                        <GapChip item={item} />
-                      </Fragment>
-                    ))}
-                  </span>
-                ))}
-              </span>
-            )}
-          </span>
-        ) : meta?.rank !== null && meta?.rank !== undefined ? (
-          <span
-            data-case-artist-title-next
-            className="mt-1.5 block border-t border-line pt-1.5 text-ui-2xs text-ink-faint"
-          >
-            已经是本线最高档。
-          </span>
-        ) : null}
-        <span className="mt-1 block text-ui-2xs text-ink-faint">同一时间只挂一个称号。</span>
+          ) : meta?.rank !== null && meta?.rank !== undefined ? (
+            <span
+              data-case-artist-title-next
+              className="mt-1.5 block border-t border-line pt-1.5 text-ui-2xs text-ink-faint"
+            >
+              已经是最高档。
+            </span>
+          ) : null}
+            <span className="mt-1 block text-ui-2xs text-ink-faint">同一时间只挂一个称号。</span>
+        </span>
       </span>
     </span>
   );

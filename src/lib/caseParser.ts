@@ -15,13 +15,29 @@ import { nextTitle, type TitleNext } from './titleLadder';
 
 export const ATTRS = ['演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信'] as const;
 /** 游戏「通告统计」用的那一套名字，顺序 = 存档状态块 +248 起那五个计数
- *  （电视作品 / 电影作品 / 专辑 / 广告 / 节目）。称号门槛（Nickname.tab）里
- *  写的也是这五个名字，所以两处共用这一份，免得同一个东西两个叫法。 */
-export const NOTICE_COUNT_LABELS = ['电视作品', '电影作品', '专辑', '广告', '节目'] as const;
+ *  （电视 / 电影 / 唱片 / 广告 / 主持）。称号门槛（Nickname.tab）里写的是
+ *  「电视作品 / 电影作品 / 专辑 / 节目」，页面靠 NOTICE_COUNT_ALIAS 统一成
+ *  这一套，免得同一个东西两个叫法。 */
+export const NOTICE_COUNT_LABELS = ['电视', '电影', '唱片', '广告', '主持'] as const;
 /** 与 NOTICE_COUNT_LABELS 同序，游戏界面上跟在数字后面的单位。 */
 export const NOTICE_COUNT_UNITS = ['部', '部', '张', '支', '档'] as const;
 /** 六项里的最后一项：上面五个数字相加（单位不齐，所以不带单位）。 */
 export const NOTICE_TOTAL_LABEL = '作品总数';
+/** 称号表里的作品门槛名 → 通告统计的叫法。 */
+export const NOTICE_COUNT_ALIAS: Record<string, string> = {
+  电视作品: '电视', 电影作品: '电影', 专辑: '唱片', 节目: '主持',
+};
+
+/** 门槛 / 统计的统一显示名。 */
+export function noticeLabel(label: string): string {
+  return NOTICE_COUNT_ALIAS[label] ?? label;
+}
+
+/** 与 noticeLabel 配套的单位；作品总数没有单位。 */
+export function noticeUnit(label: string): string {
+  const index = NOTICE_COUNT_LABELS.indexOf(noticeLabel(label) as (typeof NOTICE_COUNT_LABELS)[number]);
+  return index >= 0 ? NOTICE_COUNT_UNITS[index] : '';
+}
 const GRADES = ['', 'A', 'B', 'C', 'D'];
 const WEEKDAYS = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
@@ -340,9 +356,9 @@ export interface CompanyInfo {
   protagonist: string;
   /** 公司形象，例如「注入新血的」。 */
   image: string;
-  /** 知名度。 */
+  /** 知名度（存档里 ×10，这里已除回游戏界面的值）。 */
   fame: number;
-  /** 公关。 */
+  /** 公关（同样已 ÷10）。 */
   pr: number;
   /** 资金，可能是负数（负债）。 */
   money: number;
@@ -990,7 +1006,8 @@ function readFixedText(bytes: Uint8Array, start: number, length: number): string
 
 /** `Firm` 段体：先公司数量，然后每家一条
  *  `[编号][形象字节数][每字节一个 int32][知名度][公关][0]`。编号 1 是我方，
- *  2..5 是对手公司。形象里的字节是按**有符号** int32 存的，取低 8 位再拼。 */
+ *  2..5 是对手公司。形象里的字节是按**有符号** int32 存的，取低 8 位再拼；
+ *  知名度与公关和艺人属性一样是 ×10 存的，读出来要除以 10。 */
 function readFirmStats(
   bytes: Uint8Array,
   view: DataView,
@@ -1016,14 +1033,15 @@ function readFirmStats(
     }
     const chars = new Uint8Array(len);
     for (let k = 0; k < len; k += 1) chars[k] = view.getInt32(dataAt + k * 4, true) & 0xff;
-    const fame = view.getInt32(dataAt + len * 4, true);
-    const pr = view.getInt32(dataAt + len * 4 + 4, true);
-    if (fame < 0 || fame > 99999999 || pr < 0 || pr > 99999999) return null;
+    // 和艺人属性一样，这两位在存档里是 ×10 存的；除以 10 才是游戏界面的值。
+    const rawFame = view.getInt32(dataAt + len * 4, true);
+    const rawPr = view.getInt32(dataAt + len * 4 + 4, true);
+    if (rawFame < 0 || rawFame > 99999999 || rawPr < 0 || rawPr > 99999999) return null;
     const image = decodeBig5(chars).replace(/\0/g, '').trim();
     return {
       image: /[\ufffd]/.test(image) ? '' : image,
-      fame,
-      pr,
+      fame: rawFame / 10,
+      pr: rawPr / 10,
       offset: o,
     };
   }

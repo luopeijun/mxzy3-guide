@@ -47,6 +47,11 @@ const WORKS_INDEX: Record<string, number> = {
 /** 门槛里属于「作品」的项 —— 同一个称号的不同作品组合之间是「或」的关系。 */
 const WORKS_LABELS = new Set(['电视作品', '电影作品', '专辑', '广告', '节目', '作品总数']);
 
+/** 这四条职业线走到顶档后，下一步接跨线的总称号（天王巨星 / 超级天后）。
+ *  「其他」线的知名艺人只是过渡，不接总称号。 */
+const TOP_LINES = new Set(['music', 'host', 'model', 'screen']);
+
+
 type Need = [string, number];
 
 interface TitleStats {
@@ -105,6 +110,9 @@ const sameNeed = (a: Need[], b: Need[]) =>
  * 同名的合并成一个目标，共同的属性 / 社交门槛提出来只写一次，作品门槛各占
  * 一支「或」；不同名的是并列的另一个称号（电视演员 / 电影演员），分开算，
  * 最后按「已达成 → 缺口最小」挑一个推荐。
+ *
+ * 唱片 / 主持 / 模特 / 影视四条线走到顶档（歌神、综艺天王、国际名模、戏剧天王…）
+ * 之后，下一步是跨线的总称号 `star`：天王巨星（男）/ 超级天后（女）。
  */
 export function nextTitle(
   catalog: Record<string, TitleMeta>,
@@ -118,9 +126,18 @@ export function nextTitle(
   // 目录里第三位是 'any'（性别不固定），这时不做性别过滤。
   const known = gender === 'male' || gender === 'female' ? gender : undefined;
 
+  // 已经在本线顶档的职业线，下一步改看总称号那一档。
+  const lineRanks = Object.values(catalog)
+    .filter((meta) => meta.line === current.line && meta.rank !== null && meta.rank !== undefined)
+    .map((meta) => meta.rank as number);
+  const atTop = lineRanks.length > 0 && current.rank === Math.max(...lineRanks);
+  const toStar = atTop && TOP_LINES.has(current.line);
+  const targetLine = toStar ? 'star' : current.line;
+  const targetRank = toStar ? 0 : current.rank + 1;
+
   const groups = new Map<string, { id: number; metas: TitleMeta[] }>();
   for (const [id, meta] of Object.entries(catalog)) {
-    if (meta.line !== current.line || meta.rank !== current.rank + 1) continue;
+    if (meta.line !== targetLine || meta.rank !== targetRank) continue;
     if (known && meta.sex >= 0) {
       const wanted = meta.sex === 1 ? 'male' : 'female';
       if (wanted !== known) continue;

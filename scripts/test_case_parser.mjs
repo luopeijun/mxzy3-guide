@@ -377,9 +377,10 @@ if (fs.existsSync(savePath)) {
     check(auto.company?.name === '靠譜傳媒' && auto.company?.protagonist === '駱佩君',
       'Auto: 公司名 / 主角姓名取存档头的定长字段',
       `${auto.company?.name} / ${auto.company?.protagonist}`);
-    check(auto.company?.image === '注入新血的' && auto.company?.fame === 670
-      && auto.company?.pr === 539,
-      'Auto: 形象 / 知名度 / 公关 取 Firm 段编号 1 那条（注入新血的 670 / 539）',
+    // 知名度 / 公关 在存档里 ×10，读出来要除回游戏界面的值。
+    check(auto.company?.image === '注入新血的' && auto.company?.fame === 67
+      && auto.company?.pr === 53.9,
+      'Auto: 形象 / 知名度 / 公关 取 Firm 段编号 1 那条（注入新血的 67 / 53.9）',
       `${auto.company?.image} ${auto.company?.fame}/${auto.company?.pr}`);
     check(auto.company?.money === 1151527,
       'Auto: 资金取存档头 @80', String(auto.company?.money));
@@ -662,7 +663,7 @@ if (fs.existsSync(savePath)) {
       'Ending0005: 同一条通告上各人的需拍天数不一样（按人算）',
       tv601?.casts.map((c) => `${c.artistName}:${c.workDays}`).join(' '));
     check(mid.company?.name === '君君傳媒' && mid.company?.image === '邁向國際的'
-      && mid.company?.fame === 45093 && mid.company?.pr === 1300,
+      && mid.company?.fame === 4509.3 && mid.company?.pr === 130,
       'Ending0005: 公司换成 君君傳媒 后形象 / 知名度 / 公关 也跟着存档走',
       `${mid.company?.name} ${mid.company?.image} ${mid.company?.fame}/${mid.company?.pr}`);
   } else {
@@ -988,6 +989,39 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
         `${sha?.titleNext?.name} / ${sha?.titleNext?.shared.map((i) => i.label).join(',')} / ${branchLabels.join('|')}`);
     }
   }
+}
+
+// 四条职业线（唱片 / 主持 / 模特 / 影视）走到顶档后，下一步是跨线的总称号：
+// 天王巨星（男）/ 超级天后（女）。「其他」线的知名艺人只是过渡，不接。
+{
+  const ladderBundle = path.join(tmp, 'title-ladder.test.mjs');
+  await build({
+    entryPoints: [path.join(root, 'src/lib/titleLadder.ts')],
+    outfile: ladderBundle,
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    logLevel: 'silent',
+  });
+  const { nextTitle } = await import(pathToFileURL(ladderBundle).href + `?v=${Date.now()}`);
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const stats = {
+    abilities: Array(9).fill(999),
+    social: Array(5).fill(600),
+    noticeCounts: [10, 10, 10, 10, 10],
+  };
+  const next = (id, gender) => nextTitle(tables.titleMeta, tables.titles, id, stats, gender);
+
+  const singer = next(101, 'male'); // 歌神 → 总称号
+  check(singer?.name === '天王巨星' && singer.branches.length === 2,
+    '歌神 → 天王巨星（电影 7 + 专辑 4 或 电影 4 + 专辑 7）',
+    `${singer?.name} / ${singer?.branches.length ?? 0} 支`);
+  const model = next(311, 'female'); // 国际名模不限性别，女艺人接超级天后
+  check(model?.name === '超级天后', '国际名模 → 超级天后', model?.name ?? 'null');
+  const actor = next(411, 'male'); // 通用版戏剧天王
+  check(actor?.name === '天王巨星', '戏剧天王 → 天王巨星', actor?.name ?? 'null');
+  check(next(1, 'male') === null, '天王巨星已经是最高档', String(next(1, 'male')));
+  check(next(601, 'female') === null, '知名艺人（其他线）不接总称号', String(next(601, 'female')));
 }
 
 // 角色社交接演门槛（叛逆/性感/亲和）：Story0004 的 CF234 味美 解說篇要求亲和 ≥ 650，

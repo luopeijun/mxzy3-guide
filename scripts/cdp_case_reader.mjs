@@ -299,9 +299,9 @@ async function main() {
     const comp = p.company ? JSON.parse(p.company) : null;
     check(comp?.summary.includes('靠譜傳媒') && comp?.summary.includes('駱佩君'),
       '公司卡片读出头部的公司名与主角姓名', comp?.summary ?? 'none');
-    check(comp?.image.includes('注入新血的') && comp?.fame.includes('670')
-      && comp?.pr.includes('539'),
-      '公司形象 / 知名度 / 公关 从 Firm 段读出来',
+    check(comp?.image.includes('注入新血的') && comp?.fame.includes('67')
+      && comp?.pr.includes('53.9'),
+      '公司形象 / 知名度 / 公关 从 Firm 段读出来（×10 的已除回）',
       `${comp?.image ?? '-'} ${comp?.fame ?? '-'} ${comp?.pr ?? '-'}`);
     check(comp?.money.includes('115万1527'),
       '资金按亿 / 万拆开显示（1,151,527 → 115万1527）', comp?.money ?? 'none');
