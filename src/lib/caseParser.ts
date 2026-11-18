@@ -358,7 +358,7 @@ export function matchGroupRole(
     const need = role.social[key];
     if (!need) continue;
     const have = leader?.social[idx] ?? 0;
-    gaps.push({ attr, need, have, diff: need - have });
+    gaps.push({ attr, need, have, diff: need - have, social: true });
   }
   const missing = gaps.filter((gap) => gap.diff > 0);
   return {
@@ -1867,7 +1867,8 @@ export interface MatchResult {
   /** false when the role's gender rules the artist out entirely. */
   eligible: boolean;
   canAccept: boolean;
-  gaps: { attr: string; need: number; have: number; diff: number }[];
+  /** 社交门槛差值带 social 标记，UI 用它把隐藏条件和九项数值换成不同颜色。 */
+  gaps: { attr: string; need: number; have: number; diff: number; social?: boolean }[];
   missing: number;
 }
 
@@ -1889,7 +1890,7 @@ export function matchRole(
     const need = role.social[key];
     if (!need) continue;
     const have = artist.social[idx] ?? 0;
-    gaps.push({ attr, need, have, diff: need - have });
+    gaps.push({ attr, need, have, diff: need - have, social: true });
   }
   const missing = gaps.filter((gap) => gap.diff > 0);
   const eligible = canTakeRole(role, gender);

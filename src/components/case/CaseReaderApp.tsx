@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, ReactNode } from 'react';
 import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
@@ -1821,7 +1821,25 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
                 ) : (
                   <span>
                     <b>{match.artistName}</b>{' '}
-                    差 {match.gaps.filter((gap) => gap.diff > 0).map((gap) => `${gap.attr} ${Math.ceil(gap.diff)}`).join(' · ')}
+                    差{' '}
+                    {match.gaps
+                      .filter((gap) => gap.diff > 0)
+                      .map((gap, index) => (
+                        <Fragment key={gap.attr}>
+                          {index > 0 && ' · '}
+                          {gap.social ? (
+                            <span
+                              data-case-social-gap
+                              title="从存档读取的附加属性门槛（无等级）"
+                              className="inline-flex items-center rounded-full border border-brand-line bg-brand-soft px-1.5 py-0.5 align-baseline font-semibold text-brand-strong"
+                            >
+                              {gap.attr} {Math.ceil(gap.diff)}
+                            </span>
+                          ) : (
+                            <span>{gap.attr} {Math.ceil(gap.diff)}</span>
+                          )}
+                        </Fragment>
+                      ))}
                   </span>
                 )}
                 {/* 团体通告是整团接的：队长与团员另起一行列全。 */}
