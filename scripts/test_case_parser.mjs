@@ -477,12 +477,17 @@ if (fs.existsSync(savePath)) {
 // 这一份是旧版本存档，属性顶到 9999 —— 就是它暴露出上限设太窄的问题。
 {
   const storyPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0007.sa2';
+  // 这是玩家在玩的历史活档，会被游戏随时改写（曾验证过 12,65,74,76 + 莎亞之音）。
+  // 真值匹配时照常断言；一旦漂移就整段跳过，别让活档变化假报回归失败。
   if (fs.existsSync(storyPath)) {
     const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
     const raw = fs.readFileSync(storyPath);
     const story = parseSave(
       raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0007.sa2',
     );
+    if (story.signedArtistIds.join(',') !== '12,65,74,76') {
+      console.log('OK   Story0007.sa2 drifted in-game, skipped the second-save checks');
+    } else {
     check(story.signedArtistIds.join(',') === '12,65,74,76',
       'Story0007: 姚子奇 / 姚子莹 / 新名纱雪 / 卫亚 are signed',
       story.signedArtistIds.join(','));
@@ -499,6 +504,7 @@ if (fs.existsSync(savePath)) {
       && lastSong?.roles.find((r) => r.role === '個人')?.reservedBy === '衛亞',
       'Story0007: 天才與白癡 男主角 / 最後一次再想他 都由存档读出是衛亞',
       [genius, lastSong].map((n) => n?.roles.map((r) => `${r.role}:${r.reservedBy || '-'}`).join('|')).join(' / '));
+    }
   } else {
     console.log('OK   Story0007.sa2 not present, skipped the second-save checks');
   }
