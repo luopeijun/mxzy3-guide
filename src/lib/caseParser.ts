@@ -113,6 +113,8 @@ export interface CaseTables {
   difficulty: number[][][];
   /** 艺人编号 -> [名字, 性别]（1 男 0 女），用来给「已被谁预约」署名。 */
   stars?: Record<string, [string, number]>;
+  /** 称号编号 -> 简体称号名，来自 Nickname.tab；存档艺人块 -12 处存的就是这个编号。 */
+  titles?: Record<string, string>;
   /** company id -> name */
   firms: Record<string, string>;
   /** 道具 code -> [名称, 分类, 说明, 属性行]，来自 Item.dat 烘焙。 */
@@ -120,7 +122,8 @@ export interface CaseTables {
 }
 
 export const EMPTY_TABLES: CaseTables = {
-  source: '', cases: {}, needEffect: {}, length: {}, difficulty: [], stars: {}, firms: {}, items: {},
+  source: '', cases: {}, needEffect: {}, length: {}, difficulty: [],
+  stars: {}, titles: {}, firms: {}, items: {},
 };
 
 export interface Requirement {
@@ -240,6 +243,10 @@ export interface ArtistStats {
   noticeCounts: number[];
   /** Short Big5 status label such as 正常. */
   condition: string;
+  /** 游戏内称号编号，存在状态块起始前 12 字节；0 = 还没有称号（例如刚签下、还没作品）。 */
+  titleId: number;
+  /** 称号名（简体），由 titleId 查烘焙进站点的 Nickname 表得来；读不到就是空串。 */
+  title: string;
   /** The game's roster number, stored 16 bytes before the nine abilities. */
   roleId: number;
   /** 1 means this artist is currently signed by the player's company. */
@@ -254,6 +261,8 @@ export interface ArtistOption extends ArtistDirectoryEntry {
   /** null when this artist has no state block in this save yet. */
   artistIndex: number | null;
   signed: boolean;
+  /** 存档里的称号名；空串表示还没有称号。 */
+  title: string;
   /** Nine abilities, for the roster chip tooltip. */
   abilities: number[];
 }
@@ -711,6 +720,7 @@ function parseArtists(
   start: number,
   end: number,
   friendship: Record<number, number>,
+  titles: Record<string, string>,
 ): ArtistStats[] {
   const out: ArtistStats[] = [];
   const seen = new Set<number>();
@@ -755,6 +765,9 @@ function parseArtists(
     if (abilities.every((v) => v === abilities[0])) continue;
     const roleId = o >= 16 ? view.getUint32(o - 16, true) : 0;
     if (PLACEHOLDER_ARTIST_IDS.includes(roleId)) continue;
+    // 称号编号紧跟在角色编号后面（块头 `[编号][称号][公司][?]`）。
+    // 0 表示还没有称号：刚签下、还没作品时会读到 0，不是解析失败。
+    const titleId = o >= 16 ? view.getUint32(o - 12, true) : 0;
     // One block per artist; keep the first so a stray later match cannot shadow it.
     if (seen.has(roleId)) continue;
     seen.add(roleId);
@@ -763,6 +776,7 @@ function parseArtists(
     out.push({
       friendship: roleId in friendship ? friendship[roleId] : null,
       abilities, stress, fatigue, social, gifts, noticeCounts, condition,
+      titleId, title: (titleId > 0 && titles[String(titleId)]) || '',
       roleId, signed, offset: o, index,
     });
   }
@@ -1493,7 +1507,7 @@ export function parseSave(
   const artistStart = blocks.StarRoleQ ? blocks.StarRoleQ[1] : 0;
   const artistEnd = blocks.Firm ? blocks.Firm[0] : bytes.length;
   const friendship = parseFriendship(view, bytes);
-  const artists = parseArtists(bytes, view, artistStart, artistEnd, friendship);
+  const artists = parseArtists(bytes, view, artistStart, artistEnd, friendship, tables.titles ?? {});
   const roster = parseRoster(bytes);
   // The state block carries the game's roster number at -16, so the panel can
   // show named artists instead of anonymous "状态块 #N" selectors.
@@ -1503,6 +1517,7 @@ export function parseSave(
       ...entry,
       artistIndex: block?.index ?? null,
       signed: block?.signed ?? false,
+      title: block?.title ?? '',
       abilities: block?.abilities ?? [],
     };
   });

@@ -1689,12 +1689,23 @@ function ItemsPanel({
   );
 }
 
-function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {  return (    <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
+function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {
+  return (
+    <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
       <div className="flex items-baseline gap-1.5">
         <span className="text-ui-xs font-bold text-brand-strong">#{option.id} {option.name}</span>
         <span className="rounded-full bg-surface-soft px-1.5 text-ui-2xs text-ink-faint">
           {option.gender === 'female' ? '女' : '男'}
         </span>
+        {artist?.title && (
+          <span
+            data-case-artist-title
+            title={`存档里记录的称号（编号 ${artist.titleId}）`}
+            className="rounded-full border border-brand-line bg-surface px-1.5 text-ui-2xs font-semibold text-brand-strong"
+          >
+            {artist.title}
+          </span>
+        )}
         {artist && (
           <span
             data-case-artist-condition
