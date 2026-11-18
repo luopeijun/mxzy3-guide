@@ -7,6 +7,8 @@
  *    hold across every notice (skipped on machines without the game).
  *
  * Usage: node scripts/test_case_parser.mjs [path/to/save.sa2]
+ * Defaults to the frozen probe.sa2 snapshot in tests/fixtures/saves/ so the
+ * exact-value assertions are reproducible and never follow the live game save.
  */
 
 import { build } from 'esbuild';
@@ -15,6 +17,9 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Frozen saves with player-verified truths. Never read the live Save2/ dir for
+// these — the game rewrites it while running and the assertions would drift.
+const SNAP = path.join(root, 'tests', 'fixtures', 'saves');
 const tmp = path.join(root, '.tmp');
 fs.mkdirSync(tmp, { recursive: true });
 const bundle = path.join(tmp, 'case-parser.test.mjs');
@@ -144,8 +149,7 @@ check(!wrongGender.eligible && !wrongGender.canAccept
     JSON.stringify([tables.length['舞台劇|男主角'], tables.length['時裝秀|男性']]));
 }
 
-const savePath = process.argv[2]
-  ?? 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
+const savePath = process.argv[2] ?? path.join(SNAP, 'probe.sa2');
 if (fs.existsSync(savePath)) {
   const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
   const data = fs.readFileSync(savePath);
@@ -331,10 +335,11 @@ if (fs.existsSync(savePath)) {
   console.log(`\nreal save not found (${savePath}), skipped live-save checks`);
 }
 
-// 第四个存档（Auto，玩家用来核对「拍摄中」）：只有萧依莉那条广告在拍，
-// 存档记的完成天数是 4 天，酬劳 5000。
+// 黄金快照（probe.sa2，玩家用来核对「拍摄中」）：只有萧依莉那条广告在拍，
+// 存档记的完成天数是 4 天，酬劳 5000。此前读 D 盘 Auto.sa2，但游戏会改写它
+// （变成 CF159 / 资金 1394477 / 20 件），故改用冻结快照。
 {
-  const autoPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
+  const autoPath = path.join(SNAP, 'probe.sa2');
   if (fs.existsSync(autoPath)) {
     const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
     const raw = fs.readFileSync(autoPath);
@@ -772,14 +777,16 @@ if (fs.existsSync(savePath)) {
     'canTakeNotice 只问没人接的角色', `问了 ${asked.length} / ${half.roles.length}`);
 }
 
-// 真实存档上的条数：Auto 8 条（3 条下周更新不算）、Story0055 9 条（CD017 / CF137 已满）。
+// 真实存档上的条数：probe 快照 8 条（3 条下周更新不算）、Story0055 9 条（CD017 / CF137 已满）。
 for (const [save, expected, fullCodes, expectedQualified] of [
-  // Auto 是开局：8 条还有未预约角色，但九项数值差 2~4 项，一条都接不上。
-  ['Auto.sa2', 8, '', 0],
-  // Story0055 已到后期，未预约的 9 条都满足条件。
+  // probe 是开局快照：8 条还有未预约角色，但九项数值差 2~4 项，一条都接不上。
+  ['probe.sa2', 8, '', 0],
+  // Story0055 已到后期，未预约的 9 条都满足条件（历史存档，游戏目录存在才跑）。
   ['Story0055.sa2', 9, 'CD017,CF137', 9],
 ]) {
-  const p = `D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/${save}`;
+  const p = save === 'probe.sa2'
+    ? path.join(SNAP, 'probe.sa2')
+    : `D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/${save}`;
   if (!fs.existsSync(p)) { console.log(`OK   ${save} not present, skipped the acceptable checks`); continue; }
   const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
   const raw = fs.readFileSync(p);
@@ -815,9 +822,10 @@ for (const [save, expected, fullCodes, expectedQualified] of [
     `${qualified.length} :: ${qualified.map((n) => n.code).join(',')}`);
 }
 
-// 友好度表：Story0002 萧依莉(#6)=141、Story0003=92，两个真实存档交叉验证。
+// 友好度表：Story0002 萧依莉(#6)=141、Story0003=92，玩家口述核对过的真值。
+// 读冻结快照而非游戏目录（活档已被改写成 144）。
 for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) {
-  const p = `D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/${save}`;
+  const p = path.join(SNAP, save);
   if (!fs.existsSync(p)) { console.log(`OK   ${save} not present, skipped the friendship check`); continue; }
   const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
   const raw = fs.readFileSync(p);
@@ -833,10 +841,11 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
 
 // 角色社交接演门槛（叛逆/性感/亲和）：Story0004 的 CF234 味美 解說篇要求亲和 ≥ 650，
 // 这个门槛存在角色记录 off+76/80/84，静态 special 表也有但存档才是真源。
+// 读冻结快照（玩家口述核对过 650），避免活档漂移。
 {
-  const p = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0004.sa2';
+  const p = path.join(SNAP, 'Story0004.sa2');
   if (!fs.existsSync(p)) {
-    console.log('OK   Story0004.sa2 not present, skipped the social-threshold check');
+    console.log('OK   Story0004.sa2 snapshot not present, skipped the social-threshold check');
   } else {
     const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
     const raw = fs.readFileSync(p);

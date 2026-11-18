@@ -21,8 +21,10 @@ import { fileURLToPath } from 'node:url';
 const PORT = '9339';
 const BASE = `http://127.0.0.1:${PORT}`;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SOURCE = process.argv[2] ?? 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Auto.sa2';
-// Work on a snapshot: Waltz.exe rewrites Auto.sa2 while the game is running.
+// Default to the frozen probe.sa2 snapshot: the game rewrites Save2/Auto.sa2
+// while running (date / money / items drift), which broke exact-value assertions.
+const SNAP = path.join(root, 'tests', 'fixtures', 'saves');
+const SOURCE = process.argv[2] ?? path.join(SNAP, 'probe.sa2');
 const SAVE = path.join(root, '.tmp', 'case-e2e.sa2');
 fs.mkdirSync(path.dirname(SAVE), { recursive: true });
 fs.copyFileSync(SOURCE, SAVE);
