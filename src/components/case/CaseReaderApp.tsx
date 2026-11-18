@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import EmptyState from '../EmptyState';
 import { cn } from '../../lib/cn';
 import {
@@ -1704,6 +1705,61 @@ function Td({ children, className, title, colSpan, rowSpan, dataAttrs }: {
   );
 }
 
+/** 课程 → 属性（玩家口述补齐表）：hover 差值时按缺口属性推荐可上的课。
+ *  名气没有对应课程，表里缺它就自然不弹浮窗。 */
+const TRAINING_COURSES: { name: string; attrs: [string, string] }[] = [
+  { name: '音感发声', attrs: ['歌艺', '自信'] },
+  { name: '乐器乐理', attrs: ['歌艺', '才智'] },
+  { name: '声音表情', attrs: ['演技', '口才'] },
+  { name: '肢体动作', attrs: ['演技', '动感'] },
+  { name: '说话技巧', attrs: ['口才', '自信'] },
+  { name: '摄影训练', attrs: ['仪态', '体能'] },
+  { name: '舞台表演', attrs: ['仪态', '动感'] },
+  { name: '有氧舞蹈', attrs: ['动感', '体能'] },
+  { name: '快速记忆', attrs: ['口才', '才智'] },
+  { name: '美姿美仪', attrs: ['仪态', '自信'] },
+];
+const COURSES_BY_ATTR = TRAINING_COURSES.reduce<Record<string, typeof TRAINING_COURSES>>((acc, course) => {
+  for (const attr of course.attrs) (acc[attr] ??= []).push(course);
+  return acc;
+}, {});
+
+/** Hover a missing ability and see which classes raise it. Portal to body so the
+ *  popover is not clipped by the case tab's own overflow-y content column. */
+function GapCourseHint({ gap }: { gap: { attr: string; diff: number } }) {
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
+  const courses = COURSES_BY_ATTR[gap.attr] ?? [];
+  if (courses.length === 0) return <span>{gap.attr} {Math.ceil(gap.diff)}</span>;
+  return (
+    <span
+      data-case-course-hint={gap.attr}
+      className="cursor-help decoration-dotted underline-offset-2 hover:underline"
+      onMouseEnter={(ev) => {
+        const r = ev.currentTarget.getBoundingClientRect();
+        setAnchor({ x: r.left + r.width / 2, y: r.top });
+      }}
+      onMouseLeave={() => setAnchor(null)}
+    >
+      {gap.attr} {Math.ceil(gap.diff)}
+      {anchor && createPortal(
+        <div
+          data-case-course-popover
+          className="pointer-events-none fixed z-50 w-max rounded-ui-md border border-line-strong bg-surface px-2.5 py-1.5 text-ui-2xs shadow-lg"
+          style={{ left: anchor.x, top: anchor.y - 6, transform: 'translate(-50%, -100%)' }}
+        >
+          <div className="mb-0.5 font-semibold text-brand-strong">可上课程 · {gap.attr}</div>
+          {courses.map((course) => (
+            <div key={course.name} className="whitespace-nowrap text-ink-muted">
+              {course.name}（{course.attrs.join(' · ')}）
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )}
+    </span>
+  );
+}
+
 /** Only the rolled thresholds; each artist's verdict lives in its own column. */
 function RequirementChips({ role }: { role: RoleRecord }) {
   if (role.requirements.length === 0) return <span className="text-ui-2xs text-ink-faint">无能力要求</span>;
@@ -1836,7 +1892,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
                               {gap.attr} {Math.ceil(gap.diff)}
                             </span>
                           ) : (
-                            <span>{gap.attr} {Math.ceil(gap.diff)}</span>
+                            <GapCourseHint gap={gap} />
                           )}
                         </Fragment>
                       ))}
