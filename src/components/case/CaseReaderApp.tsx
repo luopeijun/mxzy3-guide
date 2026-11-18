@@ -1721,13 +1721,32 @@ const TITLE_NEED_UNIT: Record<string, string> = Object.fromEntries(
   NOTICE_COUNT_LABELS.map((label, i) => [label, NOTICE_COUNT_UNITS[i]]),
 );
 
-/** 门槛一律写成「节目 需 3 档，还差 2 档」这一句，跟游戏通告统计的名词对齐。 */
+/** 门槛文案：达标的只写「名气 500」（绿色，不写「已够」），没达标的写清还差多少。 */
 function needGapText(item: TitleGapItem): string {
   const unit = TITLE_NEED_UNIT[item.label] ?? '';
-  const need = `${item.need}${unit}`;
-  if (item.diff === null) return `${item.label} 需 ${need}`;
-  if (item.diff === 0) return `${item.label} 需 ${need}，已够`;
-  return `${item.label} 需 ${need}，还差 ${item.diff}${unit}`;
+  const need = `${item.label} ${item.need}${unit}`;
+  if (item.diff === null || item.diff === 0) return need;
+  return `${need}，还差 ${item.diff}${unit}`;
+}
+
+/** 一个门槛小标签：绿 = 已达标、红 = 还差、灰 = 读不到当前值。 */
+function GapChip({ item }: { item: TitleGapItem }) {
+  return (
+    <span
+      data-case-gap={item.label}
+      data-gap-state={item.diff === 0 ? 'ready' : item.diff === null ? 'unknown' : 'short'}
+      className={cn(
+        'rounded px-1 text-ui-2xs tabular-nums',
+        item.diff === 0
+          ? 'bg-title-model-soft text-title-model'
+          : item.diff === null
+            ? 'bg-surface-soft text-ink-muted'
+            : 'bg-alert-soft text-alert',
+      )}
+    >
+      {needGapText(item)}
+    </span>
+  );
 }
 
 /** 称号徽标：颜色标线，hover / 键盘聚焦时展开这条线的门槛。 */
@@ -1753,7 +1772,7 @@ function TitleBadge({ title, meta, next }: {
       <span
         data-case-artist-title-card
         role="tooltip"
-        className="pointer-events-none absolute left-0 top-full z-30 mt-1 w-[236px] rounded-ui-sm border border-line bg-surface p-2 text-left opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute left-0 top-full z-30 mt-1 w-[300px] rounded-ui-sm border border-line bg-surface p-2 text-left opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
       >
         <span className="flex items-baseline gap-1">
           <b className={cn('text-ui-2xs', TITLE_LINE_TEXT[line])}>{TITLE_LINE_LABEL[line]}</b>
@@ -1785,23 +1804,32 @@ function TitleBadge({ title, meta, next }: {
                 <span className="text-ui-2xs font-semibold text-title-model">条件已够</span>
               )}
             </span>
-            <span className="mt-1 flex flex-wrap gap-1">
-              {next.items.map((item) => (
-                <span
-                  key={item.label}
-                  className={cn(
-                    'rounded px-1 text-ui-2xs tabular-nums',
-                    item.diff === 0
-                      ? 'bg-title-model-soft text-title-model'
-                      : item.diff === null
-                        ? 'bg-surface-soft text-ink-muted'
-                        : 'bg-alert-soft text-alert',
-                  )}
-                >
-                  {needGapText(item)}
-                </span>
-              ))}
-            </span>
+            {next.shared.length > 0 && (
+              <span data-case-title-shared className="mt-1 flex flex-wrap gap-1">
+                {next.shared.map((item) => <GapChip key={item.label} item={item} />)}
+              </span>
+            )}
+            {next.branches.some((branch) => branch.items.length > 0) && (
+              <span data-case-title-branches className="mt-1 block">
+                {next.branches.length > 1 && (
+                  <span className="block text-ui-2xs text-ink-faint">作品条件任一达成即可</span>
+                )}
+                {next.branches.map((branch, i) => (
+                  <span
+                    key={i}
+                    data-case-title-branch={i}
+                    className="mt-0.5 flex flex-wrap items-baseline gap-1"
+                  >
+                    {next.branches.length > 1 && (
+                      <span className="w-3 shrink-0 text-ui-2xs text-ink-faint">
+                        {i === 0 ? '' : '或'}
+                      </span>
+                    )}
+                    {branch.items.map((item) => <GapChip key={item.label} item={item} />)}
+                  </span>
+                ))}
+              </span>
+            )}
           </span>
         ) : meta?.rank !== null && meta?.rank !== undefined ? (
           <span

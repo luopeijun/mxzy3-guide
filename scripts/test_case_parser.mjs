@@ -964,15 +964,28 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       const save_ = parseSave(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0034.sa2');
       const get = (id) => save_.artists.find((a) => a.roleId === id);
       const fen = get(1); // 林芬芬 0 电视 / 1 电影 / 3 专辑 / 2 广告 / 1 节目
-      const album = fen?.titleNext?.items.find((i) => i.label === '专辑');
+      const album = fen?.titleNext?.branches
+        .flatMap((branch) => branch.items).find((i) => i.label === '专辑');
       check(fen?.noticeCounts.join(',') === '0,1,3,2,1'
         && album?.need === 5 && album?.have === 3 && album?.diff === 2,
         'Story0034: 偶像歌手 → 唱匠 要 5 张专辑，统计 3 张，还差 2 张',
         JSON.stringify(album));
       const kai = get(9); // 关古威 8 / 3 / 6 / 10 / 0
-      const total = kai?.titleNext?.items.find((i) => i.label === '作品总数');
+      const total = kai?.titleNext?.branches
+        .flatMap((branch) => branch.items).find((i) => i.label === '作品总数');
       check(total?.need === 10 && total?.have === 27 && total?.diff === 0,
         'Story0034: 作品总数 = 五项相加（关古威 27）', JSON.stringify(total));
+
+      // 「或」的条件必须拆开写：实力派演员 = 属性三件（共同）+ 电视 5 / 电影 5 /
+      // 电视 3 + 电影 3 三种拿法，hover 卡只列这三支，不再把三支的作品项混成一堆。
+      const sha = get(74); // 新名纱雪，偶像演员 → 实力派演员（3 支）
+      const branchLabels = (sha?.titleNext?.branches ?? [])
+        .map((branch) => branch.items.map((i) => i.label).join('+'));
+      check(sha?.titleNext?.name === '实力派演员'
+        && sha.titleNext.shared.map((i) => i.label).join(',') === '演技,名气,自信'
+        && branchLabels.join('|') === '电视作品|电影作品|电视作品+电影作品',
+        'Story0034: 实力派演员拆成 3 个「或」分支，共同属性只写一次',
+        `${sha?.titleNext?.name} / ${sha?.titleNext?.shared.map((i) => i.label).join(',')} / ${branchLabels.join('|')}`);
     }
   }
 }
