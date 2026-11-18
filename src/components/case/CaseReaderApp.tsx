@@ -252,6 +252,72 @@ function CaseToc({
   );
 }
 
+/** 右栏「艺人速查」：顶部完整卡片不动，这里只留对照通告表格时一眼要扫的
+ *  九项属性 + 状态 + 社交三项；友好度、压力疲劳、通告统计仍在顶部卡片里。
+ *  列表在剩余高度内自己滚，本页小结钉在上方不受影响。 */
+function ArtistQuickRef({ signed }: { signed: SignedArtist[] }) {
+  const [collapsed, setCollapsed] = useState(false);
+  return (
+    <section data-case-quickref className="flex min-h-0 flex-1 flex-col rounded-ui-md border border-line bg-surface p-2.5 shadow-soft">
+      <div className="flex items-center justify-between px-0.5">
+        <span className="text-ui-2xs font-semibold text-ink-faint">艺人速查 · {signed.length} 位</span>
+        <button
+          type="button"
+          data-case-quickref-toggle
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+          className="rounded px-1 text-ui-2xs text-ink-faint transition-colors hover:bg-surface-soft hover:text-brand-strong"
+        >
+          {collapsed ? '展开' : '收起'}
+        </button>
+      </div>
+      {!collapsed && (
+        <div data-case-quickref-list className="mt-1.5 min-h-0 space-y-1.5 overflow-y-auto pr-0.5">
+          {signed.length === 0 ? (
+            <p className="px-0.5 text-ui-2xs text-ink-faint">这份存档里没有识别到旗下艺人。</p>
+          ) : signed.map(({ option, artist }) => (
+            <div key={option.id} data-case-quickref-artist={option.name} className="rounded border border-line bg-surface-soft px-2 py-1.5">
+              <div className="flex items-baseline gap-1">
+                <span className="text-ui-2xs font-bold text-brand-strong">#{option.id} {option.name}</span>
+                <span className="rounded-full bg-surface px-1 text-ui-2xs text-ink-faint">
+                  {option.gender === 'female' ? '女' : '男'}
+                </span>
+                <span
+                  data-case-quickref-condition
+                  className={cn(
+                    'ml-auto text-ui-2xs',
+                    artist?.condition && artist.condition !== '正常'
+                      ? 'font-semibold text-alert' : 'text-ink-faint',
+                  )}
+                >
+                  {artist?.condition ?? '—'}
+                </span>
+              </div>
+              {artist ? (
+                <>
+                  <div data-case-quickref-attrs className="mt-1 grid grid-cols-3 gap-x-1.5 gap-y-0.5 text-ui-2xs text-ink-muted">
+                    {ATTRS.map((attr, i) => (
+                      <span key={attr} className="flex justify-between gap-0.5 whitespace-nowrap">
+                        <span className="text-ink-faint">{attr}</span>
+                        <b className="tabular-nums">{artist.abilities[i]}</b>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-1 whitespace-nowrap border-t border-line pt-1 text-ui-2xs leading-[1.5] text-ink-faint">
+                    叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]}
+                  </div>
+                </>
+              ) : (
+                <p className="mt-1 text-ui-2xs text-ink-faint">这份存档里还没有这位的状态块。</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** 存档解析：把 .sa2 拖进来，在浏览器里解出当期通告、日期与艺人数值。
  *  文件不会上传；读进内存的就是一份快照，游戏随后覆盖自动存档也不影响。 */
 export default function CaseReaderApp() {
@@ -954,12 +1020,15 @@ export default function CaseReaderApp() {
       </div>
 
       {result && (
-        <aside className="fixed right-4 top-[76px] z-10 hidden w-[248px] min-[1120px]:block">
-          <CaseToc
-            result={result}
-            signedArtists={signedArtists}
-            activeGroups={activeGroups}
-          />
+        <aside className="fixed right-4 top-[76px] z-10 flex max-h-[calc(100vh-92px)] w-[248px] flex-col gap-2 hidden min-[1120px]:flex">
+          <div className="shrink-0">
+            <CaseToc
+              result={result}
+              signedArtists={signedArtists}
+              activeGroups={activeGroups}
+            />
+          </div>
+          <ArtistQuickRef signed={signedArtists} />
         </aside>
       )}
     </div>
