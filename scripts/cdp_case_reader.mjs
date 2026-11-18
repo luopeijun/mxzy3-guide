@@ -168,6 +168,10 @@ async function main() {
       artistCounts: document.querySelectorAll('[data-case-artist-counts]').length,
       artistTitles: [...document.querySelectorAll('[data-case-artist-title]')]
         .map(x => (x.innerText || '').replace(/\\s+/g, ' ').trim()),
+      artistLines: [...document.querySelectorAll('[data-case-artist-title]')]
+        .map(x => x.dataset.titleLine || ''),
+      artistTitleInk: [...document.querySelectorAll('[data-case-artist-title]')]
+        .map(x => { const s = getComputedStyle(x); return s.color + '/' + s.backgroundColor; }),
       artistCollapsible: (function(){
         var d = document.querySelector('[data-case-artists]');
         return !!d && d.tagName === 'DETAILS' && !!d.querySelector('summary');
@@ -428,6 +432,54 @@ async function main() {
     check(p.artistTitles.length === 2 && p.artistTitles.every((text) => text === '未出道新人'),
       'artist cards show the title stored in the save (0 = none, no badge)',
       p.artistTitles.join('|') || '(none)');
+    // 称号徽标按职业线上色：未出道归「其他」；六种线各自一个色值，不能糊成一种。
+    check(p.artistLines.length === 2 && p.artistLines.every((line) => line === 'other'),
+      '未出道新人归到「其他」线', p.artistLines.join('|'));
+    const titleTokens = await evaluate(`(() => {
+      const s = getComputedStyle(document.documentElement);
+      return ['music', 'host', 'model', 'screen', 'star', 'other']
+        .map((k) => s.getPropertyValue('--color-title-' + k).trim());
+    })()`);
+    check(Array.isArray(titleTokens) && new Set(titleTokens).size === 6,
+      '唱片 / 主持 / 模特 / 影视 / 总称号 / 其他 各有独立颜色',
+      (titleTokens || []).join(','));
+    check(p.artistTitleInk.length === 2 && p.artistTitleInk.every(
+      (ink) => ink === 'rgb(92, 84, 89)/rgb(236, 231, 234)'),
+      '「其他」徽标用的是中性灰', p.artistTitleInk.join('|'));
+    // hover 才展开门槛卡；中文标签 + 数值都要在里面。
+    const badgeBox = await evaluate(`(() => {
+      const b = document.querySelector('[data-case-artist-title]');
+      const c = document.querySelector('[data-case-artist-title-card]');
+      if (!b || !c) return '';
+      const r = b.getBoundingClientRect();
+      return JSON.stringify({
+        x: r.x + r.width / 2, y: r.y + r.height / 2,
+        hidden: getComputedStyle(c).opacity,
+      });
+    })()`);
+    const badge = badgeBox ? JSON.parse(badgeBox) : null;
+    check(badge && badge.hidden === '0', '门槛卡默认收起', badgeBox || '(none)');
+    if (badge) {
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: badge.x, y: badge.y });
+      await sleep(300);
+      const tip = await evaluate(`(() => {
+        const c = document.querySelector('[data-case-artist-title-card]');
+        if (!c) return '';
+        return JSON.stringify({
+          opacity: getComputedStyle(c).opacity,
+          text: (c.innerText || '').replace(/\\s+/g, ' ').trim(),
+        });
+      })()`);
+      const card = tip ? JSON.parse(tip) : null;
+      check(card?.opacity === '1' && card.text.includes('其他')
+        && card.text.includes('没有门槛')
+        && card.text.includes('第 1 档')
+        && card.text.includes('下一档') && card.text.includes('新人'),
+        'hover 称号徽标展开本线门槛 + 下一档提示', tip || '(none)');
+      // 移开指针，别让展开的卡片影响后面的交互断言。
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+      await sleep(200);
+    }
     check(p.matchCols === 1 && p.matchColHead.includes('数值对比')
       && p.matchLists === p.roles,
       'all artists share one comparison column',

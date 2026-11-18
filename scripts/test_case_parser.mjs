@@ -862,6 +862,43 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     .filter((ch) => '際國級綜藝戲劇員電視廣兒過氣實動'.includes(ch));
   check(traditional.length === 0, '称号名全部转成简体', traditional.join(''));
 
+  // 每条称号都带「线 / 媒介 / 门槛」：页面靠 line 上色、靠 need 做 hover 卡。
+  const meta = tables.titleMeta ?? {};
+  check(Object.keys(meta).length === Object.keys(titles).length,
+    '每个称号都带线 / 门槛元数据',
+    `${Object.keys(meta).length} / ${Object.keys(titles).length}`);
+  for (const [id, line] of [[1, 'star'], [11, 'star'], [101, 'music'], [121, 'music'],
+    [201, 'host'], [241, 'host'], [311, 'model'], [341, 'model'], [401, 'screen'],
+    [411, 'screen'], [464, 'screen'], [624, 'screen'], [501, 'other'], [611, 'other'], [701, 'other']]) {
+    check(meta[String(id)]?.line === line, `称号 #${id} 归到 ${line} 线`, meta[String(id)]?.line ?? '缺失');
+  }
+  const lines = new Set(Object.values(meta).map((m) => m.line));
+  check(['music', 'host', 'model', 'screen', 'star', 'other'].every((l) => lines.has(l)),
+    '六种称号线都烘焙出了数据', [...lines].join(','));
+  // 门槛按列反推自 Nickname.tab：歌神=歌艺 700 + 5 张专辑，戏剧天王=演技 700 + 7 部电影。
+  const needOf = (id) => Object.fromEntries((meta[String(id)]?.need ?? []).map(([k, v]) => [k, v]));
+  check(needOf(101).歌艺 === 700 && needOf(101).专辑 === 5, '歌神门槛：歌艺 700 + 专辑 5',
+    JSON.stringify(needOf(101)));
+  check(needOf(401).演技 === 700 && needOf(401).电影作品 === 7,
+    '戏剧天王门槛：演技 700 + 电影 7', JSON.stringify(needOf(401)));
+  check((meta['701'].need ?? []).length === 0, '未出道新人没有门槛', JSON.stringify(meta['701'].need));
+  // 同名还有「通用版」：戏剧天王 411 要 5 部电视 + 5 部电影，不能被 MV 版覆盖掉。
+  check(meta['411'].need.some(([k, v]) => k === '电视作品' && v === 5),
+    '通用版戏剧天王保留自己的作品门槛', JSON.stringify(meta['411'].need));
+
+  // 梯子：除过气艺人（掉档结果，不是升级方向）外每个称号都要有档位，
+  // 而且同一条线的档位必须连续 —— 中间缺一档，「下一档」就会指错。
+  const ranked = Object.entries(meta).filter(([, m]) => m.rank !== null && m.rank !== undefined);
+  check(ranked.length === Object.keys(meta).length - 1, '除过气艺人外都有档位',
+    `${ranked.length} / ${Object.keys(meta).length}`);
+  const rankByLine = {};
+  for (const [, m] of ranked) (rankByLine[m.line] ??= []).push(m.rank);
+  const gaps = Object.entries(rankByLine)
+    .filter(([, rs]) => new Set(rs).size !== Math.max(...rs) + 1)
+    .map(([line, rs]) => `${line}:${[...new Set(rs)].sort((a, b) => a - b)}`);
+  check(gaps.length === 0, '每条线的档位连续', gaps.join(' '));
+  check(meta['501'].rank === null, '过气艺人不在升级梯子上', String(meta['501'].rank));
+
   for (const [save, expected] of [
     ['Story0002.sa2', { 6: '未出道新人' }],
     ['Story0004.sa2', { 6: '未出道新人', 8: '主持新人' }],
@@ -880,6 +917,30 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     const orphans = save_.artists.filter((a) => a.titleId > 0 && !titles[String(a.titleId)]);
     check(orphans.length === 0, `${save}: 所有非 0 称号编号都能查到名字`,
       orphans.map((a) => `${a.roleId}:${a.titleId}`).join(','));
+    // 有称号就必须有对应的线，否则页面上没有颜色可上。
+    const noMeta = save_.artists.filter((a) => a.titleId > 0 && !a.titleMeta);
+    check(noMeta.length === 0, `${save}: 有称号的艺人都带线信息`,
+      noMeta.map((a) => `${a.roleId}:${a.titleId}`).join(','));
+    // 顺带锁住几条线：称号名 -> 线必须和烘焙时一致（哪个艺人先拿到无所谓）。
+    const LINE_BY_TITLE = {
+      主持新人: 'host', 广告新人: 'model', 未出道新人: 'other',
+      电视演员: 'screen', 主持人: 'host', 知名艺人: 'other', 歌手: 'music',
+    };
+    for (const artist of save_.artists) {
+      const want = LINE_BY_TITLE[artist.title];
+      if (!want || !artist.titleMeta) continue;
+      check(artist.titleMeta.line === want, `${save}: ${artist.title} 归 ${want} 线`,
+        artist.titleMeta.line);
+    }
+    // 「下一档」按烘焙的梯子走：主持新人 -> 主持人、广告新人 -> 模特儿、
+    // 未出道新人 -> 新人。门槛都算不出来时只给目标，不算差值。
+    const NEXT_BY_TITLE = { 主持新人: '主持人', 广告新人: '模特儿', 未出道新人: '新人' };
+    for (const artist of save_.artists) {
+      const want = NEXT_BY_TITLE[artist.title];
+      if (!want) continue;
+      check(artist.titleNext?.name === want, `${save}: ${artist.title} 的下一档 = ${want}`,
+        artist.titleNext ? artist.titleNext.name : '（空）');
+    }
     // 艺人卡拿到的 option 也要带上同一个称号。
     const sample = Object.keys(expected)[0];
     const option = save_.artistDirectory.find((o) => o.id === Number(sample));
@@ -921,6 +982,56 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       check(gYiFu?.need === 650 && gYiFu?.have === 700 && gYiFu?.diff === -50,
         '数值对比把陈奕夫亲和 700 判为达标（差 -50）',
         JSON.stringify(gYiFu));
+    }
+  }
+}
+
+// 预约要精确到角色号：存档里有一张 52 字节的「通告码 + 角色号 -> 接演艺人编号」
+// 表，不能只按性别猜第一个同性别角色。Story0011 小熊寶寶有女主角/女配角两个
+// 女角，苏嫚君接的是女配角；Story0004 的三条 NPC 预约是原先猜对了的对照组，
+// 修完后必须保持原样。真值由玩家逐条口述，冻结成快照避免活档漂移。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const load = (name) => {
+    const p = path.join(SNAP, name);
+    if (!fs.existsSync(p)) return null;
+    const raw = fs.readFileSync(p);
+    return parseSave(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, name);
+  };
+  const s11 = load('Story0011.sa2');
+  if (!s11) {
+    console.log('OK   Story0011.sa2 snapshot not present, skipped the role-reservation check');
+  } else {
+    const tv048 = s11.notices.find((n) => n.code === 'TV048');
+    const lead = tv048?.roles.find((r) => r.roleCode === 'TV0481');
+    const support = tv048?.roles.find((r) => r.roleCode === 'TV0482');
+    check(lead?.role === '女主角' && support?.role === '女配角',
+      'Story0011 TV048 有女主角与女配角两个角色',
+      tv048?.roles.map((r) => `${r.roleCode}:${r.role}`).join(',') ?? '缺通告');
+    check(lead?.reservedBy === '', 'Story0011 TV048 女主角没有被苏嫚君误占',
+      `实际 ${lead?.reservedBy || '（空）'}`);
+    check(support?.reservedBy === '蘇嫚君', 'Story0011 TV048 女配角精确落到苏嫚君',
+      `实际 ${support?.reservedBy || '（空）'}`);
+  }
+  const s01 = load('Story0001.sa2');
+  if (s01) {
+    const tva62 = s01.notices.find((n) => n.code === 'TVA62');
+    check(tva62?.roles.length === 4, 'Story0001 TVA62 屈原列傳解出 4 个角色（带字母的通告码）',
+      `${tva62?.roles.length ?? '缺通告'} 个`);
+    check(tva62?.roles.find((r) => r.roleCode === 'TVA621')?.reservedBy === '丹尼斯',
+      'Story0001 屈原列傳男主角 = 丹尼斯',
+      `实际 ${tva62?.roles.find((r) => r.roleCode === 'TVA621')?.reservedBy || '（空）'}`);
+  }
+  const s04 = load('Story0004.sa2');
+  if (s04) {
+    for (const [code, roleCode, name] of [
+      ['TV054', 'TV0542', '方若綺'],
+      ['TV828', 'TV8281', '史蒂芬'],
+      ['MV002', 'MV0021', '馬智文'],
+    ]) {
+      const role = s04.notices.find((n) => n.code === code)?.roles.find((r) => r.roleCode === roleCode);
+      check(role?.reservedBy === name, `Story0004 ${roleCode} 仍是 ${name}（对照组不回退）`,
+        `实际 ${role?.reservedBy || '（空）'}`);
     }
   }
 }
