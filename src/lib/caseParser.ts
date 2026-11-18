@@ -130,6 +130,15 @@ export interface Requirement {
   staticGrade: string;
   /** Grade inferred from the value and the star's difficulty ranges. */
   rolledGrade: string;
+  /** 社交接演门槛（叛逆/性感/亲和）没有 A/B/C 等级，UI 用这个标记区分显示。 */
+  social?: boolean;
+}
+
+/** 角色记录里 `off+76 / +80 / +84` 的三个接演门槛，与艺人 social 的前三项同序同量纲。 */
+export interface SocialThresholds {
+  rebellion: number;
+  sexy: number;
+  affinity: number;
 }
 
 export interface RoleRecord {
@@ -140,6 +149,8 @@ export interface RoleRecord {
   gender: Gender;
   star: number;
   values: Record<string, number>;
+  /** 从存档读取的社交接演门槛；三项都是 0 表示这个角色没有额外要求。 */
+  social: SocialThresholds;
   requirements: Requirement[];
   /** Artist who has booked this role, e.g. 黎华. Empty means available. */
   reservedBy: string;
@@ -216,6 +227,8 @@ export function canTakeNotice(
 /** One artist state block, read straight from the uploaded save. Field order
  *  was checked field-by-field against the game's save-editor panel. */
 export interface ArtistStats {
+  /** 友好度，整数、不缩放；来自存档头部的角色友好度表，缺记录时为 null。 */
+  friendship: number | null;
   /** Nine ability values, in the same order as ATTRS. */
   abilities: number[];
   stress: number;
@@ -334,13 +347,19 @@ export function matchGroupRole(
   groupName: string,
   leaderName: string,
 ): MatchResult {
-  const gaps = ATTRS
+  const gaps: MatchResult['gaps'] = ATTRS
     .filter((attr) => role.values[attr])
     .map((attr) => {
       const need = role.values[attr];
       const have = leader?.abilities[ATTRS.indexOf(attr)] ?? 0;
       return { attr, need, have, diff: need - have };
     });
+  for (const [key, attr, idx] of [['rebellion', '叛逆', 0], ['sexy', '性感', 1], ['affinity', '亲和', 2]] as const) {
+    const need = role.social[key];
+    if (!need) continue;
+    const have = leader?.social[idx] ?? 0;
+    gaps.push({ attr, need, have, diff: need - have });
+  }
   const missing = gaps.filter((gap) => gap.diff > 0);
   return {
     artistIndex: leader?.index ?? -1,
@@ -386,6 +405,8 @@ export interface ParseResult {
   /** 「自制通告及其他」：玩家自己出品的通告清单，按制作顺序。 */
   selfMade: SelfMadeNotice[];
   artists: ArtistStats[];
+  /** 艺人编号 -> 友好度（整数），独立于状态块的头部友好度表。 */
+  friendship: Record<number, number>;
   /** The 18 signable artists, resolved against the state blocks in this save. */
   artistDirectory: ArtistOption[];
   /** Numbers of the artists the save marks as signed (1..4 of them). */
@@ -562,6 +583,15 @@ function parseRoles(
     }
     if (!(star >= 1 && star <= 5) || !plausible) continue;
 
+    // 社交接演门槛紧跟在九项能力之后：off+76 叛逆 / +80 性感 / +84 亲和。
+    // 与艺人 social 前三项同量纲（都是几百的直接值，不做 ×10 换算），
+    // 全部为 0 表示这个角色没有额外要求。逐一跨 27 份存档核对过槽位。
+    const social: SocialThresholds = {
+      rebellion: view.getUint32(off + 76, true),
+      sexy: view.getUint32(off + 80, true),
+      affinity: view.getUint32(off + 84, true),
+    };
+
     rows.push({
       code: tag.slice(0, 5),
       roleCode: tag,
@@ -569,6 +599,7 @@ function parseRoles(
       gender: roleGender(role),
       star,
       values,
+      social,
       requirements: [],
       reservedBy: RESERVED_ROLES[tag] ?? '',
       offset: off,
@@ -653,10 +684,34 @@ export function parseRoster(bytes: Uint8Array): RosterEntry[] {
   return out;
 }
 
+/** 友好度表：存档头部按 284 字节一条排列，字段为
+ *  [友好度 int32][0][256/257][艺人编号 int32]。用编号反查，不依赖固定偏移。 */
+function parseFriendship(view: DataView, bytes: Uint8Array): Record<number, number> {
+  const out: Record<number, number> = {};
+  const ids = new Set(ARTIST_DIRECTORY.map((a) => a.id));
+  const limit = Math.min(bytes.length - 16, 20000);
+  for (let p = 0; p + 16 <= limit; p += 4) {
+    const value = view.getUint32(p, true);
+    if (value > 9999) continue;
+    const marker = view.getUint32(p + 8, true);
+    if (marker !== 256 && marker !== 257) continue;
+    const id = view.getUint32(p + 12, true);
+    if (!ids.has(id) || id in out) continue;
+    out[id] = value;
+  }
+  return out;
+}
+
 /** Artist attribute blocks: nine abilities, stress/fatigue, a short Big5
  *  status label, the social stats and five notice counters. The 999 "cap"
  *  blocks that follow each real one are filtered out. */
-function parseArtists(bytes: Uint8Array, view: DataView, start: number, end: number): ArtistStats[] {
+function parseArtists(
+  bytes: Uint8Array,
+  view: DataView,
+  start: number,
+  end: number,
+  friendship: Record<number, number>,
+): ArtistStats[] {
   const out: ArtistStats[] = [];
   const seen = new Set<number>();
   let index = 0;
@@ -706,6 +761,7 @@ function parseArtists(bytes: Uint8Array, view: DataView, start: number, end: num
     const signed = o >= 8 && view.getUint32(o - 8, true) === 1;
     index += 1;
     out.push({
+      friendship: roleId in friendship ? friendship[roleId] : null,
       abilities, stress, fatigue, social, gifts, noticeCounts, condition,
       roleId, signed, offset: o, index,
     });
@@ -1436,7 +1492,8 @@ export function parseSave(
 
   const artistStart = blocks.StarRoleQ ? blocks.StarRoleQ[1] : 0;
   const artistEnd = blocks.Firm ? blocks.Firm[0] : bytes.length;
-  const artists = parseArtists(bytes, view, artistStart, artistEnd);
+  const friendship = parseFriendship(view, bytes);
+  const artists = parseArtists(bytes, view, artistStart, artistEnd, friendship);
   const roster = parseRoster(bytes);
   // The state block carries the game's roster number at -16, so the panel can
   // show named artists instead of anonymous "状态块 #N" selectors.
@@ -1548,6 +1605,12 @@ export function parseSave(
           staticGrade: grades ? GRADES[grades[ATTRS.indexOf(attr)]] ?? '' : '',
           rolledGrade: gradeOf(role.values[attr], role.star, tables.difficulty),
         }));
+      // 社交门槛（叛逆/性感/亲和）是角色的隐藏接演条件，直接从存档读。
+      // 它们没有 A/B/C 等级，用 social 标记让 UI 只显示「亲和 650」。
+      for (const [key, attr] of [['rebellion', '叛逆'], ['sexy', '性感'], ['affinity', '亲和']] as const) {
+        const value = role.social[key];
+        if (value) role.requirements.push({ attr, value, staticGrade: '', rolledGrade: '', social: true });
+      }
     }
     const length = noticeRoles
       .map((role) => lengthOf(item.code, info, role.role))
@@ -1783,6 +1846,7 @@ export function parseSave(
     shooting,
     selfMade,
     artists,
+    friendship,
     artistDirectory,
     signedArtistIds,
     teams,
@@ -1813,13 +1877,20 @@ export function matchRole(
   artistName: string,
   gender: Gender = 'any',
 ): MatchResult {
-  const gaps = ATTRS
+  const gaps: MatchResult['gaps'] = ATTRS
     .filter((attr) => role.values[attr])
     .map((attr) => {
       const need = role.values[attr];
       const have = artist.abilities[ATTRS.indexOf(attr)] ?? 0;
       return { attr, need, have, diff: need - have };
     });
+  // 社交门槛与九项能力一起决定能否接演：叛逆/性感/亲和直接比艺人 social 前三项。
+  for (const [key, attr, idx] of [['rebellion', '叛逆', 0], ['sexy', '性感', 1], ['affinity', '亲和', 2]] as const) {
+    const need = role.social[key];
+    if (!need) continue;
+    const have = artist.social[idx] ?? 0;
+    gaps.push({ attr, need, have, diff: need - have });
+  }
   const missing = gaps.filter((gap) => gap.diff > 0);
   const eligible = canTakeRole(role, gender);
   return {
