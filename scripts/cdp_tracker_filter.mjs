@@ -173,7 +173,7 @@ async function main() {
 
   const setup = await snap();
   check('PHASES_BUILT', setup, (s) => {
-    const want = { all: N - 1, inProgress: 1, notStarted: N - 4, completed: 1, abandoned: 1, excluded: 1 };
+    const want = { all: N - 2, inProgress: 1, notStarted: N - 4, completed: 1, abandoned: 1, excluded: 1 };
     for (const [k, v] of Object.entries(want)) {
       if (s.counts[k] !== v) return `${k} count ${s.counts[k]} != ${v}`;
     }
@@ -224,7 +224,8 @@ async function main() {
     return null;
   });
   check('VIEW_ALL', views.all, (s) => {
-    if (s.activeCards !== N - 2) return `全部 working list should hold ${N - 2} lines, got ${s.activeCards}`;
+    if (s.activeCards !== N - 3) return `全部 working list should hold ${N - 3} lines (已放弃不占位), got ${s.activeCards}`;
+    if (s.abandonedBadges !== 0) return `「全部」视图不该出现已放弃卡，看到 ${s.abandonedBadges} 张`;
     if (!s.archive || s.archiveExpanded !== 'false') return 'archive should be back and collapsed';
     if (s.jumpDisabled !== false || s.draggable !== 'true') return 'all-view interactions not restored';
     return null;
@@ -267,7 +268,7 @@ async function main() {
   await sleep(400);
   const afterRestore = await snap();
   check('AFTER_RESTORE', afterRestore, (s) => {
-    if (s.counts.excluded !== 0 || s.counts.all !== N) return 'restore did not update counts';
+    if (s.counts.excluded !== 0 || s.counts.all !== N - 1) return 'restore did not update counts';
     if (s.activeCards !== 0 || !s.emptyFilter) return 'restored line should leave the 已移出 filter';
     if (JSON.stringify(s.chipGeometry) !== JSON.stringify(beforeRestore.chipGeometry)) return 'chips jumped after a count change';
     return null;
