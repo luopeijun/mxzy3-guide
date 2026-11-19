@@ -26,6 +26,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const SNAPSHOT = `(() => {
   const root = ${ROOT};
   const chips = [...root.querySelectorAll('[data-filter-key]')];
+  const artistChips = [...root.querySelectorAll('[data-artist-filter] [data-artist-key]')];
+  const groupChips = [...root.querySelectorAll('[data-group-filter] [data-group-key]')];
+  const artistRow = root.querySelector('[data-artist-filter]');
+  const statusRow = root.querySelector('[data-filter-chips]');
   const cards = [...root.querySelectorAll('[data-active-pool] [data-line-card]')];
   const archive = root.querySelector('[data-completed-pool]');
   const jump = root.querySelector('[data-jump-completed]');
@@ -50,6 +54,11 @@ const SNAPSHOT = `(() => {
     counts: Object.fromEntries(chips.map(c => [c.getAttribute('data-filter-key'), Number(c.textContent.replace(/[^0-9]/g, ''))])),
     chipCount: chips.length,
     chipGeometry: rects,
+    artistKeys: artistChips.map(c => c.getAttribute('data-artist-key')),
+    artistPressed: artistChips.filter(c => c.getAttribute('aria-pressed') === 'true').map(c => c.getAttribute('data-artist-key')),
+    groupKeys: groupChips.map(c => c.getAttribute('data-group-key')),
+    groupPressed: groupChips.filter(c => c.getAttribute('aria-pressed') === 'true').map(c => c.getAttribute('data-group-key')),
+    artistRowBelowStatus: !!(statusRow && artistRow && statusRow.getBoundingClientRect().bottom <= artistRow.getBoundingClientRect().top),
     activeCards: cards.length,
     activeIds: cards.map(c => c.getAttribute('data-line-id')),
     allDone: cards.filter(c => master(c) === 'true').length,
@@ -79,6 +88,8 @@ const SEARCH = (value) => `(() => {
 })()`;
 
 const CLICK_CHIP = (key) => `(() => { ${ROOT}.querySelector('[data-filter-key="${key}"]').click(); return 1; })()`;
+const CLICK_ARTIST = (key) => `(() => { ${ROOT}.querySelector('[data-artist-key="${key}"]').click(); return 1; })()`;
+const CLICK_GROUP = (key) => `(() => { ${ROOT}.querySelector('[data-group-key="${key}"]').click(); return 1; })()`;
 
 async function main() {
   const target = await jsonPut('http://127.0.0.1:9339/json/new?' + encodeURIComponent(url));
@@ -288,6 +299,106 @@ async function main() {
   check('AFTER_RELOAD', await snap(), (s) => {
     if (s.filter !== 'all') return 'filter should reset to 全部 on reload';
     if (s.counts.excluded !== 0 || s.counts.completed !== 1 || s.counts.inProgress !== 1) return 'progress did not persist';
+    return null;
+  });
+
+  // 艺人筛选：状态 chips 下面单独一行；多选艺人彼此并集，再与状态取交集。
+  const artistBase = await snap();
+  check('ARTIST_ROW', artistBase, (s) => {
+    if (!s.artistRowBelowStatus) return '艺人筛选行必须排在状态筛选行下面';
+    const want = ['all', 'characters/lin-fenfen', 'characters/lu-feng', 'characters/ou-yiqing'];
+    if (JSON.stringify(s.artistKeys) !== JSON.stringify(want)) return `艺人 chips 应来自左侧追踪名单，实际 ${s.artistKeys.join(',')}`;
+    if (JSON.stringify(s.artistPressed) !== JSON.stringify(['all'])) return '默认应选中「不限」';
+    return null;
+  });
+  const artistId = artistBase.activeIds.find((id) => id.startsWith('characters/'));
+  const secondKey = artistBase.artistKeys.find((k) => k !== 'all' && k !== artistId?.split('::')[0]);
+  if (!artistId || !secondKey) {
+    failures.push('need at least two artist lines for the artist-filter checks');
+  } else {
+    const artistKey = artistId.split('::')[0];
+    const card = (id) => `[...${ROOT}.querySelectorAll('[data-active-pool] [data-line-card]')].find(c => c.getAttribute('data-line-id') === ${JSON.stringify(id)})`;
+    // 让这条艺人线处于进行中（勾一步即可，不要点总勾选，否则它会进已完成区）。
+    await evaluate(`(() => { ${card(artistId)}.querySelector('button[aria-expanded]').click(); return 1; })()`);
+    await sleep(220);
+    await evaluate(`(() => { ${card(artistId)}.querySelector('button[aria-pressed]').click(); return 1; })()`);
+    await sleep(320);
+
+    await evaluate(CLICK_ARTIST(artistKey));
+    await sleep(300);
+    const oneArtist = await snap();
+    check('ARTIST_ONLY', oneArtist, (s) => {
+      if (!s.activeIds.length || s.activeIds.some((id) => !id.startsWith(artistKey + '::'))) return '单艺人筛选混入了其他任务线';
+      if (JSON.stringify(s.artistPressed) !== JSON.stringify([artistKey])) return '艺人选中状态不对';
+      if (s.draggable !== 'false') return '艺人筛选时应禁用拖拽';
+      return null;
+    });
+
+    await evaluate(CLICK_ARTIST(secondKey));
+    await sleep(300);
+    const twoArtists = await snap();
+    check('ARTIST_UNION', twoArtists, (s) => {
+      if (s.activeIds.length <= oneArtist.activeIds.length) return '选第二位艺人后结果没有变多';
+      const allowed = (id) => id.startsWith(artistKey + '::') || id.startsWith(secondKey + '::') || id.startsWith('other-events/luousang/');
+      if (s.activeIds.some((id) => !allowed(id))) return '多选艺人不是并集或混入了无关任务线';
+      return null;
+    });
+
+    await evaluate(CLICK_CHIP('inProgress'));
+    await sleep(300);
+    check('ARTIST_PLUS_STATUS', await snap(), (s) => {
+      if (!s.activeIds.length) return '艺人 + 进行中筛出了空列表';
+      if (s.activeIds.some((id) => !id.startsWith(artistKey + '::') && !id.startsWith(secondKey + '::') && !id.startsWith('other-events/luousang/'))) return '艺人×状态混入了别的艺人';
+      if (s.mixed !== s.activeIds.length || s.allDone) return '艺人×状态结果不全是进行中线';
+      if (!s.hint?.includes('状态「进行中」') || !s.hint.includes('艺人「')) return '提示行没有同时写出状态与艺人';
+      return null;
+    });
+
+    await evaluate(CLICK_ARTIST('all'));
+    await sleep(300);
+    check('ARTIST_CLEARED', await snap(), (s) => {
+      if (s.artistPressed.length !== 1 || s.artistPressed[0] !== 'all') return '「不限」没有清除艺人选择';
+      if (s.filter !== 'inProgress') return '清除艺人不应重置状态筛选';
+      return null;
+    });
+  }
+
+  // 分类筛选：和艺人同一行，经纪人事件簿 / 其他事件按站点配置给出。
+  await evaluate(CLICK_CHIP('all'));
+  await sleep(260);
+  check('GROUP_ROW', await snap(), (s) => {
+    if (!s.groupKeys.includes('all') || !s.groupKeys.includes('broker') || !s.groupKeys.includes('other')) return '分类 chips 缺少经纪人事件簿 / 其他事件';
+    if (JSON.stringify(s.groupPressed) !== JSON.stringify(['all'])) return '分类默认应选中「不限」';
+    return null;
+  });
+  await evaluate(CLICK_GROUP('broker'));
+  await sleep(300);
+  const brokerOnly = await snap();
+  check('GROUP_BROKER', brokerOnly, (s) => {
+    if (!s.activeIds.length || s.activeIds.some((id) => !id.startsWith('game-guide/'))) return '经纪人事件簿筛选混入了别的分类';
+    if (s.draggable !== 'false') return '分类筛选时应禁用拖拽';
+    return null;
+  });
+  await evaluate(CLICK_GROUP('other'));
+  await sleep(300);
+  const twoGroups = await snap();
+  check('GROUP_UNION', twoGroups, (s) => {
+    if (s.activeIds.length <= brokerOnly.activeIds.length) return '选「其他事件」后结果没有变多';
+    if (s.activeIds.some((id) => !id.startsWith('game-guide/') && !id.startsWith('notices/') && !id.startsWith('other-events/'))) return '分类多选不是并集';
+    return null;
+  });
+  await evaluate(CLICK_CHIP('inProgress'));
+  await sleep(300);
+  check('GROUP_PLUS_STATUS', await snap(), (s) => {
+    if (!s.hint?.includes('状态「进行中」') || !s.hint.includes('分类「')) return '提示行没有同时写出状态与分类';
+    if (s.activeIds.some((id) => !id.startsWith('game-guide/') && !id.startsWith('notices/') && !id.startsWith('other-events/'))) return '分类×状态混入了别的分类';
+    return null;
+  });
+  await evaluate(CLICK_GROUP('all'));
+  await sleep(300);
+  check('GROUP_CLEARED', await snap(), (s) => {
+    if (s.groupPressed.length !== 1 || s.groupPressed[0] !== 'all') return '「不限」没有清除分类选择';
+    if (s.filter !== 'inProgress') return '清除分类不应重置状态筛选';
     return null;
   });
 

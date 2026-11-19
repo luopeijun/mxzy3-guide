@@ -114,6 +114,17 @@ async function main() {
     opened.setup && opened.batch && opened.memo && opened.overview && opened.archive && opened.pool,
     JSON.stringify(opened));
 
+  const scope = JSON.parse(await evaluate(`(() => JSON.stringify({
+    artist: [...document.querySelectorAll('[data-artist-filter] [data-artist-key]')].map(b => ({ key: b.dataset.artistKey, text: b.textContent.trim() })),
+    group: [...document.querySelectorAll('[data-group-filter] [data-group-key]')].map(b => ({ key: b.dataset.groupKey, text: b.textContent.trim() })),
+  }))()`));
+  check('筛选行取左侧追踪名单：甜站固定主角在列，分类用甜站叫法',
+    scope.artist.some(c => c.key === 'protagonist' && c.text === '杜云芊') &&
+    scope.group.some(c => c.key === 'broker' && c.text === '经纪人事件簿') &&
+    scope.group.some(c => c.key === 'other' && c.text === '支线攻略') &&
+    !scope.group.some(c => c.key === 'luousang'),
+    JSON.stringify(scope));
+
   // 3. 主角初始状态
   const initial = await evaluate(`(() => {
     const app = document.querySelector('[data-tracker-app]');
