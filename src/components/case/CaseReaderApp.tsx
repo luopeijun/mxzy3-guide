@@ -480,6 +480,9 @@ export default function CaseReaderApp() {
   );
 
   /** Search, category, company and 接取情况 are independent filters; they intersect. */
+  /** 存档已有道具按属性反查， hover 差值时和训练 / 打工一起给。 */
+  const itemHints = useMemo(() => itemHintsFor(result?.items ?? []), [result]);
+
   const notices = useMemo(() => {
     if (!result) return [];
     const needle = query.trim().toLowerCase();
@@ -1009,6 +1012,7 @@ export default function CaseReaderApp() {
                         signed={signedArtists}
                         groups={activeGroups}
                         artists={artists}
+                        itemHints={itemHints}
                       />
                     ))}
                   </table>
@@ -1976,7 +1980,7 @@ const WORKS: { name: string; attrs: string[] }[] = [
   { name: '平面模特', attrs: ['仪态', '自信', '名气'] },
 ];
 
-type CourseHint = { kind: '训练' | '打工'; name: string; attrs: string[] };
+type CourseHint = { kind: '训练' | '打工' | '道具'; name: string; attrs: string[]; text?: string };
 const HINTS_BY_ATTR: Record<string, CourseHint[]> = {};
 for (const course of TRAINING_COURSES) {
   for (const attr of course.attrs) {
@@ -1989,13 +1993,42 @@ for (const work of WORKS) {
   }
 }
 
+/** 道具属性行（Item.dat 原文，繁体）里能补九项能力的繁体写法 -> 页面简体名。
+ *  只列正向加成；像八卦雜誌「才智-20」这类负项不会算成「能补才智」。 */
+const ITEM_ATTR_TRAD: Record<string, string> = {
+  演技: '演技', 口才: '口才', 才智: '才智', 自信: '自信',
+  儀態: '仪态', 動感: '动感', 體能: '体能', 歌藝: '歌艺', 名氣: '名气',
+};
+
+/** 从存档已拥有的道具里建「缺口属性 -> 可补道具」索引。显示沿用道具表原文
+ *  （和道具面板一致），一行里所有增减都写出来，不只写补的那一项。 */
+function itemHintsFor(items: OwnedItem[]): Record<string, CourseHint[]> {
+  const out: Record<string, CourseHint[]> = {};
+  for (const it of items) {
+    if (it.quantity <= 0 || !it.stats) continue;
+    const matched = new Set<string>();
+    for (const [, attr, raw] of it.stats.matchAll(/([^\s+\-]+)([+-]\d+)/g)) {
+      const simple = ITEM_ATTR_TRAD[attr];
+      if (!simple || Number(raw) <= 0) continue;
+      matched.add(simple);
+    }
+    const text = `${it.name ?? `道具 ${it.code}`}（${it.stats.replace(/\s+/g, '，')}）`;
+    for (const attr of matched) {
+      (out[attr] ??= []).push({ kind: '道具', name: it.name ?? `道具 ${it.code}`, attrs: [attr], text });
+    }
+  }
+  return out;
+}
+
 /** Hover a missing ability and see what can raise it. Portal to body so the
  *  popover is not clipped by the case tab's own overflow-y content column.
  *  Moving the mouse onto the popover keeps it open; leaving closes it. */
-function GapCourseHint({ gap }: { gap: { attr: string; diff: number } }) {
+function GapCourseHint({
+  gap, itemHints,
+}: { gap: { attr: string; diff: number }; itemHints: Record<string, CourseHint[]> }) {
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hints = HINTS_BY_ATTR[gap.attr] ?? [];
+  const hints = [...(HINTS_BY_ATTR[gap.attr] ?? []), ...(itemHints[gap.attr] ?? [])];
 
   const cancelClose = useCallback(() => {
     if (closeTimer.current) {
@@ -2031,19 +2064,23 @@ function GapCourseHint({ gap }: { gap: { attr: string; diff: number } }) {
           onMouseLeave={() => setAnchor(null)}
         >
           <div className="mb-0.5 font-semibold text-brand-strong">可补 {gap.attr}</div>
-          {(['训练', '打工'] as const).map((kind) => {
+          {(['训练', '打工', '道具'] as const).map((kind) => {
             const group = hints.filter((hint) => hint.kind === kind);
             if (group.length === 0) return null;
             return (
               <div key={kind}>
                 <div className="font-semibold text-ink-faint">【{kind}】</div>
                 {group.map((hint) => {
-                  const shown = hint.attrs.slice(0, 2).includes(gap.attr)
-                    ? hint.attrs.slice(0, 2)
-                    : [gap.attr, ...hint.attrs.filter((attr) => attr !== gap.attr)].slice(0, 2);
+                  // 道具整行照抄道具表（含负项），训练 / 打工只列能补的属性。
+                  const shown = hint.text ?? (() => {
+                    const pair = hint.attrs.slice(0, 2).includes(gap.attr)
+                      ? hint.attrs.slice(0, 2)
+                      : [gap.attr, ...hint.attrs.filter((attr) => attr !== gap.attr)].slice(0, 2);
+                    return `${hint.name}（${pair.join(' · ')}）`;
+                  })();
                   return (
                     <div key={hint.name} className="whitespace-nowrap pl-3 text-ink-muted">
-                      {hint.name}（{shown.join(' · ')}）
+                      {shown}
                     </div>
                   );
                 })}
@@ -2091,11 +2128,12 @@ function RequirementChips({ role }: { role: RoleRecord }) {
 /** One column holds every signed artist's verdict, one line per artist.
  *  A 團體 role is matched against each group's leader instead, so only the
  *  captain's numbers decide whether the group can take it. */
-function MatchList({ role, signed, groups, artists, cellClass }: {
+function MatchList({ role, signed, groups, artists, itemHints, cellClass }: {
   role: RoleRecord;
   signed: SignedArtist[];
   groups: GroupRecord[];
   artists: ArtistStats[];
+  itemHints: Record<string, CourseHint[]>;
   cellClass?: string;
 }) {
   const groupRole = isGroupRole(role);
@@ -2189,7 +2227,7 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
                               {gap.attr} {Math.ceil(gap.diff)}
                             </span>
                           ) : (
-                            <GapCourseHint gap={gap} />
+                            <GapCourseHint gap={gap} itemHints={itemHints} />
                           )}
                         </Fragment>
                       ))}
@@ -2218,12 +2256,13 @@ function MatchList({ role, signed, groups, artists, cellClass }: {
  *  those columns blank, with no arrow or repeated text. No rowspan, so a
  *  reserved role only dims its own cells and never the whole notice. */
 function NoticeRows({
-  notice, signed, groups, artists,
+  notice, signed, groups, artists, itemHints,
 }: {
   notice: CaseNotice;
   signed: SignedArtist[];
   groups: GroupRecord[];
   artists: ArtistStats[];
+  itemHints: Record<string, CourseHint[]>;
 }) {
   const closing = notice.status === 'closing';
   const noticeCells = (
@@ -2356,7 +2395,7 @@ function NoticeRows({
             <Td className={roleCell}>
               <RequirementChips role={role} />
             </Td>
-            <MatchList role={role} signed={signed} groups={groups} artists={artists} cellClass={roleCell} />
+            <MatchList role={role} signed={signed} groups={groups} artists={artists} itemHints={itemHints} cellClass={roleCell} />
             {reservationCell(role, reserved)}
           </tr>
         );
