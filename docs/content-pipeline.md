@@ -148,6 +148,7 @@
 ### 双站点事件追踪器
 
 - `src/lib/trackerConfig.ts` 是两站追踪器**唯一**的差异来源：`MAIN_TRACKER_CONFIG` / `SWEET_TRACKER_CONFIG` 各自持有进度 / 备忘 / 备份的 localStorage 键、签约上限、艺人节点前缀、分组 chips 与文案、存档信封 format。所有 lib 函数默认取主站配置，共享组件从 `useTracker().config` 读取；甜蜜乐章只在 `SweetApp` 把配置传给 `TrackerProvider`，**原站行为零变化**（共享组件里不写 `if (site === ...)`）。
+- **已放弃项不进「全部」视图**：`activeLines / completedLines` 用 `phaseOf` 判定，跳过 `excluded` 与 `abandoned` 两相，所以「全部」的主列表和 `all` 计数都不含已放弃线（只剩进行 / 未开始 + 底部已完成归档）；已放弃线只在上方「已放弃」chip 里能看到、可从卡片上「恢复追踪」回到池子。用 `phaseOf` 而非直接读 `status`：与 chip 同一套口径（全勾的放弃线归已完成），不会出现「全部」和 chip 对同一条线说法不一。两站共用同一逻辑。回归 `scripts/cdp_tracker_filter.mjs` 的 `PHASES_BUILT` / `VIEW_ALL` / `FILTER_ABANDONED`。
 - **事件池筛选条**：状态 chips（全部 / 进行中 / …）下面紧接一行 `TrackerScopeChips`，分「艺人」「分类」两段。艺人选项**只取左侧「追踪艺人」名单**（`trackedArtists`，含已解约、含甜站恒占的杜云芊），不从池里的任务线反推；取消追踪后失效的选中项会自动清除。分类走 `config.groups`（主站经纪人事件簿 / 艺人事件簿 / 路欧桑剧情 / 其他事件；甜站经纪人事件簿 / 角色攻略 / 支线攻略），两站文案不写死在组件里。同一段里多选＝并集（选中路 / 欧 / 桑任一人都算路欧桑线共有），段与段之间、以及与状态筛选之间是交集：选「林芬芬 + 进行中 + 其他事件」只留她在该分类的进行中线。每段都有「不限」即时撤销；任一筛选生效时禁用拖拽排序。回归 `scripts/cdp_tracker_filter.mjs` / `scripts/cdp_sweet_tracker.mjs`。
 - 甜蜜乐章：旗下最多 **4 位**（主角 + 还能再签 3 位艺人），`protagonist` 即主角 **杜云芊**（红发双马尾），恒占一位。头像 `public/images/sweet/protagonist-logo.png` 来自 `E:/Pictures/mxzy3/甜蜜乐章/2/620-1.bmp`，**不是卫亚那张**；回归会逐字节比对，防止再复制错图。她没有攻略节点，作为固定项插进选择器，`normaliseArtists()` 在读存档 / 重置 / 导入三条路径都保证归位；被主角挤掉的艺人转为「已解约」而不是消失，进度线照常保留。点击主角按钮、解约角标都不生效。
 - 选择器展开区**只保留一行操作说明**：不写 `protagonist.hint` 就不渲染主角说明框，`setupIntro` 也不要再加「既当经纪人也是艺人」之类的括注；`cdp_sweet_tracker.mjs` 会断言这两段文案都不出现。
