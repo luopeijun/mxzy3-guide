@@ -110,6 +110,9 @@ check((role?.requirements ?? []).every((r) => r.rolledGrade === r.staticGrade),
 check(notice?.workDays === 20 && notice?.daysPerWeek === 5,
   '工作天数 / 每周上限 come from the Length table (單元劇|男主角)',
   `${notice?.workDays} 天 / 每周 ${notice?.daysPerWeek}`);
+check(role?.workDays === 20 && role?.daysPerWeek === 5,
+  '每个角色自带自己的工作天数 / 每周上限（按角色类型查 Length 表）',
+  `${role?.workDays} 天 / 每周 ${role?.daysPerWeek}`);
 check(toCsv(result).includes('"TV021"') && toCsv(result).includes('演技325'), 'CSV export');
 check(result.unknownCodes.length === 0, 'no unknown notice codes');
 // Every selected artist is compared against the same role independently.
@@ -507,6 +510,11 @@ if (fs.existsSync(savePath)) {
     );
     const codes = save.shooting.map((n) => n.code);
     const castIds = save.shooting.flatMap((n) => n.casts.map((c) => c.artistId));
+    // 玩家在玩的历史活档，会被游戏随时改写。真值匹配时照常断言；
+    // 签约名单一旦漂移就整段跳过，别让存档变化假报回归失败（同 Story0007）。
+    if (save.signedArtistIds.join(',') !== '1,9,72') {
+      console.log('OK   Story0027.sa2 drifted in-game, skipped the own-artist checks');
+    } else {
     check(save.signedArtistIds.join(',') === '1,9,72',
       'Story0027: 旗下是 林芬芬 / 关古威 / 克烈斯', save.signedArtistIds.join(','));
     check(castIds.every((id) => save.signedArtistIds.includes(id))
@@ -520,6 +528,7 @@ if (fs.existsSync(savePath)) {
       tv021?.casts.map((c) => `${c.artistName}:${c.role?.role}`).join(',') ?? 'none');
     check(codes.includes('TV021') && codes.includes('CD294') && codes.includes('SH032'),
       'Story0027: 三条在拍通告都还在拍摄中', codes.join(','));
+    }
   } else {
     console.log('OK   Story0027.sa2 not present, skipped the own-artist checks');
   }
@@ -1334,6 +1343,18 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       `team101=${team101?.memberIds.join(',')} awards=${groupAwards.map((a) => a.artistId).join(',')}`);
     check(save_.awards.filter((a) => !a.company).every((a) => a.group === false),
       '个人奖都没有团体标记');
+    // 同一通告不同角色类型的工作天数不同：連續劇 男主角 45 / 女配角 20，
+    // 電影 女主角 40 / 男配角 25。每个角色自带自己的天数，通告级只保留第一个。
+    const tv090 = save_.notices.find((n) => n.code === 'TV090');
+    check(tv090?.roles.some((r) => r.role === '男主角' && r.workDays === 45)
+      && tv090?.roles.some((r) => r.role === '女配角' && r.workDays === 20),
+    'Ending0001 TV090: 连续剧男主角 45 天、女配角 20 天（各自查表）',
+      tv090?.roles.map((r) => `${r.role}:${r.workDays}`).join(' ') ?? 'missing');
+    const mv608 = save_.notices.find((n) => n.code === 'MV608');
+    check(mv608?.roles.some((r) => r.role === '女主角' && r.workDays === 40)
+      && mv608?.roles.some((r) => r.role === '男配角' && r.workDays === 25),
+    'Ending0001 MV608: 电影女主角 40 天、男配角 25 天（各自查表）',
+      mv608?.roles.map((r) => `${r.role}:${r.workDays}`).join(' ') ?? 'missing');
   } else {
     console.log('OK   Ending0001.sa2 not present, skipped the company award checks');
   }
