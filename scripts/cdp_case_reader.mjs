@@ -184,6 +184,20 @@ async function main() {
       reservedText: [...document.querySelectorAll('[data-case-reserved="yes"] [data-case-reservation]')].map(x => x.innerText).join('|'),
       workDays: document.querySelectorAll('[data-case-workdays]').length,
       workDaysFirst: document.querySelector('[data-case-workdays]')?.innerText || '',
+      workDayBadges: (function(){
+        var box = document.querySelector('[data-case-workdays]');
+        if (!box) return JSON.stringify({ blocks:0 });
+        var spans = [...box.querySelectorAll(':scope > span')];
+        var styles = spans.map(function(x){ var s = getComputedStyle(x); return { bg:s.backgroundColor, display:s.display }; });
+        var outer = getComputedStyle(box);
+        return JSON.stringify({
+          blocks: spans.length,
+          backgrounds: styles.map(function(x){ return x.bg; }),
+          displays: styles.map(function(x){ return x.display; }),
+          outerBg: outer.backgroundColor,
+          texts: spans.map(function(x){ return x.innerText.replace(/\\s+/g, ' ').trim(); }),
+        });
+      })(),
       upcoming: document.querySelectorAll('[data-case-upcoming]').length,
       upcomingText: document.querySelector('[data-case-upcoming]')?.innerText || '',
       reservePanel: !!document.querySelector('[data-case-reserve-panel]'),
@@ -342,6 +356,27 @@ async function main() {
     const activeTab = tabInfo.tabs.find((t) => t.active);
     check(activeTab && activeTab.cat === '一般物品' && tabInfo.count === 4 && !tabInfo.hasPager,
       '默认激活「一般物品」，列出 4 件且无需翻页', JSON.stringify({ active: activeTab && activeTab.cat, count: tabInfo.count, pager: tabInfo.hasPager }));
+
+    // 一般物品新增「好感度」列：按当前存档签约艺人反查 Item.dat 送礼向量。
+    const giftColumn = JSON.parse(await evaluate(`(function(){
+      var table = document.querySelector('[data-case-item-table]');
+      var head = table ? [...table.querySelectorAll('thead th')].map(function(th){ return th.innerText.replace(/\\s+/g, ' ').trim(); }) : [];
+      var rows = [...document.querySelectorAll('[data-case-item]')].map(function(row){
+        return {
+          code: row.getAttribute('data-case-item-code'),
+          hints: [...row.querySelectorAll('[data-case-item-gift] [data-case-item-gift-name]')].map(function(x){
+            return x.getAttribute('data-case-item-gift-name') + '+' + x.getAttribute('data-case-item-gift-value');
+          }),
+        };
+      });
+      return JSON.stringify({ head: head, rows: rows });
+    })()`));
+    check(giftColumn.head.includes('好感度'),
+      '一般物品表出现「好感度」列', JSON.stringify(giftColumn.head));
+    check(giftColumn.rows.some(r => r.hints.includes('萧依莉+4'))
+      && giftColumn.rows.some(r => r.hints.includes('路敏+3')),
+      'probe 存档一般物品按签约艺人显示好感加成（萧依莉+4 / 路敏+3）',
+      JSON.stringify(giftColumn.rows));
 
     // 切到「特殊物品」：15 件 → 第 1 页 10 行 + 翻页。
     await evaluate(`[...document.querySelectorAll('[data-case-item-tab]')].find(t => t.getAttribute('data-case-item-tab') === '特殊物品').click()`);
@@ -553,6 +588,14 @@ async function main() {
       && p.workDaysFirst.includes('每周'),
       'every notice shows its 工作天数 / 每周上限 from the Length table',
       `${p.workDays} badges / ${p.workDaysFirst.replace(/\s+/g, ' ')}`);
+    const wd = JSON.parse(p.workDayBadges);
+    check(wd.blocks === 2 && wd.texts.some(t => t.includes('工作'))
+      && wd.texts.some(t => t.includes('每周'))
+      && wd.backgrounds.every(bg => bg && bg !== 'rgba(0, 0, 0, 0)' && bg === wd.backgrounds[0])
+      && wd.outerBg === 'rgba(0, 0, 0, 0)'
+      && wd.displays.every(d => d.includes('flex')),
+      '工作 / 每周拆成两个独立背景 badge，外层不再是一整块背景',
+      p.workDayBadges);
     check(p.reservedRows === 0 || (p.reservedNoticeCellDim === false
       && p.reservedDimCells <= 5 * p.reservedRows),
       'only the reserved role cells dim, not the whole notice',
@@ -1053,6 +1096,29 @@ async function main() {
     const autoCopy = path.join(root, '.tmp', 'case-e2e-auto.sa2');
     fs.copyFileSync(path.join(SNAP, 'Auto.sa2'), autoCopy);
     await uploadSave(autoCopy);
+    // Auto 存档的一般物品也应按签约艺人列出好感加成（賀總造型棒棒糖 → 萧依莉+4）。
+    const autoGift = JSON.parse(await evaluate(`(function(){
+      var box = document.querySelector('[data-case-items]');
+      if (box && !box.hasAttribute('open')) box.querySelector('[data-case-items-summary]').click();
+      return JSON.stringify({ opened: !!box && box.hasAttribute('open') });
+    })()`));
+    await sleep(250);
+    const autoGiftRows = JSON.parse(await evaluate(`(function(){
+      var tab = [...document.querySelectorAll('[data-case-item-tab]')]
+        .find(function(t){ return t.getAttribute('data-case-item-tab') === '一般物品'; });
+      if (tab) tab.click();
+      return JSON.stringify([...document.querySelectorAll('[data-case-item]')].map(function(row){
+        return {
+          code: row.getAttribute('data-case-item-code'),
+          hints: [...row.querySelectorAll('[data-case-item-gift] [data-case-item-gift-name]')].map(function(x){
+            return x.getAttribute('data-case-item-gift-name') + '+' + x.getAttribute('data-case-item-gift-value');
+          }),
+        };
+      }));
+    })()`));
+    check(autoGift.opened && autoGiftRows.some(r => r.hints.includes('萧依莉+4')),
+      'Auto 存档一般物品显示「萧依莉+4」（Item.dat 送礼表）',
+      JSON.stringify({ opened: autoGift.opened, rows: autoGiftRows }));
     await evaluate(`document.querySelector('[data-case-tab="open"]').click()`);
     await sleep(350);
     const itemHint = await evaluate(`(() => {

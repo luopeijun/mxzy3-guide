@@ -149,6 +149,70 @@ check(!wrongGender.eligible && !wrongGender.canAccept
     JSON.stringify([tables.length['舞台劇|男主角'], tables.length['時裝秀|男性']]));
 }
 
+// 送礼好感表：Item.dat 尾 21 字段烘焙成 gifts，槽位 -> 艺人编号由
+// sources/favorites.txt 的 ＋4 / ＋3 真值反查（18 位可签约艺人，3 槽未使用）。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const gifts = tables.gifts ?? {};
+  const slots = tables.giftSlots ?? {};
+  check(Object.keys(gifts).length >= 300 && Object.values(gifts).every((v) => v.length === 21),
+    '送礼表烘焙自 Item.dat（>=300 件道具，每条 21 个槽位）',
+    `${Object.keys(gifts).length} items`);
+  check(Object.keys(slots).length === 18 && [3, 65, 72, 74, 75, 76, 77].every((id) => slots[id] !== undefined),
+    '送礼槽位覆盖 18 位可签约艺人（含 65/72/74/75/76/77）',
+    JSON.stringify(slots));
+  // 攻略页 favorites.txt 的 ＋4 / ＋3 真值：每个艺人所有列出的道具在对应槽位上都相等。
+  const fav = fs.readFileSync(path.join(root, 'sources/favorites.txt'), 'utf-8');
+  const itemCodes = Object.fromEntries(
+    Object.entries(tables.items).map(([code, meta]) => [meta[0].replace(' ', ''), code]),
+  );
+  const trad = {
+    '八卦杂志': '八卦雜誌', '爱神巧克力': '愛神巧克力', '粉红色紧身长袜': '粉紅色緊身長襪',
+    '玫瑰之星': '玫瑰之星', '亲和眼影组': '親和眼影組', '人气香水': '人氣香水',
+    '夏威夷风比基尼': '夏威夷風比基尼', '粉红色雪纺纱裙': '粉紅色雪紡紗裙',
+    '贺总造型棒棒糖': '賀總造型棒棒糖', '蜂王精华露': '蜂王精華露', '雪山灵芝': '雪山靈芝',
+    '细高跟绑带长靴': '細高跟綁帶長靴', '红色丝巾': '紅色絲巾', '冰山雪莲': '冰山雪蓮',
+    '大宇啤酒': '大宇啤酒', '提神饮料': '提神飲料', '千年人参果': '千年人參果',
+    '绿宝石银带腰链': '綠寶石銀帶腰鍊', '水晶镶钻脚链': '水晶鑲鑽腳鍊', '蛮羊': '蠻羊',
+    '金质怀表': '金質懷錶', '镶钻夹脚拖鞋': '鑲鑽夾腳拖鞋', '镶钻夹角拖鞋': '鑲鑽夾腳拖鞋',
+    '龙尾散': '龍尾散', '蓝色咖啡': '藍色咖啡', '魅惑口红': '魅惑口紅', '叛逆口红': '叛逆口紅',
+    '长生不老露': '長生不老露', '绿色竹制手提包': '綠色竹製手提包', '七彩蛋糕': '七彩蛋糕',
+    '白色毛线帽': '白色毛線帽', '褐色丝质领巾': '褐色絲質領巾',
+    '渐层反光太阳眼镜': '漸層反光太陽眼鏡', '男性香水': '男性香水', '山药精力汤': '山藥精力湯',
+    '南洋风彩色手环': '南洋風彩色手環', '蓝宝石机械表': '藍寶石機械錶', '补脑养生丸': '補腦養生丸',
+    '镶钻夹脚拖鞋': '鑲鑽夾腳拖鞋', '海蓝色休闲头巾': '海藍色休閒頭巾', '呼干牌啤酒': '呼乾牌啤酒',
+    '百灵鸟之舌': '百舌鳥之舌', '绒毛披肩': '絨毛披肩', '运动护腕': '運動護腕',
+    '水晶镶钻脚链': '水晶鑲鑽腳鍊', '软呢帽': '軟呢帽',
+  };
+  const artistIds = { '林芬芬': 1, '桑禾蓓': 2, '欧怡青': 3, '苏嫚君': 4, '路敏': 5,
+    '萧依莉': 6, '天晴': 7, '陈奕夫': 8, '关古威': 9, '路风': 10, '纪翔': 11,
+    '姚子奇': 12, '姚子莹': 65, '新名纱雪': 74, '聆香': 75, '卫亚': 76,
+    '克烈斯': 72, '原少纬': 77 };
+  const names = new Set(Object.keys(artistIds));
+  let currentName = null, matched = 0, wrong = 0;
+  for (const line of fav.split(/\r?\n/)) {
+    const s = line.trim();
+    if (s.startsWith('送礼后')) break;
+    if (names.has(s)) { currentName = s; continue; }
+    if (!currentName || !s.includes('（＋')) continue;
+    const parts = s.split(/（＋(\d)）/);
+    for (let i = 0; i < parts.length - 1; i += 2) {
+      const tier = Number(parts[i + 1]);
+      for (const nm of parts[i].split('、').map((x) => x.trim()).filter(Boolean)) {
+        const code = itemCodes[trad[nm] ?? nm];
+        const slot = slots[String(artistIds[currentName])];
+        if (!code || slot === undefined) { wrong++; continue; }
+        if (gifts[code]?.[slot] === tier) matched++; else wrong++;
+      }
+    }
+  }
+  // 唯一已知分歧：萧依莉的蜂王精华露，攻略页写 ＋4，游戏 Item.dat 实际是 ＋3。
+  // 按用户要求「不依赖攻略网站」，以游戏表为准。
+  check(matched >= 145 && wrong <= 1,
+    '送礼表与攻略页 ＋4/＋3 真值逐条吻合（>=145 项，仅蜂王精华露一处游戏为准）',
+    `matched=${matched} wrong=${wrong}`);
+}
+
 const savePath = process.argv[2] ?? path.join(SNAP, 'probe.sa2');
 if (fs.existsSync(savePath)) {
   const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
