@@ -1039,6 +1039,36 @@ async function main() {
     } else {
       console.log('OK   Story0027.sa2 not present, skipped the own-artist checks');
     }
+    // 道具联动：Auto 存档里有八卦雜誌（口才+10 儀態+10 才智-20），
+    // hover 口才缺口时浮窗的【道具】组应把它整行列出来（含负项原文）。
+    const autoCopy = path.join(root, '.tmp', 'case-e2e-auto.sa2');
+    fs.copyFileSync(path.join(SNAP, 'Auto.sa2'), autoCopy);
+    await uploadSave(autoCopy);
+    await evaluate(`document.querySelector('[data-case-tab="open"]').click()`);
+    await sleep(350);
+    const itemHint = await evaluate(`(() => {
+      const e = [...document.querySelectorAll('[data-case-course-hint="口才"]')][0];
+      if (!e) return '';
+      e.scrollIntoView({ block: 'center' });
+      const r = e.getBoundingClientRect();
+      return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    })()`);
+    if (itemHint) {
+      await sleep(180);
+      const b = JSON.parse(itemHint);
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: b.x, y: b.y });
+      await sleep(250);
+      const pop = await evaluate(`(() => {
+        const c = document.querySelector('[data-case-course-popover]');
+        return c ? (c.innerText || '').replace(/\\s+/g, ' ').trim() : '';
+      })()`);
+      check(pop.includes('【道具】') && pop.includes('八卦雜誌')
+        && pop.includes('口才+10') && pop.includes('才智-20'),
+      'Auto 口才缺口浮窗列出【道具】八卦雜誌整行（含负项原文）', pop || '(none)');
+    } else {
+      check(false, 'Auto 存档应有一个口才缺口供 hover');
+    }
+
     await navigate('http://localhost:5173/sweet.html');
     const sweetState = JSON.parse(await evaluate(`JSON.stringify({
       tabs: document.querySelectorAll('[role="tab"]').length,
