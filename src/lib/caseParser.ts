@@ -290,6 +290,7 @@ export interface ArtistStats {
   fatigue: number;
   /** [叛逆, 性感, 亲和, 人气, 曝光] */
   social: number[];
+  /** 送过的礼物数；来自存档头部友好度表的第二格，缺记录时为 0。 */
   gifts: number;
   /** 电视 / 电影 / 唱片 / 广告 / 主持 已完成作品数。
    *  直接用游戏自己算好的那 5 个数字（状态块 +248 起），它已经包含加入公司
@@ -803,22 +804,30 @@ function parseRoleReservations(bytes: Uint8Array, view: DataView): Map<string, s
   return out;
 }
 
-/** 友好度表：存档头部按 284 字节一条排列，字段为
- *  [友好度 int32][0][256/257][艺人编号 int32]。用编号反查，不依赖固定偏移。 */
-function parseFriendship(view: DataView, bytes: Uint8Array): Record<number, number> {
-  const out: Record<number, number> = {};
+/** 头部友好度表：存档头部按 284 字节一条排列，字段为
+ *  [友好度 int32][送礼数 int32][256/257][艺人编号 int32]。用编号反查，不依赖固定偏移。
+ *  礼物数就在这条记录的第二格；艺人状态块 social 之后那几个 0/1 是标志位，不是数量。 */
+function parseFriendship(
+  view: DataView,
+  bytes: Uint8Array,
+): { friendship: Record<number, number>; gifts: Record<number, number> } {
+  const friendship: Record<number, number> = {};
+  const gifts: Record<number, number> = {};
   const ids = new Set(ARTIST_DIRECTORY.map((a) => a.id));
   const limit = Math.min(bytes.length - 16, 20000);
   for (let p = 0; p + 16 <= limit; p += 4) {
     const value = view.getUint32(p, true);
     if (value > 9999) continue;
+    const giftCount = view.getUint32(p + 4, true);
+    if (giftCount > 9999) continue;
     const marker = view.getUint32(p + 8, true);
     if (marker !== 256 && marker !== 257) continue;
     const id = view.getUint32(p + 12, true);
-    if (!ids.has(id) || id in out) continue;
-    out[id] = value;
+    if (!ids.has(id) || id in friendship) continue;
+    friendship[id] = value;
+    gifts[id] = giftCount;
   }
-  return out;
+  return { friendship, gifts };
 }
 
 /** Artist attribute blocks: nine abilities, stress/fatigue, a short Big5
@@ -830,6 +839,7 @@ function parseArtists(
   start: number,
   end: number,
   friendship: Record<number, number>,
+  giftCounts: Record<number, number>,
   titles: Record<string, string>,
   titleMeta: Record<string, TitleMeta>,
   stars: CaseTables['stars'],
@@ -870,8 +880,7 @@ function parseArtists(
     // 名气 / 魅力 in newer saves reach four digits (×10 scale), so this is only
     // a sanity bound; it must not be tight enough to drop real artists.
     if (!social.every((v) => v <= 99999)) continue;
-    const gifts = view.getUint32(socialAt + 20, true);
-    // 这里 5 个 int32 只是 0/1 标志位，不是作品数（Auto 里萧依莉 3 支广告却全是 0）。
+    // 礼物数在头部友好度表第二格，不在这里；social 之后的 5 个 int32 是 0/1 标志位。
     // 真正的作品数在块 +248，见下面的读取。
     const flagSlots = Array.from({ length: 5 }, (_, j) => view.getUint32(socialAt + 24 + 4 * j, true));
     if (!flagSlots.every((v) => v <= 9999)) continue;
@@ -897,7 +906,9 @@ function parseArtists(
     index += 1;
     out.push({
       friendship: roleId in friendship ? friendship[roleId] : null,
-      abilities, stress, fatigue, social, gifts, condition,
+      abilities, stress, fatigue, social,
+      gifts: roleId in giftCounts ? giftCounts[roleId] : 0,
+      condition,
       noticeCounts,
       titleId, title: (titleId > 0 && titles[String(titleId)]) || '',
       titleMeta: (titleId > 0 && titleMeta[String(titleId)]) || null,
@@ -1644,9 +1655,9 @@ export function parseSave(
 
   const artistStart = blocks.StarRoleQ ? blocks.StarRoleQ[1] : 0;
   const artistEnd = blocks.Firm ? blocks.Firm[0] : bytes.length;
-  const friendship = parseFriendship(view, bytes);
+  const { friendship, gifts } = parseFriendship(view, bytes);
   const artists = parseArtists(
-    bytes, view, artistStart, artistEnd, friendship,
+    bytes, view, artistStart, artistEnd, friendship, gifts,
     tables.titles ?? {}, tables.titleMeta ?? {}, tables.stars,
   );
   const roster = parseRoster(bytes);
