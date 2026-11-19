@@ -1138,11 +1138,36 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     check(get(8)?.noticeCounts.join(',') === '0,0,0,1,2',
       'Auto 陈奕夫 1 支广告 2 档节目（含加入公司前的履历）',
       JSON.stringify(get(8)?.noticeCounts));
+    check(get(6)?.gifts === 2,
+      'Auto 萧依莉 送过 2 个礼物（读头部友好度表第二格）',
+      String(get(6)?.gifts));
     // 马智文是 NPC、从未签约，作品数照样有值 —— 统计里含他在别家公司、
     // 以及加入公司之前的作品，所以不能靠数我方的接演记录。
     check(get(14)?.noticeCounts.join(',') === '7,15,0,6,0',
       'Auto 马智文历史作品 7 电视 15 电影 6 广告（含加入公司前）',
       JSON.stringify(get(14)?.noticeCounts));
+  }
+  // 礼物数真源是头部友好度表第二格；Ending0001 由玩家逐人核对过。
+  const ending1Path = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0001.sa2';
+  if (fs.existsSync(ending1Path)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(ending1Path);
+    const ending1 = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Ending0001.sa2',
+    );
+    const get = (id) => ending1.artists.find((a) => a.roleId === id);
+    for (const [id, name, want] of [
+      [65, '姚子莹', 10],
+      [74, '新名纱雪', 5],
+      [76, '卫亚', 2],
+      [12, '姚子奇', 4],
+    ]) {
+      check(get(id)?.gifts === want,
+        `Ending0001 ${name} 送过 ${want} 个礼物`,
+        String(get(id)?.gifts));
+    }
+  } else {
+    console.log('OK   Ending0001.sa2 not present, skipped the gift checks');
   }
 }
 
