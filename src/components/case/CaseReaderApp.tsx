@@ -764,7 +764,7 @@ export default function CaseReaderApp() {
                 >
                   道具
                   <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                    {result.items.filter((it) => it.quantity > 0).length} 件（数量 0 不计）
+                    {result.items.filter((it) => it.quantity > 0).length} 件
                   </span>
                 </summary>
                 <ItemsPanel
