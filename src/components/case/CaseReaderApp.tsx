@@ -1993,12 +1993,22 @@ for (const work of WORKS) {
   }
 }
 
-/** 道具属性行（Item.dat 原文，繁体）里能补九项能力的繁体写法 -> 页面简体名。
- *  只列正向加成；像八卦雜誌「才智-20」这类负项不会算成「能补才智」。 */
+/** 道具属性行（Item.dat 原文，繁体）里的属性写法 -> 页面简体名。
+ *  九项能力带数字（口才+10），社交门槛（叛逆/性感/亲和/人气/曝光）常写成
+ *  「親和力上升 / 性感上升叛逆上升」这种没有数字的定性描述，两种都要认。
+ *  只列正向加成；像八卦雜誌「才智-20」、冰山雪蓮「人氣-40」这类负项不算「能补」。 */
 const ITEM_ATTR_TRAD: Record<string, string> = {
   演技: '演技', 口才: '口才', 才智: '才智', 自信: '自信',
   儀態: '仪态', 動感: '动感', 體能: '体能', 歌藝: '歌艺', 名氣: '名气',
+  叛逆: '叛逆', 性感: '性感', 親和: '亲和', 親和力: '亲和',
+  人氣: '人气', 曝光: '曝光',
 };
+// 「XX上升」没有数字，只能靠上面的繁体写法白名单匹配；长的写法排前面，
+// 这样「親和力上升」不会被「親和」抢先切成两半。
+const ITEM_RISING_RE = new RegExp(
+  `(${Object.keys(ITEM_ATTR_TRAD).sort((a, b) => b.length - a.length).join('|')})上升`,
+  'g',
+);
 
 /** 从存档已拥有的道具里建「缺口属性 -> 可补道具」索引。显示沿用道具表原文
  *  （和道具面板一致），一行里所有增减都写出来，不只写补的那一项。 */
@@ -2007,10 +2017,16 @@ function itemHintsFor(items: OwnedItem[]): Record<string, CourseHint[]> {
   for (const it of items) {
     if (it.quantity <= 0 || !it.stats) continue;
     const matched = new Set<string>();
+    // 带数字：口才+10 / 性感+50；只收正向，才智-20 / 人氣-40 不算。
     for (const [, attr, raw] of it.stats.matchAll(/([^\s+\-]+)([+-]\d+)/g)) {
       const simple = ITEM_ATTR_TRAD[attr];
       if (!simple || Number(raw) <= 0) continue;
       matched.add(simple);
+    }
+    // 无数字：親和力上升 / 性感上升叛逆上升（男性香水一行补两项）。
+    for (const [, attr] of it.stats.matchAll(ITEM_RISING_RE)) {
+      const simple = ITEM_ATTR_TRAD[attr];
+      if (simple) matched.add(simple);
     }
     const text = `${it.name ?? `道具 ${it.code}`}（${it.stats.replace(/\s+/g, '，')}）`;
     for (const attr of matched) {
@@ -2024,11 +2040,15 @@ function itemHintsFor(items: OwnedItem[]): Record<string, CourseHint[]> {
  *  popover is not clipped by the case tab's own overflow-y content column.
  *  Moving the mouse onto the popover keeps it open; leaving closes it. */
 function GapCourseHint({
-  gap, itemHints,
-}: { gap: { attr: string; diff: number }; itemHints: Record<string, CourseHint[]> }) {
+  gap, itemHints, social = false,
+}: { gap: { attr: string; diff: number }; itemHints: Record<string, CourseHint[]>; social?: boolean }) {
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hints = [...(HINTS_BY_ATTR[gap.attr] ?? []), ...(itemHints[gap.attr] ?? [])];
+  // 社交门槛没有训练 / 打工课程，只看道具联动；九项能力照旧两者都有。
+  const hints = [
+    ...(social ? [] : HINTS_BY_ATTR[gap.attr] ?? []),
+    ...(itemHints[gap.attr] ?? []),
+  ];
 
   const cancelClose = useCallback(() => {
     if (closeTimer.current) {
@@ -2038,11 +2058,22 @@ function GapCourseHint({
   }, []);
   useEffect(() => () => cancelClose(), [cancelClose]);
 
-  if (hints.length === 0) return <span>{gap.attr} {Math.ceil(gap.diff)}</span>;
+  // 社交门槛保留原来的粉色小标签；没有可补道具时也不改变既有外观。
+  const pill = social
+    ? 'inline-flex items-center rounded-full border border-brand-line bg-brand-soft px-1.5 py-0.5 align-baseline font-semibold text-brand-strong'
+    : '';
+  const text = <>{gap.attr} {Math.ceil(gap.diff)}</>;
+  if (hints.length === 0) {
+    return social
+      ? <span data-case-social-gap title="从存档读取的附加属性门槛（无等级）" className={pill}>{text}</span>
+      : <span>{text}</span>;
+  }
   return (
     <span
       data-case-course-hint={gap.attr}
-      className="cursor-help decoration-dotted underline-offset-2 hover:underline"
+      {...(social ? { 'data-case-social-gap': '' } : {})}
+      title={social ? '从存档读取的附加属性门槛（无等级）' : undefined}
+      className={cn('cursor-help decoration-dotted underline-offset-2 hover:underline', pill)}
       onMouseEnter={(ev) => {
         cancelClose();
         const r = ev.currentTarget.getBoundingClientRect();
@@ -2054,7 +2085,7 @@ function GapCourseHint({
         closeTimer.current = setTimeout(() => setAnchor(null), 150);
       }}
     >
-      {gap.attr} {Math.ceil(gap.diff)}
+      {text}
       {anchor && createPortal(
         <div
           data-case-course-popover
@@ -2220,17 +2251,7 @@ function MatchList({ role, signed, groups, artists, itemHints, cellClass }: {
                       .map((gap, index) => (
                         <Fragment key={gap.attr}>
                           {index > 0 && ' · '}
-                          {gap.social ? (
-                            <span
-                              data-case-social-gap
-                              title="从存档读取的附加属性门槛（无等级）"
-                              className="inline-flex items-center rounded-full border border-brand-line bg-brand-soft px-1.5 py-0.5 align-baseline font-semibold text-brand-strong"
-                            >
-                              {gap.attr} {Math.ceil(gap.diff)}
-                            </span>
-                          ) : (
-                            <GapCourseHint gap={gap} itemHints={itemHints} />
-                          )}
+                          <GapCourseHint gap={gap} itemHints={itemHints} social={gap.social} />
                         </Fragment>
                       ))}
                   </span>
