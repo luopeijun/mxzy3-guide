@@ -2486,6 +2486,32 @@ function NoticeRows({
   itemHints: Record<string, CourseHint[]>;
 }) {
   const closing = notice.status === 'closing';
+  // 工作天数按角色显示：电视剧 / 电影里男主角、配角各自的天数不同，通告第一行
+  // 只显示第一个角色的天数会漏掉其他人。这里给每个角色行渲染自己的胶囊；
+  // 起止日期仍是通告级信息，只在第一行给。无角色记录时退回通告自带的 workDays。
+  const workDaysBadge = (role?: RoleRecord) => {
+    const workDays = role?.workDays ?? notice.workDays;
+    const daysPerWeek = role?.daysPerWeek ?? notice.daysPerWeek;
+    if (!workDays) return null;
+    return (
+      <div
+        data-case-workdays
+        data-case-role-name={role?.role ?? ''}
+        data-case-work-days={workDays}
+        title={role
+          ? `角色「${role.role}」需要工作 ${workDays} 天，每周最多排 ${daysPerWeek} 天（拍摄期共 ${notice.execDays} 天）`
+          : `这张通告需要工作 ${workDays} 天，每周最多排 ${daysPerWeek} 天`}
+        className="mt-1 flex flex-wrap items-center gap-1"
+      >
+        <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-brand-strong">
+          工作 {workDays} 天
+        </span>
+        <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-normal text-brand-strong">
+          每周 ≤{daysPerWeek} 次
+        </span>
+      </div>
+    );
+  };
   const noticeCells = (
     <>
       <Td>
@@ -2543,20 +2569,7 @@ function NoticeRows({
             <span className="ml-1 text-ink-faint">共 {notice.execDays} 天</span>
           </div>
         </div>
-        {notice.workDays > 0 && (
-          <div
-            data-case-workdays
-            title={`拍摄期共 ${notice.execDays} 天，其中需要工作 ${notice.workDays} 天，每周最多排 ${notice.daysPerWeek} 天`}
-            className="mt-1 flex flex-wrap items-center gap-1"
-          >
-            <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-brand-strong">
-              工作 {notice.workDays} 天
-            </span>
-            <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-normal text-brand-strong">
-              每周 ≤{notice.daysPerWeek} 次
-            </span>
-          </div>
-        )}
+        {workDaysBadge(notice.roles[0])}
         {notice.executedDays > 0 && notice.remainingDays > 0 ? (
           <span className="mt-1 inline-block rounded-full bg-tag-follow-soft px-1.5 py-0.5 text-ui-2xs text-tag-follow">
             进行中 · 已执行 {notice.executedDays} 天 / 剩 {notice.remainingDays} 天
@@ -2570,7 +2583,11 @@ function NoticeRows({
     </>
   );
 
-  const blankCells = (<><Td /><Td /><Td /><Td /><Td /></>);
+  // 后续角色行：前四列留空，第五格（执行期间列）放这名角色自己的工作天数。
+  // 这样同一通告里不同角色类型的天数逐行可见，不再只有第一个角色的数字。
+  const blankCells = (role: RoleRecord) => (
+    <><Td /><Td /><Td /><Td /><Td>{workDaysBadge(role)}</Td></>
+  );
 
   /** 只显示结果，不在这里编辑：设置入口在表格上方的「预约设置」。 */
   const reservationCell = (role: RoleRecord, reserved: boolean) => (
@@ -2590,7 +2607,10 @@ function NoticeRows({
       <tbody data-case-notice data-case-status={notice.status}>
         <tr data-case-role className="border-t border-line-strong">
           {noticeCells}
-          <Td className="text-ink-faint" colSpan={4}>存档里没有该通告的角色需求记录</Td>
+          <Td className="text-ink-faint" colSpan={4}>
+            存档里没有该通告的角色需求记录
+            {workDaysBadge()}
+          </Td>
           <Td className="text-ink-faint">—</Td>
         </tr>
       </tbody>
@@ -2613,7 +2633,7 @@ function NoticeRows({
             data-case-role-name={role.role}
             className={cn('hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
           >
-            {index === 0 ? noticeCells : blankCells}
+            {index === 0 ? noticeCells : blankCells(role)}
             <Td className={roleCell}>
               <RolePill role={role} />
             </Td>

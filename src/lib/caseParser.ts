@@ -215,6 +215,10 @@ export interface RoleRecord {
   /** Artist who has booked this role, e.g. 黎华. Empty means available. */
   reservedBy: string;
   offset: number;
+  /** 通告解析时按 Length 表填入的角色自己的工作天数 / 每周上限。
+   *  电视剧 / 电影里男主角、男配角、女主角、女配角天数各不相同，不能只取通告第一个角色。 */
+  workDays?: number;
+  daysPerWeek?: number;
 }
 
 /** 'upcoming' not open yet, 'open' bookable, 'closing' deadline within 7 days,
@@ -1951,8 +1955,17 @@ export function parseSave(
         if (value) role.requirements.push({ attr, value, staticGrade: '', rolledGrade: '', social: true });
       }
     }
+    // 每个角色按自己的角色类型查 Length 表：连续剧 / 电影里男主角、男配角、
+    // 女主角、女配角的工作天数各不相同，不能只取通告的第一个角色。
+    // notice.workDays 仍保留第一个命中角色的值（CSV 与旧断言用），逐角色的
+    // 天数写回各自 RoleRecord，供筹备中表格按行展示。
+    for (const role of noticeRoles) {
+      const hit = lengthOf(item.code, info, role.role);
+      role.workDays = hit?.[0] ?? 0;
+      role.daysPerWeek = hit?.[1] ?? 0;
+    }
     const length = noticeRoles
-      .map((role) => lengthOf(item.code, info, role.role))
+      .map((role) => (role.workDays ? [role.workDays, role.daysPerWeek ?? 0] : null))
       .find((hit): hit is number[] => Boolean(hit)) ?? null;
     const triple = datesByCode[item.code];
     const openDate = triple ? fmtDate(triple[0]) : '';
