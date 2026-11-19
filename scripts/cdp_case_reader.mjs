@@ -1047,6 +1047,32 @@ async function main() {
       console.log('SKIP Story0055.sa2 not present, day counts not checked');
     }
 
+    // Story0014：CF095 意美 好吃篇的萧依莉根本没接取，预约列必须为空。
+    // 存档里有一段形状像 52 字节预约表的假记录（尾部带 1），不能误报成已预约。
+    const s14Copy = path.join(root, '.tmp', 'case-e2e-story14.sa2');
+    fs.copyFileSync(path.join(SNAP, 'Story0014.sa2'), s14Copy);
+    await uploadSave(s14Copy);
+    await evaluate(`document.querySelector('[data-case-tab="open"]').click()`);
+    await sleep(350);
+    const cf095 = JSON.parse(await evaluate(`(function(){
+      var t = [...document.querySelectorAll('[data-case-notice]')].find(function(x){ return x.innerText.includes('CF095'); });
+      if (!t) return JSON.stringify({ found:false });
+      return JSON.stringify({
+        found:true,
+        rows: [...t.querySelectorAll('[data-case-role]')].map(function(r){
+          return {
+            name: r.getAttribute('data-case-role-name'),
+            reserved: r.getAttribute('data-case-reserved'),
+            by: r.querySelector('[data-case-reservation]')?.innerText || '',
+          };
+        }),
+      });
+    })()`));
+    check(cf095.found && cf095.rows.length === 1 && cf095.rows[0].reserved === 'no'
+      && cf095.rows[0].by === '' && !cf095.rows[0].by.includes('萧依莉'),
+      'Story0014 CF095 萧依莉没接取，页面不显示已预约',
+      JSON.stringify(cf095));
+
     // 换成 Story0027：「守候」里史蒂芬 / 方若綺不是旗下艺人，只该留克烈斯一行。
     const ownPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0027.sa2';
     if (fs.existsSync(ownPath)) {
