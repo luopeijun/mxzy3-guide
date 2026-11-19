@@ -10,6 +10,11 @@ import {
   groupPhases,
   type LineFilter,
 } from '../../lib/trackerFilter';
+import {
+  lineMatchesArtists,
+  trackedArtistChoices,
+} from '../../lib/trackerArtistFilter';
+import { groupOf, type GroupKey } from '../../lib/trackerGroups';
 import { useTracker } from '../../hooks/useTracker';
 import { cn } from '../../lib/cn';
 import {
@@ -22,6 +27,7 @@ import {
 } from '../../lib/trackerContent';
 import TaskLineCard from './TaskLineCard';
 import TrackerFilterChips from './TrackerFilterChips';
+import TrackerScopeChips from './TrackerScopeChips';
 import TrackerContentChips from './TrackerContentChips';
 
 interface Props {
@@ -62,10 +68,21 @@ function mergeMatched(
  *  restored in place. A filtered list is a partial view, so drag is disabled
  *  there for the same reason it is disabled while searching. */
 export default function TrackerPool({ data }: Props) {
-  const { config, poolSelection, includeReleased, getLine, lineOrder, pinnedIds, togglePin, reorderLines } =
-    useTracker();
+  const {
+    config,
+    poolSelection,
+    trackedArtists,
+    includeReleased,
+    getLine,
+    lineOrder,
+    pinnedIds,
+    togglePin,
+    reorderLines,
+  } = useTracker();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<LineFilter>('all');
+  const [artistFilter, setArtistFilter] = useState<string[]>([]);
+  const [groupFilter, setGroupFilter] = useState<GroupKey[]>([]);
   const [content, setContent] = useState<ContentFilter>(NO_CONTENT);
   const [completedOpen, setCompletedOpen] = useState(false);
   const [jumpRequested, setJumpRequested] = useState(false);
@@ -77,7 +94,10 @@ export default function TrackerPool({ data }: Props) {
   const searching = needle.length > 0;
   const filtering = filter !== 'all';
   const contentFiltering = isContentFilterActive(content);
-  const dragDisabled = searching || filtering || contentFiltering;
+  const artistFiltering = artistFilter.length > 0;
+  const groupFiltering = groupFilter.length > 0;
+  const dragDisabled =
+    searching || filtering || contentFiltering || artistFiltering || groupFiltering;
   const pool = useMemo(
     () => buildPool(data, poolSelection, config),
     [data, poolSelection, config],
@@ -88,22 +108,49 @@ export default function TrackerPool({ data }: Props) {
     () => (contentFiltering ? pool.filter((line) => lineMatchesContent(line, content)) : pool),
     [pool, content, contentFiltering],
   );
+  const artistChoices = useMemo(
+    () => trackedArtistChoices(trackedArtists, data, config),
+    [trackedArtists, data, config],
+  );
+  // 左侧取消追踪的人不该继续留在筛选里（否则选中一个池外艺人，列表永远空白）。
+  useEffect(() => {
+    if (!artistFilter.length) return;
+    const available = new Set(trackedArtists);
+    const next = artistFilter.filter((id) => available.has(id));
+    if (next.length !== artistFilter.length) setArtistFilter(next);
+  }, [trackedArtists, artistFilter]);
+  // 艺人 / 分类先收窄池子，状态筛选再于其中挑选：选中「林芬芬 + 进行中」
+  // 只留她的进行中任务线；同维度多选是并集，维度之间是交集。
+  const scopedPool = useMemo(() => {
+    let lines = visiblePool;
+    if (artistFiltering) lines = lines.filter((line) => lineMatchesArtists(line, artistFilter));
+    if (groupFiltering) lines = lines.filter((line) => groupFilter.includes(groupOf(line, config)));
+    return lines;
+  }, [visiblePool, artistFilter, artistFiltering, groupFilter, groupFiltering, config]);
+  const artistFilterLabel = artistChoices
+    .filter((choice) => artistFilter.includes(choice.id))
+    .map((choice) => choice.label)
+    .join('、');
+  const groupFilterLabel = config.groups
+    .filter((group) => groupFilter.includes(group.key))
+    .map((group) => group.label)
+    .join('、');
   // Which steps survive the content filter, per line — the card renders only
   // those, exactly like a search hit list.
   const contentSteps = useMemo(() => {
     if (!contentFiltering) return null;
     const map = new Map<string, Set<number>>();
-    for (const line of visiblePool) {
+    for (const line of scopedPool) {
       const indices = matchingStepIndices(line, content);
       if (indices) map.set(line.id, indices);
     }
     return map;
-  }, [visiblePool, content, contentFiltering]);
+  }, [scopedPool, content, contentFiltering]);
 
   // Buckets exist in every view: they drive the chip counts and the filtered
   // list. The 全部 view still uses the original split so its ordering, archive
   // and drag behaviour are byte-for-byte unchanged.
-  const phases = useMemo(() => groupPhases(visiblePool, getLine), [visiblePool, getLine]);
+  const phases = useMemo(() => groupPhases(scopedPool, getLine), [scopedPool, getLine]);
   const stats = useMemo(
     () => summarisePool(pool, getLine, includeReleased),
     [pool, getLine, includeReleased],
@@ -111,14 +158,14 @@ export default function TrackerPool({ data }: Props) {
   const { activeLines, completedLines } = useMemo(() => {
     const activeLines: TaskLine[] = [];
     const completedLines: TaskLine[] = [];
-    for (const line of visiblePool) {
+    for (const line of scopedPool) {
       const state = getLine(line.id);
       if ((state?.status ?? 'active') === 'excluded') continue;
       if (isLineComplete(line, state?.done ?? [], state?.skipped ?? [])) completedLines.push(line);
       else activeLines.push(line);
     }
     return { activeLines, completedLines };
-  }, [visiblePool, getLine]);
+  }, [scopedPool, getLine]);
 
   const counts = useMemo<Record<LineFilter, number>>(
     () => ({
@@ -379,22 +426,32 @@ export default function TrackerPool({ data }: Props) {
         </div>
 
         <TrackerFilterChips value={filter} counts={counts} onChange={setFilter} />
+        <TrackerScopeChips
+          artists={artistChoices}
+          artistValue={artistFilter}
+          onArtistChange={setArtistFilter}
+          groups={config.groups}
+          groupValue={groupFilter}
+          onGroupChange={setGroupFilter}
+        />
         <TrackerContentChips value={content} onChange={setContent} />
 
-        {(searching || filtering || contentFiltering) && (
+        {(searching || filtering || contentFiltering || artistFiltering || groupFiltering) && (
           <p data-filter-hint className="mt-1.5 text-ui-2xs text-ink-faint">
             {searching
               ? `找到 ${foundLines} 条任务线 · ${matchedEvents} 个事件`
               : `${[
                   filtering ? `状态「${FILTER_LABEL[filter]}」` : null,
+                  artistFiltering ? `艺人「${artistFilterLabel}」` : null,
+                  groupFiltering ? `分类「${groupFilterLabel}」` : null,
                   contentFiltering ? `内容「${contentLabel(content)}」` : null,
                 ]
                   .filter(Boolean)
                   .join(' · ')} · ${ordered.length + orderedCompleted.length} 条任务线`}
             {filtering
               ? ' · 筛选时不可拖拽，状态改变会自动离开当前筛选'
-              : contentFiltering
-                ? ' · 内容筛选时不可拖拽排序'
+              : contentFiltering || artistFiltering || groupFiltering
+                ? ' · 筛选时不可拖拽排序'
                 : ''}
             {searching && ' · 按 Esc 或「清空」退出'}
           </p>
@@ -427,7 +484,11 @@ export default function TrackerPool({ data }: Props) {
             ? `没有内容为「${contentLabel(content)}」的任务线，点「内容」旁的清除回到全部。`
             : filtering
               ? `当前没有「${FILTER_LABEL[filter]}」的任务线，点上方「全部」返回。`
-              : '事件池为空。勾选艺人，或把已移出的任务线恢复回来。'}
+              : artistFiltering
+                ? `当前没有「${artistFilterLabel}」的任务线，点「艺人」行的「不限」返回。`
+                : groupFiltering
+                  ? `当前没有「${groupFilterLabel}」的任务线，点「分类」行的「不限」返回。`
+                  : '事件池为空。勾选艺人，或把已移出的任务线恢复回来。'}
         </p>
       ) : foundLines === 0 ? (
         <p className="rounded-ui-md border border-dashed border-line-strong bg-surface-soft px-4 py-8 text-center text-ui-xs text-ink-faint">
