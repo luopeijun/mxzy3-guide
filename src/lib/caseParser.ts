@@ -338,8 +338,10 @@ export interface ArtistAward {
   workCode: string;
   /** 获奖作品名，查不到静态表时退回编码。 */
   workName: string;
-  /** 公司级奖项（年度专辑 / 最佳团体 / 年度戏剧），存档挂在团长或主唱名下。 */
+  /** 非个人奖（团体奖 + 公司奖），存档挂在团长或主唱名下。 */
   company: boolean;
+  /** 团体奖（最佳团体）：归到获奖者所在团体，不挂个人卡。 */
+  group: boolean;
   /** 存档里的艺人编号。 */
   artistId: number;
 }
@@ -362,8 +364,11 @@ export const AWARD_NAMES: Record<number, string> = {
   51: '最上镜头', 52: '最佳模特儿', 53: '最佳代言人',
 };
 
-/** 这三个不是个人奖：存档照样挂在某位艺人名下，界面按公司奖单列。 */
+/** 这三个不是个人奖：存档照样挂在某位艺人名下，界面按团体 / 公司分流。
+ *  23 最佳团体是团体荣誉，归到获奖者所在团体；24 / 44 是公司作品奖。 */
 export const COMPANY_AWARD_IDS = [23, 24, 44];
+/** 团体奖编号：只挂到「我方团体」，既不进艺人卡也不进公司卡的奖项行。 */
+export const GROUP_AWARD_IDS = [23];
 
 /** 记事表里的「得奖」事件类型。类型 5 配事项编号 11..15 是作品下档，不是奖。 */
 const DIARY_AWARD_KIND = 5;
@@ -969,6 +974,7 @@ export function parseAwards(
         workCode,
         workName: (workCode && cases[workCode]?.[0]) || workCode || '作品未记录',
         company: COMPANY_AWARD_IDS.includes(awardId),
+        group: GROUP_AWARD_IDS.includes(awardId),
         artistId: view.getUint32(p + 20, true),
       },
       day: dayNumber(year, month, day),

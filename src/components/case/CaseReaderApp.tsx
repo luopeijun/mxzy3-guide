@@ -447,8 +447,8 @@ export default function CaseReaderApp() {
       }));
   }, [result, artists]);
 
-  /** 公司层面的奖：年度专辑 / 最佳团体 / 年度戏剧。存档把它们挂在团长或主唱
-   *  名下，所以公司行要带上人名，个人卡里也要留一行小字。 */
+  /** 公司层面的奖：年度专辑(24) / 年度戏剧(44)。存档挂在某人作品名下，
+   *  公司行带上人名。最佳团体(23) 是团体荣誉，归到「我方团体」，不在这里。 */
   const companyAwards = useMemo(() => {
     if (!result) return [];
     const nameOf = (id: number): string =>
@@ -456,9 +456,32 @@ export default function CaseReaderApp() {
       ?? tables.stars?.[String(id)]?.[0]
       ?? `编号${id}`;
     return result.awards
-      .filter((award) => award.company)
+      .filter((award) => award.company && !award.group)
       .map((award) => ({ award, artistName: nameOf(award.artistId) }));
   }, [result, tables]);
+
+  /** 团体奖（最佳团体）：按存档里挂名的艺人编号归到其所在的团体。
+   *  一个艺人可以是多支团体的成员，此时每条奖在所属每支团体卡里都显示；
+   *  挂名艺人不在任何团体里的奖归到 groupAwardsUnmatched，兜底不丢失。 */
+  const { groupAwardsByTeam, groupAwardsUnmatched } = useMemo(() => {
+    const byTeam = new Map<number, ParseResult['awards']>();
+    const unmatched: ParseResult['awards'] = [];
+    if (!result) return { groupAwardsByTeam: byTeam, groupAwardsUnmatched: unmatched };
+    const groupAwards = result.awards.filter((award) => award.group);
+    for (const award of groupAwards) {
+      const teams = result.teams.filter((team) => team.memberIds.includes(award.artistId));
+      if (teams.length === 0) {
+        unmatched.push(award);
+        continue;
+      }
+      for (const team of teams) {
+        const list = byTeam.get(team.code) ?? [];
+        list.push(award);
+        byTeam.set(team.code, list);
+      }
+    }
+    return { groupAwardsByTeam: byTeam, groupAwardsUnmatched: unmatched };
+  }, [result]);
 
   /** 我方团体：只认存档 `Team` 段里的记录（编号 101 起）。存档没记录就是
    *  旗下没有团体 —— 这里不做任何猜测，也不预置默认值。 */
@@ -780,7 +803,45 @@ export default function CaseReaderApp() {
                           </span>
                         ))}
                       </div>
+                      {/* 团体奖（最佳团体）：存档挂在队长 / 团员名下，归到团体卡；
+                          不进任何艺人卡。 */}
+                      {(groupAwardsByTeam.get(group.code)?.length ?? 0) > 0 && (
+                        <div data-case-group-awards className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
+                          <span className="text-ink-faint">团体奖</span>
+                          {groupAwardsByTeam.get(group.code)!.map((award) => (
+                            <span
+                              key={`${award.awardId}-${award.date}-${award.workCode}`}
+                              data-case-group-award
+                              data-case-award-id={award.awardId}
+                              className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                            >
+                              {award.ceremony}·{award.label}
+                              <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                              <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                  ))}
+                </div>
+              )}
+              {/* 存档把团体奖挂在某位艺人名下，但该艺人不在任何团体记录里：
+                  兜底展示，不丢奖，也不塞回艺人卡。 */}
+              {groupAwardsUnmatched.length > 0 && (
+                <div data-case-group-awards-unmatched className="mt-2 flex flex-wrap items-center gap-1 text-ui-2xs">
+                  <span className="text-ink-faint">团体奖（存档未记所属团体）</span>
+                  {groupAwardsUnmatched.map((award) => (
+                    <span
+                      key={`${award.awardId}-${award.date}-${award.workCode}`}
+                      data-case-group-award
+                      data-case-award-id={award.awardId}
+                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                    >
+                      {award.ceremony}·{award.label}
+                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                      <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
+                    </span>
                   ))}
                 </div>
               )}
@@ -2009,9 +2070,10 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
               {NOTICE_TOTAL_LABEL} <b>{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
             </span>
           </div>
-          {/* 奖项：个人奖是金色胶囊，公司奖（年度专辑等）单列一行灰字 ——
-              同一件事在两个层面各看得见，又不至于混成个人荣誉。 */}
-          {artist.awards.length > 0 && (
+          {/* 奖项：个人奖是金色胶囊，公司作品奖（年度专辑 / 年度戏剧）单列一行；
+              团体奖（最佳团体）归到「我方团体」卡，不挂在这里。 */}
+          {(artist.awards.some((award) => !award.company)
+            || artist.awards.some((award) => award.company && !award.group)) && (
             <div data-case-artist-awards className="mt-1 border-t border-line pt-1 text-ui-2xs">
               {artist.awards.some((award) => !award.company) && (
                 <span className="flex flex-wrap items-center gap-1">
@@ -2030,10 +2092,10 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
                   ))}
                 </span>
               )}
-              {artist.awards.some((award) => award.company) && (
+              {artist.awards.some((award) => award.company && !award.group) && (
                 <span data-case-artist-company-awards className="mt-0.5 flex flex-wrap items-center gap-1">
                   <span className="text-ink-faint">公司奖</span>
-                  {artist.awards.filter((award) => award.company).map((award) => (
+                  {artist.awards.filter((award) => award.company && !award.group).map((award) => (
                     <span
                       key={`${award.awardId}-${award.date}-${award.workCode}`}
                       data-case-artist-company-award
