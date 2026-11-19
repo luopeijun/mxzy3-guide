@@ -178,6 +178,13 @@ async function main() {
       })(),
       artistSummary: document.querySelector('[data-case-artists-summary]')?.innerText || '',
       picker: !!document.querySelector('[data-case-artist-picker]'),
+      companyAwards: (document.querySelector('[data-case-company-awards]')?.innerText || '')
+        .replace(/\\s+/g, ' ').trim() || null,
+      companyAwardChips: document.querySelectorAll('[data-case-company-award]').length,
+      artistAwards: [...document.querySelectorAll('[data-case-artist-award]')]
+        .map(x => (x.innerText || '').replace(/\\s+/g, ' ').trim()),
+      artistCompanyAwards: [...document.querySelectorAll('[data-case-artist-company-awards]')]
+        .map(x => (x.innerText || '').replace(/\\s+/g, ' ').trim()),
       updates: (function(){ var d = document.querySelector('[data-case-updates]'); if (!d) return ''; d.open = true; return d.textContent || ''; })(),
       closingRows: document.querySelectorAll('[data-case-status="closing"]').length,
       reservedRows: document.querySelectorAll('[data-case-reserved="yes"]').length,
@@ -321,6 +328,19 @@ async function main() {
       '资金按亿 / 万拆开显示（1,151,527 → 115万1527）', comp?.money ?? 'none');
     check(comp?.aboveArtists === true,
       '公司卡片排在旗下艺人前面', String(comp?.aboveArtists));
+    // 奖项：个人奖在艺人卡里，公司奖（年度专辑等）在公司卡另起一行、
+    // 艺人卡里只留一行灰字，两边都不混。
+    check(p.companyAwards !== null, '公司卡里有「奖项」一行', p.companyAwards ?? 'none');
+    if (p.artistAwards.length > 0) {
+      check(p.artistAwards.every((t) => /^(金曲奖|金像奖|金钟奖|金星奖)·/.test(t)),
+        '个人奖项一律带颁奖礼前缀', p.artistAwards.join(' | '));
+      check(p.artistAwards.every((t) => !/年度专辑|年度戏剧|最佳团体/.test(t)),
+        '公司奖没有混进个人奖项', p.artistAwards.join(' | '));
+      console.log('    个人奖项:', p.artistAwards.join(' | '));
+      console.log('    公司奖项:', p.artistCompanyAwards.join(' | ') || '无');
+    } else {
+      console.log('OK   这份存档还没有奖项，跳过奖项文案检查');
+    }
     // 道具：默认收起，标题改为「道具」；按类型分三个页签，每页 10 件内部分页。
     const items = JSON.parse(await evaluate(`(function(){
       var d = document.querySelector('[data-case-items]');

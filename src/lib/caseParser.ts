@@ -317,7 +317,56 @@ export interface ArtistStats {
   signed: boolean;
   offset: number;
   index: number;
+  /** 这位艺人拿过的奖，最近的排在最前；公司奖也在里面，看 `company` 分流。 */
+  awards: ArtistAward[];
 }
+
+/** 存档「艺人成绩」记事里的一条获奖记录。 */
+export interface ArtistAward {
+  /** 获奖年份 / 月份；记事只到月，没有更细的日期。 */
+  year: number;
+  month: number;
+  /** `2006/2`，界面直接用。 */
+  date: string;
+  /** 颁奖礼：金曲奖 / 金像奖 / 金钟奖 / 金星奖。 */
+  ceremony: string;
+  /** 单项名，例如 最上镜头、最佳代言人。 */
+  label: string;
+  /** 奖项编号 21..53；排错和测试用。 */
+  awardId: number;
+  /** 获奖作品编码，例如 CF159；剧情 / 自制通告可能读不到。 */
+  workCode: string;
+  /** 获奖作品名，查不到静态表时退回编码。 */
+  workName: string;
+  /** 公司级奖项（年度专辑 / 最佳团体 / 年度戏剧），存档挂在团长或主唱名下。 */
+  company: boolean;
+  /** 存档里的艺人编号。 */
+  artistId: number;
+}
+
+/** 记事表每条记录的固定字节数，表头是 `[条数][108]`。 */
+const DIARY_STRIDE = 108;
+
+/** 奖项编号的十位 -> 颁奖礼。 */
+const AWARD_CEREMONY: Record<number, string> = {
+  2: '金曲奖', 3: '金像奖', 4: '金钟奖', 5: '金星奖',
+};
+
+/** 奖项编号 -> 单项名。编号从主程序里那张分支跳表反推（跳表下标 = 编号 - 21），
+ *  再用「性别 / 作品类型必须自洽」交叉验过：43 的获奖作品一律是主持、32 只有
+ *  女艺人、51 / 53 只有广告。游戏内电影那个奖叫金像奖，不是金马奖。 */
+export const AWARD_NAMES: Record<number, string> = {
+  21: '最佳新人', 22: '最佳演唱人', 23: '最佳团体', 24: '年度专辑',
+  31: '最佳男主角', 32: '最佳女主角', 33: '最佳男配角', 34: '最佳女配角',
+  41: '最佳男演员', 42: '最佳女演员', 43: '最佳主持人', 44: '年度戏剧',
+  51: '最上镜头', 52: '最佳模特儿', 53: '最佳代言人',
+};
+
+/** 这三个不是个人奖：存档照样挂在某位艺人名下，界面按公司奖单列。 */
+export const COMPANY_AWARD_IDS = [23, 24, 44];
+
+/** 记事表里的「得奖」事件类型。类型 5 配事项编号 11..15 是作品下档，不是奖。 */
+const DIARY_AWARD_KIND = 5;
 
 /** One selectable artist in the top panel: fixed roster number plus whichever
  *  state block the save happens to contain for them. */
@@ -496,6 +545,8 @@ export interface ParseResult {
   currentDate: GameDate | null;
   /** 我方公司：名称 / 主角 / 形象 / 知名度 / 公关 / 资金。 */
   company: CompanyInfo | null;
+  /** 「艺人成绩」记事里的全部获奖记录，最近的在前。 */
+  awards: ArtistAward[];
   /** Monday notice-update batches, oldest first. */
   batches: UpdateBatch[];
   /** First batch strictly after today, i.e. the next company refresh. */
@@ -846,6 +897,87 @@ function parseFriendship(
 /** Artist attribute blocks: nine abilities, stress/fatigue, a short Big5
  *  status label, the social stats and five notice counters. The 999 "cap"
  *  blocks that follow each real one are filtered out. */
+/** 记事表在存档里的位置：表头 `[条数][108]`，随后是条数×108 字节。
+ *  全档扫 `条数 / 108` 这两个 int32，再逐条校验年月日与编号范围；88 份存档
+ *  上验证过每份只会命中一处（记事表出现前也返回 null，不是解析失败）。 */
+function readDiaryTable(
+  view: DataView, byteLength: number,
+): { offset: number; count: number } | null {
+  let best: { offset: number; count: number } | null = null;
+  for (let offset = 0; offset + 16 <= byteLength; offset += 4) {
+    const count = view.getInt32(offset, true);
+    if (count < 1 || count > 400) continue;
+    if (view.getInt32(offset + 4, true) !== DIARY_STRIDE) continue;
+    if (offset + 8 + count * DIARY_STRIDE > byteLength) continue;
+    let ok = true;
+    for (let i = 0; i < count && ok; i += 1) {
+      const p = offset + 8 + i * DIARY_STRIDE;
+      const year = view.getUint32(p, true);
+      const month = view.getUint32(p + 4, true);
+      const day = view.getUint32(p + 8, true);
+      const kind = view.getUint32(p + 12, true);
+      const thing = view.getUint32(p + 16, true);
+      const artist = view.getUint32(p + 20, true);
+      ok = year >= 2000 && year <= 2100 && month >= 1 && month <= 12
+        && day >= 1 && day <= 31 && kind <= 40 && thing <= 99 && artist <= 200;
+    }
+    if (!ok) continue;
+    if (!best || count > best.count) best = { offset, count };
+  }
+  return best;
+}
+
+/** 记事里的作品编码：`+56` 起 8 字节 ASCII，`CF159` 这样。 */
+function readDiaryCode(view: DataView, offset: number): string {
+  let code = '';
+  for (let j = 0; j < 8; j += 1) {
+    const v = view.getUint8(offset + j);
+    if (!v) break;
+    if (v < 0x20 || v > 0x7e) return '';
+    code += String.fromCharCode(v);
+  }
+  return /^[A-Z]{2}[0-9A-Z]{3}$/.test(code) ? code : '';
+}
+
+/** 解析「艺人成绩」记事里的获奖记录，最近的排在最前。
+ *  一条记录 = 年 / 月 / 日 / 事件类型 / 事项编号 / 艺人编号 / 作品编码。
+ *  只认事件类型 5 且事项编号 21..53 的；作品名去静态通告表查。 */
+export function parseAwards(
+  view: DataView, byteLength: number, cases: CaseTables['cases'],
+): ArtistAward[] {
+  const table = readDiaryTable(view, byteLength);
+  if (!table) return [];
+  const rows: { award: ArtistAward; day: number }[] = [];
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * DIARY_STRIDE;
+    const kind = view.getUint32(p + 12, true);
+    if (kind !== DIARY_AWARD_KIND) continue;
+    const awardId = view.getUint32(p + 16, true);
+    const label = AWARD_NAMES[awardId];
+    if (!label) continue;
+    const year = view.getUint32(p, true);
+    const month = view.getUint32(p + 4, true);
+    const day = view.getUint32(p + 8, true);
+    const workCode = readDiaryCode(view, p + 56);
+    rows.push({
+      award: {
+        year, month,
+        date: `${year}/${month}`,
+        ceremony: AWARD_CEREMONY[Math.floor(awardId / 10)] ?? '',
+        label,
+        awardId,
+        workCode,
+        workName: (workCode && cases[workCode]?.[0]) || workCode || '作品未记录',
+        company: COMPANY_AWARD_IDS.includes(awardId),
+        artistId: view.getUint32(p + 20, true),
+      },
+      day: dayNumber(year, month, day),
+    });
+  }
+  rows.sort((a, b) => b.day - a.day || a.award.awardId - b.award.awardId);
+  return rows.map((row) => row.award);
+}
+
 function parseArtists(
   bytes: Uint8Array,
   view: DataView,
@@ -933,6 +1065,7 @@ function parseArtists(
         )
         : null,
       roleId, signed, offset: o, index,
+      awards: [],
     });
   }
   return out;
@@ -1687,6 +1820,12 @@ export function parseSave(
       abilities: block?.abilities ?? [],
     };
   });
+  // 记事表里的获奖记录，按艺人编号分给各个状态块；公司奖也在里面，
+  // 由页面按 `award.company` 决定显示在个人行还是公司行。
+  const awards = parseAwards(view, bytes.length, tables.cases);
+  for (const artist of artists) {
+    artist.awards = awards.filter((award) => award.artistId === artist.roleId);
+  }
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
   const teams = parseTeams(bytes, view, blocks);
   // 每个艺人接下的通告编码，用来判断通告池里哪个角色已经被别人占住。
@@ -2049,6 +2188,7 @@ export function parseSave(
     roster,
     currentDate,
     company,
+    awards,
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],

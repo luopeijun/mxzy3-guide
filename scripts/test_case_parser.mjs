@@ -35,6 +35,7 @@ const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, starGender, ARTIST_DIRECTORY,
   isGroupRole, matchGroupRole, buildGroupRecord, riskOf, RISK_SLACK_DAYS, shootableDays,
   moneyText, freeRoleCount, isAcceptable, canTakeNotice,
+  AWARD_NAMES, COMPANY_AWARD_IDS,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -1243,6 +1244,85 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     }
   } else {
     console.log('OK   Ending0001.sa2 not present, skipped the gift checks');
+  }
+}
+
+// 奖项：存档「艺人成绩」记事表（表头 [条数][108]，每条 108 字节）。
+// 真值来自游戏那一页「艺人成绩」的截图：Auto 里萧依莉 = 金星奖·最上镜头
+// （食王 溫馨篇）、陈奕夫 = 金星奖·最佳代言人（雷鳥汽車 小巧篇）。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  check(Object.keys(AWARD_NAMES).length === 15, '奖项编号表 15 条（21..53）',
+    `${Object.keys(AWARD_NAMES).length} 条`);
+  for (const [id, name] of [[51, '最上镜头'], [53, '最佳代言人'], [43, '最佳主持人'], [32, '最佳女主角']]) {
+    check(AWARD_NAMES[id] === name, `奖项 #${id} = ${name}`, AWARD_NAMES[id] ?? '缺失');
+  }
+  check(COMPANY_AWARD_IDS.join(',') === '23,24,44', '公司奖编号 23 / 24 / 44',
+    COMPANY_AWARD_IDS.join(','));
+
+  const autoPath = path.join(SNAP, 'Auto.sa2');
+  if (fs.existsSync(autoPath)) {
+    const raw = fs.readFileSync(autoPath);
+    const save_ = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Auto.sa2',
+    );
+    check(save_.awards.length === 2, 'Auto 记事里 2 条获奖记录',
+      `${save_.awards.length} 条 :: ${save_.awards.map((a) => a.label).join(',')}`);
+    const [xiao, chen] = save_.awards;
+    check(xiao?.artistId === 6 && xiao?.ceremony === '金星奖' && xiao?.label === '最上镜头'
+      && xiao?.workName === '食王 溫馨篇' && xiao?.date === '2006/2',
+    'Auto 萧依莉 2006/2 金星奖·最上镜头（食王 溫馨篇）',
+    JSON.stringify(xiao));
+    check(chen?.artistId === 8 && chen?.ceremony === '金星奖' && chen?.label === '最佳代言人'
+      && chen?.workName === '雷鳥汽車 小巧篇',
+    'Auto 陈奕夫 2006/2 金星奖·最佳代言人（雷鳥汽車 小巧篇）',
+    JSON.stringify(chen));
+    check(save_.awards.every((a) => a.company === false), 'Auto 两条都是个人奖');
+    const xiaoBlock = save_.artists.find((a) => a.roleId === 6);
+    const chenBlock = save_.artists.find((a) => a.roleId === 8);
+    check(xiaoBlock?.awards.length === 1 && chenBlock?.awards.length === 1,
+      '奖项按艺人编号分到各自状态块',
+      `${xiaoBlock?.awards.length} / ${chenBlock?.awards.length}`);
+    check(save_.artists.find((a) => a.roleId === 4)?.awards.length === 0,
+      'Auto 苏嫚君还没拿奖');
+  } else {
+    console.log('OK   Auto.sa2 not present, skipped the award checks');
+  }
+
+  // Story0034 里除了 5 个真奖，还混着「事件类型 5 + 事项编号 12/13/14」的作品
+  // 下档记录（2006/7/7、2007/8/31），这几条必须被挡掉。
+  const story34 = path.join(SNAP, 'Story0034.sa2');
+  if (fs.existsSync(story34)) {
+    const raw = fs.readFileSync(story34);
+    const save_ = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0034.sa2',
+    );
+    const ids = save_.awards.map((a) => a.awardId).sort((a, b) => a - b).join(',');
+    check(ids === '21,22,42,43', 'Story0034 只认 4 个真奖，作品下档不算', ids);
+    check(save_.awards.every((a) => a.awardId >= 21), '奖项编号一律 >= 21',
+      save_.awards.map((a) => a.awardId).join(','));
+    const host = save_.awards.find((a) => a.awardId === 43);
+    check(host?.workCode.startsWith('SH'), '最佳主持人（43）的作品一定是主持',
+      `${host?.workCode}`);
+  } else {
+    console.log('OK   Story0034.sa2 not present, skipped the award filter checks');
+  }
+
+  // 公司奖：年度专辑 / 最佳团体 / 年度戏剧。Ending0001 玩到 2008，三类都出现过。
+  const ending1Path = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0001.sa2';
+  if (fs.existsSync(ending1Path)) {
+    const raw = fs.readFileSync(ending1Path);
+    const save_ = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Ending0001.sa2',
+    );
+    const company = save_.awards.filter((a) => a.company);
+    check(company.length >= 3, 'Ending0001 至少 3 条公司奖', `${company.length} 条`);
+    check(company.every((a) => COMPANY_AWARD_IDS.includes(a.awardId)),
+      '公司奖只来自 23 / 24 / 44', company.map((a) => a.awardId).join(','));
+    const album = company.find((a) => a.awardId === 24);
+    check(Boolean(album?.workCode), '年度专辑也带作品编码', album?.workCode ?? '缺失');
+  } else {
+    console.log('OK   Ending0001.sa2 not present, skipped the company award checks');
   }
 }
 

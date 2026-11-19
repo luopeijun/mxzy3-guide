@@ -14,7 +14,9 @@ import {
 } from '../../lib/caseParser';
 import type { TitleGapItem, TitleNext } from '../../lib/titleLadder';
 
-const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json`;
+// 数据文件可独立更新、不随 JS 构建走 hash；加时间戳绕开浏览器/CDN 缓存，
+// 否则表新增字段后已打开的页面会一直读到缺字段的旧 JSON（如礼物好感列全为 -）。
+const TABLES_URL = `${import.meta.env.BASE_URL}data/case-tables.json?v=${Date.now()}`;
 
 const CATEGORY_CLASS: Record<string, string> = {
   唱片: 'bg-tag-talk-soft text-tag-talk',
@@ -364,7 +366,7 @@ export default function CaseReaderApp() {
         setTablesReady(true);
       });
     return () => { alive = false; };
-  }, []);
+  }, [TABLES_URL]);
 
   const parseBuffer = useCallback((buffer: ArrayBuffer, name: string) => {
     setResult(parseSave(buffer, tablesRef.current, name));
@@ -444,6 +446,19 @@ export default function CaseReaderApp() {
           : artists.find((a) => a.index === option.artistIndex) ?? null,
       }));
   }, [result, artists]);
+
+  /** 公司层面的奖：年度专辑 / 最佳团体 / 年度戏剧。存档把它们挂在团长或主唱
+   *  名下，所以公司行要带上人名，个人卡里也要留一行小字。 */
+  const companyAwards = useMemo(() => {
+    if (!result) return [];
+    const nameOf = (id: number): string =>
+      result.artistDirectory.find((a) => a.id === id)?.name
+      ?? tables.stars?.[String(id)]?.[0]
+      ?? `编号${id}`;
+    return result.awards
+      .filter((award) => award.company)
+      .map((award) => ({ award, artistName: nameOf(award.artistId) }));
+  }, [result, tables]);
 
   /** 我方团体：只认存档 `Team` 段里的记录（编号 101 起）。存档没记录就是
    *  旗下没有团体 —— 这里不做任何猜测，也不预置默认值。 */
@@ -671,6 +686,28 @@ export default function CaseReaderApp() {
                     attr="money"
                     alert={result.company.money < 0}
                   />
+                </div>
+                {/* 公司奖：年度专辑 / 最佳团体 / 年度戏剧，只有这几项挂在公司头上，
+                    个人奖在下面每位艺人卡里。 */}
+                <div
+                  data-case-company-awards
+                  className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs"
+                >
+                  <span className="text-ink-faint">奖项</span>
+                  {companyAwards.length === 0 ? (
+                    <span className="text-ink-faint">—</span>
+                  ) : companyAwards.map(({ award, artistName }) => (
+                    <span
+                      key={`${award.awardId}-${award.date}-${award.workCode}`}
+                      data-case-company-award
+                      data-case-award-id={award.awardId}
+                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                    >
+                      {award.ceremony}·{award.label}
+                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                      <span className="ml-1 font-normal text-ink-faint">{artistName} · {award.date}</span>
+                    </span>
+                  ))}
                 </div>
               </details>
             )}
@@ -1971,6 +2008,38 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
               {NOTICE_TOTAL_LABEL} <b>{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
             </span>
           </div>
+          {/* 奖项：个人奖是金色胶囊，公司奖（年度专辑等）单列一行灰字 ——
+              同一件事在两个层面各看得见，又不至于混成个人荣誉。 */}
+          {artist.awards.length > 0 && (
+            <div data-case-artist-awards className="mt-1 border-t border-line pt-1 text-ui-2xs">
+              {artist.awards.some((award) => !award.company) && (
+                <span className="flex flex-wrap items-center gap-1">
+                  <span className="text-ink-faint">奖项</span>
+                  {artist.awards.filter((award) => !award.company).map((award) => (
+                    <span
+                      key={`${award.awardId}-${award.date}-${award.workCode}`}
+                      data-case-artist-award
+                      data-case-award-id={award.awardId}
+                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                    >
+                      {award.ceremony}·{award.label}
+                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                      <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
+                    </span>
+                  ))}
+                </span>
+              )}
+              {artist.awards.some((award) => award.company) && (
+                <span data-case-artist-company-awards className="mt-0.5 block text-ink-faint">
+                  公司奖{' '}
+                  {artist.awards
+                    .filter((award) => award.company)
+                    .map((award) => `${award.ceremony}·${award.label} ${award.workName} ${award.date}`)
+                    .join('、')}
+                </span>
+              )}
+            </div>
+          )}
         </>
       ) : (
         <p className="mt-1 text-ui-2xs text-ink-faint">这份存档里还没有这位的状态块。</p>
