@@ -2202,8 +2202,10 @@ function MatchList({ role, signed, groups, artists, itemHints, cellClass }: {
             >
               <span className="shrink-0 select-none leading-[1.6] text-ink-faint" aria-hidden="true">•</span>
               <span className="min-w-0 flex-1">
+                {/* 「可以接」绿与称号 hover 的达标绿共用 title-model 色系：
+                    两处都是「已满足」的 yes 信号，别各用一种绿。 */}
                 {match.canAccept ? (
-                  <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-accept-line bg-accept-soft px-2 py-0.5 align-middle text-accept">
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-title-model-line bg-title-model-soft px-2 py-0.5 align-middle text-title-model">
                     <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
                       <path d="M2.5 6.2 4.8 8.5 9.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
