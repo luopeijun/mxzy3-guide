@@ -1950,9 +1950,9 @@ function Td({ children, className, title, colSpan, rowSpan, dataAttrs }: {
   );
 }
 
-/** 课程 → 属性（玩家口述补齐表）：hover 差值时按缺口属性推荐可上的课。
- *  名气没有对应课程，表里缺它就自然不弹浮窗。 */
-const TRAINING_COURSES: { name: string; attrs: [string, string] }[] = [
+/** 课程 / 打工 → 能加的属性（玩家口述）：hover 差值时按缺口属性推荐。
+ *  打工只列属性、不铺每档数值：存档读不到当前是新手还是资深，按属性给方向就够。 */
+const TRAINING_COURSES: { name: string; attrs: string[] }[] = [
   { name: '音感发声', attrs: ['歌艺', '自信'] },
   { name: '乐器乐理', attrs: ['歌艺', '才智'] },
   { name: '声音表情', attrs: ['演技', '口才'] },
@@ -1964,40 +1964,92 @@ const TRAINING_COURSES: { name: string; attrs: [string, string] }[] = [
   { name: '快速记忆', attrs: ['口才', '才智'] },
   { name: '美姿美仪', attrs: ['仪态', '自信'] },
 ];
-const COURSES_BY_ATTR = TRAINING_COURSES.reduce<Record<string, typeof TRAINING_COURSES>>((acc, course) => {
-  for (const attr of course.attrs) (acc[attr] ??= []).push(course);
-  return acc;
-}, {});
 
-/** Hover a missing ability and see which classes raise it. Portal to body so the
- *  popover is not clipped by the case tab's own overflow-y content column. */
+/** 只列能补的正向属性：压力 / 疲劳是副作用，唱片助理的动感是 -1，都不算。 */
+const WORKS: { name: string; attrs: string[] }[] = [
+  { name: '唱片助理', attrs: ['歌艺', '才智'] },
+  { name: '戏剧配音', attrs: ['演技', '名气', '自信'] },
+  { name: '幕后合音', attrs: ['歌艺', '仪态', '名气'] },
+  { name: 'MV 演出', attrs: ['演技', '名气', '自信'] },
+  { name: '节目助理', attrs: ['口才', '体能', '名气', '自信'] },
+  { name: '舞群伴舞', attrs: ['动感', '体能', '名气'] },
+  { name: '平面模特', attrs: ['仪态', '自信', '名气'] },
+];
+
+type CourseHint = { kind: '训练' | '打工'; name: string; attrs: string[] };
+const HINTS_BY_ATTR: Record<string, CourseHint[]> = {};
+for (const course of TRAINING_COURSES) {
+  for (const attr of course.attrs) {
+    (HINTS_BY_ATTR[attr] ??= []).push({ kind: '训练', name: course.name, attrs: course.attrs });
+  }
+}
+for (const work of WORKS) {
+  for (const attr of work.attrs) {
+    (HINTS_BY_ATTR[attr] ??= []).push({ kind: '打工', name: work.name, attrs: work.attrs });
+  }
+}
+
+/** Hover a missing ability and see what can raise it. Portal to body so the
+ *  popover is not clipped by the case tab's own overflow-y content column.
+ *  Moving the mouse onto the popover keeps it open; leaving closes it. */
 function GapCourseHint({ gap }: { gap: { attr: string; diff: number } }) {
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
-  const courses = COURSES_BY_ATTR[gap.attr] ?? [];
-  if (courses.length === 0) return <span>{gap.attr} {Math.ceil(gap.diff)}</span>;
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hints = HINTS_BY_ATTR[gap.attr] ?? [];
+
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }, []);
+  useEffect(() => () => cancelClose(), [cancelClose]);
+
+  if (hints.length === 0) return <span>{gap.attr} {Math.ceil(gap.diff)}</span>;
   return (
     <span
       data-case-course-hint={gap.attr}
       className="cursor-help decoration-dotted underline-offset-2 hover:underline"
       onMouseEnter={(ev) => {
+        cancelClose();
         const r = ev.currentTarget.getBoundingClientRect();
         setAnchor({ x: r.left + r.width / 2, y: r.top });
       }}
-      onMouseLeave={() => setAnchor(null)}
+      // 留一点时间让鼠标穿过触发词和浮窗之间的 6px 空隙
+      onMouseLeave={() => {
+        cancelClose();
+        closeTimer.current = setTimeout(() => setAnchor(null), 150);
+      }}
     >
       {gap.attr} {Math.ceil(gap.diff)}
       {anchor && createPortal(
         <div
           data-case-course-popover
-          className="pointer-events-none fixed z-50 w-max rounded-ui-md border border-line-strong bg-surface px-2.5 py-1.5 text-ui-2xs shadow-lg"
+          className="pointer-events-auto fixed z-50 w-[360px] rounded-ui-md border border-line-strong bg-surface px-2.5 py-1.5 text-ui-2xs shadow-lg"
           style={{ left: anchor.x, top: anchor.y - 6, transform: 'translate(-50%, -100%)' }}
+          onMouseEnter={cancelClose}
+          onMouseLeave={() => setAnchor(null)}
         >
-          <div className="mb-0.5 font-semibold text-brand-strong">可上课程 · {gap.attr}</div>
-          {courses.map((course) => (
-            <div key={course.name} className="whitespace-nowrap text-ink-muted">
-              {course.name}（{course.attrs.join(' · ')}）
-            </div>
-          ))}
+          <div className="mb-0.5 font-semibold text-brand-strong">可补 {gap.attr}</div>
+          {(['训练', '打工'] as const).map((kind) => {
+            const group = hints.filter((hint) => hint.kind === kind);
+            if (group.length === 0) return null;
+            return (
+              <div key={kind}>
+                <div className="font-semibold text-ink-faint">【{kind}】</div>
+                {group.map((hint) => {
+                  const shown = hint.attrs.slice(0, 2).includes(gap.attr)
+                    ? hint.attrs.slice(0, 2)
+                    : [gap.attr, ...hint.attrs.filter((attr) => attr !== gap.attr)].slice(0, 2);
+                  return (
+                    <div key={hint.name} className="whitespace-nowrap pl-3 text-ink-muted">
+                      {hint.name}（{shown.join(' · ')}）
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>,
         document.body,
       )}
