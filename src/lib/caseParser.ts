@@ -802,6 +802,14 @@ function parseRoleReservations(bytes: Uint8Array, view: DataView): Map<string, s
     const digit = view.getUint32(o + 24, true);
     if (digit < 0x30 || digit > 0x39) continue;
     const artistId = view.getUint32(o + 28, true);
+    // 真正的预约记录末尾 5 个 int32 全是 0。扫描时会在别的数据里撞上
+    // 形同 [6][CF095][1][16] 的片段（Story0014 的 CF095 就是），它尾部
+    // 带一个 1，实际不是接取记录 —— 不校验尾部就会把「没接取」误报成已预约。
+    let clean = true;
+    for (let k = 32; k < 52; k += 4) {
+      if (view.getUint32(o + k, true) !== 0) { clean = false; break; }
+    }
+    if (!clean) continue;
     const name = artistId ? nameById.get(artistId) : undefined;
     if (!name) continue;
     out.set(`${code}${String.fromCharCode(digit)}`, name);
