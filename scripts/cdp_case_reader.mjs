@@ -480,6 +480,48 @@ async function main() {
       await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
       await sleep(200);
     }
+    // 差值 hover：训练 / 打工按缺口一起给，打工标出新手 / 资深；浮窗可停留可移出关闭。
+    const hintBox = await evaluate(`(() => {
+      const attrs = ['演技', '歌艺', '口才', '仪态', '动感', '体能', '才智', '自信', '名气'];
+      const e = [...document.querySelectorAll('[data-case-course-hint]')]
+        .find((el) => attrs.includes(el.getAttribute('data-case-course-hint')));
+      if (!e) return '';
+      // the comparison table sits far down the scroll container
+      e.scrollIntoView({ block: 'center' });
+      const r = e.getBoundingClientRect();
+      return JSON.stringify({ attr: e.getAttribute('data-case-course-hint'), x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    })()`);
+    const hint = hintBox ? JSON.parse(hintBox) : null;
+    check(!!hint, 'a value gap offers training / work hints', hintBox || '(none)');
+    if (hint) {
+      await sleep(200);
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: hint.x, y: hint.y });
+      await sleep(250);
+      const pop = await evaluate(`(() => {
+        const c = document.querySelector('[data-case-course-popover]');
+        if (!c) return '';
+        const r = c.getBoundingClientRect();
+        return JSON.stringify({
+          text: (c.innerText || '').replace(/\\s+/g, ' ').trim(),
+          x: r.x + r.width / 2, y: r.y + r.height / 2,
+        });
+      })()`);
+      const popover = pop ? JSON.parse(pop) : null;
+      check(popover?.text.includes('【训练】') && popover.text.includes('【打工】')
+        && /【打工】\s+\S+（[^）]+ · [^）]+）/.test(popover.text)
+        && !popover.text.includes('新手') && !popover.text.includes('资深'),
+      `hover ${hint.attr} groups training / work hints without level values`, pop || '(none)');
+      if (popover && popover.y > 0 && popover.y < 900) {
+        await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: popover.x, y: popover.y });
+        await sleep(250);
+        check(await evaluate(`!!document.querySelector('[data-case-course-popover]')`),
+          'moving onto the popover keeps it open');
+      }
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+      await sleep(250);
+      check(await evaluate(`!document.querySelector('[data-case-course-popover]')`),
+        'moving away closes the popover');
+    }
     check(p.matchCols === 1 && p.matchColHead.includes('数值对比')
       && p.matchLists === p.roles,
       'all artists share one comparison column',
