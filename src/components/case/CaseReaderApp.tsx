@@ -770,6 +770,9 @@ export default function CaseReaderApp() {
                 <ItemsPanel
                   items={result.items}
                   tableCount={Object.keys(tables.items).length}
+                  signed={signedArtists}
+                  gifts={tables.gifts ?? {}}
+                  giftSlots={tables.giftSlots ?? {}}
                 />
               </details>
             )}
@@ -1499,12 +1502,36 @@ function itemCategoryClass(category: string): string {
  *  数量 0 的不展示；名称 / 分类 / 说明来自烘焙的道具表（Item.dat）。
  *  只渲染当前页的 10 行，翻页 / 切页签都在这张卡片内完成。 */
 function ItemsPanel({
-  items, tableCount,
-}: { items: OwnedItem[]; tableCount: number }) {
+  items, tableCount, signed, gifts, giftSlots,
+}: {
+  items: OwnedItem[];
+  tableCount: number;
+  signed: SignedArtist[];
+  gifts: Record<string, number[]>;
+  giftSlots: Record<string, number>;
+}) {
   const owned = useMemo(
     () => items.filter((it) => it.quantity > 0),
     [items],
   );
+  /** 送礼好感：反查 Item.dat 的 21 槽位向量，只列这份存档里签约、且加成 > 0 的艺人。 */
+  const giftHints = useMemo(() => {
+    const out: Record<number, { name: string; value: number }[]> = {};
+    for (const it of owned) {
+      const vector = gifts[String(it.code)];
+      if (!vector) continue;
+      const hints: { name: string; value: number }[] = [];
+      for (const { option } of signed) {
+        const slot = giftSlots[String(option.id)];
+        if (slot === undefined) continue;
+        const value = vector[slot];
+        if (value > 0) hints.push({ name: option.name, value });
+      }
+      hints.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name, 'zh-Hans-CN'));
+      out[it.code] = hints;
+    }
+    return out;
+  }, [owned, signed, gifts, giftSlots]);
   const [tab, setTab] = useState<ItemCat>('一般物品');
   const [page, setPage] = useState(0);
   const PAGE = 10;
@@ -1580,6 +1607,9 @@ function ItemsPanel({
                 <th className="py-1 pr-2 font-medium">名称</th>
                 <th className="w-24 py-1 pr-2 font-medium">类型</th>
                 <th className="w-16 py-1 pr-2 text-right font-medium">数量</th>
+                {tab === '一般物品' && (
+                  <th className="w-44 py-1 pr-2 font-medium" title="送给当前存档已签约艺人的好感加成，来自游戏 Item.dat">好感度</th>
+                )}
                 <th className="py-1 font-medium">说明</th>
               </tr>
             </thead>
@@ -1587,7 +1617,7 @@ function ItemsPanel({
               {Array.from({ length: PAGE }, (_, i) => {
                 const it = pageRows[i];
                 if (!it) {
-                  // 占位行：拆成与真实行一致的 5 个单元格并填入不换行空格，
+                  // 占位行：拆成与真实行一致的单元格并填入不换行空格，
                   // 这样它的高度 = 真实行高度（一行），翻到不满的末页时表格区
                   // 高度恒定，翻页器不会上下跳。
                   return (
@@ -1596,6 +1626,7 @@ function ItemsPanel({
                       <td className="py-1.5 pr-2">&nbsp;</td>
                       <td className="py-1.5 pr-2">&nbsp;</td>
                       <td className="py-1.5 pr-2">&nbsp;</td>
+                      {tab === '一般物品' && <td className="py-1.5 pr-2">&nbsp;</td>}
                       <td className="py-1.5">&nbsp;</td>
                     </tr>
                   );
@@ -1627,6 +1658,33 @@ function ItemsPanel({
                     </span>
                   </td>
                   <td className="py-1.5 pr-2 text-right tabular-nums font-semibold">×{it.quantity}</td>
+                  {tab === '一般物品' && (
+                    <td className="py-1.5 pr-2">
+                      {giftHints[it.code]?.length ? (
+                        <span data-case-item-gift className="flex flex-wrap gap-1">
+                          {giftHints[it.code].map((hint) => (
+                            <span
+                              key={hint.name}
+                              data-case-item-gift-name={hint.name}
+                              data-case-item-gift-value={hint.value}
+                              className={cn(
+                                'whitespace-nowrap rounded-full px-1.5 py-0.5 text-ui-2xs tabular-nums',
+                                hint.value >= 4
+                                  ? 'bg-brand-soft font-semibold text-brand-strong'
+                                  : hint.value === 3
+                                    ? 'bg-accept-soft text-accept'
+                                    : 'bg-surface-soft text-ink-muted',
+                              )}
+                            >
+                              {hint.name}+{hint.value}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="text-ink-faint">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="py-1.5 text-ink-muted">
                     {it.desc ? (
                       <span data-case-item-desc className="block truncate" title={it.desc}>{it.desc}</span>
@@ -2349,10 +2407,14 @@ function NoticeRows({
           <div
             data-case-workdays
             title={`拍摄期共 ${notice.execDays} 天，其中需要工作 ${notice.workDays} 天，每周最多排 ${notice.daysPerWeek} 天`}
-            className="mt-1 inline-flex flex-wrap items-center gap-1 rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-brand-strong"
+            className="mt-1 flex flex-wrap items-center gap-1"
           >
-            工作 {notice.workDays} 天
-            <span className="font-normal">每周 ≤{notice.daysPerWeek} 次</span>
+            <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-brand-strong">
+              工作 {notice.workDays} 天
+            </span>
+            <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-normal text-brand-strong">
+              每周 ≤{notice.daysPerWeek} 次
+            </span>
           </div>
         )}
         {notice.executedDays > 0 && notice.remainingDays > 0 ? (
