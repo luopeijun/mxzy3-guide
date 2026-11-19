@@ -171,11 +171,16 @@ export interface CaseTables {
   firms: Record<string, string>;
   /** 道具 code -> [名称, 分类, 说明, 属性行]，来自 Item.dat 烘焙。 */
   items: Record<string, string[]>;
+  /** 道具 code -> 21 个送礼对象的好感加成（0..4），Item.dat 每条记录的尾字段。 */
+  gifts?: Record<string, number[]>;
+  /** 艺人编号 -> 送礼槽位（0/16/20 未使用，故没有艺人映射过去）。 */
+  giftSlots?: Record<string, number>;
 }
 
 export const EMPTY_TABLES: CaseTables = {
   source: '', cases: {}, needEffect: {}, length: {}, difficulty: [],
   stars: {}, titles: {}, titleMeta: {}, firms: {}, items: {},
+  gifts: {}, giftSlots: {},
 };
 
 export interface Requirement {

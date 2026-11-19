@@ -462,6 +462,62 @@ def parse_item_dat(path):
     return out
 
 
+# Item.dat 每条记录的 27 个定长字段里，第 6..26 位是 21 个送礼对象的好感加成
+# （0..4）。这 21 个槽位和 StarRole 编号无关，是游戏自己的一份「送礼对象顺序表」；
+# 用 sources/favorites.txt 的 ＋4 / ＋3 真值逐条反查确认（95 项全吻合）：
+#   1 林芬芬 / 2 桑禾蓓 / 3 欧怡青 / 4 苏嫚君 / 5 路敏 / 6 萧依莉 / 7 天晴 /
+#   8 陈奕夫 / 9 关古威 / 10 路风 / 11 纪翔 / 12 姚子奇 / 13 姚子莹 /
+#   14 新名纱雪 / 15 聆香 / 17 克烈斯 / 18 卫亚 / 19 原少纬；
+# 0 / 16 / 20 三个槽位没有任何专属高好感道具，判定为未使用，不映射艺人。
+# 其中 13..15、17..19 六位由攻略站（百度知道同份整理）和游戏里的 ＋4 专属道具
+# 双重对上：欧怡青=水晶镶钻脚链、新名纱雪=叛逆口红、卫亚=贺总造型棒棒糖、
+# 原少纬=大宇啤酒＋呼干牌啤酒，与索引逐条吻合。
+# 输出按「艺人编号 -> 槽位」存，页面直接拿存档艺人编号查。
+GIFT_SLOTS = {
+    1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7,
+    8: 8, 9: 9, 10: 10, 11: 11, 12: 12, 65: 13,
+    74: 14, 75: 15, 72: 17, 76: 18, 77: 19,
+}
+
+
+def load_gifts(data_dirs):
+    """道具 code -> 21 个送礼槽位的好感加成（0..4），来自 Item.dat。
+
+    真值来自 sources/favorites.txt 的 ＋4 / ＋3 分组；每个艺人能在这 21 列里
+    找到唯一一列，使他的所有已知道具数值都对上（95/95）。
+    """
+    out = {}
+    for data_dir in data_dirs:
+        path = os.path.join(data_dir, "Item.dat")
+        if not os.path.isfile(path):
+            continue
+        raw = open(path, "rb").read()
+        if len(raw) < 12:
+            continue
+        count = struct.unpack_from("<I", raw, 4)[0]
+        u32 = lambda o: struct.unpack_from("<I", raw, o)[0]
+        off, found = 12, {}
+        for _ in range(count + 1):
+            if off + 12 > len(raw):
+                break
+            code, nlen = u32(off), u32(off + 8)
+            if nlen <= 0 or nlen > 200 or off + 12 + nlen * 4 + 112 > len(raw):
+                break
+            q = off + 12 + nlen * 4
+            fixed = [u32(q + i * 4) for i in range(27)]
+            desc_len = u32(q + 108)
+            p2 = q + 112 + desc_len * 4
+            stats_len = u32(p2)
+            off = p2 + 4 + stats_len * 4
+            vector = fixed[6:27]
+            if len(vector) == 21 and max(vector) <= 4:
+                found[str(code)] = vector
+        # data1（324 条）优先，data（258 条）只补空。
+        if len(found) > len(out):
+            out = found
+    return out
+
+
 def load_items(data_dirs):
     """从各 data 目录的 Item.dat 解析道具表，data1（324 条）优先，data（258 条）补空。
 
@@ -508,6 +564,8 @@ def main():
         "titleMeta": title_meta,
         "firms": load_firms(dirs[0]),
         "items": load_items(dirs),
+        "gifts": load_gifts(dirs),
+        "giftSlots": GIFT_SLOTS,
     }
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
@@ -519,6 +577,8 @@ def main():
     print("titles       %d (%d with meta)" % (len(payload["titles"]), len(payload["titleMeta"])))
     print("firms        %d" % len(payload["firms"]))
     print("items        %d" % len(payload["items"]))
+    print("gifts        %d items x %d slots (%d artists)" % (
+        len(payload["gifts"]), 21, len(payload["giftSlots"])))
     print("written      %s (%d bytes)" % (OUT, os.path.getsize(OUT)))
     return 0
 
