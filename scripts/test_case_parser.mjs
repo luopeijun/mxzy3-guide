@@ -35,7 +35,7 @@ const {
   parseSave, toCsv, matchRole, canTakeRole, roleGender, starGender, ARTIST_DIRECTORY,
   isGroupRole, matchGroupRole, buildGroupRecord, riskOf, RISK_SLACK_DAYS, shootableDays,
   moneyText, freeRoleCount, isAcceptable, canTakeNotice,
-  AWARD_NAMES, COMPANY_AWARD_IDS,
+  AWARD_NAMES, COMPANY_AWARD_IDS, GROUP_AWARD_IDS,
 } = await import(pathToFileURL(bundle).href + `?v=${Date.now()}`);
 
 let failures = 0;
@@ -1259,6 +1259,8 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
   }
   check(COMPANY_AWARD_IDS.join(',') === '23,24,44', '公司奖编号 23 / 24 / 44',
     COMPANY_AWARD_IDS.join(','));
+  check(GROUP_AWARD_IDS.join(',') === '23', '团体奖编号只有 23（最佳团体）',
+    GROUP_AWARD_IDS.join(','));
 
   const autoPath = path.join(SNAP, 'Auto.sa2');
   if (fs.existsSync(autoPath)) {
@@ -1321,6 +1323,17 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       '公司奖只来自 23 / 24 / 44', company.map((a) => a.awardId).join(','));
     const album = company.find((a) => a.awardId === 24);
     check(Boolean(album?.workCode), '年度专辑也带作品编码', album?.workCode ?? '缺失');
+    // 团体奖只标 23，且都挂在团体成员名下 —— 界面据此归到「我方团体」，不进艺人卡。
+    const groupAwards = save_.awards.filter((a) => a.group);
+    check(groupAwards.length >= 2 && groupAwards.every((a) => a.awardId === 23 && a.company),
+      'Ending0001 团体奖都是 23（最佳团体），且同属非个人奖',
+      groupAwards.map((a) => `${a.awardId}/${a.artistId}`).join(','));
+    const team101 = save_.teams.find((t) => t.code === 101);
+    check(Boolean(team101?.memberIds.includes(74)) && groupAwards.every((a) => team101.memberIds.includes(a.artistId)),
+      '团体奖挂名艺人(74 新名纱雪)在团体 101 成员里，可归到该团体',
+      `team101=${team101?.memberIds.join(',')} awards=${groupAwards.map((a) => a.artistId).join(',')}`);
+    check(save_.awards.filter((a) => !a.company).every((a) => a.group === false),
+      '个人奖都没有团体标记');
   } else {
     console.log('OK   Ending0001.sa2 not present, skipped the company award checks');
   }

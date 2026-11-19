@@ -1212,6 +1212,35 @@ async function main() {
       check(false, 'Auto 存档应有一个口才缺口供 hover');
     }
 
+    // 团体奖归属：Ending0001 的两条「最佳團體」存档挂在 74 新名纱雪名下，
+    // 但她不是个人荣誉 —— 奖应出现在「我方团体」卡，艺人卡与公司卡奖项行都不含它。
+    const ending1Path = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0001.sa2';
+    if (fs.existsSync(ending1Path)) {
+      const ending1Copy = path.join(root, '.tmp', 'case-e2e-ending1.sa2');
+      fs.copyFileSync(ending1Path, ending1Copy);
+      await uploadSave(ending1Copy);
+      const g = JSON.parse(await evaluate(`JSON.stringify({
+        groupName: document.querySelector('[data-case-group] .font-semibold')?.innerText || '',
+        groupAwardChips: [...document.querySelectorAll('[data-case-group] [data-case-group-award]')]
+          .map(function(x){ return (x.innerText || '').replace(/\\s+/g, ' ').trim() + '#' + x.getAttribute('data-case-award-id'); }),
+        unmatched: document.querySelectorAll('[data-case-group-awards-unmatched] [data-case-group-award]').length,
+        artistAwardIds: [...document.querySelectorAll('[data-case-artist-award], [data-case-artist-company-award]')]
+          .map(function(x){ return x.getAttribute('data-case-award-id'); }),
+        companyAwardText: document.querySelector('[data-case-company-awards]')?.innerText || '',
+      })`));
+      check(g.groupName.includes('莎亞') && g.groupAwardChips.length >= 2
+        && g.groupAwardChips.every((t) => t.endsWith('#23')),
+        'Ending0001「最佳團體」挂在团体卡（莎亞之音，2 条，编号 23）',
+        `${g.groupName} :: ${g.groupAwardChips.join(' | ')}`);
+      check(g.unmatched === 0, '两条团体奖都归到了团体，没有落到未归属兜底', String(g.unmatched));
+      check(!g.artistAwardIds.includes('23'),
+        '艺人卡不再显示最佳團體（个人奖与公司奖行都没有 #23）', g.artistAwardIds.join(','));
+      check(!g.companyAwardText.includes('最佳團體'),
+        '公司卡奖项行也不再混入团体奖', g.companyAwardText.replace(/\s+/g, ' ').trim());
+    } else {
+      console.log('OK   Ending0001.sa2 not present, skipped group-award checks');
+    }
+
     // 社交门槛联动：冻结 Story0004 同时有「親和力上升」的賀總造型棒棒糖，
     // 和 CF234 女主角要求的亲和门槛。hover 亲和缺口应出【道具】组，
     // 且粉色小标签（data-case-social-gap）要保留。
