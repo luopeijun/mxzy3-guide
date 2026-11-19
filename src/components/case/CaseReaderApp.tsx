@@ -1637,15 +1637,15 @@ function ItemsPanel({
         {current.length === 0 ? (
           <p className="py-2 text-ui-2xs text-ink-faint">这个分类下没有数量大于 0 的道具。</p>
         ) : (
-          <table className="w-full table-fixed border-collapse text-ui-xs">
+          <table className="w-full min-w-max border-collapse text-ui-xs">
             <thead>
               <tr className="text-left text-ink-faint">
-                <th className="w-16 py-1 pr-2 font-medium">编号</th>
+                <th className="w-10 py-1 pr-2 font-medium">编号</th>
                 <th className="py-1 pr-2 font-medium">名称</th>
-                <th className="w-24 py-1 pr-2 font-medium">类型</th>
-                <th className="w-16 py-1 pr-2 text-right font-medium">数量</th>
+                <th className="w-[72px] py-1 pr-2 font-medium">类型</th>
+                <th className="w-10 py-1 pr-2 text-right font-medium">数量</th>
                 {tab === '一般物品' && (
-                  <th className="w-44 py-1 pr-2 font-medium" title="送给当前存档已签约艺人的好感加成，来自游戏 Item.dat">好感度</th>
+                  <th className="w-68 py-1 pr-2 font-medium" title="送给当前存档已签约艺人的好感加成，来自游戏 Item.dat">好感度</th>
                 )}
                 <th className="py-1 font-medium">说明</th>
               </tr>
@@ -1689,7 +1689,7 @@ function ItemsPanel({
                   <td className="py-1.5 pr-2">
                     <span
                       data-case-item-type
-                      className={cn('rounded-full px-2 py-0.5 text-ui-2xs', itemCategoryClass(it.category ?? ''))}
+                      className={cn('whitespace-nowrap rounded-full px-2 py-0.5 text-ui-2xs', itemCategoryClass(it.category ?? ''))}
                     >
                       {it.category || '未知物品'}
                     </span>
@@ -1706,11 +1706,12 @@ function ItemsPanel({
                               data-case-item-gift-value={hint.value}
                               className={cn(
                                 'whitespace-nowrap rounded-full px-1.5 py-0.5 text-ui-2xs tabular-nums',
+                                // 同一品牌色系，靠深浅分三档：+4 实心 / +3 浅底 / +1·+2 淡底。
                                 hint.value >= 4
-                                  ? 'bg-brand-soft font-semibold text-brand-strong'
+                                  ? 'bg-brand font-semibold text-white'
                                   : hint.value === 3
-                                    ? 'bg-accept-soft text-accept'
-                                    : 'bg-surface-soft text-ink-muted',
+                                    ? 'bg-brand-soft font-medium text-brand-strong'
+                                    : 'bg-surface-soft text-brand',
                               )}
                             >
                               {hint.name}+{hint.value}
@@ -1724,7 +1725,7 @@ function ItemsPanel({
                   )}
                   <td className="py-1.5 text-ink-muted">
                     {it.desc ? (
-                      <span data-case-item-desc className="block truncate" title={it.desc}>{it.desc}</span>
+                      <span data-case-item-desc className="block" title={it.desc}>{it.desc}</span>
                     ) : (
                       <span className="text-ink-faint">—</span>
                     )}
@@ -2030,12 +2031,20 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
                 </span>
               )}
               {artist.awards.some((award) => award.company) && (
-                <span data-case-artist-company-awards className="mt-0.5 block text-ink-faint">
-                  公司奖{' '}
-                  {artist.awards
-                    .filter((award) => award.company)
-                    .map((award) => `${award.ceremony}·${award.label} ${award.workName} ${award.date}`)
-                    .join('、')}
+                <span data-case-artist-company-awards className="mt-0.5 flex flex-wrap items-center gap-1">
+                  <span className="text-ink-faint">公司奖</span>
+                  {artist.awards.filter((award) => award.company).map((award) => (
+                    <span
+                      key={`${award.awardId}-${award.date}-${award.workCode}`}
+                      data-case-artist-company-award
+                      data-case-award-id={award.awardId}
+                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                    >
+                      {award.ceremony}·{award.label}
+                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                      <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
+                    </span>
+                  ))}
                 </span>
               )}
             </div>
