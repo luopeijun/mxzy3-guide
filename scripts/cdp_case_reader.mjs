@@ -398,6 +398,28 @@ async function main() {
       'probe 存档一般物品按签约艺人显示好感加成（萧依莉+4 / 路敏+3）',
       JSON.stringify(giftColumn.rows));
 
+    // 列宽裁决：名称(含属性)/类型/说明必须单行完整，好感度徽标统一品牌色系。
+    const itemLayout = JSON.parse(await evaluate(`(function(){
+      function lines(cell){
+        var r=document.createRange(); r.selectNodeContents(cell);
+        var tops=[].slice.call(r.getClientRects()).map(function(x){return x.top}).sort(function(a,b){return a-b});
+        if(!tops.length) return 0;
+        var n=1; for(var i=1;i<tops.length;i++){ if(tops[i]-tops[i-1]>7) n++; }
+        return n;
+      }
+      var tr=[...document.querySelectorAll('[data-case-item-table] tbody tr')].filter(function(x){return x.hasAttribute('data-case-item-code')});
+      var wrapped=tr.filter(function(row){ return lines(row.children[1])>1 || lines(row.children[2])>1 || lines(row.children[5])>1; }).length;
+      var badges=[...document.querySelectorAll('[data-case-item-gift-name]')];
+      var cls=badges.map(function(b){return b.className});
+      // 统一色系：不应再出现 accept / surface-soft 底的老三档
+      var offPalette=cls.filter(function(c){return /accept-soft|text-accept|text-ink-muted/.test(c)}).length;
+      return JSON.stringify({ wrapped:wrapped, rows:tr.length, badgeCount:badges.length, offPalette:offPalette });
+    })()`));
+    check(itemLayout.wrapped === 0 && itemLayout.rows > 0,
+      '一般物品名称/类型/说明均单行完整展示，不换行', JSON.stringify(itemLayout));
+    check(itemLayout.badgeCount > 0 && itemLayout.offPalette === 0,
+      '好感度徽标统一品牌色系（无旧 accept/灰 混色）', JSON.stringify(itemLayout));
+
     // 切到「特殊物品」：15 件 → 第 1 页 10 行 + 翻页。
     await evaluate(`[...document.querySelectorAll('[data-case-item-tab]')].find(t => t.getAttribute('data-case-item-tab') === '特殊物品').click()`);
     await sleep(200);
