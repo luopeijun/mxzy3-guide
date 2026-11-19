@@ -141,6 +141,7 @@
 ### 双站点事件追踪器
 
 - `src/lib/trackerConfig.ts` 是两站追踪器**唯一**的差异来源：`MAIN_TRACKER_CONFIG` / `SWEET_TRACKER_CONFIG` 各自持有进度 / 备忘 / 备份的 localStorage 键、签约上限、艺人节点前缀、分组 chips 与文案、存档信封 format。所有 lib 函数默认取主站配置，共享组件从 `useTracker().config` 读取；甜蜜乐章只在 `SweetApp` 把配置传给 `TrackerProvider`，**原站行为零变化**（共享组件里不写 `if (site === ...)`）。
+- **事件池筛选条**：状态 chips（全部 / 进行中 / …）下面紧接一行 `TrackerScopeChips`，分「艺人」「分类」两段。艺人选项**只取左侧「追踪艺人」名单**（`trackedArtists`，含已解约、含甜站恒占的杜云芊），不从池里的任务线反推；取消追踪后失效的选中项会自动清除。分类走 `config.groups`（主站经纪人事件簿 / 艺人事件簿 / 路欧桑剧情 / 其他事件；甜站经纪人事件簿 / 角色攻略 / 支线攻略），两站文案不写死在组件里。同一段里多选＝并集（选中路 / 欧 / 桑任一人都算路欧桑线共有），段与段之间、以及与状态筛选之间是交集：选「林芬芬 + 进行中 + 其他事件」只留她在该分类的进行中线。每段都有「不限」即时撤销；任一筛选生效时禁用拖拽排序。回归 `scripts/cdp_tracker_filter.mjs` / `scripts/cdp_sweet_tracker.mjs`。
 - 甜蜜乐章：旗下最多 **4 位**（主角 + 还能再签 3 位艺人），`protagonist` 即主角 **杜云芊**（红发双马尾），恒占一位。头像 `public/images/sweet/protagonist-logo.png` 来自 `E:/Pictures/mxzy3/甜蜜乐章/2/620-1.bmp`，**不是卫亚那张**；回归会逐字节比对，防止再复制错图。她没有攻略节点，作为固定项插进选择器，`normaliseArtists()` 在读存档 / 重置 / 导入三条路径都保证归位；被主角挤掉的艺人转为「已解约」而不是消失，进度线照常保留。点击主角按钮、解约角标都不生效。
 - 选择器展开区**只保留一行操作说明**：不写 `protagonist.hint` 就不渲染主角说明框，`setupIntro` 也不要再加「既当经纪人也是艺人」之类的括注；`cdp_sweet_tracker.mjs` 会断言这两段文案都不出现。
 - **事件详情常驻**：甜蜜乐章 event 块只放标题，「时间 / 概要 / 提示」是紧随其后、同一 `group` 的 `paragraph` / `note` 块（明星志愿3 的 `event.text` 本身就是整段正文）。`stepDetails: true` 让 `extractLines()` 把这些行收进 `TaskStep.details`，`TaskLineCard` **直接常驻渲染在步骤标题下方**，不折叠、不存展开状态——追踪器是逐条对照打勾用的，详情本来就该一眼看到；搜索也会命中详情文本。
@@ -150,7 +151,7 @@
 - **经纪人事件簿白名单**：`poolNodeAllowlist: { 'sweet-guide': [...] }` 只放行 `main-story` 主线攻略、`company` 公司改建攻略、`outfits` 服装获得方法和剧情三页（及其后代）；`extractLines()` 对配了白名单的类目跳过其它节点，没配的类目全收。「自制通告一览」等资料页也用 `event` 块排版（每个通告一条），原先被拆成 24 条人名重复的怪线，现在不进池；其它资料页本来就没有 event。攻略目录 / 正文一个字没动，只是追踪器不再把它们当待办。经纪人组从 35 条线降到 11 条（主线 4 + 改建 1 + 服装 6），池总数 83 → 59。
 - 甜蜜乐章的 `poolSkip` / `branchPrefix` 为空（没有路欧桑分支），`config.groups` 给出三组 chips（经纪人事件簿 / 角色攻略 / 支线攻略）。存档走和原站同一套统一信封，只是标记换成 `sweet-save`、文件名前缀「甜蜜乐章」：`saveFormat` / `cgStorageKey` / `hasSpecials` 三个字段（`hasSpecials: false` 让导出省略六大通告段、摘要与提示也不提）决定甜蜜乐章装什么，`archiveFormat` 只留作「旧版 `sweet-tracker-save` 仍认」的兼容标记。`SaveArchivePanel` 因此没有 `if (site === ...)`，两站共用。
 - 回归 `scripts/cdp_sweet_archive.mjs`（16 项）覆盖 CG 图鉴顶栏「全部存档」入口、弹窗里同一个面板、面板文案只说「进度与 CG 收藏」、导出信封为 `sweet-save`（含 tracker + cg、不含 specials、文件名「甜蜜乐章-存档-….json」）、导入只含 CG 的存档取并集写 `sweet.cg.v1` 且不碰 `guide.cg.v1`、主站 `mxzy3-save` 被拒、旧版 `sweet-tracker-save` 仍能读并标明「不含 CG 收集」、Esc 关弹窗。
-- 回归 `scripts/cdp_sweet_tracker.mjs`（43 项）覆盖两个页签与 `#/tracker`、主角姓名与头像（不与任何角色头像重复）、主角锁死与 4 人上限、详情常驻且折叠控件已彻底移除、时间 / 概要 / 提示三层样式、时间标签与编号 pill 不同底色且保持极淡中性（三通道差 ≤12、亮度 ≥240）、头部只剩三个按钮、卡片仍可折叠、三组 chips、事件池前缀与经纪人三页白名单（无自制通告线）、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜蜜乐章的进度 / 备忘键，可反复运行。
+- 回归 `scripts/cdp_sweet_tracker.mjs`（44 项）覆盖两个页签与 `#/tracker`、主角姓名与头像（不与任何角色头像重复）、主角锁死与 4 人上限、详情常驻且折叠控件已彻底移除、时间 / 概要 / 提示三层样式、时间标签与编号 pill 不同底色且保持极淡中性（三通道差 ≤12、亮度 ≥240）、头部只剩三个按钮、卡片仍可折叠、三组 chips、事件池前缀与经纪人三页白名单（无自制通告线）、勾选只写 `sweet.progress.v1`、`guide.progress.v1` 不受影响、存档面板文案。脚本开头会清空甜蜜乐章的进度 / 备忘键，可反复运行。
 
 ### 甜蜜乐章 CG 图鉴
 
