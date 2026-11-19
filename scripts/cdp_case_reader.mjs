@@ -1078,6 +1078,36 @@ async function main() {
       check(false, 'Auto 存档应有一个口才缺口供 hover');
     }
 
+    // 社交门槛联动：冻结 Story0004 同时有「親和力上升」的賀總造型棒棒糖，
+    // 和 CF234 女主角要求的亲和门槛。hover 亲和缺口应出【道具】组，
+    // 且粉色小标签（data-case-social-gap）要保留。
+    const story4Copy = path.join(root, '.tmp', 'case-e2e-story4.sa2');
+    fs.copyFileSync(path.join(SNAP, 'Story0004.sa2'), story4Copy);
+    await uploadSave(story4Copy);
+    await evaluate(`document.querySelector('[data-case-tab="open"]').click()`);
+    await sleep(350);
+    const socialHint = JSON.parse(await evaluate(`(() => {
+      const e = document.querySelector('[data-case-course-hint="亲和"]');
+      if (!e) return '';
+      e.scrollIntoView({ block: 'center' });
+      const r = e.getBoundingClientRect();
+      return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2, pill: e.hasAttribute('data-case-social-gap') });
+    })()`));
+    if (socialHint) {
+      await sleep(180);
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: socialHint.x, y: socialHint.y });
+      await sleep(250);
+      const socPop = await evaluate(`(() => {
+        const c = document.querySelector('[data-case-course-popover]');
+        return c ? (c.innerText || '').replace(/\\s+/g, ' ').trim() : '';
+      })()`);
+      check(socialHint.pill, 'Story0004 亲和缺口保留粉色小标签样式', JSON.stringify(socialHint));
+      check(socPop.includes('【道具】') && socPop.includes('賀總造型棒棒糖') && socPop.includes('親和力上升'),
+        'Story0004 亲和缺口浮窗列出【道具】賀總造型棒棒糖（親和力上升）', socPop || '(none)');
+    } else {
+      check(false, 'Story0004 存档应有一个亲和缺口供 hover');
+    }
+
     await navigate('http://localhost:5173/sweet.html');
     const sweetState = JSON.parse(await evaluate(`JSON.stringify({
       tabs: document.querySelectorAll('[role="tab"]').length,
