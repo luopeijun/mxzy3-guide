@@ -208,7 +208,7 @@ async function main() {
         return JSON.stringify({
           artist: first.getAttribute('data-match-artist'),
           result: first.getAttribute('data-match-result'),
-          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-accept-soft'),
+          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-title-model-soft'),
         });
       })(),
       neutralRole: (function(){
@@ -277,7 +277,7 @@ async function main() {
           artist: first.getAttribute('data-match-artist'),
           result: first.getAttribute('data-match-result'),
           group: first.getAttribute('data-case-match-group'),
-          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-accept-soft'),
+          greenBadge: !!first.querySelector('svg') && first.innerHTML.includes('bg-title-model-soft'),
         });
       })()
     })`);
@@ -989,6 +989,15 @@ async function main() {
       check(qual55.notices === 9 && qual55.okRows && qual55.count.includes('9 / 11'),
         'Story0055: 筛「满足条件」只剩 9 条，且每条都有「数值够」的艺人',
         `${qual55.notices} 条 / ${qual55.count} / ok=${qual55.okRows}`);
+      const acceptTone = JSON.parse(await evaluate(`JSON.stringify((() => {
+        const badge = document.querySelector('[data-match-result="yes"] svg')?.parentElement;
+        if (!badge) return null;
+        const cs = getComputedStyle(badge);
+        return { color: cs.color, bg: cs.backgroundColor };
+      })())`));
+      check(acceptTone && acceptTone.color === 'rgb(15, 90, 82)' && acceptTone.bg === 'rgb(213, 236, 229)',
+        'Story0055: 「可以接」徽章用称号达标同款 title-model 绿（非 accept 黄绿）',
+        JSON.stringify(acceptTone));
       await evaluate(`document.querySelector('[data-case-filter-qualified]').click()`);
       await sleep(300);
     } else {
