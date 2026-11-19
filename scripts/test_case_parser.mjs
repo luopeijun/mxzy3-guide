@@ -1152,6 +1152,17 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     check(support?.reservedBy === '蘇嫚君', 'Story0011 TV048 女配角精确落到苏嫚君',
       `实际 ${support?.reservedBy || '（空）'}`);
   }
+  const s14 = load('Story0014.sa2');
+  if (!s14) {
+    console.log('OK   Story0014.sa2 snapshot not present, skipped the false-reservation check');
+  } else {
+    const cf095 = s14.notices.find((n) => n.code === 'CF095');
+    const female = cf095?.roles.find((r) => r.roleCode === 'CF0951');
+    check(female?.role === '女性', 'Story0014 CF095 意美 好吃篇有女性角色',
+      cf095?.roles.map((r) => `${r.roleCode}:${r.role}`).join(',') ?? '缺通告');
+    check(female?.reservedBy === '', 'Story0014 CF095 萧依莉没接取，预约列为空（尾部带 1 的假记录不算）',
+      `实际 ${female?.reservedBy || '（空）'}`);
+  }
   const s01 = load('Story0001.sa2');
   if (s01) {
     const tva62 = s01.notices.find((n) => n.code === 'TVA62');
