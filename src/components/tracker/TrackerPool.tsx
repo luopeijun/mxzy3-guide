@@ -8,6 +8,7 @@ import { summarisePool } from '../../lib/trackerStats';
 import {
   FILTER_LABEL,
   groupPhases,
+  phaseOf,
   type LineFilter,
 } from '../../lib/trackerFilter';
 import {
@@ -155,12 +156,17 @@ export default function TrackerPool({ data }: Props) {
     () => summarisePool(pool, getLine, includeReleased),
     [pool, getLine, includeReleased],
   );
+  // 「全部」视图只显示在进行 / 未开始 / 已完成的线。已放弃的不在主列表占位，
+  // 也不算进「全部」的计数 —— 它只在「已放弃」筛选里可见、可从那里恢复。
+  // 用 phaseOf 判断而非直接读 status：与筛选 chip 同一套口径（全勾的放弃线
+  // 归已完成），不会出现「全部」和 chip 对同一条线说法不一。
   const { activeLines, completedLines } = useMemo(() => {
     const activeLines: TaskLine[] = [];
     const completedLines: TaskLine[] = [];
     for (const line of scopedPool) {
       const state = getLine(line.id);
-      if ((state?.status ?? 'active') === 'excluded') continue;
+      const phase = phaseOf(line, state);
+      if (phase === 'excluded' || phase === 'abandoned') continue;
       if (isLineComplete(line, state?.done ?? [], state?.skipped ?? [])) completedLines.push(line);
       else activeLines.push(line);
     }
