@@ -512,6 +512,141 @@ function CaseToc({
   );
 }
 
+/** 右栏太窄，横滑小块上只写月/日；完整日期（含年份）留在悬停提示里。 */
+function shortNoticeDate(date: string): string {
+  const parts = date.split('/');
+  return parts.length === 3 ? `${parts[1]}/${parts[2]}` : (date || '—');
+}
+
+/** 每位艺人名下的横滑条：左右箭头按一格滚动，轨道自身保留横向滚动条。
+ *  只有一条通告时箭头禁用，不会假装能滑。 */
+function ActiveNoticeStrip({ notices }: { notices: ActiveArtistNotice[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  const updateEdges = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setEdges({
+      left: el.scrollLeft > 2,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateEdges();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateEdges, { passive: true });
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateEdges);
+      observer.disconnect();
+    };
+  }, [updateEdges, notices]);
+
+  const step = (direction: -1 | 1) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const tile = el.querySelector('[data-case-quickref-notice]') as HTMLElement | null;
+    // gap-1.5 = 6px；量真实卡片宽度，别把箭头步长写死。
+    el.scrollBy({ left: direction * ((tile?.offsetWidth ?? 148) + 6), behavior: 'smooth' });
+  };
+
+  return (
+    <div className="mt-1.5 border-t border-line pt-1" data-case-quickref-notice-strip>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-ui-2xs font-semibold text-ink-faint">
+          在拍通告 <span className="tabular-nums">{notices.length}</span>
+        </span>
+        <span className="flex items-center gap-0.5">
+          <button
+            type="button"
+            data-case-quickref-scroll-prev
+            aria-label="向左滑动在拍通告"
+            disabled={!edges.left}
+            onClick={() => step(-1)}
+            className={cn(
+              'flex h-4 w-4 items-center justify-center rounded border border-line bg-surface text-ui-2xs leading-none text-ink-muted transition-colors',
+              edges.left ? 'hover:border-brand-line hover:text-brand-strong' : 'cursor-not-allowed opacity-40',
+            )}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            data-case-quickref-scroll-next
+            aria-label="向右滑动在拍通告"
+            disabled={!edges.right}
+            onClick={() => step(1)}
+            className={cn(
+              'flex h-4 w-4 items-center justify-center rounded border border-line bg-surface text-ui-2xs leading-none text-ink-muted transition-colors',
+              edges.right ? 'hover:border-brand-line hover:text-brand-strong' : 'cursor-not-allowed opacity-40',
+            )}
+          >
+            ›
+          </button>
+        </span>
+      </div>
+      <div
+        ref={scrollRef}
+        data-case-quickref-notice-scroll
+        className="case-active-notice-scroll flex gap-1.5 overflow-x-auto pb-1.5"
+      >
+        {notices.map((item) => (
+          <div
+            key={item.key}
+            data-case-quickref-notice={item.code}
+            data-case-quickref-notice-source={item.source}
+            data-case-quickref-notice-risk={item.risk}
+            title={`${item.name}（${item.code}）${item.groupName ? ` · ${item.groupName}` : ''}\n${item.startDate || '—'} ~ ${item.endDate || '—'}`}
+            className={cn(
+              'relative w-[148px] shrink-0 rounded border border-line border-l-[3px] px-1.5 py-1',
+              ACTIVE_NOTICE_TILE_CLASS[item.category] ?? 'bg-surface',
+            )}
+          >
+            <div className="flex items-center gap-1 pr-2">
+              <span className={cn(
+                'shrink-0 rounded px-1 text-ui-2xs',
+                CATEGORY_CLASS[item.category] ?? 'bg-surface text-ink-muted',
+              )}
+              >
+                {item.category}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-ui-2xs font-semibold text-ink">
+                {item.name}
+              </span>
+            </div>
+            <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-muted">
+              {shortNoticeDate(item.startDate)} ~ {shortNoticeDate(item.endDate)}
+            </div>
+            <div className={cn(
+              'tabular-nums text-ui-2xs text-ink-faint',
+              item.risk === 'tight' || item.risk === 'late' ? 'pr-3' : '',
+            )}
+            >
+              {item.groupName && <span className="mr-0.5">团 </span>}
+              {item.doneDays} / {item.workDays || '—'} 天
+              {item.risk === 'tight' && <span className="ml-1 font-semibold text-gold">逾期</span>}
+              {item.risk === 'late' && <span className="ml-1 font-semibold text-alert">违约</span>}
+            </div>
+            {(item.risk === 'tight' || item.risk === 'late') && (
+              <span
+                aria-hidden
+                className={cn(
+                  'absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full ring-2 ring-white',
+                  item.risk === 'late' ? 'bg-alert' : 'bg-gold',
+                )}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** 右栏「艺人速查」：顶部完整卡片不动，这里只留对照通告表格时一眼要扫的
  *  九项属性 + 状态 + 社交三项 + 当前在拍通告；友好度、压力疲劳、通告统计
  *  仍在顶部卡片里。列表在剩余高度内自己滚，本页小结钉在上方不受影响。 */
@@ -577,63 +712,7 @@ function ArtistQuickRef({
                 ) : (
                   <p className="mt-1 text-ui-2xs text-ink-faint">这份存档里还没有这位的状态块。</p>
                 )}
-                {active.length > 0 && (
-                  <div className="mt-1.5 border-t border-line pt-1">
-                    <div className="mb-1 text-ui-2xs font-semibold text-ink-faint">
-                      在拍通告 <span className="tabular-nums">{active.length}</span>
-                    </div>
-                    <div className="space-y-1">
-                      {active.map((item) => (
-                        <div
-                          key={item.key}
-                          data-case-quickref-notice={item.code}
-                          data-case-quickref-notice-source={item.source}
-                          data-case-quickref-notice-risk={item.risk}
-                          title={`${item.name}（${item.code}）${item.groupName ? ` · ${item.groupName}` : ''}`}
-                          className={cn(
-                            'relative rounded border border-line border-l-[3px] px-1.5 py-1',
-                            ACTIVE_NOTICE_TILE_CLASS[item.category] ?? 'bg-surface',
-                          )}
-                        >
-                          <div className="flex items-center gap-1 pr-3">
-                            <span className={cn(
-                              'shrink-0 rounded px-1 text-ui-2xs',
-                              CATEGORY_CLASS[item.category] ?? 'bg-surface text-ink-muted',
-                            )}
-                            >
-                              {item.category}
-                            </span>
-                            <span className="min-w-0 flex-1 truncate text-ui-2xs font-semibold text-ink">
-                              {item.name}
-                            </span>
-                          </div>
-                          <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-muted">
-                            {item.startDate || '—'} ~ {item.endDate || '—'}
-                          </div>
-                          <div className={cn(
-                            'tabular-nums text-ui-2xs text-ink-faint',
-                            item.risk === 'tight' || item.risk === 'late' ? 'pr-3' : '',
-                          )}
-                          >
-                            {item.doneDays} / {item.workDays || '—'} 天
-                            {item.groupName && <span className="ml-1">· 团体</span>}
-                            {item.risk === 'tight' && <span className="ml-1 font-semibold text-gold">逾期风险</span>}
-                            {item.risk === 'late' && <span className="ml-1 font-semibold text-alert">违约提醒</span>}
-                          </div>
-                          {(item.risk === 'tight' || item.risk === 'late') && (
-                            <span
-                              aria-hidden
-                              className={cn(
-                                'absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full ring-2 ring-white',
-                                item.risk === 'late' ? 'bg-alert' : 'bg-gold',
-                              )}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {active.length > 0 && <ActiveNoticeStrip notices={active} />}
               </div>
             );
           })}
