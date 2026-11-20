@@ -8,7 +8,7 @@ import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
   noticeLabel, noticeUnit,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
-  type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
+  type ArtistEvent, type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
   type TitleLine, type TitleMeta, type WorkRecord,
@@ -592,6 +592,20 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     return byTeam;
   }, [result]);
 
+  /** 团体演唱会：只把记事里标记为团体场的记录挂到成员所在团体，个人场不串到团体卡。 */
+  const groupEventsByTeam = useMemo(() => {
+    const byTeam = new Map<number, ArtistEvent[]>();
+    if (!result) return byTeam;
+    for (const event of result.events.filter((item) => item.group)) {
+      for (const team of result.teams.filter((item) => item.memberIds.includes(event.artistId))) {
+        const list = byTeam.get(team.code) ?? [];
+        list.push(event);
+        byTeam.set(team.code, list);
+      }
+    }
+    return byTeam;
+  }, [result]);
+
   /** 艺人作品清单：按记事挂名艺人分组，供五个分类和「作品总数」悬停。 */
   const worksByArtist = useMemo(() => {
     const byArtist = new Map<number, WorkRecord[]>();
@@ -956,6 +970,21 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                               {award.ceremony}·{award.label}
                               <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
                               <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {(groupEventsByTeam.get(group.code)?.length ?? 0) > 0 && (
+                        <div data-case-group-events className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
+                          <span className="text-ink-faint">活动</span>
+                          {groupEventsByTeam.get(group.code)!.map((event) => (
+                            <span
+                              key={`${event.date}-${event.label}-${event.artistId}`}
+                              data-case-group-event
+                              className="rounded border border-brand-line bg-brand-soft px-1 font-semibold text-brand-strong"
+                            >
+                              {event.label}
+                              <span className="ml-1 font-normal text-ink-muted">{event.date}</span>
                             </span>
                           ))}
                         </div>
@@ -2277,6 +2306,23 @@ function ArtistCard({
                   ))}
                 </span>
               )}
+            </div>
+          )}
+          {artist.events.length > 0 && (
+            <div data-case-artist-events className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
+              <span className="text-ink-faint">活动</span>
+              {artist.events.map((event) => (
+                <span
+                  key={`${event.date}-${event.label}`}
+                  data-case-artist-event
+                  data-case-event-kind={event.kind}
+                  data-case-event-scale={event.scale}
+                  className="rounded border border-brand-line bg-brand-soft px-1 font-semibold text-brand-strong"
+                >
+                  {event.label}
+                  <span className="ml-1 font-normal text-ink-muted">{event.date}</span>
+                </span>
+              ))}
             </div>
           )}
         </>

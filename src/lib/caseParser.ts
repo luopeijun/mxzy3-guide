@@ -323,6 +323,25 @@ export interface ArtistStats {
   index: number;
   /** 这位艺人拿过的奖，最近的排在最前；公司奖也在里面，看 `company` 分流。 */
   awards: ArtistAward[];
+  /** 这位艺人办过的演唱会 / 影友會 / 歌友會，按时间正序。 */
+  events: ArtistEvent[];
+}
+
+/** 「艺人成绩」记事里的一条举办活动记录。 */
+export interface ArtistEvent {
+  /** `2008/4/19`，界面直接用。 */
+  date: string;
+  year: number; month: number; day: number;
+  /** 直接可显示的名字，例如「中型個人演唱會」「大型團體演唱會」。 */
+  label: string;
+  /** 61 歌友會 / 62 影友會 / 63 演唱會。 */
+  kind: number;
+  /** 1 大型 / 2 中型 / 3 小型。 */
+  scale: number;
+  /** 团体专场（记事 +24 非零）；个人场为 false。 */
+  group: boolean;
+  /** 记事挂名的艺人编号。 */
+  artistId: number;
 }
 
 /** 存档「艺人成绩」记事里的一条获奖记录。 */
@@ -379,6 +398,14 @@ const DIARY_STRIDE = 108;
 /** 记事项类型 -> 通告统计分类。11 电视 / 12 电影 / 13 唱片 / 14 广告 / 15 主持。 */
 const DIARY_WORK_TYPE: Record<number, number> = { 11: 0, 12: 1, 13: 2, 14: 3, 15: 4 };
 const WORK_CODE_PREFIX = ['TV', 'MV', 'CD', 'CF', 'SH'];
+
+/** 记事表 kind=6 是「举办活动」：61 歌友會 / 62 影友會 / 63 演唱會。
+ *  62、63 已用 Auto 存档的游戏界面核对；61 按同一枚举顺序补上，样本存档里
+ *  暂时没有歌友會记录。事项后的 +36 是规模（1 大型 / 2 中型 / 3 小型）。 */
+const DIARY_EVENT_NAME: Record<number, string> = {
+  61: '歌友會', 62: '影友會', 63: '演唱會',
+};
+const DIARY_EVENT_SCALE = ['', '大型', '中型', '小型'];
 
 /** 奖项编号的十位 -> 颁奖礼。 */
 const AWARD_CEREMONY: Record<number, string> = {
@@ -591,6 +618,8 @@ export interface ParseResult {
   /** 「艺人成绩」记事里的个人作品记录，供通告统计悬停按时间展示。 */
   works: WorkRecord[];
   awards: ArtistAward[];
+  /** 「艺人成绩」记事里的演唱会 / 影友會 / 歌友會记录，按时间正序。 */
+  events: ArtistEvent[];
   /** Monday notice-update batches, oldest first. */
   batches: UpdateBatch[];
   /** First batch strictly after today, i.e. the next company refresh. */
@@ -1134,6 +1163,44 @@ export function parseWorks(
   return rows.map((row) => row.work);
 }
 
+/** 「艺人成绩」记事里的举办活动，按时间正序。
+ *  规模取 +36，团体场看 +24 是否非零（Auto 的千金小姐大型团体演唱会 +24=4）。
+ *  只认 kind=6 且事项在 61..63，避免把普通通告完成记录混进来。 */
+export function parseEvents(view: DataView, byteLength: number): ArtistEvent[] {
+  const table = readDiaryTable(view, byteLength);
+  if (!table) return [];
+  const seen = new Set<string>();
+  const rows: { event: ArtistEvent; day: number }[] = [];
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * DIARY_STRIDE;
+    if (view.getUint32(p + 12, true) !== 6) continue;
+    const kind = view.getUint32(p + 16, true);
+    const name = DIARY_EVENT_NAME[kind];
+    if (!name) continue;
+    const scale = view.getUint32(p + 36, true);
+    if (scale < 1 || scale > 3) continue;
+    const year = view.getUint32(p, true);
+    const month = view.getUint32(p + 4, true);
+    const day = view.getUint32(p + 8, true);
+    const artistId = view.getUint32(p + 20, true);
+    const group = view.getUint32(p + 24, true) > 0;
+    const key = `${year}/${month}/${day}|${kind}|${scale}|${group}|${artistId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push({
+      event: {
+        date: `${year}/${month}/${day}`,
+        year, month, day,
+        label: `${DIARY_EVENT_SCALE[scale]}${group ? '團體' : kind === 63 ? '個人' : ''}${name}`,
+        kind, scale, group, artistId,
+      },
+      day: dayNumber(year, month, day),
+    });
+  }
+  rows.sort((a, b) => a.day - b.day || a.event.artistId - b.event.artistId);
+  return rows.map((row) => row.event);
+}
+
 function parseArtists(
   bytes: Uint8Array,
   view: DataView,
@@ -1222,6 +1289,7 @@ function parseArtists(
         : null,
       roleId, signed, offset: o, index,
       awards: [],
+      events: [],
     });
   }
   return out;
@@ -1990,12 +2058,15 @@ export function parseSave(
   // 记事表里的获奖记录，按艺人编号分给各个状态块；公司奖也在里面，
   // 由页面按 `award.company` 决定显示在个人行还是公司行。
   const awards = parseAwards(view, bytes.length, tables.cases);
+  // 举办活动（演唱会 / 影友會 / 歌友會），供艺人卡与团体卡在奖项下面单列。
+  const events = parseEvents(view, bytes.length);
   // 团体唱片发行清单，供团体卡「通告统计」hover 展示。
   const groupWorks = parseGroupWorks(view, bytes.length, tables.cases);
   // 个人作品清单，供艺人卡五个分类和「作品总数」hover 按时间展示。
   const works = parseWorks(view, bytes.length, tables.cases, rolesByCode, tables.stars);
   for (const artist of artists) {
     artist.awards = awards.filter((award) => award.artistId === artist.roleId);
+    artist.events = events.filter((event) => event.artistId === artist.roleId);
   }
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
   const teams = parseTeams(bytes, view, blocks);
@@ -2426,6 +2497,7 @@ export function parseSave(
     currentDate,
     company,
     awards,
+    events,
     groupWorks: allGroupWorks,
     works: allWorks,
     batches,
