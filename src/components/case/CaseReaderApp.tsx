@@ -255,15 +255,15 @@ function WorkCountChip({
     ? { 'data-case-group-work': '' }
     : { 'data-case-artist-work': '' };
   return (
-    <span className="group relative inline-flex">
+    <span className="work-count-chip group relative inline-flex">
       <span
         {...(dataName ? { [dataName]: '' } : {})}
         data-notice-index={dataNoticeIndex}
         tabIndex={0}
         role="button"
-        className="cursor-help rounded bg-count-soft px-1.5 py-0.5 text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
+        className="cursor-help rounded px-1 py-0.5 text-ink-faint outline-none transition-colors hover:bg-count-soft hover:text-ink focus-visible:bg-count-soft focus-visible:text-ink focus-visible:ring-2 focus-visible:ring-brand-line"
       >
-        {label} <b>{value}</b>{unit}
+        {label} <b className="font-semibold text-ink">{value}</b>{unit}
       </span>
       {works.length > 0 && (
         <span
@@ -2681,8 +2681,8 @@ function ArtistCard({
               叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]} · 曝光 {artist.social[4]} · 礼物 {artist.gifts}
             </span>
           </div>
-          <div data-case-artist-counts className="mt-0.5 flex flex-wrap gap-1 text-ui-2xs">
-            <span className="text-ink-faint">通告统计</span>
+          <div data-case-artist-counts className="mt-0.5 flex flex-wrap items-center text-ui-2xs">
+            <span className="mr-1 text-ink-faint">通告统计</span>
             {NOTICE_COUNT_LABELS.map((label, i) => (
               <WorkCountChip
                 key={label}

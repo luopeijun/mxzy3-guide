@@ -333,6 +333,16 @@
   color: var(--color-line-strong);
 }
 
+/* 通告统计改成常驻纯文字 + hover 才浮粉底：粉底和 hover 浮窗一起出现，
+   正好当「可悬停看明细」的暗示，不会突兀。项之间用淡分隔点，和证书统一。
+   外层 .group 是浮窗定位锚点，分隔点挂在它前面而不是内层可 hover 的 chip 上。 */
+.work-count-chip + .work-count-chip::before {
+  content: '·';
+  margin: 0 5px 0 1px;
+  color: var(--color-line-strong);
+  pointer-events: none;
+}
+
 /* 存档解析页的折叠区块：收起时真正把内容（含后代）藏起来，而不是只靠浏览器
  * 默认的 details 布局隐藏 —— 后者下 getComputedStyle 仍报 block / table-row，
  * 会让「收起态不可见」这类断言永远不成立，也不利于屏幕阅读器。 */
