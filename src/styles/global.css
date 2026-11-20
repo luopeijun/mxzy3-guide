@@ -347,6 +347,14 @@
   vertical-align: middle;
 }
 
+/* 社交行里友好度 / 人气 / 压力疲劳之间用淡分隔点，和证书、通告统计统一。
+ * 友好度已用 ::before 画圆点，所以分隔点挂在后两项的 ::before 上。 */
+.social-item::before {
+  content: '·';
+  margin: 0 6px 0 1px;
+  color: var(--color-line-strong);
+}
+
 /* 通告统计改成常驻纯文字 + hover 才浮粉底：粉底和 hover 浮窗一起出现，
    正好当「可悬停看明细」的暗示，不会突兀。项之间用淡分隔点，和证书统一。
    外层 .group 是浮窗定位锚点，分隔点挂在它前面而不是内层可 hover 的 chip 上。 */

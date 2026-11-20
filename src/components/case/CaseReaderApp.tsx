@@ -2665,10 +2665,10 @@ function ArtistCard({
             <span data-case-artist-friendship className="friendship-value font-semibold text-brand-strong">
               友好度 {artist.friendship ?? '—'}
             </span>
-            <span data-case-artist-popularity className="rounded bg-surface-soft px-1 font-semibold text-ink">
+            <span data-case-artist-popularity className="social-item font-semibold text-ink">
               人气 {artist.social[3]}
             </span>
-            <span className="font-medium text-ink-muted">
+            <span className="social-item font-medium text-ink-muted">
               压力 {artist.stress} · 疲劳 {artist.fatigue}
             </span>
             <span className="text-ink-faint">
