@@ -1481,6 +1481,20 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       '早期主持通告没有明细就写占位，不猜作品名',
       host.map((w) => w.workName).join(' / '));
 
+    const dated = released.works.filter((w) => w.artistId === 6 && w.year > 0);
+    const dayOf = (w) => w.year * 10000 + w.month * 100 + w.day;
+    check(dated.every((w, i) => i === 0 || dayOf(dated[i - 1]) <= dayOf(w)),
+      '作品明细按发生时间正序，不再按「第 N 部」序号乱跳',
+      dated.map((w) => w.date).join(' '));
+
+    const roleOf = (id, code) => released.works.find((w) => w.artistId === id && w.workCode === code)?.role;
+    check(roleOf(74, 'MV702') === '女主角' && roleOf(74, 'MV009') === '女主角'
+      && roleOf(74, 'TV727') === '女主角' && roleOf(8, 'MV601') === '男主角'
+      && roleOf(8, 'TV727') === '男主角',
+      '电视 / 电影 hover 显示截图确认的具体角色（主角）');
+    check(roleOf(8, 'TV111') === '男配角' && roleOf(8, 'MV706') === '男配角',
+      '实机截图确认的配角归属不被主角优先规则覆盖');
+
     const albums = released.works.filter((w) => w.artistId === 74 && w.noticeIndex === 2);
     const albumCodes = albums.map((w) => w.workCode).join(',');
     check(albums.length === 7 && albumCodes.includes('CD211') && !albumCodes.includes('CD661'),

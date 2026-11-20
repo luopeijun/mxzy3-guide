@@ -1471,6 +1471,18 @@ async function main() {
         && albums.rows.some((row) => row.includes('來自深海的愛')),
       '新名纱雪 7 张唱片逐条显示日期，含原声带《來自深海的愛》',
       JSON.stringify(albums));
+      const albumDays = albums?.rows.map((row) => row.match(/(\d{4})\/(\d+)\/(\d+)/)?.slice(1).map(Number) ?? [0, 0, 0]) ?? [];
+      check(albumDays.every((d, i) => i === 0 || albumDays[i - 1][0] * 10000 + albumDays[i - 1][1] * 100 + albumDays[i - 1][2]
+        <= d[0] * 10000 + d[1] * 100 + d[2]),
+      '作品 hover 按日期正序，不再按「第 N 部」序号跳', albums?.rows.join(' | ') ?? 'none');
+      const xinMovies = await hoverArtistChip(74, 1);
+      check(xinMovies && xinMovies.rows.some((row) => row.includes('就在鄰近的幸福') && row.includes('女主角'))
+        && xinMovies.rows.some((row) => row.includes('一代歌后鍾湘') && row.includes('女主角')),
+      '新名纱雪电影 hover 显示实机截图里的「女主角」', JSON.stringify(xinMovies));
+      const chenMovies = await hoverArtistChip(8, 1);
+      check(chenMovies && chenMovies.rows.some((row) => row.includes('不死靈魂') && row.includes('男配角'))
+        && chenMovies.rows.some((row) => row.includes('笑傲天際') && row.includes('男主角')),
+      '陈奕夫电影 hover 区分「男配角」与「男主角」', JSON.stringify(chenMovies));
       check(host?.maxHeight === '240px' && host?.overflow === 'auto'
         && albums?.maxHeight === '240px' && albums?.overflow === 'auto',
       '作品 hover 定高滚动，多条也不会撑爆页面',
