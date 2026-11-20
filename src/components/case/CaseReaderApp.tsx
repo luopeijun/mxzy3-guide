@@ -5,6 +5,7 @@ import EmptyState from '../EmptyState';
 import { companyDot, companyText } from '../notices/infoStyle';
 import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
+import { artistCertificates } from '../../lib/caseCertificates';
 import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
@@ -2872,38 +2873,6 @@ const ITEM_RISING_RE = new RegExp(
   `(${Object.keys(ITEM_ATTR_TRAD).sort((a, b) => b.length - a.length).join('|')})上升`,
   'g',
 );
-
-/** 学院结业证书：特殊物品里每位艺人各有戏剧 / 音乐 / 舞蹈三张，道具说明以
- *  艺人的游戏内名字开头；「藝人的…」那几张是通用道具，不挂到任何人身上。 */
-const CERT_KINDS = [
-  { word: '舞蹈', label: '舞蹈' },
-  { word: '戲劇', label: '戏剧' },
-  { word: '音樂', label: '音乐' },
-] as const;
-
-function artistCertificates(items: OwnedItem[], tables: CaseTables): Map<number, string[]> {
-  const byId = new Map<number, string[]>();
-  const nameToId: Array<[string, number]> = Object.entries(tables.stars ?? {})
-    .filter(([, info]) => !!info?.[0])
-    .map(([id, info]) => [info[0], Number(id)] as [string, number])
-    .sort((a, b) => b[0].length - a[0].length);
-  for (const item of items) {
-    if (item.quantity <= 0) continue;
-    const name = item.name ?? '';
-    if (!name.includes('證書')) continue;
-    const kind = CERT_KINDS.find((k) => name.includes(k.word));
-    if (!kind) continue;
-    const owner = nameToId.find(([star]) => item.desc?.startsWith(star));
-    if (!owner) continue;
-    const list = byId.get(owner[1]) ?? [];
-    if (!list.includes(kind.label)) list.push(kind.label);
-    byId.set(owner[1], list);
-  }
-  for (const list of byId.values()) {
-    list.sort((a, b) => CERT_KINDS.findIndex((k) => k.label === a) - CERT_KINDS.findIndex((k) => k.label === b));
-  }
-  return byId;
-}
 
 /** 从存档已拥有的道具里建「缺口属性 -> 可补道具」索引。显示沿用道具表原文
  *  （和道具面板一致），一行里所有增减都写出来，不只写补的那一项。 */
