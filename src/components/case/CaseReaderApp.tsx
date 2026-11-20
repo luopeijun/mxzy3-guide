@@ -2705,13 +2705,13 @@ function ArtistCard({
               title="全部作品"
             />
           </div>
-          <div data-case-artist-certs className="mt-0.5 flex flex-wrap items-center gap-1 text-ui-2xs">
-            <span className="text-ink-faint">证书</span>
+          <div data-case-artist-certs className="mt-0.5 flex flex-wrap items-center text-ui-2xs">
+            <span className="mr-1 text-ink-faint">证书</span>
             {certificates.length > 0 ? certificates.map((label) => (
               <span
                 key={label}
                 data-case-artist-cert={label}
-                className="rounded border border-brand-line bg-brand-soft px-1 font-semibold text-brand-strong"
+                className="cert-item font-semibold text-ink"
               >
                 {label}
               </span>

@@ -326,6 +326,13 @@
   color: var(--color-line-strong);
 }
 
+/* 证书改成纯文字后，多张之间用淡分隔点，跟奖项 / 活动保持同一视觉语言。 */
+.cert-item + .cert-item::before {
+  content: '·';
+  margin: 0 5px;
+  color: var(--color-line-strong);
+}
+
 /* 存档解析页的折叠区块：收起时真正把内容（含后代）藏起来，而不是只靠浏览器
  * 默认的 details 布局隐藏 —— 后者下 getComputedStyle 仍报 block / table-row，
  * 会让「收起态不可见」这类断言永远不成立，也不利于屏幕阅读器。 */
