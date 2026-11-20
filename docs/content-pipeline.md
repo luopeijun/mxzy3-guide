@@ -115,6 +115,19 @@
 - **测试存档一律不读游戏目录的活档**：游戏运行时会改写 `Save2/`（日期 / 资金 / 友好度 / 通告池都会变），读活档会让固定真值断言随进度漂移、产生假失败。玩家口述逐项核对过的冻结快照放在 `tests/fixtures/saves/`（现共 8 份：`probe` / `Story0001`~`0004` / `Story0011` / `Story0034` / `Auto`）：`probe.sa2`（日期 2006/1/29、资金 1151527、CF014、21 件道具等全套精确值，也是 CDP 的默认输入）、`Story0002.sa2`（友好度 141）、`Story0003.sa2`（友好度 92）、`Story0004.sa2`（CF234 亲和门槛 650）。每份锁定的真值列在同目录 README。这 4 份缺失即跳过对应断言；命令行仍可传任意 `.sa2` 做一次性排查。其余历史存档（Story0007/0024/0027/0055、Ending0001/0004/0005/0009）是 2016–2022 年不再改写的老档，测试在游戏目录存在它们时才跑、缺失即跳过，不冻结进仓库。
 - CDP 必须**全程复用一个 page tab**，反复 `/json/new` 会堆出上百个 tab 让 Chrome 卡死。
 
+## Electron 桌面端（存档解析）
+
+桌面端是独立入口 `desktop.html`，只挂**存档解析**一个页面，其它五个页签入口都不渲染；和 Web 端共用同一份 `CaseReaderApp` 与样式令牌。以后要把别的页面放进桌面端，只需在这个入口加 tab，组件都是现成的。
+
+- **三层结构**：`desktop.html`（Vite 第三个输入）→ `src/desktop/main.tsx`（挂 `DesktopApp`）→ `src/desktop/DesktopApp.tsx`（顶栏 + `<CaseReaderApp externalSave>`）。`CaseReaderApp` 新增可选 prop `externalSave: {buffer, name, token}`，`token` 递增就重新解析；Web 端不传这个 prop，仍走拖入 / 选文件。
+- **自定义协议 `mxzy://local/...`**：`electron/main.cjs` 在 `whenReady` 前 `registerSchemesAsPrivileged` 声明为标准协议，`protocol.handle` 把请求映射到 `dist/` 并补 MIME。这样页面里所有 `fetch('data/*.json')`（含 `case-tables.json?`）都能在打包后正常加载——`file://` 下本地 fetch 会被 CORS 拦。开发时可设 `MXZY_DESKTOP_DEV_URL` 走 Vite dev server，跳过协议。
+- **只读文件桥**：`electron/preload.cjs` 经 `contextBridge` 暴露最小接口（`getState` / `chooseDir` / `refresh` / `setAutoFollow` / `setSelected` / `readSave` / `onState`），没有任何写文件或系统能力。目录由用户**自己选**（`dialog.showOpenDialog` 的 `openDirectory`，不写死、不猜游戏安装路径），只把上次选的目录 / 自动跟随开关 / 选中档位记在 `app.getPath('userData')/desktop-config.json`。
+- **稳定读取**：Auto.sa2 游戏运行时会被覆盖，`readSaveStable()` 读前后各 stat 一次，大小或修改时间变了就等 90ms 重读，最多 4 次，避免半截文件进解析器。`readSave` 经 IPC 把 Buffer 转成 `Uint8Array` 克隆给渲染进程，再转回 `ArrayBuffer` 交给 `parseSave`。
+- **自动跟随**：主进程 `fs.watch(saveDir)` 变化时节流 350ms 推 `desktop:state`（含最新清单），渲染进程比对当前档位的 `path|mtime|size` 指纹，变了才重读；主动读取也会记下指纹，避免“读到新快照→再触发读取”的死循环。没开自动跟随时，点「读取当前游戏状态」或换档位才读。
+- **启动注意**：本环境预设了 `ELECTRON_RUN_AS_NODE=1`，会让 electron.exe 以纯 Node 模式跑主进程（`require('electron')` 只剩路径、协议 API 全丢）。启动必须清掉：`env -u ELECTRON_RUN_AS_NODE electron .`；npm 的 `desktop` 脚本在用户机器上通常没这个变量，不受影响。Electron 二进制首装若从 GitHub 下载失败，用 `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ node node_modules/electron/install.js`。
+- **回归**：`scripts/cdp_desktop.mjs`（13 项，连调试端口验证独立入口无其它页签、自定义协议加载内置表、文件桥注入、真实 IPC 读档后渲染游戏时间与通告表格）。启动：`env -u ELECTRON_RUN_AS_NODE MXZY_DESKTOP_DEBUG=9223 electron .`，再 `MXZY_DESKTOP_DEBUG=9223 node scripts/cdp_desktop.mjs`。本环境 GUI 窗口十几秒会被回收，CDP 要和启动写在同一条命令里跑完。
+- **未决**：游戏何时写盘（自动存档触发时机）未实测——当前游戏没运行，留待开游戏时盯 `Save2/Auto.sa2` 修改时间。自动跟随本身只要游戏写盘就会触发。
+
 ## 体量统计口径
 
 页面上显示的是**字数**，不再是段落数：「约 X 字」取正文非空白字符数（含标点），`table` 块的单元格也算在内，分类页按「自身 + 全部子条目」累计；叶子条目只显示字数，没有子条目时不再显示「0 个子条目」。超过 1 万字折算成「1.2 万」，由 `src/lib/guide.ts` 的 `countChars` / `countCharsDeep` / `formatCount` 统一处理。
@@ -231,6 +244,7 @@
 | `npm run build` | 类型检查 + 生产构建到 `dist/` |
 | `npm run preview` | 预览构建产物 |
 | `npm run typecheck` | 只跑 `tsc` |
+| `npm run desktop` | 构建后启动 Electron 桌面版（只挂存档解析） |
 | `npm run test:guide` | Python 回归测试：攻略解析（31 项）+ 通告数据（13 项）+ 攻略 ⇄ CG 映射（9 项）+ 六大通告（7 项）+ 甜蜜乐章攻略（26 项）+ 甜蜜乐章 CG（11 项）+ 图片缩略图（4 项），共 **101 项** |
 | `npm run test:sweet` | 只跑甜蜜乐章两套回归（攻略 26 + CG 11，共 37 项） |
 | `python scripts/extract_notices.py` | 重生成通告数据（需 `pip install openpyxl xlrd`） |
@@ -309,6 +323,11 @@ scripts/test_cg_links.py     事件 → CG 映射回归测试
 scripts/test_cg_node_links.py  CG → 事件 / 页面映射回归测试
 scripts/test_image_thumbs.py 缩略图产物完整性回归测试（4 项）
 scripts/cdp_*.mjs            浏览器端到端验证脚本
+scripts/cdp_desktop.mjs      Electron 桌面端端到端验证（13 项）
+electron/main.cjs            Electron 主进程：mxzy:// 资源协议 + 只读文件桥 + 目录监听
+electron/preload.cjs         contextBridge 注入最小桌面接口
+desktop.html                 Electron 入口（只挂存档解析）
+src/desktop/                 桌面端入口与读取控制条（顶栏 / 目录 / 存档位 / 自动跟随）
 src/sweet/                   甜蜜乐章站点入口（sweet.html 挂载：攻略 / 事件追踪 / CG 图鉴）
 src/ui/SmartImage.tsx        全站统一图片组件（缩略图 / 懒加载 / 占位 / 失败回退）
 src/ui/                      两站共用的顶栏与页签
