@@ -23,6 +23,8 @@ export interface ItemCheck {
   gameName: string;
   have: number;
   met: boolean;
+  /** 条件表里写了「（可选）」的道具：有就打钩，没有也不影响达标。 */
+  optional: boolean;
 }
 
 export interface SlotGap {
@@ -100,8 +102,11 @@ interface EvalContext {
   certs: Map<number, string[]>;
 }
 
-function cleanName(name: string): string {
-  return name.replace(/（可选）/g, '').trim();
+function cleanName(name: string): { label: string; optional: boolean } {
+  return {
+    label: name.replace(/[（(]可选[）)]/g, '').trim(),
+    optional: /[（(]可选[）)]/.test(name),
+  };
 }
 
 /** 范围条件按区间上限判定：500~550 要 550 才算达标（用户定稿）。 */
@@ -236,10 +241,10 @@ function evaluateGroupRow(
 }
 
 function itemCheck(row: SpecialRow, ctx: EvalContext): ItemCheck {
-  const name = cleanName(row.name);
-  const gameName = ITEM_ALIASES[name] ?? name;
+  const { label, optional } = cleanName(row.name);
+  const gameName = ITEM_ALIASES[label] ?? label;
   const have = ctx.result.items.find((item) => item.name === gameName)?.quantity ?? 0;
-  return { name, gameName, have, met: have > 0 };
+  return { name: label, gameName, have, met: have > 0, optional };
 }
 
 function artistDetail(
@@ -383,14 +388,22 @@ export function evaluateLiveSpecials(
         ? signed.filter((artist) => starGender(artist.roleId, tables.stars) === 'male')
         : signed;
 
+      const slotOf = (condition: LiveCondition): string =>
+        condition.row.slot && condition.row.slot !== '-' ? condition.row.slot : 'main';
       const bySlot = new Map<string, LiveCondition[]>();
       for (const condition of artistRows) {
-        const slot = condition.row.slot && condition.row.slot !== '-' ? condition.row.slot : 'main';
+        const slot = slotOf(condition);
         bySlot.set(slot, [...(bySlot.get(slot) ?? []), condition]);
       }
 
+      // 笑傲天际是男主角专属的特殊通告：达标数只按男主角 4 项算，
+      // 男配角那组只在 hover 里看差值，不参与绿勾与进度分母。
+      const qualifyingRows = maleOnly
+        ? artistRows.filter((condition) => slotOf(condition) === 'main')
+        : artistRows;
+
       const matches = candidates.map((artist): ArtistMatch => {
-        const gaps = artistRows
+        const gaps = qualifyingRows
           .filter((condition) => !condition.byArtist[artist.roleId])
           .map((condition) => condition.row.name);
         const slots: SlotGap[] = [...bySlot].map(([slot, rows]) => ({
@@ -407,8 +420,8 @@ export function evaluateLiveSpecials(
         return {
           id: artist.roleId,
           name: result.artistDirectory.find((option) => option.id === artist.roleId)?.name ?? String(artist.roleId),
-          met: artistRows.length - gaps.length,
-          total: artistRows.length,
+          met: qualifyingRows.length - gaps.length,
+          total: qualifyingRows.length,
           gaps,
           slots,
         };

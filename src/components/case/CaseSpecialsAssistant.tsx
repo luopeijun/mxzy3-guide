@@ -127,18 +127,24 @@ function DetailSection({
               <span className="w-[92px] shrink-0 truncate text-ui-xs font-semibold text-ink">
                 {item.notice.title}
               </span>
-              <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-soft">
-                <span
-                  className="block h-full rounded-full bg-brand"
-                  style={{ width: `${item.total ? Math.round(item.met / item.total * 100) : 0}%` }}
-                />
-              </span>
-              <span className="w-[30px] shrink-0 text-right text-ui-2xs text-ink-faint">
-                {item.total ? `${item.met}/${item.total}` : '—'}
-              </span>
-              <span className="w-[76px] shrink-0 text-right text-ui-2xs text-ink-muted">
-                {LIVE_STATUS_LABELS[item.status]}
-              </span>
+              {item.nodes.length > 0 ? (
+                <span className="flex-1 text-right text-ui-2xs text-ink-faint">按事件节点推进</span>
+              ) : (
+                <>
+                  <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-soft">
+                    <span
+                      className="block h-full rounded-full bg-brand"
+                      style={{ width: `${item.total ? Math.round(item.met / item.total * 100) : 0}%` }}
+                    />
+                  </span>
+                  <span className="w-[30px] shrink-0 text-right text-ui-2xs text-ink-faint">
+                    {item.total ? `${item.met}/${item.total}` : '—'}
+                  </span>
+                  <span className="w-[76px] shrink-0 text-right text-ui-2xs text-ink-muted">
+                    {LIVE_STATUS_LABELS[item.status]}
+                  </span>
+                </>
+              )}
               <span className="w-3 shrink-0 text-center text-ui-2xs text-ink-faint">
                 {open ? '−' : '+'}
               </span>
@@ -190,7 +196,7 @@ function DetailSection({
                         )}
                       >
                         {entry.met && <span aria-hidden="true">✓</span>}
-                        {entry.name}
+                        {entry.name}{entry.optional && '（可选）'}
                       </span>
                     ))}
                   </div>
