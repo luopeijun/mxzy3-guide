@@ -10,11 +10,11 @@
      Sampled straight from the in-game starfield art (#a8506e). */
   --color-canvas: #faf5f7;
   --color-surface: #ffffff;
-  --color-surface-soft: #fdfafb;
+  --color-surface-soft: #f8f0f4;
   --color-sidebar: #f6ebf0;
   --color-line: #eedde5;
   --color-line-strong: #dcc2ce;
-  /* 通告统计数字的底色：只比 surface-soft 深一点点，让胶囊有轮廓又不抢眼。 */
+  /* 通告统计数字 hover 时的浮底：比白卡深、能看出轮廓又不抢眼。 */
   --color-count-soft: #faeff3;
 
   /* Text — every role clears WCAG AA on its own background */
