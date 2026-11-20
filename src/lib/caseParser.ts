@@ -325,6 +325,20 @@ export interface ArtistStats {
   awards: ArtistAward[];
   /** 这位艺人办过的演唱会 / 影友會 / 歌友會，按时间正序。 */
   events: ArtistEvent[];
+  /** 当前合约；未签约（含已解约）时为 null，不拿占位日期冒充。 */
+  contract: ArtistContract | null;
+}
+
+/** 艺人状态块 +308 起的当前合约信息。 */
+export interface ArtistContract {
+  /** `2006/1/1`。 */
+  signDate: string;
+  /** `2010/1/24`。 */
+  expireDate: string;
+  /** 签约金，单位元；0 也照实显示。 */
+  signingBonus: number;
+  /** 艺人分红，百分比整数，例如 50 表示 50%。 */
+  dividend: number;
 }
 
 /** 「艺人成绩」记事里的一条举办活动记录。 */
@@ -1248,6 +1262,27 @@ function parseArtists(
     if (seen.has(roleId)) continue;
     seen.add(roleId);
     const signed = o >= 8 && view.getUint32(o - 8, true) === 1;
+    // 当前合约：状态块 +308 起两个 [年,月,日,星期] 四元组，+340 签约金，+344 分红。
+    // 四份存档核对过（Auto 萧依莉 2006/1/1 - 2010/1/24、0 元、50%）。未签约的
+    // 占位日期不冒充真实合约，只有 signed 才读。
+    let contract: ArtistContract | null = null;
+    if (signed && o + 348 <= end) {
+      const sy = view.getUint32(o + 308, true);
+      const sm = view.getUint32(o + 312, true);
+      const sd = view.getUint32(o + 316, true);
+      const ey = view.getUint32(o + 324, true);
+      const em = view.getUint32(o + 328, true);
+      const ed = view.getUint32(o + 332, true);
+      if (sy >= 2000 && sy <= 2100 && sm >= 1 && sm <= 12 && sd >= 1 && sd <= 31
+        && ey >= 2000 && ey <= 2100 && em >= 1 && em <= 12 && ed >= 1 && ed <= 31) {
+        contract = {
+          signDate: `${sy}/${sm}/${sd}`,
+          expireDate: `${ey}/${em}/${ed}`,
+          signingBonus: view.getUint32(o + 340, true),
+          dividend: view.getUint32(o + 344, true),
+        };
+      }
+    }
     index += 1;
     out.push({
       friendship: roleId in friendship ? friendship[roleId] : null,
@@ -1267,6 +1302,7 @@ function parseArtists(
       roleId, signed, offset: o, index,
       awards: [],
       events: [],
+      contract,
     });
   }
   return out;

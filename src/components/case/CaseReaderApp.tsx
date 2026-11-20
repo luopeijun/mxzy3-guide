@@ -2325,6 +2325,22 @@ function ArtistCard({
               ))}
             </div>
           )}
+          {artist.contract && (
+            <details data-case-artist-contract className="mt-1 border-t border-line pt-1 text-ui-2xs">
+              <summary className="cursor-pointer text-ink-faint">
+                合约信息
+                <span className="ml-1 text-ink-faint">
+                  {artist.contract.signDate} - {artist.contract.expireDate}
+                </span>
+              </summary>
+              <div data-case-artist-contract-detail className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 pl-1 text-ink-muted">
+                <span>签约时间 <b className="font-semibold text-ink">{artist.contract.signDate}</b></span>
+                <span>合约期限 <b className="font-semibold text-ink">{artist.contract.expireDate}</b></span>
+                <span>签约金 <b className="font-semibold text-ink">{moneyText(artist.contract.signingBonus)}</b></span>
+                <span>艺人分红 <b className="font-semibold text-ink">{artist.contract.dividend}%</b></span>
+              </div>
+            </details>
+          )}
         </>
       ) : (
         <p className="mt-1 text-ui-2xs text-ink-faint">这份存档里还没有这位的状态块。</p>
