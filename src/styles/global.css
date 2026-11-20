@@ -14,6 +14,9 @@
   --color-sidebar: #f6ebf0;
   --color-line: #eedde5;
   --color-line-strong: #dcc2ce;
+  /* 通告统计数字的底色：比普通 surface-soft 深一档，6 个小胶囊连排时
+     不用细看也能分辨是一组统计，而不是贴在正文上的裸数字。 */
+  --color-count-soft: #f4d8e2;
 
   /* Text — every role clears WCAG AA on its own background */
   --color-ink: #1c1216;

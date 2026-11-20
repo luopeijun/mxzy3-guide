@@ -149,7 +149,7 @@ function WorkCountChip({
         data-notice-index={dataNoticeIndex}
         tabIndex={0}
         role="button"
-        className="cursor-help rounded bg-surface-soft px-1 text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
+        className="cursor-help rounded bg-count-soft px-1.5 py-0.5 text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
       >
         {label} <b>{value}</b>{unit}
       </span>
