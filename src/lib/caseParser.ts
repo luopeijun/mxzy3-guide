@@ -2245,7 +2245,7 @@ export function parseSave(
   // 记事表里的获奖记录，按艺人编号分给各个状态块；公司奖也在里面，
   // 由页面按 `award.company` 决定显示在个人行还是公司行。
   const awards = parseAwards(view, bytes.length, tables.cases);
-  // 举办活动（演唱会 / 影友會 / 歌友會），供艺人卡与团体卡在奖项下面单列。
+  // 举办活动（演唱会 / 影友會 / 歌友會）：个人场挂艺人卡，团体场只挂团体卡。
   const events = parseEvents(view, bytes.length);
   // 团体唱片发行清单，供团体卡「通告统计」hover 展示。
   const groupWorks = parseGroupWorks(view, bytes.length, tables.cases);
@@ -2253,7 +2253,8 @@ export function parseSave(
   const diaryWorks = parseWorks(view, bytes.length, tables.cases);
   for (const artist of artists) {
     artist.awards = awards.filter((award) => award.artistId === artist.roleId);
-    artist.events = events.filter((event) => event.artistId === artist.roleId);
+    // 团体场（大型团体演唱会等）在团体卡「活动」里展示，不重复挂到艺人卡。
+    artist.events = events.filter((event) => event.artistId === artist.roleId && !event.group);
   }
   const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
   const teams = parseTeams(bytes, view, blocks);
