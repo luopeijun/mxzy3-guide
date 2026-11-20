@@ -698,9 +698,6 @@ function ArtistQuickRef({
               <div key={option.id} data-case-quickref-artist={option.name} className="rounded border border-line bg-surface-soft px-2 py-1.5">
                 <div className="flex items-baseline gap-1">
                   <span className="text-ui-2xs font-bold text-brand-strong">#{option.id} {option.name}</span>
-                  <span className="rounded-full bg-surface px-1 text-ui-2xs text-ink-faint">
-                    {option.gender === 'female' ? '女' : '男'}
-                  </span>
                   <span
                     data-case-quickref-condition
                     className={cn(
@@ -2636,9 +2633,6 @@ function ArtistCard({
     <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
       <div className="flex items-baseline gap-1.5">
         <span className="text-ui-xs font-bold text-brand-strong">#{option.id} {option.name}</span>
-        <span className="rounded-full bg-surface-soft px-1.5 text-ui-2xs text-ink-faint">
-          {option.gender === 'female' ? '女' : '男'}
-        </span>
         {artist?.title && (
           <TitleBadge title={artist.title} meta={artist.titleMeta} next={artist.titleNext} />
         )}
