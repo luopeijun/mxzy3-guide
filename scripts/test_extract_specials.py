@@ -65,9 +65,9 @@ class TestSpecialsJson(unittest.TestCase):
     def test_counts_match_the_reviewed_table(self):
         data = _json()
         s = data["stats"]
-        self.assertEqual(s["rows"], 118)
-        self.assertEqual(s["conditions"], 81)
-        self.assertEqual(s["notes"], 37)
+        self.assertEqual(s["rows"], 121)
+        self.assertEqual(s["conditions"], 79)
+        self.assertEqual(s["notes"], 42)
         self.assertEqual(len(data["notices"]), 7)
         self.assertEqual(
             sum(n["conditionCount"] for n in data["notices"]), s["conditions"]
@@ -138,6 +138,21 @@ class TestSpecialsJson(unittest.TestCase):
                    if r["slot"] == "support" and r["type"] == "stat"}
         self.assertEqual(main, support)
         self.assertEqual(main, {"演技": "550", "名气": "550", "体能": "500", "才智": "550"})
+
+    def test_doomsday_has_five_event_nodes_and_no_manual_fallbacks(self):
+        rows = _json()["rows"]
+        node_ids = [
+            r["id"] for r in rows
+            if r["notice"] == "doomsday-warrior" and ".node." in r["id"]
+        ]
+        self.assertEqual(
+            node_ids,
+            [f"doom.node.{i}" for i in range(1, 6)],
+        )
+        targets = [r["target"] for r in rows if r["id"] in node_ids]
+        self.assertEqual(targets, ["3年3月后", "3年3月", "3年4月", "3年7月", "3年8月"])
+        for old_id in ("doom.metSmith", "doom.prepDays"):
+            self.assertFalse(any(r["id"] == old_id for r in rows), old_id)
 
     def test_kunlun_has_three_named_role_slots(self):
         notices = {n["id"]: n for n in _json()["notices"]}

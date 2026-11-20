@@ -5,14 +5,14 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 118,
-    "conditions": 81,
-    "notes": 37,
+    "rows": 121,
+    "conditions": 79,
+    "notes": 42,
     "scopeCounts": {
       "artist": 40,
-      "global": 29,
+      "global": 28,
       "group": 7,
-      "notice": 2,
+      "notice": 1,
       "role": 3
     },
     "eventAnchorsChecked": 2013
@@ -43,8 +43,8 @@
       "id": "doomsday-warrior",
       "title": "末日战士",
       "guideNode": "notices/doomsday-warrior",
-      "conditionCount": 11,
-      "noteCount": 6,
+      "conditionCount": 9,
+      "noteCount": 11,
       "slots": [
         "main",
         "support"
@@ -809,41 +809,93 @@
       }
     },
     {
-      "id": "doom.metSmith",
+      "id": "doom.node.1",
       "notice": "doomsday-warrior",
       "slot": "-",
-      "phase": "prepare",
-      "kind": "condition",
-      "type": "flag",
-      "scope": "global",
-      "name": "见过史麦克导演",
-      "target": "-",
-      "hint": "见过则初选前得 4 本剧本，否则贺总只给 2 本",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "旗下艺人参演 3 部电影且名气、演技 >600；或旗下女艺人参演 3 部以上电影、名气、演技 >400，正在拍摄电影且担任女主角（必须为 4★ 或 5★ 角色），完成「暗夜惊魂」事件（跟随艺人 21 次以上）",
+      "target": "3年3月后",
+      "hint": "两条路线任选其一；跟随满 21 次可提前开启好莱坞",
       "source": "表+攻略",
       "link": {
-        "kind": "guide",
-        "href": "#/guide/notices/doomsday-warrior~ev5",
-        "node": "notices/doomsday-warrior",
-        "event": "47"
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
       }
     },
     {
-      "id": "doom.prepDays",
+      "id": "doom.node.2",
       "notice": "doomsday-warrior",
-      "slot": "main",
-      "phase": "notice",
-      "kind": "condition",
-      "type": "flag",
-      "scope": "notice",
-      "name": "剧本准备天数足够",
-      "target": "-",
-      "hint": "初选/决选剧本给出后要如数安排自由活动",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "拿到末日战士初选剧本，周末送给艺人（艺人至少出演一次电影主角、接演电影 2 部以上），给够自由活动时间（4/8 天）",
+      "target": "3年3月",
+      "hint": "初选剧本给出后按天数安排自由活动",
       "source": "表+攻略",
       "link": {
-        "kind": "guide",
-        "href": "#/guide/notices/doomsday-warrior~ev6",
-        "node": "notices/doomsday-warrior",
-        "event": "48"
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.node.3",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "艺人准备戏剧学院证书",
+      "target": "3年4月",
+      "hint": "戏剧学院（纽约）：声音表情/肢体语言 专业 + 说话技巧 高级；回国周末发证",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.node.4",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "给艺人决选剧本，给够自由活动时间",
+      "target": "3年7月",
+      "hint": "决选剧本给出后按天数安排自由活动",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
+      }
+    },
+    {
+      "id": "doom.node.5",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "史麦克上门邀约艺人主演「末日战士」，其他角色去好莱坞预约",
+      "target": "3年8月",
+      "hint": "未上门邀约也可自行前往好莱坞预约",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/doomsday-warrior"
       }
     },
     {

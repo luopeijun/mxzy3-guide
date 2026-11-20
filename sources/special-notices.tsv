@@ -37,8 +37,11 @@ doom.heroine.acting	doomsday-warrior	support	notice	condition	stat	artist	演技
 doom.heroine.wisdom	doomsday-warrior	support	notice	condition	stat	artist	才智	550	女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限	notices/doomsday-warrior#55	表+攻略	-
 doom.heroine.fame	doomsday-warrior	support	notice	condition	stat	artist	名气	550	女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限	notices/doomsday-warrior#55	表+攻略	-
 doom.heroine.energy	doomsday-warrior	support	notice	condition	stat	artist	体能	500	女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限	notices/doomsday-warrior#55	表+攻略	-
-doom.metSmith	doomsday-warrior	-	prepare	condition	flag	global	见过史麦克导演	-	见过则初选前得 4 本剧本，否则贺总只给 2 本	notices/doomsday-warrior#47	表+攻略	-
-doom.prepDays	doomsday-warrior	main	notice	condition	flag	notice	剧本准备天数足够	-	初选/决选剧本给出后要如数安排自由活动	notices/doomsday-warrior#48	表+攻略	-
+doom.node.1	doomsday-warrior	-	-	note	-	-	旗下艺人参演 3 部电影且名气、演技 >600；或旗下女艺人参演 3 部以上电影、名气、演技 >400，正在拍摄电影且担任女主角（必须为 4★ 或 5★ 角色），完成「暗夜惊魂」事件（跟随艺人 21 次以上）	3年3月后	两条路线任选其一；跟随满 21 次可提前开启好莱坞	tracker:notices/doomsday-warrior	表+攻略	-
+doom.node.2	doomsday-warrior	-	-	note	-	-	拿到末日战士初选剧本，周末送给艺人（艺人至少出演一次电影主角、接演电影 2 部以上），给够自由活动时间（4/8 天）	3年3月	初选剧本给出后按天数安排自由活动	tracker:notices/doomsday-warrior	表+攻略	-
+doom.node.3	doomsday-warrior	-	-	note	-	-	艺人准备戏剧学院证书	3年4月	戏剧学院（纽约）：声音表情/肢体语言 专业 + 说话技巧 高级；回国周末发证	tracker:notices/doomsday-warrior	表+攻略	-
+doom.node.4	doomsday-warrior	-	-	note	-	-	给艺人决选剧本，给够自由活动时间	3年7月	决选剧本给出后按天数安排自由活动	tracker:notices/doomsday-warrior	表+攻略	-
+doom.node.5	doomsday-warrior	-	-	note	-	-	史麦克上门邀约艺人主演「末日战士」，其他角色去好莱坞预约	3年8月	未上门邀约也可自行前往好莱坞预约	tracker:notices/doomsday-warrior	表+攻略	-
 doom.tl.dates	doomsday-warrior	-	-	note	-	-	第三年 4 月 27 日初选、7 月 27 日决选	-	具体日期按条件表（4/27 初选、7/27 决选）；攻略正文只给月份；时间窗只作标签，不计时	tracker:notices/doomsday-warrior	表	-
 doom.tl.route1	doomsday-warrior	-	-	note	-	-	路径 1 暗夜惊魂事件：女艺人，名气/演技 >400、电影 >3 部，拍 4 或 5 星女主角时触发，选关心的选项、跟随满 21 天，可提前开启好莱坞	-	属于事件流程，在事件追踪器里跟	tracker:notices/doomsday-warrior	表	-
 doom.tl.route2	doomsday-warrior	-	-	note	-	-	路径 2 等导演上门：任意艺人，名气/演技 >600、电影 >3 部，第三年 3 月史麦克上门	-	属于事件流程，在事件追踪器里跟	tracker:notices/doomsday-warrior	表	-
