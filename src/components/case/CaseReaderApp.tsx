@@ -499,6 +499,21 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     return { groupAwardsByTeam: byTeam, groupAwardsUnmatched: unmatched };
   }, [result]);
 
+  /** 团体唱片发行清单：按记事挂名艺人归到其所在团体。 */
+  const groupWorksByTeam = useMemo(() => {
+    const byTeam = new Map<number, ParseResult['groupWorks']>();
+    if (!result) return byTeam;
+    for (const work of result.groupWorks) {
+      const teams = result.teams.filter((team) => team.memberIds.includes(work.artistId));
+      for (const team of teams) {
+        const list = byTeam.get(team.code) ?? [];
+        list.push(work);
+        byTeam.set(team.code, list);
+      }
+    }
+    return byTeam;
+  }, [result]);
+
   /** 我方团体：只认存档 `Team` 段里的记录（编号 101 起）。存档没记录就是
    *  旗下没有团体 —— 这里不做任何猜测，也不预置默认值。 */
   const activeGroups = useMemo<GroupRecord[]>(() => {
@@ -822,8 +837,42 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                       {/* 团体通告统计：团体只接唱片通告，直接读存档累计的唱片作品数。 */}
                       <div data-case-group-counts className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                         <span className="text-ink-faint">通告统计</span>
-                        <span data-case-group-work-count className="rounded bg-surface-soft px-1 text-ink-muted">
-                          {NOTICE_COUNT_LABELS[2]} <b>{group.workCount}</b>{NOTICE_COUNT_UNITS[2]}
+                        <span className="group relative inline-flex">
+                          <span
+                            data-case-group-work-count
+                            tabIndex={0}
+                            role="button"
+                            className="cursor-help rounded bg-surface-soft px-1 text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
+                          >
+                            {NOTICE_COUNT_LABELS[2]} <b>{group.workCount}</b>{NOTICE_COUNT_UNITS[2]}
+                          </span>
+                          {(groupWorksByTeam.get(group.code)?.length ?? 0) > 0 && (
+                            <span
+                              data-case-group-works-card
+                              role="tooltip"
+                              className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+                            >
+                              <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
+                                <span className="mb-1 flex items-baseline gap-1">
+                                  <b className="text-ui-2xs text-ink">团体唱片作品</b>
+                                  <span className="text-ui-2xs text-ink-faint">
+                                    {groupWorksByTeam.get(group.code)!.length} 张（按发布时间）
+                                  </span>
+                                </span>
+                                {groupWorksByTeam.get(group.code)!.map((work) => (
+                                  <span
+                                    key={work.workCode}
+                                    data-case-group-work
+                                    className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
+                                  >
+                                    <span className="text-ink-faint">{work.date}</span>
+                                    <span className="font-semibold text-ink">{work.workName}</span>
+                                    <span className="text-ink-muted">· {work.company}</span>
+                                  </span>
+                                ))}
+                              </span>
+                            </span>
+                          )}
                         </span>
                       </div>
                       {/* 团体奖（最佳团体）：存档挂在队长 / 团员名下，归到团体卡；

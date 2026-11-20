@@ -350,6 +350,21 @@ export interface ArtistAward {
   artistId: number;
 }
 
+/** 「艺人成绩」记事里的一条团体唱片发行记录。 */
+export interface GroupWork {
+  /** `2007/2/28`，界面直接用。 */
+  date: string;
+  year: number; month: number; day: number;
+  /** 作品编码，例如 CD053。 */
+  workCode: string;
+  /** 作品名，查不到静态表时退回编码。 */
+  workName: string;
+  /** 制作公司，来自静态通告表 cases[code][3]。 */
+  company: string;
+  /** 记事挂名的艺人编号（一般是团长），页面据此归到所在团体。 */
+  artistId: number;
+}
+
 /** 记事表每条记录的固定字节数，表头是 `[条数][108]`。 */
 const DIARY_STRIDE = 108;
 
@@ -559,6 +574,8 @@ export interface ParseResult {
   /** 我方公司：名称 / 主角 / 形象 / 知名度 / 公关 / 资金。 */
   company: CompanyInfo | null;
   /** 「艺人成绩」记事里的全部获奖记录，最近的在前。 */
+  /** 「艺人成绩」记事里的团体唱片发行记录（时间/作品/公司）。 */
+  groupWorks: GroupWork[];
   awards: ArtistAward[];
   /** Monday notice-update batches, oldest first. */
   batches: UpdateBatch[];
@@ -990,6 +1007,44 @@ export function parseAwards(
   }
   rows.sort((a, b) => b.day - a.day || a.award.awardId - b.award.awardId);
   return rows.map((row) => row.award);
+}
+
+/** 解析「艺人成绩」记事里的团体唱片发行记录，按时间正序（早 -> 晚）。
+ *  判定：事项 13 = 唱片作品，编码 CD 开头，静态表 subtype = 團體，且排除奖项(kind 5)。
+ *  同一编码去重（获奖等事件会重复记同一张）。 */
+export function parseGroupWorks(
+  view: DataView, byteLength: number, cases: CaseTables['cases'],
+): GroupWork[] {
+  const table = readDiaryTable(view, byteLength);
+  if (!table) return [];
+  const seen = new Set<string>();
+  const rows: { work: GroupWork; day: number }[] = [];
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * DIARY_STRIDE;
+    const kind = view.getUint32(p + 12, true);
+    if (kind === DIARY_AWARD_KIND) continue;
+    if (view.getUint32(p + 16, true) !== 13) continue;
+    const workCode = readDiaryCode(view, p + 56);
+    if (!workCode.startsWith('CD') || cases[workCode]?.[2] !== '團體') continue;
+    if (seen.has(workCode)) continue;
+    seen.add(workCode);
+    const year = view.getUint32(p, true);
+    const month = view.getUint32(p + 4, true);
+    const day = view.getUint32(p + 8, true);
+    rows.push({
+      work: {
+        date: `${year}/${month}/${day}`,
+        year, month, day,
+        workCode,
+        workName: cases[workCode]?.[0] || workCode,
+        company: cases[workCode]?.[3] || '', 
+        artistId: view.getUint32(p + 20, true),
+      },
+      day: dayNumber(year, month, day),
+    });
+  }
+  rows.sort((a, b) => a.day - b.day || a.work.workCode.localeCompare(b.work.workCode));
+  return rows.map((row) => row.work);
 }
 
 function parseArtists(
@@ -1842,6 +1897,8 @@ export function parseSave(
   // 记事表里的获奖记录，按艺人编号分给各个状态块；公司奖也在里面，
   // 由页面按 `award.company` 决定显示在个人行还是公司行。
   const awards = parseAwards(view, bytes.length, tables.cases);
+  // 团体唱片发行清单，供团体卡「通告统计」hover 展示。
+  const groupWorks = parseGroupWorks(view, bytes.length, tables.cases);
   for (const artist of artists) {
     artist.awards = awards.filter((award) => award.artistId === artist.roleId);
   }
@@ -2219,6 +2276,7 @@ export function parseSave(
     currentDate,
     company,
     awards,
+    groupWorks,
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],
