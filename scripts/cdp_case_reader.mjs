@@ -251,6 +251,19 @@ async function main() {
       })(),
       tocLinks: document.querySelectorAll('[data-case-toc-link]').length,
       tocHasNotices: !!document.querySelector('[data-case-toc-link="notices"]'),
+      tocToggle: !!document.querySelector('[data-case-toc-toggle]'),
+      tocCollapsed: (function(){
+        var b = document.querySelector('[data-case-toc-toggle]');
+        return b ? b.getAttribute('aria-expanded') === 'false' : null;
+      })(),
+      tocPad: (function(){
+        var n = document.querySelector('[data-case-toc]');
+        return n ? getComputedStyle(n).paddingLeft : '';
+      })(),
+      quickPad: (function(){
+        var n = document.querySelector('[data-case-quickref]');
+        return n ? getComputedStyle(n).paddingLeft : '';
+      })(),
       tocTop: (function(){
         var n = document.querySelector('[data-case-toc]');
         return n ? Math.round(n.getBoundingClientRect().top) : -1;
@@ -654,8 +667,24 @@ async function main() {
       && p.sidePadding >= 32 && p.sidePadding <= 64,
       'wide content area keeps modest side margin and no horizontal scroll (right TOC occupies the gutter)',
       `width=${p.contentWidth} padding=${p.sidePadding} noScroll=${p.noHorizontalScroll}`);
-    check(p.tocLinks === 7 && p.tocHasNotices,
-      '本页小结目录列出 7 个标题卡片（含场景与通告）', `links=${p.tocLinks}`);
+    check(p.tocToggle && p.tocCollapsed === true && p.tocLinks === 0,
+      '本页小结默认收成一行，目录链接不占位',
+      `toggle=${p.tocToggle} collapsed=${p.tocCollapsed} links=${p.tocLinks}`);
+    check(p.tocPad === p.quickPad && p.tocPad !== '',
+      '收起的本页小结与艺人速查用同一套左右内边距，标题对齐',
+      `toc=${p.tocPad} quick=${p.quickPad}`);
+    await evaluate(`document.querySelector('[data-case-toc-toggle]').click()`);
+    await sleep(150);
+    const tocOpen = JSON.parse(await evaluate(`(function(){
+      var b = document.querySelector('[data-case-toc-toggle]');
+      return JSON.stringify({
+        expanded: b ? b.getAttribute('aria-expanded') : null,
+        links: document.querySelectorAll('[data-case-toc-link]').length,
+        hasNotices: !!document.querySelector('[data-case-toc-link="notices"]'),
+      });
+    })()`));
+    check(tocOpen.expanded === 'true' && tocOpen.links === 7 && tocOpen.hasNotices,
+      '本页小结展开后列出 7 个标题卡片（含场景与通告）', JSON.stringify(tocOpen));
 
     // 点目录里的「通告」应平滑滚到通告页签；滚完后该页签贴近视口顶部。
     await evaluate(`document.querySelector('[data-case-toc-link="notices"]').click()`);
@@ -962,6 +991,47 @@ async function main() {
         && galaxy.rows.every((r) => r.text.includes('10 / 25 天') && r.text.includes('4150 万')),
         'AutoReleased: 团体唱片 銀河 队长与队员都显示 10/25、酬劳 4150 万（队员共享队长进度）',
         JSON.stringify(galaxy.rows));
+
+      // 右栏艺人速查：在拍通告横滑轨道，团体共享、自制通告也挂到人，风险圆点跟表格同口径。
+      const quickref = JSON.parse(await evaluate(`JSON.stringify({
+        strips: document.querySelectorAll('[data-case-quickref-notice-strip]').length,
+        scrolls: document.querySelectorAll('[data-case-quickref-notice-scroll]').length,
+        arrows: document.querySelectorAll('[data-case-quickref-scroll-prev],[data-case-quickref-scroll-next]').length,
+        artists: [...document.querySelectorAll('[data-case-quickref-artist]')].map(card => ({
+          artist: card.getAttribute('data-case-quickref-artist'),
+          tiles: [...card.querySelectorAll('[data-case-quickref-notice]')].map(t => {
+            var dot = t.querySelector('[aria-hidden]');
+            var cls = dot ? dot.className : '';
+            return {
+              code: t.getAttribute('data-case-quickref-notice'),
+              source: t.getAttribute('data-case-quickref-notice-source'),
+              risk: t.getAttribute('data-case-quickref-notice-risk'),
+              text: t.innerText.replace(/\\s+/g, ' ').trim(),
+              title: t.getAttribute('title') || '',
+              dot: cls.includes('bg-gold') ? 'gold' : cls.includes('bg-alert') ? 'alert' : '',
+              border: getComputedStyle(t).borderLeftColor,
+            };
+          }),
+        })),
+      })`));
+      console.log('quickref:', JSON.stringify(quickref));
+      const qrTiles = quickref.artists.flatMap(a => a.tiles.map(t => ({ ...t, artist: a.artist })));
+      check(qrTiles.length > 0 && quickref.strips > 0
+        && quickref.scrolls === quickref.strips && quickref.arrows === quickref.strips * 2,
+        '艺人速查：在拍通告是横滑轨道，每条轨道都有左右箭头和滚动区',
+        `tiles=${qrTiles.length} strips=${quickref.strips} scrolls=${quickref.scrolls} arrows=${quickref.arrows}`);
+      const qrGalaxy = qrTiles.filter(t => t.code === 'CD602');
+      check(qrGalaxy.length === 2
+        && qrGalaxy.every(t => t.text.includes('10 / 25') && t.risk === 'late' && t.dot === 'alert'),
+        '艺人速查：团体唱片 銀河 挂到两位成员名下，进度共享 10/25、违约画红点',
+        JSON.stringify(qrGalaxy.map(t => `${t.artist}:${t.text}:${t.risk}:${t.dot}`)));
+      check(qrTiles.some(t => t.source === 'selfMade'),
+        '艺人速查：自制通告里拍摄中的那一条也挂到艺人身上',
+        qrTiles.filter(t => t.source === 'selfMade').map(t => `${t.artist}:${t.code}`).join(',') || '(none)');
+      check(qrTiles.every(t => t.text.includes('/') && t.text.includes('天'))
+        && qrTiles.every(t => t.title.includes('~')),
+        '艺人速查：每块显示完成/总天数，档期完整日期保留在悬停提示里',
+        JSON.stringify(qrTiles.map(t => `${t.code}:${t.text}:${t.title}`)));
     } else {
       console.log('SKIP AutoReleased.sa2 not present, released-notice UI not checked');
     }
