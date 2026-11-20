@@ -70,8 +70,6 @@ export interface LiveNotice {
 export interface LiveSpecialsReport {
   notices: LiveNotice[];
   doneCount: number;
-  closeCount: number;
-  pendingCount: number;
 }
 
 /** TSV 里的简体名 → 游戏 Item.dat 的繁体名。取当前持有数，不计已消耗。 */
@@ -451,8 +449,6 @@ export function evaluateLiveSpecials(
   return {
     notices,
     doneCount: notices.filter((notice) => notice.status === 'done').length,
-    closeCount: notices.filter((notice) => notice.status === 'close').length,
-    pendingCount: notices.filter((notice) => notice.status !== 'done' && notice.status !== 'close').length,
   };
 }
 

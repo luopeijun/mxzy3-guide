@@ -78,15 +78,6 @@ function NodeText({ text }: { text: string }) {
   );
 }
 
-function SummaryBox({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex-1 rounded-ui-sm bg-surface-soft px-2.5 py-2">
-      <div className="text-ui-2xs text-ink-faint">{label}</div>
-      <div className="text-[20px] font-semibold leading-tight text-ink">{value}</div>
-    </div>
-  );
-}
-
 function DetailSection({
   report,
   expanded,
@@ -161,7 +152,7 @@ function DetailSection({
                             <span className="shrink-0 text-ink-faint">{index + 1}.</span>
                             <span>
                               {row.target !== '-' && row.target && (
-                                <span className="mr-1 rounded bg-tag-scene-soft px-1 text-tag-scene">{row.target}</span>
+                                <span className="mr-1 rounded bg-brand-soft px-1 font-semibold text-brand-strong">{row.target}</span>
                               )}
                               <NodeText text={row.name} />
                             </span>
@@ -306,12 +297,6 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             >
               ×
             </button>
-          </div>
-
-          <div className="flex gap-2 px-3 py-2">
-            <SummaryBox label="已达成" value={report ? `${report.doneCount} / 6` : '—'} />
-            <SummaryBox label="差一项" value={report ? String(report.closeCount) : '—'} />
-            <SummaryBox label="待推进" value={report ? String(report.pendingCount) : '—'} />
           </div>
 
           {!result && (
