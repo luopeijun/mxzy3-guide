@@ -10,7 +10,7 @@ html[data-game='sweet'] {
   /* Surfaces & lines — 粉白底，比原站更亮一档 */
   --color-canvas: #fdf5f9;
   --color-surface: #ffffff;
-  --color-surface-soft: #faf0f6;
+  --color-surface-soft: #fffafd;
   --color-sidebar: #fbe8f2;
   --color-line: #f4dce8;
   --color-line-strong: #e6c1d4;
