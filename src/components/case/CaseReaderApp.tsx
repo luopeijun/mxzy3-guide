@@ -1126,26 +1126,26 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                   {result.scenes.map((scene, index) => {
                     const hints = sceneUnlockHints[scene.name] ?? [];
-                    const showUnlock = !scene.unlocked && hints.length > 0;
+                    const showHints = hints.length > 0;
                     return (
                       <div
                         key={scene.name}
                         data-case-scene
                         data-case-scene-unlocked={scene.unlocked}
-                        tabIndex={showUnlock ? 0 : undefined}
+                        tabIndex={showHints ? 0 : undefined}
                         className={cn(
-                          'group flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
+                          'group relative flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
                           scene.unlocked
                             ? 'border-growth-line bg-growth-soft text-growth-strong'
                             : 'border-line bg-surface text-ink-faint',
-                          showUnlock && 'cursor-help outline-none focus-visible:ring-2 focus-visible:ring-brand-line',
+                          showHints && 'cursor-help outline-none focus-visible:ring-2 focus-visible:ring-brand-line',
                         )}
                       >
                         <b className="font-semibold">{scene.name}</b>
-                        <span className={cn('ml-1 tabular-nums', showUnlock && 'decoration-dotted underline-offset-2 hover:underline')}>
+                        <span className={cn('ml-1 tabular-nums', showHints && 'decoration-dotted underline-offset-2 hover:underline')}>
                           {scene.unlocked ? '已解锁' : scene.cost.toLocaleString('zh-CN')}
                         </span>
-                        {showUnlock && (
+                        {showHints && (
                           <span
                             data-case-scene-unlock
                             role="tooltip"

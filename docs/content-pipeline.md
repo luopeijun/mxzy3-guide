@@ -115,7 +115,7 @@
 - **汇总条上的每个数字都是筛选标签**：`共 20 条 / 唱片 15 / 电视剧 5 / 未开拍 8 / 已完成 12`（Story0055 那份是 `共 6 条 / 唱片 4 / 电视剧 2 / 拍摄中 2 / 已逾期 1 / 未开拍 3`），点一下只看这一类或这一档（`aria-pressed` 有态），再点一下还原；筛选时右侧改写成「当前 N / 20 条」，不筛选时是「旗下艺人已接 X 条 · 还没人接 Y 条」。
 - 回归：`scripts/test_case_parser.mjs`（258 项；历史活档 Story0007 / Story0027 真值漂移时整段自动跳过；送礼表按 `favorites.txt` 逐条比对 ＋4 / ＋3，150 项吻合、只有「蜂王精华露」一处按游戏表 ＋3，含 TV090 / MV608 各角色工作天数）+ `scripts/cdp_case_reader.mjs`（136 项；含工作天数双胶囊与逐角色天数、好感度列、Auto「萧依莉+4」、Story0014 CF095 空预约、道具名称/类型/说明单行不换行、好感度徽标统一品牌色系、Ending0001 团体奖归团体卡且不进艺人卡 / 公司卡、TV090/MV608 同通告不同角色天数）。
 - **「已满足」用色统一**：称号 hover 的达标门槛与筹备中「数值对比」的「可以接」徽章共用 `title-model` 青绿（`#0f5a52` / soft `#d5ece5`）；`accept` 黄绿只留给道具「公司物品」分类。
-- **场景卡**：8 个国际场景的解锁标志来自存档里 `[9][8×0/1][0,4,80,108,97]` 那段，费用来自 `World.tab`。未解锁格 hover 的解锁方式直接读 `guide.json` 的 `game-guide/scenes` 节点：按场景标题取紧随的第一段、选项和提示；开罗标题后的真品概率说明不是解锁条件，不进 tooltip。
+- **场景卡**：8 个国际场景的解锁标志来自存档里 `[9][8×0/1][0,4,80,108,97]` 那段，费用来自 `World.tab`。每个场景格 hover 的解锁方式都直接读 `guide.json` 的 `game-guide/scenes` 节点（已解锁也一样）：按场景标题取紧随的第一段、选项和提示；开罗标题后的真品概率说明不是解锁条件，不进 tooltip。tooltip 用场景格自身做定位锚点，避免漂到别处。
 - **测试存档一律不读游戏目录的活档**：游戏运行时会改写 `Save2/`（日期 / 资金 / 友好度 / 通告池都会变），读活档会让固定真值断言随进度漂移、产生假失败。玩家口述逐项核对过的冻结快照放在 `tests/fixtures/saves/`（现共 8 份：`probe` / `Story0001`~`0004` / `Story0011` / `Story0034` / `Auto`）：`probe.sa2`（日期 2006/1/29、资金 1151527、CF014、21 件道具等全套精确值，也是 CDP 的默认输入）、`Story0002.sa2`（友好度 141）、`Story0003.sa2`（友好度 92）、`Story0004.sa2`（CF234 亲和门槛 650）。每份锁定的真值列在同目录 README。这 4 份缺失即跳过对应断言；命令行仍可传任意 `.sa2` 做一次性排查。其余历史存档（Story0007/0024/0027/0055、Ending0001/0004/0005/0009）是 2016–2022 年不再改写的老档，测试在游戏目录存在它们时才跑、缺失即跳过，不冻结进仓库。
 - CDP 必须**全程复用一个 page tab**，反复 `/json/new` 会堆出上百个 tab 让 Chrome 卡死。
 
@@ -123,7 +123,7 @@
 
 桌面端是独立入口 `desktop.html`，只挂**存档解析**一个页面，其它五个页签入口都不渲染；和 Web 端共用同一份 `CaseReaderApp` 与样式令牌。以后要把别的页面放进桌面端，只需在这个入口加 tab，组件都是现成的。
 
-- **三层结构**：`desktop.html`（Vite 第三个输入）→ `src/desktop/main.tsx`（挂 `DesktopApp`）→ `src/desktop/DesktopApp.tsx`（顶栏 + `<CaseReaderApp externalSave>`）。`CaseReaderApp` 新增可选 prop `externalSave: {buffer, name, token}`，`token` 递增就重新解析；Web 端不传这个 prop，仍走拖入 / 选文件。桌面端自己加载 `data/guide.json` 并挂 `GuideDataContext`，场景卡未解锁 hover 的提示与主站共用同一份文案。
+- **三层结构**：`desktop.html`（Vite 第三个输入）→ `src/desktop/main.tsx`（挂 `DesktopApp`）→ `src/desktop/DesktopApp.tsx`（顶栏 + `<CaseReaderApp externalSave>`）。`CaseReaderApp` 新增可选 prop `externalSave: {buffer, name, token}`，`token` 递增就重新解析；Web 端不传这个 prop，仍走拖入 / 选文件。桌面端自己加载 `data/guide.json` 并挂 `GuideDataContext`，场景卡 hover 的提示与主站共用同一份文案。
 - **自定义协议 `mxzy://local/...`**：`electron/main.cjs` 在 `whenReady` 前 `registerSchemesAsPrivileged` 声明为标准协议，`protocol.handle` 把请求映射到 `dist/` 并补 MIME。这样页面里所有 `fetch('data/*.json')`（含 `case-tables.json?`）都能在打包后正常加载——`file://` 下本地 fetch 会被 CORS 拦。开发时可设 `MXZY_DESKTOP_DEV_URL` 走 Vite dev server，跳过协议。
 - **只读文件桥**：`electron/preload.cjs` 经 `contextBridge` 暴露最小接口（`getState` / `chooseDir` / `refresh` / `setAutoFollow` / `setSelected` / `readSave` / `onState`），没有任何写文件或系统能力。目录由用户**自己选**（`dialog.showOpenDialog` 的 `openDirectory`，不写死、不猜游戏安装路径），只把上次选的目录 / 自动跟随开关 / 选中档位记在 `app.getPath('userData')/desktop-config.json`。
 - **稳定读取**：Auto.sa2 游戏运行时会被覆盖，`readSaveStable()` 读前后各 stat 一次，大小或修改时间变了就等 90ms 重读，最多 4 次，避免半截文件进解析器。`readSave` 经 IPC 把 Buffer 转成 `Uint8Array` 克隆给渲染进程，再转回 `ArrayBuffer` 交给 `parseSave`。
