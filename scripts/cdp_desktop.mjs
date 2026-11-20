@@ -83,6 +83,10 @@ const shell = await c.evaluate(`(() => ({
   followBtn: document.querySelector('[data-desktop-follow]')?.textContent?.trim() ?? '',
   slot: !!document.querySelector('[data-desktop-slot]'),
   bridge: typeof window.desktopBridge?.readSave === 'function',
+  openSaveBridge: typeof window.desktopBridge?.openSave === 'function'
+    && typeof window.desktopBridge?.onOpenSave === 'function'
+    && typeof window.desktopBridge?.requestReload === 'function'
+    && typeof window.desktopBridge?.onReloadRequest === 'function',
   caseReader: !!document.querySelector('[data-case-reader]'),
   otherTabs: [...document.querySelectorAll('a,button')].map(e => e.textContent?.trim() ?? '')
     .filter(t => /攻略|事件追踪|CG 图鉴|六大通告|甜蜜乐章/.test(t)),
@@ -94,6 +98,7 @@ check(shell.readBtn.includes('读取当前游戏状态'), '有「读取当前游
 check(shell.followBtn.includes('自动跟随'), '有自动跟随开关', shell.followBtn);
 check(shell.slot, '有存档位下拉');
 check(shell.bridge, '桌面文件桥已注入');
+check(shell.openSaveBridge, 'File 菜单打开存档桥已注入');
 check(shell.caseReader, '存档解析页已挂载');
 
 // 3) 自定义协议加载内置表成功（成功时 data-tables-source 有值、无 tablesError）。
@@ -132,8 +137,43 @@ if (!fs.existsSync(SAVE)) {
   }
 }
 
+// 5) File 菜单链路：openSave 推回来的字节走 feedSave，重新载入认的是这个外部文件。
+if (!fs.existsSync(SAVE)) {
+  check(false, 'File 菜单打开存档测试存档存在', SAVE);
+} else {
+  const opened = await c.evaluate(`(async () => {
+    if (typeof window.desktopBridge?.openSave !== 'function') return { bridged: false };
+    const ok = await window.desktopBridge.openSave(${JSON.stringify(SAVE)});
+    return { bridged: true, ok };
+  })()`);
+  check(opened.bridged && opened.ok === true, 'File → 打开存档经桥读到文件', JSON.stringify(opened));
+  await sleep(800);
+  const afterOpen = await c.evaluate(`(() => ({
+    notice: document.querySelector('[data-desktop-notice]')?.textContent?.trim() ?? '',
+    error: document.querySelector('[data-desktop-error]')?.textContent?.trim() ?? '',
+    now: document.querySelector('[data-case-now]')?.textContent?.trim() ?? '',
+    notices: document.querySelectorAll('[data-case-notice]').length,
+  }))()`);
+  check(afterOpen.notice.includes('已从文件打开') && afterOpen.notice.includes(path.basename(SAVE)),
+    '打开后顶栏显示来源与文件名', afterOpen.notice);
+  check(!afterOpen.error && /\d{4}/.test(afterOpen.now) && afterOpen.notices > 0,
+    '打开存档走同一解析通道渲染出内容', `${afterOpen.now} / ${afterOpen.notices} 条`);
+
+  const reloadSent = await c.evaluate(`(async () => {
+    if (typeof window.desktopBridge?.requestReload !== 'function') return false;
+    await window.desktopBridge.requestReload();
+    return true;
+  })()`);
+  await sleep(800);
+  const reloadNotice = await c.evaluate(`document.querySelector('[data-desktop-notice]')?.textContent?.trim() ?? ''`);
+  check(reloadSent && reloadNotice.includes('已重新载入文件'),
+    'File → 重新载入重读菜单打开的文件，而非目录里的存档位', reloadNotice);
+}
+
 console.log(`\n${checks - failures.length}/${checks} checks passed`);
 if (failures.length) {
   console.log('FAILURES:', failures.join(' | '));
   process.exit(1);
 }
+// CDP 的 WebSocket 不会自己关，成功后显式退出，否则脚本一直挂着。
+process.exit(0);
