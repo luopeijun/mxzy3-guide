@@ -406,6 +406,10 @@ export interface WorkRecord extends GroupWork {
   role: string;
   /** 参与清单里的原始顺序（就是游戏里的发生顺序），仅用于 hover 排序。 */
   order?: number;
+  /** 游戏内「第 N 部」序号（记事表 +36）。有它就能把被挤掉的早期作品
+   *  的占位放回正确位置：陈奕夫主持 SH067=第3部、SH072=第4部，缺的第
+   *  1、2 部是加入公司前的通告，占位要排在明细前面，不能一律补末尾。 */
+  seq?: number;
 }
 
 /** 记事表每条记录的固定字节数，表头是 `[条数][108]`。 */
@@ -1204,10 +1208,15 @@ function readHistoryCode(view: DataView, at: number): string {
  *  等），跳掉就会把这些片子的日期全丢掉。 */
 function buildWorkDateIndex(
   view: DataView, byteLength: number,
-): Map<string, { date: string; year: number; month: number; day: number }> {
+): {
+  dates: Map<string, { date: string; year: number; month: number; day: number }>;
+  /** `艺人编号|通告分类` -> `编码 -> 第N部序号`（记事表 +36）。 */
+  seqs: Map<string, Map<string, number>>;
+} {
   const table = readDiaryTable(view, byteLength);
-  const index = new Map<string, { date: string; year: number; month: number; day: number }>();
-  if (!table) return index;
+  const dates = new Map<string, { date: string; year: number; month: number; day: number }>();
+  const seqs = new Map<string, Map<string, number>>();
+  if (!table) return { dates, seqs };
   for (let i = 0; i < table.count; i += 1) {
     const p = table.offset + 8 + i * DIARY_STRIDE;
     const code = readDiaryCode(view, p + 56);
@@ -1215,12 +1224,23 @@ function buildWorkDateIndex(
     const year = view.getUint32(p, true);
     const month = view.getUint32(p + 4, true);
     const day = view.getUint32(p + 8, true);
-    const prev = index.get(code);
+    const prev = dates.get(code);
     if (!prev || dayNumber(year, month, day) < dayNumber(prev.year, prev.month, prev.day)) {
-      index.set(code, { date: `${year}/${month}/${day}`, year, month, day });
+      dates.set(code, { date: `${year}/${month}/${day}`, year, month, day });
     }
+    // +36 是游戏内「第 N 部」序号，只在作品发行记录（事项 11..15）里有效。
+    // 同一部戏挂不同艺人名下时序号各自独立，所以按 艺人|分类 分组。
+    const thing = view.getUint32(p + 16, true);
+    const noticeIndex = DIARY_WORK_TYPE[thing];
+    const seq = view.getUint32(p + 36, true);
+    if (noticeIndex === undefined || seq < 1 || seq > 999) continue;
+    const artistId = view.getUint32(p + 20, true);
+    const groupKey = `${artistId}|${noticeIndex}`;
+    const byCode = seqs.get(groupKey) ?? new Map<string, number>();
+    if (!byCode.has(code)) byCode.set(code, seq);
+    seqs.set(groupKey, byCode);
   }
-  return index;
+  return { dates, seqs };
 }
 
 /** 每位艺人状态块后面都跟着一份**完整**的参与记录清单（记事表只有 97 条、
@@ -1238,7 +1258,7 @@ export function parseWorkHistory(
   view: DataView,
   artists: ArtistStats[],
   cases: CaseTables['cases'],
-  dateIndex: Map<string, { date: string; year: number; month: number; day: number }>,
+  workIndex: ReturnType<typeof buildWorkDateIndex>,
   selfMade: SelfMadeNotice[],
   firmStart: number,
 ): WorkRecord[] {
@@ -1282,7 +1302,8 @@ export function parseWorkHistory(
       const key = `${noticeIndex}|${workCode}|${artist.roleId}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const dated = dateIndex.get(workCode);
+      const dated = workIndex.dates.get(workCode);
+      const seq = workIndex.seqs.get(`${artist.roleId}|${noticeIndex}`)?.get(workCode);
       out.push({
         date: dated?.date ?? '',
         year: dated?.year ?? 0,
@@ -1295,6 +1316,7 @@ export function parseWorkHistory(
         noticeIndex,
         role: '',
         order: k,
+        seq,
       });
     }
   }
@@ -2616,8 +2638,8 @@ export function parseSave(
   // 明细改用每位艺人状态块后面的完整参与清单；记事表只剩 97 条，苏嫚君
   // 官方 8 部电视在记事表里只有 5 条，用它当明细必然对不上「通告统计」。
   // 日期则从整张记事表按作品编码补（不按艺人），避免发行记录挂在别人名下。
-  const workDateIndex = buildWorkDateIndex(view, bytes.length);
-  const historyWorks = parseWorkHistory(view, artists, tables.cases, workDateIndex, selfMade, artistEnd);
+  const workIndex = buildWorkDateIndex(view, bytes.length);
+  const historyWorks = parseWorkHistory(view, artists, tables.cases, workIndex, selfMade, artistEnd);
   const works = historyWorks.length > 0 ? historyWorks : diaryWorks;
 
   // 自制通告的个人作品已经进参与清单（CD701 有朋自遠方來就在里面），
@@ -2644,13 +2666,17 @@ export function parseSave(
       artistId: cast.artistId,
     });
   }
+  // 排序键优先用游戏内「第 N 部」序号（seq）：有明细的作品按它归位，被记事
+  // 表挤掉的早期作品用缺失序号补成占位，这样第 1、2 部（加入公司前的通告）
+  // 就排在前面，第 3、4 部（加入公司后）跟在后面，跟游戏「艺人成绩」一致。
+  // 没有 seq 的老记录退回参与清单原始顺序（+900000 让它们排在带序号的之后）。
+  const sortKey = (w: WorkRecord) => w.seq && w.seq >= 1 ? w.seq : 900000 + (w.order ?? 0);
   const sortedWorks = [...works].sort(
-    (a, b) => (a.order ?? 0) - (b.order ?? 0)
-      || a.workCode.localeCompare(b.workCode),
+    (a, b) => sortKey(a) - sortKey(b) || a.workCode.localeCompare(b.workCode),
   );
   // 显示出来的条数必须和「通告统计」上的数字一致。参与清单偶尔比官方多
-  // 一条（未杀青的自制通告、重复版本）或漏几条（早期主持工作），多的按
-  // 时间从旧往新裁掉，缺的补一条「未留存明细」占位，绝不编作品名。
+  // 一条（未杀青的自制通告、重复版本）或漏几条（早期主持工作），多的裁掉，
+  // 缺的补「未留存明细」占位，绝不编作品名。占位的 seq 取明细里没出现的序号。
   const allWorks: WorkRecord[] = [];
   for (const artist of artists) {
     for (let noticeIndex = 0; noticeIndex < 5; noticeIndex += 1) {
@@ -2658,18 +2684,24 @@ export function parseSave(
         (work) => work.artistId === artist.roleId && work.noticeIndex === noticeIndex,
       );
       const official = artist.noticeCounts[noticeIndex] ?? list.length;
-      allWorks.push(...list.slice(Math.max(0, list.length - official)));
-      for (let k = list.length; k < official; k += 1) {
+      const kept = list.slice(Math.max(0, list.length - official));
+      allWorks.push(...kept);
+      const usedSeqs = new Set(kept.map((w) => w.seq).filter((s): s is number => !!s && s >= 1));
+      let missing = 1;
+      for (let k = kept.length; k < official; k += 1) {
+        while (usedSeqs.has(missing)) missing += 1;
+        const seq = missing++;
         allWorks.push({
           date: '', year: 0, month: 0, day: 0,
           workCode: '', workName: '（存档未留存明细）', company: '',
           artistId: artist.roleId, noticeIndex, role: '',
           order: 900000 + noticeIndex * 1000 + k,
+          seq,
         });
       }
     }
   }
-  allWorks.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.workCode.localeCompare(b.workCode));
+  allWorks.sort((a, b) => sortKey(a) - sortKey(b) || a.workCode.localeCompare(b.workCode));
   const allGroupWorks = [...groupWorks, ...extraGroupWorks].sort(
     (a, b) => dayNumber(a.year, a.month, a.day) - dayNumber(b.year, b.month, b.day)
       || a.workCode.localeCompare(b.workCode),
