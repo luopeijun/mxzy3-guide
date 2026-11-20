@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import type { ChangeEvent, DragEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import EmptyState from '../EmptyState';
+import CaseSpecialsAssistant from './CaseSpecialsAssistant';
 import { companyDot, companyText } from '../notices/infoStyle';
 import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
@@ -1050,6 +1051,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     URL.revokeObjectURL(url);
   }, [result]);
 
+  const jumpForSpecial = useCallback((target: 'items' | 'artists' | 'notices') => {
+    const selector = target === 'items' ? '[data-case-items]'
+      : target === 'artists' ? '[data-case-artists]' : '[data-case-tabs]';
+    const element = document.querySelector(selector) as HTMLElement | null;
+    if (!element) return;
+    if (element instanceof HTMLDetailsElement && !element.open) element.open = true;
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   return (
     <div
       data-case-reader
@@ -1724,6 +1734,8 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
           <ArtistQuickRef signed={signedArtists} activeNotices={activeNotices} />
         </aside>
       )}
+
+      <CaseSpecialsAssistant result={result} tables={tables} onJump={jumpForSpecial} />
     </div>
   );
 }
