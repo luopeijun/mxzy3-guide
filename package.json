@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "desktop": "npm run build && electron .",
     "desktop:dev": "electron .",
-    "package:desktop": "npm run build && electron-builder --win",
+    "package:desktop": "npm run build && electron-builder --win && node scripts/inject_desktop_icon.mjs",
     "typecheck": "tsc -b --noEmit",
     "test:guide": "python -m unittest discover -s scripts -p \"test_*.py\" -v",
     "test:sweet": "python -m unittest scripts.test_sweet_guide scripts.test_sweet_cg -v"
