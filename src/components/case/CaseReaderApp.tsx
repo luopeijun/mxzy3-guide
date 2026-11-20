@@ -1527,7 +1527,9 @@ function SelfMadePanel({
                           ? 'bg-brand-soft font-semibold text-brand-strong'
                           : notice.status === 'overdue'
                             ? 'bg-alert-soft font-semibold text-alert'
-                            : 'bg-surface-soft text-ink-muted',
+                            : notice.status === 'done'
+                              ? 'bg-growth-soft font-semibold text-growth-strong'
+                              : 'bg-surface-soft text-ink-muted',
                       )}
                     >
                       {SELF_MADE_STATUS_LABEL[notice.status]}
