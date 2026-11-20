@@ -478,12 +478,9 @@ function CaseToc({
     <nav
       data-case-toc
       aria-label="本页小结"
-      className={cn(
-        'rounded-ui-md border border-line bg-surface shadow-soft',
-        collapsed ? 'px-3 py-2' : 'p-3',
-      )}
+      className="rounded-ui-md border border-line bg-surface p-2.5 shadow-soft"
     >
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-0.5">
         <span className="text-ui-2xs font-semibold text-ink-faint">本页小结</span>
         <button
           type="button"
