@@ -159,17 +159,15 @@ function DetailSection({
             {open && (
               <div className="border-t border-line px-2.5 pb-2.5 pt-2">
                 {filmed.length > 0 && (
-                  <div className="mb-2 rounded-ui-sm border border-growth-line bg-growth-soft px-2 py-1.5" data-case-special-filmed-record>
-                    <p className="mb-1 text-ui-2xs font-semibold text-growth-strong">✓ 已拍摄</p>
-                    <div className="space-y-0.5 text-ui-2xs leading-relaxed text-ink-muted">
-                      {filmed.map((record, index) => (
-                        <div key={`${record.name}-${record.date}-${record.role}-${index}`} className="flex flex-wrap items-baseline gap-1">
-                          {record.role && <span className={workRoleClass(record.role)}>{record.role}</span>}
-                          <span className="font-semibold text-ink">{record.name}</span>
-                          {record.date && <span className="text-ink-faint">{record.date}</span>}
-                        </div>
-                      ))}
-                    </div>
+                  <div className="mb-2 text-ui-2xs leading-relaxed" data-case-special-filmed-record>
+                    <p className="mb-0.5 font-semibold text-growth-strong">已拍摄</p>
+                    {filmed.map((record, index) => (
+                      <div key={`${record.name}-${record.date}-${record.role}-${index}`} className="flex flex-wrap items-baseline gap-1 text-ink-muted">
+                        {record.role && <span className={workRoleClass(record.role)}>{record.role}</span>}
+                        <span className="text-ink">{record.name}</span>
+                        {record.date && <span className="text-ink-faint">{record.date}</span>}
+                      </div>
+                    ))}
                   </div>
                 )}
 
