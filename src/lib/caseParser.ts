@@ -1147,14 +1147,20 @@ const WORK_ROLE_OVERRIDES: Record<string, string> = {
   '6|MV153': '女主角',
 };
 
-/** 电视 / 电影的角色：先按艺人性别过滤角色表，再优先主角。 */
+/** 主持通告的角色就在静态表的 subtype 里（助理主持 / 外景主持 / 主持人，
+ *  SHCase.dat 的字段，Length.tab 也用同一套叫法），不是从性别猜出来的。 */
+const HOST_ROLES = new Set(['助理主持', '外景主持', '主持人']);
+
+/** 电视 / 电影按艺人性别过滤角色表再优先主角；主持直接读通告表的角色字段。 */
 function pickWorkRole(
   workCode: string,
   noticeIndex: number,
   artistId: number,
   rolesByCode: Map<string, RoleRecord[]>,
   stars: CaseTables['stars'],
+  cases: CaseTables['cases'],
 ): string {
+  if (noticeIndex === 4) return HOST_ROLES.has(cases[workCode]?.[2] ?? '') ? cases[workCode][2] : '';
   if (noticeIndex !== 0 && noticeIndex !== 1) return '';
   const override = WORK_ROLE_OVERRIDES[`${artistId}|${workCode}`];
   if (override) return override;
@@ -1344,7 +1350,7 @@ export function parseWorkHistory(
         company: cases[workCode]?.[3] || '',
         artistId: artist.roleId,
         noticeIndex,
-        role: pickWorkRole(workCode, noticeIndex, artist.roleId, rolesByCode, stars),
+        role: pickWorkRole(workCode, noticeIndex, artist.roleId, rolesByCode, stars, cases),
         order: k,
         seq,
       });
