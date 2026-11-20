@@ -927,7 +927,8 @@ async function main() {
           .map(r => [r.getAttribute('data-case-selfmade-row'),
             r.querySelector('[data-case-selfmade-days]')?.getAttribute('data-case-selfmade-days') || ''])),
         text: document.querySelector('[data-case-selfmade]')?.innerText.replace(/\\s+/g, ' ') || '',
-        summary: document.querySelector('[data-case-selfmade-summary]')?.innerText.replace(/\\s+/g, ' ') || ''
+        summary: document.querySelector('[data-case-selfmade-summary]')?.innerText.replace(/\\s+/g, ' ') || '',
+        groupWork: document.querySelector('[data-case-group-work-count]')?.innerText.replace(/\\s+/g, ' ') || '',
       })`));
       for (const code of ['CD701', 'CD601', 'TV701', 'TV727']) {
         check(rel.byCode[code] === 'done',
@@ -945,6 +946,8 @@ async function main() {
         'AutoReleased: 未开拍的通告小字写「还没人接」，不再写「档期已过，没人接」');
       check(!rel.summary.includes('已逾期'),
         'AutoReleased: 汇总筛选条上不再挂「已逾期」', rel.summary.slice(0, 100));
+      check(/唱片\s*6\s*张/.test(rel.groupWork),
+        'AutoReleased: 团体卡通告统计显示千金小姐唱片 6 张', rel.groupWork);
     } else {
       console.log('SKIP AutoReleased.sa2 not present, released-notice UI not checked');
     }

@@ -456,6 +456,10 @@ export interface TeamRecord {
   /** 成员艺人编号，第 0 个就是队长。 */
   memberIds: number[];
   /** 存档里这条记录的位置。 */
+  /** 团体已完成的唱片作品数，存档 nameEnd+24；团体只接唱片通告。
+   *  这是游戏自己维护的累计值（Auto 千金小姐 6、Ending0001 莎亞之音 10），
+   *  不用去重数作品清单。 */
+  workCount: number;
   offset: number;
 }
 
@@ -1294,7 +1298,11 @@ export function parseTeams(
       if (id >= 1 && id <= 96 && !memberIds.includes(id)) memberIds.push(id);
     }
     if (out.some((team) => team.code === code)) continue;
-    out.push({ code, name, memberIds, offset: o });
+    // 团体唱片作品数：名字末尾 +24（名字长度不同会浮动，不能用固定偏移）。
+    // 老记录靠 shapeOk 已保证 ≤99；带 Invaid 标记的也顺手校验一次。
+    const rawWorkCount = view.getUint32(nameEnd + 24, true);
+    const workCount = rawWorkCount <= 99 ? rawWorkCount : 0;
+    out.push({ code, name, memberIds, workCount, offset: o });
   }
   return out.sort((a, b) => a.code - b.code);
 }

@@ -819,6 +819,13 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                           </span>
                         ))}
                       </div>
+                      {/* 团体通告统计：团体只接唱片通告，直接读存档累计的唱片作品数。 */}
+                      <div data-case-group-counts className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
+                        <span className="text-ink-faint">通告统计</span>
+                        <span data-case-group-work-count className="rounded bg-surface-soft px-1 text-ink-muted">
+                          {NOTICE_COUNT_LABELS[2]} <b>{group.workCount}</b>{NOTICE_COUNT_UNITS[2]}
+                        </span>
+                      </div>
                       {/* 团体奖（最佳团体）：存档挂在队长 / 团员名下，归到团体卡；
                           不进任何艺人卡。 */}
                       {(groupAwardsByTeam.get(group.code)?.length ?? 0) > 0 && (

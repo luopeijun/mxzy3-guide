@@ -611,6 +611,9 @@ if (fs.existsSync(savePath)) {
       && ending.teams[1]?.memberIds.join(',') === '7,77',
       'Ending0009: 两个团体的成员编号都读到',
       ending.teams.map((t) => t.memberIds.join('/')).join(' | '));
+    check(ending.teams[0]?.workCount === 0 && ending.teams[1]?.workCount === 3,
+      'Ending0009: 团体唱片作品数按浮动偏移读（大小姐 0 / 晴少爺 3）',
+      ending.teams.map((t) => `${t.name}:${t.workCount}`).join(' | '));
     // 同一部电影上四位艺人各自进度不同：完成天数、酬劳、角色都要分开读。
     const mv = ending.shooting.find((s) => s.code === 'MV031');
     const rows = mv?.casts.map((c) => `${c.artistName}:${c.role?.role ?? '-'}:${c.doneDays}/${c.workDays}:${c.pay}`);
@@ -650,6 +653,10 @@ if (fs.existsSync(savePath)) {
     const save = parseSave(
       raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'AutoReleased.sa2',
     );
+    const yqj = save.teams.find((t) => t.name === '千金小姐');
+    check(save.teams.length === 1 && yqj?.code === 101 && yqj.workCount === 6,
+      'AutoReleased: 千金小姐团体唱片作品数 = 6（游戏界面 6 张团体专辑）',
+      save.teams.map((t) => `${t.name}:${t.workCount}`).join(',') || 'none');
     const expected = [
       ['CD701', '有朋自遠方來', 1, [['萧依莉', 25]]],
       ['CD601', '俠客行', 1, [['苏嫚君', 25]]],
