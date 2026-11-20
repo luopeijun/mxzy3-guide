@@ -388,7 +388,7 @@ export interface GroupWork {
 export interface WorkRecord extends GroupWork {
   /** 对应 NOTICE_COUNT_LABELS / artist.noticeCounts 的下标 0..4。 */
   noticeIndex: number;
-  /** 非唱片作品的角色名；唱片没有角色，留空。 */
+  /** 记事表没有记录每位艺人在这部作品里的角色，一律留空，不按性别猜。 */
   role: string;
 }
 
@@ -1090,31 +1090,10 @@ export function parseGroupWorks(
   return rows.map((row) => row.work);
 }
 
-/** 非唱片作品的角色：主持直接取作品类别，其余按存档角色表 + 艺人性别挑一个。
- *  角色表里同一部戏常有男女两套（男配角 / 女配角），性别先过滤；还有多个时
- *  优先主角——记事表不记具体角色号，这是能给出的最稳口径。 */
-function pickWorkRole(
-  workCode: string,
-  noticeIndex: number,
-  artistId: number,
-  cases: CaseTables['cases'],
-  rolesByCode: Map<string, RoleRecord[]>,
-  stars: CaseTables['stars'],
-): string {
-  if (noticeIndex === 2) return '';
-  if (noticeIndex === 4) return cases[workCode]?.[2] ?? '';
-  const candidates = (rolesByCode.get(workCode) ?? []).filter((role) => {
-    const needed = roleGender(role.role);
-    if (needed === 'any') return true;
-    const actual = starGender(artistId, stars);
-    return actual === 'any' || needed === actual;
-  });
-  if (!candidates.length) return '';
-  const priority = (role: RoleRecord) => (
-    /主角/.test(role.role) ? 0 : /配角/.test(role.role) ? 1 : 2
-  );
-  candidates.sort((a, b) => priority(a) - priority(b) || a.roleCode.localeCompare(b.roleCode));
-  return candidates[0].role;
+/** 记事表不记录每位艺人在这部作品里演的角色（+36 只是同类作品的序号），
+ *  通告角色表里的男女主角也无法和这条记录可靠对应。读不到就留空，不猜。 */
+function pickWorkRole(): string {
+  return '';
 }
 
 /** 「艺人成绩」记事里的个人作品发行记录，按时间正序（早 -> 晚）。
@@ -1123,8 +1102,6 @@ export function parseWorks(
   view: DataView,
   byteLength: number,
   cases: CaseTables['cases'],
-  rolesByCode: Map<string, RoleRecord[]>,
-  stars: CaseTables['stars'],
 ): WorkRecord[] {
   const table = readDiaryTable(view, byteLength);
   if (!table) return [];
@@ -1154,7 +1131,7 @@ export function parseWorks(
         company: cases[workCode]?.[3] || '',
         artistId,
         noticeIndex,
-        role: pickWorkRole(workCode, noticeIndex, artistId, cases, rolesByCode, stars),
+        role: pickWorkRole(),
       },
       day: dayNumber(year, month, day),
     });
@@ -2063,7 +2040,7 @@ export function parseSave(
   // 团体唱片发行清单，供团体卡「通告统计」hover 展示。
   const groupWorks = parseGroupWorks(view, bytes.length, tables.cases);
   // 个人作品清单，供艺人卡五个分类和「作品总数」hover 按时间展示。
-  const works = parseWorks(view, bytes.length, tables.cases, rolesByCode, tables.stars);
+  const works = parseWorks(view, bytes.length, tables.cases);
   for (const artist of artists) {
     artist.awards = awards.filter((award) => award.artistId === artist.roleId);
     artist.events = events.filter((event) => event.artistId === artist.roleId);
