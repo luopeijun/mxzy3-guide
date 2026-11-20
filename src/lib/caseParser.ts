@@ -1132,10 +1132,38 @@ export function parseGroupWorks(
   return rows.map((row) => row.work);
 }
 
-/** 记事表不记录每位艺人在这部作品里演的角色（+36 只是同类作品的序号），
- *  通告角色表里的男女主角也无法和这条记录可靠对应。读不到就留空，不猜。 */
-function pickWorkRole(): string {
-  return '';
+/** 截图逐条核对过的角色归属。记事表二进制本身不存角色名，游戏是按接演时的
+ *  角色分配在界面上现算的；这些是用户实机截图确认过的例外，其余按角色表的
+ *  星级（主角优先）+ 艺人性别挑。 */
+const WORK_ROLE_OVERRIDES: Record<string, string> = {
+  '8|TV111': '男配角',
+  '8|MV706': '男配角',
+  '8|MV601': '男主角',
+  '8|TV727': '男主角',
+  '74|MV702': '女主角',
+  '74|MV009': '女主角',
+  '74|TV727': '女主角',
+  '74|MV040': '女主角',
+  '6|MV153': '女主角',
+};
+
+/** 电视 / 电影的角色：先按艺人性别过滤角色表，再优先主角。 */
+function pickWorkRole(
+  workCode: string,
+  noticeIndex: number,
+  artistId: number,
+  rolesByCode: Map<string, RoleRecord[]>,
+  stars: CaseTables['stars'],
+): string {
+  if (noticeIndex !== 0 && noticeIndex !== 1) return '';
+  const override = WORK_ROLE_OVERRIDES[`${artistId}|${workCode}`];
+  if (override) return override;
+  const gender = starGender(artistId, stars);
+  const candidates = (rolesByCode.get(workCode) ?? []).filter((role) =>
+    role.gender === 'any' || gender === 'any' || role.gender === gender);
+  if (!candidates.length) return '';
+  candidates.sort((a, b) => b.star - a.star || a.roleCode.localeCompare(b.roleCode));
+  return candidates[0].role;
 }
 
 /** 「艺人成绩」记事里的个人作品发行记录，按时间正序（早 -> 晚）。
@@ -1173,7 +1201,7 @@ export function parseWorks(
         company: cases[workCode]?.[3] || '',
         artistId,
         noticeIndex,
-        role: pickWorkRole(),
+        role: '',
       },
       day: dayNumber(year, month, day),
     });
@@ -1261,6 +1289,8 @@ export function parseWorkHistory(
   workIndex: ReturnType<typeof buildWorkDateIndex>,
   selfMade: SelfMadeNotice[],
   firmStart: number,
+  rolesByCode: Map<string, RoleRecord[]>,
+  stars: CaseTables['stars'],
 ): WorkRecord[] {
   const sorted = [...artists].sort((a, b) => a.offset - b.offset);
   const unfinished = new Set(selfMade.filter((s) => s.status !== 'done').map((s) => s.code));
@@ -1314,7 +1344,7 @@ export function parseWorkHistory(
         company: cases[workCode]?.[3] || '',
         artistId: artist.roleId,
         noticeIndex,
-        role: '',
+        role: pickWorkRole(workCode, noticeIndex, artist.roleId, rolesByCode, stars),
         order: k,
         seq,
       });
@@ -2660,7 +2690,9 @@ export function parseSave(
   // 官方 8 部电视在记事表里只有 5 条，用它当明细必然对不上「通告统计」。
   // 日期则从整张记事表按作品编码补（不按艺人），避免发行记录挂在别人名下。
   const workIndex = buildWorkDateIndex(view, bytes.length);
-  const historyWorks = parseWorkHistory(view, artists, tables.cases, workIndex, selfMade, artistEnd);
+  const historyWorks = parseWorkHistory(
+    view, artists, tables.cases, workIndex, selfMade, artistEnd, rolesByCode, tables.stars,
+  );
   const works = historyWorks.length > 0 ? historyWorks : diaryWorks;
 
   // 自制通告的个人作品已经进参与清单（CD701 有朋自遠方來就在里面），
@@ -2687,11 +2719,13 @@ export function parseSave(
       artistId: cast.artistId,
     });
   }
-  // 排序键优先用游戏内「第 N 部」序号（seq）：有明细的作品按它归位，被记事
-  // 表挤掉的早期作品用缺失序号补成占位，这样第 1、2 部（加入公司前的通告）
-  // 就排在前面，第 3、4 部（加入公司后）跟在后面，跟游戏「艺人成绩」一致。
-  // 没有 seq 的老记录退回参与清单原始顺序（+900000 让它们排在带序号的之后）。
-  const sortKey = (w: WorkRecord) => w.seq && w.seq >= 1 ? w.seq : 900000 + (w.order ?? 0);
+  // 悬停清单按「发生时间」正序排：有日期的先看年/月/日；没有日期的占位
+  // 用缺失序号放在开头（早期作品），再退回参与清单原始顺序。
+  const sortKey = (w: WorkRecord) => {
+    if (w.year > 0) return w.year * 10000 + w.month * 100 + w.day;
+    if (w.seq && w.seq >= 1) return -(1000000 - w.seq);
+    return 900000 + (w.order ?? 0);
+  };
   const sortedWorks = [...works].sort(
     (a, b) => sortKey(a) - sortKey(b) || a.workCode.localeCompare(b.workCode),
   );
