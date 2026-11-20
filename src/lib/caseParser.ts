@@ -1270,8 +1270,14 @@ export function parseWorkHistory(
       const noticeIndex = WORK_CODE_PREFIX.indexOf(workCode.slice(0, 2));
       if (noticeIndex < 0 || noticeIndex > 4) continue;
       if (noticeIndex === 2) {
-        const subtype = cases[workCode]?.[2] ?? '';
-        if (subtype === '團體' || subtype === '原聲帶') continue;
+        const info = cases[workCode];
+        const subtype = info?.[2] ?? '';
+        // 团体唱片不进个人统计。**原声带算个人唱片**：新名紗雪 CD211
+        // 《來自深海的愛》是原声带，游戏「艺人成绩」算进 7 张唱片里。
+        if (subtype === '團體') continue;
+        // 名字含 U+FFFD 是烘焙静态表时 Big5 解不出来的损坏编码（CD661
+        // 「LOVE? AGENCY」），游戏里不存在这张，排除它才不会顶替真作品。
+        if (info?.[0]?.includes('\ufffd')) continue;
       }
       const key = `${noticeIndex}|${workCode}|${artist.roleId}`;
       if (seen.has(key)) continue;
