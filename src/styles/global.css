@@ -77,6 +77,9 @@
   --color-title-other: #5c5459;
   --color-title-other-soft: #ece7ea;
   --color-title-other-line: #d8d0d5;
+  /* 活动（演唱会 / 颁奖礼 / 义卖）：纯文字配菱形项目符号，冷色青绿和金色奖项、
+     品牌粉拉开；语义色，不随甜蜜乐章主题换色。 */
+  --color-event: #0f5a52;
   /* Alerts that must not read as brand rose — 「暴力」这类特殊要求用它，
      免得和「吻戏」的粉色、品牌色混成一团。 */
   --color-alert: #97351f;
@@ -299,6 +302,25 @@
 /* 奖项名（金）与后面的作品名、日期（浅灰）之间放一枚淡分隔点，
  * 避免深灰在粉底缩小后和金棕糊成一片、看着像整条都是金色。 */
 .award-meta::before {
+  content: '·';
+  margin-right: 3px;
+  color: var(--color-line-strong);
+}
+
+/* 活动改成青绿纯文字后，用同一枚小菱形当项目符号，和奖项保持同一视觉语言。 */
+.event-item::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 4px;
+  background: currentColor;
+  transform: rotate(45deg) translateY(-1px);
+  vertical-align: middle;
+}
+
+/* 活动名与日期之间的浅灰分隔点，跟奖项一致。 */
+.event-meta::before {
   content: '·';
   margin-right: 3px;
   color: var(--color-line-strong);

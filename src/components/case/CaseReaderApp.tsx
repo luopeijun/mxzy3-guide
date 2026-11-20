@@ -1327,10 +1327,9 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                             <span
                               key={`${event.date}-${event.label}-${event.artistId}`}
                               data-case-group-event
-                              className="rounded border border-brand-line bg-brand-soft px-1 font-semibold text-brand-strong"
                             >
-                              {event.label}
-                              <span className="ml-1 font-normal text-ink-muted">{event.date}</span>
+                              <span className="event-item font-semibold text-event">{event.label}</span>
+                              <span className="event-meta ml-1 font-normal text-ink-faint">{event.date}</span>
                             </span>
                           ))}
                         </div>
@@ -2760,10 +2759,9 @@ function ArtistCard({
                   data-case-artist-event
                   data-case-event-kind={event.kind}
                   data-case-event-scale={event.scale}
-                  className="rounded border border-brand-line bg-brand-soft px-1 font-semibold text-brand-strong"
                 >
-                  {event.label}
-                  <span className="ml-1 font-normal text-ink-muted">{event.date}</span>
+                  <span className="event-item font-semibold text-event">{event.label}</span>
+                  <span className="event-meta ml-1 font-normal text-ink-faint">{event.date}</span>
                 </span>
               ))}
             </div>
