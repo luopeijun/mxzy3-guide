@@ -383,6 +383,8 @@ function CaseToc({
   activeGroups: GroupRecord[];
 }) {
   const [active, setActive] = useState('');
+  // 右栏高度优先给「艺人速查」：本页小结默认收成一行，要用再展开。
+  const [collapsed, setCollapsed] = useState(true);
 
   const entries = useMemo(() => {
     const list: { id: string; label: string; selector: string; summary: string }[] = [];
@@ -476,38 +478,54 @@ function CaseToc({
     <nav
       data-case-toc
       aria-label="本页小结"
-      className="rounded-ui-md border border-line bg-surface p-3 shadow-soft"
+      className={cn(
+        'rounded-ui-md border border-line bg-surface shadow-soft',
+        collapsed ? 'px-3 py-2' : 'p-3',
+      )}
     >
-      <p className="px-1 text-ui-2xs font-semibold text-ink-faint">本页小结</p>
-      <ul className="mt-2 flex flex-col gap-0.5">
-        {entries.map((e) => (
-          <li key={e.id}>
-            <button
-              type="button"
-              data-case-toc-link={e.id}
-              aria-current={active === e.id ? 'true' : undefined}
-              onClick={() => jump(e)}
-              className={cn(
-                'flex w-full items-center gap-2 rounded-ui-xs px-2 py-1.5 text-left text-ui-2xs transition-colors',
-                active === e.id
-                  ? 'bg-brand-soft font-semibold text-brand-strong'
-                  : 'text-ink-muted hover:bg-surface-soft hover:text-brand-strong',
-              )}
-            >
-              <span
+      <div className="flex items-center justify-between px-1">
+        <span className="text-ui-2xs font-semibold text-ink-faint">本页小结</span>
+        <button
+          type="button"
+          data-case-toc-toggle
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+          className="rounded px-1 text-ui-2xs text-ink-faint transition-colors hover:bg-surface-soft hover:text-brand-strong"
+        >
+          {collapsed ? '展开' : '收起'}
+        </button>
+      </div>
+      {!collapsed && (
+        <ul className="mt-2 flex flex-col gap-0.5">
+          {entries.map((e) => (
+            <li key={e.id}>
+              <button
+                type="button"
+                data-case-toc-link={e.id}
+                aria-current={active === e.id ? 'true' : undefined}
+                onClick={() => jump(e)}
                 className={cn(
-                  'h-1.5 w-1.5 shrink-0 rounded-full',
-                  active === e.id ? 'bg-brand' : 'bg-line-strong',
+                  'flex w-full items-center gap-2 rounded-ui-xs px-2 py-1.5 text-left text-ui-2xs transition-colors',
+                  active === e.id
+                    ? 'bg-brand-soft font-semibold text-brand-strong'
+                    : 'text-ink-muted hover:bg-surface-soft hover:text-brand-strong',
                 )}
-              />
-              <span className="min-w-0 flex-1 truncate font-medium">{e.label}</span>
-              <span className={cn('shrink-0 tabular-nums', active === e.id ? 'text-brand-strong' : 'text-ink-faint')}>
-                {e.summary}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+              >
+                <span
+                  className={cn(
+                    'h-1.5 w-1.5 shrink-0 rounded-full',
+                    active === e.id ? 'bg-brand' : 'bg-line-strong',
+                  )}
+                />
+                <span className="min-w-0 flex-1 truncate font-medium">{e.label}</span>
+                <span className={cn('shrink-0 tabular-nums', active === e.id ? 'text-brand-strong' : 'text-ink-faint')}>
+                  {e.summary}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </nav>
   );
 }
