@@ -67,6 +67,17 @@ function MatchHoverCard({
   );
 }
 
+/** 节点正文：「书名号」里的歌曲 / 剧本是重点奖励，用金色区分。 */
+function NodeText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(「[^」]+」)/g).map((part, index) => part.startsWith('「') && part.endsWith('」')
+        ? <span key={index} className="font-semibold text-title-star">{part}</span>
+        : <span key={index}>{part}</span>)}
+    </>
+  );
+}
+
 function SummaryBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex-1 rounded-ui-sm bg-surface-soft px-2.5 py-2">
@@ -138,18 +149,30 @@ function DetailSection({
 
             {open && (
               <div className="border-t border-line px-2.5 pb-2.5 pt-2">
-                {manual.length > 0 && (
+                {(item.nodes.length > 0 || manual.length > 0) && (
                   <div className="mb-2" data-case-special-nodes>
                     <p className="mb-1 text-ui-2xs font-semibold text-ink">
                       关键事件节点 <span className="font-normal text-ink-faint">· 存档无法判定</span>
                     </p>
-                    <div className="space-y-0.5 text-ui-2xs leading-relaxed text-ink-muted">
-                      {manual.map((condition, index) => (
-                        <div key={condition.row.id} data-case-special-node={condition.row.id} className="flex gap-1.5">
-                          <span className="shrink-0 text-ink-faint">{index + 1}.</span>
-                          <span>{condition.row.name}</span>
-                        </div>
-                      ))}
+                    <div className="space-y-1 text-ui-2xs leading-relaxed text-ink-muted">
+                      {item.nodes.length > 0
+                        ? item.nodes.map((row, index) => (
+                          <div key={row.id} data-case-special-node={row.id} className="flex gap-1.5">
+                            <span className="shrink-0 text-ink-faint">{index + 1}.</span>
+                            <span>
+                              {row.target !== '-' && row.target && (
+                                <span className="mr-1 rounded bg-tag-scene-soft px-1 text-tag-scene">{row.target}</span>
+                              )}
+                              <NodeText text={row.name} />
+                            </span>
+                          </div>
+                        ))
+                        : manual.map((condition, index) => (
+                          <div key={condition.row.id} data-case-special-node={condition.row.id} className="flex gap-1.5">
+                            <span className="shrink-0 text-ink-faint">{index + 1}.</span>
+                            <span>{condition.row.name}</span>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 )}
@@ -195,13 +218,19 @@ function DetailSection({
                         <span
                           key={match.id}
                           data-case-special-match={match.id}
-                          className="cursor-help rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
+                          className={cn(
+                            'cursor-help inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                            match.met === match.total
+                              ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                              : 'border-line bg-surface-soft text-ink',
+                          )}
                           onMouseEnter={(event) => {
                             const rect = event.currentTarget.getBoundingClientRect();
                             onMatchHover(match, { left: rect.left, top: rect.top });
                           }}
                           onMouseLeave={() => onMatchHover(null, { left: 0, top: 0 })}
                         >
+                          {match.met === match.total && <span aria-hidden="true">✓</span>}
                           {match.name} {match.met}/{match.total}
                         </span>
                       ))}

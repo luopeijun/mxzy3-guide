@@ -14,6 +14,15 @@ proud.support.acting	proud-of-the-world	support	notice	condition	stat	artist	演
 proud.support.fame	proud-of-the-world	support	notice	condition	stat	artist	名气	400~450	男配角能力要求；达到上限即达标	notices/proud-of-the-world#92	表	-
 proud.support.movement	proud-of-the-world	support	notice	condition	stat	artist	动感	400~450	男配角能力要求；达到上限即达标	notices/proud-of-the-world#92	表	-
 proud.support.energy	proud-of-the-world	support	notice	condition	stat	artist	体能	450~520	男配角能力要求；达到上限即达标	notices/proud-of-the-world#92	表	-
+proud.node.1	proud-of-the-world	-	-	note	-	-	第二次送药后拿到蛮羊配方，公园找姚子奇与金父，触发五次，拿到歌曲「侠客行」	一年11月底前	歌曲到手；第 1 次一定要触发	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.2	proud-of-the-world	-	-	note	-	-	任意场景遇到周先生参加影友会，选择「让老爸再风光一下也不错～」	一年11月底前	必须参加（#81）	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.3	proud-of-the-world	-	-	note	-	-	周先生上门提醒下周日市民音乐厅举行影友会，需按时参加	自动	按时参加	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.4	proud-of-the-world	-	-	note	-	-	周三到19号酒馆找记者，触发后续	影友会后三个月内	记者必须触发（#83）	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.5	proud-of-the-world	-	-	note	-	-	送药四次且过完第二次父亲节后，公园找老爸传达王导邀约	2年8月8日后	送药 4 次 + 父亲节 2 次	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.6	proud-of-the-world	-	-	note	-	-	到全球看到王瑞恩与老爸讨论，共需触发三次	每月一次	触发 3 次	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.7	proud-of-the-world	-	-	note	-	-	公园找老爸，告知宣传会时间	2年10月后	需先触发 3 次讨论	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.8	proud-of-the-world	-	-	note	-	-	按时参加记者会，拿到剧本「握斧长龙」	2年12.16日	缺席则不计入国际通告完成数	tracker:notices/proud-of-the-world	表+攻略	-
+proud.node.9	proud-of-the-world	-	-	note	-	-	全球通告更新上笑傲天际；若未上门邀约，主动去全球预约	3年1月中旬	未邀约需主动预约	tracker:notices/proud-of-the-world	表+攻略	-
 proud.tl.booking	proud-of-the-world	-	-	note	-	-	1 月下旬预约，2 月下旬开拍	-	时间窗标签，不计时	tracker:notices/proud-of-the-world	表	-
 proud.tl.firstYear	proud-of-the-world	-	-	note	-	-	第一年：侠客行 5 次；按时参加影友会；影友会后 3 个月内周三找记者	-	影友会必须参加（#81），记者必须触发（#83）才有后续	tracker:notices/proud-of-the-world	表+攻略	-
 proud.tl.secondYear	proud-of-the-world	-	-	note	-	-	第二年：送药 4 次后公园找老爸；电影指导 3 次（每月 1 次）；过完 2 次父亲节（8.8）；11 月底前公园找老爸；参加记者会（12 月 16 日）；医院	-	对应攻略 #75 #77 #87 #88 #90 #91 #96	tracker:notices/proud-of-the-world	表+攻略	-

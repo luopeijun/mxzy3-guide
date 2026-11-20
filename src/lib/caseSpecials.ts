@@ -55,6 +55,8 @@ export type LiveNoticeStatus = 'done' | 'close' | 'progress' | 'none' | 'manual'
 
 export interface LiveNotice {
   notice: SpecialNotice;
+  /** note 行里 id 带 `.node.` 的关键事件节点，按表里顺序展示。 */
+  nodes: SpecialRow[];
   conditions: LiveCondition[];
   items: ItemCheck[];
   matches: ArtistMatch[];
@@ -370,6 +372,8 @@ export function evaluateLiveSpecials(
     .filter((notice) => notice.id !== '_global')
     .map((notice): LiveNotice => {
       const rows = data.rows.filter((row) => row.notice === notice.id && row.kind === 'condition');
+      const nodes = data.rows.filter((row) =>
+        row.notice === notice.id && row.kind === 'note' && row.id.includes('.node.'));
       const conditions = rows.map((row) => evaluateRow(row, ctx));
       const readable = conditions.filter((condition) => condition.state !== 'manual');
       const met = readable.filter((condition) => condition.state === 'met').length;
@@ -430,6 +434,7 @@ export function evaluateLiveSpecials(
 
       return {
         notice,
+        nodes,
         conditions,
         items: conditions
           .filter((condition) => condition.row.type === 'item')
