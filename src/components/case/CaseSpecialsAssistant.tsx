@@ -68,7 +68,6 @@ function DetailSection({
     <div className="space-y-1">
       {report.notices.map((item) => {
         const open = expanded === item.notice.id;
-        const readable = item.conditions.filter((condition) => condition.state !== 'manual');
         const manual = item.conditions.filter((condition) => condition.state === 'manual');
 
         return (
@@ -122,26 +121,6 @@ function DetailSection({
                     </div>
                   </div>
                 )}
-
-                <p className="mb-1 text-ui-2xs text-ink-faint">存档可判定 {item.met}/{item.total} 项</p>
-
-                <div className="space-y-0.5">
-                  {readable.map((condition) => (
-                    <div
-                      key={condition.row.id}
-                      data-case-special-condition={condition.row.id}
-                      data-case-special-condition-state={condition.state}
-                      className="flex items-start gap-1.5 text-ui-2xs leading-relaxed"
-                    >
-                      <i className={cn(
-                        'mt-1 h-1 w-1 shrink-0 rounded-full',
-                        condition.state === 'met' ? 'bg-brand' : 'bg-alert',
-                      )} />
-                      <span className="shrink-0 text-ink">{condition.row.name}</span>
-                      <span className="truncate text-ink-faint">{condition.detail}</span>
-                    </div>
-                  ))}
-                </div>
 
                 {item.items.length > 0 && (
                   <div className="mt-2 flex flex-wrap items-center gap-1" data-case-special-items>

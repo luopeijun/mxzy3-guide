@@ -10,6 +10,10 @@ proud.stat.acting	proud-of-the-world	main	notice	condition	stat	artist	演技	50
 proud.stat.movement	proud-of-the-world	main	notice	condition	stat	artist	动感	450~500	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
 proud.stat.energy	proud-of-the-world	main	notice	condition	stat	artist	体能	630~700	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
 proud.stat.fame	proud-of-the-world	main	notice	condition	stat	artist	名气	500~550	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
+proud.support.acting	proud-of-the-world	support	notice	condition	stat	artist	演技	450~520	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
+proud.support.fame	proud-of-the-world	support	notice	condition	stat	artist	名气	400~450	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
+proud.support.movement	proud-of-the-world	support	notice	condition	stat	artist	动感	400~450	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
+proud.support.energy	proud-of-the-world	support	notice	condition	stat	artist	体能	450~520	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
 proud.tl.booking	proud-of-the-world	-	-	note	-	-	1 月下旬预约，2 月下旬开拍	-	时间窗标签，不计时	tracker:notices/proud-of-the-world	表	-
 proud.tl.firstYear	proud-of-the-world	-	-	note	-	-	第一年：侠客行 5 次；按时参加影友会；影友会后 3 个月内周三找记者	-	影友会必须参加（#81），记者必须触发（#83）才有后续	tracker:notices/proud-of-the-world	表+攻略	-
 proud.tl.secondYear	proud-of-the-world	-	-	note	-	-	第二年：送药 4 次后公园找老爸；电影指导 3 次（每月 1 次）；过完 2 次父亲节（8.8）；11 月底前公园找老爸；参加记者会（12 月 16 日）；医院	-	对应攻略 #75 #77 #87 #88 #90 #91 #96	tracker:notices/proud-of-the-world	表+攻略	-
