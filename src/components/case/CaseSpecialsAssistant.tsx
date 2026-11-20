@@ -161,19 +161,21 @@ function DetailSection({
                 {filmed.length > 0 && (
                   <div className="mb-2 text-ui-2xs leading-relaxed" data-case-special-filmed-record>
                     <p className="mb-1">
-                      <span className="inline-flex rounded-full border border-growth-line bg-growth-soft px-1.5 py-0.5 font-semibold text-growth-strong">已拍摄</span>
+                      <span className="inline-flex rounded border border-growth-line bg-growth-soft px-1.5 py-0.5 font-semibold text-growth-strong">已拍摄</span>
                     </p>
-                    {filmed.map((record, index) => (
-                      <div key={`${record.name}-${record.date}-${record.role}-${index}`} className="flex flex-wrap items-baseline gap-1 text-ink-muted">
-                        {record.role && (
-                          <span className="rounded border border-growth-line px-1 font-semibold text-growth-strong">
-                            {record.role}
-                          </span>
-                        )}
-                        <span className="text-ink">{record.name}</span>
-                        {record.date && <span className="text-ink-faint">{record.date}</span>}
-                      </div>
-                    ))}
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      {filmed.map((record, index) => (
+                        <span key={`${record.name}-${record.date}-${record.role}-${index}`} className="inline-flex items-baseline gap-1 text-ink-muted">
+                          {record.role && (
+                            <span className="rounded border border-growth-line px-1 font-semibold text-growth-strong">
+                              {record.role}
+                            </span>
+                          )}
+                          <span className={cn('text-ink', record.own && 'font-semibold')}>{record.name}</span>
+                          {record.date && <span className="text-ink-faint">{record.date}</span>}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
 

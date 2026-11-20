@@ -62,6 +62,8 @@ export interface FilmedRecord {
   role: string;
   workCode: string;
   workName: string;
+  /** 该艺人是否为存档里的签约艺人，用于名字加粗。 */
+  own: boolean;
 }
 
 export interface LiveNotice {
@@ -374,6 +376,7 @@ function filmedRecords(noticeId: string, ctx: EvalContext): FilmedRecord[] {
       role: '',
       workCode: work.workCode,
       workName: work.workName,
+      own: false,
     }));
 
   const personalRows = ctx.result.works
@@ -384,6 +387,7 @@ function filmedRecords(noticeId: string, ctx: EvalContext): FilmedRecord[] {
       role: work.role,
       workCode: work.workCode,
       workName: work.workName,
+      own: ctx.signedIds.has(work.artistId),
     }));
 
   const unique = new Map<string, FilmedRecord>();
