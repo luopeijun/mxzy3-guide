@@ -1,7 +1,7 @@
 {
   "name": "mxzy3-guide",
   "private": true,
-  "version": "1.13.4",
+  "version": "1.14.0",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "desktop": "npm run build && electron .",
     "desktop:dev": "electron .",
+    "package:desktop": "npm run build && electron-builder --win",
     "typecheck": "tsc -b --noEmit",
     "test:guide": "python -m unittest discover -s scripts -p \"test_*.py\" -v",
     "test:sweet": "python -m unittest scripts.test_sweet_guide scripts.test_sweet_cg -v"
@@ -18,12 +19,38 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
+  "build": {
+    "appId": "com.mxzy3.guide.desktop",
+    "productName": "明星志愿3-存档解析",
+    "icon": "build/icon.ico",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "mxzy3-desktop-${version}-setup.${ext}",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "language": "2052"
+    }
+  },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^45.4.1",
+    "electron-builder": "^25.1.8",
     "tailwindcss": "^4.3.5",
     "typescript": "~5.7.2",
     "vite": "^6.0.0"
