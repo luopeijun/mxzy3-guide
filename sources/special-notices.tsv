@@ -29,10 +29,14 @@ proud.tl.secondYear	proud-of-the-world	-	-	note	-	-	第二年：送药 4 次后�
 proud.tl.reporterWarn	proud-of-the-world	-	-	note	-	-	如果最后的记者会没有参加，也一样会有笑傲天际通告，但结算时不计入国际通告完成数量	-	UP 本人血的教训，纯提醒	tracker:notices/proud-of-the-world	表	-
 proud.tl.note	proud-of-the-world	-	-	note	-	-	注：陈奕夫的国际记者工作与笑傲天际男主角不可兼得，规划时注意取舍	-	互斥提示	tracker:notices/proud-of-the-world	表	-
 doom.cert.drama	doomsday-warrior	main	prepare	condition	cert	artist	国际戏剧学院证书	-	戏剧学院（纽约）：声音表情/肢体语言 专业 + 说话技巧 高级；回国周末发证	notices/doomsday-warrior#51	表+攻略	-
-doom.stat.acting	doomsday-warrior	main	notice	condition	stat	artist	演技	550	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
-doom.stat.wisdom	doomsday-warrior	main	notice	condition	stat	artist	才智	550	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
-doom.stat.fame	doomsday-warrior	main	notice	condition	stat	artist	名气	550	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
-doom.stat.energy	doomsday-warrior	main	notice	condition	stat	artist	体能	500	决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.stat.acting	doomsday-warrior	main	notice	condition	stat	artist	演技	550	男主角能力要求；决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.stat.wisdom	doomsday-warrior	main	notice	condition	stat	artist	才智	550	男主角能力要求；决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.stat.fame	doomsday-warrior	main	notice	condition	stat	artist	名气	550	男主角能力要求；决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.stat.energy	doomsday-warrior	main	notice	condition	stat	artist	体能	500	男主角能力要求；决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
+doom.heroine.acting	doomsday-warrior	support	notice	condition	stat	artist	演技	550	女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限	notices/doomsday-warrior#55	表+攻略	-
+doom.heroine.wisdom	doomsday-warrior	support	notice	condition	stat	artist	才智	550	女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限	notices/doomsday-warrior#55	表+攻略	-
+doom.heroine.fame	doomsday-warrior	support	notice	condition	stat	artist	名气	550	女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限	notices/doomsday-warrior#55	表+攻略	-
+doom.heroine.energy	doomsday-warrior	support	notice	condition	stat	artist	体能	500	女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限	notices/doomsday-warrior#55	表+攻略	-
 doom.metSmith	doomsday-warrior	-	prepare	condition	flag	global	见过史麦克导演	-	见过则初选前得 4 本剧本，否则贺总只给 2 本	notices/doomsday-warrior#47	表+攻略	-
 doom.prepDays	doomsday-warrior	main	notice	condition	flag	notice	剧本准备天数足够	-	初选/决选剧本给出后要如数安排自由活动	notices/doomsday-warrior#48	表+攻略	-
 doom.tl.dates	doomsday-warrior	-	-	note	-	-	第三年 4 月 27 日初选、7 月 27 日决选	-	具体日期按条件表（4/27 初选、7/27 决选）；攻略正文只给月份；时间窗只作标签，不计时	tracker:notices/doomsday-warrior	表	-

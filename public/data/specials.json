@@ -5,11 +5,11 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 114,
-    "conditions": 77,
+    "rows": 118,
+    "conditions": 81,
     "notes": 37,
     "scopeCounts": {
-      "artist": 36,
+      "artist": 40,
       "global": 29,
       "group": 7,
       "notice": 2,
@@ -43,10 +43,11 @@
       "id": "doomsday-warrior",
       "title": "末日战士",
       "guideNode": "notices/doomsday-warrior",
-      "conditionCount": 7,
+      "conditionCount": 11,
       "noteCount": 6,
       "slots": [
-        "main"
+        "main",
+        "support"
       ],
       "soloMain": false
     },
@@ -665,7 +666,7 @@
       "scope": "artist",
       "name": "演技",
       "target": "550",
-      "hint": "决选与通告要求一致",
+      "hint": "男主角能力要求；决选与通告要求一致",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -684,7 +685,7 @@
       "scope": "artist",
       "name": "才智",
       "target": "550",
-      "hint": "决选与通告要求一致",
+      "hint": "男主角能力要求；决选与通告要求一致",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -703,7 +704,7 @@
       "scope": "artist",
       "name": "名气",
       "target": "550",
-      "hint": "决选与通告要求一致",
+      "hint": "男主角能力要求；决选与通告要求一致",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -722,7 +723,83 @@
       "scope": "artist",
       "name": "体能",
       "target": "500",
-      "hint": "决选与通告要求一致",
+      "hint": "男主角能力要求；决选与通告要求一致",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.heroine.acting",
+      "notice": "doomsday-warrior",
+      "slot": "support",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "演技",
+      "target": "550",
+      "hint": "女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.heroine.wisdom",
+      "notice": "doomsday-warrior",
+      "slot": "support",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "才智",
+      "target": "550",
+      "hint": "女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.heroine.fame",
+      "notice": "doomsday-warrior",
+      "slot": "support",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "名气",
+      "target": "550",
+      "hint": "女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.heroine.energy",
+      "notice": "doomsday-warrior",
+      "slot": "support",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "体能",
+      "target": "500",
+      "hint": "女主角能力要求；游戏内通告截图核实与男主角相同，取区间上限",
       "source": "表+攻略",
       "link": {
         "kind": "guide",

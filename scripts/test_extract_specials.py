@@ -65,9 +65,9 @@ class TestSpecialsJson(unittest.TestCase):
     def test_counts_match_the_reviewed_table(self):
         data = _json()
         s = data["stats"]
-        self.assertEqual(s["rows"], 101)
-        self.assertEqual(s["conditions"], 73)
-        self.assertEqual(s["notes"], 28)
+        self.assertEqual(s["rows"], 118)
+        self.assertEqual(s["conditions"], 81)
+        self.assertEqual(s["notes"], 37)
         self.assertEqual(len(data["notices"]), 7)
         self.assertEqual(
             sum(n["conditionCount"] for n in data["notices"]), s["conditions"]
@@ -127,6 +127,17 @@ class TestSpecialsJson(unittest.TestCase):
         )
         self.assertEqual(rows["kunlun.tl.maleOnly"]["kind"], "note")
         self.assertEqual(rows["galaxy.tl.stats"]["kind"], "note")
+
+    def test_doomsday_has_male_and_female_slots_with_equal_stats(self):
+        rows = [r for r in _json()["rows"] if r["notice"] == "doomsday-warrior"]
+        notices = {n["id"]: n for n in _json()["notices"]}
+        self.assertEqual(notices["doomsday-warrior"]["slots"], ["main", "support"])
+        main = {r["name"]: r["target"] for r in rows
+                if r["slot"] == "main" and r["type"] == "stat"}
+        support = {r["name"]: r["target"] for r in rows
+                   if r["slot"] == "support" and r["type"] == "stat"}
+        self.assertEqual(main, support)
+        self.assertEqual(main, {"演技": "550", "名气": "550", "体能": "500", "才智": "550"})
 
     def test_kunlun_has_three_named_role_slots(self):
         notices = {n["id"]: n for n in _json()["notices"]}
