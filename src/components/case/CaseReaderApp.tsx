@@ -1003,6 +1003,12 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   /** 存档已有道具按属性反查， hover 差值时和训练 / 打工一起给。 */
   const itemHints = useMemo(() => itemHintsFor(result?.items ?? []), [result]);
 
+  /** 特殊物品里的学院结业证书，按道具说明挂到对应艺人名下。 */
+  const certificates = useMemo(
+    () => (result ? artistCertificates(result.items, tables) : new Map<number, string[]>()),
+    [result, tables],
+  );
+
   const notices = useMemo(() => {
     if (!result) return [];
     const needle = query.trim().toLowerCase();
@@ -1238,6 +1244,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                       option={option}
                       artist={artist}
                       works={worksByArtist.get(option.id) ?? []}
+                      certificates={certificates.get(option.id) ?? []}
                     />
                   </div>
                 ))}
@@ -2623,11 +2630,12 @@ function TitleBadge({ title, meta, next }: {
 }
 
 function ArtistCard({
-  option, artist, works,
+  option, artist, works, certificates,
 }: {
   option: ArtistOption;
   artist: ArtistStats | null;
   works: WorkRecord[];
+  certificates: string[];
 }) {
   const worksByType = useMemo(() => {
     const byType = new Map<number, WorkRecord[]>();
@@ -2710,6 +2718,20 @@ function ArtistCard({
               works={works}
               title="全部作品"
             />
+          </div>
+          <div data-case-artist-certs className="mt-0.5 flex flex-wrap items-center gap-1 text-ui-2xs">
+            <span className="text-ink-faint">证书</span>
+            {certificates.length > 0 ? certificates.map((label) => (
+              <span
+                key={label}
+                data-case-artist-cert={label}
+                className="rounded border border-brand-line bg-brand-soft px-1 font-semibold text-brand-strong"
+              >
+                {label}
+              </span>
+            )) : (
+              <span data-case-artist-cert-none className="text-ink-faint">无</span>
+            )}
           </div>
           {/* 奖项：个人奖是金色胶囊，公司作品奖（年度专辑 / 年度戏剧）单列一行；
               团体奖（最佳团体）归到「我方团体」卡，不挂在这里。 */}
@@ -2881,6 +2903,38 @@ const ITEM_RISING_RE = new RegExp(
   `(${Object.keys(ITEM_ATTR_TRAD).sort((a, b) => b.length - a.length).join('|')})上升`,
   'g',
 );
+
+/** 学院结业证书：特殊物品里每位艺人各有戏剧 / 音乐 / 舞蹈三张，道具说明以
+ *  艺人的游戏内名字开头；「藝人的…」那几张是通用道具，不挂到任何人身上。 */
+const CERT_KINDS = [
+  { word: '舞蹈', label: '舞蹈' },
+  { word: '戲劇', label: '戏剧' },
+  { word: '音樂', label: '音乐' },
+] as const;
+
+function artistCertificates(items: OwnedItem[], tables: CaseTables): Map<number, string[]> {
+  const byId = new Map<number, string[]>();
+  const nameToId: Array<[string, number]> = Object.entries(tables.stars ?? {})
+    .filter(([, info]) => !!info?.[0])
+    .map(([id, info]) => [info[0], Number(id)] as [string, number])
+    .sort((a, b) => b[0].length - a[0].length);
+  for (const item of items) {
+    if (item.quantity <= 0) continue;
+    const name = item.name ?? '';
+    if (!name.includes('證書')) continue;
+    const kind = CERT_KINDS.find((k) => name.includes(k.word));
+    if (!kind) continue;
+    const owner = nameToId.find(([star]) => item.desc?.startsWith(star));
+    if (!owner) continue;
+    const list = byId.get(owner[1]) ?? [];
+    if (!list.includes(kind.label)) list.push(kind.label);
+    byId.set(owner[1], list);
+  }
+  for (const list of byId.values()) {
+    list.sort((a, b) => CERT_KINDS.findIndex((k) => k.label === a) - CERT_KINDS.findIndex((k) => k.label === b));
+  }
+  return byId;
+}
 
 /** 从存档已拥有的道具里建「缺口属性 -> 可补道具」索引。显示沿用道具表原文
  *  （和道具面板一致），一行里所有增减都写出来，不只写补的那一项。 */
