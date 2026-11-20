@@ -115,34 +115,39 @@ function WorkCountChip({
               <b className="text-ui-2xs text-ink">{title}</b>
               <span className="text-ui-2xs text-ink-faint">{works.length} 条（按发布时间）</span>
             </span>
-            {works.map((work) => (
-              <span
-                key={work.workCode}
-                {...rowData}
-                className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
-              >
-                <span className="text-ink-faint">{work.date}</span>
-                <span className="font-semibold text-ink">{work.workName}</span>
-                {showRole && 'role' in work && work.role && (
-                  <span className="rounded bg-surface-soft px-1 text-ink-muted">{work.role}</span>
-                )}
+            <span
+              data-case-works-scroll
+              className="block max-h-[240px] overflow-y-auto overscroll-contain pr-1"
+            >
+              {works.map((work) => (
                 <span
-                  className={cn(
-                    'inline-flex items-center gap-1 font-semibold',
-                    companyText(work.company),
-                  )}
+                  key={work.workCode}
+                  {...rowData}
+                  className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
                 >
+                  <span className="text-ink-faint">{work.date}</span>
+                  <span className="font-semibold text-ink">{work.workName}</span>
+                  {showRole && 'role' in work && work.role && (
+                    <span className="rounded bg-surface-soft px-1 text-ink-muted">{work.role}</span>
+                  )}
                   <span
-                    aria-hidden
                     className={cn(
-                      'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
-                      companyDot(work.company),
+                      'inline-flex items-center gap-1 font-semibold',
+                      companyText(work.company),
                     )}
-                  />
-                  {work.company}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
+                        companyDot(work.company),
+                      )}
+                    />
+                    {work.company}
+                  </span>
                 </span>
-              </span>
-            ))}
+              ))}
+            </span>
           </span>
         </span>
       )}
