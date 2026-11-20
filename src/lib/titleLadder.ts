@@ -7,6 +7,8 @@ export interface TitleGapItem {
   have: number | null;
   /** 还差多少，已达标为 0；算不出来是 null。 */
   diff: number | null;
+  /** 奖项 / 演唱会这类非数值门槛的整句文案；有就不再套「还差 N」的格式。 */
+  display?: string;
 }
 
 /** 一种达成方式里的作品条件（彼此是「并」）。 */
@@ -25,7 +27,9 @@ export interface TitleNext {
   shared: TitleGapItem[];
   /** 作品条件的几种达成方式，彼此是「或」；只有一种时长度为 1。 */
   branches: TitleBranch[];
-  /** 共同门槛 + 任意一条分支都达成。 */
+  /** 攻略页额外要求的奖项 / 演唱会，和数值门槛一起决定能不能升级。 */
+  extras: TitleGapItem[];
+  /** 共同门槛 + 任意一条分支 + 全部额外条件都达成。 */
   ready: boolean;
 }
 
@@ -51,6 +55,81 @@ const WORKS_LABELS = new Set(['电视作品', '电影作品', '专辑', '广告'
  *  「其他」线的知名艺人只是过渡，不接总称号。 */
 const TOP_LINES = new Set(['music', 'host', 'model', 'screen']);
 
+/** 档案里奖项 / 演唱会门槛（sources/titles.txt 各路线的 PS 行）。
+ *  Nickname.tab 只存数值，这些条件得靠攻略页补；奖项编号见 caseParser 的 AWARD_NAMES。 */
+interface ExtraAwardRule {
+  ids: number[];
+  count: number;
+  label: string;
+}
+interface ExtraRule {
+  awards?: ExtraAwardRule;
+  concerts?: number;
+}
+const MUSIC_EXTRA: ExtraRule = {
+  awards: { ids: [22], count: 1, label: '金曲奖最佳演唱人' },
+  concerts: 2,
+};
+const HOST_EXTRA: ExtraRule = {
+  awards: { ids: [43], count: 1, label: '金钟奖最佳主持人' },
+};
+const MODEL_EXTRA: ExtraRule = {
+  awards: { ids: [52], count: 1, label: '金星奖最佳模特儿' },
+};
+const screenExtra = (male: boolean): ExtraRule => ({
+  awards: {
+    ids: [male ? 31 : 32], count: 1,
+    label: male ? '金钟奖最佳男主角' : '金钟奖最佳女主角',
+  },
+});
+const starExtra = (male: boolean): ExtraRule => ({
+  awards: {
+    ids: male ? [52, 41, 43, 22, 31] : [52, 42, 43, 22, 32],
+    count: 2,
+    label: '两项大奖',
+  },
+  concerts: 2,
+});
+
+/** 只有这几档有附加条件；其余称号照旧只看数值。 */
+function extraRuleFor(id: number): ExtraRule | null {
+  if (id === 101 || id === 111) return MUSIC_EXTRA;
+  if (id === 201 || id === 211) return HOST_EXTRA;
+  if (id === 311) return MODEL_EXTRA;
+  if (id === 401 || id === 411) return screenExtra(true);
+  if (id === 402 || id === 412) return screenExtra(false);
+  if (id === 1 || id === 2) return starExtra(true);
+  if (id === 11 || id === 12) return starExtra(false);
+  return null;
+}
+
+function extraGaps(id: number, stats: TitleStats): TitleGapItem[] {
+  const rule = extraRuleFor(id);
+  if (!rule) return [];
+  const out: TitleGapItem[] = [];
+  if (rule.concerts !== undefined) {
+    const have = stats.concerts ?? null;
+    const diff = have === null ? null : Math.max(0, rule.concerts - have);
+    out.push({
+      label: '演唱会', need: rule.concerts, have, diff,
+      display: `演唱会 ${have ?? '?'}/${rule.concerts}（不限规模、个人或团体）`,
+    });
+  }
+  if (rule.awards) {
+    const { ids, count, label } = rule.awards;
+    const have = stats.awardIds
+      ? stats.awardIds.filter((awardId) => ids.includes(awardId)).length
+      : null;
+    const diff = have === null ? null : Math.max(0, count - have);
+    out.push({
+      label, need: count, have, diff,
+      display: count > 1
+        ? `${label} ${have ?? '?'}/${count}`
+        : diff === 0 ? `${label} 已获得` : have === null ? `${label} 未记录` : `${label} 未获得`,
+    });
+  }
+  return out;
+}
 
 type Need = [string, number];
 
@@ -59,6 +138,10 @@ interface TitleStats {
   social: number[];
   /** 五个已完成作品数；缺了就算不出作品类门槛。 */
   noticeCounts?: number[];
+  /** 艺人记得的奖项编号（记事表会被挤掉旧记录，所以只有「已记录」的概念）。 */
+  awardIds?: readonly number[];
+  /** 办过的演唱会次数（含团体场、不限规模）。 */
+  concerts?: number;
 }
 
 function currentValue(label: string, stats: TitleStats): number | null {
@@ -113,6 +196,10 @@ const sameNeed = (a: Need[], b: Need[]) =>
  *
  * 唱片 / 主持 / 模特 / 影视四条线走到顶档（歌神、综艺天王、国际名模、戏剧天王…）
  * 之后，下一步是跨线的总称号 `star`：天王巨星（男）/ 超级天后（女）。
+ *
+ * Nickname.tab 只有数值门槛，攻略 `sources/titles.txt` 的 PS 行另有奖项 /
+ * 演唱会要求。那些按目标称号编号挂到 `extras`，和数值一起决定 `ready`，
+ * 这样「数值全满但还没升级」会明确显示缺哪一条，而不是误报条件已够。
  */
 export function nextTitle(
   catalog: Record<string, TitleMeta>,
@@ -162,15 +249,18 @@ export function nextTitle(
       );
       return { items, ready: allReady(items) };
     });
+    const extras = extraGaps(group.id, stats);
     return {
       id: group.id,
       name,
       rank: group.metas[0].rank ?? 0,
       shared,
       branches,
-      ready: allReady(shared) && branches.some((branch) => branch.ready),
-      // 共同缺口 + 最接近那一支的缺口，越小越该推荐。
-      gap: sumGap(shared) + Math.min(...branches.map((branch) => sumGap(branch.items))),
+      extras,
+      ready: allReady(shared) && branches.some((branch) => branch.ready) && allReady(extras),
+      // 共同缺口 + 最接近那一支的缺口 + 额外条件，越小越该推荐。
+      gap: sumGap(shared) + Math.min(...branches.map((branch) => sumGap(branch.items)))
+        + sumGap(extras),
     };
   });
 
@@ -182,6 +272,7 @@ export function nextTitle(
     rank: best.rank,
     shared: best.shared,
     branches: best.branches,
+    extras: best.extras,
     ready: best.ready,
   };
 }

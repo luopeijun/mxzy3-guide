@@ -1370,7 +1370,6 @@ function parseArtists(
   giftCounts: Record<number, number>,
   titles: Record<string, string>,
   titleMeta: Record<string, TitleMeta>,
-  stars: CaseTables['stars'],
 ): ArtistStats[] {
   const out: ArtistStats[] = [];
   const seen = new Set<number>();
@@ -1461,13 +1460,9 @@ function parseArtists(
       noticeCounts,
       titleId, title: (titleId > 0 && titles[String(titleId)]) || '',
       titleMeta: (titleId > 0 && titleMeta[String(titleId)]) || null,
-      titleNext: titleId > 0
-        ? nextTitle(
-          titleMeta, titles, titleId,
-          { abilities, social, noticeCounts },
-          starGender(roleId, stars),
-        )
-        : null,
+      // 下一档还要看奖项与演唱会（攻略页 PS 条件），那两张表在这一层还没解析，
+      // 等 parseSave 里奖项 / 活动挂上后再统一算。
+      titleNext: null,
       roleId, signed, offset: o, index,
       awards: [],
       events: [],
@@ -2248,7 +2243,7 @@ export function parseSave(
   const { friendship, gifts } = parseFriendship(view, bytes);
   const artists = parseArtists(
     bytes, view, artistStart, artistEnd, friendship, gifts,
-    tables.titles ?? {}, tables.titleMeta ?? {}, tables.stars,
+    tables.titles ?? {}, tables.titleMeta ?? {},
   );
   const roster = parseRoster(bytes);
   // The state block carries the game's roster number at -16, so the panel can
@@ -2278,8 +2273,34 @@ export function parseSave(
     // 团体场（大型团体演唱会等）在团体卡「活动」里展示，不重复挂到艺人卡。
     artist.events = events.filter((event) => event.artistId === artist.roleId && !event.group);
   }
-  const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
   const teams = parseTeams(bytes, view, blocks);
+  // 称号下一档的额外条件要连奖项和演唱会一起判。演唱会按攻略「不限大小、
+  // 个人或团体」计：团体场在记事表里只挂一个艺人，同团成员都算办过。
+  for (const artist of artists) {
+    const teammates = new Set<number>();
+    for (const team of teams) {
+      if (team.memberIds.includes(artist.roleId)) {
+        for (const id of team.memberIds) teammates.add(id);
+      }
+    }
+    const concerts = events.filter((event) => event.kind === 63 && (
+      event.artistId === artist.roleId || (event.group && teammates.has(event.artistId))
+    )).length;
+    artist.titleNext = artist.titleId > 0
+      ? nextTitle(
+        tables.titleMeta ?? {}, tables.titles ?? {}, artist.titleId,
+        {
+          abilities: artist.abilities,
+          social: artist.social,
+          noticeCounts: artist.noticeCounts,
+          awardIds: artist.awards.filter((award) => !award.group).map((award) => award.awardId),
+          concerts,
+        },
+        starGender(artist.roleId, tables.stars),
+      )
+      : null;
+  }
+  const signedArtistIds = artistDirectory.filter((a) => a.signed).map((a) => a.id);
   // 每个艺人接下的通告编码，用来判断通告池里哪个角色已经被别人占住。
   const { owners: ownersByCode } = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
   // 精确到角色号的预约关系（存档里的 52 字节角色预约表）。
