@@ -167,11 +167,7 @@ function DetailSection({
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       {filmed.map((record, index) => (
                         <span key={`${record.name}-${record.date}-${record.role}-${index}`} className="inline-flex items-baseline gap-1 text-ink-muted">
-                          {record.role && (
-                            <span className="rounded border border-growth-line px-1 font-semibold text-growth-strong">
-                              {record.role}
-                            </span>
-                          )}
+                          {record.role && <span className={workRoleClass(record.role)}>{record.role}</span>}
                           <span className={cn(record.own ? 'font-bold text-brand-strong' : 'text-ink')}>{record.name}</span>
                           {record.date && <span className="text-ink-faint">{record.date}</span>}
                         </span>
