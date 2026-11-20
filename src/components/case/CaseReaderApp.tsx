@@ -168,12 +168,13 @@ function WorkCountChip({
               data-case-works-scroll
               className="block max-h-[240px] overflow-y-auto overscroll-contain pr-1"
             >
-              {works.map((work) => (
+              {works.map((work, index) => (
                 <span
                   key={`${work.workCode}-${'order' in work ? work.order ?? 0 : 0}`}
                   {...rowData}
                   className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
                 >
+                  <span className="shrink-0 font-semibold tabular-nums text-ink-muted">{index + 1}.</span>
                   {work.date && <span className="text-ink-faint">{work.date}</span>}
                   <span className={cn('font-semibold', work.workCode ? 'text-ink' : 'text-ink-faint')}>
                     {work.workName}
