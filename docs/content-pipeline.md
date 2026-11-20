@@ -126,12 +126,13 @@
 
 - **三层结构**：`desktop.html`（Vite 第三个输入）→ `src/desktop/main.tsx`（挂 `DesktopApp`）→ `src/desktop/DesktopApp.tsx`（顶栏 + `<CaseReaderApp externalSave>`）。`CaseReaderApp` 新增可选 prop `externalSave: {buffer, name, token}`，`token` 递增就重新解析；Web 端不传这个 prop，仍走拖入 / 选文件。桌面端自己加载 `data/guide.json` 并挂 `GuideDataContext`，场景卡 hover 的提示与主站共用同一份文案。
 - **自定义协议 `mxzy://local/...`**：`electron/main.cjs` 在 `whenReady` 前 `registerSchemesAsPrivileged` 声明为标准协议，`protocol.handle` 把请求映射到 `dist/` 并补 MIME。这样页面里所有 `fetch('data/*.json')`（含 `case-tables.json?`）都能在打包后正常加载——`file://` 下本地 fetch 会被 CORS 拦。开发时可设 `MXZY_DESKTOP_DEV_URL` 走 Vite dev server，跳过协议。
-- **只读文件桥**：`electron/preload.cjs` 经 `contextBridge` 暴露最小接口（`getState` / `chooseDir` / `refresh` / `setAutoFollow` / `setSelected` / `readSave` / `onState`），没有任何写文件或系统能力。目录由用户**自己选**（`dialog.showOpenDialog` 的 `openDirectory`，不写死、不猜游戏安装路径），只把上次选的目录 / 自动跟随开关 / 选中档位记在 `app.getPath('userData')/desktop-config.json`。
+- **只读文件桥**：`electron/preload.cjs` 经 `contextBridge` 暴露最小接口（`getState` / `chooseDir` / `refresh` / `setAutoFollow` / `setSelected` / `readSave` / `onState`，File 菜单另加 `openSave` / `requestReload` / `onOpenSave` / `onReloadRequest`），没有任何写文件或系统能力。目录由用户**自己选**（`dialog.showOpenDialog` 的 `openDirectory`，不写死、不猜游戏安装路径），只把上次选的目录 / 自动跟随开关 / 选中档位记在 `app.getPath('userData')/desktop-config.json`。
 - **稳定读取**：Auto.sa2 游戏运行时会被覆盖，`readSaveStable()` 读前后各 stat 一次，大小或修改时间变了就等 90ms 重读，最多 4 次，避免半截文件进解析器。`readSave` 经 IPC 把 Buffer 转成 `Uint8Array` 克隆给渲染进程，再转回 `ArrayBuffer` 交给 `parseSave`。
+- **原生 File 菜单**：主进程 `registerMenu()` 建 File（打开存档… `CmdOrCtrl+O` / 重新载入当前存档 `CmdOrCtrl+R` / 退出）+ Edit / View / Window / Help 标准角色。`打开存档…` 用 `dialog.showOpenDialog` 的 `openFile`（默认路径取上次选的存档目录、只筛 `.sa2`），`readSaveStable()` 读完后由 `desktop:openSaveResult` 推给渲染进程的 `feedSave`——和目录里点档位共用同一条解析通道，不另写解析逻辑。**重新载入认最后打开来源**：`openFileRef` 记着菜单打开的文件（path+name）就重读它，否则读目录里的当前档位；换档位 / 选目录 / 开自动跟随都会清掉这个引用，避免两个来源打架。`desktop:openSave` / `desktop:requestReload` 两个 IPC 专供回归脚本跳过系统对话框触发同一条链路。
 - **自动跟随**：主进程 `fs.watch(saveDir)` 变化时节流 350ms 推 `desktop:state`（含最新清单），渲染进程比对当前档位的 `path|mtime|size` 指纹，变了才重读；主动读取也会记下指纹，避免“读到新快照→再触发读取”的死循环。没开自动跟随时，点「读取当前游戏状态」或换档位才读。
 - **启动注意**：本环境预设了 `ELECTRON_RUN_AS_NODE=1`，会让 electron.exe 以纯 Node 模式跑主进程（`require('electron')` 只剩路径、协议 API 全丢）。启动必须清掉：`env -u ELECTRON_RUN_AS_NODE electron .`；npm 的 `desktop` 脚本在用户机器上通常没这个变量，不受影响。Electron 二进制首装若从 GitHub 下载失败，用 `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ node node_modules/electron/install.js`。
-- **回归**：`scripts/cdp_desktop.mjs`（13 项，连调试端口验证独立入口无其它页签、自定义协议加载内置表、文件桥注入、真实 IPC 读档后渲染游戏时间与通告表格）。启动：`env -u ELECTRON_RUN_AS_NODE MXZY_DESKTOP_DEBUG=9223 electron .`，再 `MXZY_DESKTOP_DEBUG=9223 node scripts/cdp_desktop.mjs`。本环境 GUI 窗口十几秒会被回收，CDP 要和启动写在同一条命令里跑完。
-- **打包**：`electron-builder --win` 配 `signAndEditExecutable: false`（个人项目无签名证书，跳过 rcedit/签名；本环境 winCodeSign 解压还会因 macOS 符号链接权限失败，这个开关一并绕开）。产物在 `release/`。本环境 NSIS 安装包的 makensis 阶段另有权限问题，实际发行用免安装 zip：把 `release/win-unpacked/` 里的内容压成 zip（顶层就是 exe 与 `resources/app.asar`，用户解压即用），已对打包后的 exe 跑过 `cdp_desktop.mjs` 13/13 验证。`build/icon.ico` 由 `public/favicon.ico` 放大生成（256px），是网页版顶栏同一张「明3 3in1」logo。
+- **回归**：`scripts/cdp_desktop.mjs`（18 项，连调试端口验证独立入口无其它页签、自定义协议加载内置表、文件桥注入、真实 IPC 读档后渲染游戏时间与通告表格，以及 File 菜单打开存档桥、打开后顶栏显示来源与文件名、走同一解析通道渲染、`requestReload` 重读的是菜单打开的文件而非目录档位）。启动：`env -u ELECTRON_RUN_AS_NODE MXZY_DESKTOP_DEBUG=9223 electron .`，再 `MXZY_DESKTOP_DEBUG=9223 node scripts/cdp_desktop.mjs`。本环境 GUI 窗口十几秒会被回收，CDP 要和启动写在同一条命令里跑完。
+- **打包**：`electron-builder --win` 配 `signAndEditExecutable: false`（个人项目无签名证书，跳过 rcedit/签名；本环境 winCodeSign 解压还会因 macOS 符号链接权限失败，这个开关一并绕开）。产物在 `release/`。本环境 NSIS 安装包的 makensis 阶段另有权限问题，实际发行用免安装 zip：把 `release/win-unpacked/` 里的内容压成 zip（顶层就是 exe 与 `resources/app.asar`，用户解压即用），已对打包后的 exe 跑过 `cdp_desktop.mjs` 回归验证。`build/icon.ico` 由 `public/favicon.ico` 放大生成（256px），是网页版顶栏同一张「明3 3in1」logo。
   - **应用图标注入**：`signAndEditExecutable: false` 会连 rcedit 一起跳过，exe 里保留的是 Electron 默认原子图标（任务栏/文件夹里看到的不是我们的 logo）。`package:desktop` 脚本在 `electron-builder` 之后接 `node scripts/inject_desktop_icon.mjs`，用 electron-builder 缓存里的 `rcedit-x64.exe` 把 `build/icon.ico` 注入 `release/win-unpacked/*.exe`。改了 logo 后重新打包会自动注入；若只重压 zip，记得先跑一次这个脚本再压。
 - **未决**：游戏何时写盘（自动存档触发时机）未实测——当前游戏没运行，留待开游戏时盯 `Save2/Auto.sa2` 修改时间。自动跟随本身只要游戏写盘就会触发。
 
@@ -331,10 +332,10 @@ scripts/test_cg_node_links.py  CG → 事件 / 页面映射回归测试
 scripts/test_image_thumbs.py 缩略图产物完整性回归测试（4 项）
 scripts/cdp_*.mjs            浏览器端到端验证脚本
 scripts/cdp_desktop.mjs      Electron 桌面端端到端验证（13 项）
-electron/main.cjs            Electron 主进程：mxzy:// 资源协议 + 只读文件桥 + 目录监听
+electron/main.cjs            Electron 主进程：mxzy:// 资源协议 + 原生 File 菜单 + 只读文件桥 + 目录监听
 electron/preload.cjs         contextBridge 注入最小桌面接口
 desktop.html                 Electron 入口（只挂存档解析）
-src/desktop/                 桌面端入口与读取控制条（顶栏 / 目录 / 存档位 / 自动跟随）
+src/desktop/                 桌面端入口与读取控制条（顶栏 / 目录 / 存档位 / 自动跟随 / File 菜单打开与重新载入）
 src/sweet/                   甜蜜乐章站点入口（sweet.html 挂载：攻略 / 事件追踪 / CG 图鉴）
 src/ui/SmartImage.tsx        全站统一图片组件（缩略图 / 懒加载 / 占位 / 失败回退）
 src/ui/                      两站共用的顶栏与页签
