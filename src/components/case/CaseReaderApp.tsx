@@ -323,9 +323,17 @@ function ArtistQuickRef({ signed }: { signed: SignedArtist[] }) {
   );
 }
 
+/** 桌面端从磁盘读来的存档：buffer 每次读取都是新快照，token 变化时重新解析。
+ *  Web 端不传这个 prop，仍走拖入 / 选择文件的路径。 */
+export interface ExternalSave {
+  buffer: ArrayBuffer;
+  name: string;
+  token: number;
+}
+
 /** 存档解析：把 .sa2 拖进来，在浏览器里解出当期通告、日期与艺人数值。
  *  文件不会上传；读进内存的就是一份快照，游戏随后覆盖自动存档也不影响。 */
-export default function CaseReaderApp() {
+export default function CaseReaderApp({ externalSave }: { externalSave?: ExternalSave | null } = {}) {
   const [tables, setTables] = useState<CaseTables>(EMPTY_TABLES);
   const [tablesReady, setTablesReady] = useState(false);
   const [tablesError, setTablesError] = useState('');
@@ -389,6 +397,14 @@ export default function CaseReaderApp() {
       setBusy(false);
     }
   }, [parseBuffer]);
+
+  // 桌面端：主进程读来的快照直接走同一条解析路径；token 递增表示又读了一次
+  // （同一份存档被游戏覆盖后字节变了，也要重新解）。
+  useEffect(() => {
+    if (!externalSave || !tablesReady) return;
+    lastBufferRef.current = externalSave.buffer;
+    parseBuffer(externalSave.buffer, externalSave.name);
+  }, [externalSave, tablesReady, parseBuffer]);
 
   const onPick = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
