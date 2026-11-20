@@ -2387,7 +2387,7 @@ function ArtistCard({
             ))}
           </div>
           {/* 社交数值按关注度分层：友好度（品牌胶囊）> 人气 > 压力 / 疲劳 > 其余次要属性。 */}
-          <div data-case-artist-social className="mt-1 flex flex-wrap items-center gap-x-1.5 border-t border-line pt-1 text-ui-2xs leading-[1.7]">
+          <div data-case-artist-social className="mt-1 flex flex-wrap items-center gap-x-1.5 border-y border-line py-1 text-ui-2xs leading-[1.7]">
             <span data-case-artist-friendship className="rounded bg-brand-soft px-1 font-semibold text-brand-strong">
               友好度 {artist.friendship ?? '—'}
             </span>
