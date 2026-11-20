@@ -124,13 +124,6 @@ function abilityValue(artist: ArtistStats, name: string): number | null {
   return index >= 0 ? artist.abilities[index] ?? 0 : null;
 }
 
-function hasCertificates(ctx: EvalContext, artist: ArtistStats, row: SpecialRow): boolean {
-  const needed = certsForName(row.name);
-  if (!needed.length) return false;
-  const held = ctx.certs.get(artist.roleId) ?? [];
-  return needed.every((cert) => held.includes(cert));
-}
-
 function largeConcert(artist: ArtistStats, ctx: EvalContext): boolean {
   return ctx.result.events.some((event) =>
     event.artistId === artist.roleId && event.kind === 63 && event.scale === 1 && !event.group);

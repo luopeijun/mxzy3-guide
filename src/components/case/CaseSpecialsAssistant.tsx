@@ -27,14 +27,43 @@ function statusRank(status: LiveNoticeStatus): number {
   return { close: 0, progress: 1, none: 2, manual: 3, done: 4 }[status];
 }
 
-/** hover 文案：男主角 / 男配角分开列，缺的每一项都带具体数值差。 */
-function matchTitle(match: ArtistMatch): string {
-  if (!match.slots.length) {
-    return match.gaps.length ? `待补：${match.gaps.join('、')}` : '全部达标';
-  }
-  return match.slots
-    .map((slot) => `${slot.label} ${slot.met}/${slot.total}${slot.gaps.length ? `：${slot.gaps.join('；')}` : '：达标'}`)
-    .join('\n');
+/** 艺人胶囊的自定义 hover 浮层：男主角 / 男配角两坑位各自列差值。
+ *  原生 title 又慢又不能排版，这里用浮层卡片，跟随胶囊位置。 */
+function MatchHoverCard({
+  match,
+  anchor,
+}: {
+  match: ArtistMatch;
+  anchor: { left: number; top: number };
+}) {
+  return (
+    <div
+      data-case-special-hover
+      className="pointer-events-none fixed z-50 w-[300px] -translate-x-full rounded-ui-md border border-line-strong bg-canvas p-2.5 shadow-soft"
+      style={{ left: anchor.left - 8, top: anchor.top }}
+    >
+      <p className="mb-1.5 text-ui-xs font-semibold text-ink">{match.name}</p>
+      {match.slots.length ? match.slots.map((slot) => (
+        <div key={slot.label} className="mb-1.5 last:mb-0">
+          <div className="mb-0.5 flex items-center justify-between gap-2">
+            <span className="text-ui-2xs font-semibold text-ink">{slot.label}</span>
+            <span className="text-ui-2xs text-ink-faint">{slot.met}/{slot.total}</span>
+          </div>
+          {slot.gaps.length ? (
+            <div className="space-y-0.5 text-ui-2xs leading-relaxed text-ink-muted">
+              {slot.gaps.map((gap, index) => <div key={index}>· {gap}</div>)}
+            </div>
+          ) : (
+            <div className="text-ui-2xs text-growth-strong">全部达标</div>
+          )}
+        </div>
+      )) : (
+        <p className="text-ui-2xs text-ink-muted">
+          {match.gaps.length ? `待补：${match.gaps.join('、')}` : '全部达标'}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function SummaryBox({ label, value }: { label: string; value: string }) {
@@ -50,11 +79,13 @@ function DetailSection({
   report,
   expanded,
   onToggle,
+  onMatchHover,
   dataError,
 }: {
   report: LiveSpecialsReport | null;
   expanded: string;
   onToggle: (id: string) => void;
+  onMatchHover: (match: ArtistMatch | null, anchor: { left: number; top: number }) => void;
   dataError: string | null;
 }) {
   if (dataError) {
@@ -163,8 +194,12 @@ function DetailSection({
                         <span
                           key={match.id}
                           data-case-special-match={match.id}
-                          className="rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
-                          title={matchTitle(match)}
+                          className="cursor-help rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
+                          onMouseEnter={(event) => {
+                            const rect = event.currentTarget.getBoundingClientRect();
+                            onMatchHover(match, { left: rect.left, top: rect.top });
+                          }}
+                          onMouseLeave={() => onMatchHover(null, { left: 0, top: 0 })}
                         >
                           {match.name} {match.met}/{match.total}
                         </span>
@@ -180,10 +215,11 @@ function DetailSection({
   );
 }
 
-export default function CaseSpecialsAssistant({ result, tables, onJump }: Props) {
+export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const { data, error } = useSpecialsData(true);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState('');
+  const [hover, setHover] = useState<{ match: ArtistMatch; anchor: { left: number; top: number } } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const report = useMemo(
@@ -252,16 +288,13 @@ export default function CaseSpecialsAssistant({ result, tables, onJump }: Props)
             <p className="px-3 pb-3 text-ui-2xs text-ink-faint">先载入一份存档，就能看到六大目标的实时完成程度。</p>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" onScroll={() => setHover(null)}>
             {result && (
               <DetailSection
                 report={report}
                 expanded={expanded}
                 onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
-                onJump={(target) => {
-                  onJump(target);
-                  setOpen(false);
-                }}
+                onMatchHover={(match, anchor) => setHover(match ? { match, anchor } : null)}
                 dataError={error}
               />
             )}
@@ -269,12 +302,19 @@ export default function CaseSpecialsAssistant({ result, tables, onJump }: Props)
         </section>
       )}
 
+      {open && hover && (
+        <MatchHoverCard match={hover.match} anchor={hover.anchor} />
+      )}
+
       <button
         type="button"
         data-case-special-orb
         aria-label="打开六大通告助手"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setHover(null);
+          setOpen((value) => !value);
+        }}
         className={cn(
           'relative ml-auto flex h-[54px] w-[60px] items-center justify-center transition-transform duration-150 hover:-translate-y-0.5 hover:scale-105',
           open && 'drop-shadow-[0_2px_5px_rgba(192,48,111,0.35)]',
