@@ -160,9 +160,11 @@ function DetailSection({
               <div className="border-t border-line px-2.5 pb-2.5 pt-2">
                 {filmed.length > 0 && (
                   <div className="mb-2 text-ui-2xs leading-relaxed" data-case-special-filmed-record>
-                    <p className="mb-1">
-                      <span className="inline-flex rounded border border-growth-line bg-growth-soft px-1.5 py-0.5 font-semibold text-growth-strong">已拍摄</span>
-                    </p>
+                    <div className="mb-1.5 flex items-center gap-2 font-bold text-growth-strong">
+                      <span className="h-px flex-1 bg-growth-line" />
+                      <span>已拍摄</span>
+                      <span className="h-px flex-1 bg-growth-line" />
+                    </div>
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       {filmed.map((record, index) => (
                         <span key={`${record.name}-${record.date}-${record.role}-${index}`} className="inline-flex items-baseline gap-1 text-ink-muted">
@@ -171,7 +173,7 @@ function DetailSection({
                               {record.role}
                             </span>
                           )}
-                          <span className={cn('text-ink', record.own && 'font-semibold')}>{record.name}</span>
+                          <span className={cn(record.own ? 'font-bold text-brand-strong' : 'text-ink')}>{record.name}</span>
                           {record.date && <span className="text-ink-faint">{record.date}</span>}
                         </span>
                       ))}
