@@ -109,12 +109,17 @@ function DetailSection({
       {report.notices.map((item) => {
         const open = expanded === item.notice.id;
         const manual = item.conditions.filter((condition) => condition.state === 'manual');
+        const filmed = item.filmed;
+        const filmedLabel = filmed
+          .map((record) => [record.name, record.date, record.role].filter(Boolean).join(' · '))
+          .join('；');
 
         return (
           <div
             key={item.notice.id}
             data-case-special-notice={item.notice.id}
             data-case-special-status={item.status}
+            data-case-special-filmed={filmed.length > 0 ? 'true' : 'false'}
             className="rounded-ui-sm border border-line bg-surface"
           >
             <button
@@ -123,11 +128,22 @@ function DetailSection({
               onClick={() => onToggle(item.notice.id)}
               className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-surface-soft"
             >
-              <i className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT[item.status])} />
+              {filmed.length > 0 ? (
+                <span aria-hidden="true" className="shrink-0 text-ui-sm font-semibold text-growth-strong">✓</span>
+              ) : (
+                <i className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT[item.status])} />
+              )}
               <span className="w-[92px] shrink-0 truncate text-ui-xs font-semibold text-ink">
                 {item.notice.title}
               </span>
-              {item.nodes.length > 0 ? (
+              {filmed.length > 0 ? (
+                <span className="min-w-0 flex-1 truncate text-right" title={filmedLabel}>
+                  <span className="text-ui-2xs font-semibold text-growth-strong">已拍摄</span>
+                  <span className="ml-1 text-ui-2xs text-ink-muted" data-case-special-filmed-detail={filmedLabel}>
+                    {filmedLabel}
+                  </span>
+                </span>
+              ) : item.nodes.length > 0 ? (
                 <span className="flex-1 text-right text-ui-2xs text-ink-faint">按事件节点推进</span>
               ) : (
                 <>

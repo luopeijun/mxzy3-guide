@@ -55,8 +55,19 @@ export interface GroupMatch {
 
 export type LiveNoticeStatus = 'done' | 'close' | 'progress' | 'none' | 'manual';
 
+/** 存档作品清单里已经拍完的六大通告：谁 / 什么时候 / 什么角色。 */
+export interface FilmedRecord {
+  date: string;
+  name: string;
+  role: string;
+  workCode: string;
+  workName: string;
+}
+
 export interface LiveNotice {
   notice: SpecialNotice;
+  /** 按精确作品编码从存档作品清单里认出的已完成记录。 */
+  filmed: FilmedRecord[];
   /** note 行里 id 带 `.node.` 的关键事件节点，按表里顺序展示。 */
   nodes: SpecialRow[];
   conditions: LiveCondition[];
@@ -334,6 +345,56 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
   return blank;
 }
 
+/** 六大特殊通告的成品编码。只认精确编码，不用 6xx 前缀泛判。 */
+const SPECIAL_WORK_CODES: Record<string, string> = {
+  'proud-of-the-world': 'MV601',
+  'doomsday-warrior': 'MV602',
+  'kunlun-adventure': 'MV603',
+  'eternal-love': 'CD603',
+  angel: 'CD604',
+  galaxy: 'CD602',
+};
+
+function artistNameOf(id: number, ctx: EvalContext): string {
+  return ctx.result.artistDirectory.find((option) => option.id === id)?.name
+    ?? ctx.result.artistNames[id]
+    ?? `编号${id}`;
+}
+
+function filmedRecords(noticeId: string, ctx: EvalContext): FilmedRecord[] {
+  const code = SPECIAL_WORK_CODES[noticeId];
+  if (!code) return [];
+
+  const groupRows = ctx.result.groupWorks
+    .filter((work) => work.workCode === code)
+    .map((work): FilmedRecord => ({
+      date: work.date,
+      name: ctx.result.teams.find((team) => team.memberIds.includes(work.artistId))?.name
+        ?? artistNameOf(work.artistId, ctx),
+      role: '',
+      workCode: work.workCode,
+      workName: work.workName,
+    }));
+
+  const personalRows = ctx.result.works
+    .filter((work) => work.workCode === code)
+    .map((work): FilmedRecord => ({
+      date: work.date,
+      name: artistNameOf(work.artistId, ctx),
+      role: work.role,
+      workCode: work.workCode,
+      workName: work.workName,
+    }));
+
+  const unique = new Map<string, FilmedRecord>();
+  for (const record of [...groupRows, ...personalRows]) {
+    unique.set(`${record.name}|${record.date}|${record.role}`, record);
+  }
+  return [...unique.values()].sort(
+    (a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name),
+  );
+}
+
 /** 笑傲天际只有男主角 / 男配角两个坑位，女艺人不能参与。性别只认游戏表。 */
 const MALE_ONLY_NOTICES = new Set(['proud-of-the-world']);
 
@@ -445,6 +506,7 @@ export function evaluateLiveSpecials(
 
       return {
         notice,
+        filmed: filmedRecords(notice.id, ctx),
         nodes,
         conditions,
         items: conditions
@@ -461,7 +523,7 @@ export function evaluateLiveSpecials(
 
   return {
     notices,
-    doneCount: notices.filter((notice) => notice.status === 'done').length,
+    doneCount: notices.filter((notice) => notice.filmed.length > 0).length,
   };
 }
 
