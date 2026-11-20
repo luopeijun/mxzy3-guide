@@ -159,12 +159,11 @@ function DetailSection({
             {open && (
               <div className="border-t border-line px-2.5 pb-2.5 pt-2">
                 {filmed.length > 0 && (
-                  <div className="mb-2 text-ui-2xs leading-relaxed" data-case-special-filmed-record>
-                    <div className="mb-1.5 flex items-center gap-2 font-bold text-growth-strong">
-                      <span className="h-px flex-1 bg-growth-line" />
-                      <span>已拍摄</span>
-                      <span className="h-px flex-1 bg-growth-line" />
-                    </div>
+                  <div className="mb-2 border-b border-line pb-2 text-ui-2xs leading-relaxed" data-case-special-filmed-record>
+                    <p className="mb-1 flex items-center gap-1 text-ui-xs font-bold text-growth-strong">
+                      <span aria-hidden="true">✓</span>
+                      已拍摄
+                    </p>
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       {filmed.map((record, index) => (
                         <span key={`${record.name}-${record.date}-${record.role}-${index}`} className="inline-flex items-baseline gap-1 text-ink-muted">
