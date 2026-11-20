@@ -347,10 +347,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
           <div className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2">
             <span className="text-ui-sm font-semibold text-brand-strong">六大通告助手</span>
             {report && (
-              <span
-                className="rounded-full border border-growth-line bg-growth-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-growth-strong"
-                data-case-assistant-progress
-              >
+              <span className="text-ui-2xs text-ink" data-case-assistant-progress>
                 {report.doneCount}/6
               </span>
             )}
