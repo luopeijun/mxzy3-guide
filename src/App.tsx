@@ -6,7 +6,6 @@ import { isCgRoute, isCaseRoute, isNoticesRoute, isSpecialsRoute, isTrackerRoute
 import { useGuideData } from './hooks/useGuideData';
 import { useNoticeData } from './hooks/useNoticeData';
 import { useCgData } from './hooks/useCgData';
-import { useSpecialsData } from './hooks/useSpecialsData';
 import { useTreeOrder } from './hooks/useTreeOrder';
 import { GuideDataContext } from './hooks/useGuideContext';
 import { HighlightProvider } from './hooks/useHighlightPref';
@@ -20,7 +19,6 @@ import Sidebar from './components/Sidebar';
 import CgApp from './components/cg/CgApp';
 import NoticesApp from './components/notices/NoticesApp';
 import TrackerApp from './components/tracker/TrackerApp';
-import SpecialsApp from './components/specials/SpecialsApp';
 import TipsView from './components/tips/TipsView';
 import CaseReaderApp from './components/case/CaseReaderApp';
 import type { ViewMode } from './components/ViewTabs';
@@ -44,11 +42,10 @@ interface GuideAppProps {
   onViewTracker: () => void;
   onViewNotices: () => void;
   onViewCg: () => void;
-  onViewSpecials: () => void;
   onViewCase: () => void;
 }
 
-function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg, onViewSpecials, onViewCase }: GuideAppProps) {
+function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg, onViewCase }: GuideAppProps) {
   // The reader may drag levels of the tree around; everything below reads the
   // ordered copy so the header tabs, search and prev/next follow the new order.
   const { categories, move, reset, customized } = useTreeOrder(source.categories);
@@ -133,7 +130,6 @@ function GuideApp({ data: source, mode, onViewGuide, onViewTracker, onViewNotice
           onViewTracker={onViewTracker}
           onViewNotices={onViewNotices}
           onViewCg={onViewCg}
-          onViewSpecials={onViewSpecials}
           onViewCase={onViewCase}
           onSelect={handleSelect}
           onMenuClick={() => setSidebarOpen(true)}
@@ -235,42 +231,11 @@ function CgView() {
   return <CgApp data={data} />;
 }
 
-/** 六大通告看板：条件数据按需加载，旗下阵容直接读事件追踪器的存档。 */
-function SpecialsView({ guide }: { guide: GuideData }) {
-  const { data, error } = useSpecialsData(true);
-  const shell = 'fixed inset-x-0 bottom-0 top-16 z-40 flex items-center justify-center bg-canvas p-6';
-
-  if (error) {
-    return (
-      <div className={shell}>
-        <div className="w-full max-w-[520px]">
-          <EmptyState
-            title="六大通告条件加载失败"
-            text={`无法读取 public/data/specials.json（${error}）。请确认已运行 python scripts/extract_specials.py 生成数据。`}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className={shell}>
-        <div className="w-full max-w-[520px]">
-          <EmptyState title="正在载入六大通告" text="正在读取条件表与攻略深链…" />
-        </div>
-      </div>
-    );
-  }
-
-  return <SpecialsApp data={data} guide={guide} />;
-}
-
 export default function App() {
   const { data, error } = useGuideData();
   const [mode, setMode] = useState<ViewMode>(() =>
     isCgRoute() ? 'cg'
-      : isSpecialsRoute() ? 'specials'
+      : isSpecialsRoute() ? 'case'
         : isNoticesRoute() ? 'notices'
           : isTrackerRoute() ? 'tracker'
             : isCaseRoute() ? 'case' : 'guide',
@@ -290,7 +255,8 @@ export default function App() {
       } else if (isNoticesRoute()) {
         setMode('notices');
       } else if (isSpecialsRoute()) {
-        setMode('specials');
+        window.history.replaceState(null, '', '#/case');
+        setMode('case');
       } else if (isCgRoute()) {
         setMode('cg');
       } else if (isCaseRoute()) {
@@ -303,6 +269,10 @@ export default function App() {
     };
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (isSpecialsRoute()) window.history.replaceState(null, '', '#/case');
   }, []);
 
   if (error) {
@@ -340,10 +310,6 @@ export default function App() {
     window.location.hash = cgTabHash();
   };
 
-  const openSpecials = () => {
-    window.location.hash = '/specials';
-  };
-
   const openCase = () => {
     window.location.hash = '/case';
   };
@@ -359,13 +325,11 @@ export default function App() {
             onViewTracker={openTracker}
             onViewNotices={openNotices}
             onViewCg={openCg}
-            onViewSpecials={openSpecials}
             onViewCase={openCase}
           />
           {mode === 'tracker' && <TrackerApp data={data} />}
           {mode === 'notices' && <NoticesView />}
           {mode === 'cg' && <CgView />}
-          {mode === 'specials' && <SpecialsView guide={data} />}
           {mode === 'case' && <CaseReaderApp />}
         </HighlightProvider>
       </TrackerProvider>

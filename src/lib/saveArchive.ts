@@ -1,18 +1,15 @@
-/** Unified save envelope: one file that carries the event-tracker progress, the
- *  CG collection, and (on 明星志愿3 only) the six-specials board, so a user
- *  moving between devices only juggles a single backup instead of one file per
- *  feature. The tracker half reuses the existing `TrackerArchive` envelope
- *  verbatim; the CG half is a tiny `{version,collected}` blob; the specials half
- *  is the full board state. Old tracker-only files (`stardom3-tracker-save` /
- *  `sweet-tracker-save`) and old two-part saves (no specials) are still accepted
- *  and simply import with no specials half.
+/** Unified save envelope: one file that carries the event-tracker progress and
+ *  the CG collection, so a user moving between devices only juggles one backup
+ *  instead of one file per feature. The tracker half reuses the existing
+ *  `TrackerArchive` envelope verbatim; the CG half is a tiny `{version,collected}`
+ *  blob. Legacy files that still contain a six-notice board section are accepted
+ *  and simply ignore it — that board no longer exists.
  *
  *  Everything site-specific (envelope marker, CG storage key, file-name prefix)
  *  comes in through `SaveOpts`, so 甜蜜乐章 can reuse this file for its own
  *  progress + CG save without a single `if (site === ...)` here. */
 import type { ArchiveOpts, TrackerArchive } from './trackerTransfer';
 import { parseArchive } from './trackerTransfer';
-import type { SpecialsState } from './specialsState';
 import { CG_CHANGED_EVENT, CG_KEY, readCgRaw, writeCg } from './cg';
 
 /** 明星志愿3 的统一存档标记；甜蜜乐章用 `sweet-save`（见 TrackerSiteConfig），
@@ -25,17 +22,10 @@ export interface CgPart {
   collected: string[];
 }
 
-export interface SpecialsPart {
-  version: 1;
-  state: SpecialsState;
-}
-
 export interface SaveSummary {
   trackerLines: number;
   cgCollected: number;
   hasCg: boolean;
-  specialsEnabled: number;
-  hasSpecials: boolean;
 }
 
 export interface SaveArchive {
@@ -45,7 +35,6 @@ export interface SaveArchive {
   summary: SaveSummary;
   tracker?: TrackerArchive;
   cg?: CgPart;
-  specials?: SpecialsPart;
 }
 
 /** Per-site wiring of the envelope itself. `tracker` carries the roster rules
@@ -65,7 +54,6 @@ export interface SaveOpts {
 export function createSaveArchive(
   tracker: TrackerArchive,
   cg: CgPart,
-  specials: SpecialsPart | undefined,
   now: Date,
   opts: SaveOpts,
 ): SaveArchive {
@@ -77,12 +65,9 @@ export function createSaveArchive(
       trackerLines: tracker.summary.lines,
       cgCollected: cg.collected.length,
       hasCg: true,
-      specialsEnabled: specials ? specials.state.enabled.length : 0,
-      hasSpecials: Boolean(specials),
     },
     tracker,
     cg,
-    ...(specials ? { specials } : {}),
   };
 }
 
@@ -115,13 +100,10 @@ export function parseSaveArchive(text: string, opts: SaveOpts): SaveArchive {
   if (record.format === opts.format) {
     const tracker = record.tracker as TrackerArchive | undefined;
     const cg = record.cg as CgPart | undefined;
-    const specials = record.specials as SpecialsPart | undefined;
     const summary = (record.summary ?? {
       trackerLines: tracker?.summary?.lines ?? 0,
       cgCollected: cg?.collected?.length ?? 0,
       hasCg: Boolean(cg),
-      specialsEnabled: specials?.state?.enabled?.length ?? 0,
-      hasSpecials: Boolean(specials),
     }) as SaveSummary;
     return {
       format: opts.format,
@@ -130,7 +112,6 @@ export function parseSaveArchive(text: string, opts: SaveOpts): SaveArchive {
       summary,
       tracker,
       cg,
-      ...(specials ? { specials } : {}),
     };
   }
 
@@ -148,27 +129,18 @@ export function parseSaveArchive(text: string, opts: SaveOpts): SaveArchive {
         trackerLines: tracker.summary?.lines ?? 0,
         cgCollected: 0,
         hasCg: false,
-        specialsEnabled: 0,
-        hasSpecials: false,
       },
       tracker,
       cg: undefined,
-      specials: undefined,
     };
   }
 
   throw new Error(BAD_INPUT);
 }
 
-/** `hasSpecials` comes from the site config: 甜蜜乐章 has no 六大通告 board, so
- *  its summary must not mention one (主站输出与此前逐字一致). */
-export function describeSaveSummary(summary: SaveSummary, hasSpecials = true): string {
+export function describeSaveSummary(summary: SaveSummary): string {
   const cg = summary.hasCg ? `${summary.cgCollected} 张 CG 已收集` : '不含 CG 收集';
-  if (!hasSpecials) return `${summary.trackerLines} 条线有记录 · ${cg}`;
-  const specials = summary.hasSpecials
-    ? `${summary.specialsEnabled} 张通告已配置`
-    : '不含六大通告';
-  return `${summary.trackerLines} 条线有记录 · ${cg} · ${specials}`;
+  return `${summary.trackerLines} 条线有记录 · ${cg}`;
 }
 
 /** Union the incoming CG ids into whatever is already collected locally (read

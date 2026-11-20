@@ -20,7 +20,8 @@ export function isNoticesRoute(): boolean {
   return readHash() === 'notices';
 }
 
-/** True when the URL points at the 六大通告条件看板. */
+/** Legacy `#/specials` bookmarks are redirected to the save reader, where the
+ *  live six-notice assistant now lives. */
 export function isSpecialsRoute(): boolean {
   return readHash() === 'specials';
 }

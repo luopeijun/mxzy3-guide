@@ -27,7 +27,6 @@ import {
   type SaveOpts,
 } from '../../lib/saveArchive';
 import { readCgRaw } from '../../lib/cg';
-import { applySpecialsToLocal, readSpecialsForExport } from '../../lib/specialsState';
 
 type Notice = { tone: 'ok' | 'error'; text: string };
 
@@ -53,12 +52,11 @@ function downloadText(text: string, fileName: string) {
 }
 
 /** A single backup file carrying the event-tracker progress and the CG
- *  collection (plus the 六大通告 board on 明星志愿3), so one export/import moves
- *  every local save between devices. The tracker half keeps its re-anchor +
- *  merge/replace machinery; the CG half is always merged (never replaced) so a
- *  ticked CG can never be dropped.
+ *  collection, so one export/import moves every local save between devices.
+ *  The tracker half keeps its re-anchor + merge/replace machinery; the CG half
+ *  is always merged (never replaced) so a ticked CG can never be dropped.
  *
- *  两站共用这个面板：信封标记、CG 存储键、文件名前缀、有没有六大通告都来自
+ *  两站共用这个面板：信封标记、CG 存储键、文件名前缀都来自
  *  `TrackerSiteConfig`，组件里不写站点判断。 */
 export default function SaveArchivePanel() {
   const { config, snapshot, importProgress, backup, undoBackup, dismissBackup } = useTracker();
@@ -83,22 +81,14 @@ export default function SaveArchivePanel() {
     }),
     [config, archiveOpts],
   );
-  /** 面板文案：甜站没有六大通告，摘要与提示里一个字都不提。 */
   const copy = useMemo(
-    () => (config.hasSpecials
-      ? {
-          parts: '进度、CG 收藏与六大通告配置',
-          exportOk: '存档文件已下载，传到另一台设备后导入即可（含进度、CG 收集与六大通告配置）。',
-          mergeOk: '已合并存档，本机原有进度、CG 收藏与六大通告配置都保留着。',
-          replaceOk: '已用存档覆盖本机进度（CG 收集与六大通告仍按合并处理，不会丢失）。',
-        }
-      : {
-          parts: '进度与 CG 收藏',
-          exportOk: '存档文件已下载，传到另一台设备后导入即可（含进度与 CG 收藏）。',
-          mergeOk: '已合并存档，本机原有进度与 CG 收藏都保留着。',
-          replaceOk: '已用存档覆盖本机进度（CG 收藏仍按合并处理，不会丢失）。',
-        }),
-    [config.hasSpecials],
+    () => ({
+      parts: '进度与 CG 收藏',
+      exportOk: '存档文件已下载，传到另一台设备后导入即可（含进度与 CG 收藏）。',
+      mergeOk: '已合并存档，本机原有进度与 CG 收藏都保留着。',
+      replaceOk: '已用存档覆盖本机进度（CG 收藏仍按合并处理，不会丢失）。',
+    }),
+    [],
   );
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<PendingImport | null>(null);
@@ -120,17 +110,11 @@ export default function SaveArchivePanel() {
 
   const buildSaveText = (now: Date, pretty: boolean): string =>
     serialiseSaveArchive(
-      createSaveArchive(buildTrackerArchive(now), buildCgPart(), buildSpecialsPart(), now, saveOpts),
+      createSaveArchive(buildTrackerArchive(now), buildCgPart(), now, saveOpts),
       pretty,
     );
 
   const buildCgPart = () => ({ version: 1 as const, collected: readCgRaw(saveOpts.cgKey) });
-
-  const buildSpecialsPart = () => {
-    if (!config.hasSpecials) return undefined;
-    const state = readSpecialsForExport();
-    return state ? ({ version: 1 as const, state } as const) : undefined;
-  };
 
   const applyArchive = (archive: SaveArchive) => {
     const { data, report } = archive.tracker
@@ -186,7 +170,6 @@ export default function SaveArchivePanel() {
     }
     if (pending.trackerData) importProgress(pending.trackerData, mode);
     if (pending.archive?.cg) applyCgToLocal(pending.archive.cg.collected, saveOpts.cgKey);
-    if (pending.archive?.specials) applySpecialsToLocal(pending.archive.specials.state, mode);
     const base = mode === 'merge' ? copy.mergeOk : copy.replaceOk;
     const extra = pending.report ? describeReport(pending.report) : '';
     setNotice({ tone: 'ok', text: extra ? `${base} ${extra}。` : base });
@@ -288,7 +271,7 @@ export default function SaveArchivePanel() {
           </p>
           {pending.archive && (
             <p className="mt-0.5 text-ui-2xs text-ink-faint">
-              {describeSaveSummary(pending.archive.summary, config.hasSpecials)}
+              {describeSaveSummary(pending.archive.summary)}
             </p>
           )}
           {pending.archive?.tracker && (

@@ -1,6 +1,6 @@
 import TabBar, { type TabItem } from '../ui/TabBar';
 
-export type ViewMode = 'guide' | 'tracker' | 'notices' | 'cg' | 'specials' | 'case';
+export type ViewMode = 'guide' | 'tracker' | 'notices' | 'cg' | 'case';
 
 interface Props {
   mode: ViewMode;
@@ -8,7 +8,6 @@ interface Props {
   onViewTracker: () => void;
   onViewNotices: () => void;
   onViewCg: () => void;
-  onViewSpecials: () => void;
   onViewCase: () => void;
 }
 
@@ -17,11 +16,10 @@ const TABS: TabItem[] = [
   { id: 'notices', label: '通告', dataTab: 'notices' },
   { id: 'tracker', label: '事件追踪' },
   { id: 'cg', label: 'CG 图鉴', dataTab: 'cg' },
-  { id: 'specials', label: '六大通告', dataTab: 'specials' },
   { id: 'case', label: '存档解析', dataTab: 'case' },
 ];
 
-/** 明星志愿3 的六个顶层视图入口。页签视觉在 `ui/TabBar` 里，两站共用，
+/** 明星志愿3 的五个顶层视图入口。页签视觉在 `ui/TabBar` 里，两站共用，
  *  这里只负责把 id 映射回各自的回调。 */
 export default function ViewTabs({
   mode,
@@ -29,7 +27,6 @@ export default function ViewTabs({
   onViewTracker,
   onViewNotices,
   onViewCg,
-  onViewSpecials,
   onViewCase,
 }: Props) {
   const handlers: Record<ViewMode, () => void> = {
@@ -37,7 +34,6 @@ export default function ViewTabs({
     notices: onViewNotices,
     tracker: onViewTracker,
     cg: onViewCg,
-    specials: onViewSpecials,
     case: onViewCase,
   };
 

@@ -64,13 +64,11 @@ export interface TrackerSiteConfig {
    *  so a 明星志愿3 save can never be imported into 甜蜜乐章 (or vice versa). */
   archiveFormat: string;
   archiveFilePrefix: string;
-  /** 统一存档（进度 + CG 收集 [+ 六大通告]）的信封标记，与 `archiveFormat` 分开：
+  /** 统一存档（进度 + CG 收集）的信封标记，与 `archiveFormat` 分开：
    *  后者是旧版 tracker-only 文件的标记，现在只用于「还认这个格式」。 */
   saveFormat: string;
   /** 统一存档里 CG 那一半读写的 localStorage 键（甜站 `sweet.cg.v1`）。 */
   cgStorageKey: string;
-  /** 本站是否有六大通告看板要一起打包（甜站没有，导出时省略该段、摘要也不提）。 */
-  hasSpecials: boolean;
 }
 
 export const MAIN_TRACKER_CONFIG: TrackerSiteConfig = {
@@ -110,7 +108,6 @@ export const MAIN_TRACKER_CONFIG: TrackerSiteConfig = {
   archiveFilePrefix: 'MXZY3',
   saveFormat: 'mxzy3-save',
   cgStorageKey: CG_KEY,
-  hasSpecials: true,
 };
 
 export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
@@ -157,9 +154,8 @@ export const SWEET_TRACKER_CONFIG: TrackerSiteConfig = {
   includeReleasedTip: '已解约艺人的线仍在事件池里，只是默认不计入完成度',
   archiveFormat: 'sweet-tracker-save',
   archiveFilePrefix: '甜蜜乐章',
-  // 甜站的统一存档只装「进度 + CG 收集」（没有六大通告看板）。旧版导出的
-  // `sweet-tracker-save`（只有进度）继续能导入，反向不会串到原站。
+  // 甜站的统一存档只装「进度 + CG 收集」。旧版导出的 `sweet-tracker-save`
+  // （只有进度）继续能导入，反向不会串到原站。
   saveFormat: 'sweet-save',
   cgStorageKey: SWEET_CG_KEY,
-  hasSpecials: false,
 };

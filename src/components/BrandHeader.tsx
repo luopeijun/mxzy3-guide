@@ -13,17 +13,16 @@ interface Props {
   onViewTracker: () => void;
   onViewNotices: () => void;
   onViewCg: () => void;
-  onViewSpecials: () => void;
   onViewCase: () => void;
   onSelect: (id: string) => void;
   onMenuClick: () => void;
 }
 
-/** 明星志愿3 的顶栏：骨架在 `ui/GameHeader`，这里只填站名、六个页签、
+/** 明星志愿3 的顶栏：骨架在 `ui/GameHeader`，这里只填站名、五个页签、
  *  攻略分类胶囊和跨站入口。 */
 export default function BrandHeader({
   categories, activeCategoryId, mode, onViewGuide, onViewTracker, onViewNotices, onViewCg,
-  onViewSpecials, onViewCase, onSelect, onMenuClick,
+  onViewCase, onSelect, onMenuClick,
 }: Props) {
   const menuButton = mode === 'guide' ? (
     <button
@@ -49,7 +48,6 @@ export default function BrandHeader({
           onViewTracker={onViewTracker}
           onViewNotices={onViewNotices}
           onViewCg={onViewCg}
-          onViewSpecials={onViewSpecials}
           onViewCase={onViewCase}
         />
       )}
