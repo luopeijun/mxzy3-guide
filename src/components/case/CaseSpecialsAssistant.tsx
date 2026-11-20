@@ -9,12 +9,9 @@ import {
 } from '../../lib/caseSpecials';
 import type { CaseTables, ParseResult } from '../../lib/caseParser';
 
-type JumpTarget = 'items' | 'artists' | 'notices';
-
 interface Props {
   result: ParseResult | null;
   tables: CaseTables;
-  onJump: (target: JumpTarget) => void;
 }
 
 const STATUS_DOT: Record<LiveNoticeStatus, string> = {
@@ -42,13 +39,11 @@ function DetailSection({
   report,
   expanded,
   onToggle,
-  onJump,
   dataError,
 }: {
   report: LiveSpecialsReport | null;
   expanded: string;
   onToggle: (id: string) => void;
-  onJump: (target: JumpTarget) => void;
   dataError: string | null;
 }) {
   if (dataError) {
@@ -64,8 +59,6 @@ function DetailSection({
         const open = expanded === item.notice.id;
         const readable = item.conditions.filter((condition) => condition.state !== 'manual');
         const manual = item.conditions.filter((condition) => condition.state === 'manual');
-        const jumpTarget: JumpTarget = item.items.length ? 'items'
-          : item.matches.length || item.groups.length ? 'artists' : 'notices';
 
         return (
           <div
@@ -103,10 +96,23 @@ function DetailSection({
 
             {open && (
               <div className="border-t border-line px-2.5 pb-2.5 pt-2">
-                <p className="mb-1.5 text-ui-2xs text-ink-faint">
-                  存档可判定 {item.met}/{item.total} 项
-                  {manual.length > 0 && ` · 另有 ${manual.length} 项待手工确认`}
-                </p>
+                {manual.length > 0 && (
+                  <div className="mb-2" data-case-special-nodes>
+                    <p className="mb-1 text-ui-2xs font-semibold text-ink">
+                      关键事件节点 <span className="font-normal text-ink-faint">· 存档无法判定</span>
+                    </p>
+                    <div className="space-y-0.5 text-ui-2xs leading-relaxed text-ink-muted">
+                      {manual.map((condition, index) => (
+                        <div key={condition.row.id} data-case-special-node={condition.row.id} className="flex gap-1.5">
+                          <span className="shrink-0 text-ink-faint">{index + 1}.</span>
+                          <span>{condition.row.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="mb-1 text-ui-2xs text-ink-faint">存档可判定 {item.met}/{item.total} 项</p>
 
                 <div className="space-y-0.5">
                   {readable.map((condition) => (
@@ -126,33 +132,17 @@ function DetailSection({
                   ))}
                 </div>
 
-                {manual.length > 0 && (
-                  <details className="mt-1.5 text-ui-2xs text-ink-faint">
-                    <summary className="cursor-pointer list-none">待手工确认 {manual.length} 项</summary>
-                    <div className="mt-1 space-y-0.5">
-                      {manual.map((condition) => (
-                        <div key={condition.row.id} className="truncate">· {condition.row.name}</div>
-                      ))}
-                    </div>
-                  </details>
-                )}
-
                 {item.items.length > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-1" data-case-special-items>
-                    <span className="mr-0.5 text-ui-2xs text-ink-faint">所需道具</span>
-                    {item.items.map((entry) => (
+                  <div className="mt-2" data-case-special-items>
+                    <span className="text-ui-2xs text-ink-faint">所需道具 </span>
+                    {item.items.map((entry, index) => (
                       <span
                         key={entry.name}
                         data-case-special-item={entry.name}
                         data-case-special-item-met={entry.met}
-                        className={cn(
-                          'rounded-full border px-1.5 py-0.5 text-ui-2xs',
-                          entry.met
-                            ? 'border-brand-line bg-brand-soft text-brand-strong'
-                            : 'border-line bg-surface-soft text-ink-muted',
-                        )}
+                        className="text-ui-2xs text-ink-muted"
                       >
-                        {entry.name} {entry.met ? '已有' : '缺'}
+                        {index > 0 && ' · '}{entry.name} {entry.met ? '已有' : '缺'}
                       </span>
                     ))}
                   </div>
@@ -174,16 +164,6 @@ function DetailSection({
                     ))}
                   </div>
                 )}
-
-                <div className="mt-2 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => onJump(jumpTarget)}
-                    className="rounded-ui-sm border border-line px-2 py-0.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
-                  >
-                    看依据
-                  </button>
-                </div>
               </div>
             )}
           </div>
