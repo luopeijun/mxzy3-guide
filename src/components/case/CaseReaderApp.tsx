@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import type { ChangeEvent, DragEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import EmptyState from '../EmptyState';
+import { companyDot, companyText } from '../notices/infoStyle';
 import { cn } from '../../lib/cn';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
@@ -867,7 +868,21 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                                   >
                                     <span className="text-ink-faint">{work.date}</span>
                                     <span className="font-semibold text-ink">{work.workName}</span>
-                                    <span className="text-ink-muted">· {work.company}</span>
+                                    <span
+                                      className={cn(
+                                        'inline-flex items-center gap-1 font-semibold',
+                                        companyText(work.company),
+                                      )}
+                                    >
+                                      <span
+                                        aria-hidden
+                                        className={cn(
+                                          'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
+                                          companyDot(work.company),
+                                        )}
+                                      />
+                                      {work.company}
+                                    </span>
                                   </span>
                                 ))}
                               </span>

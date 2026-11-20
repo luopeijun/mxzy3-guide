@@ -44,6 +44,27 @@ const COMPANY_COLORS: CompanyColor[] = [
   { name: '钜子娱乐', dot: 'bg-dot-juzi', text: 'text-dot-juzi' },
 ];
 
+/** 存档里的公司名沿用繁体，且 EAMI 有「音乐 / 唱片」两块牌子；归一到同一套色号。 */
+const COMPANY_ALIAS: Record<string, string> = {
+  'SoSa電視': 'SoSa电视',
+  '永振電視': '永振电视',
+  '日月光音樂': '日月光音乐',
+  'EAMI音樂': 'EAMI音乐',
+  'EAMI唱片': 'EAMI音乐',
+  '京風唱片': '京风唱片',
+  '全球製片': '全球制片',
+  '大宇宙影業': '大宇宙影业',
+  '創意廣告': '创意广告',
+  '追夢廣告': '追梦广告',
+  '翱翔天際': '翱翔天际',
+  '鉅子娛樂': '钜子娱乐',
+};
+
+function companyKey(company?: string | null): string {
+  if (!company) return '';
+  return COMPANY_ALIAS[company] ?? company;
+}
+
 const COMPANY_DOT: Record<string, string> = Object.fromEntries(
   COMPANY_COLORS.map((company) => [company.name, company.dot]),
 );
@@ -60,9 +81,11 @@ export function timeText(time?: string | null): string {
 }
 
 export function companyDot(company?: string | null): string {
-  return (company && COMPANY_DOT[company]) || 'bg-ink-faint';
+  const key = companyKey(company);
+  return (key && COMPANY_DOT[key]) || 'bg-ink-faint';
 }
 
 export function companyText(company?: string | null): string {
-  return (company && COMPANY_TEXT[company]) || 'text-ink';
+  const key = companyKey(company);
+  return (key && COMPANY_TEXT[key]) || 'text-ink';
 }
