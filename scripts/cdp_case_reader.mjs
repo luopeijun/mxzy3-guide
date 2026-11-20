@@ -1532,6 +1532,7 @@ async function main() {
           return JSON.stringify({
             label: chip.innerText.replace(/\\s+/g, ' ').trim(),
             value: chip.querySelector('b')?.innerText || '',
+            chipBg: getComputedStyle(chip).backgroundColor,
             opacity: getComputedStyle(tip).opacity,
             rows: [...tip.querySelectorAll('[data-case-artist-work]')].map(function(r){ return r.innerText.replace(/\\s+/g, ' ').trim(); }),
             maxHeight: cs ? cs.maxHeight : '',
@@ -1549,6 +1550,12 @@ async function main() {
       host?.rows.join(' | ') ?? 'none');
       check(host?.rows.every((row, i) => row.startsWith(`${i + 1}.`)),
         '作品明细每行前面带发生顺序编号', host?.rows.join(' | ') ?? 'none');
+      // 主持作品角色读静态表 subtype；陈奕夫 SH067 / SH072 都是「助理主持」。
+      check(host && host.rows[2].includes('助理主持') && host.rows[3].includes('助理主持'),
+        '主持作品 hover 显示角色「助理主持」（读静态表 subtype，非性别推断）',
+        `${host?.rows[2]} | ${host?.rows[3]}`);
+      check(host && (host.chipBg === 'rgb(250, 239, 243)' || host.chipBg === 'rgb(252, 235, 244)'),
+        '通告统计项 hover 时才浮出粉底（平时透明）', host?.chipBg ?? 'none');
       const albums = await hoverArtistChip(74, 2);
       check(albums && Number(albums.value) === 7 && albums.rows.length === 7
         && albums.rows.every((row) => /\d{4}\/\d+\/\d+/.test(row))
@@ -1593,12 +1600,41 @@ async function main() {
         if (!social) return null;
         var kids = [...social.children];
         var cs = getComputedStyle(social);
+        var friend = social.querySelector('[data-case-artist-friendship]');
+        var pop = social.querySelector('[data-case-artist-popularity]');
+        var certs = [...card.querySelectorAll('[data-case-artist-cert]')]
+          .map(function(x){ return x.innerText.replace(/\\s+/g, ' ').trim(); });
+        var awards = [...card.querySelectorAll('[data-case-artist-award] [award-item], [data-case-artist-award] .award-item, [data-case-artist-company-award] .award-item')];
+        var events = [...card.querySelectorAll('[data-case-artist-event] .event-item')];
+        var chips = [...card.querySelectorAll('[data-case-artist-counts] .work-count-chip')];
         return {
           id: (card.innerText.match(/#(\\d+)/) || [])[1] || '',
           borderTop: cs.borderTopWidth, borderBottom: cs.borderBottomWidth,
           friendshipFirst: kids[0]?.hasAttribute('data-case-artist-friendship') === true,
           popularitySecond: kids[1]?.hasAttribute('data-case-artist-popularity') === true,
-          firstBg: kids[0] ? getComputedStyle(kids[0]).backgroundColor : '',
+          firstBg: friend ? getComputedStyle(friend).backgroundColor : '',
+          friendColor: friend ? getComputedStyle(friend).color : '',
+          friendDot: friend ? getComputedStyle(friend, '::before').content : '',
+          popBg: pop ? getComputedStyle(pop).backgroundColor : '',
+          socialItemCount: social.querySelectorAll('.social-item').length,
+          sep: kids[1] ? getComputedStyle(kids[1], '::before').content : '',
+          certs: certs,
+          certNone: !!card.querySelector('[data-case-artist-cert-none]'),
+          certBg: certs.length ? getComputedStyle(card.querySelector('[data-case-artist-cert]')).backgroundColor : '',
+          awardTitles: awards.map(function(x){ return x.innerText.trim(); }),
+          awardColor: awards.length ? getComputedStyle(awards[0]).color : '',
+          awardBg: awards.length ? getComputedStyle(awards[0]).backgroundColor : '',
+          awardDot: awards.length ? getComputedStyle(awards[0], '::before').content : '',
+          eventLabels: events.map(function(x){ return x.innerText.trim(); }),
+          eventColor: events.length ? getComputedStyle(events[0]).color : '',
+          eventBg: events.length ? getComputedStyle(card.querySelector('[data-case-artist-event]')).backgroundColor : '',
+          eventDot: events.length ? getComputedStyle(events[0], '::before').content : '',
+          chipCount: chips.length,
+          chipBg: chips.length ? getComputedStyle(chips[0]).backgroundColor : '',
+          chipSep: chips.length > 1 ? getComputedStyle(chips[1], '::before').content : '',
+          // 性别徽章是圆角 pill：rounded-full + 文本恰好是「男」或「女」。
+          genderBadges: [...card.querySelectorAll('.rounded-full')]
+            .filter(function(x){ return /^[男女]$/.test(x.innerText.trim()); }).length,
           socialText: social.innerText.replace(/\\s+/g, ' ').trim(),
           eventText: (card.querySelector('[data-case-artist-events]')?.innerText || '').replace(/\\s+/g, ' ').trim(),
           contract: (function(){
@@ -1617,8 +1653,41 @@ async function main() {
       check(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])),
         '社交数值按 友好度 → 人气 → 压力/疲劳 → 次要属性 排列',
         `${order.join('/')} :: ${xiaoCard?.socialText ?? 'none'}`);
-      check(Boolean(xiaoCard) && xiaoCard.firstBg !== 'rgba(0, 0, 0, 0)' && xiaoCard.firstBg !== 'transparent',
-        '友好度用品牌胶囊，和次要属性区分开', xiaoCard?.firstBg ?? 'none');
+      // v1.15.1 视觉降噪：友好度去粉底胶囊、改品牌粉文字 + 圆点；人气去底色；
+      // 奖项金色纯文字 + 菱形、活动青绿纯文字 + 菱形、证书 / 通告统计纯文字 + 分隔点。
+      check(Boolean(xiaoCard) && (xiaoCard.firstBg === 'rgba(0, 0, 0, 0)' || xiaoCard.firstBg === 'transparent')
+        && xiaoCard.friendDot !== 'none' && xiaoCard.friendDot !== 'normal' && xiaoCard.friendColor !== '',
+        '友好度去粉底胶囊，改品牌粉文字 + 圆点（::before）',
+        `bg=${xiaoCard?.firstBg} dot=${xiaoCard?.friendDot} color=${xiaoCard?.friendColor}`);
+      check(Boolean(xiaoCard) && (xiaoCard.popBg === 'rgba(0, 0, 0, 0)' || xiaoCard.popBg === 'transparent'),
+        '人气去掉淡粉底胶囊，保留深色加粗文字', xiaoCard?.popBg ?? 'none');
+      check(Boolean(xiaoCard) && xiaoCard.socialItemCount >= 2 && xiaoCard.sep !== 'none'
+        && xiaoCard.sep !== 'normal',
+        '人气 / 压力疲劳项前加淡分隔点（social-item::before），避开友好度圆点',
+        `items=${xiaoCard?.socialItemCount} sep=${xiaoCard?.sep}`);
+      const certCard = artistCards.find((c) => c.certs.length > 0);
+      check(Boolean(certCard) && (certCard.certBg === 'rgba(0, 0, 0, 0)' || certCard.certBg === 'transparent'),
+        '证书去粉底胶囊，改纯文字', `${certCard?.id}:${certCard?.certs.join('+')} bg=${certCard?.certBg}`);
+      const awardCard = artistCards.find((c) => c.awardTitles.length > 0);
+      check(Boolean(awardCard) && (awardCard.awardBg === 'rgba(0, 0, 0, 0)' || awardCard.awardBg === 'transparent')
+        && awardCard.awardDot !== 'none' && awardCard.awardDot !== 'normal',
+        '奖项去金底胶囊，改金色纯文字 + 菱形（::before）',
+        `${awardCard?.id}:${awardCard?.awardTitles[0]} bg=${awardCard?.awardBg} dot=${awardCard?.awardDot}`);
+      const eventCard = artistCards.find((c) => c.eventLabels.length > 0);
+      check(Boolean(eventCard) && (eventCard.eventBg === 'rgba(0, 0, 0, 0)' || eventCard.eventBg === 'transparent')
+        && eventCard.eventDot !== 'none' && eventCard.eventDot !== 'normal',
+        '活动去粉底胶囊，改青绿纯文字 + 菱形（::before）',
+        `${eventCard?.id}:${eventCard?.eventLabels[0]} color=${eventCard?.eventColor} dot=${eventCard?.eventDot}`);
+      check(eventCard?.eventColor === 'rgb(15, 90, 82)',
+        '活动名用青绿 #0f5a52，与金色奖项区分', eventCard?.eventColor ?? 'none');
+      check(Boolean(xiaoCard) && xiaoCard.chipCount === 6
+        && (xiaoCard.chipBg === 'rgba(0, 0, 0, 0)' || xiaoCard.chipBg === 'transparent')
+        && xiaoCard.chipSep !== 'none' && xiaoCard.chipSep !== 'normal',
+        '通告统计 6 项平时无底色、项间淡分隔点（hover 才浮粉底）',
+        `chips=${xiaoCard?.chipCount} bg=${xiaoCard?.chipBg} sep=${xiaoCard?.chipSep}`);
+      check(artistCards.every((c) => c.genderBadges === 0),
+        '艺人卡标题行不显示男 / 女徽章',
+        artistCards.filter((c) => c.genderBadges).map((c) => `${c.id}:${c.genderBadges}`).join(' '));
       check(groupEventsText.includes('大型團體演唱會')
         && artistCards.every((c) => !c.eventText.includes('大型團體演唱會')),
       '大型团体演唱会只在团体卡活动里，不挂个人卡',

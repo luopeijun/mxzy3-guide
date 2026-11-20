@@ -1494,6 +1494,24 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
       '早期主持通告没有明细就写占位，不猜作品名',
       host.map((w) => w.workName).join(' / '));
 
+    // 主持作品角色直接读静态通告表的 subtype（助理主持 / 外景主持 / 主持人），
+    // 不是按艺人性别猜；每条都要和 case-tables.json 的 subtype 逐条对上。
+    const hostRoles = released.works.filter((w) => w.noticeIndex === 4 && w.role);
+    check(hostRoles.length > 0 && hostRoles.every((w) => tables.cases[w.workCode]?.[2] === w.role),
+      '主持作品角色 = 静态表 subtype（非性别推断），逐条对上游戏数据表',
+      hostRoles.slice(0, 4).map((w) => `${w.workCode}:${w.role}`).join(' '));
+    const hostKinds = [...new Set(hostRoles.map((w) => w.role))].sort();
+    check(hostKinds.join(',') === '主持人,助理主持,外景主持',
+      '三种主持角色真值都出现（主持人 / 助理主持 / 外景主持）', hostKinds.join(','));
+    const yiliHost = released.works.filter((w) => w.artistId === 6 && w.noticeIndex === 4 && w.role);
+    check(yiliHost.length === 5 && yiliHost.every((w) => w.role === '助理主持'),
+      'AutoReleased 萧依莉 5 条主持全是助理主持',
+      yiliHost.map((w) => `${w.workCode}:${w.role}`).join(' '));
+    const chenHostRole = (code) => released.works.find((w) => w.artistId === 8 && w.workCode === code)?.role;
+    check(chenHostRole('SH067') === '助理主持' && chenHostRole('SH072') === '助理主持',
+      'AutoReleased 陈奕夫 SH067 / SH072 是助理主持',
+      `${chenHostRole('SH067')} / ${chenHostRole('SH072')}`);
+
     const dated = released.works.filter((w) => w.artistId === 6 && w.year > 0);
     const dayOf = (w) => w.year * 10000 + w.month * 100 + w.day;
     check(dated.every((w, i) => i === 0 || dayOf(dated[i - 1]) <= dayOf(w)),
