@@ -76,9 +76,11 @@ function chipClass(active: boolean) {
   );
 }
 
-/** 作品明细里的角色胶囊：主角用品牌粉提亮，配角压成灰粉底，一眼分出主次。 */
+/** 作品明细里的角色胶囊：主角 / 外景主持 / 主持人用品牌粉提亮，
+ *  配角与助理主持压成灰底。 */
 function workRoleClass(role: string): string {
-  return role.includes('主角')
+  const featured = role.includes('主角') || role === '外景主持' || role === '主持人';
+  return featured
     ? 'rounded bg-brand-soft px-1 font-semibold text-brand-strong'
     : 'rounded bg-line px-1 text-ink-muted';
 }
