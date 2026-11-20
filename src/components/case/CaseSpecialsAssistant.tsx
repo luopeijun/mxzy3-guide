@@ -24,10 +24,6 @@ const STATUS_DOT: Record<LiveNoticeStatus, string> = {
   manual: 'bg-ink-faint',
 };
 
-function statusRank(status: LiveNoticeStatus): number {
-  return { close: 0, progress: 1, none: 2, manual: 3, done: 4 }[status];
-}
-
 /** 艺人胶囊的自定义 hover 浮层：男主角 / 男配角两坑位各自列差值。
  *  原生 title 又慢又不能排版，这里用浮层卡片，跟随胶囊位置。 */
 function MatchHoverCard({
@@ -169,7 +165,10 @@ function DetailSection({
                       {filmed.map((record, index) => (
                         <span key={`${record.name}-${record.date}-${record.role}-${index}`} className="inline-flex items-baseline gap-1">
                           {record.role && <span className={workRoleClass(record.role)}>{record.role}</span>}
-                          <span className={cn('text-ui-2xs', record.own ? 'font-bold text-ink' : 'font-normal text-ink-muted')}>{record.name}</span>
+                          <span className={cn('text-ui-2xs', record.own ? 'font-bold text-ink' : 'font-normal text-ink-faint')}>
+                            {record.own && <span aria-hidden="true" className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-brand align-middle" />}
+                            {record.name}
+                          </span>
                         </span>
                       ))}
                     </div>
@@ -309,13 +308,9 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   );
 
   useEffect(() => {
-    if (!report || !report.notices.length) return;
-    setExpanded((current) => {
-      if (current && report.notices.some((item) => item.notice.id === current)) return current;
-      const best = [...report.notices].sort((a, b) =>
-        statusRank(a.status) - statusRank(b.status) || b.met - a.met)[0];
-      return best?.notice.id ?? '';
-    });
+    // 默认全部收起；换存档后清掉指向旧通告的展开项。
+    setExpanded((current) =>
+      current && report?.notices.some((item) => item.notice.id === current) ? current : '');
   }, [report]);
 
   useEffect(() => {
