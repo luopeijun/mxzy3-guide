@@ -2353,6 +2353,61 @@ export function parseSave(
     };
   });
 
+  // 自制通告杀青发布后不会写进「藝人成績」记事表（记事表只记公司通告），
+  // 所以悬停清单要另外补一份：Auto 的 CD701 有朋自遠方來、TV701 一夜緋聞
+  // 都只存在于 CaseCreate，漏掉就会让人以为官方统计多算了。
+  const knownWorkKeys = new Set(
+    works.map((work) => `${work.noticeIndex}|${work.workCode}|${work.artistId}`),
+  );
+  const knownGroupCodes = new Set(groupWorks.map((work) => work.workCode));
+  const extraWorks: WorkRecord[] = [];
+  const extraGroupWorks: GroupWork[] = [];
+  for (const notice of selfMade) {
+    if (notice.status !== 'done' || !Number.isFinite(notice.endDay)) continue;
+    const noticeIndex = WORK_CODE_PREFIX.indexOf(notice.code.slice(0, 2));
+    if (noticeIndex < 0) continue;
+    const [year, month, day] = notice.endDate.split('/').map(Number);
+    if (!year || !month || !day) continue;
+    const workName = notice.name || tables.cases[notice.code]?.[0] || notice.code;
+    const company = notice.company || tables.cases[notice.code]?.[3] || '';
+    const common = {
+      date: notice.endDate,
+      year, month, day,
+      workCode: notice.code,
+      workName,
+      company,
+    };
+    if (noticeIndex === 2 && notice.subtype === '團體') {
+      if (!knownGroupCodes.has(notice.code)) {
+        const cast = notice.casts.find((item) => item.mine) ?? notice.casts[0];
+        if (cast) {
+          knownGroupCodes.add(notice.code);
+          extraGroupWorks.push({ ...common, artistId: cast.artistId });
+        }
+      }
+      continue;
+    }
+    for (const cast of notice.casts) {
+      const key = `${noticeIndex}|${notice.code}|${cast.artistId}`;
+      if (knownWorkKeys.has(key)) continue;
+      knownWorkKeys.add(key);
+      extraWorks.push({
+        ...common,
+        artistId: cast.artistId,
+        noticeIndex,
+        role: noticeIndex === 2 ? '' : cast.role?.role ?? '',
+      });
+    }
+  }
+  const allWorks = [...works, ...extraWorks].sort(
+    (a, b) => dayNumber(a.year, a.month, a.day) - dayNumber(b.year, b.month, b.day)
+      || a.workCode.localeCompare(b.workCode),
+  );
+  const allGroupWorks = [...groupWorks, ...extraGroupWorks].sort(
+    (a, b) => dayNumber(a.year, a.month, a.day) - dayNumber(b.year, b.month, b.day)
+      || a.workCode.localeCompare(b.workCode),
+  );
+
   return {
     saveName,
     saveSize: bytes.length,
@@ -2371,8 +2426,8 @@ export function parseSave(
     currentDate,
     company,
     awards,
-    groupWorks,
-    works,
+    groupWorks: allGroupWorks,
+    works: allWorks,
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],
