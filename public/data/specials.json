@@ -242,7 +242,7 @@
       "scope": "artist",
       "name": "演技",
       "target": "500~550",
-      "hint": "达到下限即达标；攻略给的正是区间",
+      "hint": "达到上限即达标；攻略给的正是区间",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -261,7 +261,7 @@
       "scope": "artist",
       "name": "动感",
       "target": "450~500",
-      "hint": "达到下限即达标",
+      "hint": "达到上限即达标",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -280,7 +280,7 @@
       "scope": "artist",
       "name": "体能",
       "target": "630~700",
-      "hint": "达到下限即达标",
+      "hint": "达到上限即达标",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -299,7 +299,7 @@
       "scope": "artist",
       "name": "名气",
       "target": "500~550",
-      "hint": "达到下限即达标",
+      "hint": "达到上限即达标",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -318,7 +318,7 @@
       "scope": "artist",
       "name": "演技",
       "target": "450~520",
-      "hint": "男配角能力要求；达到下限即达标",
+      "hint": "男配角能力要求；达到上限即达标",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -337,7 +337,7 @@
       "scope": "artist",
       "name": "名气",
       "target": "400~450",
-      "hint": "男配角能力要求；达到下限即达标",
+      "hint": "男配角能力要求；达到上限即达标",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -356,7 +356,7 @@
       "scope": "artist",
       "name": "动感",
       "target": "400~450",
-      "hint": "男配角能力要求；达到下限即达标",
+      "hint": "男配角能力要求；达到上限即达标",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -375,7 +375,7 @@
       "scope": "artist",
       "name": "体能",
       "target": "450~520",
-      "hint": "男配角能力要求；达到下限即达标",
+      "hint": "男配角能力要求；达到上限即达标",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -877,7 +877,7 @@
       "scope": "artist",
       "name": "歌艺",
       "target": "630~700",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -895,7 +895,7 @@
       "scope": "artist",
       "name": "才智",
       "target": "450~500",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -913,7 +913,7 @@
       "scope": "artist",
       "name": "自信",
       "target": "630~700",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -931,7 +931,7 @@
       "scope": "artist",
       "name": "名气",
       "target": "450~500",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -1307,7 +1307,7 @@
       "scope": "artist",
       "name": "歌艺",
       "target": "630~700",
-      "hint": "攻略「大致要求：歌艺 700」正好是区间上限；按定稿取下限达标",
+      "hint": "攻略「大致要求：歌艺 700」正好是区间上限；按定稿取上限达标",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -1326,7 +1326,7 @@
       "scope": "artist",
       "name": "仪态",
       "target": "630~700",
-      "hint": "攻略单值 700；按定稿取下限达标",
+      "hint": "攻略单值 700；按定稿取上限达标",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -1345,7 +1345,7 @@
       "scope": "artist",
       "name": "自信",
       "target": "500~550",
-      "hint": "攻略单值 550；按定稿取下限达标",
+      "hint": "攻略单值 550；按定稿取上限达标",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -1364,7 +1364,7 @@
       "scope": "artist",
       "name": "名气",
       "target": "450~500",
-      "hint": "攻略单值 500；按定稿取下限达标",
+      "hint": "攻略单值 500；按定稿取上限达标",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -1701,7 +1701,7 @@
       "scope": "artist",
       "name": "演技",
       "target": "500~550",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -1719,7 +1719,7 @@
       "scope": "artist",
       "name": "名气",
       "target": "630~700",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -1737,7 +1737,7 @@
       "scope": "artist",
       "name": "仪态",
       "target": "500~550",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",
@@ -1755,7 +1755,7 @@
       "scope": "artist",
       "name": "动感",
       "target": "450~500",
-      "hint": "达到下限即达标；数值来自条件表（攻略正文未列）",
+      "hint": "达到上限即达标；数值来自条件表（攻略正文未列）",
       "source": "表",
       "link": {
         "kind": "guide",

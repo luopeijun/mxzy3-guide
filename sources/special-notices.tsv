@@ -6,14 +6,14 @@ proud.xiake5	proud-of-the-world	-	trigger	condition	count	global	侠客行事件
 proud.filmguide3	proud-of-the-world	-	trigger	condition	count	global	王瑞恩与金父讨论（每月 1 次）	3	前往全球看到两人讨论，需触发 3 次	notices/proud-of-the-world#88	表+攻略	-
 proud.fatherAlive	proud-of-the-world	-	trigger	condition	flag	global	金父未死	-	第二年 4/5/7/10 月新闻均要求金父未死	notices/proud-of-the-world#84	表+攻略	-
 proud.goldMedal	proud-of-the-world	-	prepare	condition	item	notice	大侠金牌（可选）	-	可用大侠金牌直接接此通告	notices/proud-of-the-world#92	表+攻略	-
-proud.stat.acting	proud-of-the-world	main	notice	condition	stat	artist	演技	500~550	达到下限即达标；攻略给的正是区间	notices/proud-of-the-world#92	表+攻略	-
-proud.stat.movement	proud-of-the-world	main	notice	condition	stat	artist	动感	450~500	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
-proud.stat.energy	proud-of-the-world	main	notice	condition	stat	artist	体能	630~700	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
-proud.stat.fame	proud-of-the-world	main	notice	condition	stat	artist	名气	500~550	达到下限即达标	notices/proud-of-the-world#92	表+攻略	-
-proud.support.acting	proud-of-the-world	support	notice	condition	stat	artist	演技	450~520	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
-proud.support.fame	proud-of-the-world	support	notice	condition	stat	artist	名气	400~450	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
-proud.support.movement	proud-of-the-world	support	notice	condition	stat	artist	动感	400~450	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
-proud.support.energy	proud-of-the-world	support	notice	condition	stat	artist	体能	450~520	男配角能力要求；达到下限即达标	notices/proud-of-the-world#92	表	-
+proud.stat.acting	proud-of-the-world	main	notice	condition	stat	artist	演技	500~550	达到上限即达标；攻略给的正是区间	notices/proud-of-the-world#92	表+攻略	-
+proud.stat.movement	proud-of-the-world	main	notice	condition	stat	artist	动感	450~500	达到上限即达标	notices/proud-of-the-world#92	表+攻略	-
+proud.stat.energy	proud-of-the-world	main	notice	condition	stat	artist	体能	630~700	达到上限即达标	notices/proud-of-the-world#92	表+攻略	-
+proud.stat.fame	proud-of-the-world	main	notice	condition	stat	artist	名气	500~550	达到上限即达标	notices/proud-of-the-world#92	表+攻略	-
+proud.support.acting	proud-of-the-world	support	notice	condition	stat	artist	演技	450~520	男配角能力要求；达到上限即达标	notices/proud-of-the-world#92	表	-
+proud.support.fame	proud-of-the-world	support	notice	condition	stat	artist	名气	400~450	男配角能力要求；达到上限即达标	notices/proud-of-the-world#92	表	-
+proud.support.movement	proud-of-the-world	support	notice	condition	stat	artist	动感	400~450	男配角能力要求；达到上限即达标	notices/proud-of-the-world#92	表	-
+proud.support.energy	proud-of-the-world	support	notice	condition	stat	artist	体能	450~520	男配角能力要求；达到上限即达标	notices/proud-of-the-world#92	表	-
 proud.tl.booking	proud-of-the-world	-	-	note	-	-	1 月下旬预约，2 月下旬开拍	-	时间窗标签，不计时	tracker:notices/proud-of-the-world	表	-
 proud.tl.firstYear	proud-of-the-world	-	-	note	-	-	第一年：侠客行 5 次；按时参加影友会；影友会后 3 个月内周三找记者	-	影友会必须参加（#81），记者必须触发（#83）才有后续	tracker:notices/proud-of-the-world	表+攻略	-
 proud.tl.secondYear	proud-of-the-world	-	-	note	-	-	第二年：送药 4 次后公园找老爸；电影指导 3 次（每月 1 次）；过完 2 次父亲节（8.8）；11 月底前公园找老爸；参加记者会（12 月 16 日）；医院	-	对应攻略 #75 #77 #87 #88 #90 #91 #96	tracker:notices/proud-of-the-world	表+攻略	-
@@ -40,10 +40,10 @@ eternal.item.meiying	eternal-love	-	prepare	condition	item	global	魅影	-	赢�
 eternal.item.mozhou	eternal-love	-	prepare	condition	item	global	魔咒	-	在维也纳买 10 次听课证后教授赠送	notices/eternal-love#17	表+攻略	-
 eternal.item.huyan	eternal-love	-	prepare	condition	item	global	狐眼	-	秀场主持到资深后再打工 20 次以上，且主角跟随时会捡到	notices/eternal-love#17	表+攻略	-
 eternal.item.cross	eternal-love	-	prepare	condition	item	global	圣约翰的千年十字架	-	开罗购买，100 万；事件 15 后一个月内	notices/eternal-love#16	表+攻略	-
-eternal.stat.singing	eternal-love	main	notice	condition	stat	artist	歌艺	630~700	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
-eternal.stat.wisdom	eternal-love	main	notice	condition	stat	artist	才智	450~500	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
-eternal.stat.confidence	eternal-love	main	notice	condition	stat	artist	自信	630~700	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
-eternal.stat.fame	eternal-love	main	notice	condition	stat	artist	名气	450~500	达到下限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.stat.singing	eternal-love	main	notice	condition	stat	artist	歌艺	630~700	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.stat.wisdom	eternal-love	main	notice	condition	stat	artist	才智	450~500	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.stat.confidence	eternal-love	main	notice	condition	stat	artist	自信	630~700	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.stat.fame	eternal-love	main	notice	condition	stat	artist	名气	450~500	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
 eternal.tl.flow	eternal-love	-	-	note	-	-	5 张个人唱片 + 音乐证书 → 大型个人演唱会后触发 → 买十字架 → 送暗黑之服 → 抽取利金	-	流程索引	tracker:notices/eternal-love	表	-
 eternal.tl.key	eternal-love	-	-	note	-	-	猫狗神偷可通过开罗商店物品「法老王之钥」大幅降低游戏难度（售价 100 万，每月末可蹲）	-	省事提示	tracker:notices/eternal-love	表	-
 eternal.tl.singer	eternal-love	-	-	note	-	-	攻略补充：万年之恋必须让交出歌曲的男艺人演唱，否则成绩很糟	-	对应攻略 #20 提醒	tracker:notices/eternal-love	攻略	-
@@ -63,10 +63,10 @@ angel.item.silk	angel	-	prepare	condition	item	global	光丝布料	-	精品店�
 angel.item.musicbox	angel	-	prepare	condition	item	global	天使的音乐盒	-	答应捐款 3 天后，大天使寄来感谢卡和音乐盒	notices/angel#5	表+攻略	-
 angel.item.dress	angel	-	prepare	condition	item	global	天使羽衣	-	集齐四样材料，巴黎找老板制作，两周后可取	notices/angel#7	表+攻略	-
 angel.giveDress	angel	main	trigger	condition	flag	artist	接通告前把天使羽衣送给对应艺人	-	必须送给触发捐款的那位女艺人	notices/angel#9	表+攻略	-
-angel.stat.singing	angel	main	notice	condition	stat	artist	歌艺	630~700	攻略「大致要求：歌艺 700」正好是区间上限；按定稿取下限达标	notices/angel#10	表+攻略	-
-angel.stat.etiquette	angel	main	notice	condition	stat	artist	仪态	630~700	攻略单值 700；按定稿取下限达标	notices/angel#10	表+攻略	-
-angel.stat.confidence	angel	main	notice	condition	stat	artist	自信	500~550	攻略单值 550；按定稿取下限达标	notices/angel#10	表+攻略	-
-angel.stat.fame	angel	main	notice	condition	stat	artist	名气	450~500	攻略单值 500；按定稿取下限达标	notices/angel#10	表+攻略	-
+angel.stat.singing	angel	main	notice	condition	stat	artist	歌艺	630~700	攻略「大致要求：歌艺 700」正好是区间上限；按定稿取上限达标	notices/angel#10	表+攻略	-
+angel.stat.etiquette	angel	main	notice	condition	stat	artist	仪态	630~700	攻略单值 700；按定稿取上限达标	notices/angel#10	表+攻略	-
+angel.stat.confidence	angel	main	notice	condition	stat	artist	自信	500~550	攻略单值 550；按定稿取上限达标	notices/angel#10	表+攻略	-
+angel.stat.fame	angel	main	notice	condition	stat	artist	名气	450~500	攻略单值 500；按定稿取上限达标	notices/angel#10	表+攻略	-
 angel.tl.charity	angel	-	-	note	-	-	慈善义演：每年 2 月/8 月第一周上门；触发条件歌艺/仪态 300、人气 3；确保排程时人气 >3 且为旗下女艺人中最高	-	流程索引	tracker:notices/angel	表	-
 angel.tl.hunger	angel	-	-	note	-	-	饥饿百分百：4 月、10 月	-	时间窗标签	tracker:notices/angel	表	-
 angel.tl.musicbox	angel	-	-	note	-	-	天使的音乐盒：参加过饥饿百分百 + 音乐证书 + 5 张个人唱片 → 举办大型个人演唱会后的周末答应捐款 → 3 天后获得	-	流程索引	tracker:notices/angel	表	-
@@ -84,10 +84,10 @@ kunlun.sight3	kunlun-adventure	-	trigger	condition	count	global	塞外观光累�
 kunlun.movies5	kunlun-adventure	-	trigger	condition	count	global	旗下艺人出演电影	5	≥5 部	notices/kunlun-adventure#66	表+攻略	-
 kunlun.leads2	kunlun-adventure	-	trigger	condition	count	global	其中担任主角	2	≥2 次	notices/kunlun-adventure#66	表+攻略	-
 kunlun.fatherAlive	kunlun-adventure	-	trigger	condition	flag	global	老爸活下来	-	不满足则剧本获得时间推迟到老爸去世后	notices/kunlun-adventure#66	表+攻略	-
-kunlun.stat.acting	kunlun-adventure	main	notice	condition	stat	artist	演技	500~550	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
-kunlun.stat.fame	kunlun-adventure	main	notice	condition	stat	artist	名气	630~700	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
-kunlun.stat.etiquette	kunlun-adventure	main	notice	condition	stat	artist	仪态	500~550	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
-kunlun.stat.movement	kunlun-adventure	main	notice	condition	stat	artist	动感	450~500	达到下限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.stat.acting	kunlun-adventure	main	notice	condition	stat	artist	演技	500~550	达到上限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.stat.fame	kunlun-adventure	main	notice	condition	stat	artist	名气	630~700	达到上限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.stat.etiquette	kunlun-adventure	main	notice	condition	stat	artist	仪态	500~550	达到上限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.stat.movement	kunlun-adventure	main	notice	condition	stat	artist	动感	450~500	达到上限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
 kunlun.tl.maleOnly	kunlun-adventure	-	-	note	-	-	注：旗下只有女艺人的话昆仑历险事件会中断（此条来自条件表，攻略正文未明写）	-	来源仅条件表；按裁决降级为只读备注，不进达标数	tracker:notices/kunlun-adventure	表	-
 kunlun.tl.sight	kunlun-adventure	-	-	note	-	-	塞外观光后，长城路老爹说风沙大；观光累计 3 次艺人叙述奇遇（风敏不触发）；有风敏在旗下时可沟通看塞外传说（不必须）	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-
 kunlun.tl.script	kunlun-adventure	-	-	note	-	-	以上事件触发后第三年 1 月后自动获得剧本；找王瑞恩闲聊 → 1 周后闲聊 → 1 月后闲聊；集齐所有道具且旗下至少 1 位艺人满足证书条件时闲聊，下次通告会上档	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-

@@ -104,11 +104,12 @@ function cleanName(name: string): string {
   return name.replace(/（可选）/g, '').trim();
 }
 
+/** 范围条件按区间上限判定：500~550 要 550 才算达标（用户定稿）。 */
 function targetOf(row: SpecialRow): number {
   const parsed = parseTarget(row.target);
   if (!parsed) return 1;
   if (parsed.kind === 'multi') return parsed.values[0] ?? 1;
-  return parsed.min;
+  return parsed.kind === 'range' ? parsed.max : parsed.min;
 }
 
 function multiAttrs(name: string): string[] | null {

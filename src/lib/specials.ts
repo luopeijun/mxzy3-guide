@@ -103,7 +103,7 @@ export type ParsedTarget =
   | { kind: 'multi'; values: number[]; raw: string }
   | null;
 
-/** "630~700" is a range (reaching the lower bound counts), "4000万" a value,
+/** "630~700" is a range (the upper bound is the pass mark), "4000万" a value,
  *  "300/300/3" three sub-requirements. Unknown shapes return null instead of
  *  guessing. */
 export function parseTarget(raw: string): ParsedTarget {
