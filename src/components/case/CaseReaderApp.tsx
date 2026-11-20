@@ -48,6 +48,13 @@ function chipClass(active: boolean) {
   );
 }
 
+/** 作品明细里的角色胶囊：主角用品牌粉提亮，配角压成灰粉底，一眼分出主次。 */
+function workRoleClass(role: string): string {
+  return role.includes('主角')
+    ? 'rounded bg-brand-soft px-1 font-semibold text-brand-strong'
+    : 'rounded bg-line px-1 text-ink-muted';
+}
+
 const SCENE_GUIDE_ID = 'game-guide/scenes';
 
 /** 解锁方式直接取「场景开启方法」页，避免在这里另抄一份会过期的文案。
@@ -180,7 +187,7 @@ function WorkCountChip({
                     {work.workName}
                   </span>
                   {showRole && 'role' in work && work.role && (
-                    <span className="rounded bg-surface-soft px-1 text-ink-muted">{work.role}</span>
+                    <span className={workRoleClass(work.role)}>{work.role}</span>
                   )}
                   {work.company && (
                     <span
