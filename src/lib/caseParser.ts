@@ -470,28 +470,6 @@ export interface RosterEntry {
   name: string;
 }
 
-/** 存档头部 284 字节名字表按「艺人编号」建索引，覆盖作品清单里出现的 NPC。
- *  RosterEntry 用的是表内槽位号，和游戏内的艺人编号不是一回事。 */
-export function parseArtistNames(bytes: Uint8Array): Map<number, string> {
-  let base = -1;
-  for (let o = 0; o < 20000; o += 4) {
-    if (readBig5Name(bytes, o) && readBig5Name(bytes, o + 284) && readBig5Name(bytes, o + 568)) {
-      base = o;
-      break;
-    }
-  }
-  if (base < 0) return new Map();
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const out = new Map<number, string>();
-  for (let k = 0; k < 60; k += 1) {
-    const at = base + k * 284;
-    const id = view.getUint32(at - 8, true);
-    const name = readBig5Name(bytes, at);
-    if (id > 0 && id < 200 && name && !out.has(id)) out.set(id, name);
-  }
-  return out;
-}
-
 export interface GameDate {
   y: number;
   m: number;
@@ -670,8 +648,6 @@ export interface ParseResult {
   teams: TeamRecord[];
   /** Full 284-byte role-name table at the head of the save. */
   roster: RosterEntry[];
-  /** 艺人编号 → 存档里的名字，含作品清单里出现的 NPC。 */
-  artistNames: Record<number, string>;
   /** Dates from the save header, used for all countdowns. */
   currentDate: GameDate | null;
   /** 我方公司：名称 / 主角 / 形象 / 知名度 / 公关 / 资金。 */
@@ -1162,6 +1138,7 @@ export function parseGroupWorks(
 const WORK_ROLE_OVERRIDES: Record<string, string> = {
   '8|TV111': '男配角',
   '8|MV706': '男配角',
+  // 笑傲天际只有男主角 / 男配角两格，两位参演者按用户实机核实，不按星级猜。
   '8|MV601': '男主角',
   '14|MV601': '男配角',
   '8|TV727': '男主角',
@@ -2307,7 +2284,6 @@ export function parseSave(
     tables.titles ?? {}, tables.titleMeta ?? {},
   );
   const roster = parseRoster(bytes);
-  const artistNames = Object.fromEntries(parseArtistNames(bytes));
   // The state block carries the game's roster number at -16, so the panel can
   // show named artists instead of anonymous "状态块 #N" selectors.
   const artistDirectory: ArtistOption[] = ARTIST_DIRECTORY.map((entry) => {
@@ -2833,7 +2809,6 @@ export function parseSave(
     signedArtistIds,
     teams,
     roster,
-    artistNames,
     currentDate,
     company,
     awards,

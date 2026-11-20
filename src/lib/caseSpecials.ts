@@ -357,7 +357,7 @@ const SPECIAL_WORK_CODES: Record<string, string> = {
 
 function artistNameOf(id: number, ctx: EvalContext): string {
   return ctx.result.artistDirectory.find((option) => option.id === id)?.name
-    ?? ctx.result.artistNames[id]
+    ?? ctx.tables.stars?.[String(id)]?.[0]
     ?? `编号${id}`;
 }
 
