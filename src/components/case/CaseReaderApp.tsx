@@ -3,7 +3,9 @@ import type { ChangeEvent, DragEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import EmptyState from '../EmptyState';
 import { companyDot, companyText } from '../notices/infoStyle';
+import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
+import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
   noticeLabel, noticeUnit,
@@ -14,6 +16,7 @@ import {
   type TitleLine, type TitleMeta, type WorkRecord,
 } from '../../lib/caseParser';
 import type { TitleGapItem, TitleNext } from '../../lib/titleLadder';
+import type { GuideData } from '../../types/guide';
 
 // 数据文件可独立更新、不随 JS 构建走 hash；加时间戳绕开浏览器/CDN 缓存，
 // 否则表新增字段后已打开的页面会一直读到缺字段的旧 JSON（如礼物好感列全为 -）。
@@ -42,6 +45,52 @@ function chipClass(active: boolean) {
     active
       ? 'border-brand bg-brand font-semibold text-white'
       : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+  );
+}
+
+const SCENE_GUIDE_ID = 'game-guide/scenes';
+
+/** 解锁方式直接取「场景开启方法」页，避免在这里另抄一份会过期的文案。
+ *  只取每个场景标题下的第一段、选项和提示：开罗段落后面还有真品概率一类
+ *  的栏目说明，那些不是解锁条件，不能塞进 tooltip。 */
+function collectSceneUnlockHints(guide: GuideData | null): Record<string, string[]> {
+  const path = guide ? findNodePath(guide, SCENE_GUIDE_ID) : [];
+  const node = path.length ? path[path.length - 1] : null;
+  if (!node) return {};
+
+  const hints: Record<string, string[]> = {};
+  let current = '';
+  let firstParagraphTaken = false;
+  for (const block of node.blocks) {
+    if (block.kind === 'section') {
+      current = '';
+      continue;
+    }
+    if (block.kind === 'heading') {
+      current = block.text.split(/[（(]/, 1)[0].trim();
+      firstParagraphTaken = false;
+      if (current && !hints[current]) hints[current] = [];
+      continue;
+    }
+    if (!current || !hints[current] || !block.text.trim()) continue;
+    if (block.kind === 'paragraph') {
+      if (firstParagraphTaken) continue;
+      firstParagraphTaken = true;
+      hints[current].push(block.text.trim());
+      continue;
+    }
+    if (block.kind === 'option' || block.kind === 'note') {
+      hints[current].push(block.kind === 'note' ? `提示：${block.text.trim()}` : block.text.trim());
+    }
+  }
+  return hints;
+}
+
+/** 场景格 2 列 / 4 列切换，tooltip 跟着靠右，别让它冲出容器。 */
+function sceneTooltipAlign(index: number): string {
+  return cn(
+    index % 2 === 1 ? 'right-0 left-auto' : 'left-0 right-auto',
+    index % 4 === 3 ? 'sm:right-0 sm:left-auto' : 'sm:left-0 sm:right-auto',
   );
 }
 
@@ -425,6 +474,8 @@ export interface ExternalSave {
 /** 存档解析：把 .sa2 拖进来，在浏览器里解出当期通告、日期与艺人数值。
  *  文件不会上传；读进内存的就是一份快照，游戏随后覆盖自动存档也不影响。 */
 export default function CaseReaderApp({ externalSave }: { externalSave?: ExternalSave | null } = {}) {
+  const guide = useGuideContext();
+  const sceneUnlockHints = useMemo(() => collectSceneUnlockHints(guide), [guide]);
   const [tables, setTables] = useState<CaseTables>(EMPTY_TABLES);
   const [tablesReady, setTablesReady] = useState(false);
   const [tablesError, setTablesError] = useState('');
@@ -1073,24 +1124,64 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   </span>
                 </summary>
                 <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                  {result.scenes.map((scene) => (
-                    <div
-                      key={scene.name}
-                      data-case-scene
-                      data-case-scene-unlocked={scene.unlocked}
-                      className={cn(
-                        'flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
-                        scene.unlocked
-                          ? 'border-growth-line bg-growth-soft text-growth-strong'
-                          : 'border-line bg-surface text-ink-faint',
-                      )}
-                    >
-                      <b className="font-semibold">{scene.name}</b>
-                      <span className="ml-1 tabular-nums">
-                        {scene.unlocked ? '已解锁' : scene.cost.toLocaleString('zh-CN')}
-                      </span>
-                    </div>
-                  ))}
+                  {result.scenes.map((scene, index) => {
+                    const hints = sceneUnlockHints[scene.name] ?? [];
+                    const showUnlock = !scene.unlocked && hints.length > 0;
+                    return (
+                      <div
+                        key={scene.name}
+                        data-case-scene
+                        data-case-scene-unlocked={scene.unlocked}
+                        tabIndex={showUnlock ? 0 : undefined}
+                        className={cn(
+                          'group flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
+                          scene.unlocked
+                            ? 'border-growth-line bg-growth-soft text-growth-strong'
+                            : 'border-line bg-surface text-ink-faint',
+                          showUnlock && 'cursor-help outline-none focus-visible:ring-2 focus-visible:ring-brand-line',
+                        )}
+                      >
+                        <b className="font-semibold">{scene.name}</b>
+                        <span className={cn('ml-1 tabular-nums', showUnlock && 'decoration-dotted underline-offset-2 hover:underline')}>
+                          {scene.unlocked ? '已解锁' : scene.cost.toLocaleString('zh-CN')}
+                        </span>
+                        {showUnlock && (
+                          <span
+                            data-case-scene-unlock
+                            role="tooltip"
+                            className={cn(
+                              'pointer-events-none absolute top-full z-30 w-[320px] pt-1 opacity-0 transition-opacity duration-150',
+                              'group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100',
+                              sceneTooltipAlign(index),
+                            )}
+                          >
+                            <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
+                              <span className="mb-1 block text-ui-2xs font-semibold text-brand-strong">
+                                解锁方式 · {scene.name}
+                              </span>
+                              <span
+                                data-case-scene-unlock-scroll
+                                className="block max-h-[240px] overflow-y-auto overscroll-contain pr-1"
+                              >
+                                {hints.map((line, lineIndex) => (
+                                  <span
+                                    key={`${lineIndex}-${line}`}
+                                    data-case-scene-unlock-line
+                                    className={cn(
+                                      'block text-ui-2xs leading-[1.5] text-ink-muted',
+                                      lineIndex > 0 && 'mt-1 border-t border-line pt-1',
+                                    )}
+                                  >
+                                    {line}
+                                  </span>
+                                ))}
+                              </span>
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </details>
             )}

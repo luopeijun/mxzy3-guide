@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CaseReaderApp, { type ExternalSave } from '../components/case/CaseReaderApp';
+import { GuideDataContext } from '../hooks/useGuideContext';
+import { useGuideData } from '../hooks/useGuideData';
 import { cn } from '../lib/cn';
 
 interface SaveFile {
@@ -44,6 +46,8 @@ function formatTime(ms: number): string {
 /** 桌面端顶栏：目录由用户自己导入，存档位可挑，点一下读当前态，可开自动跟随。
  *  高度 64px，正好接上 CaseReaderApp 的 `fixed top-16`。 */
 export default function DesktopApp() {
+  // 场景解锁提示读「场景开启方法」页；桌面端也要有同一份 GuideDataContext。
+  const { data: guide } = useGuideData();
   const [state, setState] = useState<DesktopState>(EMPTY_STATE);
   const [externalSave, setExternalSave] = useState<ExternalSave | null>(null);
   const [busy, setBusy] = useState(false);
@@ -167,7 +171,7 @@ export default function DesktopApp() {
   }, [state.autoFollow, activeSave, doRead]);
 
   return (
-    <>
+    <GuideDataContext.Provider value={guide}>
       <header
         data-desktop-bar
         className="fixed inset-x-0 top-0 z-[60] flex h-16 items-center gap-2 border-b border-line bg-surface px-4 shadow-sm"
@@ -234,6 +238,6 @@ export default function DesktopApp() {
         </span>
       </header>
       <CaseReaderApp externalSave={externalSave} />
-    </>
+    </GuideDataContext.Provider>
   );
 }
