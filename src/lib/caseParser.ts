@@ -2569,6 +2569,30 @@ export function parseSave(
       });
     }
     if (casts.length === 0) continue;
+    // 团体通告（团体唱片等）是「整团接下的一份通告」：存档只给队长写了
+    // 接取记录（真实的完成天数与酬劳），队员名下那条 done=0 / pay=0 是
+    // 参与清单带出来的噪声，并不是他自己的进度。所以进度只认队长这一份，
+    // 队员共享同一组数字（Auto 的 CD602 銀河：千金小姐 队长萧依莉 10/25、
+    // 4150 万，队员苏嫚君原本被错显成 0/25）。
+    if (noticeRoles.some(isGroupRole)) {
+      const group = teams.find((team) =>
+        team.memberIds.some((id) => casts.some((cast) => cast.artistId === id)));
+      const leader = group
+        ? casts.find((cast) => cast.artistId === group.memberIds[0]) ?? null
+        : null;
+      if (leader) {
+        for (const cast of casts) {
+          cast.doneDays = leader.doneDays;
+          cast.pay = leader.pay;
+          cast.workDays = leader.workDays;
+          cast.daysPerWeek = leader.daysPerWeek;
+          cast.needDays = leader.needDays;
+          cast.canShootDays = leader.canShootDays;
+          cast.risk = leader.risk;
+          cast.status = leader.status;
+        }
+      }
+    }
     // 自家艺人都交差了就整条收起来：没有在赶期的人，写进表格只是噪音。
     if (casts.every((cast) => cast.status === 'done')) continue;
 
