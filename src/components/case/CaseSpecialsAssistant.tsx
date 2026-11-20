@@ -33,14 +33,20 @@ function statusRank(status: LiveNoticeStatus): number {
 function MatchHoverCard({
   match,
   anchor,
+  onEnter,
+  onLeave,
 }: {
   match: ArtistMatch;
   anchor: { left: number; top: number };
+  onEnter: () => void;
+  onLeave: () => void;
 }) {
   return (
     <div
       data-case-special-hover
-      className="pointer-events-none fixed z-50 w-[300px] -translate-x-full rounded-ui-md border border-line-strong bg-canvas p-2.5 shadow-soft"
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      className="fixed z-50 w-[300px] -translate-x-full rounded-ui-md border border-line-strong bg-canvas p-2.5 shadow-soft"
       style={{ left: anchor.left - 8, top: anchor.top }}
     >
       <p className="mb-1.5 text-ui-xs font-semibold text-ink">{match.name}</p>
@@ -242,6 +248,30 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const [expanded, setExpanded] = useState('');
   const [hover, setHover] = useState<{ match: ArtistMatch; anchor: { left: number; top: number } } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHoverTimer = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+  const showHover = (match: ArtistMatch, anchor: { left: number; top: number }) => {
+    clearHoverTimer();
+    setHover({ match, anchor });
+  };
+  /** 胶囊离开后留一点时间让鼠标挪进浮层；浮层自己接管后再真正关闭。 */
+  const hideHoverSoon = () => {
+    clearHoverTimer();
+    hoverTimer.current = setTimeout(() => setHover(null), 180);
+  };
+  const hideHoverNow = () => {
+    clearHoverTimer();
+    setHover(null);
+  };
+  useEffect(() => () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  }, []);
 
   const report = useMemo(
     () => (data && result ? evaluateLiveSpecials(data, result, tables) : null),
@@ -303,13 +333,16 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             <p className="px-3 pb-3 text-ui-2xs text-ink-faint">先载入一份存档，就能看到六大目标的实时完成程度。</p>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" onScroll={() => setHover(null)}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" onScroll={hideHoverNow}>
             {result && (
               <DetailSection
                 report={report}
                 expanded={expanded}
                 onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
-                onMatchHover={(match, anchor) => setHover(match ? { match, anchor } : null)}
+                onMatchHover={(match, anchor) => {
+                  if (match) showHover(match, anchor);
+                  else hideHoverSoon();
+                }}
                 dataError={error}
               />
             )}
@@ -318,7 +351,12 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
       )}
 
       {open && hover && (
-        <MatchHoverCard match={hover.match} anchor={hover.anchor} />
+        <MatchHoverCard
+          match={hover.match}
+          anchor={hover.anchor}
+          onEnter={clearHoverTimer}
+          onLeave={hideHoverNow}
+        />
       )}
 
       <button
