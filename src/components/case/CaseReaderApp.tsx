@@ -1506,7 +1506,7 @@ function SelfMadePanel({
                             : notice.status === 'pending'
                               ? notice.daysToStart > 0
                                 ? `还有 ${notice.daysToStart} 天开拍`
-                                : '档期已过，没人接'
+                                : '还没人接'
                               : notice.status === 'overdue'
                                 ? `档期已过 ${-notice.daysLeft} 天`
                                 : `共 ${notice.endDay - notice.startDay + 1} 天`}

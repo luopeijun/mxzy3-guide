@@ -1485,7 +1485,8 @@ export interface SelfMadeCast {
 }
 
 /** 自制通告的档期状态，全部由块里的「开拍日 → 杀青日」推出来。
- *  `overdue` = 档期已经过去，但还有艺人没拍完（存档里「还差」不是 0）。 */
+ *  `overdue` 只作历史兼容保留，不再产生：档期一过作品就发布了，存档里的
+ *  进度字段是杀青时的快照，不能拿来判逾期（见下方状态判定的注释）。 */
 export type SelfMadeStatus = 'pending' | 'shooting' | 'done' | 'overdue' | 'unknown';
 
 /** 「自制通告及其他」里的一条：玩家自己出品（少数沿用原厂牌署名）的通告。
@@ -2159,16 +2160,18 @@ export function parseSave(
     // 通告列表上的排期，没人进组就谈不上拍摄中，更谈不上已完成。
     if (casts.length === 0) status = 'pending';
     else if (status === 'done') {
-      // 结局存档会把已经杀青的通告的「已完成」清零（Ending0004 里全都是 0），
-      // 档期已过又写着 0 的按拍满处理，否则一条拍完的戏会显示「0 / 45 还差 45」。
+      // 档期过完 = 作品已经杀青发布，进度一律按拍满处理。存档里的
+      // 「已完成 / 还差」是杀青那一刻的快照，发布之后不会再回写：CD701
+      // 从 Story0006 到 Auto 始终是 22/25，实际早已发布；结局存档更是把
+      // 已完成清成 0（Ending0004 全是 0）。所以这里既补 0 也补「不满」，
+      // 否则一条拍完的戏会显示「0 / 45 还差 45」或「22 / 25 还差 3」。
+      // 不能因为进度没满就判「已逾期」——那是拿快照当最终状态。
       for (const cast of casts) {
-        if (cast.doneDays === 0 && cast.workDays > 0) {
+        if (cast.workDays > 0) {
           cast.doneDays = cast.workDays;
           cast.needDays = 0;
         }
       }
-      // 档期过了却还有没拍完的人：不能算「已完成」，那是逾期。
-      if (casts.some((cast) => cast.needDays > 0)) status = 'overdue';
     }
     return {
       seq: index + 1,

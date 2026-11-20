@@ -639,6 +639,52 @@ if (fs.existsSync(savePath)) {
   }
 }
 
+// Auto 存档（冻结快照）：档期过了、进度快照却没满的自制作品，状态要看档期。
+// 存档的「已完成 / 还差」是杀青那一刻的快照，发布之后不会回写：CD701 从
+// Story0006 到 Auto 始终是 22/25，但作品早就发行了。不能判「已逾期」。
+{
+  const autoReleased = path.join(SNAP, 'AutoReleased.sa2');
+  if (fs.existsSync(autoReleased)) {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(autoReleased);
+    const save = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'AutoReleased.sa2',
+    );
+    const expected = [
+      ['CD701', '有朋自遠方來', 1, [['萧依莉', 25]]],
+      ['CD601', '俠客行', 1, [['苏嫚君', 25]]],
+      ['TV701', '一夜緋聞', 4, [['陈奕夫', 45], ['萧依莉', 45], ['编号73', 20], ['苏嫚君', 20]]],
+      ['TV727', '櫻似雪', 2, [['新名纱雪', 45], ['陈奕夫', 45]]],
+    ];
+    for (const [code, name, castCount, castDays] of expected) {
+      const notice = save.selfMade.find((n) => n.code === code);
+      check(notice?.status === 'done',
+        `AutoReleased: ${name} 档期过了、进度快照没满，仍是「已完成」不是「已逾期」`,
+        `${notice?.status} ${notice?.startDate}~${notice?.endDate}`);
+      check(notice?.casts.length === castCount
+        && castDays.every(([artist, work], k) => notice.casts[k]?.artistName === artist
+          && notice.casts[k]?.doneDays === work && notice.casts[k]?.needDays === 0),
+        `AutoReleased: ${name} 已发布的接演进度按拍满补回（不写还差几天）`,
+        notice?.casts.map((c) => `${c.artistName}:${c.doneDays}/${c.workDays}+${c.needDays}`).join(' '));
+    }
+    // 还在档期里的通告不能被误伤：二見鍾情今天仍夹在开拍和杀青之间。
+    const shooting = save.selfMade.find((n) => n.code === 'TV702');
+    check(shooting?.status === 'shooting' && shooting.casts.some((c) => c.doneDays < c.workDays),
+      'AutoReleased: 二見鍾情 还在档期内仍是「拍摄中」，进度不被补满',
+      `${shooting?.status} ${shooting?.casts.map((c) => `${c.doneDays}/${c.workDays}`).join(' ')}`);
+    // 没人接的通告也不受影响，档期过去依旧「未开拍」。
+    const empty = save.selfMade.find((n) => n.code === 'CD751');
+    check(empty?.status === 'pending' && empty.casts.length === 0,
+      'AutoReleased: 愛．隱 没人接，档期过了仍是「未开拍」',
+      `${empty?.status} casts=${empty?.casts.length}`);
+    check(save.selfMade.every((n) => n.status !== 'overdue'),
+      'AutoReleased: 11 条自制通告里没有一条被误判成「已逾期」',
+      save.selfMade.map((n) => `${n.code}:${n.status}`).join(' '));
+  } else {
+    console.log('OK   AutoReleased.sa2 not present, skipped the released-notice checks');
+  }
+}
+
 // 第四个存档（Ending0004）：自制通告 20 条，顺序和名字要与游戏「通告列表 →
 // 自制通告及其他」一致。名字不在 data1 之前的旧静态表里，10 条会读不到。
 {
@@ -760,8 +806,8 @@ if (fs.existsSync(savePath)) {
     check(weiya?.doneDays === 22 && weiya?.needDays === 3 && weiya?.workDays === 25,
       'Story0055: 有朋自遠方來 卫亚 已完成 22 天 / 还差 3 天（唱片 25 天）',
       `${weiya?.doneDays}/${weiya?.workDays}+${weiya?.needDays}`);
-    check(youpeng?.status === 'overdue',
-      'Story0055: 有朋自遠方來 档期过了还差 3 天 → 已逾期（不能说已完成）',
+    check(youpeng?.status === 'done',
+      'Story0055: 有朋自遠方來 档期过了就按已完成（进度快照不能判逾期）',
       youpeng?.status);
     const qingcheng = s55.selfMade.find((n) => n.code === 'CD757');
     const lingxiang = qingcheng?.casts.find((c) => c.artistName === '聆香');

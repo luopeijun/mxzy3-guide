@@ -906,6 +906,49 @@ async function main() {
     check(diyEmpty.rows === 0 && diyEmpty.text.includes('还没有自制通告'),
       'Auto 存档没有自制通告，页签显示空态', String(diyEmpty.rows));
 
+    // Auto 存档（冻结快照）：档期过了但进度快照没满的四条自制通告，状态是
+    // 「已完成」不是「已逾期」；未开拍的文案也不再写「档期已过」。
+    const releasedPath = path.join(SNAP, 'AutoReleased.sa2');
+    if (fs.existsSync(releasedPath)) {
+      const copy = path.join(root, '.tmp', 'case-e2e-released.sa2');
+      fs.copyFileSync(releasedPath, copy);
+      await evaluate(`document.querySelector('[data-case-tab="self-made"]').click()`);
+      await sleep(200);
+      await uploadSave(copy);
+      await evaluate(`document.querySelector('[data-case-tab="self-made"]').click()`);
+      await sleep(350);
+      const rel = JSON.parse(await evaluate(`JSON.stringify({
+        byCode: Object.fromEntries([...new Set([...document.querySelectorAll('[data-case-selfmade-row]')]
+          .map(r => r.getAttribute('data-case-selfmade-row')))].map(code => {
+            const row = document.querySelector('[data-case-selfmade-row="' + code + '"]');
+            return [code, row.getAttribute('data-case-selfmade-status')];
+          })),
+        days: Object.fromEntries([...document.querySelectorAll('[data-case-selfmade-row]')]
+          .map(r => [r.getAttribute('data-case-selfmade-row'),
+            r.querySelector('[data-case-selfmade-days]')?.getAttribute('data-case-selfmade-days') || ''])),
+        text: document.querySelector('[data-case-selfmade]')?.innerText.replace(/\\s+/g, ' ') || '',
+        summary: document.querySelector('[data-case-selfmade-summary]')?.innerText.replace(/\\s+/g, ' ') || ''
+      })`));
+      for (const code of ['CD701', 'CD601', 'TV701', 'TV727']) {
+        check(rel.byCode[code] === 'done',
+          `AutoReleased: ${code} 档期过了、进度快照没满，界面状态是「已完成」`,
+          String(rel.byCode[code]));
+      }
+      check(!Object.values(rel.byCode).includes('overdue') && !rel.text.includes('已逾期'),
+        'AutoReleased: 自制通告表里不再出现「已逾期」状态或胶囊',
+        Object.values(rel.byCode).join(','));
+      check(!rel.text.includes('还差 3 天') && !rel.text.includes('还差 6 天')
+        && rel.days.CD701 === '25/25' && rel.days.TV727 === '45/45',
+        'AutoReleased: 已发布的通告进度按拍满显示，不再写「还差 N 天」',
+        `CD701=${rel.days.CD701} TV727=${rel.days.TV727}`);
+      check(!rel.text.includes('档期已过，没人接') && rel.text.includes('还没人接'),
+        'AutoReleased: 未开拍的通告小字写「还没人接」，不再写「档期已过，没人接」');
+      check(!rel.summary.includes('已逾期'),
+        'AutoReleased: 汇总筛选条上不再挂「已逾期」', rel.summary.slice(0, 100));
+    } else {
+      console.log('SKIP AutoReleased.sa2 not present, released-notice UI not checked');
+    }
+
     // Ending0004：20 条自制通告，顺序 / 名字 / 天数 / 接演都要与游戏列表一致。
     const diyPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Ending0004.sa2';
     if (fs.existsSync(diyPath)) {
@@ -1044,8 +1087,8 @@ async function main() {
         diy55.days.join(' '));
       check(diy55.text.includes('还差 3 天') && diy55.text.includes('还差 15 天'),
         'Story0055: 还差天数由 总天数 - 已完成 算出（3 天 / 15 天）');
-      check(diy55.statuses.includes('overdue') && diy55.text.includes('已逾期'),
-        'Story0055: 档期已过还差 3 天的那条标成已逾期', diy55.statuses.join(','));
+      check(!diy55.statuses.includes('overdue') && !diy55.text.includes('已逾期'),
+        'Story0055: 档期过了的作品不再标成「已逾期」（进度快照不能判逾期）', diy55.statuses.join(','));
       // 夢的十四行詩 是团体专辑：艺人列写团名 + 队长 / 团员，不写「新名纱雪」一个人。
       check(diy55.groups.some((g) => g.startsWith('沙啞之歌|') && g.includes('队长 新名纱雪')
         && g.includes('团员 卫亚')),
