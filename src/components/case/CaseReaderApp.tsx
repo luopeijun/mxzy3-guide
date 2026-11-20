@@ -162,7 +162,7 @@ function WorkCountChip({
           <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
             <span className="mb-1 flex items-baseline gap-1">
               <b className="text-ui-2xs text-ink">{title}</b>
-              <span className="text-ui-2xs text-ink-faint">{works.length} 条（按发布时间）</span>
+              <span className="text-ui-2xs text-ink-faint">{works.length} 条（按发生顺序）</span>
             </span>
             <span
               data-case-works-scroll
@@ -170,30 +170,34 @@ function WorkCountChip({
             >
               {works.map((work) => (
                 <span
-                  key={work.workCode}
+                  key={`${work.workCode}-${'order' in work ? work.order ?? 0 : 0}`}
                   {...rowData}
                   className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
                 >
-                  <span className="text-ink-faint">{work.date}</span>
-                  <span className="font-semibold text-ink">{work.workName}</span>
+                  {work.date && <span className="text-ink-faint">{work.date}</span>}
+                  <span className={cn('font-semibold', work.workCode ? 'text-ink' : 'text-ink-faint')}>
+                    {work.workName}
+                  </span>
                   {showRole && 'role' in work && work.role && (
                     <span className="rounded bg-surface-soft px-1 text-ink-muted">{work.role}</span>
                   )}
-                  <span
-                    className={cn(
-                      'inline-flex items-center gap-1 font-semibold',
-                      companyText(work.company),
-                    )}
-                  >
+                  {work.company && (
                     <span
-                      aria-hidden
                       className={cn(
-                        'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
-                        companyDot(work.company),
+                        'inline-flex items-center gap-1 font-semibold',
+                        companyText(work.company),
                       )}
-                    />
-                    {work.company}
-                  </span>
+                    >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
+                          companyDot(work.company),
+                        )}
+                      />
+                      {work.company}
+                    </span>
+                  )}
                 </span>
               ))}
             </span>

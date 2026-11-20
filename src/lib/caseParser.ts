@@ -404,6 +404,8 @@ export interface WorkRecord extends GroupWork {
   noticeIndex: number;
   /** 记事表没有记录每位艺人在这部作品里的角色，一律留空，不按性别猜。 */
   role: string;
+  /** 参与清单里的原始顺序（就是游戏里的发生顺序），仅用于 hover 排序。 */
+  order?: number;
 }
 
 /** 记事表每条记录的固定字节数，表头是 `[条数][108]`。 */
@@ -1173,7 +1175,95 @@ export function parseWorks(
     });
   }
   rows.sort((a, b) => a.day - b.day || a.work.workCode.localeCompare(b.work.workCode));
-  return rows.map((row) => row.work);
+  return rows.map((row, index) => ({ ...row.work, order: index }));
+}
+
+/** 作品编码在每个艺人状态块后面，用 5 个小端 int32（ASCII）存 5 个字符。 */
+function readHistoryCode(view: DataView, at: number): string {
+  let code = '';
+  for (let j = 0; j < 5; j += 1) {
+    const c = view.getUint32(at + 4 * j, true);
+    if (c < 0x20 || c > 0x7a) return '';
+    code += String.fromCharCode(c);
+  }
+  if (!/^(?:CD|CF|MV|TV|SH)[0-9A-Z]{3}$/.test(code)) return '';
+  return code;
+}
+
+/** 每位艺人状态块后面都跟着一份**完整**的参与记录清单（记事表只有 97 条、
+ *  早期的会被挤掉，不能用它当明细）。结构跟 CaseCreate 一样：
+ *  `[条数][5]` + 每条 28 字节 `[编码 5×int32][类别][5]`。类别 1/2/3/4/5
+ *  分别是 广告/电视/电影/唱片/主持，10/15/16/20/21/22 是同一作品的别的
+ *  版本（重播、团体版、原声带等），去重时只取主类别第一条。
+ *
+ *  这里就是「通告统计 N」的明细真源：苏嫚君官方 8 部电视，记事表只剩 5 条，
+ *  参与清单 8 条一条不少；萧依莉 2/6/1/7/5 也逐项对上。团体唱片和原声带
+ *  不进个人唱片数，未杀青的自制通告（TV702 二見鍾情）也不算完成作品。
+ *  清单本身没有日期，能从记事表按编码补到就补，补不到留空，不猜时间。 */
+export function parseWorkHistory(
+  view: DataView,
+  artists: ArtistStats[],
+  cases: CaseTables['cases'],
+  diaryWorks: WorkRecord[],
+  selfMade: SelfMadeNotice[],
+  firmStart: number,
+): WorkRecord[] {
+  const sorted = [...artists].sort((a, b) => a.offset - b.offset);
+  const byDiary = new Map<string, WorkRecord>();
+  for (const work of diaryWorks) {
+    const key = `${work.artistId}|${work.workCode}`;
+    if (!byDiary.has(key)) byDiary.set(key, work);
+  }
+  const unfinished = new Set(selfMade.filter((s) => s.status !== 'done').map((s) => s.code));
+  const out: WorkRecord[] = [];
+
+  for (let ai = 0; ai < sorted.length; ai += 1) {
+    const artist = sorted[ai];
+    const stop = ai + 1 < sorted.length ? sorted[ai + 1].offset : firmStart;
+    let head = -1;
+    for (let o = artist.offset + 348; o + 8 < stop; o += 4) {
+      const count = view.getUint32(o, true);
+      if (count < 1 || count > 200 || view.getUint32(o + 4, true) !== 5) continue;
+      if (!readHistoryCode(view, o + 8)) continue;
+      head = o;
+      break;
+    }
+    if (head < 0) continue;
+    const count = view.getUint32(head, true);
+    const seen = new Set<string>();
+    for (let k = 0; k < count; k += 1) {
+      const at = head + 8 + k * 28;
+      const workCode = readHistoryCode(view, at);
+      if (!workCode) break;
+      const category = view.getUint32(at + 20, true);
+      if (category < 1 || category > 5) continue; // 变体记录，主类别已经收录
+      if (unfinished.has(workCode)) continue;
+      const noticeIndex = WORK_CODE_PREFIX.indexOf(workCode.slice(0, 2));
+      if (noticeIndex < 0 || noticeIndex > 4) continue;
+      if (noticeIndex === 2) {
+        const subtype = cases[workCode]?.[2] ?? '';
+        if (subtype === '團體' || subtype === '原聲帶') continue;
+      }
+      const key = `${noticeIndex}|${workCode}|${artist.roleId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const dated = byDiary.get(`${artist.roleId}|${workCode}`);
+      out.push({
+        date: dated?.date ?? '',
+        year: dated?.year ?? 0,
+        month: dated?.month ?? 0,
+        day: dated?.day ?? 0,
+        workCode,
+        workName: cases[workCode]?.[0] || workCode,
+        company: cases[workCode]?.[3] || '',
+        artistId: artist.roleId,
+        noticeIndex,
+        role: '',
+        order: k,
+      });
+    }
+  }
+  return out;
 }
 
 /** 「艺人成绩」记事里的举办活动，按时间正序。
@@ -2125,7 +2215,7 @@ export function parseSave(
   // 团体唱片发行清单，供团体卡「通告统计」hover 展示。
   const groupWorks = parseGroupWorks(view, bytes.length, tables.cases);
   // 个人作品清单，供艺人卡五个分类和「作品总数」hover 按时间展示。
-  const works = parseWorks(view, bytes.length, tables.cases);
+  const diaryWorks = parseWorks(view, bytes.length, tables.cases);
   for (const artist of artists) {
     artist.awards = awards.filter((award) => award.artistId === artist.roleId);
     artist.events = events.filter((event) => event.artistId === artist.roleId);
@@ -2487,56 +2577,61 @@ export function parseSave(
     };
   });
 
-  // 自制通告杀青发布后不会写进「藝人成績」记事表（记事表只记公司通告），
-  // 所以悬停清单要另外补一份：Auto 的 CD701 有朋自遠方來、TV701 一夜緋聞
-  // 都只存在于 CaseCreate，漏掉就会让人以为官方统计多算了。
-  const knownWorkKeys = new Set(
-    works.map((work) => `${work.noticeIndex}|${work.workCode}|${work.artistId}`),
-  );
+  // 明细改用每位艺人状态块后面的完整参与清单；记事表只剩 97 条，苏嫚君
+  // 官方 8 部电视在记事表里只有 5 条，用它当明细必然对不上「通告统计」。
+  const historyWorks = parseWorkHistory(view, artists, tables.cases, diaryWorks, selfMade, artistEnd);
+  const works = historyWorks.length > 0 ? historyWorks : diaryWorks;
+
+  // 自制通告的个人作品已经进参与清单（CD701 有朋自遠方來就在里面），
+  // 不再从 CaseCreate 另补一份——TV701 那种只留在记事表、没进官方统计的
+  // 记录曾经让 hover 比「通告统计」多一条。团体唱片仍需从杀青记录补。
   const knownGroupCodes = new Set(groupWorks.map((work) => work.workCode));
-  const extraWorks: WorkRecord[] = [];
   const extraGroupWorks: GroupWork[] = [];
   for (const notice of selfMade) {
     if (notice.status !== 'done' || !Number.isFinite(notice.endDay)) continue;
     const noticeIndex = WORK_CODE_PREFIX.indexOf(notice.code.slice(0, 2));
-    if (noticeIndex < 0) continue;
+    if (noticeIndex !== 2 || notice.subtype !== '團體') continue;
+    if (knownGroupCodes.has(notice.code)) continue;
+    const cast = notice.casts.find((item) => item.mine) ?? notice.casts[0];
+    if (!cast) continue;
     const [year, month, day] = notice.endDate.split('/').map(Number);
     if (!year || !month || !day) continue;
-    const workName = notice.name || tables.cases[notice.code]?.[0] || notice.code;
-    const company = notice.company || tables.cases[notice.code]?.[3] || '';
-    const common = {
+    knownGroupCodes.add(notice.code);
+    extraGroupWorks.push({
       date: notice.endDate,
       year, month, day,
       workCode: notice.code,
-      workName,
-      company,
-    };
-    if (noticeIndex === 2 && notice.subtype === '團體') {
-      if (!knownGroupCodes.has(notice.code)) {
-        const cast = notice.casts.find((item) => item.mine) ?? notice.casts[0];
-        if (cast) {
-          knownGroupCodes.add(notice.code);
-          extraGroupWorks.push({ ...common, artistId: cast.artistId });
-        }
-      }
-      continue;
-    }
-    for (const cast of notice.casts) {
-      const key = `${noticeIndex}|${notice.code}|${cast.artistId}`;
-      if (knownWorkKeys.has(key)) continue;
-      knownWorkKeys.add(key);
-      extraWorks.push({
-        ...common,
-        artistId: cast.artistId,
-        noticeIndex,
-        role: noticeIndex === 2 ? '' : cast.role?.role ?? '',
-      });
-    }
+      workName: notice.name || tables.cases[notice.code]?.[0] || notice.code,
+      company: notice.company || tables.cases[notice.code]?.[3] || '',
+      artistId: cast.artistId,
+    });
   }
-  const allWorks = [...works, ...extraWorks].sort(
-    (a, b) => dayNumber(a.year, a.month, a.day) - dayNumber(b.year, b.month, b.day)
+  const sortedWorks = [...works].sort(
+    (a, b) => (a.order ?? 0) - (b.order ?? 0)
       || a.workCode.localeCompare(b.workCode),
   );
+  // 显示出来的条数必须和「通告统计」上的数字一致。参与清单偶尔比官方多
+  // 一条（未杀青的自制通告、重复版本）或漏几条（早期主持工作），多的按
+  // 时间从旧往新裁掉，缺的补一条「未留存明细」占位，绝不编作品名。
+  const allWorks: WorkRecord[] = [];
+  for (const artist of artists) {
+    for (let noticeIndex = 0; noticeIndex < 5; noticeIndex += 1) {
+      const list = sortedWorks.filter(
+        (work) => work.artistId === artist.roleId && work.noticeIndex === noticeIndex,
+      );
+      const official = artist.noticeCounts[noticeIndex] ?? list.length;
+      allWorks.push(...list.slice(Math.max(0, list.length - official)));
+      for (let k = list.length; k < official; k += 1) {
+        allWorks.push({
+          date: '', year: 0, month: 0, day: 0,
+          workCode: '', workName: '（存档未留存明细）', company: '',
+          artistId: artist.roleId, noticeIndex, role: '',
+          order: 900000 + noticeIndex * 1000 + k,
+        });
+      }
+    }
+  }
+  allWorks.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.workCode.localeCompare(b.workCode));
   const allGroupWorks = [...groupWorks, ...extraGroupWorks].sort(
     (a, b) => dayNumber(a.year, a.month, a.day) - dayNumber(b.year, b.month, b.day)
       || a.workCode.localeCompare(b.workCode),
