@@ -275,6 +275,8 @@ NOTICE_REQUIREMENTS: dict[str, dict] = {
         "note": "集齐四样道具、且有艺人拿到对应证书后，去全球找王瑞恩「闲聊」，**下一档通告**才会放出来；更新后要**自己去全球预约**，王导不会主动上门。",
     },
     "proud-of-the-world": {
+        # 这里的 items 是事件奖励的歌曲 / 剧本，不是要准备的道具。
+        "itemsLabel": "可得作品",
         "stats": [
             {"label": "演技", "value": "500–550"},
             {"label": "名气", "value": "500–550"},

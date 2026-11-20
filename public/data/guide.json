@@ -29014,6 +29014,7 @@
           "title": "笑傲天际",
           "status": "ready",
           "requirements": {
+            "itemsLabel": "可得作品",
             "stats": [
               {
                 "label": "演技",

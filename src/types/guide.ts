@@ -107,6 +107,8 @@ export interface NodeRequirements {
   cast?: string[];
   /** Props and their sources. */
   items?: RequirementProp[];
+  /** Section heading for `items`; defaults to 所需道具 in the renderer. */
+  itemsLabel?: string;
   /** Closing remark, e.g. the timing caveat. */
   note?: string;
 }

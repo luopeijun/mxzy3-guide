@@ -63,7 +63,7 @@ function PropCard({ prop }: { prop: RequirementProp }) {
  *  Artist requirements run full width (they read as a checklist), props sit in
  *  an auto-fit grid so one prop fills the row and four become a tidy 2×2. */
 export default function RequirementsCard({ requirements }: Props) {
-  const { stats, cast, items, note } = requirements;
+  const { stats, cast, items, itemsLabel = '所需道具', note } = requirements;
 
   return (
     <section className="mb-6 overflow-hidden rounded-ui-md border border-brand-line bg-surface shadow-soft">
@@ -102,7 +102,7 @@ export default function RequirementsCard({ requirements }: Props) {
       </div>
 
       <div className="border-t border-dashed border-line px-5 pt-3.5 pb-4">
-        <SectionTitle tone="gold">所需道具</SectionTitle>
+        <SectionTitle tone="gold">{itemsLabel}</SectionTitle>
         <ul className="grid items-start gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(272px,1fr))]">
           {items?.map((item) => <PropCard key={item.name} prop={item} />)}
         </ul>
