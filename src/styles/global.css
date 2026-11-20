@@ -333,6 +333,20 @@
   color: var(--color-line-strong);
 }
 
+/* 友好度去掉粉底胶囊后，用一枚品牌粉圆点延续「第一重点」的提示；
+ * 颜色跟随文字（currentColor），原站 / 甜蜜乐章自动同色。 */
+.friendship-value::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translateY(-1px);
+  vertical-align: middle;
+}
+
 /* 通告统计改成常驻纯文字 + hover 才浮粉底：粉底和 hover 浮窗一起出现，
    正好当「可悬停看明细」的暗示，不会突兀。项之间用淡分隔点，和证书统一。
    外层 .group 是浮窗定位锚点，分隔点挂在它前面而不是内层可 hover 的 chip 上。 */
