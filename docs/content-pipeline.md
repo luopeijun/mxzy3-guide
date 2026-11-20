@@ -47,21 +47,17 @@
 
 ## 六大通告条件表
 
-这是**第三条独立管线**，和通告库、攻略正文都不共用解析脚本。它服务 `#/specials` 条件看板，刻意不自动从攻略正文抽条件（条件散在提醒句、括号、区间、否定和时间窗里，抽不准且改一句就崩）：
+这是**第三条独立管线**，和通告库、攻略正文都不共用解析脚本。它现在只提供「六个目标有哪些条件」这份数据，供存档解析页的六大通告助手读取；刻意不自动从攻略正文抽条件（条件散在提醒句、括号、区间、否定和时间窗里，抽不准且改一句就崩）：
 
-- `sources/special-notices.tsv`：人工维护的唯一内容来源，101 行 × 13 列（BOM + LF），六个通告各一列拆成行。**条件行 73 条**（计入达标数）、**只读备注行 28 条**（时间线与「注」，零状态、不计数、只跳事件追踪器）。`verify` 列保留 10 条裁决的依据；只要还有 `?` 开头的疑点，运行时数据就拒绝生成。改这张表时按字节补，别手抄整份（弯引号会被改成直引号）。
+- `sources/special-notices.tsv`：人工维护的唯一内容来源，101 行 × 13 列（BOM + LF），六个通告各一列拆成行。**条件行 73 条**、**只读备注行 28 条**（时间线与「注」，零状态、不计数）。`verify` 列保留 10 条裁决的依据；只要还有 `?` 开头的疑点，运行时数据就拒绝生成。改这张表时按字节补，别手抄整份（弯引号会被改成直引号）。
 - `scripts/build_specials_review.py`：校验表结构、把 `节点id#事件号` 逐条对到 `guide.json` 的事件块、生成 `outputs/specials-review.html` 审阅页（不入库）。10 条裁决记录在 `DECISIONS` 常量里，改表时可回查。
-- `scripts/extract_specials.py` → `public/data/specials.json`（约 56KB，进入「六大通告」tab 才 fetch）。生成时**复用审阅页那份节点与深链校验**，把 `notices/angel#3` 直接算成 `#/guide/notices/angel~ev19`；`tracker:` 开头的行落成 `#/tracker`。守护测试在 `scripts/test_extract_specials.py`（7 项），其中两条是硬拦：表里塞未裁决疑点、或事件号写成不存在的 `#9999`，都必须直接失败。
-- 每行字段：`id / notice / slot / phase / kind / type / scope / name / target / hint / link / source / verify`。`slot` 是槽位骨架（`main` / `group` / `role:男主` 等），`scope` 只写「这条该读谁的数值」这条**规则**——`global` 公司共享、`artist` 按艺人、`group` 按团体、`role` 按角色位、`notice` 仅本通告。**表里绝不写艺人名**，具体是谁由前端「指派艺人」在运行时产生。
-- 前端状态在 `src/lib/specialsState.ts`（纯判定）与 `src/hooks/useSpecials.ts`（`guide.specials.v1` 存档）。旗下 4 人**读 `guide.progress.v1`**，这里不复制名单。共享不是维护一张映射表，而是由状态键决定：同名的公司计数 / 资金共用一个键，证书按「艺人 + 证书」共用，同一个艺人挂两张卡时两处读同一份属性数字，一处改动多卡同步。属性 10 格（人气 0–5 单列）、课程等级 5 档与证书门槛都从 `tipsData.ts` 的 `TRAINING_ROWS` / `CERT_ROWS` 派生，不另造一份游戏数值。**数值录入集中在 `StatsPanel.tsx`**（`data-stats-panel`）：一张表填 10 项属性 × 旗下艺人，外加团体名气 / 人气（`state.values` 的 `gval:` 键），条件行只读它算缺口，不在每行重复输入；`stat` / `resource` 行仍保留逐行 ▸ 可选 peek，但只是冗余视图。
-- 课程清单**按需**：只列该艺人挂的、且已启用的通告所需证书对应的几门课（音乐 4 / 戏剧 3 / 舞蹈 3），没挂通告的人一行都不出现；等级不从属性自动派生，属性够只代表够格升级。
-- 名额：命名角色位（昆仑）1 人、银河团体 2–4 人、落入凡间的天使 / 万年之恋（`soloMain`，由 `extract_specials.py` 的 `SOLO_MAIN` 写入）只能 1 人，其余候选池最多 4 人。选满后下拉消失并显示「已满 N 人」；单人通告例外——下拉变成「换人」，选中即替换。
-- **默认全启用**：全新存档（没有 `guide.specials.v1`）时 `emptyState(defaultEnabled)` / `readState(defaultEnabled)` 从运行时 notices 派生默认列表（排除 `_global`），六张卡一进来就全勾，不想做的自己取消。已有存档**保留用户自己的勾选**（`sanitiseState` 不改写 enabled），只有「清空本看板」会回到默认全启用。截图脚本传 `fresh` 可去掉 specials 存档复现真实默认态。
-- **多平台存档**：六大通告复用事件追踪器「全部存档」的统一导出/导入（`saveArchive.ts` 的 `specials` 段），与 CG 收集对称。导出时若本机从未碰过看板则省略该段（不覆盖别人的默认全勾）；导入时 `mergeSpecialsState` 对数值与计数取较大值、其余（启用 / 指派 / 已勾 / 团体锁定）并集合并，`applySpecialsToLocal` 写回后派发 `SPECIALS_CHANGED_EVENT`，看板监听后重读，和 CG 的 `CG_CHANGED_EVENT` 同一套路。**入口三处都有**：事件追踪器右侧栏、CG 图鉴顶栏、六大通告页顶栏，渲染的是同一个 `SaveArchivePanel`（`SpecialsApp` 的 `data-specials-archive` 按钮 + `data-specials-archive-modal` 弹窗，Esc 可关）。
-- 一个条件行摊到多位艺人时（末日战士的证书 / 属性行、昆仑的三位角色）**每人一行**，不再把所有人的控件塞进同一行。
-- 条件行外框统一 1px 浅边框 + 圆角，完成的靠淡绿底和绿色控件区分；**不要用 2px 左侧状态条**（用户觉得那条竖杠很怪）。
-- 「提前准备」的道具 / 前置计数行把数据表里的 `hint` 直接常驻成一行淡灰纯文字备注（`data-item-source`，零状态、不可点、不加装饰符号）；证书行不铺备注，课程等级与属性缺口仍走 ▸ 展开。备注内容全部来自 `special-notices.tsv`，**不需要另造字段**。
-- 回归 `scripts/cdp_specials_board.mjs`（94 项）覆盖指派名额、单人换人、多人拆行、清单勾选、共享、按需课程、数值录入面板、昆仑三位、银河锁定、道具来源备注、备注零状态、存档持久化，以及右侧跳转导航（rail 存在、六入口齐全、点末张/首张滚到贴顶并高亮）；`scripts/cdp_specials_shot.mjs` 用来截看板界面；`scripts/cdp_save_archive.mjs`（11 项）覆盖六大通告并入统一存档的导入、合并与覆盖，以及六大通告页「全部存档」按钮 + 弹窗的存在与开关。
+- `scripts/extract_specials.py` → `public/data/specials.json`（约 56KB，存档解析页挂载助手时 fetch）。生成时**复用审阅页那份节点与深链校验**。守护测试在 `scripts/test_extract_specials.py`（7 项），其中两条是硬拦：表里塞未裁决疑点、或事件号写成不存在的 `#9999`，都必须直接失败。
+- 每行字段：`id / notice / slot / phase / kind / type / scope / name / target / hint / link / source / verify`。`slot` 是槽位骨架（`main` / `group` / `role:男主` 等），`scope` 只写「这条该读谁的数值」这条**规则**——`global` 公司共享、`artist` 按艺人、`group` 按团体、`role` 按角色位、`notice` 仅本通告。表里不写艺人名，具体是谁由存档里已签约的艺人决定。
+- **没有独立的六大通告看板、路由、勾选状态或本地存档**：旧 `#/specials` 直接落到 `#/case`。统一「全部存档」只装事件追踪进度与 CG 收集，旧文件里若还有 `specials` 段会被忽略。
+- 完成度由 `src/lib/caseSpecials.ts` 只读 `.sa2` 快照现算，界面在 `src/components/case/CaseSpecialsAssistant.tsx`。右下角小圆球点开侧抽屉，顶部三块摘要（已达成 / 差一项 / 待推进），六条目标默认展开最接近达成的那条；每条给出进度条、条件明细、所需道具与艺人匹配，「看依据」跳回本页对应段落。窄屏改底部抽屉，点外与 Esc 关闭；右侧「本页小结」与艺人速查保持原样，助手不碰它们。
+- **可判定 / 待手工确认分开**：能从存档读的条件才计入 `met/total`——九项能力、人气、个人唱片数、学院证书、大型个人演唱会、旗下电影 / 电影主角数、团体唱片与团体全体证书、以及道具当前持有数（按 `Item.dat` 繁体名对齐，简体别名写在 `ITEM_ALIASES`）。剧情计数、公司事件 flag、团体名气 / 人气、按角色位指派的条件都归到「待手工确认」，只列名称、不进分母，更不靠猜。道具一律按**当前持有**判断，已消耗的不算。
+- 证书来源复用 `src/lib/caseCertificates.ts`：特殊物品说明以艺人游戏内名字开头，按「舞蹈 / 戲劇 / 音樂」归类；通用「藝人的…」不挂任何人。作品数只认状态块 `+248` 的官方计数，参与清单只做明细，团体唱片不计个人。
+- 状态文案：全部可判定条件达标写「存档条件已达成」，只差一项写「差 1 项」，其余按有无进展写「推进中 / 未开始」，分母为零写「待手工确认」。不显示假精确百分比，进度条只作视觉辅助。
 
 ## 存档解析（#/case）
 
@@ -300,7 +296,7 @@ node scripts/cdp_tracker_memo.mjs
 ```
 public/data/guide.json       生成的结构化攻略数据（运行时加载）
 public/data/notices.json     生成的通告数据（进入通告 tab 才加载）
-public/data/specials.json    生成的六大通告条件表（进入六大通告 tab 才加载）
+public/data/specials.json    生成的六大通告条件表（存档解析页的助手加载）
 public/data/cg.json          生成的 CG 图鉴数据（含 CG → 攻略落点）
 public/data/sweet/guide.json 甜蜜乐章的结构化攻略数据（另一条管线）
 public/data/sweet/cg.json    甜蜜乐章的 CG 清单（编号 + 事件名 + 攻略落点，按人物分组）
@@ -347,7 +343,7 @@ src/components/              攻略阅读页组件
 src/components/notices/      通告库（筛选、详情、能力对照）
 src/components/tracker/      事件追踪器
 src/components/cg/           CG 图鉴
-src/components/case/         存档解析（.sa2 读取：筹备中 / 拍摄中 / 自制通告及其他）
+src/components/case/         存档解析（.sa2 读取：筹备中 / 拍摄中 / 自制通告及其他 / 六大通告助手）
 src/hooks/                   数据加载、选中态、进度存储、锚点跳转
 src/lib/                     纯逻辑：内容解析、统计、排序、筛选、存档、CG 反向索引
 ```
