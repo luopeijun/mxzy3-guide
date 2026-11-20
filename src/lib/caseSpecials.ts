@@ -45,6 +45,10 @@ export interface ArtistMatch {
   slots: SlotGap[];
   /** 该艺人的证书判定：有戏剧证书打绿勾，缺的写出证书名。 */
   certs: { name: string; met: boolean; detail: string }[];
+  /** 硬性前置数值判定（如电影主角 1 次、电影 2 部），进达标分母。 */
+  required: { name: string; met: boolean; detail: string }[];
+  /** 触发前置的可选数值判定（男/女按性别各认自己那组），不进达标分母。 */
+  optional: { name: string; met: boolean; detail: string }[];
 }
 
 export interface GroupMatch {
@@ -196,12 +200,23 @@ function evaluateArtistRow(
       gap: have < min ? statGap(attr, have, min) : '',
     };
   }
-  if (row.type === 'count' && row.name.includes('唱片')) {
-    const have = artist.noticeCounts[2] ?? 0;
+  if (row.type === 'count' && row.name.includes('电影主角')) {
+    const have = ctx.result.works.filter((work) =>
+      work.noticeIndex === 1 && work.role.includes('主角') && work.artistId === artist.roleId).length;
     return {
       met: have >= min,
-      detail: `唱片 ${have}/${min}`,
-      gap: have < min ? statGap('唱片', have, min) : '',
+      detail: `电影主角 ${have}/${min}`,
+      gap: have < min ? statGap('电影主角', have, min) : '',
+    };
+  }
+  if (row.type === 'count' && (row.name.includes('唱片') || row.name.includes('电影'))) {
+    const isFilm = row.name.includes('电影');
+    const label = isFilm ? '电影' : '唱片';
+    const have = artist.noticeCounts[isFilm ? 1 : 2] ?? 0;
+    return {
+      met: have >= min,
+      detail: `${label} ${have}/${min}`,
+      gap: have < min ? statGap(label, have, min) : '',
     };
   }
   if (row.type === 'cert') {
@@ -467,9 +482,13 @@ export function evaluateLiveSpecials(
       const nodes = data.rows.filter((row) =>
         row.notice === notice.id && row.kind === 'note' && row.id.includes('.node.'));
       const conditions = rows.map((row) => evaluateRow(row, ctx));
-      const readable = conditions.filter((condition) => condition.state !== 'manual');
+      // 带「（可选）」的艺人数值行只做判定展示，不进达标分母。
+      const optionalRows = conditions.filter((condition) =>
+        condition.row.scope === 'artist' && cleanName(condition.row.name).optional);
+      const readable = conditions.filter((condition) =>
+        condition.state !== 'manual' && !optionalRows.includes(condition));
       const met = readable.filter((condition) => condition.state === 'met').length;
-      const manual = conditions.length - readable.length;
+      const manual = conditions.filter((condition) => condition.state === 'manual').length;
 
       const allArtistRows = readable.filter((condition) => Object.keys(condition.byArtist).length > 0);
       const maleOnly = MALE_ONLY_NOTICES.has(notice.id);
@@ -535,8 +554,32 @@ export function evaluateLiveSpecials(
         const certs = certRows.map((condition) => {
           const met = !!condition.byArtist[artist.roleId];
           const name = certsForName(condition.row.name).join('、') || condition.row.name;
-          return { name, met, detail: met ? name : `缺 ${name}` };
+          return { name, met, detail: name };
         });
+        // 硬性前置：phase=prepare 的艺人数值行（电影主角 / 电影作品数），每位艺人各判一次。
+        const required = conditions
+          .filter((condition) => condition.row.phase === 'prepare'
+            && condition.row.type === 'count'
+            && !cleanName(condition.row.name).optional
+            && !optionalRows.includes(condition)
+            && condition.byArtist[artist.roleId] !== undefined)
+          .map((condition) => ({
+            name: condition.row.name,
+            met: !!condition.byArtist[artist.roleId],
+            detail: condition.detailByArtist[artist.roleId] ?? '',
+          }));
+        // 可选前置按性别认自己那组：男艺人看 main、女艺人看 support。
+        const gender = starGender(artist.roleId, tables.stars);
+        const optionalSlot = genderSlots
+          ? gender === 'female' ? genderSlots[1] : genderSlots[0]
+          : 'main';
+        const optional = optionalRows
+          .filter((condition) => slotOf(condition) === optionalSlot)
+          .map((condition) => ({
+            name: cleanName(condition.row.name).label,
+            met: !!condition.byArtist[artist.roleId],
+            detail: condition.detailByArtist[artist.roleId] ?? '',
+          }));
         return {
           id: artist.roleId,
           name: result.artistDirectory.find((option) => option.id === artist.roleId)?.name ?? String(artist.roleId),
@@ -545,6 +588,8 @@ export function evaluateLiveSpecials(
           gaps,
           slots,
           certs,
+          required,
+          optional,
         };
       }).filter((match) => match.total > 0)
         .sort((a, b) => b.met - a.met || a.gaps.length - b.gaps.length);

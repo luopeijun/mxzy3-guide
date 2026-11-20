@@ -46,21 +46,35 @@ function MatchHoverCard({
       style={{ left: anchor.left - 8, top: anchor.top }}
     >
       <p className="mb-1.5 text-ui-xs font-semibold text-ink">{match.name}</p>
-      {match.certs.length > 0 && (
-        <div className="mb-1.5 flex flex-wrap items-center gap-1 border-b border-line pb-1.5">
-          {match.certs.map((cert) => (
-            <span
-              key={cert.name}
-              className={cn(
-                'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
-                cert.met
-                  ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
-                  : 'border-line bg-surface-soft text-ink-muted',
-              )}
+      {match.required.length > 0 && (
+        <div className="mb-1.5 border-b border-line pb-1.5" data-case-special-required>
+          <p className="mb-0.5 flex items-center gap-1 text-ui-2xs font-semibold text-ink">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-strong" />
+            硬性前置
+          </p>
+          {match.required.map((entry, index) => (
+            <div
+              key={`${entry.name}-${index}`}
+              className={cn('text-ui-2xs', entry.met ? 'font-semibold text-growth-strong' : 'text-ink-muted')}
             >
-              {cert.met && <span aria-hidden="true">✓</span>}
-              {cert.detail}
-            </span>
+              {entry.met ? '✓ ' : ''}{entry.detail}
+            </div>
+          ))}
+        </div>
+      )}
+      {match.optional.length > 0 && (
+        <div className="mb-1.5 border-b border-line pb-1.5" data-case-special-optional>
+          <p className="mb-0.5 flex items-center gap-1 text-ui-2xs font-semibold text-ink">
+            <span className="h-1.5 w-1.5 rounded-full bg-ink-faint" />
+            可选前置
+          </p>
+          {match.optional.map((entry, index) => (
+            <div
+              key={`${entry.name}-${index}`}
+              className={cn('text-ui-2xs', entry.met ? 'font-semibold text-growth-strong' : 'text-ink-muted')}
+            >
+              {entry.met ? '✓ ' : ''}{entry.detail}
+            </div>
           ))}
         </div>
       )}
@@ -237,7 +251,7 @@ function DetailSection({
                         )}
                       >
                         {cert.met && <span aria-hidden="true">✓</span>}
-                        {cert.met ? match.name : `缺 ${match.name}`}
+                        {match.name}
                       </span>
                     )))}
                   </div>

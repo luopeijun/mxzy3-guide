@@ -29,6 +29,12 @@ proud.tl.secondYear	proud-of-the-world	-	-	note	-	-	第二年：送药 4 次后�
 proud.tl.reporterWarn	proud-of-the-world	-	-	note	-	-	如果最后的记者会没有参加，也一样会有笑傲天际通告，但结算时不计入国际通告完成数量	-	UP 本人血的教训，纯提醒	tracker:notices/proud-of-the-world	表	-
 proud.tl.note	proud-of-the-world	-	-	note	-	-	注：陈奕夫的国际记者工作与笑傲天际男主角不可兼得，规划时注意取舍	-	互斥提示	tracker:notices/proud-of-the-world	表	-
 doom.cert.drama	doomsday-warrior	main	prepare	condition	cert	artist	国际戏剧学院证书	-	戏剧学院（纽约）：声音表情/肢体语言 专业 + 说话技巧 高级；回国周末发证	notices/doomsday-warrior#51	表+攻略	-
+doom.opt.male.films	doomsday-warrior	main	prepare	condition	count	artist	电影（可选）	3	男艺人触发路线：参演 3 部电影；可选条件，不计入达标分母	notices/doomsday-warrior#55	表+攻略	-
+doom.opt.male.stats	doomsday-warrior	main	prepare	condition	stat	artist	触发前置·男艺人（名气/演技）（可选）	600/600	男艺人触发路线：名气、演技均达 600；可选条件，不计入达标分母	notices/doomsday-warrior#55	表+攻略	-
+doom.opt.female.films	doomsday-warrior	support	prepare	condition	count	artist	电影（可选）	3	女艺人触发路线：参演 3 部以上电影；可选条件，不计入达标分母	notices/doomsday-warrior#55	表+攻略	-
+doom.opt.female.stats	doomsday-warrior	support	prepare	condition	stat	artist	触发前置·女艺人（名气/演技）（可选）	400/400	女艺人触发路线：名气、演技均达 400；可选条件，不计入达标分母	notices/doomsday-warrior#55	表+攻略	-
+doom.req.filmLead	doomsday-warrior	-	prepare	condition	count	artist	电影主角	1	硬性要求：旗下需有艺人出演过至少一次电影主角	notices/doomsday-warrior#51	表+攻略	-
+doom.req.films	doomsday-warrior	-	prepare	condition	count	artist	电影	2	硬性要求：旗下需有艺人接演电影 2 部以上	notices/doomsday-warrior#51	表+攻略	-
 doom.stat.acting	doomsday-warrior	main	notice	condition	stat	artist	演技	550	男主角能力要求；决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
 doom.stat.wisdom	doomsday-warrior	main	notice	condition	stat	artist	才智	550	男主角能力要求；决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-
 doom.stat.fame	doomsday-warrior	main	notice	condition	stat	artist	名气	550	男主角能力要求；决选与通告要求一致	notices/doomsday-warrior#55	表+攻略	-

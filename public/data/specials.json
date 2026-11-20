@@ -5,11 +5,11 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 121,
-    "conditions": 79,
+    "rows": 127,
+    "conditions": 85,
     "notes": 42,
     "scopeCounts": {
-      "artist": 40,
+      "artist": 46,
       "global": 28,
       "group": 7,
       "notice": 1,
@@ -43,7 +43,7 @@
       "id": "doomsday-warrior",
       "title": "末日战士",
       "guideNode": "notices/doomsday-warrior",
-      "conditionCount": 9,
+      "conditionCount": 15,
       "noteCount": 11,
       "slots": [
         "main",
@@ -648,6 +648,120 @@
       "name": "国际戏剧学院证书",
       "target": "-",
       "hint": "戏剧学院（纽约）：声音表情/肢体语言 专业 + 说话技巧 高级；回国周末发证",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev14",
+        "node": "notices/doomsday-warrior",
+        "event": "51"
+      }
+    },
+    {
+      "id": "doom.opt.male.films",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "count",
+      "scope": "artist",
+      "name": "电影（可选）",
+      "target": "3",
+      "hint": "男艺人触发路线：参演 3 部电影；可选条件，不计入达标分母",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.opt.male.stats",
+      "notice": "doomsday-warrior",
+      "slot": "main",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "触发前置·男艺人（名气/演技）（可选）",
+      "target": "600/600",
+      "hint": "男艺人触发路线：名气、演技均达 600；可选条件，不计入达标分母",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.opt.female.films",
+      "notice": "doomsday-warrior",
+      "slot": "support",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "count",
+      "scope": "artist",
+      "name": "电影（可选）",
+      "target": "3",
+      "hint": "女艺人触发路线：参演 3 部以上电影；可选条件，不计入达标分母",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.opt.female.stats",
+      "notice": "doomsday-warrior",
+      "slot": "support",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "artist",
+      "name": "触发前置·女艺人（名气/演技）（可选）",
+      "target": "400/400",
+      "hint": "女艺人触发路线：名气、演技均达 400；可选条件，不计入达标分母",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev19",
+        "node": "notices/doomsday-warrior",
+        "event": "55"
+      }
+    },
+    {
+      "id": "doom.req.filmLead",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "count",
+      "scope": "artist",
+      "name": "电影主角",
+      "target": "1",
+      "hint": "硬性要求：旗下需有艺人出演过至少一次电影主角",
+      "source": "表+攻略",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/doomsday-warrior~ev14",
+        "node": "notices/doomsday-warrior",
+        "event": "51"
+      }
+    },
+    {
+      "id": "doom.req.films",
+      "notice": "doomsday-warrior",
+      "slot": "-",
+      "phase": "prepare",
+      "kind": "condition",
+      "type": "count",
+      "scope": "artist",
+      "name": "电影",
+      "target": "2",
+      "hint": "硬性要求：旗下需有艺人接演电影 2 部以上",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
