@@ -14,6 +14,26 @@ contextBridge.exposeInMainWorld('desktopBridge', {
     copy.set(bytes);
     return copy.buffer;
   },
+  /** File → 打开存档。目录里的档位由界面按钮走 readSave，这里专供菜单。
+   *  pickedPath 仅供回归脚本跳过系统对话框，正常从菜单进来是 undefined。 */
+  openSave: (pickedPath) => ipcRenderer.invoke('desktop:openSave', pickedPath),
+  requestReload: () => ipcRenderer.invoke('desktop:requestReload'),
+  onOpenSave: (callback) => {
+    const listener = (_event, payload) => {
+      const bytes = payload?.bytes;
+      if (!bytes) return;
+      const copy = new Uint8Array(bytes.byteLength);
+      copy.set(bytes);
+      callback({ name: payload.name, path: payload.path, buffer: copy.buffer });
+    };
+    ipcRenderer.on('desktop:openSaveResult', listener);
+    return () => ipcRenderer.removeListener('desktop:openSaveResult', listener);
+  },
+  onReloadRequest: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('desktop:reloadRequest', listener);
+    return () => ipcRenderer.removeListener('desktop:reloadRequest', listener);
+  },
   onState: (callback) => {
     const listener = (_event, state) => callback(state);
     ipcRenderer.on('desktop:state', listener);
