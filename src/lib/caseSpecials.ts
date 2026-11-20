@@ -43,6 +43,8 @@ export interface ArtistMatch {
   gaps: string[];
   /** 按通告坑位拆开的缺口，hover 时分别显示男主角 / 男配角差多少。 */
   slots: SlotGap[];
+  /** 该艺人的证书判定：有戏剧证书打绿勾，缺的写出证书名。 */
+  certs: { name: string; met: boolean; detail: string }[];
 }
 
 export interface GroupMatch {
@@ -72,6 +74,8 @@ export interface LiveNotice {
   filmed: FilmedRecord[];
   /** note 行里 id 带 `.node.` 的关键事件节点，按表里顺序展示。 */
   nodes: SpecialRow[];
+  /** 事件驱动通告：标题行不显示数值进度条，改写「按事件节点推进」。 */
+  eventDriven: boolean;
   conditions: LiveCondition[];
   items: ItemCheck[];
   matches: ArtistMatch[];
@@ -128,6 +132,11 @@ function targetOf(row: SpecialRow): number {
   if (!parsed) return 1;
   if (parsed.kind === 'multi') return parsed.values[0] ?? 1;
   return parsed.kind === 'range' ? parsed.max : parsed.min;
+}
+
+/** 存档证书用短名（戏剧/音乐/舞蹈），条件表用全名（戏剧证书/…）。统一成短名再比。 */
+function certKey(name: string): string {
+  return name.replace(/证书$/, '');
 }
 
 function multiAttrs(name: string): string[] | null {
@@ -198,8 +207,8 @@ function evaluateArtistRow(
   if (row.type === 'cert') {
     const needed = certsForName(row.name);
     if (!needed.length) return null;
-    const held = ctx.certs.get(artist.roleId) ?? [];
-    const missing = needed.filter((cert) => !held.includes(cert));
+    const held = (ctx.certs.get(artist.roleId) ?? []).map(certKey);
+    const missing = needed.filter((cert) => !held.includes(certKey(cert)));
     return {
       met: missing.length === 0,
       detail: missing.length ? `缺 ${missing.join('、')}` : needed.join('、'),
@@ -407,6 +416,8 @@ const MALE_ONLY_NOTICES = new Set(['proud-of-the-world']);
 const GENDER_SLOT_NOTICES: Record<string, [string, string]> = {
   'doomsday-warrior': ['main', 'support'],
 };
+/** 事件驱动通告：走事件节点，不按数值条件显示进度条。 */
+const EVENT_DRIVEN_NOTICES = new Set(['proud-of-the-world', 'doomsday-warrior']);
 
 const SLOT_LABELS: Record<string, string> = {
   main: '男主角',
@@ -503,6 +514,8 @@ export function evaluateLiveSpecials(
         return [...bySlot];
       };
 
+      const certRows = readable.filter((condition) => condition.row.type === 'cert');
+
       const matches = candidates.map((artist): ArtistMatch => {
         const qualifyingRows = qualifyingRowsOf(artist);
         const gaps = qualifyingRows
@@ -519,6 +532,11 @@ export function evaluateLiveSpecials(
               || condition.detailByArtist[artist.roleId]
               || condition.row.name),
         }));
+        const certs = certRows.map((condition) => {
+          const met = !!condition.byArtist[artist.roleId];
+          const name = certsForName(condition.row.name).join('、') || condition.row.name;
+          return { name, met, detail: met ? name : `缺 ${name}` };
+        });
         return {
           id: artist.roleId,
           name: result.artistDirectory.find((option) => option.id === artist.roleId)?.name ?? String(artist.roleId),
@@ -526,6 +544,7 @@ export function evaluateLiveSpecials(
           total: qualifyingRows.length,
           gaps,
           slots,
+          certs,
         };
       }).filter((match) => match.total > 0)
         .sort((a, b) => b.met - a.met || a.gaps.length - b.gaps.length);
@@ -549,6 +568,7 @@ export function evaluateLiveSpecials(
         notice,
         filmed: filmedRecords(notice.id, ctx),
         nodes,
+        eventDriven: EVENT_DRIVEN_NOTICES.has(notice.id),
         conditions,
         items: conditions
           .filter((condition) => condition.row.type === 'item')

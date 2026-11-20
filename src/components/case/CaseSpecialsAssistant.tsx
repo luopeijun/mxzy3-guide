@@ -46,6 +46,24 @@ function MatchHoverCard({
       style={{ left: anchor.left - 8, top: anchor.top }}
     >
       <p className="mb-1.5 text-ui-xs font-semibold text-ink">{match.name}</p>
+      {match.certs.length > 0 && (
+        <div className="mb-1.5 flex flex-wrap items-center gap-1 border-b border-line pb-1.5">
+          {match.certs.map((cert) => (
+            <span
+              key={cert.name}
+              className={cn(
+                'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                cert.met
+                  ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                  : 'border-line bg-surface-soft text-ink-muted',
+              )}
+            >
+              {cert.met && <span aria-hidden="true">✓</span>}
+              {cert.detail}
+            </span>
+          ))}
+        </div>
+      )}
       {match.slots.length ? match.slots.map((slot) => (
         <div key={slot.label} className="mb-1.5 last:mb-0">
           <div className="mb-0.5 flex items-center justify-between gap-2">
@@ -129,7 +147,7 @@ function DetailSection({
               <span className="w-[92px] shrink-0 truncate text-ui-xs font-semibold text-ink">
                 {item.notice.title}
               </span>
-              {item.nodes.length > 0 ? (
+              {item.eventDriven || item.nodes.length > 0 ? (
                 <span className="flex-1 text-right text-ui-2xs text-ink-faint">按事件节点推进</span>
               ) : (
                 <>
@@ -200,6 +218,28 @@ function DetailSection({
                           </div>
                         ))}
                     </div>
+                  </div>
+                )}
+
+                {item.matches.some((match) => match.certs.length > 0) && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1" data-case-special-certs>
+                    <span className="mr-0.5 text-ui-2xs text-ink-faint">戏剧证书</span>
+                    {item.matches.flatMap((match) => match.certs.map((cert) => (
+                      <span
+                        key={`${match.id}-${cert.name}`}
+                        data-case-special-cert={match.name}
+                        data-case-special-cert-met={cert.met}
+                        className={cn(
+                          'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                          cert.met
+                            ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                            : 'border-line bg-surface-soft text-ink-muted',
+                        )}
+                      >
+                        {cert.met && <span aria-hidden="true">✓</span>}
+                        {cert.met ? match.name : `缺 ${match.name}`}
+                      </span>
+                    )))}
                   </div>
                 )}
 
