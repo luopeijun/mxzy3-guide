@@ -2220,7 +2220,7 @@ function GapChip({ item }: { item: TitleGapItem }) {
             : 'bg-alert-soft text-alert',
       )}
     >
-      {needGapText(item)}
+      {item.display ?? needGapText(item)}
     </span>
   );
 }
@@ -2280,7 +2280,7 @@ function TitleBadge({ title, meta, next }: {
                 <span className="text-ui-2xs text-ink-faint">下一档</span>
                 <b className="text-ui-2xs text-ink">{next.name}</b>
                 {next.ready && (
-                  <span className="text-ui-2xs font-semibold text-title-model">数值已够</span>
+                  <span className="text-ui-2xs font-semibold text-title-model">条件已够</span>
                 )}
               </span>
               {next.shared.length > 0 && (
@@ -2318,6 +2318,14 @@ function TitleBadge({ title, meta, next }: {
                       ))}
                     </span>
                   ))}
+                </span>
+              )}
+              {next.extras.length > 0 && (
+                <span data-case-title-extras className="mt-1 block border-t border-line pt-1">
+                  <span className="mb-1 block text-ui-2xs text-ink-faint">另需（攻略条件）：</span>
+                  <span className="flex flex-wrap gap-1">
+                    {next.extras.map((item) => <GapChip key={item.label} item={item} />)}
+                  </span>
                 </span>
               )}
             </span>
