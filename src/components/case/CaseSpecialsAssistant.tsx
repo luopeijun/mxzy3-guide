@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSpecialsData } from '../../hooks/useSpecialsData';
 import { cn } from '../../lib/cn';
+import { workRoleClass } from '../../lib/workRoleStyle';
 import {
   evaluateLiveSpecials,
   LIVE_STATUS_LABELS,
@@ -46,7 +47,7 @@ function MatchHoverCard({
       {match.slots.length ? match.slots.map((slot) => (
         <div key={slot.label} className="mb-1.5 last:mb-0">
           <div className="mb-0.5 flex items-center justify-between gap-2">
-            <span className="text-ui-2xs font-semibold text-ink">{slot.label}</span>
+            <span className={cn('text-ui-2xs', workRoleClass(slot.label))}>{slot.label}</span>
             <span className="text-ui-2xs text-ink-faint">{slot.met}/{slot.total}</span>
           </div>
           {slot.gaps.length ? (

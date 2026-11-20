@@ -6,6 +6,7 @@ import CaseSpecialsAssistant from './CaseSpecialsAssistant';
 import { companyDot, companyText } from '../notices/infoStyle';
 import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
+import { workRoleClass } from '../../lib/workRoleStyle';
 import { artistCertificates } from '../../lib/caseCertificates';
 import { findNodePath } from '../../lib/guide';
 import {
@@ -76,15 +77,6 @@ function chipClass(active: boolean) {
       ? 'border-brand bg-brand font-semibold text-white'
       : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
   );
-}
-
-/** 作品明细里的角色胶囊：主角 / 外景主持 / 主持人用品牌粉提亮，
- *  配角与助理主持压成灰底。 */
-function workRoleClass(role: string): string {
-  const featured = role.includes('主角') || role === '外景主持' || role === '主持人';
-  return featured
-    ? 'rounded bg-brand-soft px-1 font-semibold text-brand-strong'
-    : 'rounded bg-line px-1 text-ink-muted';
 }
 
 /** 把「拍摄中」和「自制通告·拍摄中」接到旗下艺人头上。
