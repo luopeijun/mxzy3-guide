@@ -948,6 +948,20 @@ async function main() {
         'AutoReleased: 汇总筛选条上不再挂「已逾期」', rel.summary.slice(0, 100));
       check(/唱片\s*6\s*张/.test(rel.groupWork),
         'AutoReleased: 团体卡通告统计显示千金小姐唱片 6 张', rel.groupWork);
+      // 团体唱片「銀河」在拍摄中：整团接一份通告，队员共享队长的完成天数。
+      // 存档只给队长写接取记录，队员那条 0 天 / 0 酬劳是噪声，不该显示成 0/25。
+      await evaluate(`document.querySelector('[data-case-tab="shooting"]').click()`);
+      await sleep(350);
+      const galaxy = JSON.parse(await evaluate(`JSON.stringify({
+        rows: [...document.querySelectorAll('[data-case-shooting-row="CD602"]')].map(r => ({
+          artist: r.querySelector('[data-case-shooting-artist]')?.innerText || '',
+          text: [...r.querySelectorAll('td')].map(td => td.innerText.replace(/\\s+/g, ' ').trim()).join(' | '),
+        })),
+      })`));
+      check(galaxy.rows.length === 2
+        && galaxy.rows.every((r) => r.text.includes('10 / 25 天') && r.text.includes('4150 万')),
+        'AutoReleased: 团体唱片 銀河 队长与队员都显示 10/25、酬劳 4150 万（队员共享队长进度）',
+        JSON.stringify(galaxy.rows));
     } else {
       console.log('SKIP AutoReleased.sa2 not present, released-notice UI not checked');
     }

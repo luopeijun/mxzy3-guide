@@ -657,6 +657,19 @@ if (fs.existsSync(savePath)) {
     check(save.teams.length === 1 && yqj?.code === 101 && yqj.workCount === 6,
       'AutoReleased: 千金小姐团体唱片作品数 = 6（游戏界面 6 张团体专辑）',
       save.teams.map((t) => `${t.name}:${t.workCount}`).join(',') || 'none');
+    // 团体唱片「銀河」是整团接的一份通告：存档只给队长写接取记录，队员名下
+    // 那条 0 天 / 0 酬劳是噪声。进度只认队长，队员共享同一组数字。
+    const galaxy = save.shooting.find((n) => n.code === 'CD602');
+    const gLeader = galaxy?.casts.find((c) => c.artistId === 6);
+    const gMember = galaxy?.casts.find((c) => c.artistId === 4);
+    check(galaxy?.subtype === '團體' && gLeader?.doneDays === 10 && gLeader?.pay === 41500000,
+      'AutoReleased: 团体唱片 銀河 队长萧依莉 10/25、酬劳 4150 万',
+      JSON.stringify(gLeader ?? null));
+    check(gMember && gMember.doneDays === gLeader?.doneDays && gMember.workDays === gLeader?.workDays
+      && gMember.needDays === gLeader?.needDays && gMember.pay === gLeader?.pay
+      && gMember.risk === gLeader?.risk && gMember.status === gLeader?.status,
+      'AutoReleased: 团体唱片队员苏嫚君共享队长进度（10/25、4150 万，不再是 0/25）',
+      JSON.stringify(gMember ?? null));
     const expected = [
       ['CD701', '有朋自遠方來', 1, [['萧依莉', 25]]],
       ['CD601', '俠客行', 1, [['苏嫚君', 25]]],
