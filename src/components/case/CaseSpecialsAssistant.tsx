@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSpecialsData } from '../../hooks/useSpecialsData';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
@@ -24,8 +24,10 @@ const STATUS_DOT: Record<LiveNoticeStatus, string> = {
   manual: 'bg-ink-faint',
 };
 
+type HoverAnchor = { left: number; right: number; top: number; bottom: number };
+
 /** 艺人胶囊的自定义 hover 浮层：男主角 / 男配角两坑位各自列差值。
- *  原生 title 又慢又不能排版，这里用浮层卡片，跟随胶囊位置。 */
+ *  优先贴在胶囊上方，空间不够再翻到下方；最后夹在视口内，避免底部被截。 */
 function MatchHoverCard({
   match,
   anchor,
@@ -33,17 +35,39 @@ function MatchHoverCard({
   onLeave,
 }: {
   match: ArtistMatch;
-  anchor: { left: number; top: number };
+  anchor: HoverAnchor;
   onEnter: () => void;
   onLeave: () => void;
 }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const { width, height } = card.getBoundingClientRect();
+    const padding = 8;
+    const gap = 8;
+    const maxLeft = Math.max(padding, window.innerWidth - width - padding);
+    const left = Math.min(Math.max(padding, anchor.right - width), maxLeft);
+    let top = anchor.top - height - gap;
+    if (top < padding) top = anchor.bottom + gap;
+    if (top + height > window.innerHeight - padding) {
+      top = Math.max(padding, window.innerHeight - height - padding);
+    }
+    setPosition({ left, top });
+  }, [anchor.left, anchor.right, anchor.top, anchor.bottom, match]);
+
   return (
     <div
+      ref={cardRef}
       data-case-special-hover
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
-      className="fixed z-50 w-[300px] -translate-x-full rounded-ui-md border border-line-strong bg-canvas p-2.5 shadow-soft"
-      style={{ left: anchor.left - 8, top: anchor.top }}
+      className="fixed z-50 max-h-[calc(100vh-16px)] w-[300px] overflow-y-auto rounded-ui-md border border-line-strong bg-canvas p-2.5 shadow-soft"
+      style={position
+        ? { left: position.left, top: position.top }
+        : { left: -9999, top: -9999, visibility: 'hidden' }}
     >
       <p className="mb-1.5 text-ui-xs font-semibold text-ink">{match.name}</p>
       {match.required.length > 0 && (
@@ -122,7 +146,7 @@ function DetailSection({
   report: LiveSpecialsReport | null;
   expanded: string;
   onToggle: (id: string) => void;
-  onMatchHover: (match: ArtistMatch | null, anchor: { left: number; top: number }) => void;
+  onMatchHover: (match: ArtistMatch | null, anchor: HoverAnchor) => void;
   dataError: string | null;
 }) {
   if (dataError) {
@@ -306,9 +330,14 @@ function DetailSection({
                           )}
                           onMouseEnter={(event) => {
                             const rect = event.currentTarget.getBoundingClientRect();
-                            onMatchHover(match, { left: rect.left, top: rect.top });
+                            onMatchHover(match, {
+                              left: rect.left,
+                              right: rect.right,
+                              top: rect.top,
+                              bottom: rect.bottom,
+                            });
                           }}
-                          onMouseLeave={() => onMatchHover(null, { left: 0, top: 0 })}
+                          onMouseLeave={() => onMatchHover(null, { left: 0, right: 0, top: 0, bottom: 0 })}
                         >
                           {match.met === match.total && <span aria-hidden="true">✓</span>}
                           {match.name} {match.met}/{match.total}
@@ -329,7 +358,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const { data, error } = useSpecialsData(true);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState('');
-  const [hover, setHover] = useState<{ match: ArtistMatch; anchor: { left: number; top: number } } | null>(null);
+  const [hover, setHover] = useState<{ match: ArtistMatch; anchor: HoverAnchor } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -339,7 +368,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
       hoverTimer.current = null;
     }
   };
-  const showHover = (match: ArtistMatch, anchor: { left: number; top: number }) => {
+  const showHover = (match: ArtistMatch, anchor: HoverAnchor) => {
     clearHoverTimer();
     setHover({ match, anchor });
   };
@@ -436,6 +465,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
 
       {open && hover && (
         <MatchHoverCard
+          key={hover.match.id}
           match={hover.match}
           anchor={hover.anchor}
           onEnter={clearHoverTimer}
