@@ -8,11 +8,11 @@ import { cn } from '../../lib/cn';
 import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
-  noticeLabel, noticeUnit,
+  noticeLabel, noticeUnit, riskOf, shootableDays,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArtistEvent, type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
-  type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
+  type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice, type ShootingRisk,
   type TitleLine, type TitleMeta, type WorkRecord,
 } from '../../lib/caseParser';
 import type { TitleGapItem, TitleNext } from '../../lib/titleLadder';
@@ -33,10 +33,38 @@ const CATEGORY_CLASS: Record<string, string> = {
   特别: 'bg-alert-soft text-alert',
 };
 
+/** 艺人速查里的在拍小块：用同一套通告类别色，跟表格里的类型胶囊对得上。 */
+const ACTIVE_NOTICE_TILE_CLASS: Record<string, string> = {
+  唱片: 'border-l-tag-talk bg-tag-talk-soft/70',
+  广告: 'border-l-tag-follow bg-tag-follow-soft/70',
+  电影: 'border-l-tag-manual bg-tag-manual-soft/70',
+  电视剧: 'border-l-tag-news bg-tag-news-soft/70',
+  主持: 'border-l-tag-scene bg-tag-scene-soft/70',
+  时装: 'border-l-tag-auto bg-tag-auto-soft/70',
+  舞台剧: 'border-l-tag-talk bg-tag-talk-soft/70',
+  特别: 'border-l-alert bg-alert-soft/70',
+};
+
 /** One artist the save marks as signed, plus the state block holding their numbers. */
 interface SignedArtist {
   option: ArtistOption;
   artist: ArtistStats | null;
+}
+
+/** 挂在右栏艺人名下的在拍通告：拍摄中 tab 和自制通告里状态为拍摄中的那一条。
+ *  团体通告同一份进度会复制给每位成员，但只算一个块（key 去重）。 */
+interface ActiveArtistNotice {
+  key: string;
+  source: 'shooting' | 'selfMade';
+  code: string;
+  name: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  doneDays: number;
+  workDays: number;
+  risk: ShootingRisk;
+  groupName?: string;
 }
 
 function chipClass(active: boolean) {
@@ -53,6 +81,81 @@ function workRoleClass(role: string): string {
   return role.includes('主角')
     ? 'rounded bg-brand-soft px-1 font-semibold text-brand-strong'
     : 'rounded bg-line px-1 text-ink-muted';
+}
+
+/** 把「拍摄中」和「自制通告·拍摄中」接到旗下艺人头上。
+ *  团体通告按存档里的团体成员展开：两位成员都挂同一块，进度也用队长那一份，
+ *  不给队员另算 0 天。没有团队记录的仍只挂在接演人本人名下。 */
+function buildActiveArtistNotices(
+  result: ParseResult,
+  signed: SignedArtist[],
+  groups: GroupRecord[],
+): Map<number, ActiveArtistNotice[]> {
+  const byArtist = new Map<number, ActiveArtistNotice[]>();
+  const signedIds = new Set(signed.map(({ option }) => option.id));
+  const groupOf = (artistId: number): GroupRecord | null =>
+    groups.find((group) => group.memberIds.includes(artistId)) ?? null;
+  const add = (artistId: number, notice: ActiveArtistNotice) => {
+    if (!signedIds.has(artistId)) return;
+    const list = byArtist.get(artistId) ?? [];
+    if (list.some((item) => item.key === notice.key)) return;
+    list.push(notice);
+    byArtist.set(artistId, list);
+  };
+
+  for (const notice of result.shooting) {
+    const groupRole = notice.roles.some(isGroupRole);
+    for (const cast of notice.casts) {
+      if (cast.status === 'done') continue;
+      const group = groupRole ? groupOf(cast.artistId) : null;
+      const targets = group ? group.memberIds : [cast.artistId];
+      const item: ActiveArtistNotice = {
+        key: `shooting:${notice.code}`,
+        source: 'shooting',
+        code: notice.code,
+        name: notice.name,
+        category: notice.category,
+        startDate: notice.startDate,
+        endDate: notice.endDate,
+        doneDays: cast.doneDays,
+        workDays: cast.workDays,
+        risk: cast.risk,
+        groupName: group?.name,
+      };
+      for (const id of targets) add(id, item);
+    }
+  }
+
+  for (const notice of result.selfMade) {
+    if (notice.status !== 'shooting') continue;
+    for (const cast of notice.casts) {
+      if (!cast.mine && !cast.group) continue;
+      const group = cast.group ? groupOf(cast.artistId) : null;
+      const targets = group ? group.memberIds : [cast.artistId];
+      const risk: ShootingRisk = cast.needDays > 0
+        ? riskOf(
+          cast.needDays,
+          shootableDays(notice.daysLeft, notice.daysPerWeek),
+          notice.daysPerWeek,
+        )
+        : 'ok';
+      const item: ActiveArtistNotice = {
+        key: `selfMade:${notice.code}`,
+        source: 'selfMade',
+        code: notice.code,
+        name: notice.name,
+        category: notice.category,
+        startDate: notice.startDate,
+        endDate: notice.endDate,
+        doneDays: cast.doneDays,
+        workDays: cast.workDays,
+        risk,
+        groupName: group?.name ?? cast.group?.name,
+      };
+      for (const id of targets) add(id, item);
+    }
+  }
+  return byArtist;
 }
 
 const SCENE_GUIDE_ID = 'game-guide/scenes';
@@ -410,9 +513,14 @@ function CaseToc({
 }
 
 /** 右栏「艺人速查」：顶部完整卡片不动，这里只留对照通告表格时一眼要扫的
- *  九项属性 + 状态 + 社交三项；友好度、压力疲劳、通告统计仍在顶部卡片里。
- *  列表在剩余高度内自己滚，本页小结钉在上方不受影响。 */
-function ArtistQuickRef({ signed }: { signed: SignedArtist[] }) {
+ *  九项属性 + 状态 + 社交三项 + 当前在拍通告；友好度、压力疲劳、通告统计
+ *  仍在顶部卡片里。列表在剩余高度内自己滚，本页小结钉在上方不受影响。 */
+function ArtistQuickRef({
+  signed, activeNotices,
+}: {
+  signed: SignedArtist[];
+  activeNotices: Map<number, ActiveArtistNotice[]>;
+}) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <section data-case-quickref className="flex min-h-0 flex-1 flex-col rounded-ui-md border border-line bg-surface p-2.5 shadow-soft">
@@ -432,43 +540,103 @@ function ArtistQuickRef({ signed }: { signed: SignedArtist[] }) {
         <div data-case-quickref-list className="mt-1.5 min-h-0 space-y-1.5 overflow-y-auto pr-0.5">
           {signed.length === 0 ? (
             <p className="px-0.5 text-ui-2xs text-ink-faint">这份存档里没有识别到旗下艺人。</p>
-          ) : signed.map(({ option, artist }) => (
-            <div key={option.id} data-case-quickref-artist={option.name} className="rounded border border-line bg-surface-soft px-2 py-1.5">
-              <div className="flex items-baseline gap-1">
-                <span className="text-ui-2xs font-bold text-brand-strong">#{option.id} {option.name}</span>
-                <span className="rounded-full bg-surface px-1 text-ui-2xs text-ink-faint">
-                  {option.gender === 'female' ? '女' : '男'}
-                </span>
-                <span
-                  data-case-quickref-condition
-                  className={cn(
-                    'ml-auto text-ui-2xs',
-                    artist?.condition && artist.condition !== '正常'
-                      ? 'font-semibold text-alert' : 'text-ink-faint',
-                  )}
-                >
-                  {artist?.condition ?? '—'}
-                </span>
+          ) : signed.map(({ option, artist }) => {
+            const active = activeNotices.get(option.id) ?? [];
+            return (
+              <div key={option.id} data-case-quickref-artist={option.name} className="rounded border border-line bg-surface-soft px-2 py-1.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-ui-2xs font-bold text-brand-strong">#{option.id} {option.name}</span>
+                  <span className="rounded-full bg-surface px-1 text-ui-2xs text-ink-faint">
+                    {option.gender === 'female' ? '女' : '男'}
+                  </span>
+                  <span
+                    data-case-quickref-condition
+                    className={cn(
+                      'ml-auto text-ui-2xs',
+                      artist?.condition && artist.condition !== '正常'
+                        ? 'font-semibold text-alert' : 'text-ink-faint',
+                    )}
+                  >
+                    {artist?.condition ?? '—'}
+                  </span>
+                </div>
+                {artist ? (
+                  <>
+                    <div data-case-quickref-attrs className="mt-1 grid grid-cols-3 gap-x-1.5 gap-y-0.5 text-ui-2xs text-ink-muted">
+                      {ATTRS.map((attr, i) => (
+                        <span key={attr} className="flex justify-between gap-0.5 whitespace-nowrap">
+                          <span className="text-ink-faint">{attr}</span>
+                          <b className="tabular-nums">{artist.abilities[i]}</b>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-1 whitespace-nowrap border-t border-line pt-1 text-ui-2xs leading-[1.5] text-ink-faint">
+                      叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]}
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-1 text-ui-2xs text-ink-faint">这份存档里还没有这位的状态块。</p>
+                )}
+                {active.length > 0 && (
+                  <div className="mt-1.5 border-t border-line pt-1">
+                    <div className="mb-1 text-ui-2xs font-semibold text-ink-faint">
+                      在拍通告 <span className="tabular-nums">{active.length}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {active.map((item) => (
+                        <div
+                          key={item.key}
+                          data-case-quickref-notice={item.code}
+                          data-case-quickref-notice-source={item.source}
+                          data-case-quickref-notice-risk={item.risk}
+                          title={`${item.name}（${item.code}）${item.groupName ? ` · ${item.groupName}` : ''}`}
+                          className={cn(
+                            'relative rounded border border-line border-l-[3px] px-1.5 py-1',
+                            ACTIVE_NOTICE_TILE_CLASS[item.category] ?? 'bg-surface',
+                          )}
+                        >
+                          <div className="flex items-center gap-1 pr-3">
+                            <span className={cn(
+                              'shrink-0 rounded px-1 text-ui-2xs',
+                              CATEGORY_CLASS[item.category] ?? 'bg-surface text-ink-muted',
+                            )}
+                            >
+                              {item.category}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-ui-2xs font-semibold text-ink">
+                              {item.name}
+                            </span>
+                          </div>
+                          <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-muted">
+                            {item.startDate || '—'} ~ {item.endDate || '—'}
+                          </div>
+                          <div className={cn(
+                            'tabular-nums text-ui-2xs text-ink-faint',
+                            item.risk === 'tight' || item.risk === 'late' ? 'pr-3' : '',
+                          )}
+                          >
+                            {item.doneDays} / {item.workDays || '—'} 天
+                            {item.groupName && <span className="ml-1">· 团体</span>}
+                            {item.risk === 'tight' && <span className="ml-1 font-semibold text-gold">逾期风险</span>}
+                            {item.risk === 'late' && <span className="ml-1 font-semibold text-alert">违约提醒</span>}
+                          </div>
+                          {(item.risk === 'tight' || item.risk === 'late') && (
+                            <span
+                              aria-hidden
+                              className={cn(
+                                'absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full ring-2 ring-white',
+                                item.risk === 'late' ? 'bg-alert' : 'bg-gold',
+                              )}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              {artist ? (
-                <>
-                  <div data-case-quickref-attrs className="mt-1 grid grid-cols-3 gap-x-1.5 gap-y-0.5 text-ui-2xs text-ink-muted">
-                    {ATTRS.map((attr, i) => (
-                      <span key={attr} className="flex justify-between gap-0.5 whitespace-nowrap">
-                        <span className="text-ink-faint">{attr}</span>
-                        <b className="tabular-nums">{artist.abilities[i]}</b>
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-1 whitespace-nowrap border-t border-line pt-1 text-ui-2xs leading-[1.5] text-ink-faint">
-                    叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]}
-                  </div>
-                </>
-              ) : (
-                <p className="mt-1 text-ui-2xs text-ink-faint">这份存档里还没有这位的状态块。</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>
@@ -704,6 +872,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
       ?? `编号${id}`;
     return result.teams.map((team) => buildGroupRecord(team, nameOf));
   }, [result, tables]);
+
+  /** 右栏「艺人速查」里每位名下挂的在拍块：团体通告按成员展开，自制通告
+   *  只取状态为拍摄中的那一条，风险两档与表格里同一套数字。 */
+  const activeNotices = useMemo(
+    () => result
+      ? buildActiveArtistNotices(result, signedArtists, activeGroups)
+      : new Map<number, ActiveArtistNotice[]>(),
+    [result, signedArtists, activeGroups],
+  );
 
   /** 我方接不接得上这个角色：性别要对上，九项数值一项都不能差。
    *  团体通告拿队长去比 —— 与右边「数值对比」列同一套判断，不能两处给出不同答案。 */
@@ -1459,7 +1636,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
               activeGroups={activeGroups}
             />
           </div>
-          <ArtistQuickRef signed={signedArtists} />
+          <ArtistQuickRef signed={signedArtists} activeNotices={activeNotices} />
         </aside>
       )}
     </div>
