@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn';
 import {
   evaluateLiveSpecials,
   LIVE_STATUS_LABELS,
+  type ArtistMatch,
   type LiveNoticeStatus,
   type LiveSpecialsReport,
 } from '../../lib/caseSpecials';
@@ -24,6 +25,16 @@ const STATUS_DOT: Record<LiveNoticeStatus, string> = {
 
 function statusRank(status: LiveNoticeStatus): number {
   return { close: 0, progress: 1, none: 2, manual: 3, done: 4 }[status];
+}
+
+/** hover 文案：男主角 / 男配角分开列，缺的每一项都带具体数值差。 */
+function matchTitle(match: ArtistMatch): string {
+  if (!match.slots.length) {
+    return match.gaps.length ? `待补：${match.gaps.join('、')}` : '全部达标';
+  }
+  return match.slots
+    .map((slot) => `${slot.label} ${slot.met}/${slot.total}${slot.gaps.length ? `：${slot.gaps.join('；')}` : '：达标'}`)
+    .join('\n');
 }
 
 function SummaryBox({ label, value }: { label: string; value: string }) {
@@ -133,16 +144,22 @@ function DetailSection({
                 </div>
 
                 {item.items.length > 0 && (
-                  <div className="mt-2" data-case-special-items>
-                    <span className="text-ui-2xs text-ink-faint">所需道具 </span>
-                    {item.items.map((entry, index) => (
+                  <div className="mt-2 flex flex-wrap items-center gap-1" data-case-special-items>
+                    <span className="mr-0.5 text-ui-2xs text-ink-faint">所需道具</span>
+                    {item.items.map((entry) => (
                       <span
                         key={entry.name}
                         data-case-special-item={entry.name}
                         data-case-special-item-met={entry.met}
-                        className="text-ui-2xs text-ink-muted"
+                        className={cn(
+                          'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                          entry.met
+                            ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                            : 'border-line bg-surface-soft text-ink-muted',
+                        )}
                       >
-                        {index > 0 && ' · '}{entry.name} {entry.met ? '已有' : '缺'}
+                        {entry.met && <span aria-hidden="true">✓</span>}
+                        {entry.name}
                       </span>
                     ))}
                   </div>
@@ -153,15 +170,26 @@ function DetailSection({
                     <span className="mr-0.5 text-ui-2xs text-ink-faint">
                       {item.groups.length ? '团体匹配' : '艺人匹配'}
                     </span>
-                    {(item.groups.length ? item.groups : item.matches).slice(0, 2).map((match) => (
-                      <span
-                        key={'code' in match ? match.code : match.id}
-                        className="rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
-                        title={match.gaps.length ? `待补：${match.gaps.join('、')}` : '全部达标'}
-                      >
-                        {match.name} {match.met}/{match.total}
-                      </span>
-                    ))}
+                    {item.groups.length > 0
+                      ? item.groups.slice(0, 2).map((group) => (
+                        <span
+                          key={group.code}
+                          className="rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
+                          title={group.gaps.length ? `待补：${group.gaps.join('、')}` : '全部达标'}
+                        >
+                          {group.name} {group.met}/{group.total}
+                        </span>
+                      ))
+                      : item.matches.map((match) => (
+                        <span
+                          key={match.id}
+                          data-case-special-match={match.id}
+                          className="rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
+                          title={matchTitle(match)}
+                        >
+                          {match.name} {match.met}/{match.total}
+                        </span>
+                      ))}
                   </div>
                 )}
               </div>

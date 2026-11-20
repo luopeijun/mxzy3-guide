@@ -1,4 +1,4 @@
-import { ATTRS, type CaseTables, type ParseResult } from './caseParser';
+import { ATTRS, starGender, type CaseTables, type ParseResult } from './caseParser';
 import { artistCertificates } from './caseCertificates';
 import { certsForName, normaliseStatName, parseTarget } from './specials';
 import type { ArtistStats } from './caseParser';
@@ -11,6 +11,10 @@ export interface LiveCondition {
   state: LiveConditionState;
   detail: string;
   byArtist: Record<number, boolean>;
+  /** 每位艺人自己的数值详情，供艺人匹配的 hover 逐项显示缺口。 */
+  detailByArtist: Record<number, string>;
+  /** 未达标时带差值的文案（如「演技 差 42.4（457.6/500）」）。 */
+  gapByArtist: Record<number, string>;
   byGroup: Record<number, boolean>;
 }
 
@@ -21,12 +25,22 @@ export interface ItemCheck {
   met: boolean;
 }
 
+export interface SlotGap {
+  label: string;
+  met: number;
+  total: number;
+  /** 未达标项的具体差值；达标项不计入。 */
+  gaps: string[];
+}
+
 export interface ArtistMatch {
   id: number;
   name: string;
   met: number;
   total: number;
   gaps: string[];
+  /** 按通告坑位拆开的缺口，hover 时分别显示男主角 / 男配角差多少。 */
+  slots: SlotGap[];
 }
 
 export interface GroupMatch {
@@ -122,34 +136,52 @@ function largeConcert(artist: ArtistStats, ctx: EvalContext): boolean {
     event.artistId === artist.roleId && event.kind === 63 && event.scale === 1 && !event.group);
 }
 
+function shortGap(value: number): string {
+  return String(Number(value.toFixed(1)));
+}
+
+function statGap(label: string, have: number, min: number): string {
+  return `${label} 差 ${shortGap(min - have)}（${have}/${min}）`;
+}
+
 /** artist-scope rows we can read from a .sa2. Everything else stays manual. */
 function evaluateArtistRow(
   row: SpecialRow,
   artist: ArtistStats,
   ctx: EvalContext,
-): { met: boolean; detail: string } | null {
+): { met: boolean; detail: string; gap: string } | null {
   const min = targetOf(row);
   if (row.type === 'stat') {
     const parsed = parseTarget(row.target);
     const attrs = multiAttrs(row.name);
     if (attrs && parsed?.kind === 'multi' && attrs.length === parsed.values.length) {
       const gaps: string[] = [];
+      const details: string[] = [];
       attrs.forEach((attr, index) => {
         const have = abilityValue(artist, attr) ?? 0;
-        if (have < parsed.values[index]) gaps.push(`${attr} ${have}/${parsed.values[index]}`);
+        details.push(`${attr} ${have}/${parsed.values[index]}`);
+        if (have < parsed.values[index]) gaps.push(statGap(attr, have, parsed.values[index]));
       });
       return gaps.length
-        ? { met: false, detail: gaps.join(' · ') }
-        : { met: true, detail: attrs.map((attr) => `${attr} 达标`).join(' · ') };
+        ? { met: false, detail: details.join(' · '), gap: gaps.join(' · ') }
+        : { met: true, detail: details.join(' · '), gap: '' };
     }
     const attr = normaliseStatName(row.name);
     const have = attr === null ? null : abilityValue(artist, attr);
-    if (have === null) return null;
-    return { met: have >= min, detail: `${attr} ${have}/${min}` };
+    if (have === null || attr === null) return null;
+    return {
+      met: have >= min,
+      detail: `${attr} ${have}/${min}`,
+      gap: have < min ? statGap(attr, have, min) : '',
+    };
   }
   if (row.type === 'count' && row.name.includes('唱片')) {
     const have = artist.noticeCounts[2] ?? 0;
-    return { met: have >= min, detail: `唱片 ${have}/${min}` };
+    return {
+      met: have >= min,
+      detail: `唱片 ${have}/${min}`,
+      gap: have < min ? statGap('唱片', have, min) : '',
+    };
   }
   if (row.type === 'cert') {
     const needed = certsForName(row.name);
@@ -159,13 +191,13 @@ function evaluateArtistRow(
     return {
       met: missing.length === 0,
       detail: missing.length ? `缺 ${missing.join('、')}` : needed.join('、'),
+      gap: missing.length ? `缺 ${missing.join('、')}` : '',
     };
   }
   if (row.type === 'flag' && row.name.includes('大型个人演唱会')) {
-    return {
-      met: largeConcert(artist, ctx),
-      detail: largeConcert(artist, ctx) ? '已办大型个人演唱会' : '未记录大型个人演唱会',
-    };
+    const met = largeConcert(artist, ctx);
+    const detail = met ? '已办大型个人演唱会' : '未记录大型个人演唱会';
+    return { met, detail, gap: met ? '' : detail };
   }
   return null;
 }
@@ -228,7 +260,15 @@ function artistDetail(
 }
 
 function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
-  const blank: LiveCondition = { row, state: 'manual', detail: '存档读不到这一项', byArtist: {}, byGroup: {} };
+  const blank: LiveCondition = {
+    row,
+    state: 'manual',
+    detail: '存档读不到这一项',
+    byArtist: {},
+    detailByArtist: {},
+    gapByArtist: {},
+    byGroup: {},
+  };
 
   if (row.type === 'item') {
     const check = itemCheck(row, ctx);
@@ -242,6 +282,7 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
   if (row.scope === 'artist') {
     const byArtist: Record<number, boolean> = {};
     const detailByArtist: Record<number, string> = {};
+    const gapByArtist: Record<number, string> = {};
     let readable = false;
     for (const artist of ctx.signed) {
       const result = evaluateArtistRow(row, artist, ctx);
@@ -249,6 +290,7 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
       readable = true;
       byArtist[artist.roleId] = result.met;
       detailByArtist[artist.roleId] = result.detail;
+      gapByArtist[artist.roleId] = result.gap;
     }
     if (!readable) return blank;
     const met = ctx.signed.some((artist) => byArtist[artist.roleId]);
@@ -257,6 +299,8 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
       state: met ? 'met' : 'unmet',
       detail: artistDetail(ctx, byArtist, detailByArtist),
       byArtist,
+      detailByArtist,
+      gapByArtist,
       byGroup: {},
     };
   }
@@ -291,6 +335,21 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
   return blank;
 }
 
+/** 笑傲天际只有男主角 / 男配角两个坑位，女艺人不能参与。性别只认游戏表。 */
+const MALE_ONLY_NOTICES = new Set(['proud-of-the-world']);
+
+const SLOT_LABELS: Record<string, string> = {
+  main: '男主角',
+  support: '男配角',
+  'role:男主角': '男主角',
+  'role:男配角': '男配角',
+};
+
+function slotLabel(slot: string, maleOnly: boolean): string {
+  if (maleOnly) return SLOT_LABELS[slot] ?? (slot.startsWith('role:') ? slot.slice(5) : slot);
+  return slot === 'main' ? '主角' : slot.startsWith('role:') ? slot.slice(5) : slot;
+}
+
 function statusOf(met: number, total: number, manual: number): LiveNoticeStatus {
   if (!total) return 'manual';
   if (met === total) return 'done';
@@ -323,16 +382,39 @@ export function evaluateLiveSpecials(
       const manual = conditions.length - readable.length;
 
       const artistRows = readable.filter((condition) => Object.keys(condition.byArtist).length > 0);
-      const matches = signed.map((artist): ArtistMatch => {
+      const maleOnly = MALE_ONLY_NOTICES.has(notice.id);
+      const candidates = maleOnly
+        ? signed.filter((artist) => starGender(artist.roleId, tables.stars) === 'male')
+        : signed;
+
+      const bySlot = new Map<string, LiveCondition[]>();
+      for (const condition of artistRows) {
+        const slot = condition.row.slot && condition.row.slot !== '-' ? condition.row.slot : 'main';
+        bySlot.set(slot, [...(bySlot.get(slot) ?? []), condition]);
+      }
+
+      const matches = candidates.map((artist): ArtistMatch => {
         const gaps = artistRows
           .filter((condition) => !condition.byArtist[artist.roleId])
           .map((condition) => condition.row.name);
+        const slots: SlotGap[] = [...bySlot].map(([slot, rows]) => ({
+          label: slotLabel(slot, maleOnly),
+          met: rows.filter((condition) => condition.byArtist[artist.roleId]).length,
+          total: rows.length,
+          gaps: rows
+            .filter((condition) => !condition.byArtist[artist.roleId])
+            .map((condition) =>
+              condition.gapByArtist[artist.roleId]
+              || condition.detailByArtist[artist.roleId]
+              || condition.row.name),
+        }));
         return {
           id: artist.roleId,
           name: result.artistDirectory.find((option) => option.id === artist.roleId)?.name ?? String(artist.roleId),
           met: artistRows.length - gaps.length,
           total: artistRows.length,
           gaps,
+          slots,
         };
       }).filter((match) => match.total > 0)
         .sort((a, b) => b.met - a.met || a.gaps.length - b.gaps.length);
