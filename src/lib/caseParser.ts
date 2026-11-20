@@ -1190,6 +1190,39 @@ function readHistoryCode(view: DataView, at: number): string {
   return code;
 }
 
+/** 从整张「艺人成绩」记事表建「作品编码 -> 发行日期」索引，给参与清单补日期。
+ *
+ *  记事表每条的 +56 是作品编码、+0/+4/+8 是年月日。作品的发行月份对同一部
+ *  片子是固定的，跟这条记录挂在哪位艺人名下无关（一部多人参与的戏往往只记
+ *  在其中一人名下），所以纯按编码索引，不能按艺人分组，否则苏嫚君的 TV046
+ *  就会因为记事表里记的是 artist 8 而补不到。同一编码取**最早**的一条
+ *  （发行在下档 / 获奖记录之前，如 CD601 取 2008/7/31 而非获奖的 8/29）。
+ *
+ *  这里必须扫全表，不能用 parseWorks 的结果：后者为了区分发行 / 获奖把
+ *  kind=5 整类跳过了，而 kind=5 里其实混着 thing 11..15 的发行记录
+ *  （TV151 2007/8/31、MV706 2007/11/30、CF148 2007/6/1、SH088 2006/6/30
+ *  等），跳掉就会把这些片子的日期全丢掉。 */
+function buildWorkDateIndex(
+  view: DataView, byteLength: number,
+): Map<string, { date: string; year: number; month: number; day: number }> {
+  const table = readDiaryTable(view, byteLength);
+  const index = new Map<string, { date: string; year: number; month: number; day: number }>();
+  if (!table) return index;
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * DIARY_STRIDE;
+    const code = readDiaryCode(view, p + 56);
+    if (!code) continue;
+    const year = view.getUint32(p, true);
+    const month = view.getUint32(p + 4, true);
+    const day = view.getUint32(p + 8, true);
+    const prev = index.get(code);
+    if (!prev || dayNumber(year, month, day) < dayNumber(prev.year, prev.month, prev.day)) {
+      index.set(code, { date: `${year}/${month}/${day}`, year, month, day });
+    }
+  }
+  return index;
+}
+
 /** 每位艺人状态块后面都跟着一份**完整**的参与记录清单（记事表只有 97 条、
  *  早期的会被挤掉，不能用它当明细）。结构跟 CaseCreate 一样：
  *  `[条数][5]` + 每条 28 字节 `[编码 5×int32][类别][5]`。类别 1/2/3/4/5
@@ -1199,21 +1232,17 @@ function readHistoryCode(view: DataView, at: number): string {
  *  这里就是「通告统计 N」的明细真源：苏嫚君官方 8 部电视，记事表只剩 5 条，
  *  参与清单 8 条一条不少；萧依莉 2/6/1/7/5 也逐项对上。团体唱片和原声带
  *  不进个人唱片数，未杀青的自制通告（TV702 二見鍾情）也不算完成作品。
- *  清单本身没有日期，能从记事表按编码补到就补，补不到留空，不猜时间。 */
+ *  清单本身没有日期，从整张记事表按编码补（见 buildWorkDateIndex）；被挤掉
+ *  的早期记录补不到就留空，不猜时间。 */
 export function parseWorkHistory(
   view: DataView,
   artists: ArtistStats[],
   cases: CaseTables['cases'],
-  diaryWorks: WorkRecord[],
+  dateIndex: Map<string, { date: string; year: number; month: number; day: number }>,
   selfMade: SelfMadeNotice[],
   firmStart: number,
 ): WorkRecord[] {
   const sorted = [...artists].sort((a, b) => a.offset - b.offset);
-  const byDiary = new Map<string, WorkRecord>();
-  for (const work of diaryWorks) {
-    const key = `${work.artistId}|${work.workCode}`;
-    if (!byDiary.has(key)) byDiary.set(key, work);
-  }
   const unfinished = new Set(selfMade.filter((s) => s.status !== 'done').map((s) => s.code));
   const out: WorkRecord[] = [];
 
@@ -1247,7 +1276,7 @@ export function parseWorkHistory(
       const key = `${noticeIndex}|${workCode}|${artist.roleId}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const dated = byDiary.get(`${artist.roleId}|${workCode}`);
+      const dated = dateIndex.get(workCode);
       out.push({
         date: dated?.date ?? '',
         year: dated?.year ?? 0,
@@ -2579,7 +2608,9 @@ export function parseSave(
 
   // 明细改用每位艺人状态块后面的完整参与清单；记事表只剩 97 条，苏嫚君
   // 官方 8 部电视在记事表里只有 5 条，用它当明细必然对不上「通告统计」。
-  const historyWorks = parseWorkHistory(view, artists, tables.cases, diaryWorks, selfMade, artistEnd);
+  // 日期则从整张记事表按作品编码补（不按艺人），避免发行记录挂在别人名下。
+  const workDateIndex = buildWorkDateIndex(view, bytes.length);
+  const historyWorks = parseWorkHistory(view, artists, tables.cases, workDateIndex, selfMade, artistEnd);
   const works = historyWorks.length > 0 ? historyWorks : diaryWorks;
 
   // 自制通告的个人作品已经进参与清单（CD701 有朋自遠方來就在里面），
