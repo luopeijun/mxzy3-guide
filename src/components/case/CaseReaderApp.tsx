@@ -1214,7 +1214,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                       key={`${award.awardId}-${award.date}-${award.workCode}`}
                       data-case-company-award
                       data-case-award-id={award.awardId}
-                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                      className="award-item font-semibold text-title-star"
                     >
                       {award.ceremony}·{award.label}
                       <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
@@ -1321,7 +1321,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                               key={`${award.awardId}-${award.date}-${award.workCode}`}
                               data-case-group-award
                               data-case-award-id={award.awardId}
-                              className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                              className="award-item font-semibold text-title-star"
                             >
                               {award.ceremony}·{award.label}
                               <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
@@ -1359,7 +1359,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                       key={`${award.awardId}-${award.date}-${award.workCode}`}
                       data-case-group-award
                       data-case-award-id={award.awardId}
-                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                      className="award-item font-semibold text-title-star"
                     >
                       {award.ceremony}·{award.label}
                       <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
@@ -2735,7 +2735,7 @@ function ArtistCard({
               <span data-case-artist-cert-none className="text-ink-faint">无</span>
             )}
           </div>
-          {/* 奖项：个人奖是金色胶囊，公司作品奖（年度专辑 / 年度戏剧）单列一行；
+          {/* 奖项：个人奖是金色字（无底色），公司作品奖（年度专辑 / 年度戏剧）单列一行；
               团体奖（最佳团体）归到「我方团体」卡，不挂在这里。 */}
           {(artist.awards.some((award) => !award.company)
             || artist.awards.some((award) => award.company && !award.group)) && (
@@ -2748,7 +2748,7 @@ function ArtistCard({
                       key={`${award.awardId}-${award.date}-${award.workCode}`}
                       data-case-artist-award
                       data-case-award-id={award.awardId}
-                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                      className="award-item font-semibold text-title-star"
                     >
                       {award.ceremony}·{award.label}
                       <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
@@ -2765,7 +2765,7 @@ function ArtistCard({
                       key={`${award.awardId}-${award.date}-${award.workCode}`}
                       data-case-artist-company-award
                       data-case-award-id={award.awardId}
-                      className="rounded border border-title-star-line bg-title-star-soft px-1 font-semibold text-title-star"
+                      className="award-item font-semibold text-title-star"
                     >
                       {award.ceremony}·{award.label}
                       <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>

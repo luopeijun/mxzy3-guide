@@ -283,6 +283,19 @@
   height: 6px;
 }
 
+/* 奖项改成金色纯文字后，条目之间没有底色块区分；用一枚小菱形当项目符号，
+ * 颜色跟随文字（currentColor），原站 / 甜蜜乐章自动同色。 */
+.award-item::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 4px;
+  background: currentColor;
+  transform: rotate(45deg) translateY(-1px);
+  vertical-align: middle;
+}
+
 /* 存档解析页的折叠区块：收起时真正把内容（含后代）藏起来，而不是只靠浏览器
  * 默认的 details 布局隐藏 —— 后者下 getComputedStyle 仍报 block / table-row，
  * 会让「收起态不可见」这类断言永远不成立，也不利于屏幕阅读器。 */
