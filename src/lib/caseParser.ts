@@ -365,8 +365,20 @@ export interface GroupWork {
   artistId: number;
 }
 
+/** 「艺人成绩」记事里的一条作品记录，可归到五个通告统计分类。 */
+export interface WorkRecord extends GroupWork {
+  /** 对应 NOTICE_COUNT_LABELS / artist.noticeCounts 的下标 0..4。 */
+  noticeIndex: number;
+  /** 非唱片作品的角色名；唱片没有角色，留空。 */
+  role: string;
+}
+
 /** 记事表每条记录的固定字节数，表头是 `[条数][108]`。 */
 const DIARY_STRIDE = 108;
+
+/** 记事项类型 -> 通告统计分类。11 电视 / 12 电影 / 13 唱片 / 14 广告 / 15 主持。 */
+const DIARY_WORK_TYPE: Record<number, number> = { 11: 0, 12: 1, 13: 2, 14: 3, 15: 4 };
+const WORK_CODE_PREFIX = ['TV', 'MV', 'CD', 'CF', 'SH'];
 
 /** 奖项编号的十位 -> 颁奖礼。 */
 const AWARD_CEREMONY: Record<number, string> = {
@@ -576,6 +588,8 @@ export interface ParseResult {
   /** 「艺人成绩」记事里的全部获奖记录，最近的在前。 */
   /** 「艺人成绩」记事里的团体唱片发行记录（时间/作品/公司）。 */
   groupWorks: GroupWork[];
+  /** 「艺人成绩」记事里的个人作品记录，供通告统计悬停按时间展示。 */
+  works: WorkRecord[];
   awards: ArtistAward[];
   /** Monday notice-update batches, oldest first. */
   batches: UpdateBatch[];
@@ -1039,6 +1053,79 @@ export function parseGroupWorks(
         workName: cases[workCode]?.[0] || workCode,
         company: cases[workCode]?.[3] || '', 
         artistId: view.getUint32(p + 20, true),
+      },
+      day: dayNumber(year, month, day),
+    });
+  }
+  rows.sort((a, b) => a.day - b.day || a.work.workCode.localeCompare(b.work.workCode));
+  return rows.map((row) => row.work);
+}
+
+/** 非唱片作品的角色：主持直接取作品类别，其余按存档角色表 + 艺人性别挑一个。
+ *  角色表里同一部戏常有男女两套（男配角 / 女配角），性别先过滤；还有多个时
+ *  优先主角——记事表不记具体角色号，这是能给出的最稳口径。 */
+function pickWorkRole(
+  workCode: string,
+  noticeIndex: number,
+  artistId: number,
+  cases: CaseTables['cases'],
+  rolesByCode: Map<string, RoleRecord[]>,
+  stars: CaseTables['stars'],
+): string {
+  if (noticeIndex === 2) return '';
+  if (noticeIndex === 4) return cases[workCode]?.[2] ?? '';
+  const candidates = (rolesByCode.get(workCode) ?? []).filter((role) => {
+    const needed = roleGender(role.role);
+    if (needed === 'any') return true;
+    const actual = starGender(artistId, stars);
+    return actual === 'any' || needed === actual;
+  });
+  if (!candidates.length) return '';
+  const priority = (role: RoleRecord) => (
+    /主角/.test(role.role) ? 0 : /配角/.test(role.role) ? 1 : 2
+  );
+  candidates.sort((a, b) => priority(a) - priority(b) || a.roleCode.localeCompare(b.roleCode));
+  return candidates[0].role;
+}
+
+/** 「艺人成绩」记事里的个人作品发行记录，按时间正序（早 -> 晚）。
+ *  团体唱片归团体卡（官方个人唱片统计也不含它），原声带算个人唱片。 */
+export function parseWorks(
+  view: DataView,
+  byteLength: number,
+  cases: CaseTables['cases'],
+  rolesByCode: Map<string, RoleRecord[]>,
+  stars: CaseTables['stars'],
+): WorkRecord[] {
+  const table = readDiaryTable(view, byteLength);
+  if (!table) return [];
+  const seen = new Set<string>();
+  const rows: { work: WorkRecord; day: number }[] = [];
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * DIARY_STRIDE;
+    if (view.getUint32(p + 12, true) === DIARY_AWARD_KIND) continue;
+    const noticeIndex = DIARY_WORK_TYPE[view.getUint32(p + 16, true)];
+    if (noticeIndex === undefined) continue;
+    const workCode = readDiaryCode(view, p + 56);
+    if (!workCode.startsWith(WORK_CODE_PREFIX[noticeIndex])) continue;
+    if (noticeIndex === 2 && cases[workCode]?.[2] === '團體') continue;
+    const artistId = view.getUint32(p + 20, true);
+    const key = `${noticeIndex}|${workCode}|${artistId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const year = view.getUint32(p, true);
+    const month = view.getUint32(p + 4, true);
+    const day = view.getUint32(p + 8, true);
+    rows.push({
+      work: {
+        date: `${year}/${month}/${day}`,
+        year, month, day,
+        workCode,
+        workName: cases[workCode]?.[0] || workCode,
+        company: cases[workCode]?.[3] || '',
+        artistId,
+        noticeIndex,
+        role: pickWorkRole(workCode, noticeIndex, artistId, cases, rolesByCode, stars),
       },
       day: dayNumber(year, month, day),
     });
@@ -1867,6 +1954,12 @@ export function parseSave(
 
   const [caseStart, caseEnd] = [blocks.Case[1], blocks.CaseEnd[0]];
   const roles = parseRoles(bytes, view, caseStart, caseEnd);
+  const rolesByCode = new Map<string, RoleRecord[]>();
+  for (const role of roles) {
+    const list = rolesByCode.get(role.code) ?? [];
+    list.push(role);
+    rolesByCode.set(role.code, list);
+  }
   const firm = blocks.CaseFirm ? parseCaseFirm(view, blocks.CaseFirm[1], bytes.length) : [];
   const codeBlocks = findCodeBlocks(view, caseStart, caseEnd);
   const currentDate = readCurrentDate(view, bytes.length);
@@ -1899,6 +1992,8 @@ export function parseSave(
   const awards = parseAwards(view, bytes.length, tables.cases);
   // 团体唱片发行清单，供团体卡「通告统计」hover 展示。
   const groupWorks = parseGroupWorks(view, bytes.length, tables.cases);
+  // 个人作品清单，供艺人卡五个分类和「作品总数」hover 按时间展示。
+  const works = parseWorks(view, bytes.length, tables.cases, rolesByCode, tables.stars);
   for (const artist of artists) {
     artist.awards = awards.filter((award) => award.artistId === artist.roleId);
   }
@@ -2277,6 +2372,7 @@ export function parseSave(
     company,
     awards,
     groupWorks,
+    works,
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],

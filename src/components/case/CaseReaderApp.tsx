@@ -9,9 +9,9 @@ import {
   noticeLabel, noticeUnit,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
-  type GroupRecord, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
+  type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice,
-  type TitleLine, type TitleMeta,
+  type TitleLine, type TitleMeta, type WorkRecord,
 } from '../../lib/caseParser';
 import type { TitleGapItem, TitleNext } from '../../lib/titleLadder';
 
@@ -70,6 +70,83 @@ function CompanyStat({
         {value}
       </div>
     </div>
+  );
+}
+
+/** 通告统计的小胶囊 + 悬停作品清单，团体卡和艺人卡共用一套。 */
+function WorkCountChip({
+  label, value, unit, works, title, showRole = false, group = false, dataName, dataNoticeIndex,
+}: {
+  label: string;
+  value: number;
+  unit?: string;
+  works: readonly (GroupWork | WorkRecord)[];
+  title: string;
+  showRole?: boolean;
+  group?: boolean;
+  dataName?: string;
+  dataNoticeIndex?: number;
+}) {
+  const cardData = group
+    ? { 'data-case-group-works-card': '' }
+    : { 'data-case-artist-works-card': '' };
+  const rowData = group
+    ? { 'data-case-group-work': '' }
+    : { 'data-case-artist-work': '' };
+  return (
+    <span className="group relative inline-flex">
+      <span
+        {...(dataName ? { [dataName]: '' } : {})}
+        data-notice-index={dataNoticeIndex}
+        tabIndex={0}
+        role="button"
+        className="cursor-help rounded bg-surface-soft px-1 text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
+      >
+        {label} <b>{value}</b>{unit}
+      </span>
+      {works.length > 0 && (
+        <span
+          {...cardData}
+          role="tooltip"
+          className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+        >
+          <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
+            <span className="mb-1 flex items-baseline gap-1">
+              <b className="text-ui-2xs text-ink">{title}</b>
+              <span className="text-ui-2xs text-ink-faint">{works.length} 条（按发布时间）</span>
+            </span>
+            {works.map((work) => (
+              <span
+                key={work.workCode}
+                {...rowData}
+                className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
+              >
+                <span className="text-ink-faint">{work.date}</span>
+                <span className="font-semibold text-ink">{work.workName}</span>
+                {showRole && 'role' in work && work.role && (
+                  <span className="rounded bg-surface-soft px-1 text-ink-muted">{work.role}</span>
+                )}
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 font-semibold',
+                    companyText(work.company),
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
+                      companyDot(work.company),
+                    )}
+                  />
+                  {work.company}
+                </span>
+              </span>
+            ))}
+          </span>
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -515,6 +592,18 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     return byTeam;
   }, [result]);
 
+  /** 艺人作品清单：按记事挂名艺人分组，供五个分类和「作品总数」悬停。 */
+  const worksByArtist = useMemo(() => {
+    const byArtist = new Map<number, WorkRecord[]>();
+    if (!result) return byArtist;
+    for (const work of result.works) {
+      const list = byArtist.get(work.artistId) ?? [];
+      list.push(work);
+      byArtist.set(work.artistId, list);
+    }
+    return byArtist;
+  }, [result]);
+
   /** 我方团体：只认存档 `Team` 段里的记录（编号 101 起）。存档没记录就是
    *  旗下没有团体 —— 这里不做任何猜测，也不预置默认值。 */
   const activeGroups = useMemo<GroupRecord[]>(() => {
@@ -784,7 +873,11 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   <p className="text-ui-2xs text-ink-faint">这份存档里没有识别到旗下艺人。</p>
                 ) : signedArtists.map(({ option, artist }) => (
                   <div key={option.id} className="w-[344px] shrink-0">
-                    <ArtistCard option={option} artist={artist} />
+                    <ArtistCard
+                      option={option}
+                      artist={artist}
+                      works={worksByArtist.get(option.id) ?? []}
+                    />
                   </div>
                 ))}
               </div>
@@ -838,57 +931,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                       {/* 团体通告统计：团体只接唱片通告，直接读存档累计的唱片作品数。 */}
                       <div data-case-group-counts className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                         <span className="text-ink-faint">通告统计</span>
-                        <span className="group relative inline-flex">
-                          <span
-                            data-case-group-work-count
-                            tabIndex={0}
-                            role="button"
-                            className="cursor-help rounded bg-surface-soft px-1 text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
-                          >
-                            {NOTICE_COUNT_LABELS[2]} <b>{group.workCount}</b>{NOTICE_COUNT_UNITS[2]}
-                          </span>
-                          {(groupWorksByTeam.get(group.code)?.length ?? 0) > 0 && (
-                            <span
-                              data-case-group-works-card
-                              role="tooltip"
-                              className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
-                            >
-                              <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
-                                <span className="mb-1 flex items-baseline gap-1">
-                                  <b className="text-ui-2xs text-ink">团体唱片作品</b>
-                                  <span className="text-ui-2xs text-ink-faint">
-                                    {groupWorksByTeam.get(group.code)!.length} 张（按发布时间）
-                                  </span>
-                                </span>
-                                {groupWorksByTeam.get(group.code)!.map((work) => (
-                                  <span
-                                    key={work.workCode}
-                                    data-case-group-work
-                                    className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
-                                  >
-                                    <span className="text-ink-faint">{work.date}</span>
-                                    <span className="font-semibold text-ink">{work.workName}</span>
-                                    <span
-                                      className={cn(
-                                        'inline-flex items-center gap-1 font-semibold',
-                                        companyText(work.company),
-                                      )}
-                                    >
-                                      <span
-                                        aria-hidden
-                                        className={cn(
-                                          'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
-                                          companyDot(work.company),
-                                        )}
-                                      />
-                                      {work.company}
-                                    </span>
-                                  </span>
-                                ))}
-                              </span>
-                            </span>
-                          )}
-                        </span>
+                        <WorkCountChip
+                          group
+                          dataName="data-case-group-work-count"
+                          label={NOTICE_COUNT_LABELS[2]}
+                          value={group.workCount}
+                          unit={NOTICE_COUNT_UNITS[2]}
+                          works={groupWorksByTeam.get(group.code) ?? []}
+                          title="团体唱片作品"
+                        />
                       </div>
                       {/* 团体奖（最佳团体）：存档挂在队长 / 团员名下，归到团体卡；
                           不进任何艺人卡。 */}
@@ -2107,7 +2158,22 @@ function TitleBadge({ title, meta, next }: {
   );
 }
 
-function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistStats | null }) {
+function ArtistCard({
+  option, artist, works,
+}: {
+  option: ArtistOption;
+  artist: ArtistStats | null;
+  works: WorkRecord[];
+}) {
+  const worksByType = useMemo(() => {
+    const byType = new Map<number, WorkRecord[]>();
+    for (const work of works) {
+      const list = byType.get(work.noticeIndex) ?? [];
+      list.push(work);
+      byType.set(work.noticeIndex, list);
+    }
+    return byType;
+  }, [works]);
   return (
     <div data-case-artist className="rounded border border-line bg-surface px-2 py-1.5">
       <div className="flex items-baseline gap-1.5">
@@ -2151,13 +2217,26 @@ function ArtistCard({ option, artist }: { option: ArtistOption; artist: ArtistSt
           <div data-case-artist-counts className="mt-0.5 flex flex-wrap gap-1 text-ui-2xs">
             <span className="text-ink-faint">通告统计</span>
             {NOTICE_COUNT_LABELS.map((label, i) => (
-              <span key={label} className="rounded bg-surface-soft px-1 text-ink-muted">
-                {label} <b>{artist.noticeCounts[i]}</b>{NOTICE_COUNT_UNITS[i]}
-              </span>
+              <WorkCountChip
+                key={label}
+                dataName="data-case-artist-work-count"
+                dataNoticeIndex={i}
+                showRole
+                label={label}
+                value={artist.noticeCounts[i]}
+                unit={NOTICE_COUNT_UNITS[i]}
+                works={worksByType.get(i) ?? []}
+                title={`${label}作品`}
+              />
             ))}
-            <span data-case-artist-count-total className="rounded bg-surface-soft px-1 text-ink-muted">
-              {NOTICE_TOTAL_LABEL} <b>{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
-            </span>
+            <WorkCountChip
+              dataName="data-case-artist-count-total"
+              showRole
+              label={NOTICE_TOTAL_LABEL}
+              value={artist.noticeCounts.reduce((sum, n) => sum + n, 0)}
+              works={works}
+              title="全部作品"
+            />
           </div>
           {/* 奖项：个人奖是金色胶囊，公司作品奖（年度专辑 / 年度戏剧）单列一行；
               团体奖（最佳团体）归到「我方团体」卡，不挂在这里。 */}
