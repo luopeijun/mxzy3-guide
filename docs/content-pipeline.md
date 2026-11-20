@@ -126,6 +126,7 @@
 - **自动跟随**：主进程 `fs.watch(saveDir)` 变化时节流 350ms 推 `desktop:state`（含最新清单），渲染进程比对当前档位的 `path|mtime|size` 指纹，变了才重读；主动读取也会记下指纹，避免“读到新快照→再触发读取”的死循环。没开自动跟随时，点「读取当前游戏状态」或换档位才读。
 - **启动注意**：本环境预设了 `ELECTRON_RUN_AS_NODE=1`，会让 electron.exe 以纯 Node 模式跑主进程（`require('electron')` 只剩路径、协议 API 全丢）。启动必须清掉：`env -u ELECTRON_RUN_AS_NODE electron .`；npm 的 `desktop` 脚本在用户机器上通常没这个变量，不受影响。Electron 二进制首装若从 GitHub 下载失败，用 `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ node node_modules/electron/install.js`。
 - **回归**：`scripts/cdp_desktop.mjs`（13 项，连调试端口验证独立入口无其它页签、自定义协议加载内置表、文件桥注入、真实 IPC 读档后渲染游戏时间与通告表格）。启动：`env -u ELECTRON_RUN_AS_NODE MXZY_DESKTOP_DEBUG=9223 electron .`，再 `MXZY_DESKTOP_DEBUG=9223 node scripts/cdp_desktop.mjs`。本环境 GUI 窗口十几秒会被回收，CDP 要和启动写在同一条命令里跑完。
+- **打包**：`electron-builder --win` 配 `signAndEditExecutable: false`（个人项目无签名证书，跳过 rcedit/签名；本环境 winCodeSign 解压还会因 macOS 符号链接权限失败，这个开关一并绕开）。产物在 `release/`。本环境 NSIS 安装包的 makensis 阶段另有权限问题，实际发行用免安装 zip：把 `release/win-unpacked/` 里的内容压成 zip（顶层就是 exe 与 `resources/app.asar`，用户解压即用），已对打包后的 exe 跑过 `cdp_desktop.mjs` 13/13 验证。`build/icon.ico` 由 `public/favicon.ico` 放大生成（256px，NSIS/应用图标用）。
 - **未决**：游戏何时写盘（自动存档触发时机）未实测——当前游戏没运行，留待开游戏时盯 `Save2/Auto.sa2` 修改时间。自动跟随本身只要游戏写盘就会触发。
 
 ## 体量统计口径

@@ -89,6 +89,12 @@
 - 通告分筹备中 / 拍摄中 / 自制三类，列出角色预约、所需数值对比、拍摄进度与酬劳，可按类型 / 公司 / 搜索筛选并导出 CSV
 - 右侧常驻本页小结与艺人速查；属性缺口悬停可看推荐课程
 
+### 桌面版（存档解析）
+
+- 独立的 Windows 桌面应用，只做存档解析一件事；自己选择游戏的 Save2 存档目录，点「读取当前游戏状态」即可显示该存档，不必每次找文件拖入
+- 存档位可选最近改动或指定某一档；可开「自动跟随」，游戏一存档页面就自动刷新
+- 只读存档、绝不写回；游戏数据表都随应用打包，电脑上没装游戏也能解析。在 GitHub Releases 下载安装包
+
 ### 甜蜜乐章
 
 - 独立站点（`sweet.html`），糖果粉主题，攻略浏览、事件追踪与 CG 图鉴沿用同一套组件
@@ -109,11 +115,13 @@
 
 ```bash
 npm install
-npm run dev         # 开发服务器
-npm run build       # 构建至 dist/
-npm run preview     # 预览构建产物
-npm run typecheck   # 类型检查
-npm run test:guide  # 数据校验
+npm run dev            # 开发服务器
+npm run build          # 构建至 dist/
+npm run preview        # 预览构建产物
+npm run typecheck      # 类型检查
+npm run test:guide     # 数据校验
+npm run desktop        # 启动桌面版（先构建）
+npm run package:desktop # 打包 Windows 安装包至 release/
 ```
 
 ## 内容维护
