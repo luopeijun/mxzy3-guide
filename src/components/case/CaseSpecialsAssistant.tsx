@@ -233,12 +233,12 @@ export default function CaseSpecialsAssistant({ result, tables, onJump }: Props)
   const badge = report ? `${report.doneCount}/6` : '';
 
   return (
-    <div ref={rootRef} data-case-special-assistant className="fixed bottom-5 right-5 z-30 min-[1120px]:right-[280px]">
+    <div ref={rootRef} data-case-special-assistant className="fixed bottom-16 right-5 z-30 min-[1120px]:right-[280px]">
       {open && (
         <section
           data-case-special-panel
           aria-label="六大通告助手"
-          className="absolute bottom-[58px] right-0 flex max-h-[min(72vh,560px)] w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft"
+          className="absolute bottom-[68px] right-0 flex max-h-[min(72vh,560px)] w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft"
         >
           <div className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2">
             <span className="text-ui-sm font-semibold text-brand-strong">六大通告助手</span>
@@ -289,13 +289,13 @@ export default function CaseSpecialsAssistant({ result, tables, onJump }: Props)
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          'relative ml-auto flex h-11 w-11 items-center justify-center rounded-full border border-brand-line bg-brand-soft text-ui-xs font-semibold text-brand-strong transition-colors hover:bg-brand-line',
-          open && 'bg-brand text-white hover:bg-brand-strong',
+          'relative ml-auto flex h-[54px] w-[60px] items-center justify-center transition-transform duration-150 hover:-translate-y-0.5 hover:scale-105',
+          open && 'drop-shadow-[0_2px_5px_rgba(192,48,111,0.35)]',
         )}
       >
-        六
+        <img src="/six-notice-mascot.png" alt="" className="h-full w-full object-contain" draggable={false} />
         {badge && (
-          <span className="absolute -right-1 -top-1 min-w-[20px] rounded-full border border-brand-line bg-surface px-1 text-[10px] leading-[16px] text-brand-strong">
+          <span className="absolute -right-1 -top-0.5 min-w-[20px] rounded-full border border-brand-line bg-brand-soft px-1 text-center text-[10px] leading-[16px] text-brand-strong">
             {badge}
           </span>
         )}
