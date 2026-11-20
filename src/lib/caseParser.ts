@@ -598,6 +598,26 @@ export interface OwnedItem {
   stats?: string;
 }
 
+/** 8 个国际场景的固定表。名称来自 World.tab 记录 1..8，费用来自记录 0
+ *  +28 起的 8 个 int32（11000 / 7000 / 11000 / 13000 / 13000 / 10000 /
+ *  15000 / 21000），跟游戏「世界脈動 → 國外情報」显示的价格一致。 */
+export const WORLD_SCENES = [
+  { name: '长城', cost: 11000 },
+  { name: '东京', cost: 7000 },
+  { name: '好莱坞', cost: 11000 },
+  { name: '巴黎', cost: 13000 },
+  { name: '维也纳', cost: 13000 },
+  { name: '夏威夷', cost: 10000 },
+  { name: '纽约', cost: 15000 },
+  { name: '开罗', cost: 21000 },
+] as const;
+
+export interface WorldScene {
+  name: string;
+  cost: number;
+  unlocked: boolean;
+}
+
 export interface ParseResult {
   saveName: string;
   saveSize: number;
@@ -642,6 +662,8 @@ export interface ParseResult {
   unknownCodes: string[];
   /** 存档里解析出的整段道具清单（含数量 0 的），UI 只展示数量 > 0 的。 */
   items: OwnedItem[];
+  /** 世界场景解锁表：8 个国际场景，1 = 已解锁。 */
+  scenes: WorldScene[];
 }
 
 let decoder: TextDecoder | null = null;
@@ -1953,6 +1975,33 @@ function readProgress(
   return rows;
 }
 
+/** 世界场景解锁表：存档里是 `[9][8×0/1][0,4,80,108,97]`。
+ *
+ *  `9` = 场景总数（据点 + 8 个国际场景），紧随其后的 8 个小端 int 是国际场景
+ *  的解锁标志（1 = 已解锁），顺序与 World.tab 记录 1..8 一致（长城→开罗）。
+ *  标志后面的 `[0,4,80,108,97]` 是这段的固定尾巴，用它排除同形噪声。
+ *  存档是变长结构，不能写死绝对偏移；这组模式在 70+ 份样本存档（Auto /
+ *  Story0001..0070 / Ending0001..0011）上全部命中且只命中一次，早期存档
+ *  [1,1,0,0,0,0,1,1] 与后期 [1×8] 的差异也符合游戏进程。 */
+function parseWorldScenes(view: DataView, byteLength: number): WorldScene[] {
+  const words = Math.floor(byteLength / 4);
+  const tail = [0, 4, 80, 108, 97];
+  for (let i = 0; i + 14 < words; i += 1) {
+    if (view.getInt32(i * 4, true) !== 9) continue;
+    const flags: boolean[] = [];
+    let ok = true;
+    for (let k = 0; k < 8; k += 1) {
+      const v = view.getInt32((i + 1 + k) * 4, true);
+      if (v !== 0 && v !== 1) { ok = false; break; }
+      flags.push(v === 1);
+    }
+    if (!ok) continue;
+    if (!tail.every((want, k) => view.getInt32((i + 9 + k) * 4, true) === want)) continue;
+    return WORLD_SCENES.map((scene, k) => ({ ...scene, unlocked: flags[k] }));
+  }
+  return [];
+}
+
 /** 从存档里抠出「我拥有的道具」清单。
  *
  *  存档没有给这段数据起段名，定位靠形态：一段连续的 16 字节小端记录
@@ -2087,6 +2136,7 @@ export function parseSave(
   const { owners: ownersByCode } = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
   // 精确到角色号的预约关系（存档里的 52 字节角色预约表）。
   const roleReservations = parseRoleReservations(bytes, view);
+  const scenes = parseWorldScenes(view, bytes.length);
   const items = parseItems(view, bytes).map((it) => {
     const meta = tables.items?.[String(it.code)];
     return {
@@ -2517,6 +2567,7 @@ export function parseSave(
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],
     items,
+    scenes,
   };
 }
 

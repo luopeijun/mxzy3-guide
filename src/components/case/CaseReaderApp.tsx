@@ -245,6 +245,14 @@ function CaseToc({
         summary: `${result.items.filter((it) => it.quantity > 0).length} 件`,
       });
     }
+    if (result.scenes.length > 0) {
+      list.push({
+        id: 'scenes',
+        label: '场景',
+        selector: '[data-case-scenes]',
+        summary: `${result.scenes.filter((s) => s.unlocked).length}/${result.scenes.length} 解锁`,
+      });
+    }
     list.push({
       id: 'updates',
       label: '开放节奏',
@@ -1039,6 +1047,46 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   gifts={tables.gifts ?? {}}
                   giftSlots={tables.giftSlots ?? {}}
                 />
+              </details>
+            )}
+
+            {/* 世界场景：存档里 8 个国际场景的解锁标志，来自「世界脈動」记事。
+                1 = 已解锁，费用来自 World.tab（游戏里显示的出国价格）。 */}
+            {result.scenes.length > 0 && (
+              <details
+                data-case-scenes
+                data-case-toc-target
+                className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5"
+              >
+                <summary
+                  data-case-scenes-summary
+                  className="cursor-pointer text-ui-xs font-bold text-brand-strong"
+                >
+                  场景
+                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                    {result.scenes.filter((s) => s.unlocked).length}/{result.scenes.length} 已解锁
+                  </span>
+                </summary>
+                <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                  {result.scenes.map((scene) => (
+                    <div
+                      key={scene.name}
+                      data-case-scene
+                      data-case-scene-unlocked={scene.unlocked}
+                      className={cn(
+                        'flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
+                        scene.unlocked
+                          ? 'border-growth-line bg-growth-soft text-growth-strong'
+                          : 'border-line bg-surface text-ink-faint',
+                      )}
+                    >
+                      <b className="font-semibold">{scene.name}</b>
+                      <span className="ml-1 tabular-nums">
+                        {scene.unlocked ? '已解锁' : scene.cost.toLocaleString('zh-CN')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </details>
             )}
 
