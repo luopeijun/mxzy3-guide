@@ -1210,14 +1210,9 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   {companyAwards.length === 0 ? (
                     <span className="text-ink-faint">—</span>
                   ) : companyAwards.map(({ award, artistName }) => (
-                    <span
-                      key={`${award.awardId}-${award.date}-${award.workCode}`}
-                      data-case-company-award
-                      data-case-award-id={award.awardId}
-                      className="award-item font-semibold text-title-star"
-                    >
-                      {award.ceremony}·{award.label}
-                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                    <span key={`${award.awardId}-${award.date}-${award.workCode}`} data-case-company-award data-case-award-id={award.awardId}>
+                      <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                      <span className="award-meta ml-1 font-normal text-ink-faint">{award.workName}</span>
                       <span className="ml-1 font-normal text-ink-faint">{artistName} · {award.date}</span>
                     </span>
                   ))}
@@ -1317,14 +1312,9 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                         <div data-case-group-awards className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                           <span className="text-ink-faint">团体奖</span>
                           {groupAwardsByTeam.get(group.code)!.map((award) => (
-                            <span
-                              key={`${award.awardId}-${award.date}-${award.workCode}`}
-                              data-case-group-award
-                              data-case-award-id={award.awardId}
-                              className="award-item font-semibold text-title-star"
-                            >
-                              {award.ceremony}·{award.label}
-                              <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                            <span key={`${award.awardId}-${award.date}-${award.workCode}`} data-case-group-award data-case-award-id={award.awardId}>
+                              <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                              <span className="award-meta ml-1 font-normal text-ink-faint">{award.workName}</span>
                               <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
                             </span>
                           ))}
@@ -1355,14 +1345,9 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <div data-case-group-awards-unmatched className="mt-2 flex flex-wrap items-center gap-1 text-ui-2xs">
                   <span className="text-ink-faint">团体奖（存档未记所属团体）</span>
                   {groupAwardsUnmatched.map((award) => (
-                    <span
-                      key={`${award.awardId}-${award.date}-${award.workCode}`}
-                      data-case-group-award
-                      data-case-award-id={award.awardId}
-                      className="award-item font-semibold text-title-star"
-                    >
-                      {award.ceremony}·{award.label}
-                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                    <span key={`${award.awardId}-${award.date}-${award.workCode}`} data-case-group-award data-case-award-id={award.awardId}>
+                      <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                      <span className="award-meta ml-1 font-normal text-ink-faint">{award.workName}</span>
                       <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
                     </span>
                   ))}
@@ -2744,14 +2729,9 @@ function ArtistCard({
                 <span className="flex flex-wrap items-center gap-1">
                   <span className="text-ink-faint">奖项</span>
                   {artist.awards.filter((award) => !award.company).map((award) => (
-                    <span
-                      key={`${award.awardId}-${award.date}-${award.workCode}`}
-                      data-case-artist-award
-                      data-case-award-id={award.awardId}
-                      className="award-item font-semibold text-title-star"
-                    >
-                      {award.ceremony}·{award.label}
-                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                    <span key={`${award.awardId}-${award.date}-${award.workCode}`} data-case-artist-award data-case-award-id={award.awardId}>
+                      <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                      <span className="award-meta ml-1 font-normal text-ink-faint">{award.workName}</span>
                       <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
                     </span>
                   ))}
@@ -2761,14 +2741,9 @@ function ArtistCard({
                 <span data-case-artist-company-awards className="mt-0.5 flex flex-wrap items-center gap-1">
                   <span className="text-ink-faint">公司奖</span>
                   {artist.awards.filter((award) => award.company && !award.group).map((award) => (
-                    <span
-                      key={`${award.awardId}-${award.date}-${award.workCode}`}
-                      data-case-artist-company-award
-                      data-case-award-id={award.awardId}
-                      className="award-item font-semibold text-title-star"
-                    >
-                      {award.ceremony}·{award.label}
-                      <span className="ml-1 font-normal text-ink-muted">{award.workName}</span>
+                    <span key={`${award.awardId}-${award.date}-${award.workCode}`} data-case-artist-company-award data-case-award-id={award.awardId}>
+                      <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                      <span className="award-meta ml-1 font-normal text-ink-faint">{award.workName}</span>
                       <span className="ml-1 font-normal text-ink-faint">{award.date}</span>
                     </span>
                   ))}

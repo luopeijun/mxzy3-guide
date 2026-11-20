@@ -296,6 +296,14 @@
   vertical-align: middle;
 }
 
+/* 奖项名（金）与后面的作品名、日期（浅灰）之间放一枚淡分隔点，
+ * 避免深灰在粉底缩小后和金棕糊成一片、看着像整条都是金色。 */
+.award-meta::before {
+  content: '·';
+  margin-right: 3px;
+  color: var(--color-line-strong);
+}
+
 /* 存档解析页的折叠区块：收起时真正把内容（含后代）藏起来，而不是只靠浏览器
  * 默认的 details 布局隐藏 —— 后者下 getComputedStyle 仍报 block / table-row，
  * 会让「收起态不可见」这类断言永远不成立，也不利于屏幕阅读器。 */
