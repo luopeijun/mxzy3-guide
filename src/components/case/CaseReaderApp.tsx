@@ -2386,11 +2386,20 @@ function ArtistCard({
               </span>
             ))}
           </div>
-          <div className="mt-1 border-t border-line pt-1 text-ui-2xs leading-[1.7] text-ink-faint">
-            <span data-case-artist-friendship className="mr-1 rounded bg-brand-soft px-1 font-semibold text-brand-strong">
+          {/* 社交数值按关注度分层：友好度（品牌胶囊）> 人气 > 压力 / 疲劳 > 其余次要属性。 */}
+          <div data-case-artist-social className="mt-1 flex flex-wrap items-center gap-x-1.5 border-t border-line pt-1 text-ui-2xs leading-[1.7]">
+            <span data-case-artist-friendship className="rounded bg-brand-soft px-1 font-semibold text-brand-strong">
               友好度 {artist.friendship ?? '—'}
             </span>
-            压力 {artist.stress} · 疲劳 {artist.fatigue} · 叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]} · 人气 {artist.social[3]} · 曝光 {artist.social[4]} · 礼物 {artist.gifts}
+            <span data-case-artist-popularity className="rounded bg-surface-soft px-1 font-semibold text-ink">
+              人气 {artist.social[3]}
+            </span>
+            <span className="font-medium text-ink-muted">
+              压力 {artist.stress} · 疲劳 {artist.fatigue}
+            </span>
+            <span className="text-ink-faint">
+              叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]} · 曝光 {artist.social[4]} · 礼物 {artist.gifts}
+            </span>
           </div>
           <div data-case-artist-counts className="mt-0.5 flex flex-wrap gap-1 text-ui-2xs">
             <span className="text-ink-faint">通告统计</span>
