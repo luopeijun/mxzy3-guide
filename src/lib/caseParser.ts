@@ -394,7 +394,9 @@ export interface GroupWork {
   workName: string;
   /** 制作公司，来自静态通告表 cases[code][3]。 */
   company: string;
-  /** 记事挂名的艺人编号（一般是团长），页面据此归到所在团体。 */
+  /** 记事 `+24` 的团体代表艺人编号，页面据此归到所在团体。
+   *  注意不是 `+20` 的挂名艺人：换过成员的团体里两者可能分属不同团
+   *  （Ending0007 的 CD053 `+20=76` 已在沙啞之歌、`+24=77` 属緯少集團，官方归后者）。 */
   artistId: number;
 }
 
@@ -1106,8 +1108,8 @@ export function parseGroupWorks(
   const rows: { work: GroupWork; day: number }[] = [];
   for (let i = 0; i < table.count; i += 1) {
     const p = table.offset + 8 + i * DIARY_STRIDE;
-    const kind = view.getUint32(p + 12, true);
-    if (kind === DIARY_AWARD_KIND) continue;
+    // 不能按 kind 跳过 5：获奖类型里也混着「事项 13 = 唱片发行」的真实发行记录
+    // （如 CD106 算了吧、CD838 春夏秋冬），跳过就少算团体唱片。
     if (view.getUint32(p + 16, true) !== 13) continue;
     const workCode = readDiaryCode(view, p + 56);
     if (!workCode.startsWith('CD') || cases[workCode]?.[2] !== '團體') continue;
@@ -1122,8 +1124,9 @@ export function parseGroupWorks(
         year, month, day,
         workCode,
         workName: cases[workCode]?.[0] || workCode,
-        company: cases[workCode]?.[3] || '', 
-        artistId: view.getUint32(p + 20, true),
+        company: cases[workCode]?.[3] || '',
+        // `+20` 是当次挂名艺人，`+24` 才是团体代表；换过成员的团可能分属不同团。
+        artistId: view.getUint32(p + 24, true),
       },
       day: dayNumber(year, month, day),
     });
