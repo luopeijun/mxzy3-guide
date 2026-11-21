@@ -42,7 +42,14 @@ export const PRODUCER_GROUPS: ProducerGroup[] = [
       { key: 'jia-he-da-ze', code: 1301, name: '加贺大泽' },
     ],
   },
-  { kind: 'tv', label: '电视剧', producers: [] },
+  {
+    kind: 'tv',
+    label: '电视剧',
+    producers: [
+      { key: 'chen-ge-fei', code: 301, name: '陈革非' },
+      { key: 'zheng-chao-yi', code: 201, name: '郑超一' },
+    ],
+  },
   {
     kind: 'movie',
     label: '电影',
@@ -59,7 +66,14 @@ export const PRODUCER_GROUPS: ProducerGroup[] = [
       { key: 'mai-ke', code: 701, name: '麦克' },
     ],
   },
-  { kind: 'host', label: '主持', producers: [] },
+  {
+    kind: 'host',
+    label: '主持',
+    producers: [
+      { key: 'qiang-ni-dai', code: 302, name: '强尼戴' },
+      { key: 'qian-jun', code: 202, name: '钱钧' },
+    ],
+  },
   {
     kind: 'other',
     label: '其他',
