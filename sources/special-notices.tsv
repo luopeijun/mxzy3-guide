@@ -58,10 +58,10 @@ eternal.cert.music	eternal-love	main	trigger	condition	cert	artist	国际音乐�
 eternal.albums5	eternal-love	main	trigger	condition	count	artist	个人唱片 >5 张	5	5 张个人唱片 + 音乐证书，开过大型个人演唱会后触发	notices/eternal-love#14	表+攻略	-
 eternal.fame600	eternal-love	main	trigger	condition	stat	artist	名气（触发前置）	600	攻略 #14 的触发条件；与下方通告要求 450~500 不是同一条	notices/eternal-love#14	攻略	-
 eternal.bigConcert	eternal-love	main	trigger	condition	flag	artist	开过大型个人演唱会	-	触发爱慕信事件的前置	notices/eternal-love#14	表+攻略	-
-eternal.item.meiying	eternal-love	-	prepare	condition	item	global	魅影	-	赢得综艺节目猫狗神偷的奖品	notices/eternal-love#17	表+攻略	-
-eternal.item.mozhou	eternal-love	-	prepare	condition	item	global	魔咒	-	在维也纳买 10 次听课证后教授赠送	notices/eternal-love#17	表+攻略	-
-eternal.item.huyan	eternal-love	-	prepare	condition	item	global	狐眼	-	秀场主持到资深后再打工 20 次以上，且主角跟随时会捡到	notices/eternal-love#17	表+攻略	-
-eternal.item.cross	eternal-love	-	prepare	condition	item	global	圣约翰的千年十字架	-	开罗购买，100 万；事件 15 后一个月内	notices/eternal-love#16	表+攻略	-
+eternal.item.meiying	eternal-love	-	prepare	condition	item	global	魅影	-	赢得综艺节目猫狗神偷的奖品。	notices/eternal-love#17	表+攻略	-
+eternal.item.mozhou	eternal-love	-	prepare	condition	item	global	魔咒	-	在维也纳买了10次听课证后，教授会赠送。	notices/eternal-love#17	表+攻略	-
+eternal.item.huyan	eternal-love	-	prepare	condition	item	global	狐眼	-	打工项目“秀场主持”到资深后再打工20次以上，且主角跟随时会捡到。	notices/eternal-love#17	表+攻略	-
+eternal.item.cross	eternal-love	-	prepare	condition	item	global	圣约翰的千年十字架	-	开罗购买（100万）	notices/eternal-love#16	表+攻略	-
 eternal.stat.singing	eternal-love	main	notice	condition	stat	artist	歌艺	630~700	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
 eternal.stat.wisdom	eternal-love	main	notice	condition	stat	artist	才智	450~500	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
 eternal.stat.confidence	eternal-love	main	notice	condition	stat	artist	自信	630~700	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-

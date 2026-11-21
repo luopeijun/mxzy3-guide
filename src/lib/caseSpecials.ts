@@ -25,6 +25,8 @@ export interface ItemCheck {
   met: boolean;
   /** 条件表里写了「（可选）」的道具：有就打钩，没有也不影响达标。 */
   optional: boolean;
+  /** 条件表的 hint：道具获得方法，hover 时显示。 */
+  hint: string;
 }
 
 export interface SlotGap {
@@ -299,7 +301,7 @@ function itemCheck(row: SpecialRow, ctx: EvalContext): ItemCheck {
   const { label, optional } = cleanName(row.name);
   const gameName = ITEM_ALIASES[label] ?? label;
   const have = ctx.result.items.find((item) => item.name === gameName)?.quantity ?? 0;
-  return { name: label, gameName, have, met: have > 0, optional };
+  return { name: label, gameName, have, met: have > 0, optional, hint: row.hint };
 }
 
 function artistDetail(

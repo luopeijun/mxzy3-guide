@@ -8,6 +8,7 @@ import {
   type ArtistMatch,
   type CertMatch,
   type CertMatchGuide,
+  type ItemCheck,
   type LiveNoticeStatus,
   type LiveSpecialsReport,
 } from '../../lib/caseSpecials';
@@ -31,7 +32,8 @@ type HoverAnchor = { left: number; right: number; top: number; bottom: number };
 type HoverState =
   | { kind: 'match'; match: ArtistMatch; anchor: HoverAnchor }
   | { kind: 'certGuide'; cert: string; guide: CertMatchGuide; anchor: HoverAnchor }
-  | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; anchor: HoverAnchor };
+  | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; anchor: HoverAnchor }
+  | { kind: 'item'; item: ItemCheck; anchor: HoverAnchor };
 
 /** 统一的 hover 浮层：优先贴在锚点上方，空间不够再翻到下方；最后夹在视口内。 */
 function FloatingCard({
@@ -241,6 +243,33 @@ function CertPersonCard({
   );
 }
 
+/** 道具胶囊 hover：只显示条件表里的获得方法。 */
+function ItemHoverCard({
+  item,
+  anchor,
+  onEnter,
+  onLeave,
+}: {
+  item: ItemCheck;
+  anchor: HoverAnchor;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <FloatingCard
+      anchor={anchor}
+      onEnter={onEnter}
+      onLeave={onLeave}
+      className="w-[260px] p-2.5"
+    >
+      <p className="mb-1 text-ui-xs font-semibold text-ink">{item.name}</p>
+      <p className="text-ui-2xs leading-relaxed text-ink-muted">
+        {item.hint || '获得方法未记录'}
+      </p>
+    </FloatingCard>
+  );
+}
+
 /** 节点正文：「书名号」里的歌曲 / 剧本是重点奖励，用金色区分。 */
 function NodeText({ text }: { text: string }) {
   return (
@@ -259,6 +288,7 @@ function DetailSection({
   onMatchHover,
   onCertGuideHover,
   onCertPersonHover,
+  onItemHover,
   onHoverLeave,
   dataError,
 }: {
@@ -268,6 +298,7 @@ function DetailSection({
   onMatchHover: (match: ArtistMatch, anchor: HoverAnchor) => void;
   onCertGuideHover: (cert: string, guide: CertMatchGuide, anchor: HoverAnchor) => void;
   onCertPersonHover: (cert: string, guide: CertMatchGuide, person: string, anchor: HoverAnchor) => void;
+  onItemHover: (item: ItemCheck, anchor: HoverAnchor) => void;
   onHoverLeave: () => void;
   dataError: string | null;
 }) {
@@ -467,11 +498,18 @@ function DetailSection({
                         data-case-special-item={entry.name}
                         data-case-special-item-met={entry.met}
                         className={cn(
-                          'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                          'cursor-help inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
                           entry.met
                             ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
                             : 'border-line bg-surface-soft text-ink-muted',
                         )}
+                        onMouseEnter={(event) => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          onItemHover(entry, {
+                            left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+                          });
+                        }}
+                        onMouseLeave={onHoverLeave}
                       >
                         {entry.met && <span aria-hidden="true">✓</span>}
                         {entry.name}{entry.optional && '（可选）'}
@@ -633,6 +671,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
                 onCertGuideHover={(cert, guide, anchor) => showHover({ kind: 'certGuide', cert, guide, anchor })}
                 onCertPersonHover={(cert, guide, person, anchor) =>
                   showHover({ kind: 'certPerson', cert, guide, person, anchor })}
+                onItemHover={(item, anchor) => showHover({ kind: 'item', item, anchor })}
                 onHoverLeave={hideHoverSoon}
                 dataError={error}
               />
@@ -665,12 +704,23 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             />
           );
         }
+        if (hover.kind === 'certPerson') {
+          return (
+            <CertPersonCard
+              key={`person-${hover.cert}-${hover.person}`}
+              cert={hover.cert}
+              guide={hover.guide}
+              person={hover.person}
+              anchor={hover.anchor}
+              onEnter={clearHoverTimer}
+              onLeave={hideHoverNow}
+            />
+          );
+        }
         return (
-          <CertPersonCard
-            key={`person-${hover.cert}-${hover.person}`}
-            cert={hover.cert}
-            guide={hover.guide}
-            person={hover.person}
+          <ItemHoverCard
+            key={`item-${hover.item.name}`}
+            item={hover.item}
             anchor={hover.anchor}
             onEnter={clearHoverTimer}
             onLeave={hideHoverNow}

@@ -167,6 +167,17 @@ class TestSpecialsJson(unittest.TestCase):
         self.assertIn("暗黑之服", names[3])
         self.assertIn("抽取利金", names[5])
 
+    def test_eternal_love_item_hints_have_acquisition_methods(self):
+        rows = {r["id"]: r for r in _json()["rows"]}
+        expected = {
+            "eternal.item.meiying": "赢得综艺节目猫狗神偷的奖品。",
+            "eternal.item.mozhou": "在维也纳买了10次听课证后，教授会赠送。",
+            "eternal.item.huyan": "打工项目“秀场主持”到资深后再打工20次以上，且主角跟随时会捡到。",
+            "eternal.item.cross": "开罗购买（100万）",
+        }
+        for row_id, hint in expected.items():
+            self.assertEqual(rows[row_id]["hint"], hint)
+
     def test_doomsday_optional_numeric_checks_are_marked(self):
         rows = {r["id"]: r for r in _json()["rows"]}
         expected = {
