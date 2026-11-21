@@ -156,7 +156,7 @@ function MatchHoverCard({
       {match.slots.length ? match.slots.map((slot) => (
         <div key={slot.label} className="mb-1.5 last:mb-0">
           {!hideSlotLabel && (
-            <div className="mb-0.5 flex items-center justify-between gap-2">
+            <div className="mb-0.5 flex items-center gap-2">
               <span className={cn('text-ui-2xs', workRoleClass(slot.label))}>{slot.label}</span>
               <span className="text-ui-2xs text-ink-faint">{slot.met}/{slot.total}</span>
             </div>
