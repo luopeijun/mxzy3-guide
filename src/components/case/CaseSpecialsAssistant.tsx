@@ -771,7 +771,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
       current && report?.notices.some((item) => item.notice.id === current) ? current : '');
   }, [report]);
 
-  // 窗口缩放后把小鸟夹回视口，避免拖到边缘再缩窗导致图标消失。
+  // 窗口缩放后把 NP鸡夹回视口，避免拖到边缘再缩窗导致图标消失。
   useEffect(() => {
     const onResize = () => {
       setOrbPos((current) => ({
@@ -783,7 +783,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // 浮窗跟着小鸟走：左右按小鸟在视口的位置选对齐边，上下优先放在空间更大的一侧，最后夹回视口。
+  // 浮窗跟着 NP鸡走：左右按 NP鸡在视口的位置选对齐边，上下优先放在空间更大的一侧，最后夹回视口。
   useLayoutEffect(() => {
     if (!open) {
       setPanelPos(null);
