@@ -1,7 +1,7 @@
 {
   "name": "mxzy3-guide",
   "private": true,
-  "version": "1.14.0",
+  "version": "1.16.0",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
