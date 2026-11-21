@@ -450,7 +450,7 @@ const GENDER_SLOT_NOTICES: Record<string, [string, string]> = {
   'doomsday-warrior': ['main', 'support'],
 };
 /** 事件驱动通告：走事件节点，不按数值条件显示进度条。 */
-const EVENT_DRIVEN_NOTICES = new Set(['proud-of-the-world', 'doomsday-warrior']);
+const EVENT_DRIVEN_NOTICES = new Set(['proud-of-the-world', 'doomsday-warrior', 'eternal-love']);
 
 const SLOT_LABELS: Record<string, string> = {
   main: '男主角',

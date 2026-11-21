@@ -65,9 +65,9 @@ class TestSpecialsJson(unittest.TestCase):
     def test_counts_match_the_reviewed_table(self):
         data = _json()
         s = data["stats"]
-        self.assertEqual(s["rows"], 127)
+        self.assertEqual(s["rows"], 133)
         self.assertEqual(s["conditions"], 85)
-        self.assertEqual(s["notes"], 42)
+        self.assertEqual(s["notes"], 48)
         self.assertEqual(len(data["notices"]), 7)
         self.assertEqual(
             sum(n["conditionCount"] for n in data["notices"]), s["conditions"]
@@ -153,6 +153,19 @@ class TestSpecialsJson(unittest.TestCase):
         self.assertEqual(targets, ["3年3月后", "3年3月", "3年4月", "3年7月", "3年8月"])
         for old_id in ("doom.metSmith", "doom.prepDays"):
             self.assertFalse(any(r["id"] == old_id for r in rows), old_id)
+
+    def test_eternal_love_has_six_event_nodes(self):
+        rows = _json()["rows"]
+        node_ids = [
+            r["id"] for r in rows
+            if r["notice"] == "eternal-love" and ".node." in r["id"]
+        ]
+        self.assertEqual(node_ids, [f"eternal.node.{i}" for i in range(1, 7)])
+        names = [r["name"] for r in rows if r["id"] in node_ids]
+        self.assertIn("圣约翰的千年十字架", names[1])
+        self.assertIn("朱莉外表的小魔女", names[2])
+        self.assertIn("暗黑之服", names[3])
+        self.assertIn("抽取利金", names[5])
 
     def test_doomsday_optional_numeric_checks_are_marked(self):
         rows = {r["id"]: r for r in _json()["rows"]}

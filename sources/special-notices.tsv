@@ -66,6 +66,12 @@ eternal.stat.singing	eternal-love	main	notice	condition	stat	artist	歌艺	630~7
 eternal.stat.wisdom	eternal-love	main	notice	condition	stat	artist	才智	450~500	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
 eternal.stat.confidence	eternal-love	main	notice	condition	stat	artist	自信	630~700	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
 eternal.stat.fame	eternal-love	main	notice	condition	stat	artist	名气	450~500	达到上限即达标；数值来自条件表（攻略正文未列）	notices/eternal-love	表	-
+eternal.node.1	eternal-love	-	-	note	-	-	男艺人取得音乐证书、个人唱片 >5 张、名气 600，并开过大型个人演唱会	-	触发爱慕信事件的前置	tracker:notices/eternal-love	表+攻略	-
+eternal.node.2	eternal-love	-	-	note	-	-	男艺人说自己做噩梦后，去开罗购买「圣约翰的千年十字架」（100 万）	-	事件 15 后一个月内可买	tracker:notices/eternal-love	表+攻略	-
+eternal.node.3	eternal-love	-	-	note	-	-	任意场景遇到朱莉外表的小魔女，选择「为了艺人，牺牲自己吧……」	-	-	tracker:notices/eternal-love	攻略	-
+eternal.node.4	eternal-love	-	-	note	-	-	收集「魅影」「魔咒」「狐眼」，集齐自动合成「暗黑之服」，周末行程送给该艺人	-	-	tracker:notices/eternal-love	表+攻略	-
+eternal.node.5	eternal-love	-	-	note	-	-	一周后沟通该艺人，拿到「万年之恋」	-	必须由交出歌曲的男艺人演唱	tracker:notices/eternal-love	表+攻略	-
+eternal.node.6	eternal-love	-	-	note	-	-	周先生上门，选「卖断」直接获得 1500 万；选「抽取利金」按艺人名气 ×2500，通常更多	-	二选一结算	tracker:notices/eternal-love	表+攻略	-
 eternal.tl.flow	eternal-love	-	-	note	-	-	5 张个人唱片 + 音乐证书 → 大型个人演唱会后触发 → 买十字架 → 送暗黑之服 → 抽取利金	-	流程索引	tracker:notices/eternal-love	表	-
 eternal.tl.key	eternal-love	-	-	note	-	-	猫狗神偷可通过开罗商店物品「法老王之钥」大幅降低游戏难度（售价 100 万，每月末可蹲）	-	省事提示	tracker:notices/eternal-love	表	-
 eternal.tl.singer	eternal-love	-	-	note	-	-	攻略补充：万年之恋必须让交出歌曲的男艺人演唱，否则成绩很糟	-	对应攻略 #20 提醒	tracker:notices/eternal-love	攻略	-

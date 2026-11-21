@@ -5,9 +5,9 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 127,
+    "rows": 133,
     "conditions": 85,
-    "notes": 42,
+    "notes": 48,
     "scopeCounts": {
       "artist": 46,
       "global": 28,
@@ -56,7 +56,7 @@
       "title": "万年之恋",
       "guideNode": "notices/eternal-love",
       "conditionCount": 12,
-      "noteCount": 3,
+      "noteCount": 9,
       "slots": [
         "main"
       ],
@@ -1341,6 +1341,114 @@
       "link": {
         "kind": "guide",
         "href": "#/guide/notices/eternal-love",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.node.1",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "男艺人取得音乐证书、个人唱片 >5 张、名气 600，并开过大型个人演唱会",
+      "target": "-",
+      "hint": "触发爱慕信事件的前置",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.node.2",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "男艺人说自己做噩梦后，去开罗购买「圣约翰的千年十字架」（100 万）",
+      "target": "-",
+      "hint": "事件 15 后一个月内可买",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.node.3",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "任意场景遇到朱莉外表的小魔女，选择「为了艺人，牺牲自己吧……」",
+      "target": "-",
+      "hint": "-",
+      "source": "攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.node.4",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "收集「魅影」「魔咒」「狐眼」，集齐自动合成「暗黑之服」，周末行程送给该艺人",
+      "target": "-",
+      "hint": "-",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.node.5",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "一周后沟通该艺人，拿到「万年之恋」",
+      "target": "-",
+      "hint": "必须由交出歌曲的男艺人演唱",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/eternal-love"
+      }
+    },
+    {
+      "id": "eternal.node.6",
+      "notice": "eternal-love",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "周先生上门，选「卖断」直接获得 1500 万；选「抽取利金」按艺人名气 ×2500，通常更多",
+      "target": "-",
+      "hint": "二选一结算",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
         "node": "notices/eternal-love"
       }
     },
