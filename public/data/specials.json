@@ -1687,7 +1687,7 @@
       "scope": "global",
       "name": "人鱼的眼泪",
       "target": "-",
-      "hint": "综艺节目大富翁 BABABA 赢得的第二个神秘礼物",
+      "hint": "综艺节目「大富翁BABABA」赢得的第二个神秘礼物",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -1706,7 +1706,7 @@
       "scope": "global",
       "name": "天使的羽翼",
       "target": "-",
-      "hint": "就医满 10 次的赠品",
+      "hint": "旗下任一艺人带病前往医院就医满 10 次，欧医生赠送",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -1725,7 +1725,7 @@
       "scope": "global",
       "name": "精灵的祈祷",
       "target": "-",
-      "hint": "公园让塔罗小魔女占卜后赠送",
+      "hint": "到公园找塔罗小魔女占卜 10 次后赠送",
       "source": "表+攻略",
       "link": {
         "kind": "guide",
@@ -1744,7 +1744,7 @@
       "scope": "global",
       "name": "光丝布料",
       "target": "-",
-      "hint": "精品店买过 >10 次 + 音乐盒给周映彤后",
+      "hint": "在薇薇安精品买东西超过 10 次，把音乐盒交给周映彤后再去，老板赠送",
       "source": "表+攻略",
       "link": {
         "kind": "guide",

@@ -84,10 +84,10 @@ angel.donate	angel	main	trigger	condition	flag	artist	大型演唱会后答应�
 angel.hospital10	angel	-	prepare	condition	count	global	旗下艺人生病时就医	10	任一艺人在生病状态下就医满 10 次，欧医生赠送天使的羽翼	notices/angel#6	表+攻略	-
 angel.divine10	angel	-	prepare	condition	count	global	小魔女占卜	10	前往公园让塔罗小魔女占卜后赠送精灵的祈祷；按攻略 10 次定稿（截图写 3 次）	notices/angel#6	表+攻略	-
 angel.boutique10	angel	-	prepare	condition	count	global	精品店买东西 >10 次	10	把音乐盒给周映彤后再去精品店，老板赠送光丝布料	notices/angel#6	表+攻略	-
-angel.item.tear	angel	-	prepare	condition	item	global	人鱼的眼泪	-	综艺节目大富翁 BABABA 赢得的第二个神秘礼物	notices/angel#6	表+攻略	-
-angel.item.wing	angel	-	prepare	condition	item	global	天使的羽翼	-	就医满 10 次的赠品	notices/angel#6	表+攻略	-
-angel.item.prayer	angel	-	prepare	condition	item	global	精灵的祈祷	-	公园让塔罗小魔女占卜后赠送	notices/angel#6	表+攻略	-
-angel.item.silk	angel	-	prepare	condition	item	global	光丝布料	-	精品店买过 >10 次 + 音乐盒给周映彤后	notices/angel#6	表+攻略	-
+angel.item.tear	angel	-	prepare	condition	item	global	人鱼的眼泪	-	综艺节目「大富翁BABABA」赢得的第二个神秘礼物	notices/angel#6	表+攻略	-
+angel.item.wing	angel	-	prepare	condition	item	global	天使的羽翼	-	旗下任一艺人带病前往医院就医满 10 次，欧医生赠送	notices/angel#6	表+攻略	-
+angel.item.prayer	angel	-	prepare	condition	item	global	精灵的祈祷	-	到公园找塔罗小魔女占卜 10 次后赠送	notices/angel#6	表+攻略	-
+angel.item.silk	angel	-	prepare	condition	item	global	光丝布料	-	在薇薇安精品买东西超过 10 次，把音乐盒交给周映彤后再去，老板赠送	notices/angel#6	表+攻略	-
 angel.item.musicbox	angel	-	prepare	condition	item	global	天使的音乐盒	-	答应捐款 3 天后，大天使寄来感谢卡和音乐盒	notices/angel#5	表+攻略	-
 angel.item.dress	angel	-	prepare	condition	item	global	天使羽衣	-	集齐四样材料，巴黎找老板制作，两周后可取	notices/angel#7	表+攻略	-
 angel.giveDress	angel	main	trigger	condition	flag	artist	接通告前把天使羽衣送给对应艺人	-	必须送给触发捐款的那位女艺人	notices/angel#9	表+攻略	-

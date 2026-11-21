@@ -193,6 +193,17 @@ class TestSpecialsJson(unittest.TestCase):
         self.assertIn("周映彤", names[4])
         self.assertIn("落入凡间的天使", names[5])
 
+    def test_angel_item_hints_have_acquisition_methods(self):
+        rows = {r["id"]: r for r in _json()["rows"]}
+        expected = {
+            "angel.item.tear": "综艺节目「大富翁BABABA」赢得的第二个神秘礼物",
+            "angel.item.wing": "旗下任一艺人带病前往医院就医满 10 次，欧医生赠送",
+            "angel.item.prayer": "到公园找塔罗小魔女占卜 10 次后赠送",
+            "angel.item.silk": "在薇薇安精品买东西超过 10 次，把音乐盒交给周映彤后再去，老板赠送",
+        }
+        for row_id, hint in expected.items():
+            self.assertEqual(rows[row_id]["hint"], hint)
+
     def test_doomsday_optional_numeric_checks_are_marked(self):
         rows = {r["id"]: r for r in _json()["rows"]}
         expected = {
