@@ -5,6 +5,7 @@ import { workRoleClass } from '../../lib/workRoleStyle';
 import {
   evaluateLiveSpecials,
   LIVE_STATUS_LABELS,
+  SINGLE_ROLE_NOTICES,
   type ArtistMatch,
   type CertMatch,
   type CertMatchGuide,
@@ -30,7 +31,7 @@ const STATUS_DOT: Record<LiveNoticeStatus, string> = {
 type HoverAnchor = { left: number; right: number; top: number; bottom: number };
 
 type HoverState =
-  | { kind: 'match'; match: ArtistMatch; anchor: HoverAnchor }
+  | { kind: 'match'; match: ArtistMatch; hideSlotLabel: boolean; anchor: HoverAnchor }
   | { kind: 'certGuide'; cert: string; guide: CertMatchGuide; anchor: HoverAnchor }
   | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; anchor: HoverAnchor }
   | { kind: 'item'; item: ItemCheck; anchor: HoverAnchor };
@@ -94,11 +95,13 @@ function shortValue(value: number): string {
 /** 艺人胶囊的自定义 hover 浮层：男主角 / 男配角两坑位各自列差值。 */
 function MatchHoverCard({
   match,
+  hideSlotLabel,
   anchor,
   onEnter,
   onLeave,
 }: {
   match: ArtistMatch;
+  hideSlotLabel: boolean;
   anchor: HoverAnchor;
   onEnter: () => void;
   onLeave: () => void;
@@ -110,7 +113,14 @@ function MatchHoverCard({
       onLeave={onLeave}
       className="w-[300px] p-2.5"
     >
-      <p className="mb-1.5 text-ui-xs font-semibold text-ink">{match.name}</p>
+      <p className="mb-1.5 flex items-center gap-2 text-ui-xs font-semibold text-ink">
+        {match.name}
+        {hideSlotLabel && match.slots.length > 0 && (
+          <span className="text-ui-2xs font-normal text-ink-faint">
+            {match.slots.map((slot) => `${slot.met}/${slot.total}`).join(' · ')}
+          </span>
+        )}
+      </p>
       {match.required.length > 0 && (
         <div className="mb-1.5 border-b border-line pb-1.5" data-case-special-required>
           <p className="mb-0.5 flex items-center gap-1 text-ui-2xs font-semibold text-ink">
@@ -145,10 +155,12 @@ function MatchHoverCard({
       )}
       {match.slots.length ? match.slots.map((slot) => (
         <div key={slot.label} className="mb-1.5 last:mb-0">
-          <div className="mb-0.5 flex items-center justify-between gap-2">
-            <span className={cn('text-ui-2xs', workRoleClass(slot.label))}>{slot.label}</span>
-            <span className="text-ui-2xs text-ink-faint">{slot.met}/{slot.total}</span>
-          </div>
+          {!hideSlotLabel && (
+            <div className="mb-0.5 flex items-center justify-between gap-2">
+              <span className={cn('text-ui-2xs', workRoleClass(slot.label))}>{slot.label}</span>
+              <span className="text-ui-2xs text-ink-faint">{slot.met}/{slot.total}</span>
+            </div>
+          )}
           {slot.gaps.length ? (
             <div className="space-y-0.5 text-ui-2xs leading-relaxed text-ink-muted">
               {slot.gaps.map((gap, index) => <div key={index}>· {gap}</div>)}
@@ -292,7 +304,7 @@ function DetailSection({
   report: LiveSpecialsReport | null;
   expanded: string;
   onToggle: (id: string) => void;
-  onMatchHover: (match: ArtistMatch, anchor: HoverAnchor) => void;
+  onMatchHover: (match: ArtistMatch, hideSlotLabel: boolean, anchor: HoverAnchor) => void;
   onCertGuideHover: (cert: string, guide: CertMatchGuide, anchor: HoverAnchor) => void;
   onCertPersonHover: (cert: string, guide: CertMatchGuide, person: string, anchor: HoverAnchor) => void;
   onItemHover: (item: ItemCheck, anchor: HoverAnchor) => void;
@@ -542,7 +554,7 @@ function DetailSection({
                           )}
                           onMouseEnter={(event) => {
                             const rect = event.currentTarget.getBoundingClientRect();
-                            onMatchHover(match, {
+                            onMatchHover(match, SINGLE_ROLE_NOTICES.has(item.notice.id), {
                               left: rect.left,
                               right: rect.right,
                               top: rect.top,
@@ -664,7 +676,8 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
                 report={report}
                 expanded={expanded}
                 onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
-                onMatchHover={(match, anchor) => showHover({ kind: 'match', match, anchor })}
+                onMatchHover={(match, hideSlotLabel, anchor) =>
+                  showHover({ kind: 'match', match, hideSlotLabel, anchor })}
                 onCertGuideHover={(cert, guide, anchor) => showHover({ kind: 'certGuide', cert, guide, anchor })}
                 onCertPersonHover={(cert, guide, person, anchor) =>
                   showHover({ kind: 'certPerson', cert, guide, person, anchor })}
@@ -683,6 +696,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             <MatchHoverCard
               key={`match-${hover.match.id}`}
               match={hover.match}
+              hideSlotLabel={hover.hideSlotLabel}
               anchor={hover.anchor}
               onEnter={clearHoverTimer}
               onLeave={hideHoverNow}

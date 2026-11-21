@@ -391,6 +391,49 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
   return blank;
 }
 
+/** 把一条 stat 条件拆成「属性 -> 门槛」，多属性行按 target 里的多值逐项对应。 */
+function statEntries(condition: LiveCondition): { label: string; target: number }[] | null {
+  const row = condition.row;
+  if (row.type !== 'stat' || row.scope !== 'artist') return null;
+  const attrs = multiAttrs(row.name);
+  if (attrs) {
+    const parsed = parseTarget(row.target);
+    if (parsed?.kind !== 'multi' || parsed.values.length !== attrs.length) return null;
+    return attrs.map((label, index) => ({ label, target: parsed.values[index] }));
+  }
+  const label = normaliseStatName(row.name);
+  return label ? [{ label, target: targetOf(row) }] : null;
+}
+
+/** 同一属性只留最高那条：慈善义演的歌艺 300 不再与通告歌艺 700 重复算两次。 */
+function dedupeStatConditions(conditions: LiveCondition[], ctx: EvalContext): LiveCondition[] {
+  const entries = conditions.map((condition) => ({ condition, stats: statEntries(condition) }));
+  const maxByLabel = new Map<string, number>();
+  for (const { stats } of entries) {
+    for (const stat of stats ?? []) {
+      maxByLabel.set(stat.label, Math.max(maxByLabel.get(stat.label) ?? -Infinity, stat.target));
+    }
+  }
+  const out: LiveCondition[] = [];
+  for (const { condition, stats } of entries) {
+    if (!stats) {
+      out.push(condition);
+      continue;
+    }
+    for (const stat of stats) {
+      if ((maxByLabel.get(stat.label) ?? -Infinity) !== stat.target) continue;
+      const row: SpecialRow = {
+        ...condition.row,
+        id: `${condition.row.id}.${stat.label}`,
+        name: stat.label,
+        target: String(stat.target),
+      };
+      out.push(evaluateRow(row, ctx));
+    }
+  }
+  return out;
+}
+
 /** 六大特殊通告的成品编码。只认精确编码，不用 6xx 前缀泛判。 */
 const SPECIAL_WORK_CODES: Record<string, string> = {
   'proud-of-the-world': 'MV601',
@@ -449,6 +492,10 @@ function filmedRecords(noticeId: string, ctx: EvalContext): FilmedRecord[] {
 const MALE_ONLY_NOTICES = new Set(['proud-of-the-world', 'eternal-love']);
 /** 女艺人专属通告：落入凡间的天使（只有女主角坑）。 */
 const FEMALE_ONLY_NOTICES = new Set(['angel']);
+/** 单人坑通告，hover 里不贴「男主角 / 女主角」坑位标签（笑傲天际两坑仍保留）。 */
+export const SINGLE_ROLE_NOTICES = new Set(['eternal-love', 'angel']);
+/** 这两档里同一属性会重复出现（如歌艺 300 与 700），只按最高门槛匹配一次。 */
+const STAT_DEDUPE_NOTICES = new Set(['eternal-love', 'angel']);
 /** key = 通告 id，value = [男艺人坑位, 女艺人坑位]。每位艺人只认自己性别那一项。 */
 const GENDER_SLOT_NOTICES: Record<string, [string, string]> = {
   'doomsday-warrior': ['main', 'support'],
@@ -508,7 +555,10 @@ export function evaluateLiveSpecials(
       const rows = data.rows.filter((row) => row.notice === notice.id && row.kind === 'condition');
       const nodes = data.rows.filter((row) =>
         row.notice === notice.id && row.kind === 'note' && row.id.includes('.node.'));
-      const conditions = rows.map((row) => evaluateRow(row, ctx));
+      const rawConditions = rows.map((row) => evaluateRow(row, ctx));
+      const conditions = STAT_DEDUPE_NOTICES.has(notice.id)
+        ? dedupeStatConditions(rawConditions, ctx)
+        : rawConditions;
       // 带「（可选）」的艺人数值行只做判定展示，不进达标分母。
       const optionalRows = conditions.filter((condition) =>
         condition.row.scope === 'artist' && cleanName(condition.row.name).optional);
