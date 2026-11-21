@@ -52,5 +52,13 @@ export const PRODUCER_GROUPS: ProducerGroup[] = [
     ],
   },
   { kind: 'host', label: '主持', producers: [] },
-  { kind: 'other', label: '其他', producers: [] },
+  {
+    kind: 'other',
+    label: '其他',
+    producers: [
+      { key: 'he-zong', code: 3, name: '贺总' },
+      { key: 'steven', code: 38, name: '史蒂芬' },
+      { key: 'dennis', code: 39, name: '丹尼斯' },
+    ],
+  },
 ];
