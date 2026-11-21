@@ -138,3 +138,9 @@ galaxy.tl.stats	galaxy	-	-	note	-	-	歌艺 500-550 / 动感 630-700 / 体能 630
 galaxy.tl.flow	galaxy	-	-	note	-	-	自答应巡演后到巡演结束前，东京闲聊 3 次可获得龙尾散（没时间或不想可以不触发，不影响后续）；巡演结束后出新闻；团体成员拿到舞蹈证书后东京闲聊；下一档团唱会放银河	-	流程索引	tracker:notices/galaxy	表+攻略	-
 galaxy.tl.lock	galaxy	-	-	note	-	-	攻略补充：加贺邀请的是担任日本演唱会嘉宾的团体成员，中途换人则加贺不会上门	-	对应攻略 #37，团体一旦锁定不可换人	tracker:notices/galaxy	攻略	-
 galaxy.tl.note	galaxy	-	-	note	-	-	注：如需要关古威参与，请在第三年 9 月前完成	-	时间窗标签	tracker:notices/galaxy	表	-
+galaxy.node.1	galaxy	-	-	note	-	-	EAMI 找加贺大泽与周映彤「闲聊」，之后再次前往 EAMI 点选周映彤	2年6月1日后	第一次闲聊是前置	tracker:notices/galaxy	攻略	-
+galaxy.node.2	galaxy	-	-	note	-	-	旗下团体推出过 3 张或以上团体唱片，前往东京，加贺告诉主角他正在策划一张世纪大碟	-	团体唱片 ≥3 张	tracker:notices/galaxy	表+攻略	-
+galaxy.node.3	galaxy	-	-	note	-	-	团体接过京风唱片的团体通告、团体名气 >6、人气 >5，且开完大型演唱会后，加贺来到公司邀请该团体赴日当演唱会表演嘉宾，选择「答应」	-	答应后锁定该团体成员，中途换人加贺不再上门	tracker:notices/galaxy	表+攻略	-
+galaxy.node.4	galaxy	-	-	note	-	-	答应赴日嘉宾后到巡演结束前，到东京找加贺「闲聊」3 次，加贺赠送物品「龙尾散」（可赠艺人，歌艺 +50、自信 -30）	-	可选，没时间可跳过，不影响后续	tracker:notices/galaxy	表+攻略	-
+galaxy.node.5	galaxy	-	-	note	-	-	团体成员都有国际舞蹈学院证书后，前往东京找加贺「闲聊」，他说下一档就会把团体通告「银河」放上来	-	全体成员都要有舞蹈证书	tracker:notices/galaxy	表+攻略	-
+galaxy.node.6	galaxy	-	-	note	-	-	京风唱片更新通告后，加贺上门邀请主角的团演唱「银河」，选择接受；没来的话自行前往东京接通告	-	-	tracker:notices/galaxy	表+攻略	-
