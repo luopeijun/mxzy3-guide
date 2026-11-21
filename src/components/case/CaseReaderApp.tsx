@@ -12,7 +12,7 @@ import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
   noticeLabel, noticeUnit, riskOf, shootableDays,
-  buildGroupRecord, canTakeNotice, canTakeRole, categoryOf, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
+  buildGroupRecord, canTakeNotice, canTakeRole, categoryOf, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseDay, parseSave, toCsv,
   type ArchiveNotice, type PromoCast,
   type ArtistEvent, type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
@@ -951,7 +951,14 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
         ...n,
         promoCasts: (n.promoCasts ?? []).filter((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode)),
       }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+      // 按开拍日从早到晚；同日按名字排；缺日期（NaN）排末尾。
+      .sort((a, b) => {
+        const da = parseDay(a.startDate);
+        const db = parseDay(b.startDate);
+        if (Number.isNaN(da)) return Number.isNaN(db) ? a.name.localeCompare(b.name, 'zh-Hans-CN') : 1;
+        if (Number.isNaN(db)) return -1;
+        return da - db || a.name.localeCompare(b.name, 'zh-Hans-CN');
+      });
   }, [result]);
   const doneCount = doneNotices.length;
 
@@ -2293,11 +2300,34 @@ function DoneListPanel({
   const [page, setPage] = useState(0);
   const PAGE = 10;
   const byCategory = new Map<string, number>();
+  // 艺人筛选选项＝这批已完成作品里出现过的旗下参演者（含团体），按角色去重。
+  const artistOptions = new Map<string, string>();
+  const castKey = (c: { artistId: number; groupCode?: number }) => c.groupCode ? `g${c.groupCode}` : `a${c.artistId}`;
   for (const n of notices) {
     const category = categoryOf(n.code);
     byCategory.set(category, (byCategory.get(category) ?? 0) + 1);
+    for (const c of n.promoCasts ?? []) {
+      const key = castKey(c);
+      if (!artistOptions.has(key)) {
+        artistOptions.set(key, c.groupCode ? teamName(c.groupCode) : artistName(c.artistId));
+      }
+    }
   }
-  const visible = filter === 'all' ? notices : notices.filter((n) => categoryOf(n.code) === filter);
+  // 艺人是同维度多选：选多个取并集；与类型筛选（单选）取交集。
+  const [artistSel, setArtistSel] = useState<Set<string>>(() => new Set());
+  const toggleArtist = (key: string) => {
+    setArtistSel((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+    setPage(0);
+  };
+  const visible = notices.filter((n) => {
+    if (filter !== 'all' && categoryOf(n.code) !== filter) return false;
+    if (artistSel.size === 0) return true;
+    return (n.promoCasts ?? []).some((c) => artistSel.has(castKey(c)));
+  });
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE));
   const clampedPage = Math.min(page, pageCount - 1);
   const pageRows = visible.slice(clampedPage * PAGE, clampedPage * PAGE + PAGE);
@@ -2343,17 +2373,47 @@ function DoneListPanel({
           </button>
         ))}
       </div>
+      {artistOptions.size > 0 && (
+        <div
+          data-case-done-artist-filter
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2 text-ui-2xs text-ink-faint"
+        >
+          <span className="shrink-0 font-semibold text-ink-muted">艺人</span>
+          <button
+            type="button"
+            data-case-done-artist="all"
+            aria-pressed={artistSel.size === 0}
+            onClick={() => { setArtistSel(new Set()); setPage(0); }}
+            className={chip(artistSel.size === 0)}
+          >
+            全部艺人
+          </button>
+          {[...artistOptions].map(([key, name]) => (
+            <button
+              key={key}
+              type="button"
+              data-case-done-artist={name}
+              aria-pressed={artistSel.has(key)}
+              onClick={() => toggleArtist(key)}
+              className={chip(artistSel.has(key))}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
       <table className="w-full table-fixed border-collapse text-ui-xs">
         <thead>
           <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
-            <Th className="w-[20%]">作品</Th>
-            <Th className="w-[15%]">类型·公司</Th>
-            <Th className="w-[15%]">其他信息</Th>
-            <Th className="w-[12%]">发行档期</Th>
-            <Th className="w-[12%]">拍摄档期</Th>
-            <Th className="w-[9%]">角色</Th>
-            <Th className="w-[9%]">旗下参演</Th>
-            <Th className="w-[8%]">酬劳</Th>
+            <Th className="w-[15%]">作品</Th>
+            <Th className="w-[7%]">类型</Th>
+            <Th className="w-[11%]">公司</Th>
+            <Th className="w-[11%]">通告类型</Th>
+            <Th className="w-[17%]">拍摄档期</Th>
+            <Th className="w-[17%]">发行档期</Th>
+            <Th className="w-[8%]">角色</Th>
+            <Th className="w-[8%]">旗下参演</Th>
+            <Th className="w-[6%]">酬劳</Th>
           </tr>
         </thead>
         <tbody>
@@ -2369,25 +2429,22 @@ function DoneListPanel({
                   <>
                     <Td rowSpan={casts.length} className="align-top">
                       <span className="font-semibold text-ink">{n.name}</span>
-                      <div className="mt-0.5 text-ui-2xs text-ink-faint">{n.code}</div>
-                      <div className="mt-1 flex flex-wrap items-center gap-1">
-                        <span className={cn(
-                          'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
-                          CATEGORY_CLASS[categoryOf(n.code)] ?? 'bg-surface-soft text-ink-muted',
-                        )}>
-                          {categoryOf(n.code)}
-                        </span>
-                      </div>
+                      <span className="ml-1 text-ui-2xs font-normal text-ink-faint">{n.code}</span>
                     </Td>
+                    <Td rowSpan={casts.length} className="align-top">
+                      <span className={cn(
+                        'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+                        CATEGORY_CLASS[categoryOf(n.code)] ?? 'bg-surface-soft text-ink-muted',
+                      )}>
+                        {categoryOf(n.code)}
+                      </span>
+                    </Td>
+                    <Td rowSpan={casts.length} className="align-top text-ui-2xs text-ink-muted">{company || '—'}</Td>
                     <Td rowSpan={casts.length} className="align-top text-ui-2xs text-ink-muted">
-                      {(type || subType) && <div>{[type, subType].filter(Boolean).join(' · ')}</div>}
-                      {company && <div className="mt-0.5 text-ink-faint">{company}</div>}
+                      {(type || subType) ? [type, subType].filter(Boolean).join(' · ') : '—'}
                     </Td>
-                    <Td rowSpan={casts.length} className="align-top text-ui-2xs tabular-nums text-ink-muted">
-                      {n.otherInfo || '—'}
-                    </Td>
-                    <Td rowSpan={casts.length} className="align-top tabular-nums text-ink-muted">{n.saleStart} → {n.saleEnd}</Td>
-                    <Td rowSpan={casts.length} className="align-top tabular-nums text-ink-muted">{n.startDate} → {n.endDate}</Td>
+                    <Td rowSpan={casts.length} className="align-top whitespace-nowrap tabular-nums text-ink-muted">{n.startDate} → {n.endDate}</Td>
+                    <Td rowSpan={casts.length} className="align-top whitespace-nowrap tabular-nums text-ink-muted">{n.saleStart} → {n.saleEnd}</Td>
                   </>
                 ) : null}
                 <Td className="align-top"><span className={workRoleClass(cast.roleName)}>{cast.roleName}</span></Td>
