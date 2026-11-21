@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSpecialsData } from '../../hooks/useSpecialsData';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
@@ -6,6 +6,8 @@ import {
   evaluateLiveSpecials,
   LIVE_STATUS_LABELS,
   type ArtistMatch,
+  type CertMatch,
+  type CertMatchGuide,
   type LiveNoticeStatus,
   type LiveSpecialsReport,
 } from '../../lib/caseSpecials';
@@ -26,18 +28,24 @@ const STATUS_DOT: Record<LiveNoticeStatus, string> = {
 
 type HoverAnchor = { left: number; right: number; top: number; bottom: number };
 
-/** 艺人胶囊的自定义 hover 浮层：男主角 / 男配角两坑位各自列差值。
- *  优先贴在胶囊上方，空间不够再翻到下方；最后夹在视口内，避免底部被截。 */
-function MatchHoverCard({
-  match,
+type HoverState =
+  | { kind: 'match'; match: ArtistMatch; anchor: HoverAnchor }
+  | { kind: 'certGuide'; cert: string; guide: CertMatchGuide; anchor: HoverAnchor }
+  | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; met: boolean; anchor: HoverAnchor };
+
+/** 统一的 hover 浮层：优先贴在锚点上方，空间不够再翻到下方；最后夹在视口内。 */
+function FloatingCard({
   anchor,
   onEnter,
   onLeave,
+  className,
+  children,
 }: {
-  match: ArtistMatch;
   anchor: HoverAnchor;
   onEnter: () => void;
   onLeave: () => void;
+  className?: string;
+  children: ReactNode;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
@@ -56,7 +64,7 @@ function MatchHoverCard({
       top = Math.max(padding, window.innerHeight - height - padding);
     }
     setPosition({ left, top });
-  }, [anchor.left, anchor.right, anchor.top, anchor.bottom, match]);
+  }, [anchor.left, anchor.right, anchor.top, anchor.bottom]);
 
   return (
     <div
@@ -64,10 +72,41 @@ function MatchHoverCard({
       data-case-special-hover
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
-      className="fixed z-50 max-h-[calc(100vh-16px)] w-[300px] overflow-y-auto rounded-ui-md border border-line-strong bg-canvas p-2.5 shadow-soft"
+      className={cn(
+        'fixed z-50 max-h-[calc(100vh-16px)] overflow-y-auto rounded-ui-md border border-line-strong bg-canvas shadow-soft',
+        className,
+      )}
       style={position
         ? { left: position.left, top: position.top }
         : { left: -9999, top: -9999, visibility: 'hidden' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function shortValue(value: number): string {
+  return String(Number(value.toFixed(1)));
+}
+
+/** 艺人胶囊的自定义 hover 浮层：男主角 / 男配角两坑位各自列差值。 */
+function MatchHoverCard({
+  match,
+  anchor,
+  onEnter,
+  onLeave,
+}: {
+  match: ArtistMatch;
+  anchor: HoverAnchor;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <FloatingCard
+      anchor={anchor}
+      onEnter={onEnter}
+      onLeave={onLeave}
+      className="w-[300px] p-2.5"
     >
       <p className="mb-1.5 text-ui-xs font-semibold text-ink">{match.name}</p>
       {match.required.length > 0 && (
@@ -121,7 +160,83 @@ function MatchHoverCard({
           {match.gaps.length ? `待补：${match.gaps.join('、')}` : '全部达标'}
         </p>
       )}
-    </div>
+    </FloatingCard>
+  );
+}
+
+/** 证书说明浮层：证书名上显示学院课程与属性门槛。 */
+function CertGuideCard({
+  cert,
+  guide,
+  anchor,
+  onEnter,
+  onLeave,
+}: {
+  cert: string;
+  guide: CertMatchGuide;
+  anchor: HoverAnchor;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <FloatingCard
+      anchor={anchor}
+      onEnter={onEnter}
+      onLeave={onLeave}
+      className="w-[290px] p-2.5"
+    >
+      <p className="mb-1 text-ui-xs font-semibold text-ink">{cert}</p>
+      <p className="mb-1 text-ui-2xs font-semibold text-brand-strong">{guide.academy}</p>
+      <div className="space-y-0.5 text-ui-2xs leading-relaxed text-ink-muted">
+        {guide.courses.map((course) => <div key={course}>· {course}</div>)}
+      </div>
+      <div className="mt-1.5 border-t border-line pt-1.5 text-ui-2xs text-ink-muted">
+        <span className="font-semibold text-ink">{guide.title}：</span>
+        {guide.stats.map((stat) => `${stat.name}${stat.min}+`).join('、')}
+      </div>
+    </FloatingCard>
+  );
+}
+
+/** 证书艺人浮层：只列该艺人的属性对比；打钩仍只看是否真的持有证书。 */
+function CertPersonCard({
+  cert,
+  guide,
+  person,
+  met,
+  anchor,
+  onEnter,
+  onLeave,
+}: {
+  cert: string;
+  guide: CertMatchGuide;
+  person: string;
+  met: boolean;
+  anchor: HoverAnchor;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <FloatingCard
+      anchor={anchor}
+      onEnter={onEnter}
+      onLeave={onLeave}
+      className="w-[250px] p-2.5"
+    >
+      <p className="mb-0.5 text-ui-xs font-semibold text-ink">{person}</p>
+      <p className="mb-1.5 text-ui-2xs text-ink-faint">{cert} · {guide.title}</p>
+      <div className="space-y-0.5">
+        {guide.stats.map((stat) => (
+          <div key={stat.name} className="flex items-baseline justify-between gap-2 text-ui-2xs">
+            <span className="text-ink-muted">{stat.name} <span className="text-ink-faint">{stat.min}+</span></span>
+            <span className={cn('font-semibold', stat.have >= stat.min ? 'text-growth-strong' : 'text-ink')}>
+              {shortValue(stat.have)}
+            </span>
+          </div>
+        ))}
+      </div>
+      {met && <p className="mt-1.5 border-t border-line pt-1.5 text-ui-2xs text-ink-faint">已取得证书</p>}
+    </FloatingCard>
   );
 }
 
@@ -141,12 +256,18 @@ function DetailSection({
   expanded,
   onToggle,
   onMatchHover,
+  onCertGuideHover,
+  onCertPersonHover,
+  onHoverLeave,
   dataError,
 }: {
   report: LiveSpecialsReport | null;
   expanded: string;
   onToggle: (id: string) => void;
-  onMatchHover: (match: ArtistMatch | null, anchor: HoverAnchor) => void;
+  onMatchHover: (match: ArtistMatch, anchor: HoverAnchor) => void;
+  onCertGuideHover: (cert: string, guide: CertMatchGuide, anchor: HoverAnchor) => void;
+  onCertPersonHover: (cert: string, guide: CertMatchGuide, person: string, met: boolean, anchor: HoverAnchor) => void;
+  onHoverLeave: () => void;
   dataError: string | null;
 }) {
   if (dataError) {
@@ -162,6 +283,17 @@ function DetailSection({
         const open = expanded === item.notice.id;
         const manual = item.conditions.filter((condition) => condition.state === 'manual');
         const filmed = item.filmed;
+        const certGroups = new Map<string, {
+          guides: CertMatchGuide[];
+          people: { match: ArtistMatch; cert: CertMatch }[];
+        }>();
+        for (const match of item.matches) {
+          for (const cert of match.certs) {
+            const group = certGroups.get(cert.name) ?? { guides: cert.guides, people: [] };
+            group.people.push({ match, cert });
+            certGroups.set(cert.name, group);
+          }
+        }
 
         return (
           <div
@@ -259,27 +391,71 @@ function DetailSection({
                   </div>
                 )}
 
-                {item.matches.some((match) => match.certs.length > 0) && (
-                  <div className="mt-2 flex flex-wrap items-center gap-1" data-case-special-certs>
-                    <span className="mr-0.5 text-ui-2xs text-ink-faint">戏剧证书</span>
-                    {item.matches.flatMap((match) => match.certs.map((cert) => (
-                      <span
-                        key={`${match.id}-${cert.name}`}
-                        data-case-special-cert={match.name}
-                        data-case-special-cert-met={cert.met}
-                        className={cn(
-                          'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
-                          cert.met
-                            ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
-                            : 'border-line bg-surface-soft text-ink-muted',
-                        )}
-                      >
-                        {cert.met && <span aria-hidden="true">✓</span>}
-                        {match.name}
-                      </span>
-                    )))}
-                  </div>
-                )}
+                {[...certGroups].map(([certName, group]) => {
+                  const guide = group.guides[0];
+                  return (
+                    <div key={certName} className="mt-2 flex flex-wrap items-center gap-1" data-case-special-certs>
+                      {guide ? (
+                        <span
+                          data-case-special-cert-guide={certName}
+                          className="mr-0.5 cursor-help text-ui-2xs text-ink-faint"
+                          onMouseEnter={(event) => {
+                            const rect = event.currentTarget.getBoundingClientRect();
+                            onCertGuideHover(certName, guide, {
+                              left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+                            });
+                          }}
+                          onMouseLeave={onHoverLeave}
+                        >
+                          {certName}
+                        </span>
+                      ) : (
+                        <span className="mr-0.5 text-ui-2xs text-ink-faint">{certName}</span>
+                      )}
+                      {group.people.map(({ match, cert }) => {
+                        const personGuide = cert.guides[0] ?? guide;
+                        return personGuide ? (
+                          <span
+                            key={match.id}
+                            data-case-special-cert={match.name}
+                            data-case-special-cert-met={cert.met}
+                            className={cn(
+                              'cursor-help inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                              cert.met
+                                ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                                : 'border-line bg-surface-soft text-ink-muted',
+                            )}
+                            onMouseEnter={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect();
+                              onCertPersonHover(certName, personGuide, match.name, cert.met, {
+                                left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+                              });
+                            }}
+                            onMouseLeave={onHoverLeave}
+                          >
+                            {cert.met && <span aria-hidden="true">✓</span>}
+                            {match.name}
+                          </span>
+                        ) : (
+                          <span
+                            key={match.id}
+                            data-case-special-cert={match.name}
+                            data-case-special-cert-met={cert.met}
+                            className={cn(
+                              'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                              cert.met
+                                ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                                : 'border-line bg-surface-soft text-ink-muted',
+                            )}
+                          >
+                            {cert.met && <span aria-hidden="true">✓</span>}
+                            {match.name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
 
                 {item.items.length > 0 && (
                   <div className="mt-2 flex flex-wrap items-center gap-1" data-case-special-items>
@@ -337,7 +513,7 @@ function DetailSection({
                               bottom: rect.bottom,
                             });
                           }}
-                          onMouseLeave={() => onMatchHover(null, { left: 0, right: 0, top: 0, bottom: 0 })}
+                          onMouseLeave={onHoverLeave}
                         >
                           {match.met === match.total && <span aria-hidden="true">✓</span>}
                           {match.name} {match.met}/{match.total}
@@ -358,7 +534,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const { data, error } = useSpecialsData(true);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState('');
-  const [hover, setHover] = useState<{ match: ArtistMatch; anchor: HoverAnchor } | null>(null);
+  const [hover, setHover] = useState<HoverState | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -368,9 +544,9 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
       hoverTimer.current = null;
     }
   };
-  const showHover = (match: ArtistMatch, anchor: HoverAnchor) => {
+  const showHover = (next: HoverState) => {
     clearHoverTimer();
-    setHover({ match, anchor });
+    setHover(next);
   };
   /** 胶囊离开后留一点时间让鼠标挪进浮层；浮层自己接管后再真正关闭。 */
   const hideHoverSoon = () => {
@@ -452,10 +628,11 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
                 report={report}
                 expanded={expanded}
                 onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
-                onMatchHover={(match, anchor) => {
-                  if (match) showHover(match, anchor);
-                  else hideHoverSoon();
-                }}
+                onMatchHover={(match, anchor) => showHover({ kind: 'match', match, anchor })}
+                onCertGuideHover={(cert, guide, anchor) => showHover({ kind: 'certGuide', cert, guide, anchor })}
+                onCertPersonHover={(cert, guide, person, met, anchor) =>
+                  showHover({ kind: 'certPerson', cert, guide, person, met, anchor })}
+                onHoverLeave={hideHoverSoon}
                 dataError={error}
               />
             )}
@@ -463,15 +640,43 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
         </section>
       )}
 
-      {open && hover && (
-        <MatchHoverCard
-          key={hover.match.id}
-          match={hover.match}
-          anchor={hover.anchor}
-          onEnter={clearHoverTimer}
-          onLeave={hideHoverNow}
-        />
-      )}
+      {open && hover && (() => {
+        if (hover.kind === 'match') {
+          return (
+            <MatchHoverCard
+              key={`match-${hover.match.id}`}
+              match={hover.match}
+              anchor={hover.anchor}
+              onEnter={clearHoverTimer}
+              onLeave={hideHoverNow}
+            />
+          );
+        }
+        if (hover.kind === 'certGuide') {
+          return (
+            <CertGuideCard
+              key={`guide-${hover.cert}`}
+              cert={hover.cert}
+              guide={hover.guide}
+              anchor={hover.anchor}
+              onEnter={clearHoverTimer}
+              onLeave={hideHoverNow}
+            />
+          );
+        }
+        return (
+          <CertPersonCard
+            key={`person-${hover.cert}-${hover.person}`}
+            cert={hover.cert}
+            guide={hover.guide}
+            person={hover.person}
+            met={hover.met}
+            anchor={hover.anchor}
+            onEnter={clearHoverTimer}
+            onLeave={hideHoverNow}
+          />
+        );
+      })()}
 
       <button
         type="button"

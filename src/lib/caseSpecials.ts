@@ -1,5 +1,5 @@
 import { ATTRS, starGender, type CaseTables, type ParseResult } from './caseParser';
-import { artistCertificates } from './caseCertificates';
+import { artistCertificates, certificateGuide, type CertificateGuide } from './caseCertificates';
 import { certsForName, normaliseStatName, parseTarget } from './specials';
 import type { ArtistStats } from './caseParser';
 import type { SpecialNotice, SpecialRow, SpecialsData } from '../types/specials';
@@ -35,6 +35,24 @@ export interface SlotGap {
   gaps: string[];
 }
 
+export interface CertMatchStat {
+  name: string;
+  min: number;
+  have: number;
+}
+
+export interface CertMatchGuide extends Omit<CertificateGuide, 'attrs'> {
+  stats: CertMatchStat[];
+}
+
+export interface CertMatch {
+  name: string;
+  /** 只有存档里真的持有证书才为 true；属性达标但没有证书不打勾。 */
+  met: boolean;
+  detail: string;
+  guides: CertMatchGuide[];
+}
+
 export interface ArtistMatch {
   id: number;
   name: string;
@@ -43,8 +61,8 @@ export interface ArtistMatch {
   gaps: string[];
   /** 按通告坑位拆开的缺口，hover 时分别显示男主角 / 男配角差多少。 */
   slots: SlotGap[];
-  /** 该艺人的证书判定：有戏剧证书打绿勾，缺的写出证书名。 */
-  certs: { name: string; met: boolean; detail: string }[];
+  /** 该艺人的证书判定：有证书才打绿勾，hover 显示学院课程与属性对比。 */
+  certs: CertMatch[];
   /** 硬性前置数值判定（如电影主角 1 次、电影 2 部），进达标分母。 */
   required: { name: string; met: boolean; detail: string }[];
   /** 触发前置的可选数值判定（男/女按性别各认自己那组），不进达标分母。 */
@@ -551,11 +569,32 @@ export function evaluateLiveSpecials(
               || condition.detailByArtist[artist.roleId]
               || condition.row.name),
         }));
-        const certs = certRows.map((condition) => {
-          const met = !!condition.byArtist[artist.roleId];
-          const name = certsForName(condition.row.name).join('、') || condition.row.name;
-          return { name, met, detail: name };
-        });
+        const heldCerts = ctx.certs.get(artist.roleId) ?? [];
+        const certs: CertMatch[] = certRows
+          .flatMap((condition) => {
+            const held = heldCerts.map(certKey);
+            return certsForName(condition.row.name).map((name) => {
+              const met = held.includes(certKey(name));
+              const guide = certificateGuide(name);
+              return {
+                name,
+                met,
+                detail: met ? name : `缺 ${name}`,
+                guides: guide ? [{
+                  cert: guide.cert,
+                  title: guide.title,
+                  academy: guide.academy,
+                  courses: guide.courses,
+                  stats: guide.attrs.map((attr) => ({
+                    name: attr.name,
+                    min: attr.min,
+                    have: abilityValue(artist, attr.name) ?? 0,
+                  })),
+                }] : [],
+              };
+            });
+          })
+          .filter((cert, index, all) => all.findIndex((item) => item.name === cert.name) === index);
         // 硬性前置：phase=prepare 的艺人数值行（电影主角 / 电影作品数），每位艺人各判一次。
         const required = conditions
           .filter((condition) => condition.row.phase === 'prepare'

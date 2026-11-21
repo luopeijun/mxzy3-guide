@@ -1,4 +1,49 @@
 import type { CaseTables, OwnedItem } from './caseParser';
+import { CERT_REQUIREMENTS } from './specials';
+
+/** 证书取得条件来自 sources/certificates.txt：学院课程 + 属性门槛。 */
+export interface CertificateGuide {
+  /** 存档/条件表里的短名，如「戏剧证书」。 */
+  cert: string;
+  /** 属性门槛在攻略里用的名字，如「表演证书」。 */
+  title: string;
+  academy: string;
+  courses: string[];
+  attrs: { name: string; min: number }[];
+}
+
+const CERT_GUIDE_SOURCE: Array<Omit<CertificateGuide, 'attrs'>> = [
+  {
+    cert: '音乐证书',
+    title: '音乐证书',
+    academy: '音乐学院（维也纳）',
+    courses: ['音感发生（专业）', '乐器乐理（专业）', '快速记忆（高级）', '美姿美仪（高级）'],
+  },
+  {
+    cert: '舞蹈证书',
+    title: '舞蹈证书',
+    academy: '舞蹈学院（夏威夷）',
+    courses: ['有氧舞蹈（专业）', '舞台表演（专业）', '摄影训练（高级）'],
+  },
+  {
+    cert: '戏剧证书',
+    title: '表演证书',
+    academy: '戏剧学院（纽约）',
+    courses: ['声音表情（专业）', '肢体语言（专业）', '说话技巧（高级）'],
+  },
+];
+
+export const CERTIFICATE_GUIDES: CertificateGuide[] = CERT_GUIDE_SOURCE.map((guide) => ({
+  ...guide,
+  attrs: CERT_REQUIREMENTS.find((row) => row.cert === guide.cert)?.attrs ?? [],
+}));
+
+/** 条件表可能写「国际戏剧学院证书」这类全名，按关键字认回三类证书。 */
+export function certificateGuide(name: string): CertificateGuide | undefined {
+  const cert = ['戏剧', '音乐', '舞蹈'].find((keyword) => name.includes(keyword));
+  const shortName = cert ? `${cert}证书` : '';
+  return CERTIFICATE_GUIDES.find((guide) => guide.cert === shortName);
+}
 
 const CERT_KINDS = [
   { word: '舞蹈', label: '舞蹈' },
