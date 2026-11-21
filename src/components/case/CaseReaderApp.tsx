@@ -13,6 +13,7 @@ import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
   noticeLabel, noticeUnit, riskOf, shootableDays,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
+  type ArchiveNotice,
   type ArtistEvent, type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice, type ShootingRisk,
@@ -755,8 +756,8 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   const [filterCompany, setFilterCompany] = useState('all');
   /** 筹备中的接取筛选：全部 / 未预约 / 满足条件。 */
   const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
-  /** 三个页签：等档期的筹备中、已经接下的拍摄中、自家出品的自制通告。 */
-  const [board, setBoard] = useState<'open' | 'shooting' | 'selfMade'>('open');
+  /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 自制通告及其他。 */
+  const [board, setBoard] = useState<'open' | 'shooting' | 'selfMade' | 'promo'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
@@ -858,6 +859,26 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   }, [result]);
 
   const artists = result?.artists ?? [];
+
+  /** 宣传活动：按作品（通告码）分组，用于「宣传活动」页签的折叠清单。 */
+  const promoGroups = useMemo(() => {
+    if (!result) return [] as { code: string; name: string; items: ArchiveNotice[] }[];
+    const map = new Map<string, ArchiveNotice[]>();
+    for (const n of result.archiveNotices) {
+      if (n.category !== '宣傳活動') continue;
+      const list = map.get(n.code) ?? [];
+      list.push(n);
+      map.set(n.code, list);
+    }
+    const order = ['電視劇宣傳', '電影宣傳', '首映會', '唱片宣傳', '拍攝MV', '簽名會'];
+    const kindRank = (k?: string) => { const i = order.indexOf(k ?? ''); return i < 0 ? 99 : i; };
+    return [...map].map(([code, items]) => ({
+      code,
+      name: items[0]?.name || code,
+      items: [...items].sort((a, b) => kindRank(a.promoKind) - kindRank(b.promoKind)),
+    })).sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  }, [result]);
+  const promoCount = promoGroups.reduce((sum, g) => sum + g.items.length, 0);
 
   /** The panel is fixed: every artist the save marks as signed, no picker. */
   const signedArtists = useMemo<SignedArtist[]>(() => {
@@ -1495,6 +1516,16 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <button
                   type="button"
                   role="tab"
+                  data-case-tab="promo"
+                  aria-selected={board === 'promo'}
+                  onClick={() => setBoard('promo')}
+                  className={tabClass(board === 'promo')}
+                >
+                  宣传活动 <span className="tabular-nums">{promoCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
                   data-case-tab="open"
                   aria-selected={board === 'open'}
                   onClick={() => setBoard('open')}
@@ -1523,7 +1554,12 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   自制通告及其他 <span className="tabular-nums">{result.selfMade.length}</span>
                 </button>
               </div>
-              {board === 'selfMade' ? (
+              {board === 'promo' ? (
+                <PromoPanel
+                  groups={promoGroups}
+                  artistName={(id) => nameOfArtist(result, tables, id)}
+                />
+              ) : board === 'selfMade' ? (
                 <SelfMadePanel
                   notices={result.selfMade}
                   emptyTitle="还没有自制通告"
@@ -1921,6 +1957,100 @@ function ShootingPanel({
  *  一条通告上一人一个角色、各拿各的酬劳，所以跟拍摄中一样「一位艺人一行」，
  *  通告 / 档期 / 状态 / 出品用 rowSpan 合起来。只列自家艺人：对手公司的演员
  *  照样占角色格（不占的话自家艺人会错位），但不占行。 */
+/** 艺人编号 -> 姓名，供宣传活动清单显示签约者。 */
+function nameOfArtist(result: ParseResult, tables: CaseTables, id: number): string {
+  return result.artistDirectory.find((a) => a.id === id)?.name
+    ?? tables.stars?.[String(id)]?.[0]
+    ?? `编号${id}`;
+}
+
+/** 宣传活动的签约主体文本：个人取艺人姓名，团体显示「團體」+ 编号。 */
+function promoSigner(n: ArchiveNotice, artistName: (id: number) => string): string {
+  if (n.groupId) return `團體 #${n.groupId}`;
+  if (n.artistIds.length) return n.artistIds.map(artistName).join('、');
+  return '—';
+}
+
+/** 「宣传活动」页签：按作品分组折叠，组头是作品名，展开是各宣传子类行。 */
+function PromoPanel({
+  groups, artistName,
+}: {
+  groups: { code: string; name: string; items: ArchiveNotice[] }[];
+  artistName: (id: number) => string;
+}) {
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const toggle = (code: string) => setExpanded((prev) => {
+    const next = new Set(prev);
+    if (next.has(code)) next.delete(code); else next.add(code);
+    return next;
+  });
+  if (groups.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title="这份存档里没有宣传活动" text="唱片 / 电视剧 / 电影作品发行后会衍生宣传、拍摄 MV、签名会、首映会等活动。换一份有发行记录的存档再试。" />
+      </div>
+    );
+  }
+  const kindClass = 'bg-tag-talk-soft text-tag-talk';
+  return (
+    <div data-case-promo className="mt-2 flex flex-col gap-1.5">
+      {groups.map((group) => {
+        const open = expanded.has(group.code);
+        return (
+          <div key={group.code} className="overflow-hidden rounded-ui-md border border-line bg-surface">
+            <button
+              type="button"
+              data-case-promo-group={group.code}
+              aria-expanded={open}
+              onClick={() => toggle(group.code)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-ui-xs transition-colors hover:bg-surface-soft"
+            >
+              <svg
+                viewBox="0 0 12 12" aria-hidden="true"
+                className={cn('h-3 w-3 shrink-0 text-ink-faint transition-transform', open && 'rotate-90')}
+                fill="none" stroke="currentColor" strokeWidth="1.8"
+              >
+                <path d="M4 2.5 8 6l-4 3.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="font-semibold text-ink">{group.name}</span>
+              <span className="text-ui-2xs text-ink-faint">{group.code}</span>
+              <span className="ml-auto rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs tabular-nums text-ink-muted">
+                {group.items.length} 项
+              </span>
+            </button>
+            {open && (
+              <div className="border-t border-line">
+                <table className="w-full table-fixed border-collapse text-ui-xs">
+                  <thead>
+                    <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+                      <Th className="w-[20%]">宣传子类</Th>
+                      <Th className="w-[32%]">档期（开拍 → 杀青）</Th>
+                      <Th className="w-[12%]">完成天数</Th>
+                      <Th className="w-[36%]">签约</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.items.map((item, idx) => (
+                      <tr key={`${item.code}-${item.promoKind}-${idx}`} className="border-t border-line/60">
+                        <td className="px-3 py-1.5">
+                          <span className={cn('rounded-full px-2 py-0.5 text-ui-2xs font-semibold', kindClass)}>{item.promoKind}</span>
+                        </td>
+                        <td className="px-3 py-1.5 tabular-nums text-ink-muted">{item.startDate} → {item.endDate}</td>
+                        <td className="px-3 py-1.5 tabular-nums text-ink">{item.doneDays ?? '—'}</td>
+                        <td className="px-3 py-1.5 text-ink">{promoSigner(item, artistName)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SelfMadePanel({
   notices, emptyTitle, emptyText,
 }: { notices: SelfMadeNotice[]; emptyTitle: string; emptyText: string }) {

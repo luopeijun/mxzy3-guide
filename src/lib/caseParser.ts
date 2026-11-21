@@ -626,6 +626,48 @@ export interface WorldScene {
   unlocked: boolean;
 }
 
+/** 通告记录表里的七种状态分类，对应游戏存档编辑器「通告列表」的下拉项。 */
+export type ArchiveNoticeCategory =
+  | '宣傳活動'
+  | '籌備中'
+  | '拍攝中'
+  | '等待上市'
+  | '熱賣中'
+  | '已完成'
+  | '自製通告及其他';
+
+/** 宣传活动的六种子类，来自存档记录内「通告码后紧跟的类型码」。 */
+export type PromoKind =
+  | '電視劇宣傳'
+  | '電影宣傳'
+  | '首映會'
+  | '唱片宣傳'
+  | '拍攝MV'
+  | '簽名會';
+
+/** 通告记录表（存档里一段变长记录，每条约 1100~1200 字节）里的一条。
+ *  只读清单用：通告名 + 类型 + 档期 + 参与艺人；角色明细（角色类型/难度/
+ *  签约艺人/完成天数/酬劳）保留在原始字段，后续展开时再用。 */
+export interface ArchiveNotice {
+  code: string;
+  name: string;
+  category: ArchiveNoticeCategory;
+  /** 开拍日文本，例如 2006/7/31。 */
+  startDate: string;
+  /** 杀青日文本。 */
+  endDate: string;
+  /** 该通告的签约艺人（roleId），来自角色槽位 +800 / +824。 */
+  artistIds: number[];
+  /** 宣传活动的子类；只有 category === '宣傳活動' 时有值。 */
+  promoKind?: PromoKind;
+  /** 宣传活动的签约团体名；团体宣传时有值。 */
+  groupName?: string;
+  /** 宣传活动的完成天数；读不到时为 null。 */
+  doneDays?: number | null;
+  /** 团体宣传的团体编号（存档 +832）；配合 teams 映射成名字。 */
+  groupId?: number;
+}
+
 export interface ParseResult {
   saveName: string;
   saveSize: number;
@@ -659,6 +701,8 @@ export interface ParseResult {
   groupWorks: GroupWork[];
   /** 「艺人成绩」记事里的个人作品记录，供通告统计悬停按时间展示。 */
   works: WorkRecord[];
+  /** 存档「通告记录表」里的全部通告，按七类状态分类，供通告区只读清单使用。 */
+  archiveNotices: ArchiveNotice[];
   awards: ArtistAward[];
   /** 「艺人成绩」记事里的演唱会 / 影友會 / 歌友會记录，按时间正序。 */
   events: ArtistEvent[];
@@ -1133,6 +1177,229 @@ export function parseGroupWorks(
   }
   rows.sort((a, b) => a.day - b.day || a.work.workCode.localeCompare(b.work.workCode));
   return rows.map((row) => row.work);
+}
+
+/** 存档「通告记录表」：一段变长记录（每条约 1100~1200 字节，长度随公司名
+ *  Big5 字节数浮动），每条起点是 ASCII 通告码，+892 起是五组 [年,月,日,周]
+ *  档期（开放接取 / 开拍 / 杀青 / 上档 / 下档），+792 起是角色接演槽位，
+ *  +800 / +824 是两位签约艺人的 roleId。
+ *
+ *  记录起点锚点：ASCII 合法通告码 + `+892` 是 2000~2015 的年份 + 五组档期
+ *  月日均合法。跨多份存档验证过不会命中角色定义表（那条是 192B 固定记录，
+ *  +892 处不是年份）。
+ *
+ *  七类状态口径（对照游戏存档编辑器「通告列表」下拉）：
+ *  - 宣传活动：作品本体衍生出的宣传/首映/MV/签名会活动，角色类型是
+ *    「個人 / 團體」。判定靠记录内嵌的类型码锚点（见下），不靠同码多条。
+ *    类型码 10=電視劇宣傳 15=電影宣傳 16=首映會 20=唱片宣傳 21=拍攝MV
+ *    22=簽名會（data1/ScheduleClass.dat + 存档编辑器截图双向确认）。
+ *  - 筹备中 / 拍摄中 / 等待上市 / 热卖中 / 已完成：按当前日期落在五组档期
+ *    的哪一段推算。作品本体走正常档期分类。
+ *
+ *  宣传活动锚点：记录内 `[5×ASCII 通告码][类型码 int32][天数 int32]`，
+ *  类型码 ∈ {10,15,16,20,21,22}、天数 20~40；锚点后面 28~220 字节内是
+ *  同一通告码的记录起点（可含 base892 个人或 base940 团体）。角色槽首格
+ *  「個人 / 團體」区分主体：个人艺人号在 +800、完成天数 +804；团体编号
+ *  在 +832、完成天数 +836（+804 是哨兵值）。story17/story70/AutoReleased
+ *  三档共 79 条宣传记录全部命中。 */
+export function parseArchiveNotices(
+  bytes: Uint8Array,
+  view: DataView,
+  tables: CaseTables,
+  currentDate: GameDate | null,
+): ArchiveNotice[] {
+  const today = currentDate?.dayNumber ?? NaN;
+  const day = (y: number, m: number, d: number) => dayNumber(y, m, d);
+  const b = bytes;
+  const PREFIX = new Set(['TV', 'MV', 'CD', 'CF', 'SH']);
+  const isAsciiCode = (o: number): string => {
+    if (o < 0 || b[o] < 0x41 || b[o] > 0x5a) return '';
+    let s = '';
+    for (let j = 0; j < 5; j += 1) {
+      const c = b[j + o];
+      if (c < 0x30 || c > 0x7a) return '';
+      s += String.fromCharCode(c);
+    }
+    return PREFIX.has(s.slice(0, 2)) && /^[0-9A-Z]{3}$/.test(s.slice(2)) ? s : '';
+  };
+  const q = (o: number, r: number) => view.getUint32(o + r, true);
+  const roleAt = (o: number, r: number): string => {
+    try {
+      return decodeBig5(b.slice(o + r, o + r + 16)).replace(/\0.*/, '').replace(/[^\u4e00-\u9fff]/g, '');
+    } catch {
+      return '';
+    }
+  };
+
+  // 类型码 -> 宣传子类（data1/ScheduleClass.dat + 存档编辑器截图双向确认）。
+  const PROMO_KIND: Record<number, PromoKind> = {
+    10: '電視劇宣傳',
+    15: '電影宣傳',
+    16: '首映會',
+    20: '唱片宣傳',
+    21: '拍攝MV',
+    22: '簽名會',
+  };
+
+  // 阶段一：收集所有合法通告记录起点（ASCII 码 + 年份 + 五组档期合法）。
+  // 个人记录年份在 +892，团体记录在 +940，两者都要收。
+  type Rec = {
+    o: number;
+    code: string;
+    start: number;
+    end: number;
+    onSale: number;
+    off: number;
+    startDate: string;
+    endDate: string;
+    artists: number[];
+    groupId: number;
+    doneDays: number | null;
+    isGroup: boolean;
+  };
+  const recs: Rec[] = [];
+  const recByOffset = new Map<number, Rec>();
+  for (let o = 0; o + 1080 < b.length; o += 1) {
+    const code = isAsciiCode(o);
+    if (!code) continue;
+    const y892 = q(o, 892);
+    const y940 = q(o, 940);
+    const isGroup = !(y892 >= 2000 && y892 <= 2015) && y940 >= 2000 && y940 <= 2015;
+    if (!isGroup && !(y892 >= 2000 && y892 <= 2015)) continue;
+    const base = isGroup ? 940 : 892;
+    const role1 = roleAt(o, 10);
+    const group = role1 === '團體';
+    const months = [q(o, base + 4), q(o, base + 20), q(o, base + 36), q(o, base + 52), q(o, base + 68)];
+    const days = [q(o, base + 8), q(o, base + 24), q(o, base + 40), q(o, base + 56), q(o, base + 72)];
+    const valid = (i: number) => months[i] >= 1 && months[i] <= 12 && days[i] >= 1 && days[i] <= 31;
+    // 个人记录档期组：[开放, 开拍, 杀青, 上档, 下档]；开拍在 base+16、杀青 base+32。
+    // 团体记录只有 4 组：[开拍, 杀青, 上档, 下档]；开拍就在 base、杀青 base+16。
+    const startBase = group ? base : base + 16;
+    const endBase = group ? base + 16 : base + 32;
+    const startIdx = group ? 0 : 1;
+    const endIdx = group ? 1 : 2;
+    if (!valid(startIdx) || !valid(endIdx)) continue;
+    const start = day(q(o, startBase), months[startIdx], days[startIdx]);
+    const end = day(q(o, endBase), months[endIdx], days[endIdx]);
+    const groupId = group ? q(o, 832) : 0;
+    const doneRaw = group ? q(o, 836) : q(o, 804);
+    const doneDays = doneRaw < 4000000000 ? doneRaw : null;
+    const artists = group ? [] : [q(o, 800), q(o, 824)].filter((a) => a >= 1 && a <= 100);
+    const rec: Rec = {
+      o,
+      code,
+      start,
+      end,
+      onSale: day(q(o, base + 48), months[3], days[3]),
+      off: day(q(o, base + 64), months[4], days[4]),
+      startDate: fmtDay(view, o + startBase),
+      endDate: fmtDay(view, o + endBase),
+      artists,
+      groupId,
+      doneDays,
+      isGroup: group,
+    };
+    recs.push(rec);
+    recByOffset.set(o, rec);
+  }
+  recs.sort((a, z) => a.o - z.o);
+
+  // 阶段二：扫类型码锚点 `[5×ASCII 通告码][类型码][天数]`，关联到后面同码的记录起点。
+  // 锚点后 28~220 字节内找同一 code 的起点；找到后若阶段一没收（年份字段是 0 的
+  // 唱片宣传记录），就在此就地构造一条宣传 Rec，保证这类也能出现在清单里。
+  const promoByOffset = new Map<number, PromoKind>();
+  for (let p = 0; p + 28 < b.length; p += 4) {
+    // 锚点里 5 个 ASCII 字符各占一个 int32（4 字节），低位是字符；逐 int32 读。
+    let ascii = '';
+    let codeOk = true;
+    for (let j = 0; j < 5; j += 1) {
+      const v = view.getUint32(p + j * 4, true);
+      if (v > 0xff || v < 0x30 || v > 0x7a) { codeOk = false; break; }
+      ascii += String.fromCharCode(v);
+    }
+    if (!codeOk) continue;
+    if (!PREFIX.has(ascii.slice(0, 2)) || !/^[0-9A-Z]{3}$/.test(ascii.slice(2))) continue;
+    const kind = PROMO_KIND[view.getUint32(p + 20, true)];
+    const promoDays = view.getUint32(p + 24, true);
+    if (!kind || promoDays < 20 || promoDays > 40) continue;
+    for (let s = p + 28; s <= p + 220; s += 1) {
+      if (isAsciiCode(s) !== ascii) continue;
+      if (promoByOffset.has(s)) break;
+      promoByOffset.set(s, kind);
+      if (!recByOffset.has(s)) {
+        // 部分唱片宣传记录的年份字段是 0，阶段一漏掉。档期三元组从起点往后
+        // 860~1000 范围找第一组「年 2000~2015 + 合法月日」，据此定 base。
+        let base = -1;
+        for (let r = 860; r <= 1000; r += 4) {
+          const yy = q(s, r);
+          const mm = q(s, r + 4);
+          const dd = q(s, r + 8);
+          if (yy >= 2000 && yy <= 2015 && mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) { base = r; break; }
+        }
+        if (base >= 0) {
+          const role1 = roleAt(s, 10);
+          const group = role1 === '團體';
+          const doneRaw = group ? q(s, 836) : q(s, 804);
+          const rec: Rec = {
+            o: s,
+            code: ascii,
+            start: day(q(s, base), q(s, base + 4), q(s, base + 8)),
+            end: day(q(s, base + 16), q(s, base + 20), q(s, base + 24)),
+            onSale: 0,
+            off: 0,
+            startDate: fmtDay(view, s + base),
+            endDate: fmtDay(view, s + base + 16),
+            artists: group ? [] : [q(s, 800), q(s, 824)].filter((a) => a >= 1 && a <= 100),
+            groupId: group ? q(s, 832) : 0,
+            doneDays: doneRaw < 4000000000 ? doneRaw : null,
+            isGroup: group,
+          };
+          // 这段是宣传记录的起始段（在通告记录表尾部），插到末尾即可。
+          recs.push(rec);
+          recByOffset.set(s, rec);
+        }
+      }
+      break;
+    }
+  }
+
+  // 阶段三：组装。宣传活动的档期/艺人/天数来自关联的记录本体；其余按档期分状态。
+  const out: ArchiveNotice[] = [];
+  for (const rec of recs) {
+    const promoKind = promoByOffset.get(rec.o);
+    let category: ArchiveNoticeCategory;
+    if (promoKind) {
+      category = '宣傳活動';
+    } else if (!Number.isFinite(today)) {
+      category = '已完成';
+    } else if (today < rec.start) {
+      category = '籌備中';
+    } else if (today <= rec.end) {
+      category = '拍攝中';
+    } else {
+      category = today < rec.onSale ? '等待上市' : today <= rec.off ? '熱賣中' : '已完成';
+    }
+    const notice: ArchiveNotice = {
+      code: rec.code,
+      name: tables.cases[rec.code]?.[0] || rec.code,
+      category,
+      startDate: rec.startDate,
+      endDate: rec.endDate,
+      artistIds: rec.artists,
+    };
+    if (promoKind) {
+      notice.promoKind = promoKind;
+      notice.doneDays = rec.doneDays;
+      if (rec.isGroup) notice.groupId = rec.groupId;
+    }
+    out.push(notice);
+  }
+  return out;
+}
+
+/** 从记录起点 +r 读一个 [年,月,日] 三元组，格式化成 2006/7/31。 */
+function fmtDay(view: DataView, p: number): string {
+  return `${view.getUint32(p, true)}/${view.getUint32(p + 4, true)}/${view.getUint32(p + 8, true)}`;
 }
 
 /** 截图逐条核对过的角色归属。记事表二进制本身不存角色名，游戏是按接演时的
@@ -2823,6 +3090,7 @@ export function parseSave(
     events,
     groupWorks: allGroupWorks,
     works: allWorks,
+    archiveNotices: parseArchiveNotices(bytes, view, tables, currentDate),
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],
