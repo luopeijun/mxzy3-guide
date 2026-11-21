@@ -1115,17 +1115,18 @@ function parseProducerFriendship(
     break;
   }
 
-  // 同一张 284 字节定长表的前段是 NPC / 其他角色（编号 3=賀總、38=史蒂芬、
-  // 39=丹尼斯…）。这段的 +4 类别不是编号百位（多为 34），不能套上面的校验；
-  // 改用「code=3 且 +284 处 code=4」双连续锚点定位表头（跨 40 份存档 base
-  // 712/772 都能命中），再按步长顺扫小编号段 1..399，空槽跳过。
+  // 同一张 284 字节定长表还含 NPC / 其他角色（3 賀總 / 38 史蒂芬 / 39 丹尼斯 /
+  // 101 王瑞恩…）与 13xx 段（1301 加賀大澤 / 1302 史麥克）。这些段的 +4 类别
+  // 不是编号百位，不能套上面的校验；改用「code=3 且 +284 处 code=4」双连续
+  // 锚点定位表头（跨 40+ 份存档 base 712/772 都能命中），再按步长顺扫到
+  // code=1399（表尾是 1400+ 的场景物件，友好度恒 0），空槽跳过、先到优先。
   for (let p = 0; p + 432 <= limit; p += 4) {
     if (view.getUint32(p, true) !== 3) continue;
     if (view.getUint32(p + 284, true) !== 4) continue;
     if (view.getUint32(p + 148, true) > 9999) continue;
     for (let q = p; q + 152 <= bytes.length; q += 284) {
       const code = view.getUint32(q, true);
-      if (code > 399) break;
+      if (code > 1399) break;
       if (code < 1) continue;
       const friendship = view.getUint32(q + 148, true);
       if (friendship > 9999) continue;

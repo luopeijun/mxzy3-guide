@@ -39,10 +39,18 @@ export const PRODUCER_GROUPS: ProducerGroup[] = [
     producers: [
       { key: 'zhou-yingtong', code: 401, name: '周映彤', title: 'EAMI唱片公司负责人' },
       { key: 'xiao-xiong', code: 501, name: '小熊', title: '日月光音乐负责人' },
+      { key: 'jia-he-da-ze', code: 1301, name: '加贺大泽' },
     ],
   },
   { kind: 'tv', label: '电视剧', producers: [] },
-  { kind: 'movie', label: '电影', producers: [] },
+  {
+    kind: 'movie',
+    label: '电影',
+    producers: [
+      { key: 'wang-rui-en', code: 101, name: '王瑞恩' },
+      { key: 'shi-mai-ke', code: 1302, name: '史麦克' },
+    ],
+  },
   {
     kind: 'ad',
     label: '广告',
