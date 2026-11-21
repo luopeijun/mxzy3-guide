@@ -492,6 +492,8 @@ function filmedRecords(noticeId: string, ctx: EvalContext): FilmedRecord[] {
 const MALE_ONLY_NOTICES = new Set(['proud-of-the-world', 'eternal-love']);
 /** 女艺人专属通告：落入凡间的天使（只有女主角坑）。 */
 const FEMALE_ONLY_NOTICES = new Set(['angel']);
+/** 团体专属通告：银河是团体专辑，没有我方团体就不能接。 */
+const GROUP_ONLY_NOTICES = new Set(['galaxy']);
 /** 单人坑通告，hover 里不贴「男主角 / 女主角」坑位标签（笑傲天际两坑仍保留）。 */
 export const SINGLE_ROLE_NOTICES = new Set(['eternal-love', 'angel']);
 /** 这两档里同一属性会重复出现（如歌艺 300 与 700），只按最高门槛匹配一次。 */
@@ -709,6 +711,16 @@ export function evaluateLiveSpecials(
         };
       }).filter((match) => match.total > 0)
         .sort((a, b) => b.met - a.met || a.gaps.length - b.gaps.length);
+      // 团体专辑没有团体可接时也要给个明确提示，不留空。
+      if (GROUP_ONLY_NOTICES.has(notice.id) && groups.length === 0) {
+        groups.push({
+          code: -1,
+          name: '需先组建团体',
+          met: 0,
+          total: 1,
+          gaps: ['存档没有我方团体'],
+        });
+      }
 
       return {
         notice,
