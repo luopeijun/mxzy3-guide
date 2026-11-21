@@ -65,9 +65,9 @@ class TestSpecialsJson(unittest.TestCase):
     def test_counts_match_the_reviewed_table(self):
         data = _json()
         s = data["stats"]
-        self.assertEqual(s["rows"], 133)
+        self.assertEqual(s["rows"], 139)
         self.assertEqual(s["conditions"], 85)
-        self.assertEqual(s["notes"], 48)
+        self.assertEqual(s["notes"], 54)
         self.assertEqual(len(data["notices"]), 7)
         self.assertEqual(
             sum(n["conditionCount"] for n in data["notices"]), s["conditions"]
@@ -177,6 +177,21 @@ class TestSpecialsJson(unittest.TestCase):
         }
         for row_id, hint in expected.items():
             self.assertEqual(rows[row_id]["hint"], hint)
+
+    def test_angel_has_six_event_nodes(self):
+        rows = _json()["rows"]
+        node_ids = [
+            r["id"] for r in rows
+            if r["notice"] == "angel" and ".node." in r["id"]
+        ]
+        self.assertEqual(node_ids, [f"angel.node.{i}" for i in range(1, 7)])
+        names = [r["name"] for r in rows if r["id"] in node_ids]
+        self.assertIn("慈善义演", names[0])
+        self.assertIn("饥饿百分百", names[1])
+        self.assertIn("天使的音乐盒", names[2])
+        self.assertIn("天使羽衣", names[3])
+        self.assertIn("周映彤", names[4])
+        self.assertIn("落入凡间的天使", names[5])
 
     def test_doomsday_optional_numeric_checks_are_marked(self):
         rows = {r["id"]: r for r in _json()["rows"]}

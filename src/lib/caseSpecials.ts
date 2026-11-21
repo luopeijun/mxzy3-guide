@@ -447,12 +447,16 @@ function filmedRecords(noticeId: string, ctx: EvalContext): FilmedRecord[] {
  *  万年之恋（只有男主角坑）。末日战士按性别分坑（男主角给男艺人、女主角给女艺人）。
  *  性别只认游戏表。 */
 const MALE_ONLY_NOTICES = new Set(['proud-of-the-world', 'eternal-love']);
+/** 女艺人专属通告：落入凡间的天使（只有女主角坑）。 */
+const FEMALE_ONLY_NOTICES = new Set(['angel']);
 /** key = 通告 id，value = [男艺人坑位, 女艺人坑位]。每位艺人只认自己性别那一项。 */
 const GENDER_SLOT_NOTICES: Record<string, [string, string]> = {
   'doomsday-warrior': ['main', 'support'],
 };
 /** 事件驱动通告：走事件节点，不按数值条件显示进度条。 */
-const EVENT_DRIVEN_NOTICES = new Set(['proud-of-the-world', 'doomsday-warrior', 'eternal-love']);
+const EVENT_DRIVEN_NOTICES = new Set([
+  'proud-of-the-world', 'doomsday-warrior', 'eternal-love', 'angel',
+]);
 
 const SLOT_LABELS: Record<string, string> = {
   main: '男主角',
@@ -464,6 +468,9 @@ const SLOT_LABELS: Record<string, string> = {
 function slotLabel(slot: string, notice: SpecialNotice): string {
   if (MALE_ONLY_NOTICES.has(notice.id)) {
     return SLOT_LABELS[slot] ?? (slot.startsWith('role:') ? slot.slice(5) : slot);
+  }
+  if (FEMALE_ONLY_NOTICES.has(notice.id)) {
+    return slot === 'main' ? '女主角' : slot.startsWith('role:') ? slot.slice(5) : slot;
   }
   const pair = GENDER_SLOT_NOTICES[notice.id];
   if (pair) {
@@ -512,6 +519,7 @@ export function evaluateLiveSpecials(
 
       const allArtistRows = readable.filter((condition) => Object.keys(condition.byArtist).length > 0);
       const maleOnly = MALE_ONLY_NOTICES.has(notice.id);
+      const femaleOnly = FEMALE_ONLY_NOTICES.has(notice.id);
       const genderSlots = GENDER_SLOT_NOTICES[notice.id];
       // 男女分坑通告：坑位匹配只算真正贴在角色上的数值行（phase=notice）。
       // 甄选阶段的证书前置（phase=prepare）仍留在总条件里，但不混进男女两坑的 4 项对比。
@@ -520,7 +528,9 @@ export function evaluateLiveSpecials(
         : allArtistRows;
       const candidates = maleOnly
         ? signed.filter((artist) => starGender(artist.roleId, tables.stars) === 'male')
-        : signed;
+        : femaleOnly
+          ? signed.filter((artist) => starGender(artist.roleId, tables.stars) === 'female')
+          : signed;
 
       const slotOf = (condition: LiveCondition): string =>
         condition.row.slot && condition.row.slot !== '-' ? condition.row.slot : 'main';
@@ -533,7 +543,7 @@ export function evaluateLiveSpecials(
       // 笑傲天际是男主角专属通告：只按男主角 4 项计分，男配角只在 hover 看差值。
       // 末日战士男女分坑：男艺人只认男主角、女艺人只认女主角，各自按自己坑位计分。
       const qualifyingRowsOf = (artist: ArtistStats): LiveCondition[] => {
-        if (maleOnly) return artistRows.filter((condition) => slotOf(condition) === 'main');
+        if (maleOnly || femaleOnly) return artistRows.filter((condition) => slotOf(condition) === 'main');
         if (genderSlots) {
           const gender = starGender(artist.roleId, tables.stars);
           const slot = gender === 'female' ? genderSlots[1] : genderSlots[0];
@@ -544,7 +554,7 @@ export function evaluateLiveSpecials(
       // hover 里列哪些坑位的差值：笑傲天际把男主角/男配角两坑都列出来对照；
       // 末日战士男女互斥，只列该艺人性别对应的那一个坑。
       const visibleSlotsOf = (artist: ArtistStats): [string, LiveCondition[]][] => {
-        if (maleOnly) return [...bySlot];
+        if (maleOnly || femaleOnly) return [...bySlot];
         if (genderSlots) {
           const gender = starGender(artist.roleId, tables.stars);
           const slot = gender === 'female' ? genderSlots[1] : genderSlots[0];

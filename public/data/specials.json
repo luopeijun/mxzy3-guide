@@ -5,9 +5,9 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 133,
+    "rows": 139,
     "conditions": 85,
-    "notes": 48,
+    "notes": 54,
     "scopeCounts": {
       "artist": 46,
       "global": 28,
@@ -67,7 +67,7 @@
       "title": "落入凡间的天使",
       "guideNode": "notices/angel",
       "conditionCount": 20,
-      "noteCount": 5,
+      "noteCount": 11,
       "slots": [
         "main"
       ],
@@ -1884,6 +1884,114 @@
         "href": "#/guide/notices/angel~ev12",
         "node": "notices/angel",
         "event": "10"
+      }
+    },
+    {
+      "id": "angel.node.1",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "女艺人参加过慈善义演（歌艺 300、仪态 300、人气 3），且是人气最高的女艺人；周先生上门邀请参加「饥饿百分百」，选择「答应」",
+      "target": "-",
+      "hint": "每年 2 月 / 8 月第一周上门；饥饿百分百在 4 月、10 月",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.node.2",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "参加过「饥饿百分百」，且有国际音乐学院证书、个人唱片 >5 张、开过演唱会（最好大型）后的周末，该女艺人希望把演唱会所得的 10% 捐给第三世界儿童，选择「答应」",
+      "target": "-",
+      "hint": "答应捐款 3 天后收到感谢卡",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.node.3",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "收到大天使的感谢卡和道具「天使的音乐盒」后，前往 EAMI 唱片找周映彤「闲聊」，收集道具做天使的羽翼",
+      "target": "-",
+      "hint": "-",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.node.4",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "材料为「人鱼的眼泪」「天使的羽翼」「精灵的祈祷」「光丝布料」，前往巴黎找老板制作「天使羽衣」，两周后可取",
+      "target": "-",
+      "hint": "-",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.node.5",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "拿到「天使羽衣」后，前往 EAMI 找周映彤「闲聊」，她说下一档会把这个通告放上来；周末把天使羽衣送给该女艺人",
+      "target": "-",
+      "hint": "必须送给触发捐款的那位女艺人",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
+      }
+    },
+    {
+      "id": "angel.node.6",
+      "notice": "angel",
+      "slot": "-",
+      "phase": "-",
+      "kind": "note",
+      "type": "-",
+      "scope": "-",
+      "name": "EAMI 通告更新后，周映彤上门邀约通告「落入凡间的天使」，选择接受；没来的话需自己前往 EAMI 预约",
+      "target": "-",
+      "hint": "-",
+      "source": "表+攻略",
+      "link": {
+        "kind": "tracker",
+        "href": "#/tracker",
+        "node": "notices/angel"
       }
     },
     {

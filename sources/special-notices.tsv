@@ -95,6 +95,12 @@ angel.stat.singing	angel	main	notice	condition	stat	artist	歌艺	630~700	攻略
 angel.stat.etiquette	angel	main	notice	condition	stat	artist	仪态	630~700	攻略单值 700；按定稿取上限达标	notices/angel#10	表+攻略	-
 angel.stat.confidence	angel	main	notice	condition	stat	artist	自信	500~550	攻略单值 550；按定稿取上限达标	notices/angel#10	表+攻略	-
 angel.stat.fame	angel	main	notice	condition	stat	artist	名气	450~500	攻略单值 500；按定稿取上限达标	notices/angel#10	表+攻略	-
+angel.node.1	angel	-	-	note	-	-	女艺人参加过慈善义演（歌艺 300、仪态 300、人气 3），且是人气最高的女艺人；周先生上门邀请参加「饥饿百分百」，选择「答应」	-	每年 2 月 / 8 月第一周上门；饥饿百分百在 4 月、10 月	tracker:notices/angel	表+攻略	-
+angel.node.2	angel	-	-	note	-	-	参加过「饥饿百分百」，且有国际音乐学院证书、个人唱片 >5 张、开过演唱会（最好大型）后的周末，该女艺人希望把演唱会所得的 10% 捐给第三世界儿童，选择「答应」	-	答应捐款 3 天后收到感谢卡	tracker:notices/angel	表+攻略	-
+angel.node.3	angel	-	-	note	-	-	收到大天使的感谢卡和道具「天使的音乐盒」后，前往 EAMI 唱片找周映彤「闲聊」，收集道具做天使的羽翼	-	-	tracker:notices/angel	表+攻略	-
+angel.node.4	angel	-	-	note	-	-	材料为「人鱼的眼泪」「天使的羽翼」「精灵的祈祷」「光丝布料」，前往巴黎找老板制作「天使羽衣」，两周后可取	-	-	tracker:notices/angel	表+攻略	-
+angel.node.5	angel	-	-	note	-	-	拿到「天使羽衣」后，前往 EAMI 找周映彤「闲聊」，她说下一档会把这个通告放上来；周末把天使羽衣送给该女艺人	-	必须送给触发捐款的那位女艺人	tracker:notices/angel	表+攻略	-
+angel.node.6	angel	-	-	note	-	-	EAMI 通告更新后，周映彤上门邀约通告「落入凡间的天使」，选择接受；没来的话需自己前往 EAMI 预约	-	-	tracker:notices/angel	表+攻略	-
 angel.tl.charity	angel	-	-	note	-	-	慈善义演：每年 2 月/8 月第一周上门；触发条件歌艺/仪态 300、人气 3；确保排程时人气 >3 且为旗下女艺人中最高	-	流程索引	tracker:notices/angel	表	-
 angel.tl.hunger	angel	-	-	note	-	-	饥饿百分百：4 月、10 月	-	时间窗标签	tracker:notices/angel	表	-
 angel.tl.musicbox	angel	-	-	note	-	-	天使的音乐盒：参加过饥饿百分百 + 音乐证书 + 5 张个人唱片 → 举办大型个人演唱会后的周末答应捐款 → 3 天后获得	-	流程索引	tracker:notices/angel	表	-
