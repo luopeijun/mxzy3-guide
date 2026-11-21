@@ -441,10 +441,10 @@ function filmedRecords(noticeId: string, ctx: EvalContext): FilmedRecord[] {
   );
 }
 
-/** 双坑位通告：笑傲天际只有男艺人（男主角 / 男配角，只按男主角计分）；
- *  末日战士按性别分坑（男主角给男艺人、女主角给女艺人，各按自己坑位计分）。
+/** 男艺人专属通告：笑傲天际（男主角 / 男配角，只按男主角计分）、
+ *  万年之恋（只有男主角坑）。末日战士按性别分坑（男主角给男艺人、女主角给女艺人）。
  *  性别只认游戏表。 */
-const MALE_ONLY_NOTICES = new Set(['proud-of-the-world']);
+const MALE_ONLY_NOTICES = new Set(['proud-of-the-world', 'eternal-love']);
 /** key = 通告 id，value = [男艺人坑位, 女艺人坑位]。每位艺人只认自己性别那一项。 */
 const GENDER_SLOT_NOTICES: Record<string, [string, string]> = {
   'doomsday-warrior': ['main', 'support'],
