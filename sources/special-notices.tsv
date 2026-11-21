@@ -110,7 +110,7 @@ kunlun.debt	kunlun-adventure	-	trigger	condition	flag	global	还清贺总欠款 
 kunlun.item.soft	kunlun-adventure	-	prepare	condition	item	global	昆仑仙境软体	-	旗下艺人录制「益智休闲」类的主持通告时，跟随第 8 次赠送，不用在同一个通告里触发，也不用是同一个艺人。	notices/kunlun-adventure#69	表+攻略	-
 kunlun.item.silk	kunlun-adventure	-	prepare	condition	item	global	真虹羽纱	-	在巴黎买过 3 件以上的女装，且买走当季的女装后就可以买到。	notices/kunlun-adventure#69	表+攻略	-
 kunlun.item.fox	kunlun-adventure	-	prepare	condition	item	global	九尾狐皮裳	-	旗下所有艺人去过日本旅游累积大于 9 次后，旅行社会赠送。	notices/kunlun-adventure#69	表+攻略	-
-kunlun.item.stick	kunlun-adventure	-	prepare	condition	item	global	如意金箍棒	-	开罗有售（触发事件 68 后出现几率较高）。	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.stick	kunlun-adventure	-	prepare	condition	item	global	如意金箍棒	-	开罗有售（事件第五点后出现几率较高）。	notices/kunlun-adventure#69	表+攻略	-
 kunlun.cert.male	kunlun-adventure	role:男主	prepare	condition	cert	artist	男主：戏剧 + 音乐证书	-	按角色位判定，不能摊到一个人头上	notices/kunlun-adventure#69	表+攻略	-
 kunlun.cert.f1	kunlun-adventure	role:女主一	prepare	condition	cert	artist	女主一：舞蹈 + 戏剧证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
 kunlun.cert.f2	kunlun-adventure	role:女主二	prepare	condition	cert	artist	女主二：舞蹈 + 音乐证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
