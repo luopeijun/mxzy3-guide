@@ -176,6 +176,35 @@ function MatchHoverCard({
           {match.gaps.length ? `待补：${match.gaps.join('、')}` : '全部达标'}
         </p>
       )}
+      {match.roleCerts.length > 0 && (
+        <div className="mt-1.5 border-t border-line pt-1.5" data-case-special-role-certs>
+          <p className="mb-1 text-ui-2xs font-semibold text-ink">角色证书</p>
+          {match.roleCerts.map((role) => (
+            <div key={role.label} className="mb-1 last:mb-0" data-case-special-role-cert={role.label}>
+              <div className="mb-0.5 flex items-center gap-1.5">
+                <span className={cn('text-ui-2xs', workRoleClass(role.label))}>{role.label}</span>
+                <span className={cn(
+                  'text-ui-2xs',
+                  role.met ? 'font-semibold text-growth-strong' : 'text-ink-faint',
+                )}>
+                  {role.met ? '✓ 证书齐备' : '证书未齐'}
+                </span>
+              </div>
+              {role.certs.map((cert) => (
+                <div
+                  key={cert.name}
+                  className={cn(
+                    'text-ui-2xs leading-relaxed',
+                    cert.met ? 'font-semibold text-growth-strong' : 'text-ink-muted',
+                  )}
+                >
+                  {cert.met ? '✓ ' : '· 缺 '}{cert.name}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </FloatingCard>
   );
 }
@@ -620,47 +649,63 @@ function DetailSection({
                       {item.groups.length ? '团体匹配' : '艺人匹配'}
                     </span>
                     {item.groups.length > 0
-                      ? item.groups.slice(0, 2).map((group) => (
-                        <span
-                          key={group.code}
-                          data-case-special-group={group.code}
-                          className="cursor-help rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
-                          onMouseEnter={(event) => {
-                            const rect = event.currentTarget.getBoundingClientRect();
-                            onGroupHover(group, {
-                              left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
-                            });
-                          }}
-                          onMouseLeave={onHoverLeave}
-                        >
-                          {group.name} {group.met}/{group.total}
-                        </span>
-                      ))
-                      : item.matches.map((match) => (
-                        <span
-                          key={match.id}
-                          data-case-special-match={match.id}
-                          className={cn(
-                            'cursor-help inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
-                            match.met === match.total
-                              ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
-                              : 'border-line bg-surface-soft text-ink',
-                          )}
-                          onMouseEnter={(event) => {
-                            const rect = event.currentTarget.getBoundingClientRect();
-                            onMatchHover(match, SINGLE_ROLE_NOTICES.has(item.notice.id), {
-                              left: rect.left,
-                              right: rect.right,
-                              top: rect.top,
-                              bottom: rect.bottom,
-                            });
-                          }}
-                          onMouseLeave={onHoverLeave}
-                        >
-                          {match.met === match.total && <span aria-hidden="true">✓</span>}
-                          {match.name} {match.met}/{match.total}
-                        </span>
-                      ))}
+                      ? item.groups.slice(0, 2).map((group) => {
+                        const complete = group.met === group.total
+                          && group.certs.every((member) => member.met);
+                        return (
+                          <span
+                            key={group.code}
+                            data-case-special-group={group.code}
+                            data-case-special-complete={complete}
+                            className={cn(
+                              'cursor-help inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                              complete
+                                ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                                : 'border-line bg-surface-soft text-ink',
+                            )}
+                            onMouseEnter={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect();
+                              onGroupHover(group, {
+                                left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+                              });
+                            }}
+                            onMouseLeave={onHoverLeave}
+                          >
+                            {complete && <span aria-hidden="true">✓</span>}
+                            {group.name} {group.met}/{group.total}
+                          </span>
+                        );
+                      })
+                      : item.matches.map((match) => {
+                        const complete = match.met === match.total
+                          && match.roleCerts.every((role) => role.met);
+                        return (
+                          <span
+                            key={match.id}
+                            data-case-special-match={match.id}
+                            data-case-special-complete={complete}
+                            className={cn(
+                              'cursor-help inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                              complete
+                                ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                                : 'border-line bg-surface-soft text-ink',
+                            )}
+                            onMouseEnter={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect();
+                              onMatchHover(match, SINGLE_ROLE_NOTICES.has(item.notice.id), {
+                                left: rect.left,
+                                right: rect.right,
+                                top: rect.top,
+                                bottom: rect.bottom,
+                              });
+                            }}
+                            onMouseLeave={onHoverLeave}
+                          >
+                            {complete && <span aria-hidden="true">✓</span>}
+                            {match.name} {match.met}/{match.total}
+                          </span>
+                        );
+                      })}
                   </div>
                 )}
               </div>

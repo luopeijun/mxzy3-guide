@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /* Browser regression for the 存档解析 tab:
- *   1) the main site has six tabs, #/case renders the reader and the bundled
+ *   1) the main site has five tabs, #/case renders the reader and the bundled
  *      static table loads;
  *   2) injecting a real .sa2 through the hidden file input renders the notice
  *      table with rolled values, the game clock, artist cards, the booking
@@ -113,7 +113,7 @@ async function main() {
     })`);
     const s = JSON.parse(shell);
     console.log('shell:', shell);
-    check(s.tabs === 6, 'main site has six tabs', String(s.tabs));
+    check(s.tabs === 5, 'main site has five tabs', String(s.tabs));
     check(s.caseTab && s.caseActive === 'true', '存档解析 tab is active');
     check(s.reader && s.input, 'reader and upload input mounted');
     check(s.hash === '#/case', 'route is #/case', s.hash);
@@ -862,7 +862,7 @@ async function main() {
     await sleep(400);
     const shot = JSON.parse(await evaluate(`JSON.stringify({
       tabs: document.querySelectorAll('[data-case-tabs] [role="tab"]').length,
-      hasFinishedTab: Boolean(document.querySelector('[data-case-tab="finished"]')),
+      hasFinishedTab: Boolean(document.querySelector('[data-case-tab="done"]')),
       openSelected: document.querySelector('[data-case-tab="open"]')?.getAttribute('aria-selected'),
       shootingSelected: document.querySelector('[data-case-tab="shooting"]')?.getAttribute('aria-selected'),
       rows: document.querySelectorAll('[data-case-shooting-row]').length,
@@ -883,10 +883,10 @@ async function main() {
       })()
     })`));
     console.log('shooting:', JSON.stringify(shot));
-    check(shot.tabs === 3 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
-      '筹备中 / 拍摄中 / 自制通告及其他 三个页签可以切换', `${shot.tabs} tabs`);
-    check(!shot.hasFinishedTab,
-      '已完成的页签已经去掉，拍完的通告不再单独一档', String(shot.hasFinishedTab));
+    check(shot.tabs === 7 && shot.shootingSelected === 'true' && shot.openSelected === 'false',
+      '档案页七个通告页签可以切换', `${shot.tabs} tabs`);
+    check(shot.hasFinishedTab,
+      '已完成的页签在热卖中后面', String(shot.hasFinishedTab));
     check(shot.rows === 1 && shot.codes[0] === 'CF014',
       '拍摄中只列 CF014 愛信電訊（萧依莉那条广告）', shot.codes.join(',') || 'none');
     check(shot.artists.join(',') === '蕭依莉',
@@ -930,8 +930,8 @@ async function main() {
       text: document.body.innerText,
       noticesHidden: document.querySelectorAll('[data-case-notice]').length
     })`));
-    check(diyEmpty.tabs === 3 && diyEmpty.selected === 'true' && diyEmpty.noticesHidden === 0,
-      '自制通告及其他 是第三个页签，切过去会收起筹备中的表格', `${diyEmpty.tabs} tabs`);
+    check(diyEmpty.tabs === 7 && diyEmpty.selected === 'true' && diyEmpty.noticesHidden === 0,
+      '自制通告及其他 切过去会收起筹备中的表格', `${diyEmpty.tabs} tabs`);
     check(diyEmpty.rows === 0 && diyEmpty.text.includes('还没有自制通告'),
       'Auto 存档没有自制通告，页签显示空态', String(diyEmpty.rows));
 

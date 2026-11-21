@@ -65,9 +65,9 @@ class TestSpecialsJson(unittest.TestCase):
     def test_counts_match_the_reviewed_table(self):
         data = _json()
         s = data["stats"]
-        self.assertEqual(s["rows"], 139)
-        self.assertEqual(s["conditions"], 85)
-        self.assertEqual(s["notes"], 54)
+        self.assertEqual(s["rows"], 156)
+        self.assertEqual(s["conditions"], 89)
+        self.assertEqual(s["notes"], 67)
         self.assertEqual(len(data["notices"]), 7)
         self.assertEqual(
             sum(n["conditionCount"] for n in data["notices"]), s["conditions"]
@@ -126,7 +126,7 @@ class TestSpecialsJson(unittest.TestCase):
             "4000 万等 resource 条件已从看板移除",
         )
         self.assertEqual(rows["kunlun.tl.maleOnly"]["kind"], "note")
-        self.assertEqual(rows["galaxy.tl.stats"]["kind"], "note")
+        self.assertEqual(rows["galaxy.tl.note"]["kind"], "note")
 
     def test_doomsday_has_male_and_female_slots_with_equal_stats(self):
         rows = [r for r in _json()["rows"] if r["notice"] == "doomsday-warrior"]

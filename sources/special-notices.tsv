@@ -107,13 +107,13 @@ angel.tl.musicbox	angel	-	-	note	-	-	天使的音乐盒：参加过饥饿百分�
 angel.tl.dress	angel	-	-	note	-	-	光丝布料：把音乐盒交给周映彤后去精品店（买过 >10 次）老板赠送；集齐材料巴黎做天使羽衣；拿回后找周映彤，下期通告上档（下期是团唱要再等一期）；接通告前把羽衣送给相应艺人	-	流程索引	tracker:notices/angel	表	-
 angel.tl.trigger	angel	-	-	note	-	-	攻略补充：不需要和塔罗小魔女交谈就能触发	-	节点标题注	tracker:notices/angel	攻略	-
 kunlun.debt	kunlun-adventure	-	trigger	condition	flag	global	还清贺总欠款 + 公园找小魔女	-	仅昆仑刚需，对应攻略 #62	notices/kunlun-adventure#62	表+攻略	-
-kunlun.item.soft	kunlun-adventure	-	prepare	condition	item	global	昆仑仙境软体	-	旗下艺人录制「益智休闲」类主持通告，跟随第 8 次时赠送（不限同一通告/同一艺人）	notices/kunlun-adventure#69	表+攻略	-
-kunlun.item.silk	kunlun-adventure	-	prepare	condition	item	global	真虹羽纱	-	在巴黎买过 3 件以上女装，且买走当季女装后可买到；名称按攻略正字统一（截图写「真虹纱羽」）	notices/kunlun-adventure#69	表+攻略	-
-kunlun.item.fox	kunlun-adventure	-	prepare	condition	item	global	九尾狐皮裳	-	旗下所有艺人日本旅游累计 >9 次，旅行社会赠送	notices/kunlun-adventure#69	表+攻略	-
-kunlun.item.stick	kunlun-adventure	-	prepare	condition	item	global	如意金箍棒	-	开罗有售（事件 68 后出现几率较高）	notices/kunlun-adventure#69	表+攻略	-
-kunlun.cert.male	kunlun-adventure	role:男主	prepare	condition	cert	role	男主：戏剧 + 音乐证书	-	按角色位判定，不能摊到一个人头上	notices/kunlun-adventure#69	表+攻略	-
-kunlun.cert.f1	kunlun-adventure	role:女主一	prepare	condition	cert	role	女主一：舞蹈 + 戏剧证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
-kunlun.cert.f2	kunlun-adventure	role:女主二	prepare	condition	cert	role	女主二：舞蹈 + 音乐证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.soft	kunlun-adventure	-	prepare	condition	item	global	昆仑仙境软体	-	旗下艺人录制「益智休闲」类的主持通告时，跟随第 8 次赠送，不用在同一个通告里触发，也不用是同一个艺人。	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.silk	kunlun-adventure	-	prepare	condition	item	global	真虹羽纱	-	在巴黎买过 3 件以上的女装，且买走当季的女装后就可以买到。	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.fox	kunlun-adventure	-	prepare	condition	item	global	九尾狐皮裳	-	旗下所有艺人去过日本旅游累积大于 9 次后，旅行社会赠送。	notices/kunlun-adventure#69	表+攻略	-
+kunlun.item.stick	kunlun-adventure	-	prepare	condition	item	global	如意金箍棒	-	开罗有售（触发事件 68 后出现几率较高）。	notices/kunlun-adventure#69	表+攻略	-
+kunlun.cert.male	kunlun-adventure	role:男主	prepare	condition	cert	artist	男主：戏剧 + 音乐证书	-	按角色位判定，不能摊到一个人头上	notices/kunlun-adventure#69	表+攻略	-
+kunlun.cert.f1	kunlun-adventure	role:女主一	prepare	condition	cert	artist	女主一：舞蹈 + 戏剧证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
+kunlun.cert.f2	kunlun-adventure	role:女主二	prepare	condition	cert	artist	女主二：舞蹈 + 音乐证书	-	按角色位判定	notices/kunlun-adventure#69	表+攻略	-
 kunlun.sight3	kunlun-adventure	-	trigger	condition	count	global	塞外观光累计	3	所有艺人累积不限哪位，但路风、路敏无法触发	notices/kunlun-adventure#64	表+攻略	-
 kunlun.movies5	kunlun-adventure	-	trigger	condition	count	global	旗下艺人出演电影	5	≥5 部	notices/kunlun-adventure#66	表+攻略	-
 kunlun.leads2	kunlun-adventure	-	trigger	condition	count	global	其中担任主角	2	≥2 次	notices/kunlun-adventure#66	表+攻略	-
@@ -122,6 +122,14 @@ kunlun.stat.acting	kunlun-adventure	main	notice	condition	stat	artist	演技	500
 kunlun.stat.fame	kunlun-adventure	main	notice	condition	stat	artist	名气	630~700	达到上限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
 kunlun.stat.etiquette	kunlun-adventure	main	notice	condition	stat	artist	仪态	500~550	达到上限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
 kunlun.stat.movement	kunlun-adventure	main	notice	condition	stat	artist	动感	450~500	达到上限即达标；数值来自条件表（攻略正文未列）	notices/kunlun-adventure	表	-
+kunlun.node.1	kunlun-adventure	-	-	note	-	-	已还清贺总欠款后，前往公园找塔罗小魔女，听完六大通告那段话	-	开启六大的前提	notices/kunlun-adventure#62	表+攻略	-
+kunlun.node.2	kunlun-adventure	-	-	note	-	-	旗下艺人去过塞外观光后，前往长城，路老爹告诉主角最近塞外风沙很大，不过隐约中可以看到一座古城	-	-	notices/kunlun-adventure#63	表+攻略	-
+kunlun.node.3	kunlun-adventure	-	-	note	-	-	旗下艺人去过塞外观光 3 次以上（所有艺人累积，不限哪位，但路风、路敏无法触发），艺人回来后告诉主角在塞外发生了奇遇	-	路风路敏除外	notices/kunlun-adventure#64	表+攻略	-
+kunlun.node.4	kunlun-adventure	-	-	note	-	-	旗下有艺人出演过 5 部或以上电影、至少演过 2 次主角，第三年 1 月后，九黎子民寄来「昆仑历险」的剧本	第三年1月后	-	notices/kunlun-adventure#66	表+攻略	-
+kunlun.node.5	kunlun-adventure	-	-	note	-	-	前往全球点选王瑞恩「闲聊」；一周后再去全球点选王瑞恩「闲聊」，他要主角再给他一个月时间消化剧本	一周后	-	notices/kunlun-adventure#68	攻略	-
+kunlun.node.6	kunlun-adventure	-	-	note	-	-	一个月后，前往全球点选王瑞恩「闲聊」，告知开拍昆仑历险所需的四样道具（昆仑仙境软体／真虹羽纱／九尾狐皮裳／如意金箍棒）	一个月后	四样道具见下方道具胶囊	notices/kunlun-adventure#69	表+攻略	-
+kunlun.node.7	kunlun-adventure	-	-	note	-	-	收集齐四样道具，且旗下至少有一位艺人拿到对应证书后，前往全球找王瑞恩「闲聊」，他说下一档会把通告放上来	-	证书按角色位判定	notices/kunlun-adventure#70	表+攻略	-
+kunlun.node.8	kunlun-adventure	-	-	note	-	-	全球更新通告后，前往全球预约「昆仑历险」（王导不会主动上门，需自己前去预约）	-	-	notices/kunlun-adventure#71	攻略	-
 kunlun.tl.maleOnly	kunlun-adventure	-	-	note	-	-	注：旗下只有女艺人的话昆仑历险事件会中断（此条来自条件表，攻略正文未明写）	-	来源仅条件表；按裁决降级为只读备注，不进达标数	tracker:notices/kunlun-adventure	表	-
 kunlun.tl.sight	kunlun-adventure	-	-	note	-	-	塞外观光后，长城路老爹说风沙大；观光累计 3 次艺人叙述奇遇（风敏不触发）；有风敏在旗下时可沟通看塞外传说（不必须）	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-
 kunlun.tl.script	kunlun-adventure	-	-	note	-	-	以上事件触发后第三年 1 月后自动获得剧本；找王瑞恩闲聊 → 1 周后闲聊 → 1 月后闲聊；集齐所有道具且旗下至少 1 位艺人满足证书条件时闲聊，下次通告会上档	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-

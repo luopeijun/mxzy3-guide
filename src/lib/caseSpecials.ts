@@ -57,6 +57,15 @@ export interface CertMatch {
   guides: CertMatchGuide[];
 }
 
+export interface RoleCertCheck {
+  /** 角色位名，如 男主角 / 女主角一 / 女主角二。 */
+  label: string;
+  /** 这个角色位要的每张证书，持证即 met。 */
+  certs: { name: string; met: boolean }[];
+  /** 该角色位全部证书齐备。 */
+  met: boolean;
+}
+
 export interface ArtistMatch {
   id: number;
   name: string;
@@ -67,6 +76,8 @@ export interface ArtistMatch {
   slots: SlotGap[];
   /** 该艺人的证书判定：有证书才打绿勾，hover 显示学院课程与属性对比。 */
   certs: CertMatch[];
+  /** 按角色位判的证书（昆仑三角色位）：男艺人看男主角，女艺人看女主一 + 女主二。 */
+  roleCerts: RoleCertCheck[];
   /** 硬性前置数值判定（如电影主角 1 次、电影 2 部），进达标分母。 */
   required: { name: string; met: boolean; detail: string }[];
   /** 触发前置的可选数值判定（男/女按性别各认自己那组），不进达标分母。 */
@@ -560,9 +571,13 @@ const GENDER_SLOT_NOTICES: Record<string, [string, string]> = {
 /** 昆仑历险三角色位（男主角 1 位、女主角 2 位）数值门槛完全相同，共用一组 `main` 数值行；
  *  只在艺人匹配的坑位标签上按性别区分：男艺人＝男主角，女艺人＝女主角。 */
 const GENDER_LABEL_NOTICES = new Set(['kunlun-adventure']);
+/** 按角色位判证书的通告：每位艺人只判自己性别能演的角色位。
+ *  昆仑：男艺人→男主（戏剧+音乐）；女艺人→女主一（舞蹈+戏剧）、女主二（舞蹈+音乐）。 */
+const ROLE_CERT_NOTICES = new Set(['kunlun-adventure']);
 /** 事件驱动通告：走事件节点，不按数值条件显示进度条。 */
 const EVENT_DRIVEN_NOTICES = new Set([
   'proud-of-the-world', 'doomsday-warrior', 'eternal-love', 'angel', 'galaxy',
+  'kunlun-adventure',
 ]);
 
 const SLOT_LABELS: Record<string, string> = {
@@ -570,6 +585,13 @@ const SLOT_LABELS: Record<string, string> = {
   support: '男配角',
   'role:男主角': '男主角',
   'role:男配角': '男配角',
+};
+
+/** 昆仑角色位 → hover 里显示的角色名。 */
+const ROLE_CERT_LABELS: Record<string, string> = {
+  'role:男主': '男主角',
+  'role:女主一': '女主角一',
+  'role:女主二': '女主角二',
 };
 
 function slotLabel(slot: string, notice: SpecialNotice, gender?: Gender): string {
@@ -634,9 +656,9 @@ export function evaluateLiveSpecials(
       const maleOnly = MALE_ONLY_NOTICES.has(notice.id);
       const femaleOnly = FEMALE_ONLY_NOTICES.has(notice.id);
       const genderSlots = GENDER_SLOT_NOTICES[notice.id];
-      // 男女分坑通告：坑位匹配只算真正贴在角色上的数值行（phase=notice）。
-      // 甄选阶段的证书前置（phase=prepare）仍留在总条件里，但不混进男女两坑的 4 项对比。
-      const artistRows = genderSlots
+      // 男女分坑 / 昆仑三角色位通告：坑位匹配只算真正贴在角色上的数值行（phase=notice）。
+      // 甄选阶段的证书前置（phase=prepare）仍留在总条件里，但不混进坑位的 4 项数值对比。
+      const artistRows = genderSlots || GENDER_LABEL_NOTICES.has(notice.id)
         ? allArtistRows.filter((condition) => condition.row.phase === 'notice')
         : allArtistRows;
       // 团体专属通告的证书人名只给团体成员看，不在任何团里的艺人不出现。
@@ -726,6 +748,25 @@ export function evaluateLiveSpecials(
             });
           })
           .filter((cert, index, all) => all.findIndex((item) => item.name === cert.name) === index);
+        // 按角色位判证书：昆仑女艺人要同时对女主一 / 女主二两组证书各判一次，男艺人只判男主。
+        const roleCerts: RoleCertCheck[] = ROLE_CERT_NOTICES.has(notice.id)
+          ? (artistGender === 'female' ? ['role:女主一', 'role:女主二'] : ['role:男主'])
+            .map((slot) => {
+              const names = [...new Set(certRows
+                .filter((condition) => condition.row.slot === slot)
+                .flatMap((condition) => certsForName(condition.row.name)))];
+              const checks = names.map((name) => ({
+                name,
+                met: heldCerts.map(certKey).includes(certKey(name)),
+              }));
+              return {
+                label: ROLE_CERT_LABELS[slot] ?? slot.slice(5),
+                certs: checks,
+                met: checks.length > 0 && checks.every((check) => check.met),
+              };
+            })
+            .filter((check) => check.certs.length > 0)
+          : [];
         // 硬性前置：phase=prepare 的艺人数值行（电影主角 / 电影作品数），每位艺人各判一次。
         const required = conditions
           .filter((condition) => condition.row.phase === 'prepare'
@@ -758,6 +799,7 @@ export function evaluateLiveSpecials(
           gaps,
           slots,
           certs,
+          roleCerts,
           required,
           optional,
         };
