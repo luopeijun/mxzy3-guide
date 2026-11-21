@@ -670,18 +670,26 @@ export interface ArchiveNotice {
   endDayNum?: number;
   /** 宣传活动里每个角色槽的明细（角色名 / 签约艺人编号 / 该角色宣传天数）。团体宣传只有一条。 */
   promoCasts?: PromoCast[];
+  /** 等待上市：发行档期起（上市日，文本）。来自本体记录第 4 组档期。 */
+  saleStart?: string;
+  /** 等待上市：发行档期止（下市日，文本）。来自本体记录第 5 组档期。 */
+  saleEnd?: string;
+  /** 等待上市：本体记录的酬劳（首角色 +816）。 */
+  pay?: number | null;
 }
 
-/** 宣传活动里一个角色槽的明细。 */
+/** 通告记录里一个角色槽的明细（宣传活动与等待上市共用）。 */
 export interface PromoCast {
   /** 角色名（女主角 / 男配角 / 個人 / 團體…）。 */
   roleName: string;
   /** 签约艺人编号（roleId）；团体宣传取代表艺人。 */
   artistId: number;
-  /** 该角色在这一宣传活动里的完成天数。 */
+  /** 该角色在这一条通告里的完成天数。 */
   doneDays: number;
   /** 团体宣传的团体 code；个人宣传为 0。 */
   groupCode: number;
+  /** 该角色的酬劳（个人记录 +816+i*24）；读不到为 null。 */
+  pay?: number | null;
 }
 
 export interface ParseResult {
@@ -1268,6 +1276,9 @@ export function parseArchiveNotices(
     off: number;
     startDate: string;
     endDate: string;
+    saleStart: string;
+    saleEnd: string;
+    pay: number | null;
     artists: number[];
     groupId: number;
     doneDays: number | null;
@@ -1285,7 +1296,7 @@ export function parseArchiveNotices(
       const artistId = q(o, 800 + i * 24);
       const roleName = roleAt(o, 10 + i * 192);
       if (!artistId && !roleName) continue;
-      out.push({ roleName: roleName || '個人', artistId, doneDays: q(o, 804 + i * 24), groupCode: 0 });
+      out.push({ roleName: roleName || '個人', artistId, doneDays: q(o, 804 + i * 24), groupCode: 0, pay: q(o, 816 + i * 24) });
     }
     return out;
   };
@@ -1322,10 +1333,16 @@ export function parseArchiveNotices(
       code,
       start,
       end,
-      onSale: day(q(o, base + 48), months[3], days[3]),
-      off: day(q(o, base + 64), months[4], days[4]),
+      // 上档/下档：个人在 months[3]/[4]，团体少一组、在 months[2]/[3]。
+      onSale: day(q(o, group ? base + 32 : base + 48), months[group ? 2 : 3], days[group ? 2 : 3]),
+      off: day(q(o, group ? base + 48 : base + 64), months[group ? 3 : 4], days[group ? 3 : 4]),
       startDate: fmtDay(view, o + startBase),
       endDate: fmtDay(view, o + endBase),
+      // 个人记录 5 组档期（+892 起）：开拍 +908 / 杀青 +924 / 上档 +940 / 下档 +956。
+      // 团体记录 4 组（+924 开放周、+940 开拍起）：上档 +972 / 下档 +988，比个人少一组。
+      saleStart: fmtDay(view, o + (isGroup ? base + 32 : base + 48)),
+      saleEnd: fmtDay(view, o + (isGroup ? base + 48 : base + 64)),
+      pay: q(o, 816) < 4000000000 ? q(o, 816) : null,
       artists,
       groupId,
       doneDays,
@@ -1382,6 +1399,9 @@ export function parseArchiveNotices(
             off: 0,
             startDate: fmtDay(view, s + base),
             endDate: fmtDay(view, s + base + 16),
+            saleStart: '',
+            saleEnd: '',
+            pay: null,
             artists: group ? [] : [q(s, 800), q(s, 824)].filter((a) => a >= 1 && a <= 100),
             groupId: group ? q(s, 772) : 0,
             doneDays: doneRaw < 4000000000 ? doneRaw : null,
@@ -1427,6 +1447,12 @@ export function parseArchiveNotices(
       if (rec.isGroup) notice.groupId = rec.groupId;
       notice.promoCasts = rec.casts;
       notice.endDayNum = rec.end;
+    } else if (category === '等待上市') {
+      // 等待上市显示的是本体记录：发行档期 + 每个参演角色的完成天数 / 酬劳。
+      notice.saleStart = rec.saleStart;
+      notice.saleEnd = rec.saleEnd;
+      notice.pay = rec.pay;
+      notice.promoCasts = rec.casts;
     }
     out.push(notice);
   }

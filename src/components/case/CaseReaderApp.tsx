@@ -756,9 +756,9 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   const [filterCompany, setFilterCompany] = useState('all');
   /** 筹备中的接取筛选：全部 / 未预约 / 满足条件。 */
   const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
-  /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 自制通告及其他。
+  /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 等待上市 / 自制通告及其他。
    *  默认固定「筹备中」：以后无论加多少页签，这里都保持 'open'。 */
-  const [board, setBoard] = useState<'open' | 'shooting' | 'selfMade' | 'promo'>('open');
+  const [board, setBoard] = useState<'open' | 'shooting' | 'waiting' | 'selfMade' | 'promo'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
@@ -896,6 +896,26 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
       .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
   }, [result]);
   const promoCount = promoGroups.reduce((sum, g) => sum + sumCastCount(g.items), 0);
+
+  /** 等待上市：本体记录里状态为「等待上市」、且有旗下艺人（或旗下团体）参演的作品。
+   *  只按作品一条一行，不按宣传子类拆；旗下艺人可能不止一位，逐角色列出。 */
+  const waitingNotices = useMemo(() => {
+    if (!result) return [] as ArchiveNotice[];
+    const signed = new Set(result.signedArtistIds);
+    const teamCodes = new Set(result.teams.map((t) => t.code));
+    return result.archiveNotices
+      .filter((n) => {
+        if (n.category !== '等待上市') return false;
+        if (n.artistIds.some((a) => signed.has(a))) return true;
+        return (n.promoCasts ?? []).some((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode));
+      })
+      .map((n) => ({
+        ...n,
+        promoCasts: (n.promoCasts ?? []).filter((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  }, [result]);
+  const waitingCount = waitingNotices.length;
 
   /** The panel is fixed: every artist the save marks as signed, no picker. */
   const signedArtists = useMemo<SignedArtist[]>(() => {
@@ -1563,6 +1583,16 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <button
                   type="button"
                   role="tab"
+                  data-case-tab="waiting"
+                  aria-selected={board === 'waiting'}
+                  onClick={() => setBoard('waiting')}
+                  className={tabClass(board === 'waiting')}
+                >
+                  等待上市 <span className="tabular-nums">{waitingCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
                   data-case-tab="self-made"
                   aria-selected={board === 'selfMade'}
                   onClick={() => setBoard('selfMade')}
@@ -1588,6 +1618,13 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   notices={result.shooting}
                   emptyTitle="没有在拍的通告"
                   emptyText="这份存档里没有旗下艺人正在赶期的通告。"
+                />
+              ) : board === 'waiting' ? (
+                <WaitingPanel
+                  notices={waitingNotices}
+                  tables={tables}
+                  artistName={(id) => nameOfArtist(result, tables, id)}
+                  teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
                 />
               ) : (
               <>
@@ -2065,6 +2102,87 @@ function PromoPanel({
                   </tbody>
                 </table>
             </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 「等待上市」页签：本体记录已杀青、还没到发行日的作品，只列旗下艺人参演的。
+ *  每项作品一张卡片，旗下参演角色逐行列出，各自带完成天数与酬劳。 */
+function WaitingPanel({
+  notices, tables, artistName, teamName,
+}: {
+  notices: ArchiveNotice[];
+  tables: CaseTables;
+  artistName: (id: number) => string;
+  teamName: (code: number) => string;
+}) {
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title="没有等待上市的作品" text="只列旗下艺人已参演、拍摄完成但还没到发行日的作品。换一份带这类记录的存档再试。" />
+      </div>
+    );
+  }
+  return (
+    <div data-case-waiting className="mt-2 flex flex-col gap-1.5">
+      {notices.map((n) => {
+        const meta = tables.cases?.[n.code] ?? [];
+        const type = meta[2] ?? '';
+        const subType = meta[1] ?? '';
+        const company = meta[3] ?? '';
+        const casts = n.promoCasts ?? [];
+        return (
+          <div key={n.code} data-case-waiting-work={n.code} className="overflow-hidden rounded-ui-md border border-line bg-surface">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 border-b border-line px-3 py-2 text-ui-xs">
+              <span className="font-semibold text-ink">{n.name}</span>
+              <span className="text-ui-2xs text-ink-faint">{n.code}</span>
+              {(type || subType) && (
+                <span className="rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-muted">
+                  {[type, subType].filter(Boolean).join(' · ')}
+                </span>
+              )}
+              {company && <span className="text-ui-2xs text-ink-faint">{company}</span>}
+              <span className="ml-auto whitespace-nowrap text-ui-2xs tabular-nums text-ink-muted">
+                发行 {n.saleStart} → {n.saleEnd}
+              </span>
+            </div>
+            <table className="w-full table-fixed border-collapse text-ui-xs">
+              <thead>
+                <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+                  <Th className="w-[22%]">拍摄档期</Th>
+                  <Th className="w-[20%]">角色</Th>
+                  <Th className="w-[26%]">旗下参演</Th>
+                  <Th className="w-[14%]">完成天数</Th>
+                  <Th className="w-[18%]">酬劳</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {casts.map((cast, ci) => (
+                  <tr key={`${n.code}-${ci}`} className="border-t border-line/60">
+                    {ci === 0 ? (
+                      <td rowSpan={casts.length} className="px-3 py-1.5 align-top tabular-nums text-ink-muted">
+                        {n.startDate} → {n.endDate}
+                      </td>
+                    ) : null}
+                    <td className="px-3 py-1.5">
+                      <span className={workRoleClass(cast.roleName)}>{cast.roleName}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-ink">
+                      {cast.groupCode
+                        ? teamName(cast.groupCode)
+                        : artistName(cast.artistId)}
+                    </td>
+                    <td className="px-3 py-1.5 tabular-nums text-ink">{cast.doneDays}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-ink">
+                      {cast.pay != null ? moneyText(cast.pay) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         );
       })}
