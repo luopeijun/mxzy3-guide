@@ -1694,11 +1694,9 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
                 />
               ) : board === 'done' ? (
-                <WaitingPanel
+                <DoneListPanel
                   notices={doneNotices}
                   tables={tables}
-                  emptyTitle="没有已完成作品"
-                  emptyText="只列旗下艺人已参演、已过发行下架日的作品。"
                   artistName={(id) => nameOfArtist(result, tables, id)}
                   teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
                 />
@@ -2277,6 +2275,176 @@ function WaitingPanel({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** 已完成：作品多，改用一张紧凑表格（一行一个作品，多位旗下参演才拆行）。 */
+function DoneListPanel({
+  notices, tables, artistName, teamName,
+}: {
+  notices: ArchiveNotice[];
+  tables: CaseTables;
+  artistName: (id: number) => string;
+  teamName: (code: number) => string;
+}) {
+  // 与自制通告一致：汇总条上的类型数字是按钮，点一下只看这一类，再点还原。
+  const [filter, setFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const PAGE = 10;
+  const byCategory = new Map<string, number>();
+  for (const n of notices) {
+    const category = categoryOf(n.code);
+    byCategory.set(category, (byCategory.get(category) ?? 0) + 1);
+  }
+  const visible = filter === 'all' ? notices : notices.filter((n) => categoryOf(n.code) === filter);
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE));
+  const clampedPage = Math.min(page, pageCount - 1);
+  const pageRows = visible.slice(clampedPage * PAGE, clampedPage * PAGE + PAGE);
+  const chip = (on: boolean) => cn(
+    'rounded-full px-2 py-0.5 text-ui-2xs transition-colors',
+    on ? 'bg-brand font-semibold text-white' : 'bg-surface-soft text-ink-muted hover:text-brand-strong',
+  );
+  const toggle = (value: string) => { setFilter(filter === value ? 'all' : value); setPage(0); };
+  const goPage = (next: number) => setPage(Math.max(0, Math.min(next, pageCount - 1)));
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title="没有已完成作品" text="只列旗下艺人已参演、已过发行下架日的作品。换一份带这类记录的存档再试。" />
+      </div>
+    );
+  }
+  return (
+    <div data-case-done className="mt-2">
+      <div className="overflow-hidden rounded-ui-md border border-line bg-surface">
+      <div
+        data-case-done-summary
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2 text-ui-2xs text-ink-faint"
+      >
+        <button
+          type="button"
+          data-case-done-filter="all"
+          aria-pressed={filter === 'all'}
+          onClick={() => { setFilter('all'); setPage(0); }}
+          className={chip(filter === 'all')}
+        >
+          共 <span className="tabular-nums">{notices.length}</span> 条
+        </button>
+        {[...byCategory].map(([category, count]) => (
+          <button
+            key={category}
+            type="button"
+            data-case-done-filter={category}
+            aria-pressed={filter === category}
+            onClick={() => toggle(category)}
+            className={chip(filter === category)}
+          >
+            {category} <span className="tabular-nums">{count}</span>
+          </button>
+        ))}
+      </div>
+      <table className="w-full table-fixed border-collapse text-ui-xs">
+        <thead>
+          <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+            <Th className="w-[20%]">作品</Th>
+            <Th className="w-[15%]">类型·公司</Th>
+            <Th className="w-[15%]">其他信息</Th>
+            <Th className="w-[12%]">发行档期</Th>
+            <Th className="w-[12%]">拍摄档期</Th>
+            <Th className="w-[9%]">角色</Th>
+            <Th className="w-[9%]">旗下参演</Th>
+            <Th className="w-[8%]">酬劳</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {pageRows.map((n) => {
+            const meta = tables.cases?.[n.code] ?? [];
+            const type = meta[2] ?? '';
+            const subType = meta[1] ?? '';
+            const company = meta[3] ?? '';
+            const casts = n.promoCasts ?? [];
+            return casts.map((cast, ci) => (
+              <tr key={`${n.code}-${ci}`} className="border-b border-line/60">
+                {ci === 0 ? (
+                  <>
+                    <Td rowSpan={casts.length} className="align-top">
+                      <span className="font-semibold text-ink">{n.name}</span>
+                      <div className="mt-0.5 text-ui-2xs text-ink-faint">{n.code}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        <span className={cn(
+                          'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+                          CATEGORY_CLASS[categoryOf(n.code)] ?? 'bg-surface-soft text-ink-muted',
+                        )}>
+                          {categoryOf(n.code)}
+                        </span>
+                      </div>
+                    </Td>
+                    <Td rowSpan={casts.length} className="align-top text-ui-2xs text-ink-muted">
+                      {(type || subType) && <div>{[type, subType].filter(Boolean).join(' · ')}</div>}
+                      {company && <div className="mt-0.5 text-ink-faint">{company}</div>}
+                    </Td>
+                    <Td rowSpan={casts.length} className="align-top text-ui-2xs tabular-nums text-ink-muted">
+                      {n.otherInfo || '—'}
+                    </Td>
+                    <Td rowSpan={casts.length} className="align-top tabular-nums text-ink-muted">{n.saleStart} → {n.saleEnd}</Td>
+                    <Td rowSpan={casts.length} className="align-top tabular-nums text-ink-muted">{n.startDate} → {n.endDate}</Td>
+                  </>
+                ) : null}
+                <Td className="align-top"><span className={workRoleClass(cast.roleName)}>{cast.roleName}</span></Td>
+                <Td className="align-top text-ink">{cast.groupCode ? teamName(cast.groupCode) : artistName(cast.artistId)}</Td>
+                <Td className="align-top tabular-nums text-ink">{cast.pay != null ? moneyText(cast.pay) : '—'}</Td>
+              </tr>
+            ));
+          })}
+        </tbody>
+      </table>
+      </div>
+      {/* 翻页放列表下方、左对齐；每页 10 件作品。 */}
+      {pageCount > 1 && (
+        <div
+          data-case-done-pager
+          className="mt-2 flex flex-wrap items-center justify-start gap-2 text-ui-2xs text-ink-muted"
+        >
+          <button
+            type="button"
+            data-case-done-prev
+            disabled={clampedPage <= 0}
+            onClick={() => goPage(clampedPage - 1)}
+            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            上一页
+          </button>
+          {Array.from({ length: pageCount }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              data-case-done-page={i + 1}
+              aria-current={clampedPage === i ? 'true' : undefined}
+              onClick={() => goPage(i)}
+              className={cn(
+                'h-6 min-w-6 rounded border px-1 text-ui-2xs tabular-nums transition-colors',
+                clampedPage === i
+                  ? 'border-brand bg-brand-soft font-bold text-brand-strong'
+                  : 'border-line bg-surface text-ink-faint hover:border-brand-line hover:text-brand-strong',
+              )}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            data-case-done-next
+            disabled={clampedPage >= pageCount - 1}
+            onClick={() => goPage(clampedPage + 1)}
+            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            下一页
+          </button>
+          <span data-case-done-pageinfo className="ml-1 tabular-nums">
+            第 {clampedPage + 1} / {pageCount} 页 · 共 {visible.length} 件
+          </span>
+        </div>
+      )}
     </div>
   );
 }

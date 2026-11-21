@@ -676,6 +676,8 @@ export interface ArchiveNotice {
   saleEnd?: string;
   /** 等待上市 / 热卖中 / 已完成：本体记录的酬劳（首角色 +816）。 */
   pay?: number | null;
+  /** 通告编辑器「其他信息」里的六个数（个人 +972 / 团体式 +1004 起）。 */
+  otherInfo?: string;
 }
 
 /** 通告记录里一个角色槽的明细（宣传活动与等待上市共用）。 */
@@ -1279,6 +1281,7 @@ export function parseArchiveNotices(
     saleStart: string;
     saleEnd: string;
     pay: number | null;
+    otherInfo: string;
     artists: number[];
     groupId: number;
     doneDays: number | null;
@@ -1349,6 +1352,12 @@ export function parseArchiveNotices(
       saleStart: fmtDay(view, o + (isGroup ? base + 32 : base + 48)),
       saleEnd: fmtDay(view, o + (isGroup ? base + 48 : base + 64)),
       pay: q(o, 816 + slot) < 4000000000 ? q(o, 816 + slot) : null,
+      // 编辑器「其他信息」头六个数：个人档期在 +892~+963，紧接 +972；
+      // 团体/CF 档期在 +924~+999，紧接 +1004。
+      otherInfo: Array.from({ length: 6 }, (_, i) => {
+        const x = q(o, (base + (isGroup ? 64 : 80)) + i * 4);
+        return x < 4000000000 ? x : 0;
+      }).join(', '),
       artists,
       groupId,
       doneDays,
@@ -1408,6 +1417,7 @@ export function parseArchiveNotices(
             saleStart: '',
             saleEnd: '',
             pay: null,
+            otherInfo: '',
             artists: group ? [] : [q(s, 800), q(s, 824)].filter((a) => a >= 1 && a <= 100),
             groupId: group ? q(s, 772) : 0,
             doneDays: doneRaw < 4000000000 ? doneRaw : null,
@@ -1458,6 +1468,7 @@ export function parseArchiveNotices(
       notice.saleStart = rec.saleStart;
       notice.saleEnd = rec.saleEnd;
       notice.pay = rec.pay;
+      notice.otherInfo = rec.otherInfo;
       notice.promoCasts = rec.casts;
     }
     out.push(notice);
