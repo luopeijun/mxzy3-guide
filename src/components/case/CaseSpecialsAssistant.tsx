@@ -202,14 +202,12 @@ function CertGuideCard({
 
 /** 证书艺人浮层：只列该艺人的属性对比；打钩仍只看是否真的持有证书。 */
 function CertPersonCard({
-  cert,
   guide,
   person,
   anchor,
   onEnter,
   onLeave,
 }: {
-  cert: string;
   guide: CertMatchGuide;
   person: string;
   anchor: HoverAnchor;
@@ -223,8 +221,7 @@ function CertPersonCard({
       onLeave={onLeave}
       className="w-[250px] p-2.5"
     >
-      <p className="mb-0.5 text-ui-xs font-semibold text-ink">{person}</p>
-      <p className="mb-1.5 text-ui-2xs text-ink-faint">{cert} · {guide.title}</p>
+      <p className="mb-1.5 text-ui-xs font-semibold text-ink">{person}</p>
       <div className="space-y-0.5">
         {guide.stats.map((stat) => {
           const satisfied = stat.have >= stat.min;
@@ -708,7 +705,6 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
           return (
             <CertPersonCard
               key={`person-${hover.cert}-${hover.person}`}
-              cert={hover.cert}
               guide={hover.guide}
               person={hover.person}
               anchor={hover.anchor}
