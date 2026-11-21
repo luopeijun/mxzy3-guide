@@ -474,12 +474,21 @@ function DetailSection({
               onClick={() => onToggle(item.notice.id)}
               className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-surface-soft"
             >
-              <i className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-strong" />
+              {filmed.length > 0 ? (
+                <span aria-hidden="true" className="shrink-0 text-ui-sm font-semibold text-growth-strong">✓</span>
+              ) : (
+                <i className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-strong" />
+              )}
               <span className="w-[92px] shrink-0 truncate text-ui-xs font-semibold text-ink">
                 {item.notice.title}
               </span>
               <span className="flex-1" />
-              <span className="w-[60px] shrink-0 text-right text-ui-2xs text-ink-muted">
+              <span
+                className={cn(
+                  'w-[60px] shrink-0 text-right text-ui-2xs',
+                  filmed.length > 0 ? 'font-semibold text-growth-strong' : 'text-ink-muted',
+                )}
+              >
                 {filmed.length > 0 ? '已拍摄' : '推进中'}
               </span>
               <span className="w-3 shrink-0 text-center text-ui-2xs text-ink-faint">
