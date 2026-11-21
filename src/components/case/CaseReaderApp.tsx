@@ -756,7 +756,8 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   const [filterCompany, setFilterCompany] = useState('all');
   /** 筹备中的接取筛选：全部 / 未预约 / 满足条件。 */
   const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
-  /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 自制通告及其他。 */
+  /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 自制通告及其他。
+   *  默认固定「筹备中」：以后无论加多少页签，这里都保持 'open'。 */
   const [board, setBoard] = useState<'open' | 'shooting' | 'selfMade' | 'promo'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
@@ -1992,7 +1993,7 @@ function promoCastSigner(cast: PromoCast, artistName: (id: number) => string, te
   return artistName(cast.artistId);
 }
 
-/** 「宣传活动」页签：作品 → 宣传子类 → 旗下艺人角色，三层默认全部展开。
+/** 「宣传活动」页签：作品 → 宣传子类 → 旗下艺人角色，每组是一张固定展开的卡片。
  *  只显示档期内、且有旗下艺人/团体参与的作品；每个角色显示自己的宣传天数。 */
 function PromoPanel({
   groups, artistName, teamName,
@@ -2001,12 +2002,6 @@ function PromoPanel({
   artistName: (id: number) => string;
   teamName: (code: number) => string;
 }) {
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
-  const toggle = (code: string) => setCollapsed((prev) => {
-    const next = new Set(prev);
-    if (next.has(code)) next.delete(code); else next.add(code);
-    return next;
-  });
   if (groups.length === 0) {
     return (
       <div className="mt-2">
@@ -2018,32 +2013,20 @@ function PromoPanel({
   return (
     <div data-case-promo className="mt-2 flex flex-col gap-1.5">
       {groups.map((group) => {
-        const open = !collapsed.has(group.code);
         const castCount = sumCastCount(group.items);
         return (
           <div key={group.code} className="overflow-hidden rounded-ui-md border border-line bg-surface">
-            <button
-              type="button"
+            <div
               data-case-promo-group={group.code}
-              aria-expanded={open}
-              onClick={() => toggle(group.code)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-ui-xs transition-colors hover:bg-surface-soft"
+              className="flex items-center gap-2 px-3 py-2 text-left text-ui-xs"
             >
-              <svg
-                viewBox="0 0 12 12" aria-hidden="true"
-                className={cn('h-3 w-3 shrink-0 text-ink-faint transition-transform', open && 'rotate-90')}
-                fill="none" stroke="currentColor" strokeWidth="1.8"
-              >
-                <path d="M4 2.5 8 6l-4 3.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
               <span className="font-semibold text-ink">{group.name}</span>
               <span className="text-ui-2xs text-ink-faint">{group.code}</span>
               <span className="ml-auto rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs tabular-nums text-ink-muted">
                 {castCount} 角色
               </span>
-            </button>
-            {open && (
-              <div className="border-t border-line">
+            </div>
+            <div className="border-t border-line">
                 <table className="w-full table-fixed border-collapse text-ui-xs">
                   <thead>
                     <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
@@ -2071,7 +2054,9 @@ function PromoPanel({
                               </td>
                             </>
                           ) : null}
-                          <td className="px-3 py-1.5 text-ink">{cast.roleName}</td>
+                          <td className="px-3 py-1.5">
+                            <span className={workRoleClass(cast.roleName)}>{cast.roleName}</span>
+                          </td>
                           <td className="px-3 py-1.5 text-ink">{promoCastSigner(cast, artistName, teamName)}</td>
                           <td className="px-3 py-1.5 tabular-nums text-ink">{cast.doneDays}</td>
                         </tr>
@@ -2079,8 +2064,7 @@ function PromoPanel({
                     )}
                   </tbody>
                 </table>
-              </div>
-            )}
+            </div>
           </div>
         );
       })}
