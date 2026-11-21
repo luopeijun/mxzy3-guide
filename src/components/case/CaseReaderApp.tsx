@@ -8,7 +8,7 @@ import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
 import { artistCertificates } from '../../lib/caseCertificates';
-import { PRODUCER_COUNT, PRODUCER_GROUPS } from '../../lib/caseProducers';
+import { PRODUCER_GROUPS } from '../../lib/caseProducers';
 import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
@@ -426,7 +426,7 @@ function CaseToc({
       id: 'producers',
       label: '制作人好感',
       selector: '[data-case-producers]',
-      summary: `${PRODUCER_COUNT} 位`,
+      summary: '五类',
     });
     list.push({
       id: 'updates',
@@ -531,46 +531,55 @@ function CaseToc({
   );
 }
 
-/** 制作人好感清单：按唱片 / 电视剧 / 电影分组，每位制作人压成一行，
- *  标注擅长类型、讨厌类型、出现条件与选择提示。友好度数值待存档真源确认后
- *  补到行尾。刻意做成紧凑列表，避免 23 位撑起整页。 */
+/** 制作人好感清单：唱片 / 电视剧 / 电影 / 广告 / 主持五列并排，每列纵向列制作人。
+ *  每位制作人压成一小块，名字 / 擅长 / 讨厌 / 出现条件分行紧凑排；友好度数值
+ *  待存档真源确认后补到名字旁。五列等宽，空列保留标题占位。 */
 function ProducerPanel() {
   return (
-    <div className="mt-2 flex flex-col gap-1.5">
+    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
       {PRODUCER_GROUPS.map((group) => (
-        <div key={group.kind}>
-          <div className="mb-0.5 text-ui-2xs font-semibold text-brand-strong">{group.label}</div>
-          <div className="flex flex-col">
-            {group.producers.map((producer) => (
+        <div key={group.kind} data-case-producer-group={group.kind} className="rounded-ui-sm border border-line bg-surface px-2 py-1.5">
+          <div className="mb-1 border-b border-line pb-1 text-ui-2xs font-bold text-brand-strong">
+            {group.label}
+            <span className="ml-1 font-normal text-ink-faint">{group.producers.length}</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            {group.producers.length === 0 ? (
+              <div className="py-1 text-ui-2xs text-ink-faint">待补充</div>
+            ) : group.producers.map((producer) => (
               <div
                 key={producer.key}
                 data-case-producer={producer.key}
-                className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-b border-line/60 py-1 text-ui-2xs last:border-0"
+                className="flex flex-col gap-0.5 border-b border-line/60 pb-1 text-ui-2xs last:border-0 last:pb-0"
               >
-                <span className="shrink-0 font-semibold text-ink">{producer.name}</span>
-                {producer.title && (
-                  <span className="shrink-0 text-ink-faint">· {producer.title}</span>
-                )}
-                <span className="shrink-0 text-ink-faint">擅长</span>
-                {producer.strengths.map((strength) => (
-                  <span
-                    key={strength}
-                    className="shrink-0 rounded bg-brand-soft px-1 py-0.5 font-medium text-brand-strong"
-                  >
-                    {strength}
-                  </span>
-                ))}
+                <div className="flex flex-wrap items-baseline gap-x-1">
+                  <span className="font-semibold text-ink">{producer.name}</span>
+                  {producer.title && (
+                    <span className="text-ink-faint">· {producer.title}</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="text-ink-faint">擅长</span>
+                  {producer.strengths.map((strength) => (
+                    <span
+                      key={strength}
+                      className="rounded bg-brand-soft px-1 py-0.5 font-medium text-brand-strong"
+                    >
+                      {strength}
+                    </span>
+                  ))}
+                </div>
                 {producer.dislikes?.map((dislike) => (
-                  <Fragment key={dislike}>
-                    <span className="shrink-0 text-ink-faint">讨厌</span>
-                    <span className="shrink-0 rounded bg-alert-soft px-1 py-0.5 text-alert">{dislike}</span>
-                  </Fragment>
+                  <div key={dislike} className="flex items-center gap-1">
+                    <span className="text-ink-faint">讨厌</span>
+                    <span className="rounded bg-alert-soft px-1 py-0.5 text-alert">{dislike}</span>
+                  </div>
                 ))}
                 {producer.note && (
-                  <span className="text-ink-muted">（{producer.note}）</span>
+                  <div className="text-ink-muted">{producer.note}</div>
                 )}
                 {producer.condition && (
-                  <span className="ml-auto shrink-0 text-ink-faint">出现：{producer.condition}</span>
+                  <div className="text-ink-faint">出现：{producer.condition}</div>
                 )}
               </div>
             ))}
@@ -1626,7 +1635,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
               >
                 制作人好感
                 <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                  {PRODUCER_COUNT} 位 · 唱片 / 电视剧 / 电影
+                  唱片 / 电视剧 / 电影 / 广告 / 主持
                 </span>
               </summary>
               <ProducerPanel />
