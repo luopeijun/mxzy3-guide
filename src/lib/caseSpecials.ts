@@ -336,6 +336,15 @@ function evaluateGroupRow(
       detail: met ? '接过京风唱片团体通告' : '未接过京风唱片团体通告',
     };
   }
+  if (row.type === 'flag' && row.name.includes('大型演唱会')) {
+    const met = ctx.result.events.some((event) =>
+      event.kind === 63 && event.scale === 1 && event.group
+      && group.memberIds.includes(event.artistId));
+    return {
+      met,
+      detail: met ? '开过大型团体演唱会' : '未开过大型团体演唱会',
+    };
+  }
   return null;
 }
 
