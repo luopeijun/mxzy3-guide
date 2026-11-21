@@ -686,6 +686,31 @@ async function main() {
     check(tocOpen.expanded === 'true' && tocOpen.links === 8 && tocOpen.hasNotices,
       '本页小结展开后列出 8 个标题卡片（含场景、制作人好感与通告）', JSON.stringify(tocOpen));
 
+    // 制作人好感：六列分组 + 按角色编号反查当前存档友好度（真值来自冻结 probe.sa2）。
+    await evaluate(`document.querySelector('[data-case-producers]').open = true`);
+    await sleep(200);
+    const producers = JSON.parse(await evaluate(`(function(){
+      var groups = [...document.querySelectorAll('[data-case-producer-group]')].map(function(g){
+        return { kind: g.getAttribute('data-case-producer-group'),
+                 n: g.querySelectorAll('[data-case-producer]').length };
+      });
+      var friends = {};
+      document.querySelectorAll('[data-case-producer]').forEach(function(el){
+        friends[el.getAttribute('data-case-producer')] = el.getAttribute('data-case-producer-friendship');
+      });
+      return JSON.stringify({ groups: groups, friends: friends });
+    })()`));
+    check(producers.groups.length === 6 && producers.groups.every((g) => g.n > 0),
+      '制作人好感按唱片/电视剧/电影/广告/主持/其他六列分组且每列都有制作人',
+      JSON.stringify(producers.groups));
+    for (const [key, want] of [
+      ['he-zong', '10'], ['zhou-yingtong', '50'], ['chen-chali', '37'],
+      ['jia-he-da-ze', '300'], ['shi-mai-ke', '300'], ['wang-rui-en', '50'],
+    ]) {
+      check(producers.friends[key] === want, `制作人好感 ${key} 显示存档友好度 ${want}`,
+        `实际 ${producers.friends[key] ?? '缺失'}`);
+    }
+
     // 点目录里的「通告」应平滑滚到通告页签；滚完后该页签贴近视口顶部。
     await evaluate(`document.querySelector('[data-case-toc-link="notices"]').click()`);
     await sleep(600);

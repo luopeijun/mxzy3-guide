@@ -1005,6 +1005,34 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
     `${Object.keys(save_.friendship).length} 位`);
 }
 
+// 制作人 / NPC 友好度表：与艺人表分开的 284B 定长表，按角色编号反查。
+// 冻结快照 AutoReleased.sa2 的解析真值（跨存档结构已验证），分三段各取代表：
+// NPC 小编号段(3/38/39)、人物中段(101/201…)、制作人段(4xx/5xx/6xx/7xx)、13xx 段。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const p = path.join(SNAP, 'AutoReleased.sa2');
+  if (fs.existsSync(p)) {
+    const raw = fs.readFileSync(p);
+    const save_ = parseSave(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'AutoReleased.sa2',
+    );
+    const pf = save_.producerFriendship;
+    check(Object.keys(pf).length >= 300, '制作人友好度表读出 300+ 条记录',
+      `${Object.keys(pf).length} 条`);
+    for (const [code, name, want] of [
+      [3, '賀總', 205], [38, '史蒂芬', 110], [39, '丹尼斯', 80],
+      [101, '王瑞恩', 479], [301, '陳革非', 385], [302, '強尼戴', 200],
+      [401, '周映彤', 356], [501, '小熊', 147], [601, '陈查理', 438], [701, '麦克', 443],
+      [1301, '加賀大澤', 503], [1302, '史麥克', 404],
+    ]) {
+      check(pf[code] === want, `AutoReleased 制作人友好度 ${name}(#${code}) = ${want}`,
+        `实际 ${pf[code] ?? '缺失'}`);
+    }
+  } else {
+    console.log('OK   AutoReleased.sa2 not present, skipped producer friendship checks');
+  }
+}
+
 // 艺人称号：存进艺人块起始前 12 字节，是 Nickname.tab 里的称号编号。
 // 真值来自玩家口述（陈奕夫=主持新人、萧依莉=广告新人、苏嫚君=未出道新人），
 // 三份冻结快照都对得上；顺带锁住「0 = 还没有称号」不是解析失败。

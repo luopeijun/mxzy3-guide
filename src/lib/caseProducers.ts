@@ -16,14 +16,6 @@ export interface Producer {
   name: string;
   /** 身份 / 所属。 */
   title?: string;
-  /** 擅长类型（用户后续补充，可能暂缺）。 */
-  strengths?: string[];
-  /** 讨厌类型。 */
-  dislikes?: string[];
-  /** 出现条件；缺失表示未给出。 */
-  condition?: string;
-  /** 强度或选择提示。 */
-  note?: string;
 }
 
 export interface ProducerGroup {

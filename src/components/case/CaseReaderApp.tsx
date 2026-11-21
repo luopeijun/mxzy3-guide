@@ -532,8 +532,8 @@ function CaseToc({
 }
 
 /** 制作人好感清单：唱片 / 电视剧 / 电影 / 广告 / 主持 / 其他六列并排，每列纵向列制作人。
- *  每位制作人压成一小块，名字后标当前存档友好度（存档真源，按角色编号查）；
- *  擅长 / 讨厌 / 出现条件分行紧凑排。六列等宽，空列保留标题占位。 */
+ *  每位制作人一行，名字后标当前存档友好度（存档真源，按角色编号查）。
+ *  六列等宽，空列保留标题占位。 */
 function ProducerPanel({ friendship }: { friendship: Record<number, number> }) {
   return (
     <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
@@ -564,31 +564,6 @@ function ProducerPanel({ friendship }: { friendship: Record<number, number> }) {
                     <span className="text-ink-faint">· {producer.title}</span>
                   )}
                 </div>
-                {producer.strengths && producer.strengths.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1">
-                    <span className="text-ink-faint">擅长</span>
-                    {producer.strengths.map((strength) => (
-                      <span
-                        key={strength}
-                        className="rounded bg-brand-soft px-1 py-0.5 font-medium text-brand-strong"
-                      >
-                        {strength}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {producer.dislikes?.map((dislike) => (
-                  <div key={dislike} className="flex items-center gap-1">
-                    <span className="text-ink-faint">讨厌</span>
-                    <span className="rounded bg-alert-soft px-1 py-0.5 text-alert">{dislike}</span>
-                  </div>
-                ))}
-                {producer.note && (
-                  <div className="text-ink-muted">{producer.note}</div>
-                )}
-                {producer.condition && (
-                  <div className="text-ink-faint">出现：{producer.condition}</div>
-                )}
               </div>
               );
             })}
