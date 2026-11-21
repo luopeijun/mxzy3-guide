@@ -31,7 +31,7 @@ type HoverAnchor = { left: number; right: number; top: number; bottom: number };
 type HoverState =
   | { kind: 'match'; match: ArtistMatch; anchor: HoverAnchor }
   | { kind: 'certGuide'; cert: string; guide: CertMatchGuide; anchor: HoverAnchor }
-  | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; met: boolean; anchor: HoverAnchor };
+  | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; anchor: HoverAnchor };
 
 /** 统一的 hover 浮层：优先贴在锚点上方，空间不够再翻到下方；最后夹在视口内。 */
 function FloatingCard({
@@ -203,7 +203,6 @@ function CertPersonCard({
   cert,
   guide,
   person,
-  met,
   anchor,
   onEnter,
   onLeave,
@@ -211,7 +210,6 @@ function CertPersonCard({
   cert: string;
   guide: CertMatchGuide;
   person: string;
-  met: boolean;
   anchor: HoverAnchor;
   onEnter: () => void;
   onLeave: () => void;
@@ -226,16 +224,19 @@ function CertPersonCard({
       <p className="mb-0.5 text-ui-xs font-semibold text-ink">{person}</p>
       <p className="mb-1.5 text-ui-2xs text-ink-faint">{cert} · {guide.title}</p>
       <div className="space-y-0.5">
-        {guide.stats.map((stat) => (
-          <div key={stat.name} className="flex items-baseline justify-between gap-2 text-ui-2xs">
-            <span className="text-ink-muted">{stat.name} <span className="text-ink-faint">{stat.min}+</span></span>
-            <span className={cn('font-semibold', stat.have >= stat.min ? 'text-growth-strong' : 'text-ink')}>
-              {shortValue(stat.have)}
-            </span>
-          </div>
-        ))}
+        {guide.stats.map((stat) => {
+          const satisfied = stat.have >= stat.min;
+          return (
+            <div
+              key={stat.name}
+              className={cn('text-ui-2xs', satisfied ? 'font-semibold text-growth-strong' : 'text-ink')}
+            >
+              {satisfied && <span aria-hidden="true">✓ </span>}
+              {stat.name} {shortValue(stat.have)}/{stat.min}
+            </div>
+          );
+        })}
       </div>
-      {met && <p className="mt-1.5 border-t border-line pt-1.5 text-ui-2xs text-ink-faint">已取得证书</p>}
     </FloatingCard>
   );
 }
@@ -266,7 +267,7 @@ function DetailSection({
   onToggle: (id: string) => void;
   onMatchHover: (match: ArtistMatch, anchor: HoverAnchor) => void;
   onCertGuideHover: (cert: string, guide: CertMatchGuide, anchor: HoverAnchor) => void;
-  onCertPersonHover: (cert: string, guide: CertMatchGuide, person: string, met: boolean, anchor: HoverAnchor) => void;
+  onCertPersonHover: (cert: string, guide: CertMatchGuide, person: string, anchor: HoverAnchor) => void;
   onHoverLeave: () => void;
   dataError: string | null;
 }) {
@@ -427,7 +428,7 @@ function DetailSection({
                             )}
                             onMouseEnter={(event) => {
                               const rect = event.currentTarget.getBoundingClientRect();
-                              onCertPersonHover(certName, personGuide, match.name, cert.met, {
+                              onCertPersonHover(certName, personGuide, match.name, {
                                 left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
                               });
                             }}
@@ -630,8 +631,8 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
                 onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
                 onMatchHover={(match, anchor) => showHover({ kind: 'match', match, anchor })}
                 onCertGuideHover={(cert, guide, anchor) => showHover({ kind: 'certGuide', cert, guide, anchor })}
-                onCertPersonHover={(cert, guide, person, met, anchor) =>
-                  showHover({ kind: 'certPerson', cert, guide, person, met, anchor })}
+                onCertPersonHover={(cert, guide, person, anchor) =>
+                  showHover({ kind: 'certPerson', cert, guide, person, anchor })}
                 onHoverLeave={hideHoverSoon}
                 dataError={error}
               />
@@ -670,7 +671,6 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             cert={hover.cert}
             guide={hover.guide}
             person={hover.person}
-            met={hover.met}
             anchor={hover.anchor}
             onEnter={clearHoverTimer}
             onLeave={hideHoverNow}
