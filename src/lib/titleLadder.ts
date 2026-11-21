@@ -79,7 +79,8 @@ const MODEL_EXTRA: ExtraRule = {
 const screenExtra = (male: boolean): ExtraRule => ({
   awards: {
     ids: [male ? 31 : 32], count: 1,
-    label: male ? '金钟奖最佳男主角' : '金钟奖最佳女主角',
+    // 31/32 是金像奖（电影）的最佳男/女主角，不是金钟奖（电视）。
+    label: male ? '金像奖最佳男主角' : '金像奖最佳女主角',
   },
 });
 const starExtra = (male: boolean): ExtraRule => ({

@@ -1174,6 +1174,37 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
   check(actor?.name === '天王巨星', '戏剧天王 → 天王巨星', actor?.name ?? 'null');
   check(next(1, 'male') === null, '天王巨星已经是最高档', String(next(1, 'male')));
   check(next(601, 'female') === null, '知名艺人（其他线）不接总称号', String(next(601, 'female')));
+
+  // 总称号的「得奖两项」必须与演唱会 2 次一起计入 ready；
+  // 同一项得两次也算两项，所以这里只看指定奖项编号出现的次数。
+  const starFull = {
+    ...stats,
+    awardIds: [22, 52], // 金曲奖最佳演唱人 + 金星奖最佳模特儿
+    concerts: 2,
+  };
+  const star = nextTitle(tables.titleMeta, tables.titles, 101, starFull, 'male');
+  const awardChip = star?.extras.find((item) => item.label === '两项大奖');
+  check(star?.ready === true && awardChip?.have === 2 && awardChip?.diff === 0,
+    '歌神满足两次指定大奖 + 演唱会 2 次后判为可升天王巨星',
+    `ready=${star?.ready} awards=${awardChip?.have}/${awardChip?.need}`);
+
+  const starOneAward = nextTitle(
+    tables.titleMeta, tables.titles, 101,
+    { ...starFull, awardIds: [22] }, 'male',
+  );
+  const shortChip = starOneAward?.extras.find((item) => item.label === '两项大奖');
+  check(starOneAward?.ready === false && shortChip?.have === 1 && shortChip?.diff === 1,
+    '只有一项指定大奖时仍不能升天王巨星',
+    `ready=${starOneAward?.ready} awards=${shortChip?.have}/${shortChip?.need}`);
+
+  const starSameAwardTwice = nextTitle(
+    tables.titleMeta, tables.titles, 101,
+    { ...starFull, awardIds: [22, 22] }, 'male',
+  );
+  const twiceChip = starSameAwardTwice?.extras.find((item) => item.label === '两项大奖');
+  check(starSameAwardTwice?.ready === true && twiceChip?.have === 2 && twiceChip?.diff === 0,
+    '同一项指定大奖拿两次也算两项',
+    `ready=${starSameAwardTwice?.ready} awards=${twiceChip?.have}/${twiceChip?.need}`);
 }
 
 // 角色社交接演门槛（叛逆/性感/亲和）：Story0004 的 CF234 味美 解說篇要求亲和 ≥ 650，
