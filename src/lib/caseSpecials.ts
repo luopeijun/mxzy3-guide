@@ -1,4 +1,4 @@
-import { ATTRS, starGender, type CaseTables, type ParseResult } from './caseParser';
+import { ATTRS, starGender, type CaseTables, type Gender, type ParseResult } from './caseParser';
 import { artistCertificates, certificateGuide, type CertificateGuide } from './caseCertificates';
 import { certsForName, normaliseStatName, parseTarget } from './specials';
 import type { ArtistStats } from './caseParser';
@@ -557,6 +557,9 @@ const STAT_DEDUPE_NOTICES = new Set(['eternal-love', 'angel']);
 const GENDER_SLOT_NOTICES: Record<string, [string, string]> = {
   'doomsday-warrior': ['main', 'support'],
 };
+/** 昆仑历险三角色位（男主角 1 位、女主角 2 位）数值门槛完全相同，共用一组 `main` 数值行；
+ *  只在艺人匹配的坑位标签上按性别区分：男艺人＝男主角，女艺人＝女主角。 */
+const GENDER_LABEL_NOTICES = new Set(['kunlun-adventure']);
 /** 事件驱动通告：走事件节点，不按数值条件显示进度条。 */
 const EVENT_DRIVEN_NOTICES = new Set([
   'proud-of-the-world', 'doomsday-warrior', 'eternal-love', 'angel', 'galaxy',
@@ -569,7 +572,10 @@ const SLOT_LABELS: Record<string, string> = {
   'role:男配角': '男配角',
 };
 
-function slotLabel(slot: string, notice: SpecialNotice): string {
+function slotLabel(slot: string, notice: SpecialNotice, gender?: Gender): string {
+  if (GENDER_LABEL_NOTICES.has(notice.id)) {
+    return gender === 'female' ? '女主角' : '男主角';
+  }
   if (MALE_ONLY_NOTICES.has(notice.id)) {
     return SLOT_LABELS[slot] ?? (slot.startsWith('role:') ? slot.slice(5) : slot);
   }
@@ -682,8 +688,9 @@ export function evaluateLiveSpecials(
         const gaps = qualifyingRows
           .filter((condition) => !condition.byArtist[artist.roleId])
           .map((condition) => condition.row.name);
+        const artistGender = starGender(artist.roleId, tables.stars);
         const slots: SlotGap[] = visibleSlotsOf(artist).map(([slot, rows]) => ({
-          label: slotLabel(slot, notice),
+          label: slotLabel(slot, notice, artistGender),
           met: rows.filter((condition) => condition.byArtist[artist.roleId]).length,
           total: rows.length,
           gaps: rows
