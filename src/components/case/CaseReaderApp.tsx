@@ -532,9 +532,9 @@ function CaseToc({
 }
 
 /** 制作人好感清单：唱片 / 电视剧 / 电影 / 广告 / 主持 / 其他六列并排，每列纵向列制作人。
- *  每位制作人压成一小块，名字 / 擅长 / 讨厌 / 出现条件分行紧凑排；友好度数值
- *  待存档真源确认后补到名字旁。五列等宽，空列保留标题占位。 */
-function ProducerPanel() {
+ *  每位制作人压成一小块，名字后标当前存档友好度（存档真源，按角色编号查）；
+ *  擅长 / 讨厌 / 出现条件分行紧凑排。六列等宽，空列保留标题占位。 */
+function ProducerPanel({ friendship }: { friendship: Record<number, number> }) {
   return (
     <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
       {PRODUCER_GROUPS.map((group) => (
@@ -546,29 +546,37 @@ function ProducerPanel() {
           <div className="flex flex-col gap-1">
             {group.producers.length === 0 ? (
               <div className="py-1 text-ui-2xs text-ink-faint">待补充</div>
-            ) : group.producers.map((producer) => (
+            ) : group.producers.map((producer) => {
+              const value = friendship[producer.code];
+              return (
               <div
                 key={producer.key}
                 data-case-producer={producer.key}
+                data-case-producer-friendship={value ?? ''}
                 className="flex flex-col gap-0.5 border-b border-line/60 pb-1 text-ui-2xs last:border-0 last:pb-0"
               >
                 <div className="flex flex-wrap items-baseline gap-x-1">
                   <span className="font-semibold text-ink">{producer.name}</span>
+                  <span className={cn('tabular-nums', value === undefined ? 'text-ink-faint' : 'font-semibold text-brand-strong')}>
+                    {value === undefined ? '—' : value}
+                  </span>
                   {producer.title && (
                     <span className="text-ink-faint">· {producer.title}</span>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-ink-faint">擅长</span>
-                  {producer.strengths.map((strength) => (
-                    <span
-                      key={strength}
-                      className="rounded bg-brand-soft px-1 py-0.5 font-medium text-brand-strong"
-                    >
-                      {strength}
-                    </span>
-                  ))}
-                </div>
+                {producer.strengths && producer.strengths.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-ink-faint">擅长</span>
+                    {producer.strengths.map((strength) => (
+                      <span
+                        key={strength}
+                        className="rounded bg-brand-soft px-1 py-0.5 font-medium text-brand-strong"
+                      >
+                        {strength}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {producer.dislikes?.map((dislike) => (
                   <div key={dislike} className="flex items-center gap-1">
                     <span className="text-ink-faint">讨厌</span>
@@ -582,7 +590,8 @@ function ProducerPanel() {
                   <div className="text-ink-faint">出现：{producer.condition}</div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}
@@ -1638,7 +1647,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   唱片 / 电视剧 / 电影 / 广告 / 主持 / 其他
                 </span>
               </summary>
-              <ProducerPanel />
+              <ProducerPanel friendship={result.producerFriendship} />
             </details>
 
             {/* 各公司开放节奏：只按上面列出的通告归并，历史批次不进这里。 */}

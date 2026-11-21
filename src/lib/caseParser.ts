@@ -708,6 +708,8 @@ export interface ParseResult {
   artists: ArtistStats[];
   /** 艺人编号 -> 友好度（整数），独立于状态块的头部友好度表。 */
   friendship: Record<number, number>;
+  /** 制作人角色编号 -> 友好度（整数），来自独立的制作人友好度表（4xx/5xx/6xx/7xx）。 */
+  producerFriendship: Record<number, number>;
   /** The 18 signable artists, resolved against the state blocks in this save. */
   artistDirectory: ArtistOption[];
   /** Numbers of the artists the save marks as signed (1..4 of them). */
@@ -1079,6 +1081,39 @@ function parseFriendship(
     gifts[id] = giftCount;
   }
   return { friendship, gifts };
+}
+
+/** 制作人友好度表：与艺人友好度表分开的一段，每条 284 字节，
+ *  `+0` 角色编号（4xx 唱片 / 5xx 电视剧 / 6xx 电影 / 7xx 广告…）、`+4` 类别，
+ *  `+148` 友好度整数。编号不连续（401/402/404…），所以按编号反查而不是数序号。
+ *  锚点用「编号落在 400..799 且类别 === 编号百位」找连续链，不写死绝对偏移——
+ *  88 份存档验证过表都从 code=401 那条起、步长 284。 */
+function parseProducerFriendship(
+  view: DataView,
+  bytes: Uint8Array,
+): Record<number, number> {
+  const out: Record<number, number> = {};
+  const limit = Math.min(bytes.length - 152, 200000);
+  // 找 code=401 的那条记录（类别 4），它恒是制作人表第一条。
+  for (let p = 0; p + 152 <= limit; p += 4) {
+    if (view.getUint32(p, true) !== 401) continue;
+    if (view.getUint32(p + 4, true) !== 4) continue;
+    const firstFriendship = view.getUint32(p + 148, true);
+    if (firstFriendship > 9999) continue;
+    // 命中锚点：从这条起按 284 步长读连续记录。
+    for (let q = p; q + 152 <= bytes.length; q += 284) {
+      const code = view.getUint32(q, true);
+      if (code < 400 || code > 799) break;
+      const kind = view.getUint32(q + 4, true);
+      // 中间夹着未启用的空槽（如 411 kind=0），跳过继续，不能中断整张表。
+      if (kind !== Math.floor(code / 100)) continue;
+      const friendship = view.getUint32(q + 148, true);
+      if (friendship > 9999) continue;
+      out[code] = friendship;
+    }
+    break;
+  }
+  return out;
 }
 
 /** Artist attribute blocks: nine abilities, stress/fatigue, a short Big5
@@ -3217,6 +3252,7 @@ export function parseSave(
     selfMade,
     artists,
     friendship,
+    producerFriendship: parseProducerFriendship(view, bytes),
     artistDirectory,
     signedArtistIds,
     teams,
