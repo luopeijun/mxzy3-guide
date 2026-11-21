@@ -1,7 +1,7 @@
 {
   "name": "mxzy3-guide",
   "private": true,
-  "version": "1.16.0",
+  "version": "1.17.0",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
   },
   "build": {
     "appId": "com.mxzy3.guide.desktop",

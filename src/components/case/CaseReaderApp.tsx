@@ -22,6 +22,10 @@ import {
 } from '../../lib/caseParser';
 import type { TitleGapItem, TitleNext } from '../../lib/titleLadder';
 import type { GuideData } from '../../types/guide';
+import {
+  findCurrentWeek, formatWeekRange, loadMemo, memoDisplayCells, parseMemoWorkbook, saveMemo,
+  type MemoData, type MemoWeek,
+} from '../../lib/memoNotes';
 
 // 数据文件可独立更新、不随 JS 构建走 hash；加时间戳绕开浏览器/CDN 缓存，
 // 否则表新增字段后已打开的页面会一直读到缺字段的旧 JSON（如礼物好感列全为 -）。
@@ -366,6 +370,111 @@ function payText(pay: number): string {
     return `${Number.isInteger(wan) ? wan : wan.toFixed(1)} 万`;
   }
   return pay.toLocaleString('zh-CN');
+}
+
+/** 本周便签：存档解析页的独立备忘录。按当前存档的游戏日期落到哪一周，
+ *  原样显示那一周的内容列。只提醒、不编辑、不统计，也不跟存档绑定。
+ *  桌面宽屏作为右栏顶部常驻卡（默认展开），窄屏在正文顶部给简版兜底。 */
+function MemoNote({
+  week,
+  fileName,
+  error,
+  onImport,
+  onClear,
+  variant = 'inline',
+}: {
+  week: MemoWeek | null;
+  fileName: string;
+  error: string;
+  onImport: () => void;
+  onClear: () => void;
+  variant?: 'aside' | 'inline';
+}) {
+  const [open, setOpen] = useState(true);
+  const isAside = variant === 'aside';
+  return (
+    <section
+      data-case-memo
+      data-case-memo-variant={variant}
+      className={cn('rounded-ui-md border border-line bg-surface', isAside ? 'shrink-0 p-2' : 'px-3 py-2')}
+    >
+      <button
+        type="button"
+        data-case-memo-toggle
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="block w-full text-left text-ui-xs font-semibold text-ink-muted transition-colors hover:text-brand-strong"
+      >
+        <span className="flex items-center gap-2">
+          <span className="h-2 w-2 shrink-0 rounded-sm bg-tag-auto" />
+          <span className="shrink-0">本周便签</span>
+          <span className="ml-auto shrink-0 text-ui-2xs font-normal text-ink-faint">{open ? '收起' : '展开'}</span>
+        </span>
+        {week && (
+          <span
+            data-case-memo-range
+            title={week.rangeText}
+            className="mt-0.5 block whitespace-nowrap text-ui-2xs font-normal text-ink-faint"
+          >
+            {formatWeekRange(week.rangeText)}
+          </span>
+        )}
+      </button>
+      {error && (
+        <p data-case-memo-error className="mt-1 text-ui-2xs text-alert">备忘录导入失败：{error}</p>
+      )}
+      {open && (
+        <>
+          {week ? (
+            <div
+              data-case-memo-body
+              className={cn(
+                'mt-2 grid gap-2',
+                isAside ? 'max-h-[min(32vh,240px)] grid-cols-1 overflow-y-auto pr-0.5' : 'phone:grid-cols-1 sm:grid-cols-2',
+              )}
+            >
+              {memoDisplayCells(week.cells).map((cell, i) => (
+                <div key={i} className="rounded-ui-sm bg-canvas px-2.5 py-2">
+                  <div className="mb-1 text-ui-2xs font-semibold text-ink-faint">{cell.label}</div>
+                  <div className="whitespace-pre-wrap break-words text-ui-2xs leading-relaxed text-ink">{cell.value}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p data-case-memo-empty className="mt-2 text-ui-2xs text-ink-faint">
+              {fileName ? '当前游戏日期不在备忘录的周区间内。' : '还没导入备忘录。点「导入备忘录」选一个自己填好的 Excel，或先下载模板。'}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-2">
+            <button
+              type="button"
+              data-case-memo-import
+              onClick={onImport}
+              className="rounded-full border border-line px-2 py-0.5 text-ui-2xs font-normal text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            >
+              导入备忘录
+            </button>
+            {fileName && (
+              <button
+                type="button"
+                onClick={onClear}
+                className="text-ui-2xs font-normal text-ink-faint transition-colors hover:text-alert"
+              >
+                清除
+              </button>
+            )}
+            <a
+              href={`${import.meta.env.BASE_URL}memo-template.xlsx`}
+              download="备忘录模板.xlsx"
+              className="text-ui-2xs text-ink-faint underline decoration-line-strong underline-offset-2 transition-colors hover:text-brand-strong"
+            >
+              下载模板
+            </a>
+          </div>
+        </>
+      )}
+    </section>
+  );
 }
 
 /** 本页小结：右侧固定小导航（同「六大通告」右侧跳转栏的样式），列出存档解析页的
@@ -809,7 +918,11 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 等待上市 / 自制通告及其他。
    *  默认固定「筹备中」：以后无论加多少页签，这里都保持 'open'。 */
   const [board, setBoard] = useState<'open' | 'shooting' | 'waiting' | 'hot' | 'done' | 'selfMade' | 'promo'>('open');
+  /** 备忘录独立于存档：导入一次存本地，切多少份存档都不变，只有重新导入/清除才改。 */
+  const [memo, setMemo] = useState<MemoData | null>(() => loadMemo());
+  const [memoError, setMemoError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const memoInputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
   const tablesRef = useRef(tables);
@@ -872,6 +985,28 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     if (file) void readFile(file);
     event.target.value = '';
   }, [readFile]);
+
+  const onPickMemo = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setMemoError('');
+    try {
+      const XLSX = await import('xlsx');
+      const buffer = await file.arrayBuffer();
+      const data = parseMemoWorkbook(buffer, file.name, XLSX);
+      saveMemo(data);
+      setMemo(data);
+    } catch (reason: unknown) {
+      setMemoError(reason instanceof Error ? reason.message : String(reason));
+    }
+  }, []);
+
+  const clearMemo = useCallback(() => {
+    saveMemo(null);
+    setMemo(null);
+    setMemoError('');
+  }, []);
 
   const onDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -1241,6 +1376,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
             onChange={onPick}
             aria-label="选择明星志愿3 存档文件"
           />
+          <input
+            ref={memoInputRef}
+            data-case-memo-upload
+            type="file"
+            accept=".xlsx,.xls,.XLSX,.XLS"
+            className="hidden"
+            onChange={(e) => { void onPickMemo(e); }}
+            aria-label="选择备忘录 Excel 文件"
+          />
           {!result && (
             <span className="text-ui-2xs text-ink-faint">
               把明星志愿3游戏存档拖到这里，或点上面的按钮选择。
@@ -1315,6 +1459,18 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
               ) : (
                 <span className="text-ink-faint">存档里没有更晚一批的通告</span>
               )}
+            </div>
+
+            {/* 本周便签窄屏兜底：≥1120px 右栏有常驻卡，这里只在窄屏显示。
+                与存档内容无关——换存档便签不变，只有重新导入才换。 */}
+            <div className="min-[1120px]:hidden">
+              <MemoNote
+                week={findCurrentWeek(memo, result.currentDate)}
+                fileName={memo?.fileName ?? ''}
+                error={memoError}
+                onImport={() => memoInputRef.current?.click()}
+                onClear={clearMemo}
+              />
             </div>
 
             {/* 公司：名称与主角在存档头，形象 / 知名度 / 公关在 Firm 段。 */}
@@ -1947,7 +2103,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
       </div>
 
       {result && (
-        <aside className="fixed right-4 top-[76px] z-10 flex max-h-[calc(100vh-92px)] w-[248px] flex-col gap-2 hidden min-[1120px]:flex">
+        <aside className="fixed right-4 top-[76px] z-10 max-h-[calc(100vh-92px)] w-[248px] flex-col gap-2 hidden min-[1120px]:flex">
+          <MemoNote
+            variant="aside"
+            week={findCurrentWeek(memo, result.currentDate)}
+            fileName={memo?.fileName ?? ''}
+            error={memoError}
+            onImport={() => memoInputRef.current?.click()}
+            onClear={clearMemo}
+          />
           <div className="shrink-0">
             <CaseToc
               result={result}
