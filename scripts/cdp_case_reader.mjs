@@ -683,8 +683,8 @@ async function main() {
         hasNotices: !!document.querySelector('[data-case-toc-link="notices"]'),
       });
     })()`));
-    check(tocOpen.expanded === 'true' && tocOpen.links === 7 && tocOpen.hasNotices,
-      '本页小结展开后列出 7 个标题卡片（含场景与通告）', JSON.stringify(tocOpen));
+    check(tocOpen.expanded === 'true' && tocOpen.links === 8 && tocOpen.hasNotices,
+      '本页小结展开后列出 8 个标题卡片（含场景、制作人好感与通告）', JSON.stringify(tocOpen));
 
     // 点目录里的「通告」应平滑滚到通告页签；滚完后该页签贴近视口顶部。
     await evaluate(`document.querySelector('[data-case-toc-link="notices"]').click()`);

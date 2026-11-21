@@ -8,6 +8,7 @@ import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
 import { artistCertificates } from '../../lib/caseCertificates';
+import { PRODUCER_COUNT, PRODUCER_GROUPS } from '../../lib/caseProducers';
 import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
@@ -422,6 +423,12 @@ function CaseToc({
       });
     }
     list.push({
+      id: 'producers',
+      label: '制作人好感',
+      selector: '[data-case-producers]',
+      summary: `${PRODUCER_COUNT} 位`,
+    });
+    list.push({
       id: 'updates',
       label: '开放节奏',
       selector: '[data-case-updates]',
@@ -521,6 +528,56 @@ function CaseToc({
         </ul>
       )}
     </nav>
+  );
+}
+
+/** 制作人好感清单：按唱片 / 电视剧 / 电影分组，每位制作人压成一行，
+ *  标注擅长类型、讨厌类型、出现条件与选择提示。友好度数值待存档真源确认后
+ *  补到行尾。刻意做成紧凑列表，避免 23 位撑起整页。 */
+function ProducerPanel() {
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      {PRODUCER_GROUPS.map((group) => (
+        <div key={group.kind}>
+          <div className="mb-0.5 text-ui-2xs font-semibold text-brand-strong">{group.label}</div>
+          <div className="flex flex-col">
+            {group.producers.map((producer) => (
+              <div
+                key={producer.key}
+                data-case-producer={producer.key}
+                className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-b border-line/60 py-1 text-ui-2xs last:border-0"
+              >
+                <span className="shrink-0 font-semibold text-ink">{producer.name}</span>
+                {producer.title && (
+                  <span className="shrink-0 text-ink-faint">· {producer.title}</span>
+                )}
+                <span className="shrink-0 text-ink-faint">擅长</span>
+                {producer.strengths.map((strength) => (
+                  <span
+                    key={strength}
+                    className="shrink-0 rounded bg-brand-soft px-1 py-0.5 font-medium text-brand-strong"
+                  >
+                    {strength}
+                  </span>
+                ))}
+                {producer.dislikes?.map((dislike) => (
+                  <Fragment key={dislike}>
+                    <span className="shrink-0 text-ink-faint">讨厌</span>
+                    <span className="shrink-0 rounded bg-alert-soft px-1 py-0.5 text-alert">{dislike}</span>
+                  </Fragment>
+                ))}
+                {producer.note && (
+                  <span className="text-ink-muted">（{producer.note}）</span>
+                )}
+                {producer.condition && (
+                  <span className="ml-auto shrink-0 text-ink-faint">出现：{producer.condition}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -1555,6 +1612,25 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 </div>
               </details>
             )}
+
+            {/* 制作人好感：静态参考清单，按唱片 / 电视剧 / 电影分类列出全部制作人，
+                标注擅长类型、出现条件等。友好度数值待存档真源确认后再接。 */}
+            <details
+              data-case-producers
+              data-case-toc-target
+              className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5"
+            >
+              <summary
+                data-case-producers-summary
+                className="cursor-pointer text-ui-xs font-bold text-brand-strong"
+              >
+                制作人好感
+                <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                  {PRODUCER_COUNT} 位 · 唱片 / 电视剧 / 电影
+                </span>
+              </summary>
+              <ProducerPanel />
+            </details>
 
             {/* 各公司开放节奏：只按上面列出的通告归并，历史批次不进这里。 */}
             <details data-case-updates data-case-toc-target className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
