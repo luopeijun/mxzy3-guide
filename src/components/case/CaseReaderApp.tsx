@@ -758,7 +758,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
   /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 等待上市 / 自制通告及其他。
    *  默认固定「筹备中」：以后无论加多少页签，这里都保持 'open'。 */
-  const [board, setBoard] = useState<'open' | 'shooting' | 'waiting' | 'hot' | 'selfMade' | 'promo'>('open');
+  const [board, setBoard] = useState<'open' | 'shooting' | 'waiting' | 'hot' | 'done' | 'selfMade' | 'promo'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
@@ -935,6 +935,25 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
       .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
   }, [result]);
   const hotCount = hotNotices.length;
+
+  /** 已完成：与等待上市/热卖中同一套本体字段，只换成状态口径；同样只列旗下艺人/团体参演。 */
+  const doneNotices = useMemo(() => {
+    if (!result) return [] as ArchiveNotice[];
+    const signed = new Set(result.signedArtistIds);
+    const teamCodes = new Set(result.teams.map((t) => t.code));
+    return result.archiveNotices
+      .filter((n) => {
+        if (n.category !== '已完成') return false;
+        if (n.artistIds.some((a) => signed.has(a))) return true;
+        return (n.promoCasts ?? []).some((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode));
+      })
+      .map((n) => ({
+        ...n,
+        promoCasts: (n.promoCasts ?? []).filter((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  }, [result]);
+  const doneCount = doneNotices.length;
 
   /** The panel is fixed: every artist the save marks as signed, no picker. */
   const signedArtists = useMemo<SignedArtist[]>(() => {
@@ -1622,6 +1641,16 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <button
                   type="button"
                   role="tab"
+                  data-case-tab="done"
+                  aria-selected={board === 'done'}
+                  onClick={() => setBoard('done')}
+                  className={tabClass(board === 'done')}
+                >
+                  已完成 <span className="tabular-nums">{doneCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
                   data-case-tab="self-made"
                   aria-selected={board === 'selfMade'}
                   onClick={() => setBoard('selfMade')}
@@ -1661,6 +1690,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                   tables={tables}
                   emptyTitle="没有热卖中的作品"
                   emptyText="只列旗下艺人已参演、已到发行日且还没下架的作品。"
+                  artistName={(id) => nameOfArtist(result, tables, id)}
+                  teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
+                />
+              ) : board === 'done' ? (
+                <WaitingPanel
+                  notices={doneNotices}
+                  tables={tables}
+                  emptyTitle="没有已完成作品"
+                  emptyText="只列旗下艺人已参演、已过发行下架日的作品。"
                   artistName={(id) => nameOfArtist(result, tables, id)}
                   teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
                 />

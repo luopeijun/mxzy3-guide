@@ -670,11 +670,11 @@ export interface ArchiveNotice {
   endDayNum?: number;
   /** 宣传活动里每个角色槽的明细（角色名 / 签约艺人编号 / 该角色宣传天数）。团体宣传只有一条。 */
   promoCasts?: PromoCast[];
-  /** 等待上市 / 热卖中：发行档期起（上市日，文本）。来自本体记录第 4 组档期。 */
+  /** 等待上市 / 热卖中 / 已完成：发行档期起（上市日，文本）。来自本体记录第 4 组档期。 */
   saleStart?: string;
-  /** 等待上市 / 热卖中：发行档期止（下市日，文本）。来自本体记录第 5 组档期。 */
+  /** 等待上市 / 热卖中 / 已完成：发行档期止（下市日，文本）。来自本体记录第 5 组档期。 */
   saleEnd?: string;
-  /** 等待上市 / 热卖中：本体记录的酬劳（首角色 +816）。 */
+  /** 等待上市 / 热卖中 / 已完成：本体记录的酬劳（首角色 +816）。 */
   pay?: number | null;
 }
 
@@ -1287,16 +1287,16 @@ export function parseArchiveNotices(
   };
   // 读宣传记录里每个角色槽：个人每槽 +800+i*24 艺人 / +804+i*24 天数 / +10+i*192 角色名；
   // 团体记录只有一条，团体 code +772、代表艺人 +832、完成天数 +836。
-  const readCasts = (o: number, group: boolean): PromoCast[] => {
+  const readCasts = (o: number, group: boolean, slot = 0): PromoCast[] => {
     if (group) {
       return [{ roleName: '團體', artistId: q(o, 832), doneDays: q(o, 836), groupCode: q(o, 772) }];
     }
     const out: PromoCast[] = [];
     for (let i = 0; i < 4; i += 1) {
-      const artistId = q(o, 800 + i * 24);
+      const artistId = q(o, 800 + slot + i * 24);
       const roleName = roleAt(o, 10 + i * 192);
       if (!artistId && !roleName) continue;
-      out.push({ roleName: roleName || '個人', artistId, doneDays: q(o, 804 + i * 24), groupCode: 0, pay: q(o, 816 + i * 24) });
+      out.push({ roleName: roleName || '個人', artistId, doneDays: q(o, 804 + slot + i * 24), groupCode: 0, pay: q(o, 816 + slot + i * 24) });
     }
     return out;
   };
@@ -1312,42 +1312,48 @@ export function parseArchiveNotices(
     const base = isGroup ? 940 : 892;
     const role1 = roleAt(o, 10);
     const group = role1 === '團體';
+    // CF 广告个人通告用「团体式布局」但角色首格不是「團體」：档期从 +940 起，
+    // 角色槽整体比标准个人记录晚 32B（艺人 +832 / 完成 +836 / 酬劳 +848）。
+    // 用 +832 是否为合法艺人编号来区分，避免把角色定义表的 0 当成艺人。
+    const cfPersonal = isGroup && !group && q(o, 832) >= 1 && q(o, 832) <= 100;
+    const slot = cfPersonal ? 32 : 0;
     const months = [q(o, base + 4), q(o, base + 20), q(o, base + 36), q(o, base + 52), q(o, base + 68)];
     const days = [q(o, base + 8), q(o, base + 24), q(o, base + 40), q(o, base + 56), q(o, base + 72)];
     const valid = (i: number) => months[i] >= 1 && months[i] <= 12 && days[i] >= 1 && days[i] <= 31;
     // 个人记录档期组：[开放, 开拍, 杀青, 上档, 下档]；开拍在 base+16、杀青 base+32。
-    // 团体记录只有 4 组：[开拍, 杀青, 上档, 下档]；开拍就在 base、杀青 base+16。
-    const startBase = group ? base : base + 16;
-    const endBase = group ? base + 16 : base + 32;
-    const startIdx = group ? 0 : 1;
-    const endIdx = group ? 1 : 2;
+    // 团体记录（含 CF 广告这种团体式布局）从 base 起就是开拍、base+16 杀青。
+    const earlyStart = group || cfPersonal;
+    const startBase = earlyStart ? base : base + 16;
+    const endBase = earlyStart ? base + 16 : base + 32;
+    const startIdx = earlyStart ? 0 : 1;
+    const endIdx = earlyStart ? 1 : 2;
     if (!valid(startIdx) || !valid(endIdx)) continue;
     const start = day(q(o, startBase), months[startIdx], days[startIdx]);
     const end = day(q(o, endBase), months[endIdx], days[endIdx]);
     const groupId = group ? q(o, 772) : 0;
-    const doneRaw = group ? q(o, 836) : q(o, 804);
+    const doneRaw = group ? q(o, 836) : q(o, 804 + slot);
     const doneDays = doneRaw < 4000000000 ? doneRaw : null;
-    const artists = group ? [] : [q(o, 800), q(o, 824)].filter((a) => a >= 1 && a <= 100);
+    const artists = group ? [] : [q(o, 800 + slot), q(o, 824 + slot)].filter((a) => a >= 1 && a <= 100);
     const rec: Rec = {
       o,
       code,
       start,
       end,
       // 上档/下档：个人在 months[3]/[4]，团体少一组、在 months[2]/[3]。
-      onSale: day(q(o, group ? base + 32 : base + 48), months[group ? 2 : 3], days[group ? 2 : 3]),
-      off: day(q(o, group ? base + 48 : base + 64), months[group ? 3 : 4], days[group ? 3 : 4]),
+      onSale: day(q(o, earlyStart ? base + 32 : base + 48), months[earlyStart ? 2 : 3], days[earlyStart ? 2 : 3]),
+      off: day(q(o, earlyStart ? base + 48 : base + 64), months[earlyStart ? 3 : 4], days[earlyStart ? 3 : 4]),
       startDate: fmtDay(view, o + startBase),
       endDate: fmtDay(view, o + endBase),
       // 个人记录 5 组档期（+892 起）：开拍 +908 / 杀青 +924 / 上档 +940 / 下档 +956。
-      // 团体记录 4 组（+924 开放周、+940 开拍起）：上档 +972 / 下档 +988，比个人少一组。
+      // 团体式布局 4 组（+924 开放周、+940 开拍起）：上档 +972 / 下档 +988。
       saleStart: fmtDay(view, o + (isGroup ? base + 32 : base + 48)),
       saleEnd: fmtDay(view, o + (isGroup ? base + 48 : base + 64)),
-      pay: q(o, 816) < 4000000000 ? q(o, 816) : null,
+      pay: q(o, 816 + slot) < 4000000000 ? q(o, 816 + slot) : null,
       artists,
       groupId,
       doneDays,
       isGroup: group,
-      casts: readCasts(o, group),
+      casts: readCasts(o, group, slot),
     };
     recs.push(rec);
     recByOffset.set(o, rec);
@@ -1447,8 +1453,8 @@ export function parseArchiveNotices(
       if (rec.isGroup) notice.groupId = rec.groupId;
       notice.promoCasts = rec.casts;
       notice.endDayNum = rec.end;
-    } else if (category === '等待上市' || category === '熱賣中') {
-      // 等待上市 / 热卖中显示的是本体记录：发行档期 + 每个参演角色的完成天数 / 酬劳。
+    } else if (category === '等待上市' || category === '熱賣中' || category === '已完成') {
+      // 等待上市 / 热卖中 / 已完成显示的是本体记录：发行档期 + 每个参演角色的完成天数 / 酬劳。
       notice.saleStart = rec.saleStart;
       notice.saleEnd = rec.saleEnd;
       notice.pay = rec.pay;
