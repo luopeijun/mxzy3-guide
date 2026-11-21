@@ -2458,52 +2458,50 @@ function DoneListPanel({
         </tbody>
       </table>
       </div>
-      {/* 翻页放列表下方、左对齐；每页 10 件作品。 */}
-      {pageCount > 1 && (
-        <div
-          data-case-done-pager
-          className="mt-2 flex flex-wrap items-center justify-start gap-2 text-ui-2xs text-ink-muted"
+      {/* 翻页放列表下方、左对齐；每页 10 件作品。即使只有一页也保留，方便看到总件数。 */}
+      <div
+        data-case-done-pager
+        className="mt-2 flex flex-wrap items-center justify-start gap-2 text-ui-2xs text-ink-muted"
+      >
+        <button
+          type="button"
+          data-case-done-prev
+          disabled={clampedPage <= 0}
+          onClick={() => goPage(clampedPage - 1)}
+          className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
         >
+          上一页
+        </button>
+        {Array.from({ length: pageCount }, (_, i) => (
           <button
+            key={i}
             type="button"
-            data-case-done-prev
-            disabled={clampedPage <= 0}
-            onClick={() => goPage(clampedPage - 1)}
-            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+            data-case-done-page={i + 1}
+            aria-current={clampedPage === i ? 'true' : undefined}
+            onClick={() => goPage(i)}
+            className={cn(
+              'h-6 min-w-6 rounded border px-1 text-ui-2xs tabular-nums transition-colors',
+              clampedPage === i
+                ? 'border-brand bg-brand-soft font-bold text-brand-strong'
+                : 'border-line bg-surface text-ink-faint hover:border-brand-line hover:text-brand-strong',
+            )}
           >
-            上一页
+            {i + 1}
           </button>
-          {Array.from({ length: pageCount }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              data-case-done-page={i + 1}
-              aria-current={clampedPage === i ? 'true' : undefined}
-              onClick={() => goPage(i)}
-              className={cn(
-                'h-6 min-w-6 rounded border px-1 text-ui-2xs tabular-nums transition-colors',
-                clampedPage === i
-                  ? 'border-brand bg-brand-soft font-bold text-brand-strong'
-                  : 'border-line bg-surface text-ink-faint hover:border-brand-line hover:text-brand-strong',
-              )}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            type="button"
-            data-case-done-next
-            disabled={clampedPage >= pageCount - 1}
-            onClick={() => goPage(clampedPage + 1)}
-            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            下一页
-          </button>
-          <span data-case-done-pageinfo className="ml-1 tabular-nums">
-            第 {clampedPage + 1} / {pageCount} 页 · 共 {visible.length} 件
-          </span>
-        </div>
-      )}
+        ))}
+        <button
+          type="button"
+          data-case-done-next
+          disabled={clampedPage >= pageCount - 1}
+          onClick={() => goPage(clampedPage + 1)}
+          className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          下一页
+        </button>
+        <span data-case-done-pageinfo className="ml-1 tabular-nums">
+          第 {clampedPage + 1} / {pageCount} 页 · 共 {visible.length} 件
+        </span>
+      </div>
     </div>
   );
 }
