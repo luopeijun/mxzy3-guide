@@ -13,7 +13,7 @@ import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
   noticeLabel, noticeUnit, riskOf, shootableDays,
   buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
-  type ArchiveNotice,
+  type ArchiveNotice, type PromoCast,
   type ArtistEvent, type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
   type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice, type ShootingRisk,
@@ -860,25 +860,41 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
 
   const artists = result?.artists ?? [];
 
-  /** 宣传活动：按作品（通告码）分组，用于「宣传活动」页签的折叠清单。 */
+  /** 宣传活动：只列档期内的作品（当前日期 ≤ 该作品主打宣传的杀青日），
+   *  每个作品按 宣传子类 → 旗下艺人角色 展开。仅显示旗下艺人 / 旗下团体的角色。 */
   const promoGroups = useMemo(() => {
     if (!result) return [] as { code: string; name: string; items: ArchiveNotice[] }[];
+    const todayNum = result.currentDate?.dayNumber ?? NaN;
+    const signed = new Set(result.signedArtistIds);
+    const teamCodes = new Set(result.teams.map((t) => t.code));
     const map = new Map<string, ArchiveNotice[]>();
     for (const n of result.archiveNotices) {
       if (n.category !== '宣傳活動') continue;
+      // 只保留有旗下艺人 / 旗下团体角色的宣传，并裁掉非旗下角色。
+      const casts = (n.promoCasts ?? []).filter((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode));
+      if (!casts.length) continue;
       const list = map.get(n.code) ?? [];
-      list.push(n);
+      list.push({ ...n, promoCasts: casts });
       map.set(n.code, list);
     }
     const order = ['電視劇宣傳', '電影宣傳', '首映會', '唱片宣傳', '拍攝MV', '簽名會'];
     const kindRank = (k?: string) => { const i = order.indexOf(k ?? ''); return i < 0 ? 99 : i; };
-    return [...map].map(([code, items]) => ({
-      code,
-      name: items[0]?.name || code,
-      items: [...items].sort((a, b) => kindRank(a.promoKind) - kindRank(b.promoKind)),
-    })).sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+    const MAIN_KINDS = new Set(['電視劇宣傳', '電影宣傳', '唱片宣傳']);
+    return [...map].map(([code, items]) => ({ code, items }))
+      .filter(({ items }) => {
+        // 作品档期 = 主打宣传（电视剧/电影/唱片宣传）的杀青日；当前日期在杀青日之前（含）才算档期内。
+        const mains = items.filter((n) => MAIN_KINDS.has(n.promoKind ?? '') && Number.isFinite(n.endDayNum));
+        const deadline = mains.length ? Math.max(...mains.map((n) => n.endDayNum!)) : NaN;
+        return !Number.isFinite(todayNum) || !Number.isFinite(deadline) || todayNum <= deadline;
+      })
+      .map(({ code, items }) => ({
+        code,
+        name: items[0]?.name || code,
+        items: [...items].sort((a, b) => kindRank(a.promoKind) - kindRank(b.promoKind)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
   }, [result]);
-  const promoCount = promoGroups.reduce((sum, g) => sum + g.items.length, 0);
+  const promoCount = promoGroups.reduce((sum, g) => sum + sumCastCount(g.items), 0);
 
   /** The panel is fixed: every artist the save marks as signed, no picker. */
   const signedArtists = useMemo<SignedArtist[]>(() => {
@@ -1558,6 +1574,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <PromoPanel
                   groups={promoGroups}
                   artistName={(id) => nameOfArtist(result, tables, id)}
+                  teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
                 />
               ) : board === 'selfMade' ? (
                 <SelfMadePanel
@@ -1957,6 +1974,11 @@ function ShootingPanel({
  *  一条通告上一人一个角色、各拿各的酬劳，所以跟拍摄中一样「一位艺人一行」，
  *  通告 / 档期 / 状态 / 出品用 rowSpan 合起来。只列自家艺人：对手公司的演员
  *  照样占角色格（不占的话自家艺人会错位），但不占行。 */
+/** 一条宣传记录里旗下角色的条数（页签计数用：按角色算，不按宣传子类算）。 */
+function sumCastCount(items: ArchiveNotice[]): number {
+  return items.reduce((sum, n) => sum + (n.promoCasts?.length ?? 0), 0);
+}
+
 /** 艺人编号 -> 姓名，供宣传活动清单显示签约者。 */
 function nameOfArtist(result: ParseResult, tables: CaseTables, id: number): string {
   return result.artistDirectory.find((a) => a.id === id)?.name
@@ -1964,22 +1986,23 @@ function nameOfArtist(result: ParseResult, tables: CaseTables, id: number): stri
     ?? `编号${id}`;
 }
 
-/** 宣传活动的签约主体文本：个人取艺人姓名，团体显示「團體」+ 编号。 */
-function promoSigner(n: ArchiveNotice, artistName: (id: number) => string): string {
-  if (n.groupId) return `團體 #${n.groupId}`;
-  if (n.artistIds.length) return n.artistIds.map(artistName).join('、');
-  return '—';
+/** 一个宣传角色行的签约主体：团体显示团体名，个人显示艺人姓名。 */
+function promoCastSigner(cast: PromoCast, artistName: (id: number) => string, teamName: (code: number) => string): string {
+  if (cast.groupCode) return teamName(cast.groupCode);
+  return artistName(cast.artistId);
 }
 
-/** 「宣传活动」页签：按作品分组折叠，组头是作品名，展开是各宣传子类行。 */
+/** 「宣传活动」页签：作品 → 宣传子类 → 旗下艺人角色，三层默认全部展开。
+ *  只显示档期内、且有旗下艺人/团体参与的作品；每个角色显示自己的宣传天数。 */
 function PromoPanel({
-  groups, artistName,
+  groups, artistName, teamName,
 }: {
   groups: { code: string; name: string; items: ArchiveNotice[] }[];
   artistName: (id: number) => string;
+  teamName: (code: number) => string;
 }) {
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const toggle = (code: string) => setExpanded((prev) => {
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+  const toggle = (code: string) => setCollapsed((prev) => {
     const next = new Set(prev);
     if (next.has(code)) next.delete(code); else next.add(code);
     return next;
@@ -1987,7 +2010,7 @@ function PromoPanel({
   if (groups.length === 0) {
     return (
       <div className="mt-2">
-        <EmptyState title="这份存档里没有宣传活动" text="唱片 / 电视剧 / 电影作品发行后会衍生宣传、拍摄 MV、签名会、首映会等活动。换一份有发行记录的存档再试。" />
+        <EmptyState title="档期内没有宣传活动" text="只显示在档期内、且有旗下艺人参与的作品宣传。换一份有发行记录、或当前日期在宣传档期内的存档再试。" />
       </div>
     );
   }
@@ -1995,7 +2018,8 @@ function PromoPanel({
   return (
     <div data-case-promo className="mt-2 flex flex-col gap-1.5">
       {groups.map((group) => {
-        const open = expanded.has(group.code);
+        const open = !collapsed.has(group.code);
+        const castCount = sumCastCount(group.items);
         return (
           <div key={group.code} className="overflow-hidden rounded-ui-md border border-line bg-surface">
             <button
@@ -2015,7 +2039,7 @@ function PromoPanel({
               <span className="font-semibold text-ink">{group.name}</span>
               <span className="text-ui-2xs text-ink-faint">{group.code}</span>
               <span className="ml-auto rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs tabular-nums text-ink-muted">
-                {group.items.length} 项
+                {castCount} 角色
               </span>
             </button>
             {open && (
@@ -2024,22 +2048,35 @@ function PromoPanel({
                   <thead>
                     <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
                       <Th className="w-[20%]">宣传子类</Th>
-                      <Th className="w-[32%]">档期（开拍 → 杀青）</Th>
-                      <Th className="w-[12%]">完成天数</Th>
-                      <Th className="w-[36%]">签约</Th>
+                      <Th className="w-[26%]">档期（开拍 → 杀青）</Th>
+                      <Th className="w-[18%]">角色</Th>
+                      <Th className="w-[24%]">签约</Th>
+                      <Th className="w-[12%]">宣传天数</Th>
                     </tr>
                   </thead>
                   <tbody>
-                    {group.items.map((item, idx) => (
-                      <tr key={`${item.code}-${item.promoKind}-${idx}`} className="border-t border-line/60">
-                        <td className="px-3 py-1.5">
-                          <span className={cn('rounded-full px-2 py-0.5 text-ui-2xs font-semibold', kindClass)}>{item.promoKind}</span>
-                        </td>
-                        <td className="px-3 py-1.5 tabular-nums text-ink-muted">{item.startDate} → {item.endDate}</td>
-                        <td className="px-3 py-1.5 tabular-nums text-ink">{item.doneDays ?? '—'}</td>
-                        <td className="px-3 py-1.5 text-ink">{promoSigner(item, artistName)}</td>
-                      </tr>
-                    ))}
+                    {group.items.map((item) =>
+                      (item.promoCasts ?? []).map((cast, ci) => (
+                        <tr
+                          key={`${item.code}-${item.promoKind}-${cast.artistId}-${ci}`}
+                          className="border-t border-line/60"
+                        >
+                          {ci === 0 ? (
+                            <>
+                              <td rowSpan={(item.promoCasts ?? []).length} className="px-3 py-1.5 align-top">
+                                <span className={cn('rounded-full px-2 py-0.5 text-ui-2xs font-semibold', kindClass)}>{item.promoKind}</span>
+                              </td>
+                              <td rowSpan={(item.promoCasts ?? []).length} className="px-3 py-1.5 align-top tabular-nums text-ink-muted">
+                                {item.startDate} → {item.endDate}
+                              </td>
+                            </>
+                          ) : null}
+                          <td className="px-3 py-1.5 text-ink">{cast.roleName}</td>
+                          <td className="px-3 py-1.5 text-ink">{promoCastSigner(cast, artistName, teamName)}</td>
+                          <td className="px-3 py-1.5 tabular-nums text-ink">{cast.doneDays}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

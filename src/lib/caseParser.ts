@@ -664,8 +664,24 @@ export interface ArchiveNotice {
   groupName?: string;
   /** 宣传活动的完成天数；读不到时为 null。 */
   doneDays?: number | null;
-  /** 团体宣传的团体编号（存档 +832）；配合 teams 映射成名字。 */
+  /** 团体宣传的团体 code（存档 +772，101/102…）；配合 teams 映射成名字。 */
   groupId?: number;
+  /** 杀青日的 dayNumber，供 UI 按「当前日期是否在档期内」过滤整组宣传。 */
+  endDayNum?: number;
+  /** 宣传活动里每个角色槽的明细（角色名 / 签约艺人编号 / 该角色宣传天数）。团体宣传只有一条。 */
+  promoCasts?: PromoCast[];
+}
+
+/** 宣传活动里一个角色槽的明细。 */
+export interface PromoCast {
+  /** 角色名（女主角 / 男配角 / 個人 / 團體…）。 */
+  roleName: string;
+  /** 签约艺人编号（roleId）；团体宣传取代表艺人。 */
+  artistId: number;
+  /** 该角色在这一宣传活动里的完成天数。 */
+  doneDays: number;
+  /** 团体宣传的团体 code；个人宣传为 0。 */
+  groupCode: number;
 }
 
 export interface ParseResult {
@@ -1256,6 +1272,22 @@ export function parseArchiveNotices(
     groupId: number;
     doneDays: number | null;
     isGroup: boolean;
+    casts: PromoCast[];
+  };
+  // 读宣传记录里每个角色槽：个人每槽 +800+i*24 艺人 / +804+i*24 天数 / +10+i*192 角色名；
+  // 团体记录只有一条，团体 code +772、代表艺人 +832、完成天数 +836。
+  const readCasts = (o: number, group: boolean): PromoCast[] => {
+    if (group) {
+      return [{ roleName: '團體', artistId: q(o, 832), doneDays: q(o, 836), groupCode: q(o, 772) }];
+    }
+    const out: PromoCast[] = [];
+    for (let i = 0; i < 4; i += 1) {
+      const artistId = q(o, 800 + i * 24);
+      const roleName = roleAt(o, 10 + i * 192);
+      if (!artistId && !roleName) continue;
+      out.push({ roleName: roleName || '個人', artistId, doneDays: q(o, 804 + i * 24), groupCode: 0 });
+    }
+    return out;
   };
   const recs: Rec[] = [];
   const recByOffset = new Map<number, Rec>();
@@ -1281,7 +1313,7 @@ export function parseArchiveNotices(
     if (!valid(startIdx) || !valid(endIdx)) continue;
     const start = day(q(o, startBase), months[startIdx], days[startIdx]);
     const end = day(q(o, endBase), months[endIdx], days[endIdx]);
-    const groupId = group ? q(o, 832) : 0;
+    const groupId = group ? q(o, 772) : 0;
     const doneRaw = group ? q(o, 836) : q(o, 804);
     const doneDays = doneRaw < 4000000000 ? doneRaw : null;
     const artists = group ? [] : [q(o, 800), q(o, 824)].filter((a) => a >= 1 && a <= 100);
@@ -1298,6 +1330,7 @@ export function parseArchiveNotices(
       groupId,
       doneDays,
       isGroup: group,
+      casts: readCasts(o, group),
     };
     recs.push(rec);
     recByOffset.set(o, rec);
@@ -1350,9 +1383,10 @@ export function parseArchiveNotices(
             startDate: fmtDay(view, s + base),
             endDate: fmtDay(view, s + base + 16),
             artists: group ? [] : [q(s, 800), q(s, 824)].filter((a) => a >= 1 && a <= 100),
-            groupId: group ? q(s, 832) : 0,
+            groupId: group ? q(s, 772) : 0,
             doneDays: doneRaw < 4000000000 ? doneRaw : null,
             isGroup: group,
+            casts: readCasts(s, group),
           };
           // 这段是宣传记录的起始段（在通告记录表尾部），插到末尾即可。
           recs.push(rec);
@@ -1391,6 +1425,8 @@ export function parseArchiveNotices(
       notice.promoKind = promoKind;
       notice.doneDays = rec.doneDays;
       if (rec.isGroup) notice.groupId = rec.groupId;
+      notice.promoCasts = rec.casts;
+      notice.endDayNum = rec.end;
     }
     out.push(notice);
   }
