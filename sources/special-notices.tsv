@@ -126,7 +126,7 @@ kunlun.tl.maleOnly	kunlun-adventure	-	-	note	-	-	注：旗下只有女艺人的�
 kunlun.tl.sight	kunlun-adventure	-	-	note	-	-	塞外观光后，长城路老爹说风沙大；观光累计 3 次艺人叙述奇遇（风敏不触发）；有风敏在旗下时可沟通看塞外传说（不必须）	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-
 kunlun.tl.script	kunlun-adventure	-	-	note	-	-	以上事件触发后第三年 1 月后自动获得剧本；找王瑞恩闲聊 → 1 周后闲聊 → 1 月后闲聊；集齐所有道具且旗下至少 1 位艺人满足证书条件时闲聊，下次通告会上档	-	流程索引	tracker:notices/kunlun-adventure	表+攻略	-
 kunlun.tl.booking	kunlun-adventure	-	-	note	-	-	攻略补充：王导不会主动上门，需自己前往全球预约	-	对应攻略 #71	tracker:notices/kunlun-adventure	攻略	-
-galaxy.cert.dance	galaxy	group	prepare	condition	cert	group	国际舞蹈学院证书（全体成员）	-	舞蹈学院（夏威夷）：有氧舞蹈/舞台表演 专业 + 摄影训练 高级；团体成员都要有	notices/galaxy#36	表+攻略	-
+galaxy.cert.dance	galaxy	group	prepare	condition	cert	artist	国际舞蹈学院证书	-	舞蹈学院（夏威夷）：有氧舞蹈/舞台表演 专业 + 摄影训练 高级；团体成员都要有	notices/galaxy#36	表+攻略	-
 galaxy.albums3	galaxy	group	trigger	condition	count	group	团体唱片 ≥3 张	3	推出过 3 张或以上团体唱片，前往东京找加贺	notices/galaxy#28	表+攻略	-
 galaxy.jingfeng	galaxy	group	trigger	condition	flag	group	接过京风唱片的团体通告	-	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
 galaxy.groupFame	galaxy	group	trigger	condition	stat	group	团体名气 >6	6	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
@@ -134,7 +134,10 @@ galaxy.groupPop	galaxy	group	trigger	condition	stat	group	团体人气 >5	5	加�
 galaxy.concert	galaxy	group	trigger	condition	flag	group	开完大型演唱会	-	加贺上门邀请巡演的前置	notices/galaxy#30	表+攻略	-
 galaxy.invite	galaxy	group	trigger	condition	flag	group	加贺大泽上门邀请巡演 → 同意	-	选拒绝有 BUG：仍出新闻，之后加贺以换员为由拒绝合作	notices/galaxy#30	表+攻略	-
 galaxy.dragonTail	galaxy	-	prepare	condition	item	global	龙尾散（可选）	-	答应巡演后到结束前，东京找加贺闲聊 3 次；歌艺 +50、自信 -30	notices/galaxy#31	表+攻略	-
-galaxy.tl.stats	galaxy	-	-	note	-	-	歌艺 500-550 / 动感 630-700 / 体能 630-700 / 自信 500-550：事件正常推进，数值不达标也能接	-	非硬门槛，按定位降级为只读备注、不计入达标数	tracker:notices/galaxy	表	-
+galaxy.stat.singing	galaxy	group	notice	condition	stat	group	歌艺	500~550	达到上限即达标；只看队长，团员不做要求	notices/galaxy#36	表	-
+galaxy.stat.dynamic	galaxy	group	notice	condition	stat	group	动感	630~700	达到上限即达标；只看队长，团员不做要求	notices/galaxy#36	表	-
+galaxy.stat.physical	galaxy	group	notice	condition	stat	group	体能	630~700	达到上限即达标；只看队长，团员不做要求	notices/galaxy#36	表	-
+galaxy.stat.confidence	galaxy	group	notice	condition	stat	group	自信	500~550	达到上限即达标；只看队长，团员不做要求	notices/galaxy#36	表	-
 galaxy.tl.flow	galaxy	-	-	note	-	-	自答应巡演后到巡演结束前，东京闲聊 3 次可获得龙尾散（没时间或不想可以不触发，不影响后续）；巡演结束后出新闻；团体成员拿到舞蹈证书后东京闲聊；下一档团唱会放银河	-	流程索引	tracker:notices/galaxy	表+攻略	-
 galaxy.tl.lock	galaxy	-	-	note	-	-	攻略补充：加贺邀请的是担任日本演唱会嘉宾的团体成员，中途换人则加贺不会上门	-	对应攻略 #37，团体一旦锁定不可换人	tracker:notices/galaxy	攻略	-
 galaxy.tl.note	galaxy	-	-	note	-	-	注：如需要关古威参与，请在第三年 9 月前完成	-	时间窗标签	tracker:notices/galaxy	表	-

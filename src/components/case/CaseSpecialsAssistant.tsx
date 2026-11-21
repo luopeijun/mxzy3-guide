@@ -9,6 +9,7 @@ import {
   type ArtistMatch,
   type CertMatch,
   type CertMatchGuide,
+  type GroupMatch,
   type ItemCheck,
   type LiveNoticeStatus,
   type LiveSpecialsReport,
@@ -32,6 +33,7 @@ type HoverAnchor = { left: number; right: number; top: number; bottom: number };
 
 type HoverState =
   | { kind: 'match'; match: ArtistMatch; hideSlotLabel: boolean; anchor: HoverAnchor }
+  | { kind: 'group'; group: GroupMatch; anchor: HoverAnchor }
   | { kind: 'certGuide'; cert: string; guide: CertMatchGuide; anchor: HoverAnchor }
   | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; anchor: HoverAnchor }
   | { kind: 'item'; item: ItemCheck; anchor: HoverAnchor };
@@ -178,6 +180,89 @@ function MatchHoverCard({
   );
 }
 
+/** 团体匹配浮层：银河这类团体数值只看队长，逐项显示队长的当前值 / 门槛。 */
+function GroupHoverCard({
+  group,
+  anchor,
+  onEnter,
+  onLeave,
+}: {
+  group: GroupMatch;
+  anchor: HoverAnchor;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <FloatingCard anchor={anchor} onEnter={onEnter} onLeave={onLeave} className="w-[300px] p-2.5">
+      <p className="mb-1.5 text-ui-xs font-semibold text-ink">
+        {group.name}
+        {group.leaderName && (
+          <span className="ml-2 text-ui-2xs font-normal text-ink-faint">队长 {group.leaderName}</span>
+        )}
+      </p>
+      {group.certs.length > 0 && (
+        <div className="mb-1.5 border-b border-line pb-1.5" data-case-special-group-certs>
+          <p className="mb-0.5 flex items-center gap-1 text-ui-2xs font-semibold text-ink">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-strong" />
+            {group.certLabel}
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {group.certs.map((member, index) => (
+              <span
+                key={`${member.name}-${index}`}
+                className={cn(
+                  'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-ui-2xs',
+                  member.met
+                    ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                    : 'border-line bg-surface-soft text-ink-muted',
+                )}
+              >
+                {member.met && <span aria-hidden="true">✓</span>}
+                {member.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {group.checks.length > 0 && (
+        <div className="mb-1.5 border-b border-line pb-1.5">
+          <p className="mb-0.5 flex items-center gap-1 text-ui-2xs font-semibold text-ink">
+            <span className="h-1.5 w-1.5 rounded-full bg-ink-faint" />
+            团体条件
+          </p>
+          <div className="space-y-0.5 text-ui-2xs leading-relaxed">
+            {group.checks.map((check, index) => (
+              <div key={index} className={cn(check.met ? 'text-growth-strong' : 'text-ink-muted')}>
+                {check.met ? '✓ ' : '· '}{check.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {group.stats.length > 0 && (
+        <div>
+          <p className="mb-0.5 flex items-center gap-1 text-ui-2xs font-semibold text-ink">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-strong" />
+            队长数值
+          </p>
+          <div className="space-y-0.5 text-ui-2xs leading-relaxed">
+            {group.stats.map((stat, index) => (
+              <div key={index} className={cn(stat.met ? 'text-growth-strong' : 'text-ink-muted')}>
+                {stat.met ? '✓ ' : '· '}{stat.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {group.certs.length === 0 && group.checks.length === 0 && group.stats.length === 0 && (
+        <p className="text-ui-2xs text-ink-muted">
+          {group.gaps.length ? `待补：${group.gaps.join('、')}` : '全部达标'}
+        </p>
+      )}
+    </FloatingCard>
+  );
+}
+
 /** 证书说明浮层：证书名上显示学院课程与属性门槛。 */
 function CertGuideCard({
   cert,
@@ -295,6 +380,7 @@ function DetailSection({
   expanded,
   onToggle,
   onMatchHover,
+  onGroupHover,
   onCertGuideHover,
   onCertPersonHover,
   onItemHover,
@@ -305,6 +391,7 @@ function DetailSection({
   expanded: string;
   onToggle: (id: string) => void;
   onMatchHover: (match: ArtistMatch, hideSlotLabel: boolean, anchor: HoverAnchor) => void;
+  onGroupHover: (group: GroupMatch, anchor: HoverAnchor) => void;
   onCertGuideHover: (cert: string, guide: CertMatchGuide, anchor: HoverAnchor) => void;
   onCertPersonHover: (cert: string, guide: CertMatchGuide, person: string, anchor: HoverAnchor) => void;
   onItemHover: (item: ItemCheck, anchor: HoverAnchor) => void;
@@ -536,8 +623,15 @@ function DetailSection({
                       ? item.groups.slice(0, 2).map((group) => (
                         <span
                           key={group.code}
-                          className="rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
-                          title={group.gaps.length ? `待补：${group.gaps.join('、')}` : '全部达标'}
+                          data-case-special-group={group.code}
+                          className="cursor-help rounded-full border border-line bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink"
+                          onMouseEnter={(event) => {
+                            const rect = event.currentTarget.getBoundingClientRect();
+                            onGroupHover(group, {
+                              left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+                            });
+                          }}
+                          onMouseLeave={onHoverLeave}
                         >
                           {group.name} {group.met}/{group.total}
                         </span>
@@ -678,6 +772,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
                 onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
                 onMatchHover={(match, hideSlotLabel, anchor) =>
                   showHover({ kind: 'match', match, hideSlotLabel, anchor })}
+                onGroupHover={(group, anchor) => showHover({ kind: 'group', group, anchor })}
                 onCertGuideHover={(cert, guide, anchor) => showHover({ kind: 'certGuide', cert, guide, anchor })}
                 onCertPersonHover={(cert, guide, person, anchor) =>
                   showHover({ kind: 'certPerson', cert, guide, person, anchor })}
@@ -697,6 +792,17 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
               key={`match-${hover.match.id}`}
               match={hover.match}
               hideSlotLabel={hover.hideSlotLabel}
+              anchor={hover.anchor}
+              onEnter={clearHoverTimer}
+              onLeave={hideHoverNow}
+            />
+          );
+        }
+        if (hover.kind === 'group') {
+          return (
+            <GroupHoverCard
+              key={`group-${hover.group.code}`}
+              group={hover.group}
               anchor={hover.anchor}
               onEnter={clearHoverTimer}
               onLeave={hideHoverNow}

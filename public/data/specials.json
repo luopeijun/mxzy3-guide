@@ -5,13 +5,13 @@
     "source": "sources/special-notices.tsv"
   },
   "stats": {
-    "rows": 145,
-    "conditions": 85,
-    "notes": 60,
+    "rows": 148,
+    "conditions": 89,
+    "notes": 59,
     "scopeCounts": {
-      "artist": 46,
+      "artist": 47,
       "global": 28,
-      "group": 7,
+      "group": 10,
       "notice": 1,
       "role": 3
     },
@@ -91,8 +91,8 @@
       "id": "galaxy",
       "title": "银河",
       "guideNode": "notices/galaxy",
-      "conditionCount": 8,
-      "noteCount": 10,
+      "conditionCount": 12,
+      "noteCount": 9,
       "slots": [
         "group"
       ],
@@ -2463,8 +2463,8 @@
       "phase": "prepare",
       "kind": "condition",
       "type": "cert",
-      "scope": "group",
-      "name": "国际舞蹈学院证书（全体成员）",
+      "scope": "artist",
+      "name": "国际舞蹈学院证书",
       "target": "-",
       "hint": "舞蹈学院（夏威夷）：有氧舞蹈/舞台表演 专业 + 摄影训练 高级；团体成员都要有",
       "source": "表+攻略",
@@ -2609,21 +2609,79 @@
       }
     },
     {
-      "id": "galaxy.tl.stats",
+      "id": "galaxy.stat.singing",
       "notice": "galaxy",
-      "slot": "-",
-      "phase": "-",
-      "kind": "note",
-      "type": "-",
-      "scope": "-",
-      "name": "歌艺 500-550 / 动感 630-700 / 体能 630-700 / 自信 500-550：事件正常推进，数值不达标也能接",
-      "target": "-",
-      "hint": "非硬门槛，按定位降级为只读备注、不计入达标数",
+      "slot": "group",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "group",
+      "name": "歌艺",
+      "target": "500~550",
+      "hint": "达到上限即达标；只看队长，团员不做要求",
       "source": "表",
       "link": {
-        "kind": "tracker",
-        "href": "#/tracker",
-        "node": "notices/galaxy"
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev13",
+        "node": "notices/galaxy",
+        "event": "36"
+      }
+    },
+    {
+      "id": "galaxy.stat.dynamic",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "group",
+      "name": "动感",
+      "target": "630~700",
+      "hint": "达到上限即达标；只看队长，团员不做要求",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev13",
+        "node": "notices/galaxy",
+        "event": "36"
+      }
+    },
+    {
+      "id": "galaxy.stat.physical",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "group",
+      "name": "体能",
+      "target": "630~700",
+      "hint": "达到上限即达标；只看队长，团员不做要求",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev13",
+        "node": "notices/galaxy",
+        "event": "36"
+      }
+    },
+    {
+      "id": "galaxy.stat.confidence",
+      "notice": "galaxy",
+      "slot": "group",
+      "phase": "notice",
+      "kind": "condition",
+      "type": "stat",
+      "scope": "group",
+      "name": "自信",
+      "target": "500~550",
+      "hint": "达到上限即达标；只看队长，团员不做要求",
+      "source": "表",
+      "link": {
+        "kind": "guide",
+        "href": "#/guide/notices/galaxy~ev13",
+        "node": "notices/galaxy",
+        "event": "36"
       }
     },
     {

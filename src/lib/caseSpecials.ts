@@ -16,6 +16,8 @@ export interface LiveCondition {
   /** 未达标时带差值的文案（如「演技 差 42.4（457.6/500）」）。 */
   gapByArtist: Record<number, string>;
   byGroup: Record<number, boolean>;
+  /** 每个团体的判定详情，团体 hover 时显示队长数值。 */
+  detailByGroup: Record<number, string>;
 }
 
 export interface ItemCheck {
@@ -71,12 +73,30 @@ export interface ArtistMatch {
   optional: { name: string; met: boolean; detail: string }[];
 }
 
+export interface GroupStatDetail {
+  text: string;
+  met: boolean;
+}
+
+export interface GroupMemberCert {
+  name: string;
+  met: boolean;
+}
+
 export interface GroupMatch {
   code: number;
   name: string;
+  /** 队长（memberIds[0]）姓名；团体数值只看他/她。 */
+  leaderName: string;
   met: number;
   total: number;
   gaps: string[];
+  /** hover 里的成员证书判定，逐人打钩。 */
+  certLabel: string;
+  certs: GroupMemberCert[];
+  /** 团体唱片数 / 京风唱片通告等团体级判定。 */
+  checks: GroupStatDetail[];
+  stats: GroupStatDetail[];
 }
 
 export type LiveNoticeStatus = 'done' | 'close' | 'progress' | 'none' | 'manual';
@@ -278,6 +298,20 @@ function evaluateGroupRow(
   ctx: EvalContext,
 ): { met: boolean; detail: string } | null {
   const min = targetOf(row);
+  if (row.type === 'stat') {
+    // 团体数值只看队长（memberIds[0]），团员不要求。
+    const leaderId = group.memberIds[0];
+    const leader = leaderId === undefined
+      ? undefined
+      : ctx.result.artists.find((artist) => artist.roleId === leaderId);
+    const attr = normaliseStatName(row.name);
+    const have = leader && attr ? abilityValue(leader, attr) : null;
+    if (have === null || !attr) return null;
+    return {
+      met: have >= min,
+      detail: have >= min ? `${attr} ${have}/${min}` : statGap(attr, have, min),
+    };
+  }
   if (row.type === 'count' && row.name.includes('唱片')) {
     const have = group.workCount ?? 0;
     return { met: have >= min, detail: `团体唱片 ${have}/${min}` };
@@ -292,6 +326,14 @@ function evaluateGroupRow(
     return {
       met: missing.length === 0,
       detail: missing.length ? `${missing.length} 位成员缺证书` : '全体成员已取得',
+    };
+  }
+  if (row.type === 'flag' && row.name.includes('京风唱片')) {
+    const met = ctx.result.groupWorks.some((work) =>
+      work.company === '京風唱片' && group.memberIds.includes(work.artistId));
+    return {
+      met,
+      detail: met ? '接过京风唱片团体通告' : '未接过京风唱片团体通告',
     };
   }
   return null;
@@ -324,6 +366,7 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
     detailByArtist: {},
     gapByArtist: {},
     byGroup: {},
+    detailByGroup: {},
   };
 
   if (row.type === 'item') {
@@ -369,12 +412,14 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
 
   if (row.scope === 'group') {
     const byGroup: Record<number, boolean> = {};
+    const detailByGroup: Record<number, string> = {};
     let readable = false;
     for (const group of ctx.result.teams) {
       const result = evaluateGroupRow(row, group, ctx);
       if (!result) continue;
       readable = true;
       byGroup[group.code] = result.met;
+      detailByGroup[group.code] = result.detail;
     }
     if (!readable) return blank;
     const met = ctx.result.teams.some((group) => byGroup[group.code]);
@@ -385,6 +430,7 @@ function evaluateRow(row: SpecialRow, ctx: EvalContext): LiveCondition {
         ? `${ctx.result.teams.filter((group) => byGroup[group.code]).length} 个团体达标`
         : '存档没有我方团体',
       byGroup,
+      detailByGroup,
     };
   }
 
@@ -578,11 +624,16 @@ export function evaluateLiveSpecials(
       const artistRows = genderSlots
         ? allArtistRows.filter((condition) => condition.row.phase === 'notice')
         : allArtistRows;
+      // 团体专属通告的证书人名只给团体成员看，不在任何团里的艺人不出现。
+      const groupMemberIds = new Set(result.teams.flatMap((team) => team.memberIds));
+      const baseCandidates = GROUP_ONLY_NOTICES.has(notice.id)
+        ? signed.filter((artist) => groupMemberIds.has(artist.roleId))
+        : signed;
       const candidates = maleOnly
-        ? signed.filter((artist) => starGender(artist.roleId, tables.stars) === 'male')
+        ? baseCandidates.filter((artist) => starGender(artist.roleId, tables.stars) === 'male')
         : femaleOnly
-          ? signed.filter((artist) => starGender(artist.roleId, tables.stars) === 'female')
-          : signed;
+          ? baseCandidates.filter((artist) => starGender(artist.roleId, tables.stars) === 'female')
+          : baseCandidates;
 
       const slotOf = (condition: LiveCondition): string =>
         condition.row.slot && condition.row.slot !== '-' ? condition.row.slot : 'main';
@@ -698,16 +749,45 @@ export function evaluateLiveSpecials(
         .sort((a, b) => b.met - a.met || a.gaps.length - b.gaps.length);
 
       const groupRows = readable.filter((condition) => Object.keys(condition.byGroup).length > 0);
+      const groupCertNames = [...new Set(conditions
+        .filter((condition) => condition.row.type === 'cert')
+        .flatMap((condition) => certsForName(condition.row.name)))];
+      const certLabel = groupCertNames.join('、') || '证书';
       const groups = result.teams.map((group): GroupMatch => {
+        const leaderId = group.memberIds[0];
+        const leaderName = result.artistDirectory.find((artist) => artist.id === leaderId)?.name
+          ?? tables.stars?.[String(leaderId)]?.[0]
+          ?? '队长';
         const gaps = groupRows
           .filter((condition) => !condition.byGroup[group.code])
-          .map((condition) => condition.row.name);
+          .map((condition) => condition.detailByGroup[group.code] || condition.row.name);
+        const detailOf = (condition: LiveCondition): string =>
+          condition.detailByGroup[group.code] || condition.row.name;
+        const checks = groupRows
+          .filter((condition) => condition.row.type !== 'stat')
+          .map((condition) => ({ text: detailOf(condition), met: !!condition.byGroup[group.code] }));
+        const stats = groupRows
+          .filter((condition) => condition.row.type === 'stat')
+          .map((condition) => ({ text: detailOf(condition), met: !!condition.byGroup[group.code] }));
+        const certs = group.memberIds.map((id) => {
+          const held = ctx.certs.get(id) ?? [];
+          return {
+            name: artistNameOf(id, ctx),
+            met: groupCertNames.length > 0
+              && groupCertNames.every((cert) => held.includes(certKey(cert))),
+          };
+        });
         return {
           code: group.code,
           name: group.name,
+          leaderName,
           met: groupRows.length - gaps.length,
           total: groupRows.length,
           gaps,
+          certLabel,
+          certs,
+          checks,
+          stats,
         };
       }).filter((match) => match.total > 0)
         .sort((a, b) => b.met - a.met || a.gaps.length - b.gaps.length);
@@ -716,9 +796,14 @@ export function evaluateLiveSpecials(
         groups.push({
           code: -1,
           name: '需先组建团体',
+          leaderName: '',
           met: 0,
           total: 1,
           gaps: ['存档没有我方团体'],
+          certLabel,
+          certs: [],
+          checks: [],
+          stats: [],
         });
       }
 
