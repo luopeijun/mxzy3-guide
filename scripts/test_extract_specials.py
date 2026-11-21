@@ -171,7 +171,7 @@ class TestSpecialsJson(unittest.TestCase):
         rows = {r["id"]: r for r in _json()["rows"]}
         expected = {
             "eternal.item.meiying": "赢得综艺节目猫狗神偷的奖品。",
-            "eternal.item.mozhou": "在维也纳买了10次听课证后，教授会赠送。",
+            "eternal.item.mozhou": "在维也纳（音乐证书）买了10次听课证后，教授会赠送。",
             "eternal.item.huyan": "打工项目“秀场主持”到资深后再打工20次以上，且主角跟随时会捡到。",
             "eternal.item.cross": "开罗购买（100万）",
         }
