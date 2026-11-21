@@ -12,7 +12,7 @@ import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
   noticeLabel, noticeUnit, riskOf, shootableDays,
-  buildGroupRecord, canTakeNotice, canTakeRole, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
+  buildGroupRecord, canTakeNotice, canTakeRole, categoryOf, isAcceptable, isGroupRole, matchGroupRole, matchRole, moneyText, parseSave, toCsv,
   type ArchiveNotice, type PromoCast,
   type ArtistEvent, type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
@@ -758,7 +758,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
   /** 通告页签：宣传活动 / 筹备中 / 拍摄中 / 等待上市 / 自制通告及其他。
    *  默认固定「筹备中」：以后无论加多少页签，这里都保持 'open'。 */
-  const [board, setBoard] = useState<'open' | 'shooting' | 'waiting' | 'selfMade' | 'promo'>('open');
+  const [board, setBoard] = useState<'open' | 'shooting' | 'waiting' | 'hot' | 'selfMade' | 'promo'>('open');
   const inputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
   // freshest copies in refs so parseSave never joins against empty tables.
@@ -916,6 +916,25 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
       .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
   }, [result]);
   const waitingCount = waitingNotices.length;
+
+  /** 热卖中：与等待上市同一套字段口径，只换成状态判定；同样只列旗下艺人/团体参演。 */
+  const hotNotices = useMemo(() => {
+    if (!result) return [] as ArchiveNotice[];
+    const signed = new Set(result.signedArtistIds);
+    const teamCodes = new Set(result.teams.map((t) => t.code));
+    return result.archiveNotices
+      .filter((n) => {
+        if (n.category !== '熱賣中') return false;
+        if (n.artistIds.some((a) => signed.has(a))) return true;
+        return (n.promoCasts ?? []).some((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode));
+      })
+      .map((n) => ({
+        ...n,
+        promoCasts: (n.promoCasts ?? []).filter((c) => signed.has(c.artistId) || teamCodes.has(c.groupCode)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  }, [result]);
+  const hotCount = hotNotices.length;
 
   /** The panel is fixed: every artist the save marks as signed, no picker. */
   const signedArtists = useMemo<SignedArtist[]>(() => {
@@ -1593,6 +1612,16 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <button
                   type="button"
                   role="tab"
+                  data-case-tab="hot"
+                  aria-selected={board === 'hot'}
+                  onClick={() => setBoard('hot')}
+                  className={tabClass(board === 'hot')}
+                >
+                  热卖中 <span className="tabular-nums">{hotCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
                   data-case-tab="self-made"
                   aria-selected={board === 'selfMade'}
                   onClick={() => setBoard('selfMade')}
@@ -1623,6 +1652,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 <WaitingPanel
                   notices={waitingNotices}
                   tables={tables}
+                  artistName={(id) => nameOfArtist(result, tables, id)}
+                  teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
+                />
+              ) : board === 'hot' ? (
+                <WaitingPanel
+                  notices={hotNotices}
+                  tables={tables}
+                  emptyTitle="没有热卖中的作品"
+                  emptyText="只列旗下艺人已参演、已到发行日且还没下架的作品。"
                   artistName={(id) => nameOfArtist(result, tables, id)}
                   teamName={(code) => result.teams.find((t) => t.code === code)?.name ?? `團體 ${code}`}
                 />
@@ -2059,6 +2097,12 @@ function PromoPanel({
             >
               <span className="font-semibold text-ink">{group.name}</span>
               <span className="text-ui-2xs text-ink-faint">{group.code}</span>
+              <span className={cn(
+                'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+                CATEGORY_CLASS[categoryOf(group.code)] ?? 'bg-surface-soft text-ink-muted',
+              )}>
+                {categoryOf(group.code)}
+              </span>
               <span className="ml-auto rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs tabular-nums text-ink-muted">
                 {castCount} 角色
               </span>
@@ -2111,18 +2155,23 @@ function PromoPanel({
 
 /** 「等待上市」页签：本体记录已杀青、还没到发行日的作品，只列旗下艺人参演的。
  *  每项作品一张卡片，旗下参演角色逐行列出，各自带完成天数与酬劳。 */
+/** 等待上市 / 热卖中共用：同一套本体记录字段，只是状态口径不同。 */
 function WaitingPanel({
   notices, tables, artistName, teamName,
+  emptyTitle = '没有等待上市的作品',
+  emptyText = '只列旗下艺人已参演、拍摄完成但还没到发行日的作品。换一份带这类记录的存档再试。',
 }: {
   notices: ArchiveNotice[];
   tables: CaseTables;
   artistName: (id: number) => string;
   teamName: (code: number) => string;
+  emptyTitle?: string;
+  emptyText?: string;
 }) {
   if (notices.length === 0) {
     return (
       <div className="mt-2">
-        <EmptyState title="没有等待上市的作品" text="只列旗下艺人已参演、拍摄完成但还没到发行日的作品。换一份带这类记录的存档再试。" />
+        <EmptyState title={emptyTitle} text={emptyText} />
       </div>
     );
   }
@@ -2139,10 +2188,14 @@ function WaitingPanel({
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 border-b border-line px-3 py-2 text-ui-xs">
               <span className="font-semibold text-ink">{n.name}</span>
               <span className="text-ui-2xs text-ink-faint">{n.code}</span>
+              <span className={cn(
+                'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+                CATEGORY_CLASS[categoryOf(n.code)] ?? 'bg-surface-soft text-ink-muted',
+              )}>
+                {categoryOf(n.code)}
+              </span>
               {(type || subType) && (
-                <span className="rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-muted">
-                  {[type, subType].filter(Boolean).join(' · ')}
-                </span>
+                <span className="text-ui-2xs text-ink-faint">{[type, subType].filter(Boolean).join(' · ')}</span>
               )}
               {company && <span className="text-ui-2xs text-ink-faint">{company}</span>}
               <span className="ml-auto whitespace-nowrap text-ui-2xs tabular-nums text-ink-muted">

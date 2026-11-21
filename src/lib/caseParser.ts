@@ -670,11 +670,11 @@ export interface ArchiveNotice {
   endDayNum?: number;
   /** 宣传活动里每个角色槽的明细（角色名 / 签约艺人编号 / 该角色宣传天数）。团体宣传只有一条。 */
   promoCasts?: PromoCast[];
-  /** 等待上市：发行档期起（上市日，文本）。来自本体记录第 4 组档期。 */
+  /** 等待上市 / 热卖中：发行档期起（上市日，文本）。来自本体记录第 4 组档期。 */
   saleStart?: string;
-  /** 等待上市：发行档期止（下市日，文本）。来自本体记录第 5 组档期。 */
+  /** 等待上市 / 热卖中：发行档期止（下市日，文本）。来自本体记录第 5 组档期。 */
   saleEnd?: string;
-  /** 等待上市：本体记录的酬劳（首角色 +816）。 */
+  /** 等待上市 / 热卖中：本体记录的酬劳（首角色 +816）。 */
   pay?: number | null;
 }
 
@@ -1447,8 +1447,8 @@ export function parseArchiveNotices(
       if (rec.isGroup) notice.groupId = rec.groupId;
       notice.promoCasts = rec.casts;
       notice.endDayNum = rec.end;
-    } else if (category === '等待上市') {
-      // 等待上市显示的是本体记录：发行档期 + 每个参演角色的完成天数 / 酬劳。
+    } else if (category === '等待上市' || category === '熱賣中') {
+      // 等待上市 / 热卖中显示的是本体记录：发行档期 + 每个参演角色的完成天数 / 酬劳。
       notice.saleStart = rec.saleStart;
       notice.saleEnd = rec.saleEnd;
       notice.pay = rec.pay;
