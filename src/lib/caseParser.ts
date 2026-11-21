@@ -1310,16 +1310,37 @@ export function parseArchiveNotices(
     if (!code) continue;
     const y892 = q(o, 892);
     const y940 = q(o, 940);
-    const isGroup = !(y892 >= 2000 && y892 <= 2015) && y940 >= 2000 && y940 <= 2015;
-    if (!isGroup && !(y892 >= 2000 && y892 <= 2015)) continue;
-    const base = isGroup ? 940 : 892;
+    const stdPersonal = y892 >= 2000 && y892 <= 2015;
+    const stdGroup = !stdPersonal && y940 >= 2000 && y940 <= 2015;
+    // CF 广告记录的档期锚点会整体后移：+908（艺人 +816，5 组档期）或
+    // +956（艺人 +816，2 组档期，无开拍/杀青），标准 +892 不合法。
+    // 这类记录的 +940 也可能是合法年份（和团体式布局重叠），所以用「+816 是合法艺人编号」
+    // 来确认是后移布局；否则退回标准判定。只在 CF 广告时探测，避免误伤 TV/CD/MV。
+    let cfExtra = 0;
+    if (!stdPersonal && code.startsWith('CF')) {
+      const artist816 = q(o, 816);
+      if (artist816 >= 1 && artist816 <= 100) {
+        for (const cand of [908, 956]) {
+          const y = q(o, cand);
+          const m = q(o, cand + 4);
+          const d = q(o, cand + 8);
+          if (y >= 2000 && y <= 2015 && m >= 1 && m <= 12 && d >= 1 && d <= 31) { cfExtra = cand; break; }
+        }
+      }
+    }
+    const isGroup = !cfExtra && stdGroup;
+    if (!isGroup && !stdPersonal && !cfExtra) continue;
+    // 扩展锚点的 CF 记录：艺人/完成/酬劳在 +816/+820/+832（相对标准 +800 后移 16）。
+    const base = cfExtra ? cfExtra : isGroup ? 940 : 892;
     const role1 = roleAt(o, 10);
     const group = role1 === '團體';
     // CF 广告个人通告用「团体式布局」但角色首格不是「團體」：档期从 +940 起，
     // 角色槽整体比标准个人记录晚 32B（艺人 +832 / 完成 +836 / 酬劳 +848）。
     // 用 +832 是否为合法艺人编号来区分，避免把角色定义表的 0 当成艺人。
     const cfPersonal = isGroup && !group && q(o, 832) >= 1 && q(o, 832) <= 100;
-    const slot = cfPersonal ? 32 : 0;
+    const slot = cfExtra ? 16 : cfPersonal ? 32 : 0;
+    // CF501 这类锚点 +956 的记录只有 2 组档期（上档/下档），没有开拍/杀青组。
+    const cfShort = cfExtra === 956;
     const months = [q(o, base + 4), q(o, base + 20), q(o, base + 36), q(o, base + 52), q(o, base + 68)];
     const days = [q(o, base + 8), q(o, base + 24), q(o, base + 40), q(o, base + 56), q(o, base + 72)];
     const valid = (i: number) => months[i] >= 1 && months[i] <= 12 && days[i] >= 1 && days[i] <= 31;
@@ -1330,9 +1351,10 @@ export function parseArchiveNotices(
     const endBase = earlyStart ? base + 16 : base + 32;
     const startIdx = earlyStart ? 0 : 1;
     const endIdx = earlyStart ? 1 : 2;
-    if (!valid(startIdx) || !valid(endIdx)) continue;
-    const start = day(q(o, startBase), months[startIdx], days[startIdx]);
-    const end = day(q(o, endBase), months[endIdx], days[endIdx]);
+    if (cfShort ? (!valid(0) || !valid(1)) : (!valid(startIdx) || !valid(endIdx))) continue;
+    // 短布局没有开拍/杀青，起止日用上档/下档；UI 里拍摄档期显示「—」由空文本表达。
+    const start = cfShort ? day(q(o, base), months[0], days[0]) : day(q(o, startBase), months[startIdx], days[startIdx]);
+    const end = cfShort ? day(q(o, base + 16), months[1], days[1]) : day(q(o, endBase), months[endIdx], days[endIdx]);
     const groupId = group ? q(o, 772) : 0;
     const doneRaw = group ? q(o, 836) : q(o, 804 + slot);
     const doneDays = doneRaw < 4000000000 ? doneRaw : null;
@@ -1343,19 +1365,24 @@ export function parseArchiveNotices(
       start,
       end,
       // 上档/下档：个人在 months[3]/[4]，团体少一组、在 months[2]/[3]。
-      onSale: day(q(o, earlyStart ? base + 32 : base + 48), months[earlyStart ? 2 : 3], days[earlyStart ? 2 : 3]),
-      off: day(q(o, earlyStart ? base + 48 : base + 64), months[earlyStart ? 3 : 4], days[earlyStart ? 3 : 4]),
-      startDate: fmtDay(view, o + startBase),
-      endDate: fmtDay(view, o + endBase),
+      // cfShort 只有 2 组档期：上档 base、下档 base+16。
+      onSale: cfShort ? day(q(o, base), months[0], days[0])
+        : day(q(o, earlyStart ? base + 32 : base + 48), months[earlyStart ? 2 : 3], days[earlyStart ? 2 : 3]),
+      off: cfShort ? day(q(o, base + 16), months[1], days[1])
+        : day(q(o, earlyStart ? base + 48 : base + 64), months[earlyStart ? 3 : 4], days[earlyStart ? 3 : 4]),
+      startDate: cfShort ? '' : fmtDay(view, o + startBase),
+      endDate: cfShort ? '' : fmtDay(view, o + endBase),
       // 个人记录 5 组档期（+892 起）：开拍 +908 / 杀青 +924 / 上档 +940 / 下档 +956。
       // 团体式布局 4 组（+924 开放周、+940 开拍起）：上档 +972 / 下档 +988。
-      saleStart: fmtDay(view, o + (isGroup ? base + 32 : base + 48)),
-      saleEnd: fmtDay(view, o + (isGroup ? base + 48 : base + 64)),
+      // cfShort 2 组：上档 base / 下档 base+16。
+      saleStart: fmtDay(view, o + (cfShort ? base : isGroup ? base + 32 : base + 48)),
+      saleEnd: fmtDay(view, o + (cfShort ? base + 16 : isGroup ? base + 48 : base + 64)),
       pay: q(o, 816 + slot) < 4000000000 ? q(o, 816 + slot) : null,
       // 编辑器「其他信息」头六个数：个人档期在 +892~+963，紧接 +972；
-      // 团体/CF 档期在 +924~+999，紧接 +1004。
+      // 团体/CF 档期在 +924~+999，紧接 +1004；cfShort 2 组档期后紧接 base+32。
       otherInfo: Array.from({ length: 6 }, (_, i) => {
-        const x = q(o, (base + (isGroup ? 64 : 80)) + i * 4);
+        const infoBase = cfShort ? base + 32 : base + (isGroup ? 64 : 80);
+        const x = q(o, infoBase + i * 4);
         return x < 4000000000 ? x : 0;
       }).join(', '),
       artists,

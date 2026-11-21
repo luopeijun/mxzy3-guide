@@ -2443,7 +2443,9 @@ function DoneListPanel({
                     <Td rowSpan={casts.length} className="align-top text-ui-2xs text-ink-muted">
                       {(type || subType) ? [type, subType].filter(Boolean).join(' · ') : '—'}
                     </Td>
-                    <Td rowSpan={casts.length} className="align-top whitespace-nowrap tabular-nums text-ink-muted">{n.startDate} → {n.endDate}</Td>
+                    <Td rowSpan={casts.length} className="align-top whitespace-nowrap tabular-nums text-ink-muted">
+                      {n.startDate && n.endDate ? `${n.startDate} → ${n.endDate}` : '—'}
+                    </Td>
                     <Td rowSpan={casts.length} className="align-top whitespace-nowrap tabular-nums text-ink-muted">{n.saleStart} → {n.saleEnd}</Td>
                   </>
                 ) : null}
