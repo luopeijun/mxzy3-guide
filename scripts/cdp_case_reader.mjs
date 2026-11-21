@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as XLSX from 'xlsx';
 
 /* Browser regression for the 存档解析 tab:
  *   1) the main site has five tabs, #/case renders the reader and the bundled
@@ -26,7 +27,23 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SNAP = path.join(root, 'tests', 'fixtures', 'saves');
 const SOURCE = process.argv[2] ?? path.join(SNAP, 'probe.sa2');
 const SAVE = path.join(root, '.tmp', 'case-e2e.sa2');
+const MEMO = path.join(root, '.tmp', 'case-memo-e2e.xlsx');
 fs.mkdirSync(path.dirname(SAVE), { recursive: true });
+
+/** Small in-memory Excel fixture for the 本周便签 tests. Kept in .tmp so the
+ *  regression never depends on the user's own (gitignored) memo workbook. */
+function writeMemoFixture() {
+  const rows = [
+    ['年', '月', '周次', '日期区间', '当周排班', '心得备注'],
+    [1, 1, 5, '2006.1.29-2006.2.4', '去开罗给初始女艺人买礼物；去公园找古芊青；', '找古芊青要第二次再去（知名度 > 100），事件中选择「自告奋勇」'],
+    [1, 2, 1, '2006.2.5-2006.2.11', '第二周排班', '第二周备注'],
+  ];
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, '备忘录');
+  XLSX.writeFile(book, MEMO);
+}
+writeMemoFixture();
 fs.copyFileSync(SOURCE, SAVE);
 
 function request(target, method = 'PUT') {
@@ -133,6 +150,15 @@ async function main() {
       if (!input.nodeId) throw new Error('file input not found in DOM');
       await send('DOM.setFileInputFiles', { nodeId: input.nodeId, files: [file] });
       await sleep(1600);
+    };
+
+    /** 备忘录独立于存档，隐藏输入框只在结果渲染后挂载。 */
+    const uploadMemo = async (file) => {
+      const fresh = await send('DOM.getDocument', { depth: -1 });
+      const input = await send('DOM.querySelector', { nodeId: fresh.root.nodeId, selector: '[data-case-memo-upload]' });
+      if (!input.nodeId) throw new Error('memo file input not found in DOM');
+      await send('DOM.setFileInputFiles', { nodeId: input.nodeId, files: [file] });
+      await sleep(1200);
     };
 
     const parsed = await evaluate(`JSON.stringify({
@@ -1721,6 +1747,119 @@ async function main() {
         && xiaoCard.contract.includes('2010/1/24') && xiaoCard.contract.includes('50%'),
       '艺人卡合约信息显示签约时间 / 到期日 / 分红', xiaoCard?.contract ?? 'none');
     }
+
+    // v1.17.0 本周便签：Excel 导入、独立存储、显示白名单、日期不截断、旧缓存兼容。
+    await evaluate(`localStorage.removeItem('mxzy3.case.memo.v1'); true`);
+    await navigate('http://localhost:5173/#/case');
+    await uploadSave(SAVE);
+    await uploadMemo(MEMO);
+
+    const memoFormats = JSON.parse(await evaluate(`import('/src/lib/memoNotes.ts').then((m) => JSON.stringify([
+      m.formatWeekRange('2006.8.13-2006.8.19'),
+      m.formatWeekRange('2006.12.31-2007.1.6'),
+      m.formatWeekRange('2006.12.31-1.6'),
+    ]))`));
+    check(memoFormats[0] === '2006.8.13–8.19' && memoFormats[1] === '2006.12.31–2007.1.6'
+      && memoFormats[2] === '2006.12.31–2007.1.6',
+    '便签日期同年省年份、跨年保留两年', JSON.stringify(memoFormats));
+
+    const memoState = JSON.parse(await evaluate(`JSON.stringify((() => {
+      const aside = document.querySelector('[data-case-memo][data-case-memo-variant="aside"]');
+      const inline = document.querySelector('[data-case-memo][data-case-memo-variant="inline"]');
+      const body = aside?.querySelector('[data-case-memo-body]');
+      const range = aside?.querySelector('[data-case-memo-range]');
+      const toolbar = document.querySelector('[data-case-toolbar]');
+      const stored = JSON.parse(localStorage.getItem('mxzy3.case.memo.v1') || 'null');
+      return {
+        asideVisible: aside ? getComputedStyle(aside).display !== 'none' : false,
+        expanded: aside?.querySelector('[data-case-memo-toggle]')?.getAttribute('aria-expanded'),
+        labels: body ? [...body.children].map((card) => card.children[0]?.textContent.trim()) : [],
+        values: body ? [...body.children].map((card) => card.children[1]?.textContent.trim()) : [],
+        rangeText: range?.textContent.trim(),
+        rangeTitle: range?.getAttribute('title'),
+        rangeClipped: range ? range.scrollWidth > range.clientWidth + 1 : null,
+        toolbarHasMemoButtons: toolbar ? /导入备忘录|下载模板/.test(toolbar.innerText) : null,
+        inlineHidden: inline ? getComputedStyle(inline.parentElement).display === 'none' : null,
+        storedLabels: stored?.weeks?.[0]?.cells?.map((cell) => cell.label) ?? [],
+        storedFile: stored?.fileName ?? '',
+      };
+    })())`));
+    console.log('memo:', JSON.stringify(memoState));
+    check(memoState.asideVisible && memoState.expanded === 'true',
+      '本周便签在宽屏右栏常驻且默认展开');
+    check(JSON.stringify(memoState.labels) === JSON.stringify(['当周排班', '心得备注']),
+      '本周便签只显示当周排班与心得备注', JSON.stringify(memoState.labels));
+    check(memoState.values.some((v) => v.includes('去开罗给初始女艺人买礼物'))
+      && memoState.values.some((v) => v.includes('自告奋勇')),
+    '本周便签内容来自导入的 Excel', JSON.stringify(memoState.values));
+    check(memoState.rangeText === '2006.1.29–2.4'
+      && memoState.rangeTitle === '2006.1.29-2006.2.4' && memoState.rangeClipped === false,
+    '便签日期完整显示且同年不重复年份',
+    `${memoState.rangeText} / title=${memoState.rangeTitle} / clipped=${memoState.rangeClipped}`);
+    check(memoState.toolbarHasMemoButtons === false,
+      '备忘录按钮只在便签里，不重复出现在工具栏');
+    check(memoState.inlineHidden === true,
+      '宽屏只显示右栏便签，正文简版隐藏');
+    check(JSON.stringify(memoState.storedLabels) === JSON.stringify(['当周排班', '心得备注'])
+      && memoState.storedFile === 'case-memo-e2e.xlsx',
+    '导入结果存进独立 localStorage 且只保留两列',
+    `${memoState.storedFile} :: ${JSON.stringify(memoState.storedLabels)}`);
+
+    const memoBeforeSwitch = await evaluate(`localStorage.getItem('mxzy3.case.memo.v1')`);
+    await uploadSave(path.join(SNAP, 'Story0001.sa2'));
+    const memoAfterSwitch = await evaluate(`localStorage.getItem('mxzy3.case.memo.v1')`);
+    check(memoBeforeSwitch === memoAfterSwitch,
+      '切换存档后备忘录保持不变');
+
+    await send('Emulation.setDeviceMetricsOverride', {
+      width: 800, height: 900, deviceScaleFactor: 1, mobile: false,
+    });
+    await sleep(400);
+    const narrowMemo = JSON.parse(await evaluate(`JSON.stringify((() => {
+      const aside = document.querySelector('[data-case-memo][data-case-memo-variant="aside"]');
+      const inline = document.querySelector('[data-case-memo][data-case-memo-variant="inline"]');
+      return {
+        asideHidden: aside ? getComputedStyle(aside.parentElement).display === 'none' : null,
+        inlineVisible: inline ? getComputedStyle(inline.parentElement).display !== 'none' : false,
+      };
+    })())`));
+    check(narrowMemo.asideHidden === true && narrowMemo.inlineVisible === true,
+      '窄屏隐藏右栏便签，改在正文顶部显示简版', JSON.stringify(narrowMemo));
+    await send('Emulation.setDeviceMetricsOverride', {
+      width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
+    });
+
+    await navigate('http://localhost:5173/#/case');
+    await evaluate(`localStorage.setItem('mxzy3.case.memo.v1', JSON.stringify({
+      version: 1,
+      fileName: '旧格式.xlsx',
+      importedAt: Date.now(),
+      columns: ['年', '月', '周次', '日期区间', '当周排班', '心得备注'],
+      weeks: [{
+        rangeText: '2006.1.29-2006.2.4',
+        fromDay: Math.floor(Date.UTC(2006, 0, 29) / 86400000),
+        toDay: Math.floor(Date.UTC(2006, 1, 4) / 86400000),
+        cells: [
+          { label: '年', value: '1' },
+          { label: '月', value: '1' },
+          { label: '周次', value: '5' },
+          { label: '当周排班', value: '旧排班' },
+          { label: '心得备注', value: '旧备注' },
+        ],
+      }],
+    })); true`);
+    await navigate('http://localhost:5173/#/case');
+    await uploadSave(SAVE);
+    const migratedMemo = JSON.parse(await evaluate(`JSON.stringify((() => {
+      const body = document.querySelector('[data-case-memo][data-case-memo-variant="aside"] [data-case-memo-body]');
+      return {
+        labels: body ? [...body.children].map((card) => card.children[0]?.textContent.trim()) : [],
+        values: body ? [...body.children].map((card) => card.children[1]?.textContent.trim()) : [],
+      };
+    })())`));
+    check(JSON.stringify(migratedMemo.labels) === JSON.stringify(['当周排班', '心得备注'])
+      && JSON.stringify(migratedMemo.values) === JSON.stringify(['旧排班', '旧备注']),
+    '旧格式备忘录自动过滤年/月/周次且保留内容', JSON.stringify(migratedMemo));
 
     await navigate('http://localhost:5173/sweet.html');
     const sweetState = JSON.parse(await evaluate(`JSON.stringify({
