@@ -1671,6 +1671,27 @@ function buildWorkDateIndex(
  *  不进个人唱片数，未杀青的自制通告（TV702 二見鍾情）也不算完成作品。
  *  清单本身没有日期，从整张记事表按编码补（见 buildWorkDateIndex）；被挤掉
  *  的早期记录补不到就留空，不猜时间。 */
+/** 通告记录表里「作品编码|艺人编号」→ 真实角色名（男/女主角/配角）。
+ *  通告本体记录的角色槽是存档真源，比性别+星级猜测可靠；但通告表只留近期
+ *  通告，老作品命中不到时仍走 WORK_ROLE_OVERRIDES + 角色表猜测兜底。 */
+export type WorkRoleIndex = Map<string, string>;
+
+/** 电视/电影角色槽只认这四种，排除「個人 / 團體 / 女性 / 男性」等占位名。 */
+const MAIN_ROLES = new Set(['男主角', '女主角', '男配角', '女配角']);
+
+/** 从通告记录表建角色真源索引；同一作品同一艺人只留第一个（多版本角色应一致）。 */
+export function buildWorkRoleIndex(notices: ArchiveNotice[]): WorkRoleIndex {
+  const index: WorkRoleIndex = new Map();
+  for (const notice of notices) {
+    for (const cast of notice.promoCasts ?? []) {
+      if (!MAIN_ROLES.has(cast.roleName) || !cast.artistId || cast.artistId > 100) continue;
+      const key = `${notice.code}|${cast.artistId}`;
+      if (!index.has(key)) index.set(key, cast.roleName);
+    }
+  }
+  return index;
+}
+
 export function parseWorkHistory(
   view: DataView,
   artists: ArtistStats[],
@@ -1680,6 +1701,7 @@ export function parseWorkHistory(
   firmStart: number,
   rolesByCode: Map<string, RoleRecord[]>,
   stars: CaseTables['stars'],
+  roleIndex: WorkRoleIndex,
 ): WorkRecord[] {
   const sorted = [...artists].sort((a, b) => a.offset - b.offset);
   const unfinished = new Set(selfMade.filter((s) => s.status !== 'done').map((s) => s.code));
@@ -1733,7 +1755,10 @@ export function parseWorkHistory(
         company: cases[workCode]?.[3] || '',
         artistId: artist.roleId,
         noticeIndex,
-        role: pickWorkRole(workCode, noticeIndex, artist.roleId, rolesByCode, stars, cases),
+        // 通告记录表角色槽是真源，命中即用；早期作品通告表没留存，回退到
+        // 人工核对过的 override + 角色表星级/性别猜测。
+        role: roleIndex.get(`${workCode}|${artist.roleId}`)
+          ?? pickWorkRole(workCode, noticeIndex, artist.roleId, rolesByCode, stars, cases),
         order: k,
         seq,
       });
@@ -3099,12 +3124,18 @@ export function parseSave(
     };
   });
 
+  // 通告记录表里的角色槽是「通告统计」角色的真源，先解析一次建索引，供作品
+  // 明细优先取用；结果也直接进 ParseResult，不在返回时重复解析。
+  const archiveNotices = parseArchiveNotices(bytes, view, tables, currentDate);
+  const workRoleIndex = buildWorkRoleIndex(archiveNotices);
+
   // 明细改用每位艺人状态块后面的完整参与清单；记事表只剩 97 条，苏嫚君
   // 官方 8 部电视在记事表里只有 5 条，用它当明细必然对不上「通告统计」。
   // 日期则从整张记事表按作品编码补（不按艺人），避免发行记录挂在别人名下。
   const workIndex = buildWorkDateIndex(view, bytes.length);
   const historyWorks = parseWorkHistory(
     view, artists, tables.cases, workIndex, selfMade, artistEnd, rolesByCode, tables.stars,
+    workRoleIndex,
   );
   const works = historyWorks.length > 0 ? historyWorks : diaryWorks;
 
@@ -3196,7 +3227,7 @@ export function parseSave(
     events,
     groupWorks: allGroupWorks,
     works: allWorks,
-    archiveNotices: parseArchiveNotices(bytes, view, tables, currentDate),
+    archiveNotices,
     batches,
     nextUpdate,
     unknownCodes: [...new Set(unknownCodes)],
