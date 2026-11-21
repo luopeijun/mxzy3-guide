@@ -129,7 +129,7 @@ export interface LiveNotice {
   filmed: FilmedRecord[];
   /** note 行里 id 带 `.node.` 的关键事件节点，按表里顺序展示。 */
   nodes: SpecialRow[];
-  /** 事件驱动通告：标题行不显示数值进度条，改写「按事件节点推进」。 */
+  /** 事件驱动通告：节点存档判不了，标题行不显示进度条与数值，只保留「推进中 / 已拍摄」状态。 */
   eventDriven: boolean;
   conditions: LiveCondition[];
   items: ItemCheck[];

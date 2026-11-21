@@ -1,17 +1,23 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { useSpecialsData } from '../../hooks/useSpecialsData';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
 import {
   evaluateLiveSpecials,
-  LIVE_STATUS_LABELS,
   SINGLE_ROLE_NOTICES,
   type ArtistMatch,
   type CertMatch,
   type CertMatchGuide,
   type GroupMatch,
   type ItemCheck,
-  type LiveNoticeStatus,
   type LiveSpecialsReport,
 } from '../../lib/caseSpecials';
 import type { CaseTables, ParseResult } from '../../lib/caseParser';
@@ -21,13 +27,15 @@ interface Props {
   tables: CaseTables;
 }
 
-const STATUS_DOT: Record<LiveNoticeStatus, string> = {
-  done: 'bg-brand',
-  close: 'bg-alert',
-  progress: 'bg-tag-talk',
-  none: 'bg-line-strong',
-  manual: 'bg-ink-faint',
-};
+const ORB_WIDTH = 60;
+const ORB_HEIGHT = 54;
+const ORB_EDGE = 8;
+const PANEL_GAP = 10;
+const PANEL_EDGE = 8;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), Math.max(min, max));
+}
 
 type HoverAnchor = { left: number; right: number; top: number; bottom: number };
 
@@ -466,32 +474,14 @@ function DetailSection({
               onClick={() => onToggle(item.notice.id)}
               className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-surface-soft"
             >
-              {filmed.length > 0 ? (
-                <span aria-hidden="true" className="shrink-0 text-ui-sm font-semibold text-growth-strong">✓</span>
-              ) : (
-                <i className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT[item.status])} />
-              )}
+              <i className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-strong" />
               <span className="w-[92px] shrink-0 truncate text-ui-xs font-semibold text-ink">
                 {item.notice.title}
               </span>
-              {item.eventDriven || item.nodes.length > 0 ? (
-                <span className="flex-1 text-right text-ui-2xs text-ink-faint">按事件节点推进</span>
-              ) : (
-                <>
-                  <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-soft">
-                    <span
-                      className="block h-full rounded-full bg-brand"
-                      style={{ width: `${item.total ? Math.round(item.met / item.total * 100) : 0}%` }}
-                    />
-                  </span>
-                  <span className="w-[30px] shrink-0 text-right text-ui-2xs text-ink-faint">
-                    {item.total ? `${item.met}/${item.total}` : '—'}
-                  </span>
-                  <span className="w-[76px] shrink-0 text-right text-ui-2xs text-ink-muted">
-                    {LIVE_STATUS_LABELS[item.status]}
-                  </span>
-                </>
-              )}
+              <span className="flex-1" />
+              <span className="w-[60px] shrink-0 text-right text-ui-2xs text-ink-muted">
+                {filmed.length > 0 ? '已拍摄' : '推进中'}
+              </span>
               <span className="w-3 shrink-0 text-center text-ui-2xs text-ink-faint">
                 {open ? '−' : '+'}
               </span>
@@ -722,8 +712,21 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState('');
   const [hover, setHover] = useState<HoverState | null>(null);
+  const [orbPos, setOrbPos] = useState(() => ({
+    x: typeof window === 'undefined'
+      ? 0
+      : Math.max(ORB_EDGE, window.innerWidth - ORB_WIDTH - (window.innerWidth >= 1120 ? 280 : 20)),
+    y: typeof window === 'undefined' ? 0 : Math.max(ORB_EDGE, window.innerHeight - ORB_HEIGHT - 64),
+  }));
+  const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragRef = useRef<{
+    pointerId: number; startX: number; startY: number; x: number; y: number; moved: boolean;
+  } | null>(null);
+  const suppressClickRef = useRef(false);
 
   const clearHoverTimer = () => {
     if (hoverTimer.current) {
@@ -759,6 +762,52 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
       current && report?.notices.some((item) => item.notice.id === current) ? current : '');
   }, [report]);
 
+  // 窗口缩放后把小鸟夹回视口，避免拖到边缘再缩窗导致图标消失。
+  useEffect(() => {
+    const onResize = () => {
+      setOrbPos((current) => ({
+        x: clamp(current.x, ORB_EDGE, window.innerWidth - ORB_WIDTH - ORB_EDGE),
+        y: clamp(current.y, ORB_EDGE, window.innerHeight - ORB_HEIGHT - ORB_EDGE),
+      }));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // 浮窗跟着小鸟走：左右按小鸟在视口的位置选对齐边，上下优先放在空间更大的一侧，最后夹回视口。
+  useLayoutEffect(() => {
+    if (!open) {
+      setPanelPos(null);
+      return;
+    }
+    const place = () => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      const { width, height } = panel.getBoundingClientRect();
+      const centerX = orbPos.x + ORB_WIDTH / 2;
+      let left: number;
+      if (centerX < window.innerWidth / 3) left = orbPos.x;
+      else if (centerX > window.innerWidth * 2 / 3) left = orbPos.x + ORB_WIDTH - width;
+      else left = centerX - width / 2;
+      left = clamp(left, PANEL_EDGE, window.innerWidth - width - PANEL_EDGE);
+      const below = orbPos.y + ORB_HEIGHT / 2 < window.innerHeight / 2;
+      const top = clamp(
+        below ? orbPos.y + ORB_HEIGHT + PANEL_GAP : orbPos.y - PANEL_GAP - height,
+        PANEL_EDGE,
+        window.innerHeight - height - PANEL_EDGE,
+      );
+      setPanelPos({ left, top });
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    if (panelRef.current) observer.observe(panelRef.current);
+    window.addEventListener('resize', place);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', place);
+    };
+  }, [open, orbPos.x, orbPos.y]);
+
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: PointerEvent) => {
@@ -775,15 +824,65 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
     };
   }, [open]);
 
+  const onOrbPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: orbPos.x,
+      y: orbPos.y,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragging(true);
+  };
+  const onOrbPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+    drag.moved = true;
+    hideHoverNow();
+    setOrbPos({
+      x: clamp(drag.x + dx, ORB_EDGE, window.innerWidth - ORB_WIDTH - ORB_EDGE),
+      y: clamp(drag.y + dy, ORB_EDGE, window.innerHeight - ORB_HEIGHT - ORB_EDGE),
+    });
+  };
+  const onOrbPointerEnd = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (drag.moved) {
+      // 拖动结束后的 click 不应再切换抽屉开合。
+      suppressClickRef.current = true;
+      window.setTimeout(() => { suppressClickRef.current = false; }, 0);
+    }
+    dragRef.current = null;
+    setDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
   const badge = report ? `${report.doneCount}/6` : '';
 
   return (
-    <div ref={rootRef} data-case-special-assistant className="fixed bottom-16 right-5 z-30 min-[1120px]:right-[280px]">
+    <div
+      ref={rootRef}
+      data-case-special-assistant
+      className="fixed z-30"
+      style={{ left: orbPos.x, top: orbPos.y }}
+    >
       {open && (
         <section
+          ref={panelRef}
           data-case-special-panel
           aria-label="六大通告助手"
-          className="absolute bottom-[68px] right-0 flex max-h-[min(72vh,560px)] w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft"
+          className="fixed flex max-h-[min(72vh,560px)] w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft"
+          style={panelPos
+            ? { left: panelPos.left, top: panelPos.top }
+            : { left: -9999, top: -9999, visibility: 'hidden' }}
         >
           <div className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2">
             <span className="text-ui-sm font-semibold text-brand-strong">六大通告助手</span>
@@ -892,14 +991,24 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
       <button
         type="button"
         data-case-special-orb
-        aria-label="打开六大通告助手"
+        aria-label="拖动或点击六大通告助手"
         aria-expanded={open}
+        draggable={false}
+        onPointerDown={onOrbPointerDown}
+        onPointerMove={onOrbPointerMove}
+        onPointerUp={onOrbPointerEnd}
+        onPointerCancel={onOrbPointerEnd}
         onClick={() => {
+          if (suppressClickRef.current) {
+            suppressClickRef.current = false;
+            return;
+          }
           setHover(null);
           setOpen((value) => !value);
         }}
         className={cn(
-          'relative ml-auto flex h-[54px] w-[60px] items-center justify-center transition-transform duration-150 hover:-translate-y-0.5 hover:scale-105',
+          'relative flex h-[54px] w-[60px] touch-none select-none items-center justify-center',
+          dragging ? 'cursor-grabbing' : 'cursor-grab',
           open && 'drop-shadow-[0_2px_5px_rgba(192,48,111,0.35)]',
         )}
       >
