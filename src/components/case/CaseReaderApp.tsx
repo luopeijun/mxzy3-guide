@@ -426,7 +426,7 @@ function CaseToc({
       id: 'producers',
       label: '制作人好感',
       selector: '[data-case-producers]',
-      summary: '五类',
+      summary: '六类',
     });
     list.push({
       id: 'updates',
@@ -531,12 +531,12 @@ function CaseToc({
   );
 }
 
-/** 制作人好感清单：唱片 / 电视剧 / 电影 / 广告 / 主持五列并排，每列纵向列制作人。
+/** 制作人好感清单：唱片 / 电视剧 / 电影 / 广告 / 主持 / 其他六列并排，每列纵向列制作人。
  *  每位制作人压成一小块，名字 / 擅长 / 讨厌 / 出现条件分行紧凑排；友好度数值
  *  待存档真源确认后补到名字旁。五列等宽，空列保留标题占位。 */
 function ProducerPanel() {
   return (
-    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
       {PRODUCER_GROUPS.map((group) => (
         <div key={group.kind} data-case-producer-group={group.kind} className="rounded-ui-sm border border-line bg-surface px-2 py-1.5">
           <div className="mb-1 border-b border-line pb-1 text-ui-2xs font-bold text-brand-strong">
@@ -1635,7 +1635,7 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
               >
                 制作人好感
                 <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                  唱片 / 电视剧 / 电影 / 广告 / 主持
+                  唱片 / 电视剧 / 电影 / 广告 / 主持 / 其他
                 </span>
               </summary>
               <ProducerPanel />
