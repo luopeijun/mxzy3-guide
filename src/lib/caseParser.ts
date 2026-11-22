@@ -2694,7 +2694,10 @@ export function parseItems(view: DataView, bytes: Uint8Array): OwnedItem[] {
       bestLen = len;
       bestStart = i;
     }
-    i = o > i + 16 ? o : i + 4;
+    // 不能跳到 o：错位起点也可能"长得像"一段，跳过去会把真正的清单起点
+    // 一起跳过（Story0002 的 1~7 号道具就是这样丢的）。逐 4 字节扫，命中率
+    // 换一点时间，但一份 .sa2 只有 1~2MB。真实清单靠最长段胜出。
+    i += 4;
   }
   if (bestLen < 15) return [];
   const items: OwnedItem[] = [];
