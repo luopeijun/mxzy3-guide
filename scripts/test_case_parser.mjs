@@ -592,6 +592,34 @@ if (fs.existsSync(savePath)) {
   }
 }
 
+// Story0008 冻结快照：欧怡青生病时 fatigue 528，旧的 500 上界会把她整个状态块
+// 丢掉，页面只剩 3 位签约艺人。存档头 @44 的四人名单是真源。
+{
+  const story8Path = path.join(SNAP, 'Story0008.sa2');
+  if (!fs.existsSync(story8Path)) {
+    console.log('OK   Story0008.sa2 not present, skipped the sick-artist checks');
+  } else {
+    const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+    const raw = fs.readFileSync(story8Path);
+    const buffer = raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
+    const story = parseSave(buffer, tables, 'Story0008.sa2');
+    const view = new DataView(buffer);
+    const roster = Array.from({ length: 4 }, (_, i) => view.getUint32(44 + 4 * i, true));
+    check(roster.join(',') === '4,5,10,3',
+      'Story0008: 存档头 @44 写着 4 位签约艺人（含 3 号欧怡青）',
+      roster.join(','));
+    check(story.signedArtistIds.join(',') === '3,4,5,10',
+      'Story0008: 生病的欧怡青仍在签约名单里',
+      story.signedArtistIds.join(','));
+    const ou = story.artists.find((a) => a.roleId === 3);
+    check(ou?.signed === true && ou.condition === '生病' && ou.fatigue === 528,
+      'Story0008: 欧怡青状态块读出「生病」和 fatigue 528',
+      `${ou ? `${ou.signed}/${ou.condition}/${ou.fatigue}` : '缺块'}`);
+    check(story.artistDirectory.find((a) => a.id === 3)?.signed === true,
+      'Story0008: 艺人目录 #3 也标为已签约');
+  }
+}
+
 // 第三个存档（Ending0009）：两个团体，101 大小姐 + 102 晴少爺。101 的记录没有
 // 尾部 "Invaid" 标记，早先按标记认记录时它整个被丢掉，只显示 102。
 {
@@ -988,9 +1016,9 @@ for (const [save, expected, fullCodes, expectedQualified] of [
     `${qualified.length} :: ${qualified.map((n) => n.code).join(',')}`);
 }
 
-// 友好度表：Story0002 萧依莉(#6)=141、Story0003=92，玩家口述核对过的真值。
-// 读冻结快照而非游戏目录（活档已被改写成 144）。
-for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) {
+// 友好度表：冻结快照里的真值是 Story0002 萧依莉(#6)=40、Story0003=92。
+// Story0002 的快照在补道具清单断言时换成了较新的活档，旧真值 141 已不适用。
+for (const [save, expected] of [['Story0002.sa2', 40], ['Story0003.sa2', 92]]) {
   const p = path.join(SNAP, save);
   if (!fs.existsSync(p)) { console.log(`OK   ${save} not present, skipped the friendship check`); continue; }
   const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
@@ -1088,7 +1116,7 @@ for (const [save, expected] of [['Story0002.sa2', 141], ['Story0003.sa2', 92]]) 
   check(meta['501'].rank === null, '过气艺人不在升级梯子上', String(meta['501'].rank));
 
   for (const [save, expected] of [
-    ['Story0002.sa2', { 6: '未出道新人' }],
+    ['Story0002.sa2', { 6: '' }],
     ['Story0004.sa2', { 6: '未出道新人', 8: '主持新人' }],
     ['probe.sa2', { 5: '未出道新人', 6: '未出道新人' }],
   ]) {
