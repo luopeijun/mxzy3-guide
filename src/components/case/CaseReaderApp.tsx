@@ -373,21 +373,36 @@ function payText(pay: number): string {
 }
 
 /** 本周便签：存档解析页的独立备忘录。按当前存档的游戏日期落到哪一周，
- *  原样显示那一周的内容列。只提醒、不编辑、不统计，也不跟存档绑定。
- *  桌面宽屏作为右栏顶部常驻卡（默认展开），窄屏在正文顶部给简版兜底。 */
+ *  原样显示那一周的内容列，并可前后翻周、一键回到当前。只提醒、不编辑、
+ *  不统计，也不跟存档绑定。桌面宽屏作为右栏顶部常驻卡（默认展开），
+ *  窄屏在正文顶部给简版兜底。 */
 function MemoNote({
   week,
+  weekOffset,
+  showNav,
+  canPrev,
+  canNext,
   fileName,
   error,
   onImport,
   onClear,
+  onPrev,
+  onNext,
+  onReset,
   variant = 'inline',
 }: {
   week: MemoWeek | null;
+  weekOffset: number;
+  showNav: boolean;
+  canPrev: boolean;
+  canNext: boolean;
   fileName: string;
   error: string;
   onImport: () => void;
   onClear: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  onReset: () => void;
   variant?: 'aside' | 'inline';
 }) {
   const [open, setOpen] = useState(true);
@@ -407,7 +422,9 @@ function MemoNote({
       >
         <span className="flex items-center gap-2">
           <span className="h-2 w-2 shrink-0 rounded-sm bg-tag-auto" />
-          <span className="shrink-0">本周便签</span>
+          <span data-case-memo-label className="shrink-0">
+            {weekOffset === 0 ? '本周便签' : weekOffset < 0 ? `前 ${-weekOffset} 周` : `后 ${weekOffset} 周`}
+          </span>
           <span className="ml-auto shrink-0 text-ui-2xs font-normal text-ink-faint">{open ? '收起' : '展开'}</span>
         </span>
         {week && (
@@ -444,6 +461,38 @@ function MemoNote({
             <p data-case-memo-empty className="mt-2 text-ui-2xs text-ink-faint">
               {fileName ? '当前游戏日期不在备忘录的周区间内。' : '还没导入备忘录。点「导入备忘录」选一个自己填好的 Excel，或先下载模板。'}
             </p>
+          )}
+          {showNav && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <button
+                type="button"
+                data-case-memo-prev
+                disabled={!canPrev}
+                onClick={onPrev}
+                className="rounded-full border border-line px-2 py-0.5 text-ui-2xs font-normal text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-muted"
+              >
+                ← 上一周
+              </button>
+              <button
+                type="button"
+                data-case-memo-next
+                disabled={!canNext}
+                onClick={onNext}
+                className="rounded-full border border-line px-2 py-0.5 text-ui-2xs font-normal text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-muted"
+              >
+                下一周 →
+              </button>
+              {weekOffset !== 0 && (
+                <button
+                  type="button"
+                  data-case-memo-current
+                  onClick={onReset}
+                  className="ml-auto text-ui-2xs font-normal text-brand-strong transition-colors hover:underline"
+                >
+                  回到当前
+                </button>
+              )}
+            </div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-2">
             <button
@@ -921,6 +970,8 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
   /** 备忘录独立于存档：导入一次存本地，切多少份存档都不变，只有重新导入/清除才改。 */
   const [memo, setMemo] = useState<MemoData | null>(() => loadMemo());
   const [memoError, setMemoError] = useState('');
+  /** 便签翻周只是当前会话的查看位置，不写进存档也不写进 localStorage。 */
+  const [memoWeekOffset, setMemoWeekOffset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const memoInputRef = useRef<HTMLInputElement>(null);
   // A file can be dropped before the bundled tables finish loading. Keep the
@@ -1007,6 +1058,19 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     setMemo(null);
     setMemoError('');
   }, []);
+
+  const currentMemoWeek = useMemo(
+    () => findCurrentWeek(memo, result?.currentDate ?? null),
+    [memo, result?.currentDate],
+  );
+  const currentMemoWeekIndex = currentMemoWeek && memo ? memo.weeks.indexOf(currentMemoWeek) : -1;
+  const memoWeekIndex = currentMemoWeekIndex + memoWeekOffset;
+  const memoWeek = memo && currentMemoWeekIndex >= 0 ? memo.weeks[memoWeekIndex] ?? null : null;
+  const canPrev = !!memo && currentMemoWeekIndex >= 0 && memoWeekIndex > 0;
+  const canNext = !!memo && currentMemoWeekIndex >= 0 && memoWeekIndex < memo.weeks.length - 1;
+
+  // 换存档或重新导入备忘录后，先回到新存档对应的那一周。
+  useEffect(() => { setMemoWeekOffset(0); }, [memo, result]);
 
   const onDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -1465,11 +1529,18 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                 与存档内容无关——换存档便签不变，只有重新导入才换。 */}
             <div className="min-[1120px]:hidden">
               <MemoNote
-                week={findCurrentWeek(memo, result.currentDate)}
+                week={memoWeek}
+                weekOffset={memoWeekOffset}
+                showNav={currentMemoWeekIndex >= 0}
+                canPrev={canPrev}
+                canNext={canNext}
                 fileName={memo?.fileName ?? ''}
                 error={memoError}
                 onImport={() => memoInputRef.current?.click()}
                 onClear={clearMemo}
+                onPrev={() => setMemoWeekOffset((value) => value - 1)}
+                onNext={() => setMemoWeekOffset((value) => value + 1)}
+                onReset={() => setMemoWeekOffset(0)}
               />
             </div>
 
@@ -2106,11 +2177,18 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
         <aside className="fixed right-4 top-[76px] z-10 max-h-[calc(100vh-92px)] w-[248px] flex-col gap-2 hidden min-[1120px]:flex">
           <MemoNote
             variant="aside"
-            week={findCurrentWeek(memo, result.currentDate)}
+            week={memoWeek}
+            weekOffset={memoWeekOffset}
+            showNav={currentMemoWeekIndex >= 0}
+            canPrev={canPrev}
+            canNext={canNext}
             fileName={memo?.fileName ?? ''}
             error={memoError}
             onImport={() => memoInputRef.current?.click()}
             onClear={clearMemo}
+            onPrev={() => setMemoWeekOffset((value) => value - 1)}
+            onNext={() => setMemoWeekOffset((value) => value + 1)}
+            onReset={() => setMemoWeekOffset(0)}
           />
           <div className="shrink-0">
             <CaseToc
