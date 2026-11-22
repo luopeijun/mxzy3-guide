@@ -1822,6 +1822,40 @@ async function main() {
     '导入结果存进独立 localStorage 且只保留两列',
     `${memoState.storedFile} :: ${JSON.stringify(memoState.storedLabels)}`);
 
+    const memoNav = async () => JSON.parse(await evaluate(`JSON.stringify((() => {
+      const aside = document.querySelector('[data-case-memo][data-case-memo-variant="aside"]');
+      const prev = aside?.querySelector('[data-case-memo-prev]');
+      const next = aside?.querySelector('[data-case-memo-next]');
+      const current = aside?.querySelector('[data-case-memo-current]');
+      const body = aside?.querySelector('[data-case-memo-body]');
+      return {
+        label: aside?.querySelector('[data-case-memo-label]')?.textContent.trim(),
+        range: aside?.querySelector('[data-case-memo-range]')?.textContent.trim(),
+        values: body ? [...body.children].map((card) => card.children[1]?.textContent.trim()) : [],
+        prevDisabled: prev?.disabled ?? null,
+        nextDisabled: next?.disabled ?? null,
+        hasCurrent: !!current,
+      };
+    })())`));
+    const navStart = await memoNav();
+    check(navStart.prevDisabled === true && navStart.nextDisabled === false && !navStart.hasCurrent,
+      '当前周：上一周禁用、下一周可用、不显示回到当前', JSON.stringify(navStart));
+
+    await evaluate(`document.querySelector('[data-case-memo][data-case-memo-variant="aside"] [data-case-memo-next]').click(); true`);
+    await sleep(250);
+    const navNext = await memoNav();
+    check(navNext.label === '后 1 周' && navNext.range === '2006.2.5–2.11'
+      && navNext.values.some((v) => v.includes('第二周排班')),
+    '下一周切到后一周并显示那周内容', JSON.stringify(navNext));
+    check(navNext.prevDisabled === false && navNext.nextDisabled === true && navNext.hasCurrent,
+      '最后一周：下一周禁用、出现回到当前', JSON.stringify(navNext));
+
+    await evaluate(`document.querySelector('[data-case-memo][data-case-memo-variant="aside"] [data-case-memo-current]').click(); true`);
+    await sleep(250);
+    const navReset = await memoNav();
+    check(navReset.label === '本周便签' && navReset.range === '2006.1.29–2.4' && !navReset.hasCurrent,
+      '回到当前恢复本周便签', JSON.stringify(navReset));
+
     const memoBeforeSwitch = await evaluate(`localStorage.getItem('mxzy3.case.memo.v1')`);
     await uploadSave(path.join(SNAP, 'Story0001.sa2'));
     const memoAfterSwitch = await evaluate(`localStorage.getItem('mxzy3.case.memo.v1')`);
