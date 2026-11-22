@@ -1021,7 +1021,13 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
           open && 'drop-shadow-[0_2px_5px_rgba(192,48,111,0.35)]',
         )}
       >
-        <img src="/six-notice-mascot.png" alt="" className="h-full w-full object-contain" draggable={false} />
+        <img
+          data-case-mascot
+          src={`${import.meta.env.BASE_URL}six-notice-mascot.png`}
+          alt=""
+          className="h-full w-full object-contain"
+          draggable={false}
+        />
         {badge && (
           <span className="absolute -right-1 -top-0.5 min-w-[20px] rounded-full border border-brand-line bg-brand-soft px-1 text-center text-[10px] leading-[16px] text-brand-strong">
             {badge}
