@@ -1912,6 +1912,22 @@ async function main() {
       && JSON.stringify(migratedMemo.values) === JSON.stringify(['旧排班', '旧备注']),
     '旧格式备忘录自动过滤年/月/周次且保留内容', JSON.stringify(migratedMemo));
 
+    // Story0002：道具段前面有几条错位记录，旧扫描会跳过真正的清单起点，
+    // 只留下神秘香精油。这里守住截图里的六件一般物品都能读出来。
+    await uploadSave(path.join(SNAP, 'Story0002.sa2'));
+    await evaluate(`(() => {
+      const box = document.querySelector('[data-case-items]');
+      if (box && !box.open) box.querySelector('[data-case-items-summary]')?.click();
+      const tab = document.querySelector('[data-case-item-tab="一般物品"]');
+      if (tab && tab.getAttribute('aria-selected') !== 'true') tab.click();
+      return true;
+    })()`);
+    await sleep(350);
+    const story2Items = JSON.parse(await evaluate(`JSON.stringify([...document.querySelectorAll('[data-case-item]')]
+      .map((row) => row.getAttribute('data-case-item-code')))`));
+    check([1, 2, 3, 5, 6, 807].every((code) => story2Items.includes(String(code))),
+      'Story0002 六件一般物品都能读出来', JSON.stringify(story2Items));
+
     await navigate('http://localhost:5173/sweet.html');
     const sweetState = JSON.parse(await evaluate(`JSON.stringify({
       tabs: document.querySelectorAll('[role="tab"]').length,
