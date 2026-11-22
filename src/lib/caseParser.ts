@@ -1886,7 +1886,9 @@ function parseArtists(
     const abilities = rawAbilities.map((v) => v / 10);
     const stress = view.getUint32(o + 36, true);
     const fatigue = view.getUint32(o + 40, true);
-    if (stress > 500 || fatigue > 500) continue;
+    // 「生病」的艺人疲劳可以超过 500：Story0008 欧怡青 fatigue 528、Auto 832，
+    // 都是存档里真实在册的签约艺人。上界放到 1000 仍能挡住 1111 的占位块。
+    if (stress > 1000 || fatigue > 1000) continue;
     const labelLength = view.getUint32(o + 44, true);
     if (labelLength < 2 || labelLength > 12 || o + 48 + labelLength * 4 + 100 > bytes.length) continue;
     const statusBytes = new Uint8Array(labelLength);
