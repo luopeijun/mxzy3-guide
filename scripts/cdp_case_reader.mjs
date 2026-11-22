@@ -350,6 +350,23 @@ async function main() {
     check(p.csv, 'CSV export button shown');
     check(/★|☆/.test(p.firstNotice), 'difficulty stars rendered');
 
+    // NP鸡头像必须用 Vite base 相对路径；线上 GitHub Pages 有子路径，写死 /xxx 会 404。
+    // 开发服务器会把 BASE_URL 归一化成 '/'，所以源码层检查 + 浏览器层加载分开断言。
+    const assistantSource = fs.readFileSync(
+      path.join(root, 'src', 'components', 'case', 'CaseSpecialsAssistant.tsx'), 'utf8');
+    check(assistantSource.includes('${import.meta.env.BASE_URL}six-notice-mascot.png')
+      && !assistantSource.includes('src="/six-notice-mascot.png"'),
+    'NP鸡头像源码使用 base 相对路径');
+    const mascot = JSON.parse(await evaluate(`JSON.stringify((() => {
+      const img = document.querySelector('[data-case-mascot]');
+      return {
+        src: img?.getAttribute('src') || '',
+        loaded: !!img && img.complete && img.naturalWidth > 0,
+      };
+    })())`));
+    check(mascot.src.endsWith('six-notice-mascot.png') && mascot.loaded,
+      'NP鸡头像在页面中加载成功', JSON.stringify(mascot));
+
     // Clock, booking window and shooting period.
     check(p.now.includes('2006/1/29') && p.now.includes('周日'), 'game clock shows the in-game date', p.now);
     check(p.closing.includes('2 条'), '7-day deadline warning counted', p.closing);
