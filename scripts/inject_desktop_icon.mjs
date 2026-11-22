@@ -8,7 +8,10 @@ import { execFileSync } from 'node:child_process';
 // 打包后单独把 build/icon.ico（网页版 favicon 那张 logo）注入到 win-unpacked 的 exe。
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const icon = path.join(root, 'build', 'icon.ico');
-const unpacked = path.join(root, 'release', 'win-unpacked');
+// 允许传输出目录（如 release-1172），旧打包目录被占用时仍能给新产物注入图标。
+const unpacked = process.argv[2]
+  ? path.resolve(root, process.argv[2], 'win-unpacked')
+  : path.join(root, 'release', 'win-unpacked');
 
 if (!fs.existsSync(icon)) throw new Error(`找不到图标: ${icon}`);
 if (!fs.existsSync(unpacked)) throw new Error(`找不到打包目录: ${unpacked}，请先执行 npm run package:desktop`);
