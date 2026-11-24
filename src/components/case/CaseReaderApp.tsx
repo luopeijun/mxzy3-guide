@@ -2380,9 +2380,6 @@ function ShootingPanel({
                         >
                           {other?.artistName}
                         </span>
-                        <div className="mt-0.5 inline-flex rounded-full bg-surface px-1.5 text-ui-2xs text-ink-faint">
-                          他司
-                        </div>
                       </>
                     )}
                   </Td>
