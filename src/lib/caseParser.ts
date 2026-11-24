@@ -2336,6 +2336,20 @@ export interface ShootingCast {
   status: ShootingStatus;
 }
 
+/** 拍摄中通告里的「非我方角色」。存档没有「角色 → 艺人编号」的字段
+ *  （192B 角色记录里放不下），52B 预约表在通告推进后又会被清空，所以
+ *  这里只能靠作品清单里「谁接了这部戏」+ 角色性别/顺序推测对应关系。
+ *  roleGuessed 标记这个对应关系是推测的，进度/酬劳没有真值可读。 */
+export interface ShootingOtherCast {
+  artistId: number | null;
+  artistName: string;
+  role: RoleRecord | null;
+  /** true＝角色归属靠性别和顺序推测，不保证与游戏画面一致。 */
+  roleGuessed: boolean;
+  /** true＝这个角色格没人接（作品清单和预约表里都找不到）。 */
+  vacant: boolean;
+}
+
 export interface ShootingNotice {
   code: string;
   name: string;
@@ -2346,8 +2360,10 @@ export interface ShootingNotice {
   firmName: string;
   /** 角色与难度（星级），和筹备中表格同一套角色记录。 */
   roles: RoleRecord[];
-  /** 接演的艺人，一人一条进度。 */
+  /** 接演的艺人，一人一条进度。只含我方签约艺人，进度是真值。 */
   casts: ShootingCast[];
+  /** 其他公司的演员 + 没人接的角色格。进度/酬劳没有真值。 */
+  otherCasts: ShootingOtherCast[];
   startDate: string;
   endDate: string;
   startDay: number;
@@ -3016,6 +3032,7 @@ export function parseSave(
     // 自家艺人挑出来再分，就会把他错放到别人那格上。
     const claimed = new Set<string>();
     const casts: ShootingCast[] = [];
+    const otherCasts: ShootingOtherCast[] = [];
     for (const row of progress) {
       const owner = owners.find((o) => o.id === row.artistId);
       const gender = owner?.gender ?? 'any';
@@ -3024,7 +3041,18 @@ export function parseSave(
       // 只有一个角色的通告（团体、合唱一类），后接的人也占同一格。
       else if (noticeRoles.length === 1) role = noticeRoles[0];
       // 没有签约名单可参照时不做过滤，避免整档「拍摄中」被清空。
-      if (mineIds.size > 0 && !mineIds.has(row.artistId)) continue;
+      // 对手演员同样要走过角色分配（占住自己那格），否则我方艺人会被挤到
+      // 别人的角色上；只是他们不进 casts（进度无真值），单独记到 otherCasts。
+      if (mineIds.size > 0 && !mineIds.has(row.artistId)) {
+        otherCasts.push({
+          artistId: row.artistId,
+          artistName: owner?.name || `编号${row.artistId}`,
+          role,
+          roleGuessed: true,
+          vacant: false,
+        });
+        continue;
+      }
       const length = (role ? lengthOf(block.code, info, role.role) : null) ?? fallbackLength;
       const workDays = length?.[0] ?? 0;
       const daysPerWeek = length?.[1] ?? 0;
@@ -3068,7 +3096,36 @@ export function parseSave(
         }
       }
     }
+    // 其他演员补全：作品清单里挂了这部戏、但没有接取记录的人（对手公司
+    // 常见，如 CF735 的童靖陽）—— 上面那条循环只看接取记录，会漏掉他们。
+    // 我方艺人若没有接取记录说明并没在拍，不列进来。
+    const knownIds = new Set<number>([
+      ...casts.map((c) => c.artistId),
+      ...otherCasts.map((c) => c.artistId ?? -1),
+    ]);
+    for (const owner of owners) {
+      if (knownIds.has(owner.id)) continue;
+      if (mineIds.size > 0 && mineIds.has(owner.id)) continue;
+      let role = noticeRoles.find((r) => !claimed.has(r.roleCode) && canTakeRole(r, owner.gender)) ?? null;
+      if (role) claimed.add(role.roleCode);
+      else if (noticeRoles.length === 1) role = noticeRoles[0];
+      otherCasts.push({
+        artistId: owner.id,
+        artistName: owner.name,
+        role,
+        roleGuessed: true,
+        vacant: false,
+      });
+      knownIds.add(owner.id);
+    }
+    // 角色表里还没人认领的格＝虚位以待，让玩家看到完整卡司拼图缺了谁。
+    for (const role of noticeRoles) {
+      if (claimed.has(role.roleCode)) continue;
+      otherCasts.push({ artistId: null, artistName: '', role, roleGuessed: false, vacant: true });
+    }
+
     // 自家艺人都交差了就整条收起来：没有在赶期的人，写进表格只是噪音。
+    // 注意只看我方 casts —— 对手演员的进度是噪声，不参与收起判断。
     if (casts.every((cast) => cast.status === 'done')) continue;
 
     const open = casts.filter((cast) => cast.status !== 'done');
@@ -3085,6 +3142,7 @@ export function parseSave(
       firmName: '',
       roles: noticeRoles,
       casts,
+      otherCasts,
       startDate: fmtDate(triple[1]),
       endDate: fmtDate(triple[2]),
       startDay, endDay, daysLeft,
