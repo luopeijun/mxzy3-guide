@@ -583,6 +583,17 @@ if (fs.existsSync(savePath)) {
     check(wei && wei.roleGuessed === false,
       'TV088：幃幃的女配角是性别唯一匹配，不标「推测」', JSON.stringify(wei));
   }
+  // CF003 好喝可樂只有 1 个角色坑位（女性，路敏）。接取记录区前面散落着
+  // 彭胡 / 林芬芬的占位噪声（done/pay 全 0），不能再多列出两个「同事」。
+  const cf003 = save.shooting.find((n) => n.code === 'CF003');
+  if (cf003) {
+    const people = [
+      ...cf003.casts.map((c) => c.artistName),
+      ...cf003.otherCasts.filter((o) => !o.vacant).map((o) => o.artistName),
+    ];
+    check(people.length === 1 && people[0] === '路敏',
+      'CF003：单角色通告只显示路敏，不把占位噪声当成其他同事', people.join(','));
+  }
 }
 
 // 第六个存档（Story0024）：CF728 絲襪 勾引篇 已经拍满 6 天、杀青日就是今天，
