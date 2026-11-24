@@ -2608,11 +2608,15 @@ export function shootableDays(remaining: number, perWeek: number): number {
  *  每条候选都要过筛：状态位 0~3、完成天数 ≤ 60、中间两个字段 ≤ 99、酬劳
  *  要么 0 要么 ≥ 1000。筛过之后同一艺人只取第一条，避免串到邻近档期。
  *
+ *  记录按 24 字节连续排列，从「第一条真的拿到酬劳（pay ≥ 1000）的记录」
+ *  起读，一直读到字段不合法为止。这个锚点很关键：块里散落着 done/pay 全 0
+ *  的占位噪声（TV088 +940 前的史蒂芬、CF003 +940 的彭胡 / +952 的林芬芬），
+ *  它们单看字段也合法，但不在真记录的 24B 网格上。从 pay>0 那条起按 24B
+ *  往后读，就能把同片的对手（pay=0，如 TV088 幃幃）一起带进来，又不误收噪声。
+ *
  *  候选编号取「作品清单里的接演人 ∪ 游戏艺人表全部编号」：对手公司 / NPC
- *  没有状态块，进不了作品清单，但他们的接取记录同样躺在块尾（存档里他们
- *  的 done/pay 是 0，不是我的真进度，只用来确定「这个人接了这部戏」）。
- *  为避免块中段的占位记录（如 TV088 +448 的史蒂芬 done=0/pay=0）混进来，
- *  全量扫描只走块尾 260 字节 —— 逐份存档核对过所有真记录都在这段里。 */
+ *  没有状态块、进不了作品清单，但他们的接取记录同样躺在块尾。扫描只走块尾
+ *  260 字节 —— 逐份存档核对过所有真记录都在这段里。 */
 function readProgress(
   view: DataView,
   start: number,
@@ -2623,22 +2627,45 @@ function readProgress(
   const rows: { artistId: number; doneDays: number; pay: number }[] = [];
   if (ownerIds.length === 0) return rows;
   const wanted = new Set(starIds.length ? starIds : ownerIds);
-  const from = starIds.length ? Math.max(start + 400, end - 260) : start + 400;
   const limit = Math.min(end, view.byteLength);
-  for (let o = from; o + 20 <= limit; o += 4) {
-    const id = view.getUint32(o, true);
-    if (!wanted.has(id)) continue;
-    if (rows.some((row) => row.artistId === id)) continue;
-    const flag = view.getUint32(o - 4, true);
-    const done = view.getUint32(o + 4, true);
-    const a = view.getUint32(o + 8, true);
-    const b = view.getUint32(o + 12, true);
-    const pay = view.getUint32(o + 16, true);
-    if (flag > 3) continue;
-    if (done > 60 || a > 99 || b > 99) continue;
-    if (pay > 1e9) continue;
-    if (pay > 0 && pay < 1000) continue;
-    rows.push({ artistId: id, doneDays: done, pay });
+  const from = starIds.length ? Math.max(start + 400, end - 260) : start + 400;
+  // flag 位置起读一条 24B 记录：[flag][id][done][a][b][pay]
+  const readAt = (p: number) => ({
+    flag: view.getUint32(p, true),
+    id: view.getUint32(p + 4, true),
+    done: view.getUint32(p + 8, true),
+    a: view.getUint32(p + 12, true),
+    b: view.getUint32(p + 16, true),
+    pay: view.getUint32(p + 20, true),
+  });
+  const valid = (r: ReturnType<typeof readAt>) =>
+    r.flag <= 3 && wanted.has(r.id) && r.done <= 60 && r.a <= 99
+    && r.b <= 99 && r.pay <= 1e9 && !(r.pay > 0 && r.pay < 1000);
+
+  if (starIds.length) {
+    // 找块尾第一条有酬劳的真记录当锚点，再按 24B 网格往后连续读。
+    let anchor = -1;
+    for (let p = from; p + 24 <= limit; p += 4) {
+      const r = readAt(p);
+      if (r.pay >= 1000 && valid(r)) { anchor = p; break; }
+    }
+    if (anchor >= 0) {
+      for (let p = anchor; p + 24 <= limit; p += 24) {
+        const r = readAt(p);
+        if (!valid(r)) break;
+        if (rows.some((row) => row.artistId === r.id)) continue;
+        rows.push({ artistId: r.id, doneDays: r.done, pay: r.pay });
+      }
+      return rows;
+    }
+    // 没有带酬劳的记录（整条通告都没付钱）：退回逐 4 字节扫描，仍只认全部
+    // star 编号，宁可多列也别把真接演人漏掉。
+  }
+  for (let p = from; p + 24 <= limit; p += 4) {
+    const r = readAt(p);
+    if (!valid(r)) continue;
+    if (rows.some((row) => row.artistId === r.id)) continue;
+    rows.push({ artistId: r.id, doneDays: r.done, pay: r.pay });
   }
   return rows;
 }
@@ -3062,7 +3089,13 @@ export function parseSave(
       let role = noticeRoles.find((r) => !claimed.has(r.roleCode) && canTakeRole(r, gender)) ?? null;
       if (role) claimed.add(role.roleCode);
       // 只有一个角色的通告（团体、合唱一类），后接的人也占同一格。
-      else if (noticeRoles.length === 1) role = noticeRoles[0];
+      // 这里也要 claimed.add，否则后面的「角色格已满不再补人」守卫会失灵
+      // （CF003 好喝可樂：路敏靠这个兜底拿到唯一的女性格，claimed 却空着，
+      //  作品清单里挂过这部戏的彭胡 / 林芬芬就被误补进来）。
+      else if (noticeRoles.length === 1) {
+        role = noticeRoles[0];
+        claimed.add(role.roleCode);
+      }
       // 没有签约名单可参照时不做过滤，避免整档「拍摄中」被清空。
       // 对手演员同样要走过角色分配（占住自己那格），否则我方艺人会被挤到
       // 别人的角色上；只是他们不进 casts（进度无真值），单独记到 otherCasts。
