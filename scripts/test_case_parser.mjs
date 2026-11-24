@@ -1448,6 +1448,20 @@ for (const [save, expected] of [['Story0002.sa2', 40], ['Story0003.sa2', 92]]) {
         `实际 ${role?.reservedBy || '（空）'}`);
     }
   }
+  const s17 = load('Story0017.sa2');
+  if (s17) {
+    const mv142 = s17.notices.find((n) => n.code === 'MV142');
+    const roleByCode = (code) => mv142?.roles.find((r) => r.roleCode === code);
+    check(roleByCode('MV1423')?.role === '男配角' && roleByCode('MV1423')?.reservedBy === '路風',
+      'Story0017 MV142 路風精确到男配角（不是按性别顶替主角）',
+      `${roleByCode('MV1423')?.role} / ${roleByCode('MV1423')?.reservedBy || '（空）'}`);
+    check(roleByCode('MV1424')?.role === '女配角' && roleByCode('MV1424')?.reservedBy === '桑禾蓓',
+      'Story0017 MV142 桑禾蓓精确到女配角（不是按性别顶替女主角）',
+      `${roleByCode('MV1424')?.role} / ${roleByCode('MV1424')?.reservedBy || '（空）'}`);
+    check(roleByCode('MV1421')?.reservedBy === '',
+      'Story0017 MV142 空着的主角格不被回退预约填满',
+      `实际 ${roleByCode('MV1421')?.reservedBy || '（空）'}`);
+  }
   // 作品数真值：玩家在游戏「藝人資料」里逐条抄下来的四组数字。
   const s34 = load('Story0034.sa2');
   if (s34) {
