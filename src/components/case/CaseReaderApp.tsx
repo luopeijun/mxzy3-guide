@@ -17,7 +17,7 @@ import {
   type ArchiveNotice, type PromoCast,
   type ArtistEvent, type ArtistOption, type ArtistStats, type CaseNotice, type CaseTables,
   type GroupRecord, type GroupWork, type OwnedItem, type ParseResult, type RoleRecord, type SelfMadeCast,
-  type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice, type ShootingRisk,
+  type SelfMadeNotice, type SelfMadeStatus, type ShootingNotice, type ShootingOtherCast, type ShootingRisk,
   type TitleLine, type TitleMeta, type WorkRecord,
 } from '../../lib/caseParser';
 import type { TitleGapItem, TitleNext } from '../../lib/titleLadder';
@@ -2239,7 +2239,9 @@ function kindDetail(notice: { category: string; type: string; subtype: string })
  *
  *  一条通告上不同艺人各拿一个角色、各拍各的天数、各拿各的酬劳，所以一
  *  位艺人一行；通告信息只在第一行给（rowSpan），后面几行只写这位艺人自
- *  己的进度。表里只出现自己旗下的艺人 —— 同一部戏的对手公司演员不算进来。
+ *  己的进度。白底是我方艺人（进度是真值）；灰底是同一部戏的其他公司演员
+ *  与没人接的角色格 —— 存档读不到他们的真进度，只按性别/顺序推测角色并标
+ *  「推测」，进度酬劳显示「—」。风险提醒仍只看我方，不受他们影响。
  *  提醒只用存档里的数字算：
  *  还差几天（Length 表工作天数 - 存档完成天数）对比「剩下的日子里按每週
  *  上限还能排几天」，排不下 = 违约提醒，余量 ≤ 5 天 = 逾期风险。 */
@@ -2269,126 +2271,180 @@ function ShootingPanel({
           </tr>
         </thead>
         <tbody>
-          {notices.flatMap((notice) =>
-            notice.casts.map((cast, index) => (
-              <tr
-                key={`${notice.code}-${cast.artistId}`}
-                data-case-shooting-row={notice.code}
-                data-case-shooting-risk={cast.risk}
-                className={cn(
-                  'align-top',
-                  index === 0 ? 'border-t border-line' : '',
-                  cast.risk === 'late'
-                    ? 'border-l-[3px] border-l-alert bg-alert-soft/50'
-                    : cast.risk === 'tight'
-                      ? 'border-l-[3px] border-l-gold-line bg-gold-soft/40'
-                      : 'border-l-[3px] border-l-transparent',
-                )}
-              >
-                {index === 0 && (
-                  <Td rowSpan={notice.casts.length} className="border-b border-line">
-                    <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
-                    <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-1">
-                      <span className={cn(
-                        'inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-ui-2xs',
-                        CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
-                      )}
-                      >
-                        {notice.category}
-                      </span>
-                      {kindDetail(notice) && (
-                        <span className="text-ui-2xs text-ink-faint">{kindDetail(notice)}</span>
-                      )}
-                    </div>
-                  </Td>
-                )}
-                {index === 0 && (
-                  <Td rowSpan={notice.casts.length} className="tabular-nums border-b border-line text-ui-2xs">
-                    <div className="whitespace-nowrap text-ink-muted">
-                      开拍 <b className="font-semibold text-ink">{notice.startDate || '—'}</b>
-                    </div>
-                    <div className="whitespace-nowrap text-ink-muted">
-                      杀青 <b className="font-semibold text-ink">{notice.endDate || '—'}</b>
-                    </div>
-                    <div className="mt-0.5 text-ink-faint">
-                      共 {notice.endDay - notice.startDay + 1} 天
-                    </div>
-                  </Td>
-                )}
-                <Td>
-                  {cast.role ? (
-                    <RolePill role={cast.role} attr="data-case-shooting-role" />
-                  ) : (
-                    <span className="text-ui-2xs text-ink-faint">—</span>
+          {notices.flatMap((notice) => {
+            type Row =
+              | { kind: 'mine'; cast: ShootingNotice['casts'][number] }
+              | { kind: 'other'; other: ShootingOtherCast };
+            const rows: Row[] = [
+              ...notice.casts.map((cast): Row => ({ kind: 'mine', cast })),
+              ...notice.otherCasts.map((other): Row => ({ kind: 'other', other })),
+            ];
+            return rows.map((row, index) => {
+              const mine = row.kind === 'mine' ? row.cast : null;
+              const other = row.kind === 'other' ? row.other : null;
+              const role = mine ? mine.role : other?.role ?? null;
+              const isFirst = index === 0;
+              return (
+                <tr
+                  key={`${notice.code}-${mine ? `mine-${mine.artistId}` : `other-${other?.artistId ?? `vacant-${other?.role?.roleCode}`}`}`}
+                  data-case-shooting-row={notice.code}
+                  data-case-shooting-risk={mine?.risk ?? ''}
+                  className={cn(
+                    'align-top',
+                    isFirst ? 'border-t border-line' : '',
+                    other ? 'bg-surface-soft/60 text-ink-muted' : '',
+                    mine?.risk === 'late'
+                      ? 'border-l-[3px] border-l-alert bg-alert-soft/50'
+                      : mine?.risk === 'tight'
+                        ? 'border-l-[3px] border-l-gold-line bg-gold-soft/40'
+                        : 'border-l-[3px] border-l-transparent',
                   )}
-                </Td>
-                <Td>
-                  <span
-                    data-case-shooting-artist={cast.artistId}
-                    className="whitespace-nowrap text-ui-xs font-semibold text-ink"
-                  >
-                    {cast.artistName}
-                  </span>
-                  <div
-                    data-case-shooting-status={cast.status}
-                    className={cn(
-                      'mt-0.5 inline-flex rounded-full px-1.5 text-ui-2xs',
-                      cast.status === 'shooting'
-                        ? 'bg-brand-soft font-semibold text-brand-strong'
-                        : 'bg-surface-soft text-ink-faint',
-                    )}
-                  >
-                    {STATUS_LABEL[cast.status]}
-                  </div>
-                </Td>
-                <Td className="tabular-nums text-ui-2xs">
-                  <span className="text-ui-xs font-bold text-ink">{cast.doneDays}</span>
-                  <span className="text-ink-faint"> / {cast.workDays || '—'} 天</span>
-                  <div className="mt-0.5 text-ink-faint">每週 ≤ {cast.daysPerWeek || '—'} 天</div>
-                </Td>
-                <Td className="tabular-nums text-ui-2xs">
-                  {cast.status === 'done' ? (
-                    <span className="text-ui-2xs text-ink-faint">已拍完</span>
-                  ) : (
-                    <>
-                      <span className="text-ui-xs font-semibold text-ink">{cast.needDays}</span>
-                      <span className="text-ink-faint"> 天</span>
-                      <div className="mt-0.5 leading-tight text-ink-faint">
-                        <div className="whitespace-nowrap">能排 {cast.canShootDays} 天</div>
-                        <div className="whitespace-nowrap">
-                          距杀青 {Number.isFinite(notice.daysLeft) ? notice.daysLeft : '—'} 天
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </Td>
-                <Td className="tabular-nums text-ui-2xs text-ink-muted">{payText(cast.pay)}</Td>
-                <Td>
-                  {cast.risk === 'tight' || cast.risk === 'late' ? (
-                    <>
-                      <span
-                        data-case-shooting-risk-label={cast.risk}
-                        className={cn(
-                          'inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-ui-2xs',
-                          cast.risk === 'late'
-                            ? 'border-alert-line bg-alert-soft font-bold text-alert'
-                            : 'border-gold-line bg-gold-soft font-semibold text-gold',
+                >
+                  {isFirst && (
+                    <Td rowSpan={rows.length} className="border-b border-line">
+                      <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
+                      <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        <span className={cn(
+                          'inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-ui-2xs',
+                          CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
                         )}
-                      >
-                        {RISK_LABEL[cast.risk]}
-                      </span>
-                      {cast.risk === 'tight' && (
-                        <div className="mt-0.5 text-ui-2xs text-ink-faint">余量 ≤ 5 天</div>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-ui-2xs text-ink-faint">—</span>
+                        >
+                          {notice.category}
+                        </span>
+                        {kindDetail(notice) && (
+                          <span className="text-ui-2xs text-ink-faint">{kindDetail(notice)}</span>
+                        )}
+                      </div>
+                    </Td>
                   )}
-                </Td>
-              </tr>
-            )),
-          )}
+                  {isFirst && (
+                    <Td rowSpan={rows.length} className="tabular-nums border-b border-line text-ui-2xs">
+                      <div className="whitespace-nowrap text-ink-muted">
+                        开拍 <b className="font-semibold text-ink">{notice.startDate || '—'}</b>
+                      </div>
+                      <div className="whitespace-nowrap text-ink-muted">
+                        杀青 <b className="font-semibold text-ink">{notice.endDate || '—'}</b>
+                      </div>
+                      <div className="mt-0.5 text-ink-faint">
+                        共 {notice.endDay - notice.startDay + 1} 天
+                      </div>
+                    </Td>
+                  )}
+                  <Td>
+                    {role ? (
+                      <>
+                        <RolePill role={role} attr="data-case-shooting-role" />
+                        {other?.roleGuessed && (
+                          <div className="mt-0.5 text-ui-2xs text-ink-faint">推测</div>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-ui-2xs text-ink-faint">—</span>
+                    )}
+                  </Td>
+                  <Td>
+                    {mine ? (
+                      <>
+                        <span
+                          data-case-shooting-artist={mine.artistId}
+                          className="whitespace-nowrap text-ui-xs font-semibold text-ink"
+                        >
+                          {mine.artistName}
+                        </span>
+                        <div
+                          data-case-shooting-status={mine.status}
+                          className={cn(
+                            'mt-0.5 inline-flex rounded-full px-1.5 text-ui-2xs',
+                            mine.status === 'shooting'
+                              ? 'bg-brand-soft font-semibold text-brand-strong'
+                              : 'bg-surface-soft text-ink-faint',
+                          )}
+                        >
+                          {STATUS_LABEL[mine.status]}
+                        </div>
+                      </>
+                    ) : other?.vacant ? (
+                      <span
+                        data-case-shooting-vacant={other.role?.roleCode}
+                        className="italic text-ui-xs text-ink-faint"
+                      >
+                        虚位以待
+                      </span>
+                    ) : (
+                      <>
+                        <span
+                          data-case-shooting-other={other?.artistId ?? ''}
+                          className="whitespace-nowrap text-ui-xs text-ink-muted"
+                        >
+                          {other?.artistName}
+                        </span>
+                        <div className="mt-0.5 inline-flex rounded-full bg-surface px-1.5 text-ui-2xs text-ink-faint">
+                          他司
+                        </div>
+                      </>
+                    )}
+                  </Td>
+                  <Td className="tabular-nums text-ui-2xs">
+                    {mine ? (
+                      <>
+                        <span className="text-ui-xs font-bold text-ink">{mine.doneDays}</span>
+                        <span className="text-ink-faint"> / {mine.workDays || '—'} 天</span>
+                        <div className="mt-0.5 text-ink-faint">每週 ≤ {mine.daysPerWeek || '—'} 天</div>
+                      </>
+                    ) : (
+                      <span className="text-ink-faint">—</span>
+                    )}
+                  </Td>
+                  <Td className="tabular-nums text-ui-2xs">
+                    {mine ? (
+                      mine.status === 'done' ? (
+                        <span className="text-ui-2xs text-ink-faint">已拍完</span>
+                      ) : (
+                        <>
+                          <span className="text-ui-xs font-semibold text-ink">{mine.needDays}</span>
+                          <span className="text-ink-faint"> 天</span>
+                          <div className="mt-0.5 leading-tight text-ink-faint">
+                            <div className="whitespace-nowrap">能排 {mine.canShootDays} 天</div>
+                            <div className="whitespace-nowrap">
+                              距杀青 {Number.isFinite(notice.daysLeft) ? notice.daysLeft : '—'} 天
+                            </div>
+                          </div>
+                        </>
+                      )
+                    ) : (
+                      <span className="text-ink-faint">—</span>
+                    )}
+                  </Td>
+                  <Td className="tabular-nums text-ui-2xs text-ink-muted">
+                    {mine ? payText(mine.pay) : <span className="text-ink-faint">—</span>}
+                  </Td>
+                  <Td>
+                    {mine && (mine.risk === 'tight' || mine.risk === 'late') ? (
+                      <>
+                        <span
+                          data-case-shooting-risk-label={mine.risk}
+                          className={cn(
+                            'inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-ui-2xs',
+                            mine.risk === 'late'
+                              ? 'border-alert-line bg-alert-soft font-bold text-alert'
+                              : 'border-gold-line bg-gold-soft font-semibold text-gold',
+                          )}
+                        >
+                          {RISK_LABEL[mine.risk]}
+                        </span>
+                        {mine.risk === 'tight' && (
+                          <div className="mt-0.5 text-ui-2xs text-ink-faint">余量 ≤ 5 天</div>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-ui-2xs text-ink-faint">—</span>
+                    )}
+                  </Td>
+                </tr>
+              );
+            });
+          })}
         </tbody>
       </table>
     </div>

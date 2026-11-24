@@ -1320,7 +1320,8 @@ async function main() {
       'Story0014 CF095 萧依莉没接取，页面不显示已预约',
       JSON.stringify(cf095));
 
-    // 换成 Story0027：「守候」里史蒂芬 / 方若綺不是旗下艺人，只该留克烈斯一行。
+    // 换成 Story0027：多角色通告里对手演员要出现在「他司」行、与我方区分，
+    // 我方仍只在 [data-case-shooting-artist] 里、进度列是真值。
     const ownPath = 'D:/Program Files (x86)/dayuzixun/mxzy3/tw/Save2/Story0027.sa2';
     if (fs.existsSync(ownPath)) {
       const copy = path.join(root, '.tmp', 'case-e2e-own.sa2');
@@ -1330,23 +1331,32 @@ async function main() {
       await uploadSave(copy);
       const own = JSON.parse(await evaluate(`JSON.stringify({
         artists: [...document.querySelectorAll('[data-case-shooting-artist]')].map(x => x.innerText),
+        others: [...document.querySelectorAll('[data-case-shooting-other]')].map(x => x.innerText),
+        otherTags: [...document.querySelectorAll('[data-case-shooting-other]')].map(x => x.parentElement?.innerText.replace(/\\s+/g,' ').trim()),
+        vacants: [...document.querySelectorAll('[data-case-shooting-vacant]')].map(x => x.innerText),
         codes: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.getAttribute('data-case-shooting-row')),
         rows: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.innerText.replace(/\\s+/g, ' ').trim()),
         text: document.querySelector('[data-case-shooting]')?.innerText || ''
       })`));
-      console.log('own:', JSON.stringify(own.artists), own.codes.join(','));
-      // 玩家在玩的历史活档会被游戏改写。守候(TV021) 还在才做这几条断言，
-      // 否则整段跳过，别让存档漂移假报回归失败（同单测的 Story0027 守卫）。
+      console.log('own:', JSON.stringify(own.artists), 'others:', JSON.stringify(own.others), own.codes.join(','));
+      // 对手演员与我方三类行互不串位：真进度行只含签约艺人，对手只在他司属性里。
+      check(own.artists.every((n) => !own.others.includes(n)),
+        '拍摄中：我方艺人与他司演员不串位', `mine=${own.artists.join(',')} other=${own.others.join(',')}`);
+      check(own.otherTags.every((t) => t.includes('他司')),
+        '拍摄中：每个他司演员行都带「他司」标记', own.otherTags.join(' | '));
+      // 玩家在玩的历史活档会被游戏改写。守候(TV021) 还在才做具体名单断言。
       if (!own.codes.includes('TV021')) {
-        console.log('OK   Story0027.sa2 drifted in-game, skipped the own-artist checks');
+        console.log('OK   Story0027.sa2 drifted in-game, skipped the exact-name checks');
       } else {
-      check(!own.artists.includes('史蒂芬') && !own.artists.includes('方若綺'),
-        '对手公司的演员不进拍摄中', own.artists.join(',') || 'none');
       check(own.artists.includes('克烈斯') && own.codes.includes('TV021'),
         '自家艺人克烈斯仍在守候这一行', own.artists.join(','));
-      check(!own.text.includes('史蒂芬') && !own.text.includes('方若綺'),
-        '史蒂芬 / 方若綺 连名字都不出现在表里',
-        own.text.replace(/\s+/g, ' ').slice(0, 80));
+      // MV607 若仍在档期内，对手演员黎华 / 方若绮要出现在他司行。
+      if (own.codes.includes('MV607')) {
+        check(own.others.includes('黎華') && own.others.includes('方若綺'),
+          'MV607 对手演员黎华 / 方若绮显示在他司行', own.others.join(','));
+        check(own.text.includes('推测'),
+          '对手演员角色标注「推测」', own.text.slice(0, 100));
+      }
       }
 
       // Story0024：CF728 今天刚拍满 6 天（杀青日就是今天），整条都不再列进拍摄中。

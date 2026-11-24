@@ -510,21 +510,38 @@ if (fs.existsSync(savePath)) {
     );
     const codes = save.shooting.map((n) => n.code);
     const castIds = save.shooting.flatMap((n) => n.casts.map((c) => c.artistId));
-    // 玩家在玩的历史活档，会被游戏随时改写。真值匹配时照常断言；
-    // 签约名单一旦漂移就整段跳过，别让存档变化假报回归失败（同 Story0007）。
+    // 拍摄中表里，casts（真进度行）必须只含当前签约艺人；对手演员与空缺格
+    // 一律进 otherCasts，且角色归属标「推测」、不带进度。这条不依赖具体名单。
+    check(castIds.every((id) => save.signedArtistIds.includes(id)),
+      '拍摄中：casts 只含签约艺人，对手演员不混进真进度行', castIds.join(','));
+    const allOther = save.shooting.flatMap((n) => n.otherCasts);
+    check(allOther.every((o) => !save.signedArtistIds.includes(o.artistId ?? -1)),
+      '拍摄中：otherCasts 只放对手艺人与空缺格，不放签约艺人',
+      allOther.map((o) => `${o.artistName ?? '空缺'}:${o.artistId}`).join(','));
+    check(allOther.filter((o) => !o.vacant).every((o) => o.roleGuessed && o.artistName),
+      '拍摄中：对手演员角色都标推测且有名字',
+      allOther.filter((o) => !o.vacant).map((o) => `${o.artistName}:${o.roleGuessed}`).join(','));
+    check(allOther.filter((o) => o.vacant).every((o) => o.artistId === null && !o.roleGuessed),
+      '拍摄中：空缺格 artistId 为 null 且不标推测',
+      allOther.filter((o) => o.vacant).map((o) => o.role?.roleCode).join(','));
+    // 多角色通告的完整卡司：对手演员按性别落到未被我方占用的角色格。
+    // 对手演员身份不随签约名单漂移，这条断言始终生效。
+    const mv607 = save.shooting.find((n) => n.code === 'MV607');
+    if (mv607) {
+      const rolesOf = Object.fromEntries(mv607.otherCasts.map((o) => [o.artistName, o.role?.role]));
+      check(rolesOf['黎華'] === '男主角' && rolesOf['方若綺'] === '女主角',
+        'Story0027: MV607 对手角色按性别落格（黎华男主角 / 方若绮女主角）', JSON.stringify(rolesOf));
+    }
+    // 玩家在玩的历史活档，会被游戏随时改写。下面的具体名单断言在漂移时跳过。
     if (save.signedArtistIds.join(',') !== '1,9,72') {
-      console.log('OK   Story0027.sa2 drifted in-game, skipped the own-artist checks');
+      console.log(`OK   Story0027.sa2 drifted in-game (${save.signedArtistIds.join(',')}), skipped exact-roster checks`);
     } else {
     check(save.signedArtistIds.join(',') === '1,9,72',
       'Story0027: 旗下是 林芬芬 / 关古威 / 克烈斯', save.signedArtistIds.join(','));
-    check(castIds.every((id) => save.signedArtistIds.includes(id))
-      && !castIds.includes(20) && !castIds.includes(23),
-      'Story0027: 拍摄中只留旗下艺人，史蒂芬 / 方若綺不占行',
-      castIds.join(','));
     const tv021 = save.shooting.find((n) => n.code === 'TV021');
     check(tv021?.casts.length === 1 && tv021.casts[0].artistId === 72
       && tv021.casts[0].role?.role === '男配角',
-      'Story0027: 守候只剩克烈斯一行，角色没被前面的对手公司演员挤错',
+      'Story0027: 守候我方仍只克烈斯一行，角色没被对手演员挤错',
       tv021?.casts.map((c) => `${c.artistName}:${c.role?.role}`).join(',') ?? 'none');
     check(codes.includes('TV021') && codes.includes('CD294') && codes.includes('SH032'),
       'Story0027: 三条在拍通告都还在拍摄中', codes.join(','));
