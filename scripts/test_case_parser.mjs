@@ -556,6 +556,35 @@ if (fs.existsSync(savePath)) {
   }
 }
 
+// 对手 / NPC 的接取记录没有状态块、进不了作品清单，但编号与名字在存档里
+// 是精确数据（游戏艺人表 stars）。TV088 实机截图核对过：男配角=路風(10)、
+// 女配角=幃幃(70，NPC)。这两条都必须从接取记录里读出来，不能漏也不能拿
+// 作品清单里的其他人（如姚子瑩）顶替。用冻结快照，不跟活档漂移。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const raw = fs.readFileSync(path.join(SNAP, 'Auto-tv088.sa2'));
+  const save = parseSave(
+    raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Auto-tv088.sa2',
+  );
+  const tv088 = save.shooting.find((n) => n.code === 'TV088');
+  check(!!tv088, '拍摄中：TV088 失婚新娘在档期内', save.shooting.map((n) => n.code).join(','));
+  if (tv088) {
+    const mine = tv088.casts.map((c) => `${c.artistId}:${c.artistName}:${c.role?.role}`);
+    const other = tv088.otherCasts.filter((o) => !o.vacant)
+      .map((o) => `${o.artistId}:${o.artistName}:${o.role?.role}:guess=${o.roleGuessed}`);
+    check(mine.some((x) => x.startsWith('10:') && x.endsWith(':男配角')),
+      'TV088：路風(10) 男配角是我方真进度行', mine.join(' | '));
+    check(other.some((x) => x.startsWith('70:幃幃:女配角')),
+      'TV088：幃幃(70) 女配角从接取记录精确读出（NPC 无状态块）', other.join(' | '));
+    check(!other.some((x) => x.startsWith('65:')),
+      'TV088：姚子瑩(65) 只是作品清单里的历史记录，不该顶替女配角', other.join(' | '));
+    // 一男一女的角色是性别唯一匹配，不算推测；只有同性别多角色才标。
+    const wei = tv088.otherCasts.find((o) => o.artistId === 70);
+    check(wei && wei.roleGuessed === false,
+      'TV088：幃幃的女配角是性别唯一匹配，不标「推测」', JSON.stringify(wei));
+  }
+}
+
 // 第六个存档（Story0024）：CF728 絲襪 勾引篇 已经拍满 6 天、杀青日就是今天，
 // 所以整条都不该留在拍摄中（没有在赶期的人），也不再单独开「已完成」页签。
 {
