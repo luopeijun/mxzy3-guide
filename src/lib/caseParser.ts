@@ -670,6 +670,8 @@ export interface ArchiveNotice {
   endDayNum?: number;
   /** 宣传活动里每个角色槽的明细（角色名 / 签约艺人编号 / 该角色宣传天数）。团体宣传只有一条。 */
   promoCasts?: PromoCast[];
+  /** 所有个人通告的 4 个原始角色槽（含筹备中），只供预约/作品角色索引使用，不进宣传 UI。 */
+  castSlots?: PromoCast[];
   /** 等待上市 / 热卖中 / 已完成：发行档期起（上市日，文本）。来自本体记录第 4 组档期。 */
   saleStart?: string;
   /** 等待上市 / 热卖中 / 已完成：发行档期止（下市日，文本）。来自本体记录第 5 组档期。 */
@@ -692,6 +694,8 @@ export interface PromoCast {
   groupCode: number;
   /** 该角色的酬劳（个人记录 +816+i*24）；读不到为 null。 */
   pay?: number | null;
+  /** 精确角色号（通告码 + 槽位序号），用于把预约/作品角色落到具体角色格。 */
+  roleCode?: string;
 }
 
 export interface ParseResult {
@@ -1346,7 +1350,7 @@ export function parseArchiveNotices(
   };
   // 读宣传记录里每个角色槽：个人每槽 +800+i*24 艺人 / +804+i*24 天数 / +10+i*192 角色名；
   // 团体记录只有一条，团体 code +772、代表艺人 +832、完成天数 +836。
-  const readCasts = (o: number, group: boolean, slot = 0): PromoCast[] => {
+  const readCasts = (o: number, group: boolean, slot = 0, code = ''): PromoCast[] => {
     if (group) {
       return [{ roleName: '團體', artistId: q(o, 832), doneDays: q(o, 836), groupCode: q(o, 772) }];
     }
@@ -1355,7 +1359,10 @@ export function parseArchiveNotices(
       const artistId = q(o, 800 + slot + i * 24);
       const roleName = roleAt(o, 10 + i * 192);
       if (!artistId && !roleName) continue;
-      out.push({ roleName: roleName || '個人', artistId, doneDays: q(o, 804 + slot + i * 24), groupCode: 0, pay: q(o, 816 + slot + i * 24) });
+      out.push({
+        roleName: roleName || '個人', artistId, doneDays: q(o, 804 + slot + i * 24),
+        groupCode: 0, pay: q(o, 816 + slot + i * 24), roleCode: `${code}${i + 1}`,
+      });
     }
     return out;
   };
@@ -1414,7 +1421,10 @@ export function parseArchiveNotices(
     const groupId = group ? q(o, 772) : 0;
     const doneRaw = group ? q(o, 836) : q(o, 804 + slot);
     const doneDays = doneRaw < 4000000000 ? doneRaw : null;
-    const artists = group ? [] : [q(o, 800 + slot), q(o, 824 + slot)].filter((a) => a >= 1 && a <= 100);
+    // 角色槽最多 4 个（MV142 的接演人就写在 +848 / +872），只读前两位会漏人。
+    const artists = group ? [] : [...new Set(
+      Array.from({ length: 4 }, (_, i) => q(o, 800 + slot + i * 24)).filter((a) => a >= 1 && a <= 100),
+    )];
     const rec: Rec = {
       o,
       code,
@@ -1445,7 +1455,7 @@ export function parseArchiveNotices(
       groupId,
       doneDays,
       isGroup: group,
-      casts: readCasts(o, group, slot),
+      casts: readCasts(o, group, slot, code),
     };
     recs.push(rec);
     recByOffset.set(o, rec);
@@ -1501,11 +1511,13 @@ export function parseArchiveNotices(
             saleEnd: '',
             pay: null,
             otherInfo: '',
-            artists: group ? [] : [q(s, 800), q(s, 824)].filter((a) => a >= 1 && a <= 100),
+            artists: group ? [] : [...new Set(
+              Array.from({ length: 4 }, (_, i) => q(s, 800 + i * 24)).filter((a) => a >= 1 && a <= 100),
+            )],
             groupId: group ? q(s, 772) : 0,
             doneDays: doneRaw < 4000000000 ? doneRaw : null,
             isGroup: group,
-            casts: readCasts(s, group),
+            casts: readCasts(s, group, 0, ascii),
           };
           // 这段是宣传记录的起始段（在通告记录表尾部），插到末尾即可。
           recs.push(rec);
@@ -1539,6 +1551,7 @@ export function parseArchiveNotices(
       startDate: rec.startDate,
       endDate: rec.endDate,
       artistIds: rec.artists,
+      castSlots: rec.casts,
     };
     if (promoKind) {
       notice.promoKind = promoKind;
@@ -1739,7 +1752,8 @@ const MAIN_ROLES = new Set(['男主角', '女主角', '男配角', '女配角'])
 export function buildWorkRoleIndex(notices: ArchiveNotice[]): WorkRoleIndex {
   const index: WorkRoleIndex = new Map();
   for (const notice of notices) {
-    for (const cast of notice.promoCasts ?? []) {
+    // 筹备中的通告还没有 promoCasts，但角色槽里已经写好了接演人（MV142）。
+    for (const cast of notice.castSlots ?? notice.promoCasts ?? []) {
       if (!MAIN_ROLES.has(cast.roleName) || !cast.artistId || cast.artistId > 100) continue;
       const key = `${notice.code}|${cast.artistId}`;
       if (!index.has(key)) index.set(key, cast.roleName);
@@ -2868,6 +2882,19 @@ export function parseSave(
   const { owners: ownersByCode } = parseCaseOwners(bytes, view, artists, tables.stars, artistEnd);
   // 精确到角色号的预约关系（存档里的 52 字节角色预约表）。
   const roleReservations = parseRoleReservations(bytes, view);
+  const archiveNotices = parseArchiveNotices(bytes, view, tables, currentDate);
+  // 通告本体记录的 4 个角色槽是预约关系的第二真源：筹备中的 MV142 里，
+  // 桑禾蓓 / 路風写在 +872 / +848，而 52B 预约表还是空的；只按性别回退会把
+  // 桑禾蓓错放到女主角。优先 52B，其次这里的精确角色号，最后才按性别猜。
+  const exactReserved = new Map<string, string>();
+  for (const notice of archiveNotices) {
+    for (const cast of notice.castSlots ?? []) {
+      if (!cast.roleCode || !cast.artistId || cast.artistId > 100) continue;
+      const name = tables.stars?.[String(cast.artistId)]?.[0]
+        ?? ARTIST_DIRECTORY.find((a) => a.id === cast.artistId)?.name;
+      if (name) exactReserved.set(`${notice.code}|${cast.roleCode}`, name);
+    }
+  }
   const scenes = parseWorldScenes(view, bytes.length);
   const items = parseItems(view, bytes).map((it) => {
     const meta = tables.items?.[String(it.code)];
@@ -2951,6 +2978,15 @@ export function parseSave(
     for (const [roleCode, artistName] of roleReservations) {
       const target = noticeRoles.find((role) => role.roleCode === roleCode);
       if (!target || taken.has(roleCode)) continue;
+      target.reservedBy = artistName;
+      taken.add(roleCode);
+      usedOwners.add(artistName);
+    }
+    for (const [key, artistName] of exactReserved) {
+      const [code, roleCode] = key.split('|');
+      if (code !== item.code || taken.has(roleCode) || usedOwners.has(artistName)) continue;
+      const target = noticeRoles.find((role) => role.roleCode === roleCode);
+      if (!target) continue;
       target.reservedBy = artistName;
       taken.add(roleCode);
       usedOwners.add(artistName);
@@ -3311,9 +3347,7 @@ export function parseSave(
     };
   });
 
-  // 通告记录表里的角色槽是「通告统计」角色的真源，先解析一次建索引，供作品
-  // 明细优先取用；结果也直接进 ParseResult，不在返回时重复解析。
-  const archiveNotices = parseArchiveNotices(bytes, view, tables, currentDate);
+  // 通告记录表里的角色槽是「通告统计」角色的真源，建索引供作品明细优先取用。
   const workRoleIndex = buildWorkRoleIndex(archiveNotices);
 
   // 明细改用每位艺人状态块后面的完整参与清单；记事表只剩 97 条，苏嫚君
