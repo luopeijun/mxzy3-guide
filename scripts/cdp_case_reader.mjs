@@ -1360,8 +1360,8 @@ async function main() {
       if (own.codes.includes('MV607')) {
         check(own.others.includes('黎華') && own.others.includes('方若綺'),
           'MV607 对手演员黎华 / 方若绮显示在对手行', own.others.join(','));
-        check(own.text.includes('推测'),
-          '对手演员角色标注「推测」', own.text.slice(0, 100));
+        check(!own.text.includes('推测'),
+          '对手演员角色是精确数据，不再标「推测」', own.text.slice(0, 100));
       }
       }
 

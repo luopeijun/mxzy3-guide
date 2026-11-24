@@ -511,8 +511,8 @@ if (fs.existsSync(savePath)) {
     const codes = save.shooting.map((n) => n.code);
     const castIds = save.shooting.flatMap((n) => n.casts.map((c) => c.artistId));
     // 拍摄中表里，casts（真进度行）必须只含当前签约艺人；对手演员与空缺格
-    // 一律进 otherCasts。对手的编号/名字/性别来自接取记录 + stars 表（精确数据），
-    // 只有同性别多角色时的角色归属才标「推测」。这条不依赖具体名单。
+    // 一律进 otherCasts。对手的编号/名字/性别、角色归属都来自接取记录 + stars
+    // 表（精确数据，按记录顺序对应角色号）。这条不依赖具体名单。
     check(castIds.every((id) => save.signedArtistIds.includes(id)),
       '拍摄中：casts 只含签约艺人，对手演员不混进真进度行', castIds.join(','));
     const allOther = save.shooting.flatMap((n) => n.otherCasts);
@@ -522,8 +522,8 @@ if (fs.existsSync(savePath)) {
     check(allOther.filter((o) => !o.vacant).every((o) => o.artistName && !o.artistName.startsWith('编号')),
       '拍摄中：对手演员都有游戏艺人表里的精确名字',
       allOther.filter((o) => !o.vacant).map((o) => `${o.artistName}:${o.artistId}`).join(','));
-    check(allOther.filter((o) => o.vacant).every((o) => o.artistId === null && !o.roleGuessed),
-      '拍摄中：空缺格 artistId 为 null 且不标推测',
+    check(allOther.filter((o) => o.vacant).every((o) => o.artistId === null),
+      '拍摄中：空缺格 artistId 为 null',
       allOther.filter((o) => o.vacant).map((o) => o.role?.roleCode).join(','));
     // 多角色通告的完整卡司：对手演员按性别落到未被我方占用的角色格。
     // 对手演员身份不随签约名单漂移，这条断言始终生效。
@@ -571,17 +571,21 @@ if (fs.existsSync(savePath)) {
   if (tv088) {
     const mine = tv088.casts.map((c) => `${c.artistId}:${c.artistName}:${c.role?.role}`);
     const other = tv088.otherCasts.filter((o) => !o.vacant)
-      .map((o) => `${o.artistId}:${o.artistName}:${o.role?.role}:guess=${o.roleGuessed}`);
+      .map((o) => `${o.artistId}:${o.artistName}:${o.role?.role}`);
     check(mine.some((x) => x.startsWith('10:') && x.endsWith(':男配角')),
       'TV088：路風(10) 男配角是我方真进度行', mine.join(' | '));
     check(other.some((x) => x.startsWith('70:幃幃:女配角')),
       'TV088：幃幃(70) 女配角从接取记录精确读出（NPC 无状态块）', other.join(' | '));
     check(!other.some((x) => x.startsWith('65:')),
       'TV088：姚子瑩(65) 只是作品清单里的历史记录，不该顶替女配角', other.join(' | '));
-    // 一男一女的角色是性别唯一匹配，不算推测；只有同性别多角色才标。
-    const wei = tv088.otherCasts.find((o) => o.artistId === 70);
-    check(wei && wei.roleGuessed === false,
-      'TV088：幃幃的女配角是性别唯一匹配，不标「推测」', JSON.stringify(wei));
+    // 角色归属按接取记录序号精确落位：路風是记录第 1 条→男配角(角色1)，
+    // 幃幃是第 2 条→女配角(角色2)，不是靠性别猜的。
+    const allCast = [
+      ...tv088.casts.map((c) => `${c.artistName}:${c.role?.roleCode}`),
+      ...tv088.otherCasts.filter((o) => !o.vacant).map((o) => `${o.artistName}:${o.role?.roleCode}`),
+    ];
+    check(allCast.includes('路風:TV0881') && allCast.includes('幃幃:TV0882'),
+      'TV088：角色按接取记录顺序精确落位（路風角色1 / 幃幃角色2）', allCast.join(','));
   }
   // CF003 好喝可樂只有 1 个角色坑位（女性，路敏）。接取记录区前面散落着
   // 彭胡 / 林芬芬的占位噪声（done/pay 全 0），不能再多列出两个「同事」。
@@ -593,6 +597,29 @@ if (fs.existsSync(savePath)) {
     ];
     check(people.length === 1 && people[0] === '路敏',
       'CF003：单角色通告只显示路敏，不把占位噪声当成其他同事', people.join(','));
+  }
+}
+
+// MV025 提心吊膽：4 个角色（男主角/女主角/男配角/女配角），实机游戏界面
+// 精确写着 13 黎華 / 4 苏嫚君 / 56 張育銓 / 6 蕭依莉。这里验证按接取记录
+// 顺序落位（不是按性别猜），且带头像的苏嫚君 pay=920万 排第 2 条时，前面
+// pay=0 的黎華也不能漏。冻结快照，不跟活档漂移。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const raw = fs.readFileSync(path.join(SNAP, 'Story0025.sa2'));
+  const save = parseSave(
+    raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Story0025.sa2',
+  );
+  const mv025 = save.shooting.find((n) => n.code === 'MV025');
+  check(!!mv025, '拍摄中：MV025 提心吊膽在档期内', save.shooting.map((n) => n.code).join(','));
+  if (mv025) {
+    const byRole = Object.fromEntries([
+      ...mv025.casts.map((c) => [c.role?.roleCode, `${c.artistName}(${c.artistId})`]),
+      ...mv025.otherCasts.filter((o) => !o.vacant).map((o) => [o.role?.roleCode, `${o.artistName}(${o.artistId})`]),
+    ]);
+    check(byRole['MV0251'] === '黎華(13)' && byRole['MV0252'] === '蘇嫚君(4)'
+      && byRole['MV0253'] === '張育銓(56)' && byRole['MV0254'] === '蕭依莉(6)',
+    'MV025：四人按角色号精确落位（黎華/苏嫚君/張育銓/蕭依莉）', JSON.stringify(byRole));
   }
 }
 
