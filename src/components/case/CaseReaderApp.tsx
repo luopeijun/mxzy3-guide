@@ -2240,9 +2240,9 @@ function kindDetail(notice: { category: string; type: string; subtype: string })
  *  一条通告上不同艺人各拿一个角色、各拍各的天数、各拿各的酬劳，所以一
  *  位艺人一行；通告信息只在第一行给（rowSpan），后面几行只写这位艺人自
  *  己的进度。白底是我方艺人（进度是真值）；灰底是同一部戏的其他公司演员
- *  与没人接的角色格 —— 接演人编号/名字/性别从存档精确读出，角色在性别唯一
- *  时也是确定的；只有同性别多角色才按顺序猜并标「推测」。对手的进度酬劳
- *  在存档里是 0、无真值，显示「—」。风险提醒只看我方，不受他们影响。
+ *  与没人接的角色格 —— 接演人编号/名字、角色归属（按接取记录顺序对应角色号）
+ *  都是存档里的精确数据。对手的进度酬劳在存档里是 0、无真值，显示「—」。
+ *  风险提醒只看我方，不受他们影响。
  *  提醒只用存档里的数字算：
  *  还差几天（Length 表工作天数 - 存档完成天数）对比「剩下的日子里按每週
  *  上限还能排几天」，排不下 = 违约提醒，余量 ≤ 5 天 = 逾期风险。 */
@@ -2334,12 +2334,7 @@ function ShootingPanel({
                   )}
                   <Td>
                     {role ? (
-                      <>
-                        <RolePill role={role} attr="data-case-shooting-role" />
-                        {other?.roleGuessed && (
-                          <div className="mt-0.5 text-ui-2xs text-ink-faint">推测</div>
-                        )}
-                      </>
+                      <RolePill role={role} attr="data-case-shooting-role" />
                     ) : (
                       <span className="text-ui-2xs text-ink-faint">—</span>
                     )}

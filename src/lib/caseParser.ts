@@ -2336,18 +2336,15 @@ export interface ShootingCast {
   status: ShootingStatus;
 }
 
-/** 拍摄中通告里的「非我方角色」。存档没有「角色 → 艺人编号」的字段
- *  接演人本人、编号、名字、性别都从接取记录 + 游戏艺人表 stars 精确读出；
- *  角色归属在性别唯一时也是确定的（如一男一女的两个角色）。只有通告里
- *  出现多个同性别角色时才需要按顺序猜，这时 roleGuessed 才为 true。
+/** 拍摄中通告里的「非我方角色」。
+ *  接演人编号、名字、性别都从接取记录 + 游戏艺人表 stars 精确读出；角色归属
+ *  按接取记录的 24B 顺序对应角色号，也是精确数据（1804 条通告核对过）。
  *  对手的进度/酬劳在存档里是 0，没有真值可读，界面显示「—」。 */
 export interface ShootingOtherCast {
   artistId: number | null;
   artistName: string;
   role: RoleRecord | null;
-  /** true＝角色归属因为有多个同性别角色而按顺序推测。 */
-  roleGuessed: boolean;
-  /** true＝这个角色格没人接（作品清单和预约表里都找不到）。 */
+  /** true＝这个角色格没人接。 */
   vacant: boolean;
 }
 
@@ -2609,10 +2606,12 @@ export function shootableDays(remaining: number, perWeek: number): number {
  *  要么 0 要么 ≥ 1000。筛过之后同一艺人只取第一条，避免串到邻近档期。
  *
  *  记录按 24 字节连续排列，从「第一条真的拿到酬劳（pay ≥ 1000）的记录」
- *  起读，一直读到字段不合法为止。这个锚点很关键：块里散落着 done/pay 全 0
- *  的占位噪声（TV088 +940 前的史蒂芬、CF003 +940 的彭胡 / +952 的林芬芬），
- *  它们单看字段也合法，但不在真记录的 24B 网格上。从 pay>0 那条起按 24B
- *  往后读，就能把同片的对手（pay=0，如 TV088 幃幃）一起带进来，又不误收噪声。
+ *  起定出 24B 网格，再**向前后双向**按网格读。这个锚点很关键：块里散落着
+ *  done/pay 全 0 的占位噪声（TV088 +940 前的史蒂芬、CF003 +940 的彭胡 /
+ *  +952 的林芬芬），它们单看字段也合法，但不在真记录的 24B 网格上。
+ *  必须双向读，因为带头像的那位艺人未必排在最前 —— MV025 提心吊膽的
+ *  pay=920万 苏嫚君是第 2 条，前面还有 pay=0 的黎華（男主角），只往后读
+ *  会漏掉他。双向扩展既带进同片所有对手，又不误收噪声。
  *
  *  候选编号取「作品清单里的接演人 ∪ 游戏艺人表全部编号」：对手公司 / NPC
  *  没有状态块、进不了作品清单，但他们的接取记录同样躺在块尾。扫描只走块尾
@@ -2650,6 +2649,14 @@ function readProgress(
       if (r.pay >= 1000 && valid(r)) { anchor = p; break; }
     }
     if (anchor >= 0) {
+      // 先往回读（anchor-24、anchor-48…），保持文件里的角色顺序；
+      // 再从 anchor 往后读。每条都过 sanity，遇到不合法就停。
+      for (let p = anchor - 24; p >= from && p + 24 <= limit; p -= 24) {
+        const r = readAt(p);
+        if (!valid(r)) break;
+        if (rows.some((row) => row.artistId === r.id)) continue;
+        rows.unshift({ artistId: r.id, doneDays: r.done, pay: r.pay });
+      }
       for (let p = anchor; p + 24 <= limit; p += 24) {
         const r = readAt(p);
         if (!valid(r)) break;
@@ -3066,27 +3073,30 @@ export function parseSave(
       .map((role) => lengthOf(block.code, info, role.role))
       .find((hit): hit is number[] => Boolean(hit)) ?? null;
 
-    // 一位艺人一个角色：按存档里的接取顺序分配，男/女主角先落到性别对得上的那一格。
-    // 已经分配出去的角色不再给别人，所以同一段对手戏不会被两个艺人共用一格。
-    // 分配必须带着全部接演人一起走 —— 对手公司的演员也占着角色坑位，先把
-    // 自家艺人挑出来再分，就会把他错放到别人那格上。
+    // 角色归属是**精确数据**：接取记录按角色号顺序排列（24B 网格），记录第 i 条
+    // 就是角色表里第 i 个角色。逐份存档核对过 1804 条通告，记录顺序与角色号
+    // 100% 对应，所以直接按序号落位，不再靠性别猜。
+    // （此前按性别挑会出错：MV025 男/女/男/女四个角色，男主角黎華 pay=0
+    //  排在 pay=920万 的苏嫚君前面，"我方优先"重排会把角色全打乱。）
+    const sortedRoles = [...noticeRoles].sort((a, b) => a.roleCode.localeCompare(b.roleCode));
     const claimed = new Set<string>();
     const casts: ShootingCast[] = [];
     const otherCasts: ShootingOtherCast[] = [];
-    // 我方艺人优先挑角色：只有我方的角色/进度/风险是给用户看的真值。
-    // 对手若排在前面把同性别角色占走，我方就会落不到角色（MV607 苏嫚君
-    // 曾被林芬芬挤掉）。对手仍保留原顺序，只在同性别内部互相区分。
-    const orderedProgress = [...progress].sort((a, b) =>
-      Number(mineIds.has(b.artistId)) - Number(mineIds.has(a.artistId)));
-    for (const row of orderedProgress) {
+    for (let index = 0; index < progress.length; index += 1) {
+      const row = progress[index];
       // 我方从作品清单取名字性别；对手 / NPC 没有状态块，回退到游戏艺人表 stars
-      // （编号→名字、性别都是精确数据，不是推测）。
+      // （编号→名字、性别都是精确数据）。
       const starEntry = tables.stars?.[String(row.artistId)];
       const owner = owners.find((o) => o.id === row.artistId) ?? (starEntry ? {
         id: row.artistId, name: starEntry[0], gender: starGender(row.artistId, tables.stars ?? {}),
       } : undefined);
       const gender = owner?.gender ?? 'any';
-      let role = noticeRoles.find((r) => !claimed.has(r.roleCode) && canTakeRole(r, gender)) ?? null;
+      // 按序号直接取对应角色；只在性别明显冲突时退回"第一个未占的同性别角色"
+      // 兜底（应对记录数多于角色数的团体通告等边界）。
+      let role: RoleRecord | null = sortedRoles[index] ?? null;
+      if (role && !canTakeRole(role, gender) && sortedRoles.length > 1) {
+        role = sortedRoles.find((r) => !claimed.has(r.roleCode) && canTakeRole(r, gender)) ?? role;
+      }
       if (role) claimed.add(role.roleCode);
       // 只有一个角色的通告（团体、合唱一类），后接的人也占同一格。
       // 这里也要 claimed.add，否则后面的「角色格已满不再补人」守卫会失灵
@@ -3100,16 +3110,11 @@ export function parseSave(
       // 对手演员同样要走过角色分配（占住自己那格），否则我方艺人会被挤到
       // 别人的角色上；只是他们不进 casts（进度无真值），单独记到 otherCasts。
       if (mineIds.size > 0 && !mineIds.has(row.artistId)) {
-        // 性别唯一匹配时角色是确定的（TV088 一男一女：路風→男配角、幃幃→女配角），
-        // 只有同性别角色有多个（两个女主角之类）才真是猜的，标「推测」。
-        const sameGenderRoles = noticeRoles.filter(
-          (r) => canTakeRole(r, gender) && !isGroupRole(r),
-        );
+        // 角色按接取记录序号精确落位，不是推测。
         otherCasts.push({
           artistId: row.artistId,
           artistName: owner?.name || `编号${row.artistId}`,
           role,
-          roleGuessed: sameGenderRoles.length > 1,
           vacant: false,
         });
         continue;
@@ -3177,7 +3182,6 @@ export function parseSave(
         artistId: owner.id,
         artistName: owner.name,
         role,
-        roleGuessed: true,
         vacant: false,
       });
       knownIds.add(owner.id);
@@ -3185,7 +3189,7 @@ export function parseSave(
     // 角色表里还没人认领的格＝虚位以待，让玩家看到完整卡司拼图缺了谁。
     for (const role of noticeRoles) {
       if (claimed.has(role.roleCode)) continue;
-      otherCasts.push({ artistId: null, artistName: '', role, roleGuessed: false, vacant: true });
+      otherCasts.push({ artistId: null, artistName: '', role, vacant: true });
     }
 
     // 自家艺人都交差了就整条收起来：没有在赶期的人，写进表格只是噪音。
