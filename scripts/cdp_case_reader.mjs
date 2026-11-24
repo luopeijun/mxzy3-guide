@@ -934,12 +934,17 @@ async function main() {
       openSelected: document.querySelector('[data-case-tab="open"]')?.getAttribute('aria-selected'),
       shootingSelected: document.querySelector('[data-case-tab="shooting"]')?.getAttribute('aria-selected'),
       rows: document.querySelectorAll('[data-case-shooting-row]').length,
-      codes: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => r.getAttribute('data-case-shooting-row')),
+      // 我方行＝带 data-case-shooting-artist；对手演员也占行，
+      // 所以旧断言里「一行一位艺人」的口径只看带 artist 的行。
+      codes: [...new Set([...document.querySelectorAll('[data-case-shooting-row]')]
+        .map(r => r.getAttribute('data-case-shooting-row')))],
       artists: [...document.querySelectorAll('[data-case-shooting-artist]')].map(x => x.innerText),
-      roles: [...document.querySelectorAll('[data-case-shooting-role]')].map(x => x.innerText),
+      roles: [...document.querySelectorAll('[data-case-shooting-artist]')]
+        .map(x => x.closest('tr')?.querySelector('[data-case-shooting-role]')?.innerText),
       statuses: [...document.querySelectorAll('[data-case-shooting-status]')].map(x => x.getAttribute('data-case-shooting-status')),
       risk: document.querySelector('[data-case-shooting-risk-label]')?.getAttribute('data-case-shooting-risk-label') ?? null,
-      progresses: [...document.querySelectorAll('[data-case-shooting-row]')].map(r => {
+      progresses: [...document.querySelectorAll('[data-case-shooting-row]')]
+        .filter(r => r.querySelector('[data-case-shooting-artist]')).map(r => {
         var cells = [...r.querySelectorAll('td')].map(td => td.innerText.replace(/\s+/g, ' ').trim());
         return cells.join(' | ');
       }),
@@ -955,7 +960,7 @@ async function main() {
       '档案页七个通告页签可以切换', `${shot.tabs} tabs`);
     check(shot.hasFinishedTab,
       '已完成的页签在热卖中后面', String(shot.hasFinishedTab));
-    check(shot.rows === 1 && shot.codes[0] === 'CF014',
+    check(shot.codes.length === 1 && shot.codes[0] === 'CF014',
       '拍摄中只列 CF014 愛信電訊（萧依莉那条广告）', shot.codes.join(',') || 'none');
     check(shot.artists.join(',') === '蕭依莉',
       '拍摄中列出接演的艺人', shot.artists.join(',') || 'none');
@@ -1050,7 +1055,8 @@ async function main() {
       await evaluate(`document.querySelector('[data-case-tab="shooting"]').click()`);
       await sleep(350);
       const galaxy = JSON.parse(await evaluate(`JSON.stringify({
-        rows: [...document.querySelectorAll('[data-case-shooting-row="CD602"]')].map(r => ({
+        rows: [...document.querySelectorAll('[data-case-shooting-row="CD602"]')]
+          .filter(r => r.querySelector('[data-case-shooting-artist]')).map(r => ({
           artist: r.querySelector('[data-case-shooting-artist]')?.innerText || '',
           text: [...r.querySelectorAll('td')].map(td => td.innerText.replace(/\\s+/g, ' ').trim()).join(' | '),
         })),

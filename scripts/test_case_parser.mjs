@@ -511,16 +511,17 @@ if (fs.existsSync(savePath)) {
     const codes = save.shooting.map((n) => n.code);
     const castIds = save.shooting.flatMap((n) => n.casts.map((c) => c.artistId));
     // 拍摄中表里，casts（真进度行）必须只含当前签约艺人；对手演员与空缺格
-    // 一律进 otherCasts，且角色归属标「推测」、不带进度。这条不依赖具体名单。
+    // 一律进 otherCasts。对手的编号/名字/性别来自接取记录 + stars 表（精确数据），
+    // 只有同性别多角色时的角色归属才标「推测」。这条不依赖具体名单。
     check(castIds.every((id) => save.signedArtistIds.includes(id)),
       '拍摄中：casts 只含签约艺人，对手演员不混进真进度行', castIds.join(','));
     const allOther = save.shooting.flatMap((n) => n.otherCasts);
     check(allOther.every((o) => !save.signedArtistIds.includes(o.artistId ?? -1)),
       '拍摄中：otherCasts 只放对手艺人与空缺格，不放签约艺人',
       allOther.map((o) => `${o.artistName ?? '空缺'}:${o.artistId}`).join(','));
-    check(allOther.filter((o) => !o.vacant).every((o) => o.roleGuessed && o.artistName),
-      '拍摄中：对手演员角色都标推测且有名字',
-      allOther.filter((o) => !o.vacant).map((o) => `${o.artistName}:${o.roleGuessed}`).join(','));
+    check(allOther.filter((o) => !o.vacant).every((o) => o.artistName && !o.artistName.startsWith('编号')),
+      '拍摄中：对手演员都有游戏艺人表里的精确名字',
+      allOther.filter((o) => !o.vacant).map((o) => `${o.artistName}:${o.artistId}`).join(','));
     check(allOther.filter((o) => o.vacant).every((o) => o.artistId === null && !o.roleGuessed),
       '拍摄中：空缺格 artistId 为 null 且不标推测',
       allOther.filter((o) => o.vacant).map((o) => o.role?.roleCode).join(','));
@@ -528,9 +529,13 @@ if (fs.existsSync(savePath)) {
     // 对手演员身份不随签约名单漂移，这条断言始终生效。
     const mv607 = save.shooting.find((n) => n.code === 'MV607');
     if (mv607) {
-      const rolesOf = Object.fromEntries(mv607.otherCasts.map((o) => [o.artistName, o.role?.role]));
-      check(rolesOf['黎華'] === '男主角' && rolesOf['方若綺'] === '女主角',
-        'Story0027: MV607 对手角色按性别落格（黎华男主角 / 方若绮女主角）', JSON.stringify(rolesOf));
+      const rolesOf = Object.fromEntries([
+        ...mv607.casts.map((c) => [c.artistName, c.role?.role]),
+        ...mv607.otherCasts.filter((o) => !o.vacant).map((o) => [o.artistName, o.role?.role]),
+      ]);
+      check(rolesOf['黎華'] === '男主角'
+        && mv607.casts.every((c) => c.role),   // 我方艺人的角色不能被对手挤掉
+      'Story0027: MV607 对手按性别落格，我方角色不被挤掉', JSON.stringify(rolesOf));
     }
     // 玩家在玩的历史活档，会被游戏随时改写。下面的具体名单断言在漂移时跳过。
     if (save.signedArtistIds.join(',') !== '1,9,72') {
@@ -548,6 +553,35 @@ if (fs.existsSync(savePath)) {
     }
   } else {
     console.log('OK   Story0027.sa2 not present, skipped the own-artist checks');
+  }
+}
+
+// 对手 / NPC 的接取记录没有状态块、进不了作品清单，但编号与名字在存档里
+// 是精确数据（游戏艺人表 stars）。TV088 实机截图核对过：男配角=路風(10)、
+// 女配角=幃幃(70，NPC)。这两条都必须从接取记录里读出来，不能漏也不能拿
+// 作品清单里的其他人（如姚子瑩）顶替。用冻结快照，不跟活档漂移。
+{
+  const tables = JSON.parse(fs.readFileSync(path.join(root, 'public/data/case-tables.json'), 'utf-8'));
+  const raw = fs.readFileSync(path.join(SNAP, 'Auto-tv088.sa2'));
+  const save = parseSave(
+    raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), tables, 'Auto-tv088.sa2',
+  );
+  const tv088 = save.shooting.find((n) => n.code === 'TV088');
+  check(!!tv088, '拍摄中：TV088 失婚新娘在档期内', save.shooting.map((n) => n.code).join(','));
+  if (tv088) {
+    const mine = tv088.casts.map((c) => `${c.artistId}:${c.artistName}:${c.role?.role}`);
+    const other = tv088.otherCasts.filter((o) => !o.vacant)
+      .map((o) => `${o.artistId}:${o.artistName}:${o.role?.role}:guess=${o.roleGuessed}`);
+    check(mine.some((x) => x.startsWith('10:') && x.endsWith(':男配角')),
+      'TV088：路風(10) 男配角是我方真进度行', mine.join(' | '));
+    check(other.some((x) => x.startsWith('70:幃幃:女配角')),
+      'TV088：幃幃(70) 女配角从接取记录精确读出（NPC 无状态块）', other.join(' | '));
+    check(!other.some((x) => x.startsWith('65:')),
+      'TV088：姚子瑩(65) 只是作品清单里的历史记录，不该顶替女配角', other.join(' | '));
+    // 一男一女的角色是性别唯一匹配，不算推测；只有同性别多角色才标。
+    const wei = tv088.otherCasts.find((o) => o.artistId === 70);
+    check(wei && wei.roleGuessed === false,
+      'TV088：幃幃的女配角是性别唯一匹配，不标「推测」', JSON.stringify(wei));
   }
 }
 
