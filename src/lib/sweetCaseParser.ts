@@ -8,11 +8,11 @@
  *   - 公司名 @0x19：NUL 结尾 Big5。
  *   - 签约艺人槽位 @0x34 / @0x38 / @0x3c：3 个 int32 艺人编号，−1 表示空。
  *   - 游戏时间 @0x40：[年, 月, 日, 星期]（星期日=7）。
- *   - 艺人当前属性块：块头 `[327680][x][x][x][id][x][1][0]`（id 在 +16）后
- *     紧接九项 int32 能力（演技/口才/歌艺/名气/智慧/才艺/体能/仪态/自信，
- *     从 +32 起，存档 ×10）；+68/+72 是压力/疲劳，+80 起 5 项是叛逆/性感/
- *     亲和/人气/曝光，+264 起 8 项是电视/电影/唱片/广告/主持/舞台剧/走秀/
- *     演唱会的作品数。
+ *   - 艺人当前属性块：`id` 在 +16，后接 `[x][1][0]`，九项 int32 能力从 +32 起
+ *     （存档 ×10）；+68/+72 是压力/疲劳，+80 起 5 项是叛逆/性感/亲和/人气/
+ *     曝光，+264 起 8 项是电视/电影/唱片/广告/主持/舞台剧/走秀/演唱会的作品数。
+ *     块有两种形态：带 327680 标记，或不带标记但 +76 为 5/7（沈惟真、主角
+ *     常见）；只认标记会把这类艺人的压力/疲劳读成 0。
  *   - 友好度 / 礼物数：存档头部 16B 记录 `[友好度][送礼数][256|257][艺人编号]`，
  *     记录按 200B 步长排布，257 表示已签约；与主站同一套语义。
  *   - 公司形象 / 知名度 / 公关在 `Firm` 段：标记 `[4][\"Firm\\0\"]`，随后
@@ -146,74 +146,71 @@ function readCompany(bytes: Uint8Array, view: DataView): {
   return found ? result : empty;
 }
 
-/** 扫描艺人属性块。返回 id -> 完整艺人数值。 */
-function scanArtists(bytes: Uint8Array, view: DataView): Map<number, ArtistValues> {
-  const out = new Map<number, ArtistValues>();
-  for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
-    if (view.getUint32(offset, true) !== BLOCK_MARK) continue;
-    const id = readI32(view, offset + 16);
-    if (id < 1 || id > 110) continue;
-    if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
-    const rawAbilities: number[] = [];
-    let ok = true;
-    for (let i = 0; i < 9; i += 1) {
-      const value = readI32(view, offset + 32 + i * 4);
-      if (value < 0 || value > 10000) { ok = false; break; }
-      rawAbilities.push(value);
-    }
-    if (!ok) continue;
-    const stress = readI32(view, offset + 68);
-    const fatigue = readI32(view, offset + 72);
-    if (stress < 0 || stress > 1000 || fatigue < 0 || fatigue > 1000) continue;
-    const social = Array.from({ length: 5 }, (_, i) => readI32(view, offset + 80 + i * 4));
-    if (!social.every((value) => value >= 0 && value <= 10000)) continue;
-    const noticeCounts = Array.from({ length: 8 }, (_, i) => readI32(view, offset + 264 + i * 4));
-    if (!noticeCounts.every((value) => value >= 0 && value <= 9999)) continue;
-    if (out.has(id)) continue;
-    out.set(id, {
+interface ArtistBlock {
+  values: ArtistValues;
+  score: number;
+  /** 标记块最可信；无标记但 +76 为 5/7 的是真块，优先于普通噪声。 */
+  priority: number;
+}
+
+/** 读一个艺人属性块的定长数值；越界或形状不对返回 null。 */
+function readArtistBlock(view: DataView, offset: number, maxSocial: number): Omit<ArtistBlock, 'priority'> | null {
+  const rawAbilities: number[] = [];
+  for (let i = 0; i < 9; i += 1) {
+    const value = readI32(view, offset + 32 + i * 4);
+    if (value < 0 || value > 10000) return null;
+    rawAbilities.push(value);
+  }
+  const stress = readI32(view, offset + 68);
+  const fatigue = readI32(view, offset + 72);
+  if (stress < 0 || stress > 1000 || fatigue < 0 || fatigue > 1000) return null;
+  const social = Array.from({ length: 5 }, (_, i) => readI32(view, offset + 80 + i * 4));
+  if (!social.every((value) => value >= 0 && value <= maxSocial)) return null;
+  const noticeCounts = Array.from({ length: 8 }, (_, i) => readI32(view, offset + 264 + i * 4));
+  if (!noticeCounts.every((value) => value >= 0 && value <= 9999)) return null;
+  return {
+    values: {
       abilities: rawAbilities.map((value) => value / 10),
       stress,
       fatigue,
       social,
       noticeCounts,
-    });
-  }
-  return out;
+    },
+    score: rawAbilities.reduce((sum, value) => sum + value, 0),
+  };
 }
 
-/** 主角杜云芊的属性块没有 327680 标记，但同样从 +16 开始是 `[id=1][121][1][0]`
- *  加九项能力；全文件里可能有形状相近的噪声，取九项之和最大的那块。 */
+/** 扫描艺人属性块。标记块优先，其次是无标记但 +76 为 5/7 的真块。 */
+function scanArtists(bytes: Uint8Array, view: DataView): Map<number, ArtistValues> {
+  const best = new Map<number, ArtistBlock>();
+  for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
+    const id = readI32(view, offset + 16);
+    if (id < 1 || id > 110 || id === 1) continue;
+    if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
+    const marked = view.getUint32(offset, true) === BLOCK_MARK;
+    if (!marked && readI32(view, offset + 76) !== 5 && readI32(view, offset + 76) !== 7) continue;
+    const block = readArtistBlock(view, offset, 10000);
+    if (!block) continue;
+    const priority = marked ? 2 : 1;
+    const previous = best.get(id);
+    if (previous && (previous.priority > priority
+      || (previous.priority === priority && previous.score >= block.score))) continue;
+    best.set(id, { ...block, priority });
+  }
+  return new Map([...best].map(([id, block]) => [id, block.values]));
+}
+
+/** 主角杜云芊的属性块也可能没有标记，且 +76 不一定是 5/7；取数值和最大的形状匹配块。 */
 function scanProtagonist(bytes: Uint8Array, view: DataView): ArtistValues {
   let bestScore = -1;
   let result: ArtistValues = EMPTY_VALUES;
   for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
     if (readI32(view, offset + 16) !== 1) continue;
     if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
-    const rawAbilities: number[] = [];
-    let ok = true;
-    for (let i = 0; i < 9; i += 1) {
-      const value = readI32(view, offset + 32 + i * 4);
-      if (value < 0 || value > 10000) { ok = false; break; }
-      rawAbilities.push(value);
-    }
-    if (!ok) continue;
-    const stress = readI32(view, offset + 68);
-    const fatigue = readI32(view, offset + 72);
-    if (stress < 0 || stress > 1000 || fatigue < 0 || fatigue > 1000) continue;
-    const social = Array.from({ length: 5 }, (_, i) => readI32(view, offset + 80 + i * 4));
-    if (!social.every((value) => value >= 0 && value <= 99999)) continue;
-    const noticeCounts = Array.from({ length: 8 }, (_, i) => readI32(view, offset + 264 + i * 4));
-    if (!noticeCounts.every((value) => value >= 0 && value <= 9999)) continue;
-    const score = rawAbilities.reduce((sum, value) => sum + value, 0);
-    if (score <= bestScore) continue;
-    bestScore = score;
-    result = {
-      abilities: rawAbilities.map((value) => value / 10),
-      stress,
-      fatigue,
-      social,
-      noticeCounts,
-    };
+    const block = readArtistBlock(view, offset, 99999);
+    if (!block || block.score <= bestScore) continue;
+    bestScore = block.score;
+    result = block.values;
   }
   return result;
 }
