@@ -7,6 +7,7 @@ import {
   type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetEvent,
   type SweetNotice, type SweetNoticeRole, type SweetPromoNotice, type SweetSave,
   type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
+  type SweetWaitingNotice,
 } from '../lib/sweetCaseParser';
 import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
@@ -110,6 +111,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
     { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
     { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
+    { id: 'waiting', label: '等待上市通告', selector: '[data-sweet-case-notices]', summary: `${save.waiting.length} 条` },
   ], [save]);
 
   useEffect(() => {
@@ -704,6 +706,83 @@ function SweetPromoPanel({ groups }: {
   );
 }
 
+/** 等待上市：与主站 WaitingPanel 同款卡片，作品一行、旗下参演角色逐行列出。 */
+function SweetWaitingPanel({ notices }: { notices: SweetWaitingNotice[] }) {
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState
+          title="没有等待上市的作品"
+          text="只列旗下艺人已参演、拍摄完成但还没到发行日的作品。换一份带这类记录的存档再试。"
+        />
+      </div>
+    );
+  }
+  return (
+    <div data-case-waiting className="mt-2 flex flex-col gap-1.5">
+      {notices.map((notice) => (
+        <div
+          key={notice.code}
+          data-case-waiting-work={notice.code}
+          className="overflow-hidden rounded-ui-md border border-line bg-surface"
+        >
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 border-b border-line px-3 py-2 text-ui-xs">
+            <span className="font-semibold text-ink">{notice.name}</span>
+            <span className="text-ui-2xs text-ink-faint">{notice.code}</span>
+            <span className={cn(
+              'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+              SWEET_CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+            )}
+            >
+              {notice.category}
+            </span>
+            {Boolean(notice.type || notice.company) && (
+              <span className="text-ui-2xs text-ink-faint">
+                {[notice.type, notice.company].filter(Boolean).join(' · ')}
+              </span>
+            )}
+            <span className="ml-auto whitespace-nowrap text-ui-2xs tabular-nums text-ink-muted">
+              发行 {notice.saleStart} → {notice.saleEnd}
+            </span>
+          </div>
+          <table className="w-full table-fixed border-collapse text-ui-xs">
+            <thead>
+              <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+                <Th className="w-[22%]">拍摄档期</Th>
+                <Th className="w-[20%]">角色</Th>
+                <Th className="w-[26%]">旗下参演</Th>
+                <Th className="w-[14%]">完成天数</Th>
+                <Th className="w-[18%]">酬劳</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {notice.casts.map((cast, ci) => (
+                <tr key={`${notice.code}-${cast.artistId}-${ci}`} className="border-t border-line/60">
+                  {ci === 0 && (
+                    <Td rowSpan={notice.casts.length} className="tabular-nums text-ink-muted">
+                      {notice.startDate} → {notice.endDate}
+                    </Td>
+                  )}
+                  <Td>
+                    <span className="rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-muted">
+                      {cast.role?.role ?? '个人'}
+                    </span>
+                  </Td>
+                  <Td className="text-ink">{cast.artistName}</Td>
+                  <Td className="tabular-nums text-ink">{cast.doneDays}</Td>
+                  <Td className="tabular-nums text-ink">
+                    {cast.pay > 0 ? sweetMoney(cast.pay) : '—'}
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const SHOOTING_STATUS_LABEL: Record<string, string> = {
   shooting: '拍摄中', pending: '待开拍', done: '已完成',
 };
@@ -899,7 +978,7 @@ export default function SweetCaseView() {
   const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [board, setBoard] = useState<'promo' | 'open' | 'shooting'>('open');
+  const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting'>('open');
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
@@ -1347,12 +1426,24 @@ export default function SweetCaseView() {
                   >
                     拍摄中 <span className="tabular-nums">{save.shooting.length}</span>
                   </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    data-case-tab="waiting"
+                    aria-selected={board === 'waiting'}
+                    onClick={() => setBoard('waiting')}
+                    className={sweetTabClass(board === 'waiting')}
+                  >
+                    等待上市 <span className="tabular-nums">{save.waiting.length}</span>
+                  </button>
                 </div>
                 {board === 'promo'
                   ? <SweetPromoPanel groups={promoGroups} />
                   : board === 'open'
                     ? <SweetNoticePanel save={save} genders={genders} />
-                    : <SweetShootingPanel notices={save.shooting} />}
+                    : board === 'shooting'
+                      ? <SweetShootingPanel notices={save.shooting} />
+                      : <SweetWaitingPanel notices={save.waiting} />}
               </div>
             </>
           )}
