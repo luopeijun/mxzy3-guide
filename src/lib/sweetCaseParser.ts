@@ -234,6 +234,9 @@ export interface SweetWaitingNotice {
   casts: SweetWaitingCast[];
 }
 
+/** 热卖中：与等待上市同一套本体字段，只把日期口径换成已上档、未下档。 */
+export type SweetHotNotice = SweetWaitingNotice;
+
 /** 拍摄中风险档位，沿用主站两档口径：排不下=违约、余量 ≤5 天=逾期风险。 */
 export type SweetShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
 export type SweetShootingStatus = 'pending' | 'shooting' | 'done';
@@ -332,6 +335,8 @@ export interface SweetSave {
   promo: SweetPromoNotice[];
   /** 等待上市通告：已杀青、还没到发行日的作品，只列我方参演。 */
   waiting: SweetWaitingNotice[];
+  /** 热卖中通告：已到发行日、还没下档的作品，只列我方参演。 */
+  hot: SweetHotNotice[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -1239,12 +1244,14 @@ function scanSweetPromo(
   return out;
 }
 
-/** 等待上市：Case 本体的五组档期里，今天已过杀青、还没到上档日的作品。
+/** 等待上市 / 热卖中共用：Case 本体的五组档期里，第四 / 第五组是上档 / 下档。
+ *  等待上市＝今天已过杀青、还没到上档日；热卖中＝今天已到上档、还没下档。
  *  接演记录与拍摄中同构，从本体 +816 起每 24B 一组 `[flag][id][done][a][b][pay]`；
- *  上档 / 下档是第四、第五组四元组，不能用作品清单或宣传档期代替。 */
-function scanSweetWaiting(
+ *  不能用作品清单或宣传档期代替发行档期。 */
+function scanSweetArchive(
   bytes: Uint8Array, today: SweetSave['date'], tables: SweetCaseTables,
   allStars: Record<string, string>, teams: SweetTeam[], signedIds: number[],
+  status: 'waiting' | 'hot',
 ): SweetWaitingNotice[] {
   const caseStart = findSection(bytes, 'Case');
   const caseEnd = findSection(bytes, 'CaseEnd');
@@ -1289,7 +1296,11 @@ function scanSweetWaiting(
     const saleEnd = body.dates[4].value;
     const endDay = dayValue(end[0], end[1], end[2]);
     const saleDay = dayValue(saleStart[0], saleStart[1], saleStart[2]);
-    if (!(todayValue > endDay && todayValue < saleDay)) continue;
+    const saleEndDay = dayValue(saleEnd[0], saleEnd[1], saleEnd[2]);
+    const eligible = status === 'waiting'
+      ? todayValue > endDay && todayValue < saleDay
+      : todayValue >= saleDay && todayValue <= saleEndDay;
+    if (!eligible) continue;
 
     const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
     const claimed = new Set<string>();
@@ -1610,7 +1621,8 @@ export async function parseSweetSave(
   const notices = scanSweetNotices(bytes, view, date, tables, reservationStars);
   const shooting = scanSweetShooting(bytes, view, date, tables, reservationStars, signedIds);
   const promo = scanSweetPromo(bytes, tables, reservationStars, teams);
-  const waiting = scanSweetWaiting(bytes, date, tables, reservationStars, teams, signedIds);
+  const waiting = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'waiting');
+  const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'hot');
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -1627,5 +1639,6 @@ export async function parseSweetSave(
     shooting,
     promo,
     waiting,
+    hot,
   };
 }
