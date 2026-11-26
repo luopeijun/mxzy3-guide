@@ -2,8 +2,25 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
 import {
   formatSweetDate, parseSweetSave, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
-  type SweetSave,
+  type SweetAward, type SweetSave,
 } from '../lib/sweetCaseParser';
+
+/** 年度专辑 / 年度戏剧按作品显示，其余按得主显示；与主站公司奖一致。 */
+function awardSubject(award: SweetAward): string {
+  return award.company && (award.label === '年度专辑' || award.label === '年度戏剧')
+    ? award.work
+    : award.winner;
+}
+
+/** 得奖表里也有 NPC 的奖；页面只显示本公司的，和游戏排行榜筛选一致。 */
+function awardBelongsToCompany(award: SweetAward, company: string): boolean {
+  return award.company && (award.winner === company || award.winner.includes(company));
+}
+
+/** 存档里主角名可能是全名「駱佩君」，得奖记录里写作「佩君」。 */
+function awardBelongsTo(award: SweetAward, name: string): boolean {
+  return !award.company && (award.winner === name || award.winner.includes(name) || name.includes(award.winner));
+}
 
 /** 与明星志愿3 存档解析同款的小结块：右侧固定，默认收成一行，点开才列条目。 */
 function SweetCaseToc({ save }: { save: SweetSave }) {
@@ -269,6 +286,18 @@ export default function SweetCaseView() {
                   <SweetCaseStat label="公关" value={String(save.pr)} attr="pr" />
                   <SweetCaseStat label="主角" value={save.protagonist || '—'} attr="protagonist" />
                 </div>
+                <div data-sweet-case-company-awards className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
+                  <span className="text-ink-faint">奖项</span>
+                  {save.awards.filter((award) => awardBelongsToCompany(award, save.company)).length === 0 ? (
+                    <span className="text-ink-faint">—</span>
+                  ) : save.awards.filter((award) => awardBelongsToCompany(award, save.company)).map((award) => (
+                    <span key={`${award.year}-${award.label}`} data-sweet-case-company-award>
+                      <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                      <span className="award-meta ml-1 font-normal text-ink-faint">{awardSubject(award)}</span>
+                      <span className="ml-1 font-normal text-ink-faint">{award.year}</span>
+                    </span>
+                  ))}
+                </div>
               </details>
 
               <details data-sweet-case-artists data-sweet-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
@@ -334,6 +363,18 @@ export default function SweetCaseView() {
                             合计 <b className="font-semibold text-ink">{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
                           </span>
                         </div>
+                        {save.awards.some((award) => awardBelongsTo(award, artist.name)) && (
+                          <div data-sweet-case-artist-awards className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
+                            <span className="text-ink-faint">奖项</span>
+                            {save.awards.filter((award) => awardBelongsTo(award, artist.name)).map((award) => (
+                              <span key={`${award.year}-${award.label}`} data-sweet-case-artist-award>
+                                <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                                <span className="award-meta ml-1 font-normal text-ink-faint">{award.work}</span>
+                                <span className="ml-1 font-normal text-ink-faint">{award.year}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {artist.contract && (
                           <details data-sweet-case-contract className="mt-1 border-t border-line pt-1 text-ui-2xs">
                             <summary className="cursor-pointer text-ink-faint">

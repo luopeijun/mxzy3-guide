@@ -20,7 +20,11 @@
  *     记录按 200B 步长排布，257 表示已签约；与主站同一套语义。
  *   - 公司形象 / 知名度 / 公关在 `Firm` 段：标记 `[4][\"Firm\\0\"]`，随后
  *     `[公司数][编号][名字字节数][Big5 名字][NUL][知名度][公关][0]`，
- *     编号 1 是我方；知名度与公关存档 ×10，界面按整数显示（向下取整）。 */
+ *     编号 1 是我方；知名度与公关存档 ×10，界面按整数显示（向下取整）。
+ *   - 得奖记录（艺人事件簿尾部）：15 条 48B 定长记录 + 一条「從缺」占位；
+ *     每条 `[16B Big5 得主][4B 0][16B Big5 作品][12B]`。记录顺序就是
+ *     AwardItem.dat 的奖项编号 1..15（金曲 1-4 / 金像 5-8 / 金鐘 9-12 /
+ *     金星 13-15）；存档只保留最近一年，年份取游戏时间。 */
 
 export const SWEET_ABILITY_LABELS = [
   '演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信',
@@ -30,6 +34,26 @@ export const SWEET_ABILITY_LABELS = [
 export const SWEET_NOTICE_LABELS = [
   '电视', '电影', '唱片', '广告', '主持', '舞台剧', '走秀', '演唱会',
 ] as const;
+
+/** 烘焙自 Data/AwardItem.dat 记录 1..15，顺序即得奖记录表的行序。 */
+export const SWEET_AWARD_LABELS = [
+  '最佳新人', '最佳演唱人', '最佳团体', '年度专辑',
+  '最佳男主角', '最佳女主角', '最佳男配角', '最佳女配角',
+  '最佳男演员', '最佳女演员', '最佳主持人', '年度戏剧',
+  '最上镜头', '最佳模特儿', '最佳代言人',
+] as const;
+
+export interface SweetAward {
+  year: number;
+  ceremony: string;
+  label: string;
+  /** 得主名字：个人奖是艺人，公司奖可能是团体 / 公司名。 */
+  winner: string;
+  /** 作品名；个人奖也会带作品，页面只给公司 / 年度作品奖显示。 */
+  work: string;
+  /** 与主站一致：公司奖单列，个人奖挂到艺人卡。 */
+  company: boolean;
+}
 
 export interface SweetContract {
   signDate: string;
@@ -65,6 +89,7 @@ export interface SweetSave {
   date: { year: number; month: number; day: number; weekday: number };
   signedIds: number[];
   artists: SweetArtistCard[];
+  awards: SweetAward[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -278,6 +303,37 @@ function scanRelations(view: DataView, bytes: Uint8Array): Map<number, { friends
   return out;
 }
 
+/** 得奖记录表：15 条 48B 记录 + 一条「從缺」；靠尾部占位反查表头。 */
+function scanAwards(bytes: Uint8Array, year: number): SweetAward[] {
+  const vacancy = [0xb1, 0x71, 0xaf, 0xca]; // Big5「從缺」
+  const matchesAt = (offset: number) =>
+    offset + vacancy.length <= bytes.length && vacancy.every((b, i) => bytes[offset + i] === b);
+  for (let marker = 0; marker + 24 <= bytes.length; marker += 1) {
+    if (!matchesAt(marker) || !matchesAt(marker + 20)) continue;
+    const start = marker - 15 * 48;
+    if (start < 0) continue;
+    const rows: SweetAward[] = [];
+    let ok = true;
+    for (let index = 0; index < 15; index += 1) {
+      const offset = start + index * 48;
+      if (offset + 48 > bytes.length) { ok = false; break; }
+      const winner = readBig5(bytes, offset, 16);
+      const work = readBig5(bytes, offset + 20, 16);
+      if (!winner || !work || winner === '從缺') { ok = false; break; }
+      rows.push({
+        year,
+        ceremony: index < 4 ? '金曲奖' : index < 8 ? '金像奖' : index < 12 ? '金钟奖' : '金星奖',
+        label: SWEET_AWARD_LABELS[index],
+        winner,
+        work,
+        company: index === 2 || index === 3 || index === 11,
+      });
+    }
+    if (ok) return rows;
+  }
+  return [];
+}
+
 export function formatSweetDate(date: SweetSave['date']): string {
   const w = WEEKDAYS[date.weekday - 1] ?? String(date.weekday);
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
@@ -313,19 +369,21 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
     })),
   ];
 
+  const date = {
+    year: readI32(view, 0x40),
+    month: readI32(view, 0x44),
+    day: readI32(view, 0x48),
+    weekday: readI32(view, 0x4c),
+  };
   return {
     protagonist: readBig5(bytes, 0x04),
     company: readBig5(bytes, 0x19),
     companyImage: company.image,
     fame: company.fame,
     pr: company.pr,
-    date: {
-      year: readI32(view, 0x40),
-      month: readI32(view, 0x44),
-      day: readI32(view, 0x48),
-      weekday: readI32(view, 0x4c),
-    },
+    date,
     signedIds,
     artists,
+    awards: scanAwards(bytes, date.year),
   };
 }
