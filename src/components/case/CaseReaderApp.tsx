@@ -37,8 +37,8 @@ const CATEGORY_CLASS: Record<string, string> = {
   电影: 'bg-tag-manual-soft text-tag-manual',
   电视剧: 'bg-tag-news-soft text-tag-news',
   主持: 'bg-tag-scene-soft text-tag-scene',
-  时装: 'bg-tag-auto-soft text-tag-auto',
-  舞台剧: 'bg-tag-talk-soft text-tag-talk',
+  时装: 'bg-tag-runway-soft text-tag-runway',
+  舞台剧: 'bg-tag-stage-soft text-tag-stage',
   特别: 'bg-alert-soft text-alert',
 };
 
@@ -49,8 +49,8 @@ const ACTIVE_NOTICE_TILE_CLASS: Record<string, string> = {
   电影: 'border-l-tag-manual bg-tag-manual-soft/70',
   电视剧: 'border-l-tag-news bg-tag-news-soft/70',
   主持: 'border-l-tag-scene bg-tag-scene-soft/70',
-  时装: 'border-l-tag-auto bg-tag-auto-soft/70',
-  舞台剧: 'border-l-tag-talk bg-tag-talk-soft/70',
+  时装: 'border-l-tag-runway bg-tag-runway-soft/70',
+  舞台剧: 'border-l-tag-stage bg-tag-stage-soft/70',
   特别: 'border-l-alert bg-alert-soft/70',
 };
 

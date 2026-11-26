@@ -43,7 +43,8 @@
   /* Trigger-type tags (自动 / 场景 / 新闻 / 跟随 / 手动 / 沟通). Six hues spread
      across the wheel — warm grey, teal, indigo, amber, plum, rose — with a
      saturated enough tint that a two-character chip can be told apart from its
-     colour alone, without reading 12px text. Text keeps ≥5:1 on its own tint. */
+     colour alone, without reading 12px text. Text keeps ≥5:1 on its own tint.
+     舞台剧 / 时装秀是甜蜜乐章新增类别，另给铜棕与草绿两色，不复用旧类别色。 */
   --color-tag-auto: #514a54;
   --color-tag-auto-soft: #ded9dd;
   --color-tag-scene: #0f5a52;
@@ -56,6 +57,10 @@
   --color-tag-manual-soft: #e0d2f0;
   --color-tag-talk: #8f3358;
   --color-tag-talk-soft: #f8c8d8;
+  --color-tag-stage: #7a3b16;
+  --color-tag-stage-soft: #f6dfd0;
+  --color-tag-runway: #27643d;
+  --color-tag-runway-soft: #dbefdc;
   /* 艺人称号徽标：五类职业线各一个色相（唱片玫红 / 主持靛蓝 / 模特松绿 /
      影视紫罗兰 / 天王巨星·超级天后金色），另加中性灰给过气、新人、未出道。
      同一色相里 text 在 soft 上的对比度都 ≥5:1，小字号也读得清。 */

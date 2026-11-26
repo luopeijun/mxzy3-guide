@@ -688,11 +688,11 @@ type DateTuple = [number, number, number, number];
 /** 页面沿用主站的分类色，所以把游戏里的繁体大类归一成主站用词。 */
 const SWEET_CATEGORY_SIMPLE: Record<string, string> = {
   廣告: '广告', 電視: '电视剧', 電影: '电影', 唱片: '唱片',
-  主持: '主持', 舞台劇: '舞台剧', 時裝秀: '时装',
+  主持: '主持', 舞台劇: '舞台剧', 時裝秀: '时装秀',
 };
 const SWEET_CATEGORY_BY_PREFIX: Record<string, string> = {
   CF: '广告', TV: '电视剧', MV: '电影', CD: '唱片',
-  SH: '主持', TH: '舞台剧', FS: '时装',
+  SH: '主持', TH: '舞台剧', FS: '时装秀',
 };
 
 /** 男性 / 女性角色才按性别过滤；个人、团体、主持类任何艺人都能接。 */

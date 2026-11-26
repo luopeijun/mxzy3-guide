@@ -73,8 +73,8 @@ const SWEET_CATEGORY_CLASS: Record<string, string> = {
   电影: 'bg-tag-manual-soft text-tag-manual',
   电视剧: 'bg-tag-news-soft text-tag-news',
   主持: 'bg-tag-scene-soft text-tag-scene',
-  时装: 'bg-tag-auto-soft text-tag-auto',
-  舞台剧: 'bg-tag-talk-soft text-tag-talk',
+  时装秀: 'bg-tag-runway-soft text-tag-runway',
+  舞台剧: 'bg-tag-stage-soft text-tag-stage',
 };
 
 function sweetChipClass(active: boolean) {
@@ -395,10 +395,13 @@ function SweetNoticeRows({ notice, save, genders }: {
         )}
       </Td>
       <Td>
-        <span className={cn(
-          'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
-          SWEET_CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
-        )}>
+        <span
+          data-case-notice-category={notice.category}
+          className={cn(
+            'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+            SWEET_CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+          )}
+        >
           {notice.category}
         </span>
         {notice.type && <div className="mt-1 text-ui-2xs text-ink-faint">{notice.type}</div>}
