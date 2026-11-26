@@ -112,6 +112,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
     { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
     { id: 'waiting', label: '等待上市通告', selector: '[data-sweet-case-notices]', summary: `${save.waiting.length} 条` },
+    { id: 'hot', label: '热卖中通告', selector: '[data-sweet-case-notices]', summary: `${save.hot.length} 条` },
   ], [save]);
 
   useEffect(() => {
@@ -706,15 +707,20 @@ function SweetPromoPanel({ groups }: {
   );
 }
 
-/** 等待上市：与主站 WaitingPanel 同款卡片，作品一行、旗下参演角色逐行列出。 */
-function SweetWaitingPanel({ notices }: { notices: SweetWaitingNotice[] }) {
+/** 等待上市 / 热卖中共用：与主站 WaitingPanel 同款卡片，作品一行、旗下参演角色逐行列出。 */
+function SweetWaitingPanel({
+  notices,
+  emptyTitle = '没有等待上市的作品',
+  emptyText = '只列旗下艺人已参演、拍摄完成但还没到发行日的作品。换一份带这类记录的存档再试。',
+}: {
+  notices: SweetWaitingNotice[];
+  emptyTitle?: string;
+  emptyText?: string;
+}) {
   if (notices.length === 0) {
     return (
       <div className="mt-2">
-        <EmptyState
-          title="没有等待上市的作品"
-          text="只列旗下艺人已参演、拍摄完成但还没到发行日的作品。换一份带这类记录的存档再试。"
-        />
+        <EmptyState title={emptyTitle} text={emptyText} />
       </div>
     );
   }
@@ -978,7 +984,7 @@ export default function SweetCaseView() {
   const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting'>('open');
+  const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting' | 'hot'>('open');
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
@@ -1436,6 +1442,16 @@ export default function SweetCaseView() {
                   >
                     等待上市 <span className="tabular-nums">{save.waiting.length}</span>
                   </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    data-case-tab="hot"
+                    aria-selected={board === 'hot'}
+                    onClick={() => setBoard('hot')}
+                    className={sweetTabClass(board === 'hot')}
+                  >
+                    热卖中 <span className="tabular-nums">{save.hot.length}</span>
+                  </button>
                 </div>
                 {board === 'promo'
                   ? <SweetPromoPanel groups={promoGroups} />
@@ -1443,7 +1459,13 @@ export default function SweetCaseView() {
                     ? <SweetNoticePanel save={save} genders={genders} />
                     : board === 'shooting'
                       ? <SweetShootingPanel notices={save.shooting} />
-                      : <SweetWaitingPanel notices={save.waiting} />}
+                      : board === 'waiting'
+                        ? <SweetWaitingPanel notices={save.waiting} />
+                        : <SweetWaitingPanel
+                            notices={save.hot}
+                            emptyTitle="没有热卖中的作品"
+                            emptyText="只列旗下艺人已参演、已到发行日且还没下架的作品。"
+                          />}
               </div>
             </>
           )}
