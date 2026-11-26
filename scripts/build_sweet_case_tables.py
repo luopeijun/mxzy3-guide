@@ -17,7 +17,7 @@
 - World.dat：11 条 × 288B；记录 0 的 +44 起是十座国际场景费用（含甜蜜乐章
   新增的倫敦 / 米蘭，对应舞台剧 / 时装秀），记录 1..10 是场景名（+12 起
   Big5）。存档里同构的记录 +4 是解锁标志。
-- MapRole.dat + StudioProduce.dat：制作人编号 -> 名字 / 六类分组。存档友好度表
+- MapRole.dat + StudioProduce.dat：制作人编号 -> 名字 / 七类分组。存档友好度表
   里制作人段与该编号一一对应。
 
 用法：
@@ -320,14 +320,16 @@ def load_sweet_scenes(data_dir):
     return out
 
 
-# StudioProduce.dat 的 class 值 -> 存档解析页六列分组（与主站分类语义一致）
+# StudioProduce.dat 的 class 值 -> 存档解析页分组（前五类与主站分类语义一致）
 PRODUCER_CLASS_GROUP = {
     1: 'ad',      # 广告：麦可 / 陈查理 / 洁西卡
     2: 'tv',      # 电视剧：郑超一 / 陈革非
     3: 'movie',   # 电影：王瑞恩 / 史麦克
     4: 'record',  # 唱片：周映彤 / 小熊 / 加贺大泽
     5: 'host',    # 主持：钱钧 / 强尼戴
-    0: 'other', 6: 'other', 7: 'other',
+    # 甜蜜乐章新增：6 舞台剧（林立翔 346）、7 时装秀（艾瑞克 347），同列展示
+    6: 'stage', 7: 'stage',
+    0: 'other',
 }
 
 

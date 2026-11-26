@@ -1815,14 +1815,15 @@ const ITEM_CAT_ORDER = ['一般物品', '特殊物品', '公司物品'] as const
 type ItemCat = typeof ITEM_CAT_ORDER[number];
 
 /** 分类胶囊沿用明星志愿3：公司物品绿、特殊物品粉、一般物品中性描边。 */
-/** 制作人好感：六列分组与明星志愿3一致，编号 / 名字来自甜站 MapRole +
- *  StudioProduce 烘焙，友好度按编号从存档友好度表反查。 */
+/** 制作人好感：前五列与明星志愿3一致，另加甜蜜乐章的舞台剧 / 时装秀一列；
+ *  编号 / 名字来自甜站 MapRole + StudioProduce 烘焙，友好度按编号从存档友好度表反查。 */
 const SWEET_PRODUCER_GROUPS = [
   { key: 'record', label: '唱片' },
   { key: 'tv', label: '电视剧' },
   { key: 'movie', label: '电影' },
   { key: 'ad', label: '广告' },
   { key: 'host', label: '主持' },
+  { key: 'stage', label: '舞台剧 / 时装秀' },
   { key: 'other', label: '其他' },
 ];
 
@@ -1833,7 +1834,7 @@ function SweetProducerPanel({
   friendship: Record<number, number>;
 }) {
   return (
-    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
       {SWEET_PRODUCER_GROUPS.map((group) => {
         const members = producers.filter((p) => p.group === group.key);
         return (
