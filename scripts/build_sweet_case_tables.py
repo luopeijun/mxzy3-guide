@@ -14,6 +14,8 @@
 - Item.dat：391 条 × 452B 定长记录，道具编号 -> 名称 / 分类 / 说明 / 属性行，
   以及每条记录 +48 起的 21 格送礼向量。艺人槽位由 sources/sweet/favorite-gifts.txt
   的八位可送礼对象反推，只用真实有数据的那八格。
+- World.dat：11 条 × 288B；记录 0 的 +44 起是八座国际场景费用，记录 1..8
+  是场景名（+12 起 Big5）。存档里同构的记录 +4 是解锁标志。
 
 用法：
     python scripts/build_sweet_case_tables.py [--data <game data dir>]
@@ -57,6 +59,12 @@ PROMO_KIND_NAMES = {
     "唱片宣傳": "唱片宣传", "拍攝MTV": "拍摄MTV", "簽名會": "签名会",
     "舞台劇演出": "舞台剧演出", "國際時裝週": "国际时装周",
 }
+# World.dat 里 id 2..9 的八座国际场景；界面沿用主站的简体显示名。
+WORLD_SCENE_NAMES = {
+    "長城": "长城", "東京": "东京", "好萊塢": "好莱坞", "巴黎": "巴黎",
+    "維也納": "维也纳", "夏威夷": "夏威夷", "紐約": "纽约", "開羅": "开罗",
+}
+
 SUBTYPE_SIMPLE = {
     "搖滾": "摇滚", "節奏藍調": "节奏蓝调", "兒歌": "儿歌", "綜藝": "综艺",
     "採訪報導": "采访报道", "時裝週": "时装周", "說話": "说话", "聰明": "聪明",
@@ -278,6 +286,34 @@ def load_sweet_items(data_dir):
     return items, gifts
 
 
+def load_sweet_scenes(data_dir):
+    """从 World.dat 取八座国际场景的费用与繁体原名。
+
+    记录 0 的 +44 起是八个 int32 费用（与主站 World.tab 一致）；记录 1..8
+    的 +12 起是 16B Big5 名字。存档里同样按 288B 步长排布，紧挨名字前的
+    int32 才是解锁标志，解析器按 rawName 对齐这两份数据。
+    """
+    path = os.path.join(data_dir, "World.dat")
+    if not os.path.isfile(path):
+        return []
+    records = read_table(path)
+    if len(records) < 9:
+        return []
+    costs = struct.unpack_from("<8i", records[0], 44)
+    out = []
+    for i in range(1, 9):
+        ident = struct.unpack_from("<I", records[i], 0)[0]
+        raw_name = text(records[i], 12, 16)
+        if ident != i + 1 or raw_name not in WORLD_SCENE_NAMES:
+            continue
+        out.append({
+            "name": WORLD_SCENE_NAMES[raw_name],
+            "rawName": raw_name,
+            "cost": costs[i - 1],
+        })
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
@@ -298,6 +334,7 @@ def main():
         "items": items,
         "gifts": gifts,
         "giftSlots": SWEET_GIFT_SLOTS,
+        "scenes": load_sweet_scenes(args.data),
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
@@ -306,7 +343,8 @@ def main():
     print("wrote", OUT, "classes", len(data["classes"]), "roles", len(data["roles"]),
           "companies", len(data["companyBySeq"]), "lengths", len(data["lengths"]),
           "subtypes", len(data["subtypes"]), "promoKinds", len(data["promoKinds"]),
-          "items", len(items), "gifts", len(gifts), "giftSlots", len(SWEET_GIFT_SLOTS))
+          "items", len(items), "gifts", len(gifts), "giftSlots", len(SWEET_GIFT_SLOTS),
+          "scenes", len(data["scenes"]))
 
 
 if __name__ == "__main__":
