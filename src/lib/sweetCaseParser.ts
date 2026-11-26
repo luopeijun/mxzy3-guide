@@ -180,6 +180,52 @@ export interface SweetCaseTables {
   subtypes?: Record<string, string>;
 }
 
+/** 拍摄中风险档位，沿用主站两档口径：排不下=违约、余量 ≤5 天=逾期风险。 */
+export type SweetShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
+export type SweetShootingStatus = 'pending' | 'shooting' | 'done';
+
+/** 拍摄中的一位我方艺人：进度、酬劳按「通告 × 艺人」单独记。 */
+export interface SweetShootingCast {
+  artistId: number;
+  artistName: string;
+  role: SweetNoticeRole | null;
+  workDays: number;
+  daysPerWeek: number;
+  doneDays: number;
+  pay: number;
+  needDays: number;
+  canShootDays: number;
+  risk: SweetShootingRisk;
+  status: SweetShootingStatus;
+}
+
+/** 同一部戏的对手演员 / 空缺角色格，进度酬劳没有真值。 */
+export interface SweetShootingOtherCast {
+  artistId: number | null;
+  artistName: string;
+  role: SweetNoticeRole | null;
+  vacant: boolean;
+}
+
+/** 拍摄中通告：已接取、还没杀青，接取记录是真源。 */
+export interface SweetShootingNotice {
+  code: string;
+  name: string;
+  category: string;
+  type: string;
+  company: string;
+  startDate: string;
+  endDate: string;
+  startDay: number;
+  endDay: number;
+  daysLeft: number;
+  roles: SweetNoticeRole[];
+  casts: SweetShootingCast[];
+  otherCasts: SweetShootingOtherCast[];
+  risk: SweetShootingRisk;
+  offset: number;
+}
+
 export interface SweetContract {
   signDate: string;
   expireDate: string;
@@ -226,6 +272,8 @@ export interface SweetSave {
   events: SweetEvent[];
   /** 筹备中通告：CaseFirm 当期可接取列表 + Case 段的通告本体。 */
   notices: SweetNotice[];
+  /** 拍摄中通告：已接取、还没杀青，接取记录是真源。 */
+  shooting: SweetShootingNotice[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -776,6 +824,117 @@ function scanTailReservations(bytes: Uint8Array, stars: Record<string, string>):
   return out;
 }
 
+/** 排期余量：剩下的日子里按每周上限折算最多还能排几天。 */
+function shootableDays(remaining: number, perWeek: number): number {
+  if (!(remaining > 0) || !(perWeek > 0)) return 0;
+  const weeks = Math.ceil(remaining / 7);
+  return Math.min(remaining, weeks * perWeek);
+}
+
+/** 与主站同一套风险口径：排不下=违约、余量 ≤5 天=逾期风险。 */
+function sweetRiskOf(needDays: number, canShootDays: number, daysPerWeek: number): SweetShootingRisk {
+  if (needDays <= 0) return 'ok';
+  if (!(daysPerWeek > 0)) return 'unknown';
+  const slack = canShootDays - needDays;
+  if (slack < 0) return 'late';
+  return slack <= 5 ? 'tight' : 'ok';
+}
+
+/** 一条通告本体的基本信息，筹备中与拍摄中共用。 */
+interface SweetNoticeBody {
+  code: string;
+  name: string;
+  category: string;
+  type: string;
+  company: string;
+  roles: SweetNoticeRole[];
+  dates: { offset: number; value: DateTuple }[];
+  at: number;
+}
+
+/** 从 Case 段的一条本体读出名字、分类、角色和日期元组。 */
+function readNoticeBody(
+  rec: Uint8Array, recView: DataView, code: string,
+  tables: SweetCaseTables, stars: Record<string, string>,
+  tailReservations: Map<string, string>, classId: number,
+): SweetNoticeBody | null {
+  const nameLength = readI32(recView, 22);
+  if (nameLength < 1 || nameLength > 64) return null;
+  const name = readBig5(rec, 26, nameLength) || tables.cases?.[code] || code;
+  const typeId = readI32(recView, 18);
+  const rawCategory = tables.classes?.[String(classId)] ?? '';
+  const category = SWEET_CATEGORY_SIMPLE[rawCategory]
+    ?? SWEET_CATEGORY_BY_PREFIX[code.slice(0, 2)] ?? rawCategory ?? '';
+  const type = tables.subtypes?.[`${classId}|${typeId}`] ?? '';
+
+  const seq = Number(code.replace(/[^0-9]/g, '')) || 0;
+  const company = tables.companyBySeq?.[String(seq)] ?? '';
+
+  const roles: SweetNoticeRole[] = [];
+  const seen = new Set<string>();
+  for (let o = 0; o + 64 <= rec.length; o += 1) {
+    if (rec[o] !== 1 || rec[o + 1] || rec[o + 2] || rec[o + 3]) continue;
+    let end = o + 4;
+    while (end < o + 11 && rec[end] >= 0x30 && rec[end] <= 0x7a) end += 1;
+    const codeLength = end - (o + 4);
+    if (codeLength < 5 || codeLength > 6 || rec[end] !== 0) continue;
+    const roleCode = Array.from(rec.subarray(o + 4, end), (c) => String.fromCharCode(c)).join('');
+    if (roleCode !== code && !(roleCode.startsWith(code) && roleCode.length === code.length + 1)) continue;
+    if (seen.has(roleCode)) continue;
+    const roleType = readI32(recView, o + 12);
+    const star = readI32(recView, o + 16);
+    if (roleType < 1 || roleType > 11 || star < 1 || star > 5) continue;
+    const values = Array.from({ length: 9 }, (_, i) => readI32(recView, o + 28 + i * 4));
+    if (!values.every((value) => value >= 0 && value <= 999)) continue;
+    seen.add(roleCode);
+    const roleName = tables.roles?.[String(roleType)] ?? '';
+    const lengthSubId = readI32(recView, 14);
+    const lengthKey = classId === 2 && lengthSubId > 0
+      ? `電視${lengthSubId}|${roleName}` : `${rawCategory}|${roleName}`;
+    const [workDays, daysPerWeek] = tables.lengths?.[lengthKey]
+      ?? tables.lengths?.[`${rawCategory}|${roleName}`] ?? [0, 0];
+    roles.push({
+      code: roleCode,
+      role: roleName,
+      roleType,
+      star,
+      requirements: values
+        .map((value, i) => ({ attr: SWEET_ABILITY_LABELS[i], value }))
+        .filter((item) => item.value > 0),
+      workDays,
+      daysPerWeek,
+      reservedBy: '',
+    });
+  }
+  let reservationAt = -1;
+  for (let o = 700; o + 40 <= rec.length; o += 1) {
+    if (readI32(recView, o) === 6 && readI32(recView, o + 4) === 0) {
+      reservationAt = o;
+      break;
+    }
+  }
+  if (reservationAt >= 0) {
+    roles.forEach((role, i) => {
+      const id = readI32(recView, reservationAt + 8 + i * 24);
+      const reservedName = stars[String(id)] ?? '';
+      if (id > 0 && id <= 110 && isRealReservationName(reservedName)) role.reservedBy = reservedName;
+    });
+  }
+  roles.forEach((role) => {
+    if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
+  });
+  roles.sort((a, b) => a.code.localeCompare(b.code));
+
+  const dates: { offset: number; value: DateTuple }[] = [];
+  for (let o = 860; o + 16 <= rec.length && dates.length < 3; o += 1) {
+    const tuple = readDateTuple(recView, o);
+    if (!tuple) continue;
+    if (dates.length && o <= dates[dates.length - 1].offset + 4) continue;
+    dates.push({ offset: o, value: tuple });
+  }
+  return { code, name, category, type, company, roles, dates, at: 0 };
+}
+
 /** CaseFirm 列出的当期可接取通告，再用 Case 段本体补齐名字、角色、门槛和日期。 */
 function scanSweetNotices(
   bytes: Uint8Array, view: DataView,
@@ -923,6 +1082,209 @@ function scanSweetNotices(
   return out;
 }
 
+/** 拍摄中：已接取、还没杀青的通告。接取记录是 24B `[flag][id][done][a][b][pay]`，
+ *  位于本体尾部 +800~+900，与主站同构。找第一条 pay≥1000 的真记录当锚点，
+ *  再按 24B 网格前后双向扩展（带头像的艺人未必排最前），避免漏掉 pay=0 的演员。 */
+function scanSweetShooting(
+  bytes: Uint8Array, view: DataView,
+  today: SweetSave['date'], tables: SweetCaseTables,
+  allStars: Record<string, string>, signedIds: number[],
+): SweetShootingNotice[] {
+  const caseStart = findSection(bytes, 'Case');
+  const caseEnd = findSection(bytes, 'CaseEnd');
+  const firmStart = findSection(bytes, 'CaseFirm');
+  if (caseStart < 0 || caseEnd <= caseStart) return [];
+  const caseBytes = bytes.subarray(caseStart, caseEnd);
+  const tailReservations = scanTailReservations(bytes, allStars);
+
+  // CaseFirm 里的是筹备中（可接取），即便有人预约也留在筹备中表里。
+  const firmCodes = new Set<string>();
+  if (firmStart >= 0) {
+    const count = readI32(view, firmStart);
+    if (count >= 1 && count <= 200) {
+      for (let i = 0; i < count; i += 1) {
+        const p = firmStart + 4 + i * 18;
+        if (p + 18 > bytes.length) break;
+        let code = '';
+        for (let k = 0; k < 5; k += 1) {
+          const c = bytes[p + 12 + k];
+          if (c < 0x30 || c > 0x7a) break;
+          code += String.fromCharCode(c);
+        }
+        if (code) firmCodes.add(code);
+      }
+    }
+  }
+
+  // 甜站主角固定占我方一位（编号 1），signedIds 里只有后三个签约艺人槽。
+  const mineIds = new Set([1, ...signedIds.filter((id) => id >= 1 && id <= 110)]);
+  const starIds = Object.keys(allStars).map(Number).filter((id) => id >= 1 && id <= 110);
+  const todayValue = dayValue(today.year, today.month, today.day);
+  const out: SweetShootingNotice[] = [];
+
+  // 逐个定位 Case 段里的通告本体 `[5][5B code]\0`
+  const starts: { at: number; code: string }[] = [];
+  for (let i = 0; i + 10 <= caseBytes.length; i += 1) {
+    if (caseBytes[i] !== 5 || caseBytes[i + 1] || caseBytes[i + 2] || caseBytes[i + 3]) continue;
+    let code = '';
+    let ok = true;
+    for (let k = 0; k < 5; k += 1) {
+      const c = caseBytes[i + 4 + k];
+      if (c < 0x30 || c > 0x7a) { ok = false; break; }
+      code += String.fromCharCode(c);
+    }
+    if (ok && caseBytes[i + 9] === 0 && /^[A-Z]{2}[0-9A-Z]{3}$/.test(code)) {
+      starts.push({ at: i, code });
+    }
+  }
+
+  for (let idx = 0; idx < starts.length; idx += 1) {
+    const { at, code } = starts[idx];
+    if (firmCodes.has(code)) continue;
+    const nextAt = idx + 1 < starts.length ? starts[idx + 1].at : caseBytes.length;
+    const length = Math.min(1024, nextAt - at);
+    if (length < 256) continue;
+    const rec = caseBytes.subarray(at, at + length);
+    const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
+    const classId = readI32(recView, 10);
+    const body = readNoticeBody(rec, recView, code, tables, allStars, tailReservations, classId);
+    if (!body || body.roles.length === 0 || body.dates.length < 3) continue;
+    const start = body.dates[1].value;
+    const end = body.dates[2].value;
+    const startDay = dayValue(start[0], start[1], start[2]);
+    const endDay = dayValue(end[0], end[1], end[2]);
+    // 早就杀青的旧块接取记录也非零（作品清单是历史累积），不能进拍摄中。
+    if (todayValue > endDay) continue;
+    const daysLeft = endDay - todayValue;
+
+    const readAt = (p: number) => ({
+      flag: readI32(recView, p),
+      id: readI32(recView, p + 4),
+      done: readI32(recView, p + 8),
+      a: readI32(recView, p + 12),
+      b: readI32(recView, p + 16),
+      pay: readI32(recView, p + 20),
+    });
+    const valid = (r: ReturnType<typeof readAt>) =>
+      r.flag >= 0 && r.flag <= 3 && starIds.includes(r.id)
+      && r.done >= 0 && r.done <= 60 && r.a >= 0 && r.a <= 99
+      && r.b >= 0 && r.b <= 99 && r.pay >= 0 && r.pay <= 1e9
+      && !(r.pay > 0 && r.pay < 1000);
+    const from = Math.min(700, Math.max(0, length - 260));
+    const to = Math.min(length - 24, 960);
+    let anchor = -1;
+    for (let p = from; p + 24 <= to; p += 4) {
+      const r = readAt(p);
+      if (r.pay >= 1000 && valid(r)) { anchor = p; break; }
+    }
+    const progress: { artistId: number; done: number; pay: number }[] = [];
+    if (anchor >= 0) {
+      for (let p = anchor - 24; p >= from && p + 24 <= to; p -= 24) {
+        const r = readAt(p);
+        if (!valid(r)) break;
+        if (!progress.some((row) => row.artistId === r.id)) {
+          progress.unshift({ artistId: r.id, done: r.done, pay: r.pay });
+        }
+      }
+      for (let p = anchor; p + 24 <= to; p += 24) {
+        const r = readAt(p);
+        if (!valid(r)) break;
+        if (!progress.some((row) => row.artistId === r.id)) {
+          progress.push({ artistId: r.id, done: r.done, pay: r.pay });
+        }
+      }
+    } else {
+      // 整条通告都没付钱也要认：逐 4 字节扫，仍只认游戏艺人表里的编号。
+      for (let p = from; p + 24 <= to; p += 4) {
+        const r = readAt(p);
+        if (!valid(r)) continue;
+        if (!progress.some((row) => row.artistId === r.id)) {
+          progress.push({ artistId: r.id, done: r.done, pay: r.pay });
+        }
+      }
+    }
+    if (progress.length === 0) continue;
+
+    // 角色按接取记录顺序精确落位（主站核对过 1804 条零反例），性别明显冲突才回退。
+    const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
+    const claimed = new Set<string>();
+    const casts: SweetShootingCast[] = [];
+    const otherCasts: SweetShootingOtherCast[] = [];
+    for (let i = 0; i < progress.length; i += 1) {
+      const row = progress[i];
+      const name = allStars[String(row.artistId)] ?? `艺人${row.artistId}`;
+      const isMine = mineIds.has(row.artistId);
+      // 角色按接取记录顺序精确落位（主站 1804 条零反例），只在性别明显冲突时回退。
+      // 甜站 StarRole 表里主角编号 1 误标成男，实际是女性，这里特判。
+      const gender = row.artistId === 1 ? 1 : tables.genders?.[String(row.artistId)];
+      let role: SweetNoticeRole | null = sortedRoles[i] ?? null;
+      const need = role ? sweetRoleGender(role.roleType) : undefined;
+      if (role && need && gender !== undefined
+        && ((need === 'male' && gender !== 0) || (need === 'female' && gender !== 1))
+        && sortedRoles.length > 1) {
+        // 性别冲突时改找与艺人性别相符的角色（0=男、1=女）。
+        const wanted = gender === 0 ? 'male' : 'female';
+        role = sortedRoles.find((r) => !claimed.has(r.code)
+          && sweetRoleGender(r.roleType) === wanted) ?? role;
+      }
+      if (role) claimed.add(role.code);
+      else if (body.roles.length === 1) {
+        role = body.roles[0];
+        claimed.add(role.code);
+      }
+      if (!isMine) {
+        otherCasts.push({ artistId: row.artistId, artistName: name, role, vacant: false });
+        continue;
+      }
+      const workDays = role?.workDays ?? 0;
+      const daysPerWeek = role?.daysPerWeek ?? 0;
+      const done = workDays > 0 && row.done >= workDays;
+      const needDays = done ? 0 : workDays > 0 ? Math.max(0, workDays - row.done) : 0;
+      const canShoot = shootableDays(daysLeft, daysPerWeek);
+      casts.push({
+        artistId: row.artistId,
+        artistName: name,
+        role,
+        workDays, daysPerWeek,
+        doneDays: row.done,
+        pay: row.pay,
+        needDays, canShootDays: canShoot,
+        risk: done ? 'ok' : sweetRiskOf(needDays, canShoot, daysPerWeek),
+        status: done ? 'done' : todayValue < startDay ? 'pending' : 'shooting',
+      });
+    }
+    if (casts.length === 0) continue;
+
+    // 角色表里还没人认领的格＝虚位以待。
+    for (const role of body.roles) {
+      if (claimed.has(role.code)) continue;
+      otherCasts.push({ artistId: null, artistName: '', role, vacant: true });
+    }
+    // 自家艺人都交差了就收起，只剩对手演员的噪音不算在拍。
+    if (casts.every((cast) => cast.status === 'done')) continue;
+
+    const open = casts.filter((cast) => cast.status !== 'done');
+    const risk: SweetShootingRisk = open.some((c) => c.risk === 'late') ? 'late'
+      : open.some((c) => c.risk === 'tight') ? 'tight'
+        : open.some((c) => c.risk === 'ok') ? 'ok' : 'unknown';
+
+    out.push({
+      code,
+      name: body.name,
+      category: body.category,
+      type: body.type,
+      company: body.company,
+      startDate: dateText(start),
+      endDate: dateText(end),
+      startDay, endDay, daysLeft,
+      roles: body.roles,
+      casts, otherCasts, risk,
+      offset: caseStart + at,
+    });
+  }
+  return out;
+}
+
 export function formatSweetDate(date: SweetSave['date']): string {
   const w = WEEKDAYS[date.weekday - 1] ?? String(date.weekday);
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
@@ -977,6 +1339,7 @@ export async function parseSweetSave(
   const diaryTable = findSweetDiaryTable(view, bytes.length);
   const diaryAwards = scanDiaryAwards(bytes, view, protagonist, companyName, stars, diaryTable);
   const notices = scanSweetNotices(bytes, view, date, tables, reservationStars);
+  const shooting = scanSweetShooting(bytes, view, date, tables, reservationStars, signedIds);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -990,5 +1353,6 @@ export async function parseSweetSave(
     awards: diaryAwards.length > 0 ? diaryAwards : scanAwards(bytes, date.year),
     events: scanDiaryEvents(bytes, view, diaryTable),
     notices,
+    shooting,
   };
 }
