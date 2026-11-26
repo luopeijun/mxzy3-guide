@@ -6,7 +6,7 @@ import {
   formatSweetDate, parseSweetSave, shootableDays, sweetRiskOf, sweetRoleGender,
   SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
   type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetDoneNotice, type SweetEvent,
-  type SweetNotice, type SweetNoticeRole, type SweetPromoNotice, type SweetSave,
+  type SweetNotice, type SweetNoticeRole, type SweetOwnedItem, type SweetPromoNotice, type SweetSave,
   type SweetSelfMadeNotice, type SweetSelfMadeStatus,
   type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetShootingRisk, type SweetTeam,
   type SweetWaitingNotice, type SweetWorkRecord,
@@ -478,6 +478,14 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'company', label: '公司', selector: '[data-sweet-case-company]', summary: `主角 ${save.protagonist || '未记录'}` },
     { id: 'artists', label: '我方艺人', selector: '[data-sweet-case-artists]', summary: `${save.artists.length} 位` },
     { id: 'teams', label: '我方团体', selector: '[data-sweet-case-teams]', summary: `${save.teams.length} 个` },
+    ...(save.items.some((it) => it.quantity > 0)
+      ? [{
+          id: 'items',
+          label: '道具',
+          selector: '[data-sweet-case-items]',
+          summary: `${save.items.filter((it) => it.quantity > 0).length} 件`,
+        }]
+      : []),
     { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
     { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
     { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
@@ -1786,6 +1794,262 @@ function SweetShootingPanel({ notices }: { notices: SweetShootingNotice[] }) {
   );
 }
 
+/** 道具分类页签的固定顺序：一般 / 特殊 / 公司。 */
+const ITEM_CAT_ORDER = ['一般物品', '特殊物品', '公司物品'] as const;
+type ItemCat = typeof ITEM_CAT_ORDER[number];
+
+/** 分类胶囊沿用明星志愿3：公司物品绿、特殊物品粉、一般物品中性描边。 */
+function itemCategoryClass(category: string): string {
+  if (category === '公司物品') return 'bg-accept-soft text-accept';
+  if (category === '特殊物品') return 'border border-brand-line bg-brand-soft text-brand-strong';
+  return 'border border-line text-ink-faint';
+}
+
+/** 道具面板：三个分类页签，每页 10 件，末页补占位行保持表格高度不跳。
+ *  数量 / 编号来自存档 Item 段，名称 / 分类 / 说明 / 属性来自烘焙的 Item.dat 表。 */
+function SweetItemsPanel({
+  items, tableCount, signed, gifts, giftSlots,
+}: {
+  items: SweetOwnedItem[];
+  tableCount: number;
+  signed: { id: number; name: string }[];
+  gifts: Record<string, number[]>;
+  giftSlots: Record<string, number>;
+}) {
+  const owned = useMemo(() => items.filter((it) => it.quantity > 0), [items]);
+  /** 送礼好感：只列这份存档里的签约艺人，且 Item.dat 对应槽位加成 > 0。 */
+  const giftHints = useMemo(() => {
+    const out: Record<number, { name: string; value: number }[]> = {};
+    for (const it of owned) {
+      const vector = gifts[String(it.code)];
+      if (!vector) continue;
+      const hints: { name: string; value: number }[] = [];
+      for (const option of signed) {
+        const slot = giftSlots[String(option.id)];
+        if (slot === undefined) continue;
+        const value = vector[slot];
+        if (value > 0) hints.push({ name: option.name, value });
+      }
+      hints.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name, 'zh-Hans-CN'));
+      out[it.code] = hints;
+    }
+    return out;
+  }, [owned, signed, gifts, giftSlots]);
+  const [tab, setTab] = useState<ItemCat>('一般物品');
+  const [page, setPage] = useState(0);
+  const PAGE = 10;
+
+  const grouped = useMemo(() => {
+    const g: Record<string, SweetOwnedItem[]> = {};
+    for (const cat of ITEM_CAT_ORDER) g[cat] = [];
+    for (const it of owned) {
+      const cat = it.category && (ITEM_CAT_ORDER as readonly string[]).includes(it.category)
+        ? it.category
+        : '一般物品';
+      g[cat].push(it);
+    }
+    for (const cat of ITEM_CAT_ORDER) g[cat].sort((a, b) => a.code - b.code);
+    return g;
+  }, [owned]);
+
+  const current = grouped[tab] ?? [];
+  const pageCount = Math.max(1, Math.ceil(current.length / PAGE));
+  const clampedPage = Math.min(page, pageCount - 1);
+  const pageRows = current.slice(clampedPage * PAGE, clampedPage * PAGE + PAGE);
+
+  const selectTab = (cat: ItemCat) => { setTab(cat); setPage(0); };
+  const goPage = (next: number) => setPage(Math.max(0, Math.min(next, pageCount - 1)));
+
+  return (
+    <div data-case-item-panel className="mt-2">
+      <div
+        data-case-item-tabs
+        role="tablist"
+        aria-label="道具分类"
+        className="flex flex-wrap gap-1.5"
+      >
+        {ITEM_CAT_ORDER.map((cat) => {
+          const active = tab === cat;
+          const count = grouped[cat]?.length ?? 0;
+          return (
+            <button
+              key={cat}
+              type="button"
+              role="tab"
+              data-case-item-tab={cat}
+              data-case-item-count={count}
+              aria-selected={active}
+              onClick={() => selectTab(cat)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-ui-2xs font-semibold transition-colors',
+                active
+                  ? 'bg-brand text-white'
+                  : 'border border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+              )}
+            >
+              {cat}
+              <span className={cn('tabular-nums', active ? 'text-white/80' : 'text-ink-faint')}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div data-case-item-table className="mt-2 overflow-x-auto">
+        {current.length === 0 ? (
+          <p className="py-2 text-ui-2xs text-ink-faint">这个分类下没有数量大于 0 的道具。</p>
+        ) : (
+          <table className="w-full min-w-max border-collapse text-ui-xs">
+            <thead>
+              <tr className="text-left text-ink-faint">
+                <th className="w-10 py-1 pr-2 font-medium">编号</th>
+                <th className="py-1 pr-2 font-medium">名称</th>
+                <th className="w-[72px] py-1 pr-2 font-medium">类型</th>
+                <th className="w-10 py-1 pr-2 text-right font-medium">数量</th>
+                {tab === '一般物品' && (
+                  <th className="w-68 py-1 pr-2 font-medium" title="送给当前存档已签约艺人的好感加成">好感度</th>
+                )}
+                <th className="py-1 font-medium">说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: PAGE }, (_, i) => {
+                const it = pageRows[i];
+                if (!it) {
+                  return (
+                    <tr key={`pad-${i}`} aria-hidden="true" className="border-t border-line">
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      <td className="py-1.5 pr-2">&nbsp;</td>
+                      {tab === '一般物品' && <td className="py-1.5 pr-2">&nbsp;</td>}
+                      <td className="py-1.5">&nbsp;</td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr
+                    key={it.code}
+                    data-case-item
+                    data-case-item-code={it.code}
+                    data-case-item-qty={it.quantity}
+                    data-case-item-cat={it.category}
+                    className="border-t border-line align-top"
+                  >
+                    <td className="py-1.5 pr-2 tabular-nums text-ink-muted">{it.code}</td>
+                    <td className="py-1.5 pr-2">
+                      <span data-case-item-name className="font-medium text-ink">{it.name}</span>
+                      {it.stats && (
+                        <span data-case-item-stats className="ml-2 text-ui-2xs text-brand-strong">
+                          {it.stats}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-1.5 pr-2">
+                      <span
+                        data-case-item-type
+                        className={cn('whitespace-nowrap rounded-full px-2 py-0.5 text-ui-2xs', itemCategoryClass(it.category ?? ''))}
+                      >
+                        {it.category || '未知物品'}
+                      </span>
+                    </td>
+                    <td className="py-1.5 pr-2 text-right tabular-nums font-semibold">×{it.quantity}</td>
+                    {tab === '一般物品' && (
+                      <td className="py-1.5 pr-2">
+                        {giftHints[it.code]?.length ? (
+                          <span data-case-item-gift className="flex flex-wrap gap-1">
+                            {giftHints[it.code].map((hint) => (
+                              <span
+                                key={hint.name}
+                                data-case-item-gift-name={hint.name}
+                                data-case-item-gift-value={hint.value}
+                                className={cn(
+                                  'whitespace-nowrap rounded-full px-1.5 py-0.5 text-ui-2xs tabular-nums',
+                                  hint.value >= 4
+                                    ? 'bg-brand font-semibold text-white'
+                                    : hint.value === 3
+                                      ? 'bg-brand-soft font-medium text-brand-strong'
+                                      : 'bg-surface-soft text-brand',
+                                )}
+                              >
+                                {hint.name}+{hint.value}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="text-ink-faint">—</span>
+                        )}
+                      </td>
+                    )}
+                    <td className="py-1.5 text-ink-muted">
+                      {it.desc ? (
+                        <span data-case-item-desc className="block" title={it.desc}>{it.desc}</span>
+                      ) : (
+                        <span className="text-ink-faint">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {pageCount > 1 && (
+        <div
+          data-case-item-pager
+          className="mt-2 flex flex-wrap items-center justify-start gap-2 text-ui-2xs text-ink-muted"
+        >
+          <button
+            type="button"
+            data-case-item-prev
+            disabled={clampedPage <= 0}
+            onClick={() => goPage(clampedPage - 1)}
+            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            上一页
+          </button>
+          {Array.from({ length: pageCount }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              data-case-item-page={i + 1}
+              aria-current={clampedPage === i ? 'true' : undefined}
+              onClick={() => goPage(i)}
+              className={cn(
+                'h-6 min-w-6 rounded border px-1 text-ui-2xs tabular-nums transition-colors',
+                clampedPage === i
+                  ? 'border-brand bg-brand-soft font-bold text-brand-strong'
+                  : 'border-line bg-surface text-ink-faint hover:border-brand-line hover:text-brand-strong',
+              )}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            data-case-item-next
+            disabled={clampedPage >= pageCount - 1}
+            onClick={() => goPage(clampedPage + 1)}
+            className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            下一页
+          </button>
+          <span data-case-item-pageinfo className="ml-1 tabular-nums">
+            第 {clampedPage + 1} / {pageCount} 页 · 共 {current.length} 件
+          </span>
+        </div>
+      )}
+
+      <p className="mt-2 text-ui-2xs text-ink-faint">
+        编号与数量取自存档；名称 / 分类 / 说明来自烘焙进站点的道具表（Item.dat），共 {tableCount} 件。
+      </p>
+    </div>
+  );
+}
+
 /** 甜蜜乐章存档解析：游戏时间 / 公司 / 艺人卡片与合约信息。 */
 export default function SweetCaseView() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -2225,6 +2489,32 @@ export default function SweetCaseView() {
                   </div>
                 )}
               </details>
+
+              {/* 道具：与主站同款三页签 + 每页 10 件；数量 0 不展示。 */}
+              {save.items.length > 0 && (
+                <details
+                  data-sweet-case-items
+                  data-sweet-case-toc-target
+                  className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5"
+                >
+                  <summary
+                    data-sweet-case-items-summary
+                    className="cursor-pointer text-ui-xs font-bold text-brand-strong"
+                  >
+                    道具
+                    <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                      {save.items.filter((it) => it.quantity > 0).length} 件
+                    </span>
+                  </summary>
+                  <SweetItemsPanel
+                    items={save.items}
+                    tableCount={Object.keys(tables.items ?? {}).length}
+                    signed={save.artists.map((artist) => ({ id: artist.id, name: artist.name }))}
+                    gifts={tables.gifts ?? {}}
+                    giftSlots={tables.giftSlots ?? {}}
+                  />
+                </details>
+              )}
 
               <div data-sweet-case-notices data-sweet-case-toc-target className="mt-2">
                 <div data-case-tabs role="tablist" aria-label="通告状态" className="flex flex-wrap items-center gap-1.5">
