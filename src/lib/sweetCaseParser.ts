@@ -87,6 +87,15 @@ const SWEET_DIARY_EVENT_NAMES: Record<number, string> = {
 };
 const SWEET_DIARY_EVENT_SCALE = ['', '大型', '中型', '小型'];
 
+/** 参与清单里的大类编号 -> 通告统计下标；10/15/16/20/21/22/26/31 是同作品变体。 */
+const SWEET_WORK_CLASS_INDEX: Record<number, number> = {
+  1: 3, 2: 0, 3: 1, 4: 2, 5: 4, 6: 5, 7: 6,
+};
+/** 记事表事项编号 -> 通告统计下标；+36 的「第 N 部」序号只对发行记录有效。 */
+const SWEET_DIARY_WORK_TYPE: Record<number, number> = {
+  11: 0, 12: 1, 13: 2, 14: 3, 15: 4, 16: 5, 17: 6,
+};
+
 export interface SweetAward {
   /** 事项编号（21..53），与主站同一套；称号升级的额外奖项按它计数。 */
   awardId: number;
@@ -121,6 +130,25 @@ export interface SweetEvent {
   /** 团体场的记事内嵌团名，读不到时由成员编号回查团体。 */
   groupName: string;
   artistId: number;
+}
+
+/** 通告统计悬停里的一条作品，和主站 WorkRecord 同一套口径。 */
+export interface SweetWorkRecord {
+  date: string;
+  year: number;
+  month: number;
+  day: number;
+  workCode: string;
+  workName: string;
+  company: string;
+  artistId: number;
+  /** 对应 SWEET_NOTICE_LABELS 的下标 0..7。 */
+  noticeIndex: number;
+  role: string;
+  /** 参与清单里的原始顺序，只用于排序。 */
+  order: number;
+  /** 游戏内「第 N 部」序号，给未留存明细的占位排回正确位置。 */
+  seq?: number;
 }
 
 /** 我方团体：成员编号第 0 个是队长，名字来自存档。 */
@@ -369,6 +397,8 @@ export interface SweetSave {
   awards: SweetAward[];
   /** 演唱会 / 影友會 / 歌友會：个人场挂艺人卡，团体场挂团体卡。 */
   events: SweetEvent[];
+  /** 通告统计悬停用的作品明细；每位艺人每类条数与官方统计对齐。 */
+  works: SweetWorkRecord[];
   /** 筹备中通告：CaseFirm 当期可接取列表 + Case 段的通告本体。 */
   notices: SweetNotice[];
   /** 拍摄中通告：已接取、还没杀青，接取记录是真源。 */
@@ -594,6 +624,38 @@ function scanProtagonist(
     result = block.values;
   }
   return result;
+}
+
+/** 作品明细要按艺人块定位参与清单，这里复用上面的块判定，另存块起点。 */
+interface SweetArtistLocation {
+  id: number;
+  offset: number;
+  noticeCounts: number[];
+}
+
+function scanArtistLocations(bytes: Uint8Array, view: DataView): SweetArtistLocation[] {
+  const best = new Map<number, SweetArtistLocation & { priority: number; score: number }>();
+  for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
+    const id = readI32(view, offset + 16);
+    if (id < 1 || id > 110) continue;
+    if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
+    const marked = view.getUint32(offset, true) === BLOCK_MARK;
+    if (!marked && readI32(view, offset + 76) !== 5 && readI32(view, offset + 76) !== 7) continue;
+    const block = readArtistBlock(view, offset, bytes.length, {}, id === 1);
+    if (!block) continue;
+    const priority = marked ? 2 : 1;
+    const previous = best.get(id);
+    if (id === 1) {
+      if (previous && previous.score >= block.score) continue;
+    } else if (previous && (previous.priority > priority
+      || (previous.priority === priority && previous.score >= block.score))) continue;
+    best.set(id, {
+      id, offset, noticeCounts: block.values.noticeCounts, priority, score: block.score,
+    });
+  }
+  return [...best.values()]
+    .map(({ id, offset, noticeCounts }) => ({ id, offset, noticeCounts }))
+    .sort((a, b) => a.offset - b.offset);
 }
 
 /** 存档头部的友好度 / 送礼数表，记录 16B、按 200B 步长排布。 */
@@ -838,6 +900,146 @@ function scanDiaryAwards(
     });
   }
   return rows.sort((a, b) => a.year - b.year || a.month - b.month || a.day - b.day || a.label.localeCompare(b.label));
+}
+
+/** 记事表按作品编码建发行日期索引；同一部作品取最早一条，日期跟发行不跟获奖。 */
+function buildSweetWorkDateIndex(
+  bytes: Uint8Array, view: DataView, table: { offset: number; count: number } | null,
+): {
+  dates: Map<string, { date: string; year: number; month: number; day: number }>;
+  seqs: Map<string, Map<string, number>>;
+} {
+  const dates = new Map<string, { date: string; year: number; month: number; day: number }>();
+  const seqs = new Map<string, Map<string, number>>();
+  if (!table) return { dates, seqs };
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * SWEET_DIARY_STRIDE;
+    const code = readCode(bytes, p + 56);
+    if (!code) continue;
+    const year = readI32(view, p);
+    const month = readI32(view, p + 4);
+    const day = readI32(view, p + 8);
+    const previous = dates.get(code);
+    if (!previous || dayValue(year, month, day) < dayValue(previous.year, previous.month, previous.day)) {
+      dates.set(code, { date: `${year}/${month}/${day}`, year, month, day });
+    }
+    const noticeIndex = SWEET_DIARY_WORK_TYPE[readI32(view, p + 16)];
+    const seq = readI32(view, p + 36);
+    const artistId = readI32(view, p + 20);
+    if (noticeIndex === undefined || seq < 1 || seq > 999 || artistId < 1 || artistId > 110) continue;
+    const groupKey = `${artistId}|${noticeIndex}`;
+    const byCode = seqs.get(groupKey) ?? new Map<string, number>();
+    if (!byCode.has(code)) byCode.set(code, seq);
+    seqs.set(groupKey, byCode);
+  }
+  return { dates, seqs };
+}
+
+/** 每位艺人属性块后面挂着和 CaseCreate 同构的参与清单：
+ *  `[条数][5]` + 每条 `[5B ASCII 通告码][NUL][大类 int32][5]`。
+ *  这是「通告统计」明细的真源：记事表只剩最近几十条，早期作品会被挤掉。
+ *  10/15/16/20/21/22/26/31 是同一作品的版本记录，只取大类 1..7；
+ *  未杀青的自制通告还没完成，不能算进已接作品。 */
+function parseSweetWorkHistory(
+  bytes: Uint8Array,
+  view: DataView,
+  locations: SweetArtistLocation[],
+  diaryTable: { offset: number; count: number } | null,
+  tables: SweetCaseTables,
+  selfMade: SweetSelfMadeNotice[],
+): SweetWorkRecord[] {
+  const unfinished = new Set(selfMade.filter((notice) => notice.status !== 'done').map((notice) => notice.code));
+  const workIndex = buildSweetWorkDateIndex(bytes, view, diaryTable);
+  const out: SweetWorkRecord[] = [];
+  for (let i = 0; i < locations.length; i += 1) {
+    const location = locations[i];
+    const stop = Math.min(
+      location.offset + 1000,
+      i + 1 < locations.length ? locations[i + 1].offset : bytes.length,
+    );
+    let head = -1;
+    for (let h = location.offset + 372; h + 22 < stop; h += 1) {
+      const count = readI32(view, h);
+      if (count < 1 || count > 200 || readI32(view, h + 4) !== 5) continue;
+      const code = readCode(bytes, h + 8, 5);
+      if (!code || bytes[h + 13] !== 0) continue;
+      const category = readI32(view, h + 14);
+      if (category < 1 || category > 31 || readI32(view, h + 18) !== 5) continue;
+      head = h;
+      break;
+    }
+    if (head < 0) continue;
+    const count = readI32(view, head);
+    const seen = new Set<string>();
+    for (let k = 0; k < count; k += 1) {
+      const p = head + 8 + k * 14;
+      if (p + 14 > stop) break;
+      const workCode = readCode(bytes, p, 5);
+      if (!workCode || bytes[p + 5] !== 0) break;
+      const category = readI32(view, p + 6);
+      if (category < 1 || category > 31 || readI32(view, p + 10) !== 5) break;
+      const noticeIndex = SWEET_WORK_CLASS_INDEX[category];
+      if (noticeIndex === undefined || unfinished.has(workCode)) continue;
+      const key = `${noticeIndex}|${workCode}|${location.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const dated = workIndex.dates.get(workCode);
+      out.push({
+        date: dated?.date ?? '',
+        year: dated?.year ?? 0,
+        month: dated?.month ?? 0,
+        day: dated?.day ?? 0,
+        workCode,
+        workName: tables.cases?.[workCode] || workCode,
+        company: tables.companyByCode?.[workCode] || '',
+        artistId: location.id,
+        noticeIndex,
+        role: '',
+        order: k,
+        seq: workIndex.seqs.get(`${location.id}|${noticeIndex}`)?.get(workCode),
+      });
+    }
+  }
+  return out;
+}
+
+/** 明细条数必须和游戏「通告统计」上的数字一致：多的裁掉，缺的补占位，不编作品名。 */
+function alignSweetWorks(locations: SweetArtistLocation[], works: SweetWorkRecord[]): SweetWorkRecord[] {
+  const sortKey = (work: SweetWorkRecord) => {
+    if (work.year > 0) return work.year * 10000 + work.month * 100 + work.day;
+    if (work.seq && work.seq >= 1) return -(1000000 - work.seq);
+    return 900000 + work.order;
+  };
+  const sorted = [...works].sort(
+    (a, b) => sortKey(a) - sortKey(b) || a.workCode.localeCompare(b.workCode),
+  );
+  const aligned: SweetWorkRecord[] = [];
+  for (const location of locations) {
+    for (let noticeIndex = 0; noticeIndex < SWEET_NOTICE_LABELS.length; noticeIndex += 1) {
+      const list = sorted.filter(
+        (work) => work.artistId === location.id && work.noticeIndex === noticeIndex,
+      );
+      const official = location.noticeCounts[noticeIndex] ?? list.length;
+      const kept = list.slice(Math.max(0, list.length - official));
+      aligned.push(...kept);
+      const usedSeqs = new Set(kept.map((work) => work.seq).filter((seq): seq is number => !!seq && seq >= 1));
+      let missing = 1;
+      for (let k = kept.length; k < official; k += 1) {
+        while (usedSeqs.has(missing)) missing += 1;
+        const seq = missing++;
+        aligned.push({
+          date: '', year: 0, month: 0, day: 0,
+          workCode: '', workName: '（存档未留存明细）', company: '',
+          artistId: location.id, noticeIndex, role: '',
+          order: 900000 + noticeIndex * 1000 + k,
+          seq,
+        });
+      }
+    }
+  }
+  return aligned.sort(
+    (a, b) => sortKey(a) - sortKey(b) || a.workCode.localeCompare(b.workCode),
+  );
 }
 
 type DateTuple = [number, number, number, number];
@@ -1805,6 +2007,7 @@ export async function parseSweetSave(
   const reservationStars = { ...stars, '1': displayProtagonist };
   const company = readCompany(bytes, view);
   const blocks = scanArtists(bytes, view, titles);
+  const locations = scanArtistLocations(bytes, view);
   const relations = scanRelations(view, bytes);
   const withRelation = (id: number, values: ArtistValues) => ({
     ...values,
@@ -1843,6 +2046,9 @@ export async function parseSweetSave(
   const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'hot');
   const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'done');
   const selfMade = scanSweetSelfMade(bytes, date, tables, reservationStars, teams, signedIds);
+  const works = alignSweetWorks(
+    locations, parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade),
+  );
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -1855,6 +2061,7 @@ export async function parseSweetSave(
     teams,
     awards: diaryAwards.length > 0 ? diaryAwards : scanAwards(bytes, date.year),
     events: scanDiaryEvents(bytes, view, diaryTable),
+    works,
     notices,
     shooting,
     promo,
