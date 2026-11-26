@@ -11,6 +11,9 @@
 - Length.dat：`[class/ subtype][role]` -> [工作天数, 每周上限]，与存档里的
   角色类型一起决定表格上的两枚胶囊。
 - 各 XxxCase.dat：通告码 -> 名字（存档里也有名字，这份只做回查）。
+- Item.dat：391 条 × 452B 定长记录，道具编号 -> 名称 / 分类 / 说明 / 属性行，
+  以及每条记录 +48 起的 21 格送礼向量。艺人槽位由 sources/sweet/favorite-gifts.txt
+  的八位可送礼对象反推，只用真实有数据的那八格。
 
 用法：
     python scripts/build_sweet_case_tables.py [--data <game data dir>]
@@ -215,11 +218,72 @@ def load_promo_kinds(data_dir):
     return out
 
 
+# 道具类型编号（Item.dat 记录 +4）-> 游戏物品窗口的三个页签。
+ITEM_TYPE = {1: "公司物品", 2: "一般物品", 3: "特殊物品"}
+
+# 甜蜜乐章 Item.dat 每条记录 452 字节，送礼向量在 +48 起 21 格。
+# 只用 sources/sweet/favorite-gifts.txt 的八位艺人反推出真正有数据的槽位；
+# 其余槽位（含 24/25/26 号剧情道具里出现的 5）不是好感加成，不映射艺人。
+# 这里存 0 基数组下标，页面直接 vector[slot]。
+SWEET_GIFT_SLOTS = {
+    11: 13,  # 沈惟真
+    13: 14,  # 史蒂芬
+    12: 15,  # 丹尼斯
+    14: 16,  # 姚子奇
+    15: 17,  # 慕容和希
+    16: 18,  # 卫亚
+    17: 19,  # 纪翔
+    18: 20,  # 城仲瑄
+}
+
+
+def load_sweet_items(data_dir):
+    """解析甜蜜乐章 Item.dat：返回 (code -> 文本四元组, code -> 送礼向量)。
+
+    与主站的变长 Item.dat 不同，这里的头部是 [1010][391][452][1]，每条记录定长
+    452B：+0 编号、+4 类型、+8 名称（Big5，NUL 结束，最长 18 字节）、+48 起 21
+    个送礼槽位、+148 说明、+349 属性行。名称 / 说明 / 属性都是连续 Big5 字节。
+    """
+    path = os.path.join(data_dir, "Item.dat")
+    if not os.path.isfile(path):
+        return {}, {}
+    with open(path, "rb") as f:
+        raw = f.read()
+    if len(raw) < 12:
+        return {}, {}
+    magic, count, size, _flag = struct.unpack_from("<4I", raw, 0)
+    if magic != 1010 or size != 452:
+        return {}, {}
+    items, gifts = {}, {}
+    for i in range(count):
+        off = 12 + i * size
+        if off + size > len(raw):
+            break
+        rec = raw[off:off + size]
+        code, typ = struct.unpack_from("<2I", rec, 0)
+        if not code:
+            continue
+        name = text(rec, 8, 40)
+        if not name:
+            continue
+        vector = list(struct.unpack_from("<21I", rec, 48))
+        if max(vector) <= 4:
+            gifts[str(code)] = vector
+        items[str(code)] = [
+            name,
+            ITEM_TYPE.get(typ, "未知物品"),
+            text(rec, 148, 196),
+            text(rec, 349, 99),
+        ]
+    return items, gifts
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
     args = parser.parse_args()
     companies = load_companies(args.data)
+    items, gifts = load_sweet_items(args.data)
     data = {
         "classes": load_names(os.path.join(args.data, "CaseClass.dat")),
         "roles": load_names(os.path.join(args.data, "RoleType.dat")),
@@ -231,6 +295,9 @@ def main():
         "cases": load_cases(args.data),
         "subtypes": load_subtypes(args.data),
         "promoKinds": load_promo_kinds(args.data),
+        "items": items,
+        "gifts": gifts,
+        "giftSlots": SWEET_GIFT_SLOTS,
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
@@ -238,7 +305,8 @@ def main():
         f.write("\n")
     print("wrote", OUT, "classes", len(data["classes"]), "roles", len(data["roles"]),
           "companies", len(data["companyBySeq"]), "lengths", len(data["lengths"]),
-          "subtypes", len(data["subtypes"]), "promoKinds", len(data["promoKinds"]))
+          "subtypes", len(data["subtypes"]), "promoKinds", len(data["promoKinds"]),
+          "items", len(items), "gifts", len(gifts), "giftSlots", len(SWEET_GIFT_SLOTS))
 
 
 if __name__ == "__main__":
