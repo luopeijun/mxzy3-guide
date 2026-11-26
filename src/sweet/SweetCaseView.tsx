@@ -494,6 +494,14 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
           summary: `${save.scenes.filter((s) => s.unlocked).length}/${save.scenes.length} 解锁`,
         }]
       : []),
+    ...(save.producers.length > 0
+      ? [{
+          id: 'producers',
+          label: '制作人好感',
+          selector: '[data-sweet-case-producers]',
+          summary: `${save.producers.filter((p) => save.producerFriendship[p.code] !== undefined).length} 位`,
+        }]
+      : []),
     { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
     { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
     { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
@@ -1807,6 +1815,64 @@ const ITEM_CAT_ORDER = ['一般物品', '特殊物品', '公司物品'] as const
 type ItemCat = typeof ITEM_CAT_ORDER[number];
 
 /** 分类胶囊沿用明星志愿3：公司物品绿、特殊物品粉、一般物品中性描边。 */
+/** 制作人好感：六列分组与明星志愿3一致，编号 / 名字来自甜站 MapRole +
+ *  StudioProduce 烘焙，友好度按编号从存档友好度表反查。 */
+const SWEET_PRODUCER_GROUPS = [
+  { key: 'record', label: '唱片' },
+  { key: 'tv', label: '电视剧' },
+  { key: 'movie', label: '电影' },
+  { key: 'ad', label: '广告' },
+  { key: 'host', label: '主持' },
+  { key: 'other', label: '其他' },
+];
+
+function SweetProducerPanel({
+  producers, friendship,
+}: {
+  producers: Array<{ code: number; name: string; group: string }>;
+  friendship: Record<number, number>;
+}) {
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      {SWEET_PRODUCER_GROUPS.map((group) => {
+        const members = producers.filter((p) => p.group === group.key);
+        return (
+          <div
+            key={group.key}
+            data-sweet-case-producer-group={group.key}
+            className="rounded-ui-sm border border-line bg-surface px-2 py-1.5"
+          >
+            <div className="mb-1 border-b border-line pb-1 text-ui-2xs font-bold text-brand-strong">
+              {group.label}
+              <span className="ml-1 font-normal text-ink-faint">{members.length}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              {members.length === 0 ? (
+                <div className="py-1 text-ui-2xs text-ink-faint">待补充</div>
+              ) : members.map((producer) => {
+                const value = friendship[producer.code];
+                return (
+                  <div
+                    key={producer.code}
+                    data-sweet-case-producer={producer.code}
+                    data-sweet-case-producer-friendship={value ?? ''}
+                    className="flex items-baseline justify-between gap-1 border-b border-line/60 pb-1 text-ui-2xs last:border-0 last:pb-0"
+                  >
+                    <span className="font-semibold text-ink">{producer.name}</span>
+                    <span className={cn('tabular-nums', value === undefined ? 'text-ink-faint' : 'font-semibold text-brand-strong')}>
+                      {value === undefined ? '—' : value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function itemCategoryClass(category: string): string {
   if (category === '公司物品') return 'bg-accept-soft text-accept';
   if (category === '特殊物品') return 'border border-brand-line bg-brand-soft text-brand-strong';
@@ -2561,6 +2627,29 @@ export default function SweetCaseView() {
                       </div>
                     ))}
                   </div>
+                </details>
+              )}
+
+              {/* 制作人好感：六列分组，友好度按编号从存档友好度表反查。 */}
+              {save.producers.length > 0 && (
+                <details
+                  data-sweet-case-producers
+                  data-sweet-case-toc-target
+                  className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5"
+                >
+                  <summary
+                    data-sweet-case-producers-summary
+                    className="cursor-pointer text-ui-xs font-bold text-brand-strong"
+                  >
+                    制作人好感
+                    <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                      {save.producers.filter((p) => save.producerFriendship[p.code] !== undefined).length}/{save.producers.length} 位
+                    </span>
+                  </summary>
+                  <SweetProducerPanel
+                    producers={save.producers}
+                    friendship={save.producerFriendship}
+                  />
                 </details>
               )}
 
