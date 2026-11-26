@@ -46,10 +46,14 @@ const SOCIAL_INDEX: Record<string, number> = {
 /** 作品门槛用的名字就是游戏「通告统计」那五个，与 NOTICE_COUNT_LABELS 同序。 */
 const WORKS_INDEX: Record<string, number> = {
   电视作品: 0, 电影作品: 1, 专辑: 2, 广告: 3, 节目: 4,
+  // 甜蜜乐章比原版多这三类，跟 SWEET_NOTICE_LABELS 的第 6~8 项同序。
+  舞台剧: 5, 走秀: 6, 演唱会: 7,
 };
 
 /** 门槛里属于「作品」的项 —— 同一个称号的不同作品组合之间是「或」的关系。 */
-const WORKS_LABELS = new Set(['电视作品', '电影作品', '专辑', '广告', '节目', '作品总数']);
+const WORKS_LABELS = new Set([
+  '电视作品', '电影作品', '专辑', '广告', '节目', '舞台剧', '走秀', '演唱会', '作品总数',
+]);
 
 /** 这四条职业线走到顶档后，下一步接跨线的总称号（天王巨星 / 超级天后）。
  *  「其他」线的知名艺人只是过渡，不接总称号。 */
@@ -108,7 +112,7 @@ function extraGaps(id: number, stats: TitleStats): TitleGapItem[] {
   const rule = extraRuleFor(id);
   if (!rule) return [];
   const out: TitleGapItem[] = [];
-  if (rule.concerts !== undefined) {
+  if (rule.concerts !== undefined && !stats.skipConcertExtra) {
     const have = stats.concerts ?? null;
     const diff = have === null ? null : Math.max(0, rule.concerts - have);
     out.push({
@@ -143,6 +147,10 @@ interface TitleStats {
   awardIds?: readonly number[];
   /** 办过的演唱会次数（含团体场、不限规模）。 */
   concerts?: number;
+  /** 甜蜜乐章的作品总数是八类通告之和，不是主站的前五项之和。 */
+  totalWorks?: number;
+  /** 甜站称号表本身已经把演唱会列成数值门槛，不再叠加攻略 PS 的演唱会条件。 */
+  skipConcertExtra?: boolean;
 }
 
 function currentValue(label: string, stats: TitleStats): number | null {
@@ -154,8 +162,9 @@ function currentValue(label: string, stats: TitleStats): number | null {
   // 显示的值，含入司前的履历、不含在拍的通告。
   const works = WORKS_INDEX[label];
   if (works !== undefined) return stats.noticeCounts?.[works] ?? null;
-  // 作品总数 = 上面五项相加。
+  // 作品总数 = 上面五项相加；甜蜜乐章按八类相加。
   if (label === '作品总数') {
+    if (stats.totalWorks !== undefined) return stats.totalWorks;
     const counts = stats.noticeCounts;
     return counts ? counts.slice(0, 5).reduce((sum, n) => sum + n, 0) : null;
   }

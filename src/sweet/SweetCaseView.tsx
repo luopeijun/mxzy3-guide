@@ -8,8 +8,9 @@ import {
 } from '../lib/sweetCaseParser';
 import { TitleBadge } from '../ui/TitleBadge';
 
-/** 称号门槛与主站共用：奖项编号 21..53 同套，作品统计前五项同序（唱片＝专辑、主持＝节目），
- *  演唱会按事项 63 的活动计，团体场给同团成员都算。 */
+/** 称号门槛走甜蜜乐章自己的 Nickname.dat：作品统计八项同序（唱片＝专辑、主持＝节目），
+ *  作品总数是八项之和；奖项编号 21..53 与主站同套。演唱会已写进称号表，
+ *  不再叠加攻略 PS 的活动条件，但记录仍留着给活动展示用。 */
 function sweetTitleStats(save: SweetSave, artist: SweetArtistCard) {
   const awardIds = save.awards
     .filter((award) => award.artistId === artist.id)
@@ -23,9 +24,11 @@ function sweetTitleStats(save: SweetSave, artist: SweetArtistCard) {
   return {
     abilities: artist.abilities,
     social: artist.social,
-    noticeCounts: artist.noticeCounts.slice(0, 5),
+    noticeCounts: artist.noticeCounts,
+    totalWorks: artist.noticeCounts.reduce((sum, value) => sum + value, 0),
     awardIds,
     concerts,
+    skipConcertExtra: true,
   };
 }
 
@@ -206,8 +209,8 @@ export default function SweetCaseView() {
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('艺人表加载失败'))))
       .then((data: { stars?: Record<string, string> }) => setStars(data.stars ?? {}))
       .catch(() => setError('艺人表加载失败，艺人姓名可能显示为编号。'));
-    // 称号沿用游戏 Nickname.tab 的烘焙表（和主站同一份）；读不到时回退显示编号。
-    fetch(`${import.meta.env.BASE_URL}data/case-tables.json?v=${Date.now()}`)
+    // 编号体系沿用主站，但门槛来自甜蜜乐章自己的 Nickname.dat（多了舞台剧 / 走秀 / 演唱会）。
+    fetch(`${import.meta.env.BASE_URL}data/sweet/title-meta.json?v=${Date.now()}`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('称号表加载失败'))))
       .then((data: {
         titles?: Record<string, string>;

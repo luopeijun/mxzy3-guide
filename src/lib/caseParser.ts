@@ -28,6 +28,11 @@ export const NOTICE_COUNT_ALIAS: Record<string, string> = {
   电视作品: '电视', 电影作品: '电影', 专辑: '唱片', 节目: '主持',
 };
 
+/** 甜蜜乐章多出来的三类作品门槛用的单位；主站表不会出现这些名字。 */
+const EXTRA_NOTICE_UNITS: Record<string, string> = {
+  舞台剧: '场', 走秀: '场', 演唱会: '场',
+};
+
 /** 门槛 / 统计的统一显示名。 */
 export function noticeLabel(label: string): string {
   return NOTICE_COUNT_ALIAS[label] ?? label;
@@ -35,8 +40,9 @@ export function noticeLabel(label: string): string {
 
 /** 与 noticeLabel 配套的单位；作品总数没有单位。 */
 export function noticeUnit(label: string): string {
-  const index = NOTICE_COUNT_LABELS.indexOf(noticeLabel(label) as (typeof NOTICE_COUNT_LABELS)[number]);
-  return index >= 0 ? NOTICE_COUNT_UNITS[index] : '';
+  const text = noticeLabel(label);
+  const index = NOTICE_COUNT_LABELS.indexOf(text as (typeof NOTICE_COUNT_LABELS)[number]);
+  return index >= 0 ? NOTICE_COUNT_UNITS[index] : EXTRA_NOTICE_UNITS[text] ?? '';
 }
 const GRADES = ['', 'A', 'B', 'C', 'D'];
 const WEEKDAYS = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
