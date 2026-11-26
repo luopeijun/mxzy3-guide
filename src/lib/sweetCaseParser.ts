@@ -215,6 +215,25 @@ export interface SweetCaseTables {
   subtypes?: Record<string, string>;
   /** ScheduleClass.dat 的宣传子类编号 -> 简体显示名。 */
   promoKinds?: Record<string, string>;
+  /** `code -> [名称, 分类, 说明, 属性行]`，来自甜蜜乐章 Item.dat 烘焙。 */
+  items?: Record<string, [string, string, string, string]>;
+  /** `code -> 21 个送礼槽位的好感加成`，来自 Item.dat 记录 +48。 */
+  gifts?: Record<string, number[]>;
+  /** 艺人编号 -> 送礼槽位下标，由甜站偏好礼物清单反推。 */
+  giftSlots?: Record<string, number>;
+}
+
+/** 存档 Item 段里的一件道具：`[编号][状态位][数量][附字段]`。
+ *  存档本身不带名称，展示文本由 case-tables.json 的 Item.dat 表补齐。 */
+export interface SweetOwnedItem {
+  code: number;
+  flag: number;
+  quantity: number;
+  meta: number;
+  name?: string;
+  category?: string;
+  desc?: string;
+  stats?: string;
 }
 
 /** 宣传活动里一位旗下艺人的一行：宣传天数来自接演槽，角色名来自本体角色槽。 */
@@ -413,6 +432,8 @@ export interface SweetSave {
   done: SweetDoneNotice[];
   /** 自制通告及其他：CaseCreate 段里玩家自己出品的作品。 */
   selfMade: SweetSelfMadeNotice[];
+  /** 存档 Item 段记录的道具清单（含数量为 0 的条目，页面自行过滤）。 */
+  items: SweetOwnedItem[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -1990,6 +2011,38 @@ function scanSweetShooting(
   return out;
 }
 
+/** 甜站 Item 段是真段头：`[4]["Item\0"][条数][16B × 条数]`，
+ *  每条 `[编号][状态位][数量][附字段]`。状态位可能是 -12 / 96 这类标记，
+ *  不能当类型或过滤条件；数量为 0 的行也保留，由页面决定不显示。 */
+function scanSweetItems(bytes: Uint8Array, view: DataView, tables: SweetCaseTables): SweetOwnedItem[] {
+  const start = findSection(bytes, 'Item');
+  if (start < 0) return [];
+  const count = readI32(view, start);
+  if (count < 0 || count > 100000 || start + 4 + count * 16 > bytes.length) return [];
+  const out: SweetOwnedItem[] = [];
+  for (let k = 0; k < count; k += 1) {
+    const o = start + 4 + k * 16;
+    const code = readI32(view, o);
+    const flag = readI32(view, o + 4);
+    const quantity = readI32(view, o + 8);
+    const meta = readI32(view, o + 12);
+    if (code <= 0 || code >= 100000 || quantity < 0 || quantity >= 100000
+      || meta < 0 || meta >= 1000) continue;
+    const info = tables.items?.[String(code)];
+    out.push({
+      code,
+      flag,
+      quantity,
+      meta,
+      name: info?.[0] || `道具${code}`,
+      category: info?.[1],
+      desc: info?.[2],
+      stats: info?.[3],
+    });
+  }
+  return out;
+}
+
 export function formatSweetDate(date: SweetSave['date']): string {
   const w = WEEKDAYS[date.weekday - 1] ?? String(date.weekday);
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
@@ -2054,6 +2107,7 @@ export async function parseSweetSave(
   const works = alignSweetWorks(
     locations, parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade),
   );
+  const items = scanSweetItems(bytes, view, tables);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -2074,5 +2128,6 @@ export async function parseSweetSave(
     hot,
     done,
     selfMade,
+    items,
   };
 }
