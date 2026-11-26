@@ -4,10 +4,12 @@
  *  随后是一段 zlib（78 9c）压缩流。解压后才是真正的存档数据。
  *
  *  已确认的定长字段（偏移都指解压后的字节流）：
- *   - 主角名 @0x04：NUL 结尾 Big5。
- *   - 公司名 @0x19：NUL 结尾 Big5。
- *   - 签约艺人槽位 @0x34 / @0x38 / @0x3c：3 个 int32 艺人编号，−1 表示空。
- *   - 游戏时间 @0x40：[年, 月, 日, 星期]（星期日=7）。
+ *   - 普通档：主角名 @0x04、公司名 @0x19、签约槽 @0x34/@0x38/@0x3c、
+ *     游戏时间 @0x40，都是 NUL 结尾 Big5 或 int32。
+ *   - 结局档（Ending*.sav）在 @0x04 写 1，签约槽和游戏时间被提前到
+ *     @0x08/@0x0c/@0x10 与 @0x14..@0x20，普通头部整体后移 84B（0x54）：
+ *     主角名 @0x58、公司名 @0x6d。按普通档偏移读会得到乱码和空艺人列表，
+ *     必须先按这个标记切换布局。
  *   - 艺人当前属性块：`id` 在 +16，后接 `[x][1][0]`，九项 int32 能力从 +32 起
  *     （存档 ×10）；+68/+72 是压力/疲劳，+80 起 5 项是叛逆/性感/亲和/人气/
  *     曝光（后期存档人气会被 capped 到 999999，不能按 10000 拒绝整块），
@@ -1232,6 +1234,7 @@ function readNoticeBody(
   tailReservations: Map<string, string>, classId: number,
   promo = false, dateLimit = 3,
 ): SweetNoticeBody | null {
+  if (recView.byteLength < 64) return null;
   const nameLength = readI32(recView, 22);
   if (nameLength < 1 || nameLength > 64) return null;
   const name = readBig5(rec, 26, nameLength) || tables.cases?.[code] || code;
@@ -1291,7 +1294,9 @@ function readNoticeBody(
   }
   if (reservationAt >= 0) {
     roles.forEach((role, i) => {
-      const id = readI32(recView, reservationAt + 8 + i * 24);
+      const at = reservationAt + 8 + i * 24;
+      if (at + 4 > recView.byteLength) return;
+      const id = readI32(recView, at);
       const reservedName = stars[String(id)] ?? '';
       if (id > 0 && id <= 110 && isRealReservationName(reservedName)) role.reservedBy = reservedName;
     });
@@ -1499,6 +1504,7 @@ function scanSweetPromo(
     if (!ok || caseBytes[i + 9] || !/^[A-Z]{2}[0-9A-Z]{3}$/.test(code)) continue;
     const rec = caseBytes.subarray(i, Math.min(i + 1024, caseBytes.length));
     const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
+    if (recView.byteLength < 32) continue;
     const classId = readI32(recView, 10);
     if (!SWEET_PROMO_KIND_IDS.has(classId)) continue;
     const body = readNoticeBody(rec, recView, code, tables, allStars, emptyReservations, classId, true);
@@ -1506,8 +1512,10 @@ function scanSweetPromo(
 
     const casts: SweetPromoCast[] = [];
     for (let slot = 0; slot < 4; slot += 1) {
-      const artistId = readI32(recView, body.roleAt + 777 + slot * 24);
-      const doneDays = readI32(recView, body.roleAt + 781 + slot * 24);
+      const at = body.roleAt + 777 + slot * 24;
+      if (at + 8 > recView.byteLength) break;
+      const artistId = readI32(recView, at);
+      const doneDays = readI32(recView, at + 4);
       if (artistId < 1 || artistId > 110 || doneDays < 0 || doneDays > 60) continue;
       const artistName = sweetPromoSigner(artistId, teams, allStars);
       if (!isRealReservationName(artistName)) continue;
@@ -2139,6 +2147,36 @@ export function formatSweetDate(date: SweetSave['date']): string {
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
 }
 
+/** 结局档把签约槽 / 日期提到头部，普通头部整体后移 84B；这里统一给出实际偏移。 */
+function sweetHeaderLayout(view: DataView): {
+  protagonist: number;
+  company: number;
+  signed: number[];
+  date: number[];
+} {
+  const endingSigned = [0x08, 0x0c, 0x10].map((o) => readI32(view, o));
+  const endingDate = [0x14, 0x18, 0x1c, 0x20].map((o) => readI32(view, o));
+  const isEnding = readI32(view, 0x04) === 1
+    && endingSigned.every((id) => id === -1 || (id >= 1 && id <= 110))
+    && endingDate[0] >= 2000 && endingDate[0] <= 9999
+    && endingDate[1] >= 1 && endingDate[1] <= 12
+    && endingDate[2] >= 1 && endingDate[2] <= 31
+    && endingDate[3] >= 1 && endingDate[3] <= 7;
+  return isEnding
+    ? {
+        protagonist: 0x58,
+        company: 0x6d,
+        signed: [0x08, 0x0c, 0x10],
+        date: [0x14, 0x18, 0x1c, 0x20],
+      }
+    : {
+        protagonist: 0x04,
+        company: 0x19,
+        signed: [0x34, 0x38, 0x3c],
+        date: [0x40, 0x44, 0x48, 0x4c],
+      };
+}
+
 export async function parseSweetSave(
   file: File,
   stars: Record<string, string>,
@@ -2149,8 +2187,9 @@ export async function parseSweetSave(
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (bytes.byteLength < 0x50) throw new Error('存档数据过短，不是有效的甜蜜乐章存档');
 
-  const signedIds = [0x34, 0x38, 0x3c].map((o) => readI32(view, o)).filter((id) => id >= 1 && id <= 110);
-  const protagonist = readBig5(bytes, 0x04);
+  const header = sweetHeaderLayout(view);
+  const signedIds = header.signed.map((o) => readI32(view, o)).filter((id) => id >= 1 && id <= 110);
+  const protagonist = readBig5(bytes, header.protagonist);
   // UI 里的主角名一律用存档内自命名，预约列也跟随，避免数值对比与预约两处不同名。
   const displayProtagonist = protagonist || stars['1'] || '杜云芊';
   const reservationStars = { ...stars, '1': displayProtagonist };
@@ -2179,12 +2218,12 @@ export async function parseSweetSave(
   ];
 
   const date = {
-    year: readI32(view, 0x40),
-    month: readI32(view, 0x44),
-    day: readI32(view, 0x48),
-    weekday: readI32(view, 0x4c),
+    year: readI32(view, header.date[0]),
+    month: readI32(view, header.date[1]),
+    day: readI32(view, header.date[2]),
+    weekday: readI32(view, header.date[3]),
   };
-  const companyName = readBig5(bytes, 0x19);
+  const companyName = readBig5(bytes, header.company);
   const teams = scanSweetTeams(bytes, view, stars);
   const diaryTable = findSweetDiaryTable(view, bytes.length);
   const diaryAwards = scanDiaryAwards(bytes, view, protagonist, companyName, stars, diaryTable);
@@ -2202,7 +2241,7 @@ export async function parseSweetSave(
   const scenes = scanSweetScenes(bytes, view, tables);
   const producerFriendship = scanProducerFriendship(bytes, view);
   return {
-    protagonist: readBig5(bytes, 0x04),
+    protagonist: readBig5(bytes, header.protagonist),
     company: companyName,
     companyImage: company.image,
     fame: company.fame,
