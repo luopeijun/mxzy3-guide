@@ -269,7 +269,18 @@ export default function SweetCaseView() {
                     <div key={artist.id} className="w-[344px] shrink-0">
                       <article data-sweet-case-artist={artist.id} className="rounded border border-line bg-surface px-2 py-1.5">
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-ui-xs font-bold text-brand-strong">#{artist.id} {artist.name}</span>
+                          <span
+                            data-sweet-case-artist-name
+                            title={artist.isProtagonist ? '杜云芊（固定主角）' : undefined}
+                            className="text-ui-xs font-bold text-brand-strong"
+                          >
+                            #{artist.id} {artist.name}
+                          </span>
+                          {artist.isProtagonist && (
+                            <span data-sweet-case-protagonist className="rounded-full bg-brand-soft px-1.5 text-ui-2xs font-semibold text-brand-strong">
+                              主角
+                            </span>
+                          )}
                         </div>
                         <div data-sweet-case-attrs className="mt-1 grid grid-cols-3 gap-x-2 gap-y-0.5 text-ui-2xs text-ink-muted">
                           {SWEET_ABILITY_LABELS.map((label, index) => (

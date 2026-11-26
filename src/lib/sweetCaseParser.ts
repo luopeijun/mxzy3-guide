@@ -31,6 +31,8 @@ export const SWEET_NOTICE_LABELS = [
 export interface SweetArtistCard {
   id: number;
   name: string;
+  /** 杜云芊固定占我方一位，这块没有 327680 标记，靠编号 1 + 结构定位。 */
+  isProtagonist: boolean;
   /** 九项能力，存档 ×10，这里已 ÷10。 */
   abilities: number[];
   friendship: number;
@@ -55,6 +57,16 @@ export interface SweetSave {
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
+
+type ArtistValues = Omit<SweetArtistCard, 'id' | 'name' | 'isProtagonist' | 'friendship' | 'gifts'>;
+
+const EMPTY_VALUES: ArtistValues = {
+  abilities: Array(9).fill(0),
+  stress: 0,
+  fatigue: 0,
+  social: Array(5).fill(0),
+  noticeCounts: Array(8).fill(0),
+};
 
 function readI32(view: DataView, offset: number): number {
   return view.getInt32(offset, true);
@@ -135,8 +147,8 @@ function readCompany(bytes: Uint8Array, view: DataView): {
 }
 
 /** 扫描艺人属性块。返回 id -> 完整艺人数值。 */
-function scanArtists(bytes: Uint8Array, view: DataView): Map<number, Omit<SweetArtistCard, 'id' | 'name'>> {
-  const out = new Map<number, Omit<SweetArtistCard, 'id' | 'name'>>();
+function scanArtists(bytes: Uint8Array, view: DataView): Map<number, ArtistValues> {
+  const out = new Map<number, ArtistValues>();
   for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
     if (view.getUint32(offset, true) !== BLOCK_MARK) continue;
     const id = readI32(view, offset + 16);
@@ -160,8 +172,6 @@ function scanArtists(bytes: Uint8Array, view: DataView): Map<number, Omit<SweetA
     if (out.has(id)) continue;
     out.set(id, {
       abilities: rawAbilities.map((value) => value / 10),
-      friendship: 0,
-      gifts: 0,
       stress,
       fatigue,
       social,
@@ -169,6 +179,43 @@ function scanArtists(bytes: Uint8Array, view: DataView): Map<number, Omit<SweetA
     });
   }
   return out;
+}
+
+/** 主角杜云芊的属性块没有 327680 标记，但同样从 +16 开始是 `[id=1][121][1][0]`
+ *  加九项能力；全文件里可能有形状相近的噪声，取九项之和最大的那块。 */
+function scanProtagonist(bytes: Uint8Array, view: DataView): ArtistValues {
+  let bestScore = -1;
+  let result: ArtistValues = EMPTY_VALUES;
+  for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
+    if (readI32(view, offset + 16) !== 1) continue;
+    if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
+    const rawAbilities: number[] = [];
+    let ok = true;
+    for (let i = 0; i < 9; i += 1) {
+      const value = readI32(view, offset + 32 + i * 4);
+      if (value < 0 || value > 10000) { ok = false; break; }
+      rawAbilities.push(value);
+    }
+    if (!ok) continue;
+    const stress = readI32(view, offset + 68);
+    const fatigue = readI32(view, offset + 72);
+    if (stress < 0 || stress > 1000 || fatigue < 0 || fatigue > 1000) continue;
+    const social = Array.from({ length: 5 }, (_, i) => readI32(view, offset + 80 + i * 4));
+    if (!social.every((value) => value >= 0 && value <= 99999)) continue;
+    const noticeCounts = Array.from({ length: 8 }, (_, i) => readI32(view, offset + 264 + i * 4));
+    if (!noticeCounts.every((value) => value >= 0 && value <= 9999)) continue;
+    const score = rawAbilities.reduce((sum, value) => sum + value, 0);
+    if (score <= bestScore) continue;
+    bestScore = score;
+    result = {
+      abilities: rawAbilities.map((value) => value / 10),
+      stress,
+      fatigue,
+      social,
+      noticeCounts,
+    };
+  }
+  return result;
 }
 
 /** 存档头部的友好度 / 送礼数表，记录 16B、按 200B 步长排布。 */
@@ -200,22 +247,29 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
   if (bytes.byteLength < 0x50) throw new Error('存档数据过短，不是有效的甜蜜乐章存档');
 
   const signedIds = [0x34, 0x38, 0x3c].map((o) => readI32(view, o)).filter((id) => id >= 1 && id <= 110);
+  const protagonist = readBig5(bytes, 0x04);
   const company = readCompany(bytes, view);
   const blocks = scanArtists(bytes, view);
   const relations = scanRelations(view, bytes);
-  const artists = signedIds.map((id) => ({
-    id,
-    name: stars[String(id)] ?? `艺人${id}`,
-    ...(blocks.get(id) ?? {
-      abilities: Array(9).fill(0),
-      stress: 0,
-      fatigue: 0,
-      social: Array(5).fill(0),
-      noticeCounts: Array(8).fill(0),
-    }),
+  const withRelation = (id: number, values: ArtistValues) => ({
+    ...values,
     friendship: relations.get(id)?.friendship ?? 0,
     gifts: relations.get(id)?.gifts ?? 0,
-  }));
+  });
+  const artists: SweetArtistCard[] = [
+    {
+      id: 1,
+      name: protagonist || '杜云芊',
+      isProtagonist: true,
+      ...withRelation(1, scanProtagonist(bytes, view)),
+    },
+    ...signedIds.map((id): SweetArtistCard => ({
+      id,
+      name: stars[String(id)] ?? `艺人${id}`,
+      isProtagonist: false,
+      ...withRelation(id, blocks.get(id) ?? EMPTY_VALUES),
+    })),
+  ];
 
   return {
     protagonist: readBig5(bytes, 0x04),
