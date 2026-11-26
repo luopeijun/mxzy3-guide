@@ -237,6 +237,9 @@ export interface SweetWaitingNotice {
 /** 热卖中：与等待上市同一套本体字段，只把日期口径换成已上档、未下档。 */
 export type SweetHotNotice = SweetWaitingNotice;
 
+/** 已完成：与等待上市同一套本体字段，只把日期口径换成已过下档日。 */
+export type SweetDoneNotice = SweetWaitingNotice;
+
 /** 拍摄中风险档位，沿用主站两档口径：排不下=违约、余量 ≤5 天=逾期风险。 */
 export type SweetShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
 export type SweetShootingStatus = 'pending' | 'shooting' | 'done';
@@ -337,6 +340,8 @@ export interface SweetSave {
   waiting: SweetWaitingNotice[];
   /** 热卖中通告：已到发行日、还没下档的作品，只列我方参演。 */
   hot: SweetHotNotice[];
+  /** 已完成通告：已过发行下档日的作品，只列我方参演。 */
+  done: SweetDoneNotice[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -1245,13 +1250,14 @@ function scanSweetPromo(
 }
 
 /** 等待上市 / 热卖中共用：Case 本体的五组档期里，第四 / 第五组是上档 / 下档。
- *  等待上市＝今天已过杀青、还没到上档日；热卖中＝今天已到上档、还没下档。
+ *  等待上市＝今天已过杀青、还没到上档日；热卖中＝今天已到上档、还没下档；
+ *  已完成＝今天已过下档日（与主站 archive 分档一致）。
  *  接演记录与拍摄中同构，从本体 +816 起每 24B 一组 `[flag][id][done][a][b][pay]`；
  *  不能用作品清单或宣传档期代替发行档期。 */
 function scanSweetArchive(
   bytes: Uint8Array, today: SweetSave['date'], tables: SweetCaseTables,
   allStars: Record<string, string>, teams: SweetTeam[], signedIds: number[],
-  status: 'waiting' | 'hot',
+  status: 'waiting' | 'hot' | 'done',
 ): SweetWaitingNotice[] {
   const caseStart = findSection(bytes, 'Case');
   const caseEnd = findSection(bytes, 'CaseEnd');
@@ -1299,13 +1305,16 @@ function scanSweetArchive(
     const saleEndDay = dayValue(saleEnd[0], saleEnd[1], saleEnd[2]);
     const eligible = status === 'waiting'
       ? todayValue > endDay && todayValue < saleDay
-      : todayValue >= saleDay && todayValue <= saleEndDay;
+      : status === 'hot'
+        ? todayValue >= saleDay && todayValue <= saleEndDay
+        : todayValue > saleEndDay;
     if (!eligible) continue;
 
     const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
     const claimed = new Set<string>();
     const casts: SweetWaitingCast[] = [];
-    for (let slot = 0; slot < 4; slot += 1) {
+    // 接演网格最多 8 格：主角固定落在第 8 格（+984），只读前四格会漏掉他。
+    for (let slot = 0; slot < 8; slot += 1) {
       const p = 816 + slot * 24;
       if (p + 24 > length) break;
       const flag = readI32(recView, p);
@@ -1324,6 +1333,12 @@ function scanSweetArchive(
       let role: SweetNoticeRole | null = sortedRoles[slot] ?? null;
       // 主角在 StarRole 里被误标成男，这里与拍摄中一样特判。
       const gender = artistId === 1 ? 1 : tables.genders?.[String(artistId)];
+      // 第 8 槽主角没有同序角色格时，从还没认领的角色里按性别补一个。
+      if (!role && gender !== undefined && sortedRoles.length > 1) {
+        const wanted = gender === 0 ? 'male' : 'female';
+        role = sortedRoles.find((item) => !claimed.has(item.code)
+          && sweetRoleGender(item.roleType) === wanted) ?? null;
+      }
       const need = role ? sweetRoleGender(role.roleType) : undefined;
       if (role && need && gender !== undefined
         && ((need === 'male' && gender !== 0) || (need === 'female' && gender !== 1))
@@ -1623,6 +1638,7 @@ export async function parseSweetSave(
   const promo = scanSweetPromo(bytes, tables, reservationStars, teams);
   const waiting = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'waiting');
   const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'hot');
+  const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'done');
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -1640,5 +1656,6 @@ export async function parseSweetSave(
     promo,
     waiting,
     hot,
+    done,
   };
 }
