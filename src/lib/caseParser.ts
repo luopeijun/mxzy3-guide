@@ -620,15 +620,10 @@ export const WORLD_SCENES = [
   { name: '开罗', cost: 21000 },
 ] as const;
 
-/** 存档里 8 个解锁标志位的真实顺序，按「世界脈動」列表 / 解锁进程排列。
- *
- *  它**不是** WORLD_SCENES 用的 World.tab 记录顺序：Auto.sa2 的
- *  `[1,1,0,0,0,0,1,1]` 里第 7 位是好莱坞而不是纽约，纽约对应第 5 位（0）。
- *  14 份 .sa2 快照按这个顺序解读，解锁进程单调合理（开局长城+开罗，后期陆续
- *  开好莱坞/东京/维也纳/巴黎/纽约/夏威夷），按 World.tab 顺序则完全错乱。 */
-const WORLD_SCENE_FLAG_ORDER = [
-  '长城', '开罗', '巴黎', '维也纳', '纽约', '夏威夷', '好莱坞', '东京',
-] as const;
+/** 国际场景记录的锚点：编号 int32 小端 = 2（長城）。8 条记录编号 2..9，
+ *  固定间隔 0xA0，顺序与 WORLD_SCENES 一致（长城→开罗）。 */
+const WORLD_SCENE_FIRST_ID = 2;
+const WORLD_SCENE_RECORD_STRIDE = 0xa0;
 
 export interface WorldScene {
   name: string;
@@ -2701,35 +2696,46 @@ function readProgress(
   return rows;
 }
 
-/** 世界场景解锁表：存档里是 `[9][8×0/1][0,4,80,108,97]`。
+/** 世界场景解锁表：8 条独立记录，每条 `[编号 int32 小端][解锁标志 byte][名字 Big5…][NUL]`，
+ *  编号 2..9、间隔 0xA0，顺序与 WORLD_SCENES 一致（长城→开罗）。
  *
- *  `9` = 场景总数（据点 + 8 个国际场景），紧随其后的 8 个小端 int 是国际场景
- *  的解锁标志（1 = 已解锁），顺序见 WORLD_SCENE_FLAG_ORDER（世界脈動列表），
- *  **不是** World.tab 记录 1..8 的顺序（WORLD_SCENES 的显示顺序）。
- *  标志后面的 `[0,4,80,108,97]` 是这段的固定尾巴，用它排除同形噪声。
- *  存档是变长结构，不能写死绝对偏移；这组模式在 70+ 份样本存档（Auto /
- *  Story0001..0070 / Ending0001..0011）上全部命中且只命中一次，早期存档
- *  [1,1,0,0,0,0,0,0] 与后期 [1×8] 的差异也符合游戏进程。 */
+ *  真源由修改器实测坐实：把「紐約」名字前的标志从 00 改成 01，整份存档只动了
+ *  那一个字节。之前误把 `[9][8×0/1][0,4,80,108,97]` 当成解锁表（那其实是别的
+ *  数据），导致纽约显示错误；正确字段是紧贴每条场景名字前的那个字节。
+ *
+ *  定位不写死绝对偏移：扫编号 = 2 的 int32，向后按 0xA0 校验 8 条记录的编号
+ *  递增、标志为 0/1、名字是 4 或 6 字节 Big5 双字节字符并以 NUL 结尾。此模式在
+ *  102 份样本存档上全部唯一命中（Auto / Story0001..0070 / Ending / 游戏 Save2）。 */
 function parseWorldScenes(view: DataView, byteLength: number): WorldScene[] {
-  const words = Math.floor(byteLength / 4);
-  const tail = [0, 4, 80, 108, 97];
-  for (let i = 0; i + 14 < words; i += 1) {
-    if (view.getInt32(i * 4, true) !== 9) continue;
+  const isBig5Pair = (a: number, b: number) =>
+    ((a >= 0x81 && a <= 0xfe) && ((b >= 0x40 && b <= 0x7e) || (b >= 0xa1 && b <= 0xfe)));
+  for (let i = 0; i + 4 <= byteLength; i += 1) {
+    if (view.getInt32(i, true) !== WORLD_SCENE_FIRST_ID) continue;
     const flags: boolean[] = [];
     let ok = true;
-    for (let k = 0; k < 8; k += 1) {
-      const v = view.getInt32((i + 1 + k) * 4, true);
-      if (v !== 0 && v !== 1) { ok = false; break; }
-      flags.push(v === 1);
+    for (let k = 0; k < WORLD_SCENES.length; k += 1) {
+      const off = i + k * WORLD_SCENE_RECORD_STRIDE;
+      if (off + 6 > byteLength || view.getInt32(off, true) !== WORLD_SCENE_FIRST_ID + k) {
+        ok = false; break;
+      }
+      const flag = view.getUint8(off + 4);
+      if (flag !== 0 && flag !== 1) { ok = false; break; }
+      // 名字：4 或 6 字节 Big5 双字节字符，NUL 结尾
+      const nameStart = off + 5;
+      let len = 0;
+      while (nameStart + len < byteLength && view.getUint8(nameStart + len) !== 0 && len < 8) len += 1;
+      if (len !== 4 && len !== 6) { ok = false; break; }
+      let pairs = true;
+      for (let p = 0; p < len; p += 2) {
+        if (!isBig5Pair(view.getUint8(nameStart + p), view.getUint8(nameStart + p + 1))) {
+          pairs = false; break;
+        }
+      }
+      if (!pairs) { ok = false; break; }
+      flags.push(flag === 1);
     }
     if (!ok) continue;
-    if (!tail.every((want, k) => view.getInt32((i + 9 + k) * 4, true) === want)) continue;
-    const unlockedByName = new Map<string, boolean>();
-    WORLD_SCENE_FLAG_ORDER.forEach((name, k) => unlockedByName.set(name, flags[k]));
-    return WORLD_SCENES.map((scene) => ({
-      ...scene,
-      unlocked: unlockedByName.get(scene.name) ?? false,
-    }));
+    return WORLD_SCENES.map((scene, k) => ({ ...scene, unlocked: flags[k] }));
   }
   return [];
 }
