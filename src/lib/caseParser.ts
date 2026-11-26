@@ -620,6 +620,16 @@ export const WORLD_SCENES = [
   { name: '开罗', cost: 21000 },
 ] as const;
 
+/** 存档里 8 个解锁标志位的真实顺序，按「世界脈動」列表 / 解锁进程排列。
+ *
+ *  它**不是** WORLD_SCENES 用的 World.tab 记录顺序：Auto.sa2 的
+ *  `[1,1,0,0,0,0,1,1]` 里第 7 位是好莱坞而不是纽约，纽约对应第 5 位（0）。
+ *  14 份 .sa2 快照按这个顺序解读，解锁进程单调合理（开局长城+开罗，后期陆续
+ *  开好莱坞/东京/维也纳/巴黎/纽约/夏威夷），按 World.tab 顺序则完全错乱。 */
+const WORLD_SCENE_FLAG_ORDER = [
+  '长城', '开罗', '巴黎', '维也纳', '纽约', '夏威夷', '好莱坞', '东京',
+] as const;
+
 export interface WorldScene {
   name: string;
   cost: number;
@@ -2694,11 +2704,12 @@ function readProgress(
 /** 世界场景解锁表：存档里是 `[9][8×0/1][0,4,80,108,97]`。
  *
  *  `9` = 场景总数（据点 + 8 个国际场景），紧随其后的 8 个小端 int 是国际场景
- *  的解锁标志（1 = 已解锁），顺序与 World.tab 记录 1..8 一致（长城→开罗）。
+ *  的解锁标志（1 = 已解锁），顺序见 WORLD_SCENE_FLAG_ORDER（世界脈動列表），
+ *  **不是** World.tab 记录 1..8 的顺序（WORLD_SCENES 的显示顺序）。
  *  标志后面的 `[0,4,80,108,97]` 是这段的固定尾巴，用它排除同形噪声。
  *  存档是变长结构，不能写死绝对偏移；这组模式在 70+ 份样本存档（Auto /
  *  Story0001..0070 / Ending0001..0011）上全部命中且只命中一次，早期存档
- *  [1,1,0,0,0,0,1,1] 与后期 [1×8] 的差异也符合游戏进程。 */
+ *  [1,1,0,0,0,0,0,0] 与后期 [1×8] 的差异也符合游戏进程。 */
 function parseWorldScenes(view: DataView, byteLength: number): WorldScene[] {
   const words = Math.floor(byteLength / 4);
   const tail = [0, 4, 80, 108, 97];
@@ -2713,7 +2724,12 @@ function parseWorldScenes(view: DataView, byteLength: number): WorldScene[] {
     }
     if (!ok) continue;
     if (!tail.every((want, k) => view.getInt32((i + 9 + k) * 4, true) === want)) continue;
-    return WORLD_SCENES.map((scene, k) => ({ ...scene, unlocked: flags[k] }));
+    const unlockedByName = new Map<string, boolean>();
+    WORLD_SCENE_FLAG_ORDER.forEach((name, k) => unlockedByName.set(name, flags[k]));
+    return WORLD_SCENES.map((scene) => ({
+      ...scene,
+      unlocked: unlockedByName.get(scene.name) ?? false,
+    }));
   }
   return [];
 }
