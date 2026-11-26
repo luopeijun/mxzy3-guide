@@ -10,7 +10,8 @@
  *   - 游戏时间 @0x40：[年, 月, 日, 星期]（星期日=7）。
  *   - 艺人当前属性块：`id` 在 +16，后接 `[x][1][0]`，九项 int32 能力从 +32 起
  *     （存档 ×10）；+68/+72 是压力/疲劳，+80 起 5 项是叛逆/性感/亲和/人气/
- *     曝光，+264 起 8 项是电视/电影/唱片/广告/主持/舞台剧/走秀/演唱会的作品数。
+ *     曝光，+264 起 8 项是电视/电影/唱片/广告/主持/舞台剧/走秀/演唱会的作品数；
+ *     +332/+348 是两个 [年,月,日,星期] 合约日期四元组，+364 签约金，+368 分红。
  *     块有两种形态：带 327680 标记，或不带标记但 +76 为 5/7（沈惟真、主角
  *     常见）；只认标记会把这类艺人的压力/疲劳读成 0。
  *   - 友好度 / 礼物数：存档头部 16B 记录 `[友好度][送礼数][256|257][艺人编号]`，
@@ -28,6 +29,13 @@ export const SWEET_NOTICE_LABELS = [
   '电视', '电影', '唱片', '广告', '主持', '舞台剧', '走秀', '演唱会',
 ] as const;
 
+export interface SweetContract {
+  signDate: string;
+  expireDate: string;
+  signingBonus: number;
+  dividend: number;
+}
+
 export interface SweetArtistCard {
   id: number;
   name: string;
@@ -42,6 +50,8 @@ export interface SweetArtistCard {
   /** 叛逆 / 性感 / 亲和 / 人气 / 曝光。 */
   social: number[];
   noticeCounts: number[];
+  /** 与主站同样只认合法合约日期；主角或占位块返回 null。 */
+  contract: SweetContract | null;
 }
 
 export interface SweetSave {
@@ -66,6 +76,7 @@ const EMPTY_VALUES: ArtistValues = {
   fatigue: 0,
   social: Array(5).fill(0),
   noticeCounts: Array(8).fill(0),
+  contract: null,
 };
 
 function readI32(view: DataView, offset: number): number {
@@ -153,8 +164,33 @@ interface ArtistBlock {
   priority: number;
 }
 
+/** 当前合约：块尾两个日期四元组 + 签约金 + 分红；占位日期不冒充真实合约。 */
+function readContract(view: DataView, offset: number, bytesLength: number): SweetContract | null {
+  if (offset + 372 > bytesLength) return null;
+  const sy = readI32(view, offset + 332);
+  const sm = readI32(view, offset + 336);
+  const sd = readI32(view, offset + 340);
+  const ey = readI32(view, offset + 348);
+  const em = readI32(view, offset + 352);
+  const ed = readI32(view, offset + 356);
+  const signingBonus = readI32(view, offset + 364);
+  const dividend = readI32(view, offset + 368);
+  const validDate = (y: number, m: number, d: number) =>
+    y >= 2000 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31;
+  if (!validDate(sy, sm, sd) || !validDate(ey, em, ed)) return null;
+  if (signingBonus < 0 || dividend < 0 || dividend > 100) return null;
+  return {
+    signDate: `${sy}/${sm}/${sd}`,
+    expireDate: `${ey}/${em}/${ed}`,
+    signingBonus,
+    dividend,
+  };
+}
+
 /** 读一个艺人属性块的定长数值；越界或形状不对返回 null。 */
-function readArtistBlock(view: DataView, offset: number, maxSocial: number): Omit<ArtistBlock, 'priority'> | null {
+function readArtistBlock(
+  view: DataView, offset: number, maxSocial: number, bytesLength: number,
+): Omit<ArtistBlock, 'priority'> | null {
   const rawAbilities: number[] = [];
   for (let i = 0; i < 9; i += 1) {
     const value = readI32(view, offset + 32 + i * 4);
@@ -175,6 +211,7 @@ function readArtistBlock(view: DataView, offset: number, maxSocial: number): Omi
       fatigue,
       social,
       noticeCounts,
+      contract: readContract(view, offset, bytesLength),
     },
     score: rawAbilities.reduce((sum, value) => sum + value, 0),
   };
@@ -189,7 +226,7 @@ function scanArtists(bytes: Uint8Array, view: DataView): Map<number, ArtistValue
     if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
     const marked = view.getUint32(offset, true) === BLOCK_MARK;
     if (!marked && readI32(view, offset + 76) !== 5 && readI32(view, offset + 76) !== 7) continue;
-    const block = readArtistBlock(view, offset, 10000);
+    const block = readArtistBlock(view, offset, 10000, bytes.length);
     if (!block) continue;
     const priority = marked ? 2 : 1;
     const previous = best.get(id);
@@ -207,7 +244,7 @@ function scanProtagonist(bytes: Uint8Array, view: DataView): ArtistValues {
   for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
     if (readI32(view, offset + 16) !== 1) continue;
     if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
-    const block = readArtistBlock(view, offset, 99999);
+    const block = readArtistBlock(view, offset, 99999, bytes.length);
     if (!block || block.score <= bestScore) continue;
     bestScore = block.score;
     result = block.values;

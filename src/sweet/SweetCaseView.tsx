@@ -115,7 +115,23 @@ function SweetCaseStat({ label, value, attr }: { label: string; value: string; a
   );
 }
 
-/** 甜蜜乐章存档解析：第一步只做游戏时间、公司与艺人卡片。 */
+/** 与主站 moneyText 同一套：按亿/万拆开，不加千分位。 */
+function sweetMoney(value: number): string {
+  if (!Number.isFinite(value)) return '—';
+  const sign = value < 0 ? '-' : '';
+  let rest = Math.abs(Math.round(value));
+  const yi = Math.floor(rest / 100000000);
+  rest -= yi * 100000000;
+  const wan = Math.floor(rest / 10000);
+  rest -= wan * 10000;
+  let out = '';
+  if (yi) out += `${yi}亿`;
+  if (wan) out += `${wan}万`;
+  if (rest || !out) out += `${rest}`;
+  return sign + out;
+}
+
+/** 甜蜜乐章存档解析：游戏时间 / 公司 / 艺人卡片与合约信息。 */
 export default function SweetCaseView() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
@@ -318,6 +334,22 @@ export default function SweetCaseView() {
                             合计 <b className="font-semibold text-ink">{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
                           </span>
                         </div>
+                        {artist.contract && (
+                          <details data-sweet-case-contract className="mt-1 border-t border-line pt-1 text-ui-2xs">
+                            <summary className="cursor-pointer text-ink-faint">
+                              合约信息
+                              <span className="ml-1 text-ink-faint">
+                                {artist.contract.signDate} - {artist.contract.expireDate}
+                              </span>
+                            </summary>
+                            <div data-sweet-case-contract-detail className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 pl-1 text-ink-muted">
+                              <span>签约时间 <b data-sweet-case-contract-sign className="font-semibold text-ink">{artist.contract.signDate}</b></span>
+                              <span>合约期限 <b data-sweet-case-contract-expire className="font-semibold text-ink">{artist.contract.expireDate}</b></span>
+                              <span>签约金 <b data-sweet-case-contract-bonus className="font-semibold text-ink">{sweetMoney(artist.contract.signingBonus)}元</b></span>
+                              <span>艺人分红 <b data-sweet-case-contract-dividend className="font-semibold text-ink">{artist.contract.dividend}%</b></span>
+                            </div>
+                          </details>
+                        )}
                       </article>
                     </div>
                   ))}
