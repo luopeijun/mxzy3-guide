@@ -5,13 +5,6 @@ import {
   type SweetAward, type SweetSave,
 } from '../lib/sweetCaseParser';
 
-/** 年度专辑 / 年度戏剧按作品显示，其余按得主显示；与主站公司奖一致。 */
-function awardSubject(award: SweetAward): string {
-  return award.company && (award.label === '年度专辑' || award.label === '年度戏剧')
-    ? award.work
-    : award.winner;
-}
-
 /** 得奖表里也有 NPC 的奖；页面只显示本公司的，和游戏排行榜筛选一致。 */
 function awardBelongsToCompany(award: SweetAward, company: string): boolean {
   return award.company && (award.winner === company || award.winner.includes(company));
@@ -293,7 +286,7 @@ export default function SweetCaseView() {
                   ) : save.awards.filter((award) => awardBelongsToCompany(award, save.company)).map((award) => (
                     <span key={`${award.year}-${award.label}`} data-sweet-case-company-award>
                       <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
-                      <span className="award-meta ml-1 font-normal text-ink-faint">{awardSubject(award)}</span>
+                      <span className="award-meta ml-1 font-normal text-ink-faint">{award.work}</span>
                       <span className="ml-1 font-normal text-ink-faint">{award.year}</span>
                     </span>
                   ))}
@@ -369,7 +362,7 @@ export default function SweetCaseView() {
                             {save.awards.filter((award) => awardBelongsTo(award, artist.name)).map((award) => (
                               <span key={`${award.year}-${award.label}`} data-sweet-case-artist-award>
                                 <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
-                                <span className="award-meta ml-1 font-normal text-ink-faint">{awardSubject(award)}</span>
+                                <span className="award-meta ml-1 font-normal text-ink-faint">{award.work}</span>
                                 <span className="ml-1 font-normal text-ink-faint">{award.year}</span>
                               </span>
                             ))}
