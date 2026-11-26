@@ -5,6 +5,16 @@ import {
   type SweetAward, type SweetEvent, type SweetSave, type SweetTeam,
 } from '../lib/sweetCaseParser';
 
+/** 称号徽标跟主站同一套分线配色；line 来自 case-tables.json 的 titleMeta。 */
+const TITLE_LINE_CLASS: Record<string, string> = {
+  music: 'border-title-music-line bg-title-music-soft text-title-music',
+  host: 'border-title-host-line bg-title-host-soft text-title-host',
+  model: 'border-title-model-line bg-title-model-soft text-title-model',
+  screen: 'border-title-screen-line bg-title-screen-soft text-title-screen',
+  star: 'border-title-star-line bg-title-star-soft text-title-star',
+  other: 'border-title-other-line bg-title-other-soft text-title-other',
+};
+
 /** 得奖表里也有 NPC 的奖；页面只显示本公司的，和游戏排行榜筛选一致。 */
 function awardBelongsToCompany(award: SweetAward, company: string): boolean {
   return award.company && !award.group
@@ -167,6 +177,8 @@ export default function SweetCaseView() {
   const [dragging, setDragging] = useState(false);
   const [save, setSave] = useState<SweetSave | null>(null);
   const [stars, setStars] = useState<Record<string, string>>({});
+  const [titles, setTitles] = useState<Record<string, string>>({});
+  const [titleMeta, setTitleMeta] = useState<Record<string, { line?: string }>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -175,6 +187,17 @@ export default function SweetCaseView() {
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('艺人表加载失败'))))
       .then((data: { stars?: Record<string, string> }) => setStars(data.stars ?? {}))
       .catch(() => setError('艺人表加载失败，艺人姓名可能显示为编号。'));
+    // 称号沿用游戏 Nickname.tab 的烘焙表（和主站同一份）；读不到时回退显示编号。
+    fetch(`${import.meta.env.BASE_URL}data/case-tables.json?v=${Date.now()}`)
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('称号表加载失败'))))
+      .then((data: {
+        titles?: Record<string, string>;
+        titleMeta?: Record<string, { line?: string }>;
+      }) => {
+        setTitles(data.titles ?? {});
+        setTitleMeta(data.titleMeta ?? {});
+      })
+      .catch(() => { /* 不挡住存档解析 */ });
   }, []);
 
   const receive = async (file?: File | null) => {
@@ -184,7 +207,7 @@ export default function SweetCaseView() {
     setSave(null);
     setBusy(true);
     try {
-      setSave(await parseSweetSave(file, stars));
+      setSave(await parseSweetSave(file, stars, titles));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '存档读取失败');
     } finally {
@@ -336,6 +359,34 @@ export default function SweetCaseView() {
                           {artist.isProtagonist && (
                             <span data-sweet-case-protagonist className="rounded-full bg-brand-soft px-1.5 text-ui-2xs font-semibold text-brand-strong">
                               主角
+                            </span>
+                          )}
+                          {(artist.title || artist.titleId > 0) && (() => {
+                            const line = titleMeta[String(artist.titleId)]?.line ?? 'other';
+                            return (
+                              <span
+                                data-sweet-case-artist-title
+                                data-title-line={line}
+                                className={cn(
+                                  'rounded-full border px-1.5 text-ui-2xs font-semibold',
+                                  TITLE_LINE_CLASS[line] ?? TITLE_LINE_CLASS.other,
+                                )}
+                              >
+                                {artist.title || `称号${artist.titleId}`}
+                              </span>
+                            );
+                          })()}
+                          {artist.condition && (
+                            <span
+                              data-sweet-case-artist-condition
+                              className={cn(
+                                'ml-auto rounded-full px-1.5 text-ui-2xs',
+                                artist.condition === '生病'
+                                  ? 'bg-alert-soft font-semibold text-alert'
+                                  : 'bg-surface-soft text-ink-faint',
+                              )}
+                            >
+                              {artist.condition}
                             </span>
                           )}
                         </div>

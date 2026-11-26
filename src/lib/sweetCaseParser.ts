@@ -14,6 +14,8 @@
  *     +264 起 8 项是电视/电影/唱片/广告/主持/舞台剧/走秀/演唱会的作品数；
  *     +332/+348 是两个 [年,月,日,星期] 合约日期四元组，+364 签约金，+368 分红
  *     （主角到期年 4049 是游戏里的长期合约标记，照样显示）。
+ *     +20 是称号编号（与主站 Nickname.tab 同一套编号，0 = 还没有称号），
+ *     +76 是状态编号（5 = 生病、7 = 正常；这也是无标记块的识别依据）；
  *     块有两种形态：带 327680 标记，或不带标记但 +76 为 5/7（沈惟真、主角
  *     常见）；只认标记会把这类艺人的压力/疲劳读成 0。
  *   - 友好度 / 礼物数：存档头部 16B 记录 `[友好度][送礼数][256|257][艺人编号]`，
@@ -137,6 +139,12 @@ export interface SweetArtistCard {
   fatigue: number;
   /** 叛逆 / 性感 / 亲和 / 人气 / 曝光。 */
   social: number[];
+  /** +20 的游戏称号编号；0 = 还没有称号。 */
+  titleId: number;
+  /** 称号名来自 case-tables.json 的 titles，读不到时页面回退显示编号。 */
+  title: string;
+  /** +76 的状态：5 生病 / 7 正常，读不到时为空串。 */
+  condition: string;
   noticeCounts: number[];
   /** 与主站同样只认合法合约日期；主角或占位块返回 null。 */
   contract: SweetContract | null;
@@ -158,6 +166,8 @@ export interface SweetSave {
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
+/** 艺人块 +76 的状态编号；全量存档只出现 5 / 7，5 的艺人疲劳普遍很高。 */
+const SWEET_CONDITION_NAMES: Record<number, string> = { 5: '生病', 7: '正常' };
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
 // 社交五项里只有「人气」会被游戏 capped 到 999999（后期存档常见），其余仍 ≤10000。
 const SOCIAL_LIMIT = 10000;
@@ -170,6 +180,9 @@ const EMPTY_VALUES: ArtistValues = {
   stress: 0,
   fatigue: 0,
   social: Array(5).fill(0),
+  titleId: 0,
+  title: '',
+  condition: '',
   noticeCounts: Array(8).fill(0),
   contract: null,
 };
@@ -286,7 +299,11 @@ function readContract(
 
 /** 读一个艺人属性块的定长数值；越界或形状不对返回 null。 */
 function readArtistBlock(
-  view: DataView, offset: number, bytesLength: number, allowFarExpire = false,
+  view: DataView,
+  offset: number,
+  bytesLength: number,
+  titles: Record<string, string>,
+  allowFarExpire = false,
 ): Omit<ArtistBlock, 'priority'> | null {
   const rawAbilities: number[] = [];
   for (let i = 0; i < 9; i += 1) {
@@ -302,12 +319,17 @@ function readArtistBlock(
     && value <= (index === 3 ? POPULARITY_LIMIT : SOCIAL_LIMIT))) return null;
   const noticeCounts = Array.from({ length: 8 }, (_, i) => readI32(view, offset + 264 + i * 4));
   if (!noticeCounts.every((value) => value >= 0 && value <= 9999)) return null;
+  const rawTitleId = readI32(view, offset + 20);
+  const titleId = rawTitleId > 0 && rawTitleId <= 999 ? rawTitleId : 0;
   return {
     values: {
       abilities: rawAbilities.map((value) => value / 10),
       stress,
       fatigue,
       social,
+      titleId,
+      title: titleId > 0 ? titles[String(titleId)] ?? '' : '',
+      condition: SWEET_CONDITION_NAMES[readI32(view, offset + 76)] ?? '',
       noticeCounts,
       contract: readContract(view, offset, bytesLength, allowFarExpire),
     },
@@ -316,7 +338,9 @@ function readArtistBlock(
 }
 
 /** 扫描艺人属性块。标记块优先，其次是无标记但 +76 为 5/7 的真块。 */
-function scanArtists(bytes: Uint8Array, view: DataView): Map<number, ArtistValues> {
+function scanArtists(
+  bytes: Uint8Array, view: DataView, titles: Record<string, string>,
+): Map<number, ArtistValues> {
   const best = new Map<number, ArtistBlock>();
   for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
     const id = readI32(view, offset + 16);
@@ -324,7 +348,7 @@ function scanArtists(bytes: Uint8Array, view: DataView): Map<number, ArtistValue
     if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
     const marked = view.getUint32(offset, true) === BLOCK_MARK;
     if (!marked && readI32(view, offset + 76) !== 5 && readI32(view, offset + 76) !== 7) continue;
-    const block = readArtistBlock(view, offset, bytes.length);
+    const block = readArtistBlock(view, offset, bytes.length, titles);
     if (!block) continue;
     const priority = marked ? 2 : 1;
     const previous = best.get(id);
@@ -336,13 +360,15 @@ function scanArtists(bytes: Uint8Array, view: DataView): Map<number, ArtistValue
 }
 
 /** 主角杜云芊的属性块也可能没有标记，且 +76 不一定是 5/7；取数值和最大的形状匹配块。 */
-function scanProtagonist(bytes: Uint8Array, view: DataView): ArtistValues {
+function scanProtagonist(
+  bytes: Uint8Array, view: DataView, titles: Record<string, string>,
+): ArtistValues {
   let bestScore = -1;
   let result: ArtistValues = EMPTY_VALUES;
   for (let offset = 0; offset + 296 <= bytes.length; offset += 1) {
     if (readI32(view, offset + 16) !== 1) continue;
     if (readI32(view, offset + 24) !== 1 || readI32(view, offset + 28) !== 0) continue;
-    const block = readArtistBlock(view, offset, bytes.length, true);
+    const block = readArtistBlock(view, offset, bytes.length, titles, true);
     if (!block || block.score <= bestScore) continue;
     bestScore = block.score;
     result = block.values;
@@ -597,7 +623,11 @@ export function formatSweetDate(date: SweetSave['date']): string {
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
 }
 
-export async function parseSweetSave(file: File, stars: Record<string, string>): Promise<SweetSave> {
+export async function parseSweetSave(
+  file: File,
+  stars: Record<string, string>,
+  titles: Record<string, string> = {},
+): Promise<SweetSave> {
   const bytes = await inflateSave(file);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (bytes.byteLength < 0x50) throw new Error('存档数据过短，不是有效的甜蜜乐章存档');
@@ -605,7 +635,7 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
   const signedIds = [0x34, 0x38, 0x3c].map((o) => readI32(view, o)).filter((id) => id >= 1 && id <= 110);
   const protagonist = readBig5(bytes, 0x04);
   const company = readCompany(bytes, view);
-  const blocks = scanArtists(bytes, view);
+  const blocks = scanArtists(bytes, view, titles);
   const relations = scanRelations(view, bytes);
   const withRelation = (id: number, values: ArtistValues) => ({
     ...values,
@@ -617,7 +647,7 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
       id: 1,
       name: protagonist || '杜云芊',
       isProtagonist: true,
-      ...withRelation(1, scanProtagonist(bytes, view)),
+      ...withRelation(1, scanProtagonist(bytes, view, titles)),
     },
     ...signedIds.map((id): SweetArtistCard => ({
       id,
