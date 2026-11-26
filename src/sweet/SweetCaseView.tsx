@@ -4,7 +4,7 @@ import type { TitleMeta } from '../lib/caseParser';
 import { nextTitle } from '../lib/titleLadder';
 import {
   formatSweetDate, parseSweetSave, sweetRoleGender, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
-  type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetEvent,
+  type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetDoneNotice, type SweetEvent,
   type SweetNotice, type SweetNoticeRole, type SweetPromoNotice, type SweetSave,
   type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
   type SweetWaitingNotice,
@@ -113,6 +113,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
     { id: 'waiting', label: '等待上市通告', selector: '[data-sweet-case-notices]', summary: `${save.waiting.length} 条` },
     { id: 'hot', label: '热卖中通告', selector: '[data-sweet-case-notices]', summary: `${save.hot.length} 条` },
+    { id: 'done', label: '已完成通告', selector: '[data-sweet-case-notices]', summary: `${save.done.length} 条` },
   ], [save]);
 
   useEffect(() => {
@@ -789,6 +790,219 @@ function SweetWaitingPanel({
   );
 }
 
+/** 已完成：与主站 DoneListPanel 同款紧凑表格，作品一行、多位旗下参演才拆行。
+ *  类别单选 + 艺人多选取交集，10 件作品一页，翻页器在列表下方左对齐。 */
+function SweetDonePanel({ notices }: { notices: SweetDoneNotice[] }) {
+  const [filter, setFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [artistSel, setArtistSel] = useState<Set<string>>(() => new Set());
+  const PAGE = 10;
+  const sorted = useMemo(() => [...notices].sort((a, b) => {
+    const da = a.startDate || '';
+    const db = b.startDate || '';
+    if (!da) return db ? 1 : a.name.localeCompare(b.name, 'zh-Hans-CN');
+    if (!db) return -1;
+    return da.localeCompare(db) || a.name.localeCompare(b.name, 'zh-Hans-CN');
+  }), [notices]);
+  const byCategory = new Map<string, number>();
+  const artistOptions = new Map<string, string>();
+  for (const notice of sorted) {
+    byCategory.set(notice.category, (byCategory.get(notice.category) ?? 0) + 1);
+    for (const cast of notice.casts) {
+      if (!artistOptions.has(cast.artistName)) artistOptions.set(cast.artistName, cast.artistName);
+    }
+  }
+  const chip = (on: boolean) => cn(
+    'rounded-full px-2 py-0.5 text-ui-2xs transition-colors',
+    on ? 'bg-brand font-semibold text-white' : 'bg-surface-soft text-ink-muted hover:text-brand-strong',
+  );
+  const toggleArtist = (name: string) => {
+    setArtistSel((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+    setPage(0);
+  };
+  const toggleCategory = (value: string) => {
+    setFilter(filter === value ? 'all' : value);
+    setPage(0);
+  };
+  const visible = sorted.filter((notice) => {
+    if (filter !== 'all' && notice.category !== filter) return false;
+    if (artistSel.size === 0) return true;
+    return notice.casts.some((cast) => artistSel.has(cast.artistName));
+  });
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE));
+  const clampedPage = Math.min(page, pageCount - 1);
+  const pageRows = visible.slice(clampedPage * PAGE, clampedPage * PAGE + PAGE);
+  const goPage = (next: number) => setPage(Math.max(0, Math.min(next, pageCount - 1)));
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title="没有已完成作品" text="只列旗下艺人已参演、已过发行下架日的作品。换一份带这类记录的存档再试。" />
+      </div>
+    );
+  }
+  return (
+    <div data-case-done className="mt-2">
+      <div className="overflow-hidden rounded-ui-md border border-line bg-surface">
+        <div
+          data-case-done-summary
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2 text-ui-2xs text-ink-faint"
+        >
+          <button
+            type="button"
+            data-case-done-filter="all"
+            aria-pressed={filter === 'all'}
+            onClick={() => { setFilter('all'); setPage(0); }}
+            className={chip(filter === 'all')}
+          >
+            共 <span className="tabular-nums">{notices.length}</span> 条
+          </button>
+          {[...byCategory].map(([category, count]) => (
+            <button
+              key={category}
+              type="button"
+              data-case-done-filter={category}
+              aria-pressed={filter === category}
+              onClick={() => toggleCategory(category)}
+              className={chip(filter === category)}
+            >
+              {category} <span className="tabular-nums">{count}</span>
+            </button>
+          ))}
+        </div>
+        {artistOptions.size > 0 && (
+          <div
+            data-case-done-artist-filter
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2 text-ui-2xs text-ink-faint"
+          >
+            <span className="shrink-0 font-semibold text-ink-muted">艺人</span>
+            <button
+              type="button"
+              data-case-done-artist="all"
+              aria-pressed={artistSel.size === 0}
+              onClick={() => { setArtistSel(new Set()); setPage(0); }}
+              className={chip(artistSel.size === 0)}
+            >
+              全部艺人
+            </button>
+            {[...artistOptions].map(([name]) => (
+              <button
+                key={name}
+                type="button"
+                data-case-done-artist={name}
+                aria-pressed={artistSel.has(name)}
+                onClick={() => toggleArtist(name)}
+                className={chip(artistSel.has(name))}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+        <table className="w-full table-fixed border-collapse text-ui-xs">
+          <thead>
+            <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+              <Th className="w-[15%]">作品</Th>
+              <Th className="w-[7%]">类型</Th>
+              <Th className="w-[11%]">公司</Th>
+              <Th className="w-[11%]">通告类型</Th>
+              <Th className="w-[17%]">拍摄档期</Th>
+              <Th className="w-[17%]">发行档期</Th>
+              <Th className="w-[8%]">角色</Th>
+              <Th className="w-[8%]">旗下参演</Th>
+              <Th className="w-[6%]">酬劳</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((notice) => notice.casts.map((cast, ci) => (
+              <tr key={`${notice.code}-${ci}`} className="border-b border-line/60">
+                {ci === 0 ? (
+                  <>
+                    <Td rowSpan={notice.casts.length} className="align-top">
+                      <span className="font-semibold text-ink">{notice.name}</span>
+                      <span className="ml-1 text-ui-2xs font-normal text-ink-faint">{notice.code}</span>
+                    </Td>
+                    <Td rowSpan={notice.casts.length} className="align-top">
+                      <span className={cn(
+                        'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+                        SWEET_CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+                      )}
+                      >
+                        {notice.category}
+                      </span>
+                    </Td>
+                    <Td rowSpan={notice.casts.length} className="align-top text-ui-2xs text-ink-muted">{notice.company || '—'}</Td>
+                    <Td rowSpan={notice.casts.length} className="align-top text-ui-2xs text-ink-muted">{notice.type || '—'}</Td>
+                    <Td rowSpan={notice.casts.length} className="align-top whitespace-nowrap tabular-nums text-ink-muted">
+                      {notice.startDate && notice.endDate ? `${notice.startDate} → ${notice.endDate}` : '—'}
+                    </Td>
+                    <Td rowSpan={notice.casts.length} className="align-top whitespace-nowrap tabular-nums text-ink-muted">
+                      {notice.saleStart} → {notice.saleEnd}
+                    </Td>
+                  </>
+                ) : null}
+                <Td className="align-top">
+                  <span className="rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-muted">
+                    {cast.role?.role ?? '个人'}
+                  </span>
+                </Td>
+                <Td className="align-top text-ink">{cast.artistName}</Td>
+                <Td className="align-top tabular-nums text-ink">{cast.pay > 0 ? sweetMoney(cast.pay) : '—'}</Td>
+              </tr>
+            )))}
+          </tbody>
+        </table>
+      </div>
+      <div
+        data-case-done-pager
+        className="mt-2 flex flex-wrap items-center justify-start gap-2 text-ui-2xs text-ink-muted"
+      >
+        <button
+          type="button"
+          data-case-done-prev
+          disabled={clampedPage <= 0}
+          onClick={() => goPage(clampedPage - 1)}
+          className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          上一页
+        </button>
+        {Array.from({ length: pageCount }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            data-case-done-page={i + 1}
+            aria-current={clampedPage === i ? 'true' : undefined}
+            onClick={() => goPage(i)}
+            className={cn(
+              'h-6 min-w-6 rounded border px-1 text-ui-2xs tabular-nums transition-colors',
+              clampedPage === i
+                ? 'border-brand bg-brand-soft font-bold text-brand-strong'
+                : 'border-line bg-surface text-ink-faint hover:border-brand-line hover:text-brand-strong',
+            )}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button
+          type="button"
+          data-case-done-next
+          disabled={clampedPage >= pageCount - 1}
+          onClick={() => goPage(clampedPage + 1)}
+          className="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-brand-line hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          下一页
+        </button>
+        <span data-case-done-pageinfo className="ml-1 tabular-nums">
+          第 {clampedPage + 1} / {pageCount} 页 · 共 {visible.length} 件
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const SHOOTING_STATUS_LABEL: Record<string, string> = {
   shooting: '拍摄中', pending: '待开拍', done: '已完成',
 };
@@ -984,7 +1198,7 @@ export default function SweetCaseView() {
   const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting' | 'hot'>('open');
+  const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting' | 'hot' | 'done'>('open');
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
@@ -1452,6 +1666,16 @@ export default function SweetCaseView() {
                   >
                     热卖中 <span className="tabular-nums">{save.hot.length}</span>
                   </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    data-case-tab="done"
+                    aria-selected={board === 'done'}
+                    onClick={() => setBoard('done')}
+                    className={sweetTabClass(board === 'done')}
+                  >
+                    已完成 <span className="tabular-nums">{save.done.length}</span>
+                  </button>
                 </div>
                 {board === 'promo'
                   ? <SweetPromoPanel groups={promoGroups} />
@@ -1461,11 +1685,13 @@ export default function SweetCaseView() {
                       ? <SweetShootingPanel notices={save.shooting} />
                       : board === 'waiting'
                         ? <SweetWaitingPanel notices={save.waiting} />
-                        : <SweetWaitingPanel
-                            notices={save.hot}
-                            emptyTitle="没有热卖中的作品"
-                            emptyText="只列旗下艺人已参演、已到发行日且还没下架的作品。"
-                          />}
+                        : board === 'hot'
+                          ? <SweetWaitingPanel
+                              notices={save.hot}
+                              emptyTitle="没有热卖中的作品"
+                              emptyText="只列旗下艺人已参演、已到发行日且还没下架的作品。"
+                            />
+                          : <SweetDonePanel notices={save.done} />}
               </div>
             </>
           )}
