@@ -948,13 +948,18 @@ function parseSweetWorkHistory(
   tables: SweetCaseTables,
   selfMade: SweetSelfMadeNotice[],
 ): SweetWorkRecord[] {
-  const unfinished = new Set(selfMade.filter((notice) => notice.status !== 'done').map((notice) => notice.code));
+  // 参与清单里连早期没有接演记录的自制作品也会累积进来，官方统计同样算它们；
+  // 只有明确还在拍摄中的才没完成。旧作品本体没留档期时 status 是 unknown，
+  // 过去排期已过但没人接的会显示未开拍，这两种都不能从明细里删。
+  const unfinished = new Set(selfMade
+    .filter((notice) => notice.status === 'shooting')
+    .map((notice) => notice.code));
   const workIndex = buildSweetWorkDateIndex(bytes, view, diaryTable);
   const out: SweetWorkRecord[] = [];
   for (let i = 0; i < locations.length; i += 1) {
     const location = locations[i];
     const stop = Math.min(
-      location.offset + 1000,
+      location.offset + 2000,
       i + 1 < locations.length ? locations[i + 1].offset : bytes.length,
     );
     let head = -1;
