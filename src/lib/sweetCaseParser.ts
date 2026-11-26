@@ -221,6 +221,17 @@ export interface SweetCaseTables {
   gifts?: Record<string, number[]>;
   /** 艺人编号 -> 送礼槽位下标，由甜站偏好礼物清单反推。 */
   giftSlots?: Record<string, number>;
+  /** 八座国际场景的显示名 / 存档繁体原名 / 费用，来自 World.dat。 */
+  scenes?: SweetScene[];
+}
+
+/** 存档里一座国际场景的解锁状态；费用与显示名来自 World.dat 烘焙表。 */
+export interface SweetScene {
+  name: string;
+  /** World.dat / 存档里的繁体原名，用来对齐解锁记录。 */
+  rawName: string;
+  cost: number;
+  unlocked: boolean;
 }
 
 /** 存档 Item 段里的一件道具：`[编号][状态位][数量][附字段]`。
@@ -434,6 +445,8 @@ export interface SweetSave {
   selfMade: SweetSelfMadeNotice[];
   /** 存档 Item 段记录的道具清单（含数量为 0 的条目，页面自行过滤）。 */
   items: SweetOwnedItem[];
+  /** 八座国际场景的解锁标志；费用 / 显示名来自 World.dat。 */
+  scenes: SweetScene[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -2011,6 +2024,43 @@ function scanSweetShooting(
   return out;
 }
 
+/** 静态兜底；正常运行时从 case-tables.json 读 World.dat 烘焙结果。 */
+const SWEET_SCENE_TABLE: ReadonlyArray<{ name: string; rawName: string; cost: number }> = [
+  { name: '长城', rawName: '長城', cost: 11000 },
+  { name: '东京', rawName: '東京', cost: 7000 },
+  { name: '好莱坞', rawName: '好萊塢', cost: 11000 },
+  { name: '巴黎', rawName: '巴黎', cost: 13000 },
+  { name: '维也纳', rawName: '維也納', cost: 13000 },
+  { name: '夏威夷', rawName: '夏威夷', cost: 10000 },
+  { name: '纽约', rawName: '紐約', cost: 15000 },
+  { name: '开罗', rawName: '開羅', cost: 21000 },
+];
+const SWEET_SCENE_RECORD_STRIDE = 288;
+
+/** 八座国际场景的解锁记录与主站同构但更宽：每条 288B，
+ *  `[编号 int32 小端 2..9][解锁标志 int32 0/1][场景码 int32][名字 16B Big5…]`，
+ *  间隔与 World.dat 一致。标志就在名字前 8 字节（第二个 int32），不是更靠前的
+ *  那个计数表；靠编号 + 间隔 + 繁体原名三重校验定位，不写死绝对偏移。 */
+function scanSweetScenes(bytes: Uint8Array, view: DataView, tables: SweetCaseTables): SweetScene[] {
+  const table = tables.scenes?.length === SWEET_SCENE_TABLE.length ? tables.scenes : SWEET_SCENE_TABLE;
+  for (let i = 0; i + 28 <= bytes.length; i += 1) {
+    if (readI32(view, i) !== 2) continue;
+    const flags: boolean[] = [];
+    let ok = true;
+    for (let k = 0; k < table.length; k += 1) {
+      const off = i + k * SWEET_SCENE_RECORD_STRIDE;
+      if (off + 28 > bytes.length || readI32(view, off) !== k + 2) { ok = false; break; }
+      const flag = readI32(view, off + 4);
+      if (flag !== 0 && flag !== 1) { ok = false; break; }
+      if (readBig5(bytes, off + 12, 16) !== table[k].rawName) { ok = false; break; }
+      flags.push(flag === 1);
+    }
+    if (!ok) continue;
+    return table.map((scene, k) => ({ ...scene, unlocked: flags[k] }));
+  }
+  return [];
+}
+
 /** 甜站 Item 段是真段头：`[4]["Item\0"][条数][16B × 条数]`，
  *  每条 `[编号][状态位][数量][附字段]`。状态位可能是 -12 / 96 这类标记，
  *  不能当类型或过滤条件；数量为 0 的行也保留，由页面决定不显示。 */
@@ -2108,6 +2158,7 @@ export async function parseSweetSave(
     locations, parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade),
   );
   const items = scanSweetItems(bytes, view, tables);
+  const scenes = scanSweetScenes(bytes, view, tables);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -2129,5 +2180,6 @@ export async function parseSweetSave(
     done,
     selfMade,
     items,
+    scenes,
   };
 }
