@@ -17,6 +17,8 @@
 - World.dat：11 条 × 288B；记录 0 的 +44 起是十座国际场景费用（含甜蜜乐章
   新增的倫敦 / 米蘭，对应舞台剧 / 时装秀），记录 1..10 是场景名（+12 起
   Big5）。存档里同构的记录 +4 是解锁标志。
+- MapRole.dat + StudioProduce.dat：制作人编号 -> 名字 / 六类分组。存档友好度表
+  里制作人段与该编号一一对应。
 
 用法：
     python scripts/build_sweet_case_tables.py [--data <game data dir>]
@@ -318,6 +320,46 @@ def load_sweet_scenes(data_dir):
     return out
 
 
+# StudioProduce.dat 的 class 值 -> 存档解析页六列分组（与主站分类语义一致）
+PRODUCER_CLASS_GROUP = {
+    1: 'ad',      # 广告：麦可 / 陈查理 / 洁西卡
+    2: 'tv',      # 电视剧：郑超一 / 陈革非
+    3: 'movie',   # 电影：王瑞恩 / 史麦克
+    4: 'record',  # 唱片：周映彤 / 小熊 / 加贺大泽
+    5: 'host',    # 主持：钱钧 / 强尼戴
+    0: 'other', 6: 'other', 7: 'other',
+}
+
+
+def load_producers(data_dir):
+    """制作人清单：StudioProduce.dat 的 `[seq][class][charId]` -> 分组 + MapRole 名字。
+
+    存档友好度表制作人段用的就是这里的 charId；id=1 是主角，不算制作人。
+    同名多个编号时按编号保留，页面按编号反查，避免重名互相覆盖。
+    """
+    mr = os.path.join(data_dir, "MapRole.dat")
+    sp = os.path.join(data_dir, "StudioProduce.dat")
+    if not (os.path.isfile(mr) and os.path.isfile(sp)):
+        return []
+    names = {}
+    for rec in read_table(mr):
+        ident = struct.unpack_from("<i", rec, 0)[0]
+        name = text(rec, 8, 32)
+        if ident and name:
+            names.setdefault(ident, name)
+    out = []
+    seen = set()
+    for rec in read_table(sp):
+        _seq, class_id, char_id = struct.unpack_from("<3i", rec, 0)
+        group = PRODUCER_CLASS_GROUP.get(class_id)
+        name = names.get(char_id, "")
+        if not group or char_id == 1 or not name or char_id in seen:
+            continue
+        seen.add(char_id)
+        out.append({"code": char_id, "name": name, "group": group})
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
@@ -339,6 +381,7 @@ def main():
         "gifts": gifts,
         "giftSlots": SWEET_GIFT_SLOTS,
         "scenes": load_sweet_scenes(args.data),
+        "producers": load_producers(args.data),
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
@@ -348,7 +391,7 @@ def main():
           "companies", len(data["companyBySeq"]), "lengths", len(data["lengths"]),
           "subtypes", len(data["subtypes"]), "promoKinds", len(data["promoKinds"]),
           "items", len(items), "gifts", len(gifts), "giftSlots", len(SWEET_GIFT_SLOTS),
-          "scenes", len(data["scenes"]))
+          "scenes", len(data["scenes"]), "producers", len(data["producers"]))
 
 
 if __name__ == "__main__":

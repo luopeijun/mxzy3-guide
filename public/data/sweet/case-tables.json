@@ -11259,5 +11259,107 @@
    "rawName": "米蘭",
    "cost": 15000
   }
+ ],
+ "producers": [
+  {
+   "code": 301,
+   "name": "麥可",
+   "group": "ad"
+  },
+  {
+   "code": 302,
+   "name": "陳查理",
+   "group": "ad"
+  },
+  {
+   "code": 306,
+   "name": "鄭超一",
+   "group": "tv"
+  },
+  {
+   "code": 307,
+   "name": "錢鈞",
+   "group": "host"
+  },
+  {
+   "code": 311,
+   "name": "陳革非",
+   "group": "tv"
+  },
+  {
+   "code": 312,
+   "name": "強尼戴",
+   "group": "host"
+  },
+  {
+   "code": 316,
+   "name": "王瑞恩",
+   "group": "movie"
+  },
+  {
+   "code": 321,
+   "name": "周映彤",
+   "group": "record"
+  },
+  {
+   "code": 322,
+   "name": "小熊",
+   "group": "record"
+  },
+  {
+   "code": 341,
+   "name": "潔西卡",
+   "group": "ad"
+  },
+  {
+   "code": 344,
+   "name": "史麥克",
+   "group": "movie"
+  },
+  {
+   "code": 345,
+   "name": "加賀大澤",
+   "group": "record"
+  },
+  {
+   "code": 346,
+   "name": "林立翔",
+   "group": "other"
+  },
+  {
+   "code": 347,
+   "name": "艾瑞克",
+   "group": "other"
+  },
+  {
+   "code": 404,
+   "name": "陳萍",
+   "group": "other"
+  },
+  {
+   "code": 405,
+   "name": "張湘葳",
+   "group": "other"
+  },
+  {
+   "code": 403,
+   "name": "賀總",
+   "group": "other"
+  },
+  {
+   "code": 406,
+   "name": "周先生",
+   "group": "other"
+  },
+  {
+   "code": 407,
+   "name": "郭秘書",
+   "group": "other"
+  },
+  {
+   "code": 401,
+   "name": "金皓薰",
+   "group": "other"
+  }
  ]
 }
