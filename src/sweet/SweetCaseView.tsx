@@ -5,7 +5,8 @@ import { nextTitle } from '../lib/titleLadder';
 import {
   formatSweetDate, parseSweetSave, sweetRoleGender, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
   type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetEvent,
-  type SweetNotice, type SweetNoticeRole, type SweetSave, type SweetTeam,
+  type SweetNotice, type SweetNoticeRole, type SweetSave, type SweetShootingCast,
+  type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
 } from '../lib/sweetCaseParser';
 import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
@@ -107,6 +108,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'artists', label: '我方艺人', selector: '[data-sweet-case-artists]', summary: `${save.artists.length} 位` },
     { id: 'teams', label: '我方团体', selector: '[data-sweet-case-teams]', summary: `${save.teams.length} 个` },
     { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
+    { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
   ], [save]);
 
   useEffect(() => {
@@ -237,15 +239,16 @@ function Th({ children, className, dataAttrs }: {
   );
 }
 
-function Td({ children, className, title, colSpan, dataAttrs }: {
+function Td({ children, className, title, colSpan, rowSpan, dataAttrs }: {
   children?: ReactNode;
   className?: string;
   title?: string;
   colSpan?: number;
+  rowSpan?: number;
   dataAttrs?: Record<string, string>;
 }) {
   return (
-    <td title={title} colSpan={colSpan} {...dataAttrs} className={cn('border-b border-line px-3 py-2 align-top', className)}>
+    <td title={title} colSpan={colSpan} rowSpan={rowSpan} {...dataAttrs} className={cn('border-b border-line px-3 py-2 align-top', className)}>
       {children}
     </td>
   );
@@ -621,6 +624,188 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
   );
 }
 
+const SHOOTING_STATUS_LABEL: Record<string, string> = {
+  shooting: '拍摄中', pending: '待开拍', done: '已完成',
+};
+const SHOOTING_RISK_LABEL: Record<string, string> = {
+  ok: '—', tight: '逾期风险', late: '违约提醒', unknown: '—',
+};
+
+/** 拍摄中：与主站 ShootingPanel 同款 8 列表格。白底＝我方真进度（rowSpan
+ *  通告信息），灰底＝同片其他艺人 / 空缺角色格，进度酬劳显示「—」。 */
+function SweetShootingPanel({ notices }: { notices: SweetShootingNotice[] }) {
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title="没有拍摄中的通告" text="游戏里没有已接取且还没杀青的通告。" />
+      </div>
+    );
+  }
+  return (
+    <div data-case-shooting className="mt-2 rounded-ui-md border border-line bg-surface">
+      <table className="w-full table-fixed border-collapse text-ui-xs">
+        <thead>
+          <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+            <Th className="w-[20%]">通告</Th>
+            <Th className="w-[15%]">开拍 → 杀青</Th>
+            <Th className="w-[13%]">角色 / 难度</Th>
+            <Th className="w-[13%]">艺人</Th>
+            <Th className="w-[11%]">完成 / 需拍</Th>
+            <Th className="w-[12%]">剩余</Th>
+            <Th className="w-[8%]">酬劳</Th>
+            <Th className="w-[10%]">逾期风险</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {notices.flatMap((notice) => {
+            type Row =
+              | { kind: 'mine'; cast: SweetShootingCast }
+              | { kind: 'other'; other: SweetShootingOtherCast };
+            const rows: Row[] = [
+              ...notice.casts.map((cast): Row => ({ kind: 'mine', cast })),
+              ...notice.otherCasts.map((other): Row => ({ kind: 'other', other })),
+            ];
+            return rows.map((row, index) => {
+              const mine = row.kind === 'mine' ? row.cast : null;
+              const other = row.kind === 'other' ? row.other : null;
+              const role = mine ? mine.role : other?.role ?? null;
+              const isFirst = index === 0;
+              return (
+                <tr
+                  key={`${notice.code}-${mine ? `mine-${mine.artistId}` : `other-${other?.artistId ?? `vacant-${other?.role?.code}`}`}`}
+                  data-case-shooting-row={notice.code}
+                  data-case-shooting-risk={mine?.risk ?? ''}
+                  className={cn(
+                    'align-top', isFirst ? 'border-t border-line' : '',
+                    other ? 'bg-surface-soft/60 text-ink-muted' : '',
+                    mine?.risk === 'late'
+                      ? 'border-l-[3px] border-l-alert bg-alert-soft/50'
+                      : mine?.risk === 'tight'
+                        ? 'border-l-[3px] border-l-gold-line bg-gold-soft/40'
+                        : 'border-l-[3px] border-l-transparent',
+                  )}
+                >
+                  {isFirst && (
+                    <Td rowSpan={rows.length} className="border-b border-line">
+                      <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
+                      <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        <span className={cn(
+                          'inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-ui-2xs',
+                          SWEET_CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+                        )}
+                        >
+                          {notice.category}
+                        </span>
+                        {notice.type && (
+                          <span className="text-ui-2xs text-ink-faint">{notice.type}</span>
+                        )}
+                      </div>
+                    </Td>
+                  )}
+                  {isFirst && (
+                    <Td rowSpan={rows.length} className="tabular-nums border-b border-line text-ui-2xs">
+                      <div className="whitespace-nowrap text-ink-muted">
+                        开拍 <b className="font-semibold text-ink">{notice.startDate || '—'}</b>
+                      </div>
+                      <div className="whitespace-nowrap text-ink-muted">
+                        杀青 <b className="font-semibold text-ink">{notice.endDate || '—'}</b>
+                      </div>
+                      <div className="mt-0.5 text-ink-faint">共 {notice.endDay - notice.startDay + 1} 天</div>
+                    </Td>
+                  )}
+                  <Td>
+                    {role ? <SweetRolePill role={role} /> : <span className="text-ui-2xs text-ink-faint">—</span>}
+                  </Td>
+                  <Td>
+                    {mine ? (
+                      <>
+                        <span
+                          data-case-shooting-artist={mine.artistId}
+                          className="whitespace-nowrap text-ui-xs font-semibold text-ink"
+                        >
+                          {mine.artistName}
+                        </span>
+                        <div
+                          data-case-shooting-status={mine.status}
+                          className={cn(
+                            'mt-0.5 inline-flex rounded-full px-1.5 text-ui-2xs',
+                            mine.status === 'shooting'
+                              ? 'bg-brand-soft font-semibold text-brand-strong'
+                              : 'bg-surface-soft text-ink-faint',
+                          )}
+                        >
+                          {SHOOTING_STATUS_LABEL[mine.status]}
+                        </div>
+                      </>
+                    ) : other?.vacant ? (
+                      <span data-case-shooting-vacant={other.role?.code} className="italic text-ui-xs text-ink-faint">
+                        虚位以待
+                      </span>
+                    ) : (
+                      <span data-case-shooting-other={other?.artistId ?? ''} className="whitespace-nowrap text-ui-xs text-ink-muted">
+                        {other?.artistName}
+                      </span>
+                    )}
+                  </Td>
+                  <Td className="tabular-nums text-ui-2xs">
+                    {mine ? (
+                      <>
+                        <span className="text-ui-xs font-bold text-ink">{mine.doneDays}</span>
+                        <span className="text-ink-faint"> / {mine.workDays || '—'} 天</span>
+                        <div className="mt-0.5 text-ink-faint">每週 ≤ {mine.daysPerWeek || '—'} 天</div>
+                      </>
+                    ) : <span className="text-ink-faint">—</span>}
+                  </Td>
+                  <Td className="tabular-nums text-ui-2xs">
+                    {mine ? (
+                      mine.status === 'done' ? (
+                        <span className="text-ui-2xs text-ink-faint">已拍完</span>
+                      ) : (
+                        <>
+                          <span className="text-ui-xs font-semibold text-ink">{mine.needDays}</span>
+                          <span className="text-ink-faint"> 天</span>
+                          <div className="mt-0.5 leading-tight text-ink-faint">
+                            <div className="whitespace-nowrap">能排 {mine.canShootDays} 天</div>
+                            <div className="whitespace-nowrap">距杀青 {Number.isFinite(notice.daysLeft) ? notice.daysLeft : '—'} 天</div>
+                          </div>
+                        </>
+                      )
+                    ) : <span className="text-ink-faint">—</span>}
+                  </Td>
+                  <Td className="tabular-nums text-ui-2xs text-ink-muted">
+                    {mine ? sweetMoney(mine.pay) : <span className="text-ink-faint">—</span>}
+                  </Td>
+                  <Td>
+                    {mine && (mine.risk === 'tight' || mine.risk === 'late') ? (
+                      <>
+                        <span
+                          data-case-shooting-risk-label={mine.risk}
+                          className={cn(
+                            'inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-ui-2xs',
+                            mine.risk === 'late'
+                              ? 'border-alert-line bg-alert-soft font-bold text-alert'
+                              : 'border-gold-line bg-gold-soft font-semibold text-gold',
+                          )}
+                        >
+                          {SHOOTING_RISK_LABEL[mine.risk]}
+                        </span>
+                        {mine.risk === 'tight' && (
+                          <div className="mt-0.5 text-ui-2xs text-ink-faint">余量 ≤ 5 天</div>
+                        )}
+                      </>
+                    ) : <span className="text-ui-2xs text-ink-faint">—</span>}
+                  </Td>
+                </tr>
+              );
+            });
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /** 甜蜜乐章存档解析：游戏时间 / 公司 / 艺人卡片与合约信息。 */
 export default function SweetCaseView() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -634,6 +819,7 @@ export default function SweetCaseView() {
   const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [board, setBoard] = useState<'open' | 'shooting'>('open');
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
@@ -1025,13 +1211,26 @@ export default function SweetCaseView() {
                     type="button"
                     role="tab"
                     data-case-tab="open"
-                    aria-selected="true"
-                    className={sweetTabClass(true)}
+                    aria-selected={board === 'open'}
+                    onClick={() => setBoard('open')}
+                    className={sweetTabClass(board === 'open')}
                   >
                     筹备中 <span className="tabular-nums">{save.notices.length}</span>
                   </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    data-case-tab="shooting"
+                    aria-selected={board === 'shooting'}
+                    onClick={() => setBoard('shooting')}
+                    className={sweetTabClass(board === 'shooting')}
+                  >
+                    拍摄中 <span className="tabular-nums">{save.shooting.length}</span>
+                  </button>
                 </div>
-                <SweetNoticePanel save={save} genders={genders} />
+                {board === 'open'
+                  ? <SweetNoticePanel save={save} genders={genders} />
+                  : <SweetShootingPanel notices={save.shooting} />}
               </div>
             </>
           )}
