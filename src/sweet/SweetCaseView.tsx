@@ -5,8 +5,8 @@ import { nextTitle } from '../lib/titleLadder';
 import {
   formatSweetDate, parseSweetSave, sweetRoleGender, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
   type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetEvent,
-  type SweetNotice, type SweetNoticeRole, type SweetSave, type SweetShootingCast,
-  type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
+  type SweetNotice, type SweetNoticeRole, type SweetPromoNotice, type SweetSave,
+  type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
 } from '../lib/sweetCaseParser';
 import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
@@ -109,6 +109,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'teams', label: '我方团体', selector: '[data-sweet-case-teams]', summary: `${save.teams.length} 个` },
     { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
     { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
+    { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
   ], [save]);
 
   useEffect(() => {
@@ -624,6 +625,85 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
   );
 }
 
+/** 与主站「宣传活动」同款：作品一张卡，宣传子类 → 旗下艺人，每人一行。 */
+function SweetPromoPanel({ groups }: {
+  groups: { code: string; name: string; category: string; items: SweetPromoNotice[] }[];
+}) {
+  if (groups.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState
+          title="档期内没有宣传活动"
+          text="只显示在档期内、且有旗下艺人参与的作品宣传。换一份有发行记录、或当前日期在宣传档期内的存档再试。"
+        />
+      </div>
+    );
+  }
+  return (
+    <div data-case-promo className="mt-2 flex flex-col gap-1.5">
+      {groups.map((group) => {
+        const castCount = group.items.reduce((sum, item) => sum + item.casts.length, 0);
+        return (
+          <div key={group.code} className="overflow-hidden rounded-ui-md border border-line bg-surface">
+            <div data-case-promo-group={group.code} className="flex items-center gap-2 px-3 py-2 text-left text-ui-xs">
+              <span className="font-semibold text-ink">{group.name}</span>
+              <span className="text-ui-2xs text-ink-faint">{group.code}</span>
+              <span className={cn(
+                'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+                SWEET_CATEGORY_CLASS[group.category] ?? 'bg-surface-soft text-ink-muted',
+              )}
+              >
+                {group.category}
+              </span>
+              <span className="ml-auto rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs tabular-nums text-ink-muted">
+                {castCount} 角色
+              </span>
+            </div>
+            <div className="border-t border-line">
+              <table className="w-full table-fixed border-collapse text-ui-xs">
+                <thead>
+                  <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+                    <Th className="w-[20%]">宣传子类</Th>
+                    <Th className="w-[26%]">档期（开拍 → 杀青）</Th>
+                    <Th className="w-[18%]">角色</Th>
+                    <Th className="w-[24%]">签约</Th>
+                    <Th className="w-[12%]">宣传天数</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.items.flatMap((item) => item.casts.map((cast, ci) => (
+                    <tr key={`${item.code}-${item.kind}-${cast.artistId}-${ci}`} className="border-t border-line/60">
+                      {ci === 0 ? (
+                        <>
+                          <Td rowSpan={item.casts.length} className="border-b border-line">
+                            <span className="rounded-full bg-tag-talk-soft px-2 py-0.5 text-ui-2xs font-semibold text-tag-talk">
+                              {item.kind}
+                            </span>
+                          </Td>
+                          <Td rowSpan={item.casts.length} className="border-b border-line tabular-nums text-ui-2xs text-ink-muted">
+                            {item.startDate} → {item.endDate}
+                          </Td>
+                        </>
+                      ) : null}
+                      <Td>
+                        <span className="rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-muted">
+                          {cast.role}
+                        </span>
+                      </Td>
+                      <Td className="text-ink">{cast.artistName}</Td>
+                      <Td className="tabular-nums text-ink">{cast.doneDays}</Td>
+                    </tr>
+                  )))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const SHOOTING_STATUS_LABEL: Record<string, string> = {
   shooting: '拍摄中', pending: '待开拍', done: '已完成',
 };
@@ -819,7 +899,7 @@ export default function SweetCaseView() {
   const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [board, setBoard] = useState<'open' | 'shooting'>('open');
+  const [board, setBoard] = useState<'promo' | 'open' | 'shooting'>('open');
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
@@ -867,6 +947,36 @@ export default function SweetCaseView() {
     setError('');
     if (inputRef.current) inputRef.current.value = '';
   };
+
+  const promoGroups = useMemo(() => {
+    if (!save) return [] as { code: string; name: string; category: string; items: SweetPromoNotice[] }[];
+    const mineIds = new Set(save.artists.map((artist) => artist.id));
+    const teamIds = new Set(save.teams.flatMap((team) => team.memberIds));
+    const todayNum = Math.floor(Date.UTC(save.date.year, save.date.month - 1, save.date.day) / 86400000);
+    const map = new Map<string, SweetPromoNotice[]>();
+    for (const notice of save.promo) {
+      const casts = notice.casts.filter((cast) => mineIds.has(cast.artistId) || teamIds.has(cast.artistId));
+      if (casts.length === 0) continue;
+      const list = map.get(notice.code) ?? [];
+      list.push({ ...notice, casts });
+      map.set(notice.code, list);
+    }
+    const order = ['电视剧宣传', '电影宣传', '首映会', '唱片宣传', '拍摄MTV', '签名会', '舞台剧演出', '国际时装周'];
+    const rank = (kind: string) => { const i = order.indexOf(kind); return i < 0 ? 99 : i; };
+    return [...map].map(([code, items]) => ({ code, items }))
+      .filter(({ items }) => {
+        // 与主站同口径：作品档期取主打宣传里最晚的杀青日，过了就不算宣传中。
+        const deadlines = items.filter((item) => item.mainKind).map((item) => item.endDay);
+        return deadlines.length === 0 || todayNum <= Math.max(...deadlines);
+      })
+      .map(({ code, items }) => ({
+        code,
+        name: items[0]?.name || code,
+        category: items[0]?.category || '',
+        items: [...items].sort((a, b) => rank(a.kind) - rank(b.kind)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  }, [save]);
 
   return (
     <div
@@ -1210,6 +1320,16 @@ export default function SweetCaseView() {
                   <button
                     type="button"
                     role="tab"
+                    data-case-tab="promo"
+                    aria-selected={board === 'promo'}
+                    onClick={() => setBoard('promo')}
+                    className={sweetTabClass(board === 'promo')}
+                  >
+                    宣传中 <span className="tabular-nums">{promoGroups.reduce((sum, group) => sum + group.items.reduce((n, item) => n + item.casts.length, 0), 0)}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
                     data-case-tab="open"
                     aria-selected={board === 'open'}
                     onClick={() => setBoard('open')}
@@ -1228,9 +1348,11 @@ export default function SweetCaseView() {
                     拍摄中 <span className="tabular-nums">{save.shooting.length}</span>
                   </button>
                 </div>
-                {board === 'open'
-                  ? <SweetNoticePanel save={save} genders={genders} />
-                  : <SweetShootingPanel notices={save.shooting} />}
+                {board === 'promo'
+                  ? <SweetPromoPanel groups={promoGroups} />
+                  : board === 'open'
+                    ? <SweetNoticePanel save={save} genders={genders} />
+                    : <SweetShootingPanel notices={save.shooting} />}
               </div>
             </>
           )}
