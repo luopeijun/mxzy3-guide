@@ -24,7 +24,10 @@
  *   - 得奖记录（艺人事件簿尾部）：15 条 48B 定长记录 + 一条「從缺」占位；
  *     每条 `[16B Big5 得主][4B 0][16B Big5 作品][12B]`。记录顺序就是
  *     AwardItem.dat 的奖项编号 1..15（金曲 1-4 / 金像 5-8 / 金鐘 9-12 /
- *     金星 13-15）；存档只保留最近一年，年份取游戏时间。 */
+ *     金星 13-15）；存档只保留最近一年，年份取游戏时间。
+ *  同一轮游玩的更早年份不在这份存档里，按冻结的历史快照附带展示。 */
+
+import { SWEET_AWARD_HISTORY, SWEET_AUTO_AWARD_SIGNATURE } from './sweetAwardHistory';
 
 export const SWEET_ABILITY_LABELS = [
   '演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信',
@@ -334,6 +337,17 @@ function scanAwards(bytes: Uint8Array, year: number): SweetAward[] {
   return [];
 }
 
+/**
+ * Auto.sav 自带 2010 年得奖表；同轮游玩的 2008 / 2009 记录来自冻结快照。
+ * 只有当前表指纹匹配时才附带历史，避免把别人的存档串到这份记录上。
+ */
+function withAwardHistory(current: SweetAward[]): SweetAward[] {
+  const matches = SWEET_AUTO_AWARD_SIGNATURE.every(([winner, work]) =>
+    current.some((award) => award.winner === winner && award.work === work));
+  if (!matches) return current;
+  return [...SWEET_AWARD_HISTORY, ...current].sort((a, b) => a.year - b.year);
+}
+
 export function formatSweetDate(date: SweetSave['date']): string {
   const w = WEEKDAYS[date.weekday - 1] ?? String(date.weekday);
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
@@ -384,6 +398,6 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
     date,
     signedIds,
     artists,
-    awards: scanAwards(bytes, date.year),
+    awards: withAwardHistory(scanAwards(bytes, date.year)),
   };
 }

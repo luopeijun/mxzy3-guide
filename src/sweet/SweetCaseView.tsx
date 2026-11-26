@@ -369,7 +369,7 @@ export default function SweetCaseView() {
                             {save.awards.filter((award) => awardBelongsTo(award, artist.name)).map((award) => (
                               <span key={`${award.year}-${award.label}`} data-sweet-case-artist-award>
                                 <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
-                                <span className="award-meta ml-1 font-normal text-ink-faint">{award.work}</span>
+                                <span className="award-meta ml-1 font-normal text-ink-faint">{awardSubject(award)}</span>
                                 <span className="ml-1 font-normal text-ink-faint">{award.year}</span>
                               </span>
                             ))}
