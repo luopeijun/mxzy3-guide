@@ -4,7 +4,7 @@ import type { ReorderRequest } from '../lib/treeOrder';
 import { countCharsDeep, findNodePath, flattenNodes, searchGuide } from '../lib/guide';
 import { useGuideData } from '../hooks/useGuideData';
 import { useCgData } from '../hooks/useCgData';
-import { cgTabHash, guideNodeId, isCgRoute, isTrackerRoute, useHashSelection } from '../hooks/useHashSelection';
+import { cgTabHash, guideNodeId, isCaseRoute, isCgRoute, isTrackerRoute, useHashSelection } from '../hooks/useHashSelection';
 import { useAnchorJump } from '../hooks/useAnchorJump';
 import { GuideDataContext } from '../hooks/useGuideContext';
 import { TrackerProvider } from '../hooks/useTracker';
@@ -21,6 +21,7 @@ import CgApp from '../components/cg/CgApp';
 import TrackerApp from '../components/tracker/TrackerApp';
 import GameHeader from '../ui/GameHeader';
 import TabBar, { type TabItem } from '../ui/TabBar';
+import SweetCaseView from './SweetCaseView';
 
 /** 甜蜜乐章是独立站点（sweet.html），只共用设计系统与通用组件。
  *  数据、类目、顺序存档都另起一套，不和明星志愿3 的 guide.json 混。 */
@@ -33,6 +34,7 @@ const TABS: TabItem[] = [
   { id: 'guide', label: '攻略' },
   { id: 'tracker', label: '事件追踪', dataTab: 'tracker' },
   { id: 'cg', label: 'CG 图鉴', dataTab: 'cg' },
+  { id: 'case', label: '存档解析', dataTab: 'case' },
 ];
 const EMPTY_HINT = {
   title: '这一页还没整理',
@@ -90,18 +92,22 @@ function SweetGuide({ data: source }: Props) {
   const validIds = useMemo(() => new Set(allNodes.map((node) => node.id)), [allNodes]);
   const { selectedId, select } = useHashSelection(validIds);
 
-  const [mode, setMode] = useState<'guide' | 'tracker' | 'cg'>(() =>
-    isCgRoute() ? 'cg' : isTrackerRoute() ? 'tracker' : 'guide',
+  const [mode, setMode] = useState<'guide' | 'tracker' | 'cg' | 'case'>(() =>
+    isCaseRoute() ? 'case'
+      : isCgRoute() ? 'cg'
+        : isTrackerRoute() ? 'tracker' : 'guide',
   );
   // 关掉整页视图时回到打开前那一页；从 URL 直接进追踪器 / 图鉴时留空。
   const lastNodeRef = useRef<string>(
-    isTrackerRoute() || isCgRoute() ? '' : guideNodeId(),
+    isTrackerRoute() || isCgRoute() || isCaseRoute() ? '' : guideNodeId(),
   );
 
   useEffect(() => {
     const onChange = () => {
       if (isTrackerRoute()) {
         setMode('tracker');
+      } else if (isCaseRoute()) {
+        setMode('case');
       } else if (isCgRoute()) {
         setMode('cg');
       } else {
@@ -177,6 +183,11 @@ function SweetGuide({ data: source }: Props) {
     setMode('cg');
   }, []);
 
+  const openCase = useCallback(() => {
+    window.location.hash = '/case';
+    setMode('case');
+  }, []);
+
   const backToGuide = useCallback(() => {
     const id = lastNodeRef.current;
     window.location.hash = id ? `/guide/${id}` : '/guide/';
@@ -207,7 +218,12 @@ function SweetGuide({ data: source }: Props) {
           items={TABS}
           activeId={mode}
           ariaLabel="视图切换"
-          onSelect={(id) => (id === 'tracker' ? openTracker() : id === 'cg' ? openCg() : backToGuide())}
+          onSelect={(id) => (
+            id === 'tracker' ? openTracker()
+              : id === 'cg' ? openCg()
+                : id === 'case' ? openCase()
+                  : backToGuide()
+          )}
         />
       )}
       right={mode === 'guide' ? (
@@ -297,6 +313,7 @@ function SweetGuide({ data: source }: Props) {
         </AppShell>
         {mode === 'tracker' && <TrackerApp data={guide} />}
         {mode === 'cg' && <SweetCgView />}
+        {mode === 'case' && <SweetCaseView />}
       </TrackerProvider>
     </GuideDataContext.Provider>
   );

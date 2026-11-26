@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
  *      table with rolled values, the game clock, artist cards, the booking
  *      window, shooting period, reservations and the company refresh timeline;
  *   3) the search box filters the notices;
- *   4) 甜蜜乐章 keeps its own three tabs (the reader is main-site only).
+ *   4) 甜蜜乐章 keeps its own four tabs (its reader is an entry placeholder).
  *
  * Needs the dev server on localhost:5173 and CDP on 127.0.0.1:9339.
  * IMPORTANT: one debug tab is reused for the whole run. Repeatedly calling

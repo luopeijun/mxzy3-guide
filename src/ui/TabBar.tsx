@@ -16,7 +16,7 @@ interface Props {
 
 /** 文字底线式页签，两个站点共用一套视觉：未选中是浅墨色文字，悬停提为品牌
  *  深色；激活项品牌深色加粗，文字正下方压一条品牌色短下划线（伪元素画的，
- *  随文字走）。页签内容由调用方给，明星志愿3 是五个入口，甜蜜乐章先只有攻略。 */
+ *  随文字走）。页签内容由调用方给：明星志愿3 有五个入口，甜蜜乐章有四个。 */
 export default function TabBar({ items, activeId, ariaLabel, onSelect }: Props) {
   const tabClass = (active: boolean) =>
     cn(
