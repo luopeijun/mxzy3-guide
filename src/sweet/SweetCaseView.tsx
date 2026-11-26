@@ -6,6 +6,7 @@ import {
   formatSweetDate, parseSweetSave, sweetRoleGender, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
   type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetDoneNotice, type SweetEvent,
   type SweetNotice, type SweetNoticeRole, type SweetPromoNotice, type SweetSave,
+  type SweetSelfMadeNotice, type SweetSelfMadeStatus,
   type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
   type SweetWaitingNotice,
 } from '../lib/sweetCaseParser';
@@ -1003,6 +1004,237 @@ function SweetDonePanel({ notices }: { notices: SweetDoneNotice[] }) {
   );
 }
 
+const SELF_MADE_STATUS_LABEL: Record<SweetSelfMadeStatus, string> = {
+  shooting: '拍摄中', pending: '未开拍', done: '已完成', unknown: '无档期',
+};
+const SELF_MADE_STATUS_ORDER: SweetSelfMadeStatus[] = ['shooting', 'pending', 'done', 'unknown'];
+
+/** 自制作品及其他：照主站 SelfMadePanel 的八列表格，一位旗下艺人一行，
+ *  通告 / 档期 / 状态 / 出品用 rowSpan 合起来；对手演员占角色格但不占行。 */
+function SweetSelfMadePanel({
+  notices, emptyTitle, emptyText,
+}: { notices: SweetSelfMadeNotice[]; emptyTitle: string; emptyText: string }) {
+  const [filter, setFilter] = useState('all');
+  const byCategory = new Map<string, number>();
+  const byStatus = new Map<SweetSelfMadeStatus, number>();
+  let taken = 0;
+  const rowsOf = (notice: SweetSelfMadeNotice) => notice.casts.filter((cast) => cast.mine);
+  for (const notice of notices) {
+    byCategory.set(notice.category, (byCategory.get(notice.category) ?? 0) + 1);
+    byStatus.set(notice.status, (byStatus.get(notice.status) ?? 0) + 1);
+    if (rowsOf(notice).length > 0) taken += 1;
+  }
+  if (notices.length === 0) {
+    return (
+      <div className="mt-2">
+        <EmptyState title={emptyTitle} text={emptyText} />
+      </div>
+    );
+  }
+  const visible = notices.filter((notice) => {
+    if (filter === 'all') return true;
+    const [kind, value] = filter.split(':');
+    return kind === 'cat' ? notice.category === value : notice.status === value;
+  });
+  const chip = (on: boolean) => cn(
+    'rounded-full px-2 py-0.5 text-ui-2xs transition-colors',
+    on ? 'bg-brand font-semibold text-white' : 'bg-surface-soft text-ink-muted hover:text-brand-strong',
+  );
+  const toggle = (value: string) => setFilter(filter === value ? 'all' : value);
+  return (
+    <div data-case-selfmade className="mt-2 rounded-ui-md border border-line bg-surface">
+      <div
+        data-case-selfmade-summary
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2 text-ui-2xs text-ink-faint"
+      >
+        <button
+          type="button"
+          data-case-selfmade-filter="all"
+          aria-pressed={filter === 'all'}
+          onClick={() => setFilter('all')}
+          className={chip(filter === 'all')}
+        >
+          共 <span className="tabular-nums">{notices.length}</span> 条
+        </button>
+        {[...byCategory].map(([category, count]) => {
+          const key = `cat:${category}`;
+          return (
+            <button
+              key={key}
+              type="button"
+              data-case-selfmade-filter={key}
+              aria-pressed={filter === key}
+              onClick={() => toggle(key)}
+              className={chip(filter === key)}
+            >
+              {category} <span className="tabular-nums">{count}</span>
+            </button>
+          );
+        })}
+        {SELF_MADE_STATUS_ORDER.filter((status) => byStatus.get(status)).map((status) => {
+          const key = `status:${status}`;
+          return (
+            <button
+              key={key}
+              type="button"
+              data-case-selfmade-filter={key}
+              aria-pressed={filter === key}
+              onClick={() => toggle(key)}
+              className={chip(filter === key)}
+            >
+              {SELF_MADE_STATUS_LABEL[status]} <span className="tabular-nums">{byStatus.get(status)}</span>
+            </button>
+          );
+        })}
+        <span className="ml-auto tabular-nums text-ink-muted">
+          {filter === 'all'
+            ? `旗下艺人已接 ${taken} 条 · 还没人接 ${notices.length - taken} 条`
+            : `当前 ${visible.length} / ${notices.length} 条`}
+        </span>
+      </div>
+      <table className="w-full table-fixed border-collapse text-ui-xs">
+        <thead>
+          <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+            <Th className="w-[21%]">通告</Th>
+            <Th className="w-[15%]">开拍 → 杀青</Th>
+            <Th className="w-[8%]">状态</Th>
+            <Th className="w-[13%]">角色 / 难度</Th>
+            <Th className="w-[14%]">艺人</Th>
+            <Th className="w-[11%]">酬劳</Th>
+            <Th className="w-[12%]">完成 / 需拍</Th>
+            <Th className="w-[8%]">出品</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {visible.flatMap((notice) => {
+            const mine = rowsOf(notice);
+            const rows = mine.length > 0 ? mine : [null];
+            return rows.map((cast, index) => (
+              <tr
+                key={`${notice.code}-${cast?.artistId ?? 'none'}`}
+                data-case-selfmade-row={notice.code}
+                data-case-selfmade-status={notice.status}
+                data-case-selfmade-cast={mine.length}
+                className={cn('align-top', index === 0 ? 'border-t border-line' : '')}
+              >
+                {index === 0 && (
+                  <Td rowSpan={rows.length} className="border-b border-line">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="tabular-nums text-ui-2xs text-ink-faint">{notice.seq}</span>
+                      <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
+                    </div>
+                    <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      <span className={cn(
+                        'inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-ui-2xs',
+                        SWEET_CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+                      )}
+                      >
+                        {notice.category}
+                      </span>
+                      {notice.type && notice.type !== notice.category && (
+                        <span className="text-ui-2xs text-ink-faint">{notice.type}</span>
+                      )}
+                    </div>
+                  </Td>
+                )}
+                {index === 0 && (
+                  <Td rowSpan={rows.length} className="tabular-nums border-b border-line text-ui-2xs">
+                    {notice.startDate ? (
+                      <>
+                        <div className="whitespace-nowrap text-ink-muted">
+                          开拍 <b className="font-semibold text-ink">{notice.startDate}</b>
+                        </div>
+                        <div className="whitespace-nowrap text-ink-muted">
+                          杀青 <b className="font-semibold text-ink">{notice.endDate}</b>
+                        </div>
+                        <div className="mt-0.5 text-ink-faint">
+                          {notice.status === 'shooting'
+                            ? `距杀青 ${notice.daysLeft} 天`
+                            : notice.status === 'pending'
+                              ? notice.daysToStart > 0 ? `还有 ${notice.daysToStart} 天开拍` : '还没人接'
+                              : `共 ${notice.endDay - notice.startDay + 1} 天`}
+                        </div>
+                      </>
+                    ) : <span className="text-ink-faint">—</span>}
+                  </Td>
+                )}
+                {index === 0 && (
+                  <Td rowSpan={rows.length} className="border-b border-line">
+                    <span
+                      data-case-selfmade-status-label={notice.status}
+                      className={cn(
+                        'inline-flex whitespace-nowrap rounded-full px-1.5 py-0.5 text-ui-2xs',
+                        notice.status === 'shooting'
+                          ? 'bg-brand-soft font-semibold text-brand-strong'
+                          : notice.status === 'done'
+                            ? 'bg-growth-soft font-semibold text-growth-strong'
+                            : 'bg-surface-soft text-ink-muted',
+                      )}
+                    >
+                      {SELF_MADE_STATUS_LABEL[notice.status]}
+                    </span>
+                  </Td>
+                )}
+                <Td>
+                  {cast?.role ? <SweetRolePill role={cast.role} /> : <span className="text-ui-2xs text-ink-faint">—</span>}
+                </Td>
+                <Td>
+                  {cast ? (
+                    <>
+                      <span
+                        data-case-selfmade-artist={cast.artistId}
+                        className="whitespace-nowrap text-ui-xs font-semibold text-ink"
+                        title={cast.group ? `签约团体：${cast.group.name}` : cast.artistName}
+                      >
+                        {cast.group?.name ?? cast.artistName}
+                      </span>
+                      {cast.group && (
+                        <span
+                          data-case-selfmade-group={cast.group.name}
+                          className="mt-0.5 block text-ui-2xs leading-snug text-ink-faint"
+                        >
+                          团体 · 队长 {cast.group.leaderName}
+                          {cast.group.memberNames.length > 1
+                            && ` · 团员 ${cast.group.memberNames.slice(1).join(' · ')}`}
+                        </span>
+                      )}
+                    </>
+                  ) : <span className="text-ui-2xs text-ink-faint">还没有艺人接</span>}
+                </Td>
+                <Td className="tabular-nums text-ui-2xs text-ink-muted">
+                  {cast ? sweetMoney(cast.pay) : '—'}
+                </Td>
+                <Td className="tabular-nums text-ui-2xs">
+                  {cast && cast.workDays > 0 ? (
+                    <>
+                      <span
+                        data-case-selfmade-days={`${cast.doneDays}/${cast.workDays}`}
+                        className="text-ui-xs font-bold text-ink"
+                      >
+                        {cast.doneDays}
+                      </span>
+                      <span className="text-ink-faint"> / {cast.workDays} 天</span>
+                      <div className="mt-0.5 text-ink-faint">
+                        {cast.needDays > 0 ? `还差 ${cast.needDays} 天` : '已拍完'}
+                      </div>
+                    </>
+                  ) : <span className="text-ui-2xs text-ink-faint">—</span>}
+                </Td>
+                {index === 0 && (
+                  <Td rowSpan={rows.length} className="border-b border-line text-ui-2xs text-ink-muted">
+                    {notice.company || '—'}
+                  </Td>
+                )}
+              </tr>
+            ));
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 const SHOOTING_STATUS_LABEL: Record<string, string> = {
   shooting: '拍摄中', pending: '待开拍', done: '已完成',
 };
@@ -1198,7 +1430,7 @@ export default function SweetCaseView() {
   const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting' | 'hot' | 'done'>('open');
+  const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting' | 'hot' | 'done' | 'selfMade'>('open');
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
@@ -1676,6 +1908,16 @@ export default function SweetCaseView() {
                   >
                     已完成 <span className="tabular-nums">{save.done.length}</span>
                   </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    data-case-tab="self-made"
+                    aria-selected={board === 'selfMade'}
+                    onClick={() => setBoard('selfMade')}
+                    className={sweetTabClass(board === 'selfMade')}
+                  >
+                    自制通告及其他 <span className="tabular-nums">{save.selfMade.length}</span>
+                  </button>
                 </div>
                 {board === 'promo'
                   ? <SweetPromoPanel groups={promoGroups} />
@@ -1691,7 +1933,13 @@ export default function SweetCaseView() {
                               emptyTitle="没有热卖中的作品"
                               emptyText="只列旗下艺人已参演、已到发行日且还没下架的作品。"
                             />
-                          : <SweetDonePanel notices={save.done} />}
+                          : board === 'selfMade'
+                            ? <SweetSelfMadePanel
+                                notices={save.selfMade}
+                                emptyTitle="还没有自制作品"
+                                emptyText="这份存档的 CaseCreate 段里没有自制通告。自己制作唱片或戏剧之后再读一次。"
+                              />
+                            : <SweetDonePanel notices={save.done} />}
               </div>
             </>
           )}
