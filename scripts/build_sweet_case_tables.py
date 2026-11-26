@@ -46,6 +46,14 @@ TYPE_FILES = {
     1: "CFType.dat", 2: "TVType.dat", 3: "MVType.dat", 4: "CDType.dat",
     5: "SHType.dat", 6: "THType.dat", 7: "FSType.dat",
 }
+# ScheduleClass.dat 里 10/15/16/20/21/22 是作品宣传，26/31 是甜蜜乐章新增的
+# 舞台剧演出 / 国际时装周。界面沿用主站简体用词。
+PROMO_KIND_IDS = {10, 15, 16, 20, 21, 22, 26, 31}
+PROMO_KIND_NAMES = {
+    "電視劇宣傳": "电视剧宣传", "電影宣傳": "电影宣传", "首映會": "首映会",
+    "唱片宣傳": "唱片宣传", "拍攝MTV": "拍摄MTV", "簽名會": "签名会",
+    "舞台劇演出": "舞台剧演出", "國際時裝週": "国际时装周",
+}
 SUBTYPE_SIMPLE = {
     "搖滾": "摇滚", "節奏藍調": "节奏蓝调", "兒歌": "儿歌", "綜藝": "综艺",
     "採訪報導": "采访报道", "時裝週": "时装周", "說話": "说话", "聰明": "聪明",
@@ -194,6 +202,19 @@ def load_subtypes(data_dir):
     return out
 
 
+def load_promo_kinds(data_dir):
+    """ScheduleClass.dat：宣传子类编号 -> 简体显示名。"""
+    out = {}
+    for rec in read_table(os.path.join(data_dir, "ScheduleClass.dat")):
+        ident = struct.unpack_from("<I", rec, 0)[0]
+        if ident not in PROMO_KIND_IDS:
+            continue
+        name = PROMO_KIND_NAMES.get(text(rec, 4, len(rec) - 4))
+        if name:
+            out[str(ident)] = name
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
@@ -209,6 +230,7 @@ def main():
         "lengths": load_lengths(args.data),
         "cases": load_cases(args.data),
         "subtypes": load_subtypes(args.data),
+        "promoKinds": load_promo_kinds(args.data),
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
@@ -216,7 +238,7 @@ def main():
         f.write("\n")
     print("wrote", OUT, "classes", len(data["classes"]), "roles", len(data["roles"]),
           "companies", len(data["companyBySeq"]), "lengths", len(data["lengths"]),
-          "subtypes", len(data["subtypes"]))
+          "subtypes", len(data["subtypes"]), "promoKinds", len(data["promoKinds"]))
 
 
 if __name__ == "__main__":
