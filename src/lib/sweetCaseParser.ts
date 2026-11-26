@@ -21,13 +21,12 @@
  *   - 公司形象 / 知名度 / 公关在 `Firm` 段：标记 `[4][\"Firm\\0\"]`，随后
  *     `[公司数][编号][名字字节数][Big5 名字][NUL][知名度][公关][0]`，
  *     编号 1 是我方；知名度与公关存档 ×10，界面按整数显示（向下取整）。
- *   - 得奖记录（艺人事件簿尾部）：15 条 48B 定长记录 + 一条「從缺」占位；
- *     每条 `[16B Big5 得主][4B 0][16B Big5 作品][12B]`。记录顺序就是
- *     AwardItem.dat 的奖项编号 1..15（金曲 1-4 / 金像 5-8 / 金鐘 9-12 /
- *     金星 13-15）；存档只保留最近一年，年份取游戏时间。
- *  同一轮游玩的更早年份不在这份存档里，按冻结的历史快照附带展示。 */
+ *   - 艺人成绩（与主站同构的记事表）：`[条数][108]`，每条
+ *     `[年][月][日][类型][事项][艺人编号]...[8B 作品编码]`。得奖是类型 5、
+ *     事项 21..53；单份存档同时保留 2008/2009/2010 的记录，年份取这里。
+ *   - 得奖记录表（艺人事件簿尾部）：15 条 48B 定长记录 + 一条「從缺」占位；
+ *     只保留最近一年，用作艺人成绩表缺失时的兜底。 */
 
-import { SWEET_AWARD_HISTORY, SWEET_AUTO_AWARD_SIGNATURE } from './sweetAwardHistory';
 
 export const SWEET_ABILITY_LABELS = [
   '演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信',
@@ -46,14 +45,32 @@ export const SWEET_AWARD_LABELS = [
   '最上镜头', '最佳模特儿', '最佳代言人',
 ] as const;
 
+/** 艺人成绩记事里的事项编号，沿用主站 21..53 那一套。 */
+const SWEET_DIARY_AWARD_NAMES: Record<number, string> = {
+  21: '最佳新人', 22: '最佳演唱人', 23: '最佳团体', 24: '年度专辑',
+  31: '最佳男主角', 32: '最佳女主角', 33: '最佳男配角', 34: '最佳女配角',
+  41: '最佳男演员', 42: '最佳女演员', 43: '最佳主持人', 44: '年度戏剧',
+  51: '最上镜头', 52: '最佳模特儿', 53: '最佳代言人',
+};
+const SWEET_DIARY_STRIDE = 108;
+const SWEET_DIARY_AWARD_KIND = 5;
+const SWEET_DIARY_CEREMONY: Record<number, string> = {
+  2: '金曲奖', 3: '金像奖', 4: '金钟奖', 5: '金星奖',
+};
+const SWEET_DIARY_COMPANY_AWARD_IDS = new Set([23, 24, 44]);
+
 export interface SweetAward {
   year: number;
+  month: number;
+  day: number;
   ceremony: string;
   label: string;
   /** 得主名字：个人奖是艺人，公司奖可能是团体 / 公司名。 */
   winner: string;
   /** 作品名；个人奖也会带作品，页面只给公司 / 年度作品奖显示。 */
   work: string;
+  workCode: string;
+  artistId: number;
   /** 与主站一致：公司奖单列，个人奖挂到艺人卡。 */
   company: boolean;
 }
@@ -325,10 +342,14 @@ function scanAwards(bytes: Uint8Array, year: number): SweetAward[] {
       if (!winner || !work || winner === '從缺') { ok = false; break; }
       rows.push({
         year,
+        month: 0,
+        day: 0,
         ceremony: index < 4 ? '金曲奖' : index < 8 ? '金像奖' : index < 12 ? '金钟奖' : '金星奖',
         label: SWEET_AWARD_LABELS[index],
         winner,
         work,
+        workCode: '',
+        artistId: 0,
         company: index === 2 || index === 3 || index === 11,
       });
     }
@@ -337,15 +358,107 @@ function scanAwards(bytes: Uint8Array, year: number): SweetAward[] {
   return [];
 }
 
+/** 作品编码：8 字节 ASCII，NUL 结尾。 */
+function readCode(bytes: Uint8Array, offset: number, limit = 8): string {
+  let code = '';
+  for (let i = 0; i < limit && offset + i < bytes.length; i += 1) {
+    const byte = bytes[offset + i];
+    if (!byte) break;
+    if (byte < 0x20 || byte > 0x7e) return '';
+    code += String.fromCharCode(byte);
+  }
+  return /^[A-Z]{2}[0-9A-Z]{3}$/.test(code) ? code : '';
+}
+
+/** 艺人成绩表在解压流里不一定 4 字节对齐；全档找 `[条数][108]` 且逐条日期合法的一处。 */
+function findSweetDiaryTable(view: DataView, length: number): { offset: number; count: number } | null {
+  let best: { offset: number; count: number } | null = null;
+  for (let offset = 0; offset + 16 <= length; offset += 1) {
+    const count = readI32(view, offset);
+    if (count < 1 || count > 400 || readI32(view, offset + 4) !== SWEET_DIARY_STRIDE) continue;
+    if (offset + 8 + count * SWEET_DIARY_STRIDE > length) continue;
+    let ok = true;
+    for (let i = 0; i < count && ok; i += 1) {
+      const p = offset + 8 + i * SWEET_DIARY_STRIDE;
+      const year = readI32(view, p);
+      const month = readI32(view, p + 4);
+      const day = readI32(view, p + 8);
+      const kind = readI32(view, p + 12);
+      const thing = readI32(view, p + 16);
+      const artistId = readI32(view, p + 20);
+      ok = year >= 2000 && year <= 2100 && month >= 1 && month <= 12
+        && day >= 1 && day <= 31 && kind <= 40 && thing <= 99 && artistId <= 200;
+    }
+    if (ok && (!best || count > best.count)) best = { offset, count };
+  }
+  return best;
+}
+
+/** 从存档自带的成绩/作品记录里建立作品编码 → 作品名，供历史得奖记录回查。 */
+function scanSweetWorkNames(bytes: Uint8Array, view: DataView): Map<string, string> {
+  const out = new Map<string, string>();
+  const stride = 1022;
+  for (let offset = 0; offset + stride <= bytes.length; offset += 1) {
+    const code = readCode(bytes, offset + 68, 5);
+    if (!code || bytes[offset + 73] !== 0) continue;
+    const kind = readI32(view, offset + 64);
+    const nameLength = readI32(view, offset + 74);
+    const field = readI32(view, offset + 78);
+    if (kind < 1 || kind > 31 || nameLength < 1 || nameLength > 64 || field < 1 || field > 64) continue;
+    const years = [readI32(view, offset + 4), readI32(view, offset + 20)];
+    if (!years.every((year) => year >= 2000 && year <= 2099)) continue;
+    const name = readBig5(bytes, offset + 90, 32);
+    if (name && !out.has(code)) out.set(code, name);
+  }
+  return out;
+}
+
 /**
- * Auto.sav 自带 2010 年得奖表；同轮游玩的 2008 / 2009 记录来自冻结快照。
- * 只有当前表指纹匹配时才附带历史，避免把别人的存档串到这份记录上。
+ * 艺人成绩里的得奖记录：`[年][月][日][类型=5][事项=21..53][艺人编号]...[作品编码]`。
+ * 这是与明星志愿3同构的真源，单份存档就能覆盖多年；事件簿尾部 48B 表只作兜底。
  */
-function withAwardHistory(current: SweetAward[]): SweetAward[] {
-  const matches = SWEET_AUTO_AWARD_SIGNATURE.every(([winner, work]) =>
-    current.some((award) => award.winner === winner && award.work === work));
-  if (!matches) return current;
-  return [...SWEET_AWARD_HISTORY, ...current].sort((a, b) => a.year - b.year);
+function scanDiaryAwards(
+  bytes: Uint8Array,
+  view: DataView,
+  protagonist: string,
+  company: string,
+  stars: Record<string, string>,
+): SweetAward[] {
+  const table = findSweetDiaryTable(view, bytes.length);
+  if (!table) return [];
+  const workNames = scanSweetWorkNames(bytes, view);
+  const rows: SweetAward[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * SWEET_DIARY_STRIDE;
+    if (readI32(view, p + 12) !== SWEET_DIARY_AWARD_KIND) continue;
+    const awardId = readI32(view, p + 16);
+    const label = SWEET_DIARY_AWARD_NAMES[awardId];
+    if (!label) continue;
+    const artistId = readI32(view, p + 20);
+    if (artistId < 1 || artistId > 110) continue;
+    const year = readI32(view, p);
+    const month = readI32(view, p + 4);
+    const day = readI32(view, p + 8);
+    const workCode = readCode(bytes, p + 56);
+    const key = `${year}-${awardId}-${artistId}-${workCode}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const companyAward = SWEET_DIARY_COMPANY_AWARD_IDS.has(awardId);
+    rows.push({
+      year,
+      month,
+      day,
+      ceremony: SWEET_DIARY_CEREMONY[Math.floor(awardId / 10)] ?? '',
+      label,
+      winner: companyAward ? company : artistId === 1 ? protagonist : stars[String(artistId)] ?? `艺人${artistId}`,
+      work: workNames.get(workCode) ?? (workCode || '作品未记录'),
+      workCode,
+      artistId,
+      company: companyAward,
+    });
+  }
+  return rows.sort((a, b) => a.year - b.year || a.month - b.month || a.day - b.day || a.label.localeCompare(b.label));
 }
 
 export function formatSweetDate(date: SweetSave['date']): string {
@@ -389,6 +502,7 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
     day: readI32(view, 0x48),
     weekday: readI32(view, 0x4c),
   };
+  const diaryAwards = scanDiaryAwards(bytes, view, protagonist, readBig5(bytes, 0x19), stars);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: readBig5(bytes, 0x19),
@@ -398,6 +512,6 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
     date,
     signedIds,
     artists,
-    awards: withAwardHistory(scanAwards(bytes, date.year)),
+    awards: diaryAwards.length > 0 ? diaryAwards : scanAwards(bytes, date.year),
   };
 }
