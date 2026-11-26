@@ -221,7 +221,7 @@ export interface SweetCaseTables {
   gifts?: Record<string, number[]>;
   /** 艺人编号 -> 送礼槽位下标，由甜站偏好礼物清单反推。 */
   giftSlots?: Record<string, number>;
-  /** 八座国际场景的显示名 / 存档繁体原名 / 费用，来自 World.dat。 */
+  /** 十座国际场景的显示名 / 存档繁体原名 / 费用，来自 World.dat。 */
   scenes?: SweetScene[];
 }
 
@@ -445,7 +445,7 @@ export interface SweetSave {
   selfMade: SweetSelfMadeNotice[];
   /** 存档 Item 段记录的道具清单（含数量为 0 的条目，页面自行过滤）。 */
   items: SweetOwnedItem[];
-  /** 八座国际场景的解锁标志；费用 / 显示名来自 World.dat。 */
+  /** 十座国际场景的解锁标志；费用 / 显示名来自 World.dat。 */
   scenes: SweetScene[];
 }
 
@@ -2034,11 +2034,13 @@ const SWEET_SCENE_TABLE: ReadonlyArray<{ name: string; rawName: string; cost: nu
   { name: '夏威夷', rawName: '夏威夷', cost: 10000 },
   { name: '纽约', rawName: '紐約', cost: 15000 },
   { name: '开罗', rawName: '開羅', cost: 21000 },
+  { name: '伦敦', rawName: '倫敦', cost: 16000 },
+  { name: '米兰', rawName: '米蘭', cost: 15000 },
 ];
 const SWEET_SCENE_RECORD_STRIDE = 288;
 
-/** 八座国际场景的解锁记录与主站同构但更宽：每条 288B，
- *  `[编号 int32 小端 2..9][解锁标志 int32 0/1][场景码 int32][名字 16B Big5…]`，
+/** 十座国际场景的解锁记录与主站同构但更宽：每条 288B，
+ *  `[编号 int32 小端 2..11][解锁标志 int32 0/1][场景码 int32][名字 16B Big5…]`，
  *  间隔与 World.dat 一致。标志就在名字前 8 字节（第二个 int32），不是更靠前的
  *  那个计数表；靠编号 + 间隔 + 繁体原名三重校验定位，不写死绝对偏移。 */
 function scanSweetScenes(bytes: Uint8Array, view: DataView, tables: SweetCaseTables): SweetScene[] {
