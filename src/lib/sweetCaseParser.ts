@@ -240,6 +240,45 @@ export type SweetHotNotice = SweetWaitingNotice;
 /** 已完成：与等待上市同一套本体字段，只把日期口径换成已过下档日。 */
 export type SweetDoneNotice = SweetWaitingNotice;
 
+/** 自制通告的档期状态，和主站同口径：完全由本体的开拍日 / 杀青日推出来。 */
+export type SweetSelfMadeStatus = 'pending' | 'shooting' | 'done' | 'unknown';
+
+/** 一位接演艺人在这条自制通告上的记录；对手公司的演员占角色格但不上表。 */
+export interface SweetSelfMadeCast {
+  artistId: number;
+  artistName: string;
+  role: SweetNoticeRole | null;
+  pay: number;
+  mine: boolean;
+  doneDays: number;
+  needDays: number;
+  workDays: number;
+  group: { name: string; leaderName: string; memberNames: string[] } | null;
+}
+
+/** CaseCreate 段里的自制作品：玩家自己出品，不进 CaseFirm，有自己的一套档期。 */
+export interface SweetSelfMadeNotice {
+  seq: number;
+  code: string;
+  name: string;
+  category: string;
+  type: string;
+  company: string;
+  /** CaseCreate 里存的档期长度编号，0 表示没读到；界面的天数看接演记录。 */
+  days: number;
+  /** Length 表的每周上限，0 表示查不到。 */
+  daysPerWeek: number;
+  roles: SweetNoticeRole[];
+  casts: SweetSelfMadeCast[];
+  startDate: string;
+  endDate: string;
+  startDay: number;
+  endDay: number;
+  daysLeft: number;
+  daysToStart: number;
+  status: SweetSelfMadeStatus;
+}
+
 /** 拍摄中风险档位，沿用主站两档口径：排不下=违约、余量 ≤5 天=逾期风险。 */
 export type SweetShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
 export type SweetShootingStatus = 'pending' | 'shooting' | 'done';
@@ -342,6 +381,8 @@ export interface SweetSave {
   hot: SweetHotNotice[];
   /** 已完成通告：已过发行下档日的作品，只列我方参演。 */
   done: SweetDoneNotice[];
+  /** 自制通告及其他：CaseCreate 段里玩家自己出品的作品。 */
+  selfMade: SweetSelfMadeNotice[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -1377,6 +1418,168 @@ function scanSweetArchive(
   return out;
 }
 
+/** 自制作品及其他：CaseCreate 段只列通告码，名字 / 档期 / 接演记录仍在 Case 本体。
+ *
+ *  甜蜜乐章的 CaseCreate 与主站不同：段头是 `[条数][5]`，之后每条 14 字节
+ *  `[5×ASCII 通告码][NUL][大类][档期长度编号]`，不是主站的 28 字节 int32 编码。
+ *  本体与归档作品同构，接演网格也是 +816 起每 24B 一格，主角固定第 8 格。
+ *  排期只有开拍 / 杀青两个日期，状态完全由今天落在哪一侧推出。 */
+function scanSweetSelfMade(
+  bytes: Uint8Array, today: SweetSave['date'], tables: SweetCaseTables,
+  allStars: Record<string, string>, teams: SweetTeam[], signedIds: number[],
+): SweetSelfMadeNotice[] {
+  const createStart = findSection(bytes, 'CaseCreate');
+  const caseStart = findSection(bytes, 'Case');
+  const caseEnd = findSection(bytes, 'CaseEnd');
+  if (createStart < 0 || caseStart < 0 || caseEnd <= caseStart) return [];
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const count = readI32(view, createStart);
+  if (count < 1 || count > 400) return [];
+
+  // Case 段里每条本体都以 `[5][5×ASCII 通告码][0]` 开头，用下一个起点限定块长。
+  const starts: { at: number; code: string }[] = [];
+  for (let i = caseStart; i + 10 <= caseEnd; i += 1) {
+    if (bytes[i] !== 5 || bytes[i + 1] || bytes[i + 2] || bytes[i + 3]) continue;
+    let code = '';
+    let ok = true;
+    for (let k = 0; k < 5; k += 1) {
+      const c = bytes[i + 4 + k];
+      if (c < 0x30 || c > 0x7a) { ok = false; break; }
+      code += String.fromCharCode(c);
+    }
+    if (ok && bytes[i + 9] === 0 && /^[A-Z]{2}[0-9A-Z]{3}$/.test(code)) {
+      starts.push({ at: i, code });
+    }
+  }
+
+  const mineIds = new Set([1, ...signedIds.filter((id) => id >= 1 && id <= 110)]);
+  const starIds = new Set(Object.keys(allStars).map(Number).filter((id) => id >= 1 && id <= 110));
+  const todayValue = dayValue(today.year, today.month, today.day);
+  const emptyReservations = new Map<string, string>();
+  const out: SweetSelfMadeNotice[] = [];
+
+  for (let k = 0; k < count; k += 1) {
+    const at = createStart + 8 + k * 14;
+    if (at + 14 > bytes.length) break;
+    let code = '';
+    let valid = bytes[at + 5] === 0;
+    for (let j = 0; j < 5 && valid; j += 1) {
+      const c = bytes[at + j];
+      if (c < 0x30 || c > 0x7a) { valid = false; break; }
+      code += String.fromCharCode(c);
+    }
+    if (!valid || !/^[A-Z]{2}[0-9A-Z]{3}$/.test(code)) break;
+    const days = readI32(view, at + 10);
+    const first = starts.find((item) => item.code === code);
+    if (!first) continue;
+    const next = starts.find((item) => item.at > first.at);
+    const length = Math.min(1024, (next?.at ?? caseEnd) - first.at);
+    if (length < 1000) continue;
+    const rec = bytes.subarray(first.at, first.at + length);
+    const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
+    const classId = readI32(recView, 10);
+    const body = readNoticeBody(rec, recView, code, tables, allStars, emptyReservations, classId, false, 4);
+    if (!body) continue;
+
+    const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
+    const casts: SweetSelfMadeCast[] = [];
+    const claimed = new Set<string>();
+    // 接演记录顺序＝角色号顺序，最多 8 格；主角在第 8 格，前四格之外也要读。
+    for (let slot = 0; slot < 8; slot += 1) {
+      const p = 816 + slot * 24;
+      if (p + 24 > length) break;
+      const flag = readI32(recView, p);
+      const artistId = readI32(recView, p + 4);
+      const doneDays = readI32(recView, p + 8);
+      const a = readI32(recView, p + 12);
+      const b = readI32(recView, p + 16);
+      const pay = readI32(recView, p + 20);
+      if (flag < 0 || flag > 3 || !starIds.has(artistId)) continue;
+      // 尾部槽常写 `（無）` 占位编号，不是真的有人接演。
+      if (!isRealReservationName(allStars[String(artistId)] ?? '')) continue;
+      if (doneDays < 0 || doneDays > 90 || a < 0 || a > 99 || b < 0 || b > 99) continue;
+      if (pay < 0 || pay > 1e9) continue;
+      let role: SweetNoticeRole | null = sortedRoles[slot] ?? null;
+      // 主角在 StarRole 里被误标成男，这里与归档作品一样按女角处理。
+      const gender = artistId === 1 ? 1 : tables.genders?.[String(artistId)];
+      const want = gender === 0 ? 'male' : gender === 1 ? 'female' : undefined;
+      if (role && want && sweetRoleGender(role.roleType) !== want && sortedRoles.length > 1) {
+        role = sortedRoles.find((item) => !claimed.has(item.code)
+          && sweetRoleGender(item.roleType) === want) ?? role;
+      }
+      if (!role && want && sortedRoles.length > 1) {
+        role = sortedRoles.find((item) => !claimed.has(item.code)
+          && sweetRoleGender(item.roleType) === want) ?? null;
+      }
+      if (role) claimed.add(role.code);
+      else if (sortedRoles.length === 1) role = sortedRoles[0];
+      const workDays = role?.workDays && role.workDays > 0
+        ? Math.max(role.workDays, doneDays) : doneDays + b;
+      const team = teams.find((item) => item.leaderId === artistId || item.memberIds.includes(artistId));
+      const groupRole = role?.roleType === 4 || role?.role === '團體';
+      casts.push({
+        artistId,
+        artistName: groupRole && team ? team.name : allStars[String(artistId)] ?? `艺人${artistId}`,
+        role,
+        pay,
+        mine: mineIds.has(artistId)
+          || Boolean(team && team.memberIds.some((id) => mineIds.has(id))),
+        doneDays,
+        needDays: Math.max(0, workDays - doneDays),
+        workDays,
+        group: groupRole && team ? {
+          name: team.name,
+          leaderName: allStars[String(team.leaderId)] ?? `艺人${team.leaderId}`,
+          memberNames: team.memberIds.map((id) => allStars[String(id)] ?? `艺人${id}`),
+        } : null,
+      });
+    }
+
+    const start = body.dates[0]?.value;
+    const finish = body.dates[1]?.value;
+    // 开拍必须是周一，否则宁可不显示档期也不猜；后期存档的块会挪几个字节。
+    const startDate = start && start[3] === 1 && finish ? start : null;
+    const startDay = startDate ? dayValue(startDate[0], startDate[1], startDate[2]) : NaN;
+    const endDay = finish ? dayValue(finish[0], finish[1], finish[2]) : NaN;
+    let status: SweetSelfMadeStatus = 'unknown';
+    if (Number.isFinite(startDay) && Number.isFinite(endDay)) {
+      status = todayValue < startDay ? 'pending' : todayValue <= endDay ? 'shooting' : 'done';
+    }
+    // 一个人都没接就谈不上拍摄，更谈不上完成：档期只是挂在列表上的排期。
+    if (casts.length === 0) status = 'pending';
+    else if (status === 'done') {
+      // 档期一过作品就发布了，存档里的「已完成 / 还差」是杀青时的快照，
+      // 不会因发布回写；不能拿它判逾期，一律按拍满处理。
+      for (const cast of casts) {
+        if (cast.workDays > 0) {
+          cast.doneDays = cast.workDays;
+          cast.needDays = 0;
+        }
+      }
+    }
+    out.push({
+      seq: out.length + 1,
+      code,
+      name: body.name,
+      category: body.category,
+      type: body.type,
+      company: body.company,
+      days,
+      daysPerWeek: sortedRoles.find((role) => role.daysPerWeek > 0)?.daysPerWeek ?? 0,
+      roles: body.roles,
+      casts,
+      startDate: startDate ? dateText(startDate) : '',
+      endDate: finish ? dateText(finish) : '',
+      startDay,
+      endDay,
+      daysLeft: Number.isFinite(endDay) ? endDay - todayValue : NaN,
+      daysToStart: Number.isFinite(startDay) ? startDay - todayValue : NaN,
+      status,
+    });
+  }
+  return out;
+}
+
 /** 拍摄中：已接取、还没杀青的通告。接取记录是 24B `[flag][id][done][a][b][pay]`，
  *  位于本体尾部 +800~+900，与主站同构。找第一条 pay≥1000 的真记录当锚点，
  *  再按 24B 网格前后双向扩展（带头像的艺人未必排最前），避免漏掉 pay=0 的演员。 */
@@ -1639,6 +1842,7 @@ export async function parseSweetSave(
   const waiting = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'waiting');
   const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'hot');
   const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'done');
+  const selfMade = scanSweetSelfMade(bytes, date, tables, reservationStars, teams, signedIds);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -1657,5 +1861,6 @@ export async function parseSweetSave(
     waiting,
     hot,
     done,
+    selfMade,
   };
 }
