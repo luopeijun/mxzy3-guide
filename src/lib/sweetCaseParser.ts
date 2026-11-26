@@ -211,6 +211,29 @@ export interface SweetPromoNotice {
   casts: SweetPromoCast[];
 }
 
+/** 等待上市的一位我方参演者，字段与拍摄中接演记录同源。 */
+export interface SweetWaitingCast {
+  artistId: number;
+  artistName: string;
+  role: SweetNoticeRole | null;
+  doneDays: number;
+  pay: number;
+}
+
+/** 等待上市的作品：已杀青、还没到发行日，只列我方艺人/团体参与的角色行。 */
+export interface SweetWaitingNotice {
+  code: string;
+  name: string;
+  category: string;
+  type: string;
+  company: string;
+  startDate: string;
+  endDate: string;
+  saleStart: string;
+  saleEnd: string;
+  casts: SweetWaitingCast[];
+}
+
 /** 拍摄中风险档位，沿用主站两档口径：排不下=违约、余量 ≤5 天=逾期风险。 */
 export type SweetShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
 export type SweetShootingStatus = 'pending' | 'shooting' | 'done';
@@ -307,6 +330,8 @@ export interface SweetSave {
   shooting: SweetShootingNotice[];
   /** 宣传中通告：作品本体衍生出的宣传记录，按作品分组展示。 */
   promo: SweetPromoNotice[];
+  /** 等待上市通告：已杀青、还没到发行日的作品，只列我方参演。 */
+  waiting: SweetWaitingNotice[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -907,7 +932,7 @@ function readNoticeBody(
   rec: Uint8Array, recView: DataView, code: string,
   tables: SweetCaseTables, stars: Record<string, string>,
   tailReservations: Map<string, string>, classId: number,
-  promo = false,
+  promo = false, dateLimit = 3,
 ): SweetNoticeBody | null {
   const nameLength = readI32(recView, 22);
   if (nameLength < 1 || nameLength > 64) return null;
@@ -979,7 +1004,7 @@ function readNoticeBody(
   roles.sort((a, b) => a.code.localeCompare(b.code));
 
   const dates: { offset: number; value: DateTuple }[] = [];
-  for (let o = 860; o + 16 <= rec.length && dates.length < 3; o += 1) {
+  for (let o = 860; o + 16 <= rec.length && dates.length < dateLimit; o += 1) {
     const tuple = readDateTuple(recView, o);
     if (!tuple) continue;
     if (dates.length && o <= dates[dates.length - 1].offset + 4) continue;
@@ -1208,6 +1233,118 @@ function scanSweetPromo(
       startDate: dateText(start),
       endDate: dateText(end),
       endDay: dayValue(end[0], end[1], end[2]),
+      casts,
+    });
+  }
+  return out;
+}
+
+/** 等待上市：Case 本体的五组档期里，今天已过杀青、还没到上档日的作品。
+ *  接演记录与拍摄中同构，从本体 +816 起每 24B 一组 `[flag][id][done][a][b][pay]`；
+ *  上档 / 下档是第四、第五组四元组，不能用作品清单或宣传档期代替。 */
+function scanSweetWaiting(
+  bytes: Uint8Array, today: SweetSave['date'], tables: SweetCaseTables,
+  allStars: Record<string, string>, teams: SweetTeam[], signedIds: number[],
+): SweetWaitingNotice[] {
+  const caseStart = findSection(bytes, 'Case');
+  const caseEnd = findSection(bytes, 'CaseEnd');
+  if (caseStart < 0 || caseEnd <= caseStart) return [];
+  const caseBytes = bytes.subarray(caseStart, caseEnd);
+  const emptyReservations = new Map<string, string>();
+  const mineIds = new Set([1, ...signedIds.filter((id) => id >= 1 && id <= 110)]);
+  const starIds = new Set(Object.keys(allStars).map(Number).filter((id) => id >= 1 && id <= 110));
+  const todayValue = dayValue(today.year, today.month, today.day);
+  const starts: { at: number; code: string }[] = [];
+  for (let i = 0; i + 10 <= caseBytes.length; i += 1) {
+    if (caseBytes[i] !== 5 || caseBytes[i + 1] || caseBytes[i + 2] || caseBytes[i + 3]) continue;
+    let code = '';
+    let ok = true;
+    for (let k = 0; k < 5; k += 1) {
+      const c = caseBytes[i + 4 + k];
+      if (c < 0x30 || c > 0x7a) { ok = false; break; }
+      code += String.fromCharCode(c);
+    }
+    if (ok && caseBytes[i + 9] === 0 && /^[A-Z]{2}[0-9A-Z]{3}$/.test(code)) {
+      starts.push({ at: i, code });
+    }
+  }
+
+  const out: SweetWaitingNotice[] = [];
+  const seen = new Set<string>();
+  for (let idx = 0; idx < starts.length; idx += 1) {
+    const { at, code } = starts[idx];
+    if (seen.has(code)) continue;
+    const nextAt = idx + 1 < starts.length ? starts[idx + 1].at : caseBytes.length;
+    const length = Math.min(1024, nextAt - at);
+    if (length < 1000) continue;
+    const rec = caseBytes.subarray(at, at + length);
+    const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
+    const classId = readI32(recView, 10);
+    // 宣传记录虽然也有五组日期，但它们是宣传档期，不是作品发行档期。
+    if (SWEET_PROMO_KIND_IDS.has(classId)) continue;
+    const body = readNoticeBody(rec, recView, code, tables, allStars, emptyReservations, classId, false, 5);
+    if (!body || body.dates.length < 5) continue;
+    const end = body.dates[2].value;
+    const saleStart = body.dates[3].value;
+    const saleEnd = body.dates[4].value;
+    const endDay = dayValue(end[0], end[1], end[2]);
+    const saleDay = dayValue(saleStart[0], saleStart[1], saleStart[2]);
+    if (!(todayValue > endDay && todayValue < saleDay)) continue;
+
+    const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
+    const claimed = new Set<string>();
+    const casts: SweetWaitingCast[] = [];
+    for (let slot = 0; slot < 4; slot += 1) {
+      const p = 816 + slot * 24;
+      if (p + 24 > length) break;
+      const flag = readI32(recView, p);
+      const artistId = readI32(recView, p + 4);
+      const doneDays = readI32(recView, p + 8);
+      const a = readI32(recView, p + 12);
+      const b = readI32(recView, p + 16);
+      const pay = readI32(recView, p + 20);
+      if (flag < 0 || flag > 3 || !starIds.has(artistId)) continue;
+      if (doneDays < 0 || doneDays > 90 || a < 0 || a > 99 || b < 0 || b > 99) continue;
+      if (pay < 0 || pay > 1e9) continue;
+      const team = teams.find((item) => item.leaderId === artistId || item.memberIds.includes(artistId));
+      const isMine = mineIds.has(artistId)
+        || Boolean(team && team.memberIds.some((id) => mineIds.has(id)));
+      if (!isMine) continue;
+      let role: SweetNoticeRole | null = sortedRoles[slot] ?? null;
+      // 主角在 StarRole 里被误标成男，这里与拍摄中一样特判。
+      const gender = artistId === 1 ? 1 : tables.genders?.[String(artistId)];
+      const need = role ? sweetRoleGender(role.roleType) : undefined;
+      if (role && need && gender !== undefined
+        && ((need === 'male' && gender !== 0) || (need === 'female' && gender !== 1))
+        && sortedRoles.length > 1) {
+        const wanted = gender === 0 ? 'male' : 'female';
+        role = sortedRoles.find((item) => !claimed.has(item.code)
+          && sweetRoleGender(item.roleType) === wanted) ?? role;
+      }
+      if (role) claimed.add(role.code);
+      else if (body.roles.length === 1) role = body.roles[0];
+      // 只有团体角色才显示团体名；主角即便在团体里，个人作品仍显示本人姓名。
+      const groupRole = role?.roleType === 4 || role?.role === '團體';
+      casts.push({
+        artistId,
+        artistName: groupRole && team ? team.name : allStars[String(artistId)] ?? `艺人${artistId}`,
+        role,
+        doneDays,
+        pay,
+      });
+    }
+    if (casts.length === 0) continue;
+    seen.add(code);
+    out.push({
+      code,
+      name: body.name,
+      category: body.category,
+      type: body.type,
+      company: body.company,
+      startDate: dateText(body.dates[1].value),
+      endDate: dateText(end),
+      saleStart: dateText(saleStart),
+      saleEnd: dateText(saleEnd),
       casts,
     });
   }
@@ -1473,6 +1610,7 @@ export async function parseSweetSave(
   const notices = scanSweetNotices(bytes, view, date, tables, reservationStars);
   const shooting = scanSweetShooting(bytes, view, date, tables, reservationStars, signedIds);
   const promo = scanSweetPromo(bytes, tables, reservationStars, teams);
+  const waiting = scanSweetWaiting(bytes, date, tables, reservationStars, teams, signedIds);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -1488,5 +1626,6 @@ export async function parseSweetSave(
     notices,
     shooting,
     promo,
+    waiting,
   };
 }
