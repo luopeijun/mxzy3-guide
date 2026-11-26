@@ -750,6 +750,11 @@ function findBytes(haystack: Uint8Array, needle: Uint8Array): number {
   return -1;
 }
 
+/** StarRole 里的「（新藝人）」「（無）」是空槽占位，不是真的有人预约。 */
+function isRealReservationName(name: string): boolean {
+  return Boolean(name) && !/新藝人|新艺人|（無）|\(無\)/.test(name);
+}
+
 /** 早期存档（如 Story0019）把预约写在存档尾部的 `[6][角色码\0][艺人编号]`，
  *  通告本体里没有 `[6][0]` 槽。全档扫描只命中真正填了艺人的记录，作为兜底真源。 */
 function scanTailReservations(bytes: Uint8Array, stars: Record<string, string>): Map<string, string> {
@@ -766,7 +771,7 @@ function scanTailReservations(bytes: Uint8Array, stars: Record<string, string>):
     const id = readI32(view, end + 1);
     if (id < 1 || id > 110) continue;
     const name = stars[String(id)];
-    if (name && !out.has(roleCode)) out.set(roleCode, name);
+    if (isRealReservationName(name) && !out.has(roleCode)) out.set(roleCode, name);
   }
   return out;
 }
@@ -868,7 +873,8 @@ function scanSweetNotices(
     if (reservationAt >= 0) {
       roles.forEach((role, i) => {
         const id = readI32(recView, reservationAt + 8 + i * 24);
-        if (id > 0 && id <= 110 && stars[String(id)]) role.reservedBy = stars[String(id)];
+        const name = stars[String(id)] ?? '';
+        if (id > 0 && id <= 110 && isRealReservationName(name)) role.reservedBy = name;
       });
     }
     // 本体没有 [6][0] 槽的老存档改用尾部角色码记录兜底，不覆盖本体读到的真值。
@@ -934,6 +940,9 @@ export async function parseSweetSave(
 
   const signedIds = [0x34, 0x38, 0x3c].map((o) => readI32(view, o)).filter((id) => id >= 1 && id <= 110);
   const protagonist = readBig5(bytes, 0x04);
+  // UI 里的主角名一律用存档内自命名，预约列也跟随，避免数值对比与预约两处不同名。
+  const displayProtagonist = protagonist || stars['1'] || '杜云芊';
+  const reservationStars = { ...stars, '1': displayProtagonist };
   const company = readCompany(bytes, view);
   const blocks = scanArtists(bytes, view, titles);
   const relations = scanRelations(view, bytes);
@@ -945,7 +954,7 @@ export async function parseSweetSave(
   const artists: SweetArtistCard[] = [
     {
       id: 1,
-      name: protagonist || '杜云芊',
+      name: displayProtagonist,
       isProtagonist: true,
       ...withRelation(1, scanProtagonist(bytes, view, titles)),
     },
@@ -967,7 +976,7 @@ export async function parseSweetSave(
   const teams = scanSweetTeams(bytes, view, stars);
   const diaryTable = findSweetDiaryTable(view, bytes.length);
   const diaryAwards = scanDiaryAwards(bytes, view, protagonist, companyName, stars, diaryTable);
-  const notices = scanSweetNotices(bytes, view, date, tables, stars);
+  const notices = scanSweetNotices(bytes, view, date, tables, reservationStars);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
