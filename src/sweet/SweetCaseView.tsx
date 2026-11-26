@@ -8,8 +8,9 @@ import {
   type SweetNotice, type SweetNoticeRole, type SweetPromoNotice, type SweetSave,
   type SweetSelfMadeNotice, type SweetSelfMadeStatus,
   type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
-  type SweetWaitingNotice,
+  type SweetWaitingNotice, type SweetWorkRecord,
 } from '../lib/sweetCaseParser';
+import { companyDot, companyText } from '../components/notices/infoStyle';
 import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
 
@@ -87,6 +88,82 @@ function sweetChipClass(active: boolean) {
     active
       ? 'border-brand bg-brand font-semibold text-white'
       : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+  );
+}
+
+/** 通告统计的小胶囊 + 悬停作品清单，与主站 WorkCountChip 同一套样式和交互。 */
+function SweetWorkCountChip({
+  label, value, works, title, dataName, dataValue, dataNoticeIndex,
+}: {
+  label: string;
+  value: number;
+  works: readonly SweetWorkRecord[];
+  title: string;
+  dataName?: string;
+  dataValue?: string;
+  dataNoticeIndex?: number;
+}) {
+  return (
+    <span className="work-count-chip group relative inline-flex">
+      <span
+        {...(dataName ? { [dataName]: dataValue ?? '' } : {})}
+        data-notice-index={dataNoticeIndex}
+        tabIndex={0}
+        role="button"
+        className="cursor-help rounded px-1 py-0.5 text-ink-faint outline-none transition-colors hover:bg-count-soft hover:text-ink focus-visible:bg-count-soft focus-visible:text-ink focus-visible:ring-2 focus-visible:ring-brand-line"
+      >
+        {label} <b className="font-semibold text-ink">{value}</b>
+      </span>
+      {works.length > 0 && (
+        <span
+          data-sweet-case-works-card
+          role="tooltip"
+          className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+        >
+          <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
+            <span className="mb-1 flex items-baseline gap-1">
+              <b className="text-ui-2xs text-ink">{title}</b>
+              <span className="text-ui-2xs text-ink-faint">{works.length} 条（按发生顺序）</span>
+            </span>
+            <span
+              data-sweet-case-works-scroll
+              className="block max-h-[240px] overflow-y-auto overscroll-contain pr-1"
+            >
+              {works.map((work, index) => (
+                <span
+                  key={`${work.workCode}-${work.order}`}
+                  data-sweet-case-artist-work
+                  className="flex flex-wrap items-baseline gap-x-1 border-t border-line py-1 text-ui-2xs leading-[1.4]"
+                >
+                  <span className="shrink-0 font-semibold tabular-nums text-ink-muted">{index + 1}.</span>
+                  {work.date && <span className="text-ink-faint">{work.date}</span>}
+                  <span className={cn('font-semibold', work.workCode ? 'text-ink' : 'text-ink-faint')}>
+                    {work.workName}
+                  </span>
+                  {work.company && (
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 font-semibold',
+                        companyText(work.company),
+                      )}
+                    >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
+                          companyDot(work.company),
+                        )}
+                      />
+                      {work.company}
+                    </span>
+                  )}
+                </span>
+              ))}
+            </span>
+          </span>
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -1703,13 +1780,24 @@ export default function SweetCaseView() {
                         <div data-sweet-case-counts className="mt-0.5 flex flex-wrap items-center text-ui-2xs">
                           <span className="mr-1 text-ink-faint">通告统计</span>
                           {SWEET_NOTICE_LABELS.map((label, index) => (
-                            <span key={label} data-sweet-case-notice-count={label} className="rounded px-1 py-0.5 text-ink-faint">
-                              {label} <b className="font-semibold text-ink">{artist.noticeCounts[index] ?? 0}</b>
-                            </span>
+                            <SweetWorkCountChip
+                              key={label}
+                              dataName="data-sweet-case-notice-count"
+                              dataValue={label}
+                              dataNoticeIndex={index}
+                              label={label}
+                              value={artist.noticeCounts[index] ?? 0}
+                              works={save.works.filter((work) => work.artistId === artist.id && work.noticeIndex === index)}
+                              title={`${label}作品`}
+                            />
                           ))}
-                          <span data-sweet-case-notice-total className="rounded px-1 py-0.5 text-ink-faint">
-                            合计 <b className="font-semibold text-ink">{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
-                          </span>
+                          <SweetWorkCountChip
+                            dataName="data-sweet-case-notice-total"
+                            label="合计"
+                            value={artist.noticeCounts.reduce((sum, n) => sum + n, 0)}
+                            works={save.works.filter((work) => work.artistId === artist.id)}
+                            title="全部作品"
+                          />
                         </div>
                         {save.awards.some((award) => awardBelongsTo(award, artist.name)) && (
                           <div data-sweet-case-artist-awards className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
