@@ -246,8 +246,10 @@ export default function SweetCaseView() {
                     主角 {save.protagonist || '未记录'}
                   </span>
                 </summary>
-                <div data-sweet-case-company-stats className="mt-2 grid grid-cols-2 gap-2 phone:grid-cols-2">
-                  <SweetCaseStat label="公司名" value={save.company || '—'} attr="company" />
+                <div data-sweet-case-company-stats className="mt-2 grid grid-cols-4 gap-2 phone:grid-cols-2">
+                  <SweetCaseStat label="公司形象" value={save.companyImage || '未读出'} attr="image" />
+                  <SweetCaseStat label="知名度" value={String(save.fame)} attr="fame" />
+                  <SweetCaseStat label="公关" value={String(save.pr)} attr="pr" />
                   <SweetCaseStat label="主角" value={save.protagonist || '—'} attr="protagonist" />
                 </div>
               </details>

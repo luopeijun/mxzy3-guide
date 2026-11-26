@@ -11,8 +11,9 @@
  *   - 艺人当前属性块：块头 `[327680][x][x][x][id][x][1][0]`（id 在 +16）后
  *     紧接九项 int32 能力（演技/口才/歌艺/名气/智慧/才艺/体能/仪态/自信，
  *     从 +32 起）。
- *
- *  性格 / 知名度 / 公关等字段尚未定位，第一步不读，避免读出错值。 */
+ *   - 公司形象 / 知名度 / 公关在 `Firm` 段：标记 `[4][\"Firm\\0\"]`，随后
+ *     `[公司数][编号][名字字节数][Big5 名字][NUL][知名度][公关][0]`，
+ *     编号 1 是我方；知名度与公关存档 ×10，界面按整数显示（向下取整）。 */
 
 export const SWEET_ABILITY_LABELS = [
   '演技', '口才', '歌艺', '名气', '智慧', '才艺', '体能', '仪态', '自信',
@@ -27,6 +28,9 @@ export interface SweetArtistCard {
 export interface SweetSave {
   protagonist: string;
   company: string;
+  companyImage: string;
+  fame: number;
+  pr: number;
   date: { year: number; month: number; day: number; weekday: number };
   signedIds: number[];
   artists: SweetArtistCard[];
@@ -66,6 +70,53 @@ async function inflateSave(file: File): Promise<Uint8Array> {
   return raw;
 }
 
+/** `Firm` 段：编号 1 是我方，名字即公司形象文案；知名度/公关存档 ×10。 */
+function readCompany(bytes: Uint8Array, view: DataView): {
+  image: string; fame: number; pr: number;
+} {
+  const marker = [0x04, 0x00, 0x00, 0x00, 0x46, 0x69, 0x72, 0x6d, 0x00]; // [4]"Firm\0"
+  let start = -1;
+  for (let i = 0; i + marker.length <= bytes.length; i += 1) {
+    let match = true;
+    for (let k = 0; k < marker.length; k += 1) {
+      if (bytes[i + k] !== marker[k]) { match = false; break; }
+    }
+    if (match) { start = i; break; }
+  }
+  const empty = { image: '', fame: 0, pr: 0 };
+  if (start < 0) return empty;
+
+  let offset = start + marker.length;
+  const count = readI32(view, offset);
+  offset += 4;
+  if (count < 1 || count > 50) return empty;
+
+  let result = empty;
+  let found = false;
+  for (let index = 0; index < count; index += 1) {
+    const id = readI32(view, offset);
+    offset += 4;
+    const nameLength = readI32(view, offset);
+    offset += 4;
+    if (nameLength < 0 || nameLength > 64 || offset + nameLength + 13 > bytes.length) return empty;
+    const name = readBig5(bytes, offset, nameLength);
+    offset += nameLength;
+    if (bytes[offset] === 0) offset += 1;
+    const rawFame = readI32(view, offset);
+    offset += 4;
+    const rawPr = readI32(view, offset);
+    offset += 4;
+    const tail = readI32(view, offset);
+    offset += 4;
+    if (id !== index + 1 || tail !== 0 || rawFame < 0 || rawPr < 0) return empty;
+    if (id === 1) {
+      result = { image: name, fame: Math.floor(rawFame / 10), pr: Math.floor(rawPr / 10) };
+      found = true;
+    }
+  }
+  return found ? result : empty;
+}
+
 /** 扫描艺人属性块。返回 id -> 九项能力。 */
 function scanArtists(bytes: Uint8Array, view: DataView): Map<number, number[]> {
   const out = new Map<number, number[]>();
@@ -97,6 +148,7 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
   if (bytes.byteLength < 0x50) throw new Error('存档数据过短，不是有效的甜蜜乐章存档');
 
   const signedIds = [0x34, 0x38, 0x3c].map((o) => readI32(view, o)).filter((id) => id >= 1 && id <= 110);
+  const company = readCompany(bytes, view);
   const blocks = scanArtists(bytes, view);
   const artists = signedIds.map((id) => ({
     id,
@@ -107,6 +159,9 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
   return {
     protagonist: readBig5(bytes, 0x04),
     company: readBig5(bytes, 0x19),
+    companyImage: company.image,
+    fame: company.fame,
+    pr: company.pr,
     date: {
       year: readI32(view, 0x40),
       month: readI32(view, 0x44),
