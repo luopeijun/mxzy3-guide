@@ -93,3 +93,11 @@
 - `Story0007.sav`：1 部（TVA3X）；`Story0009.sav`：4 部（TV013 / TV040 / CD184 / CDADV）；`Story0017.sav`：4 部（TV185 / CD293 / CDAR4 / SH049）。
 - `Story0019.sav`：1 部（MVAS3）；`Story0023.sav`：6 部（MV012 / MVA5G / MVAS3 / CDA19 / SH053 / SHAAN）；`Story0032.sav`：3 部（TVA1A / TVALG / SH004）。
 - `Story0035.sav`：2 部（TVA1A / SHA0X）；`Story0052.sav`：3 部（TV013 / TV040 / MVA29）；`Story0065.sav`：1 部（MV177）。
+
+### 热卖中通告（与等待上市同一真源，日期口径换成已上档未下档）
+
+同一本体第 4/5 组发行档期，判定为今天 ≥ 上档日、≤ 下档日（含边界）；接演记录、我方过滤、角色落位与五列表格与等待上市完全相同。当前按作品计数的真值：
+
+- `Auto.sav`（2010/12/26）：4 部（TVA1B / MV177 / MVA29 / MVAL5）。
+- `Story0007.sav`：5 部（TV013 / TV040 / MV077 / CDA14 / CDADV）；`Story0009.sav`：3 部（TVAFW / MV051 / CDARN）；`Story0017.sav`：5 部（TV120 / TVAMR / CDA03 / SHA3B / SHA4P）。
+- `Story0019.sav`：10 部；`Story0023.sav`：7 部；`Story0032.sav`：6 部；`Story0035.sav`：7 部；`Story0052.sav`：2 部（TVAFW / SH040）；`Story0065.sav`：1 部（MVAL5）。
