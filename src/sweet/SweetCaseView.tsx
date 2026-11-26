@@ -469,10 +469,55 @@ function sweetTabClass(active: boolean) {
   );
 }
 
+interface SweetUpdateBatch {
+  date: string;
+  dayNumber: number;
+  label: string;
+  companies: string[];
+  kinds: string[];
+  codes: string[];
+  daysAway: number;
+}
+
+/** 开放节奏只按页面列出的筹备中通告归并；日期是 YYYY/M/M/D，差值走 UTC 天数。 */
+function sweetDayNumber(text: string): number | null {
+  const [year, month, day] = text.split('/').map(Number);
+  if (!year || !month || !day) return null;
+  return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+}
+
+function sweetUpdateInfo(save: SweetSave) {
+  const today = Math.floor(Date.UTC(save.date.year, save.date.month - 1, save.date.day) / 86400000);
+  const byDay = new Map<number, SweetUpdateBatch>();
+  for (const notice of save.notices) {
+    const dayNumber = sweetDayNumber(notice.openDate);
+    if (dayNumber === null) continue;
+    let batch = byDay.get(dayNumber);
+    if (!batch) {
+      const weekday = ['日', '一', '二', '三', '四', '五', '六'][new Date(dayNumber * 86400000).getUTCDay()];
+      batch = {
+        date: notice.openDate, dayNumber, label: weekday,
+        companies: [], kinds: [], codes: [], daysAway: dayNumber - today,
+      };
+      byDay.set(dayNumber, batch);
+    }
+    if (notice.company && !batch.companies.includes(notice.company)) batch.companies.push(notice.company);
+    if (notice.category && !batch.kinds.includes(notice.category)) batch.kinds.push(notice.category);
+    if (!batch.codes.includes(notice.code)) batch.codes.push(notice.code);
+  }
+  const batches = [...byDay.values()].sort((a, b) => a.dayNumber - b.dayNumber);
+  return {
+    closingCount: save.notices.filter((notice) => notice.status === 'closing').length,
+    batches,
+    nextUpdate: batches.find((batch) => batch.dayNumber > today) ?? null,
+  };
+}
+
 /** 与明星志愿3 存档解析同款的小结块：右侧固定，默认收成一行，点开才列条目。 */
 function SweetCaseToc({ save }: { save: SweetSave }) {
   const [active, setActive] = useState('');
   const [collapsed, setCollapsed] = useState(true);
+  const updates = useMemo(() => sweetUpdateInfo(save), [save]);
   const entries = useMemo(() => [
     { id: 'clock', label: '游戏时间', selector: '[data-sweet-case-clock]', summary: formatSweetDate(save.date) },
     { id: 'company', label: '公司', selector: '[data-sweet-case-company]', summary: `主角 ${save.protagonist || '未记录'}` },
@@ -502,13 +547,14 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
           summary: `${save.producers.filter((p) => save.producerFriendship[p.code] !== undefined).length} 位`,
         }]
       : []),
+    { id: 'updates', label: '开放节奏', selector: '[data-sweet-case-updates]', summary: `归并 ${updates.batches.length} 批` },
     { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
     { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
     { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
     { id: 'waiting', label: '等待上市通告', selector: '[data-sweet-case-notices]', summary: `${save.waiting.length} 条` },
     { id: 'hot', label: '热卖中通告', selector: '[data-sweet-case-notices]', summary: `${save.hot.length} 条` },
     { id: 'done', label: '已完成通告', selector: '[data-sweet-case-notices]', summary: `${save.done.length} 条` },
-  ], [save]);
+  ], [save, updates.batches.length]);
 
   useEffect(() => {
     const root = document.querySelector('[data-sweet-case-scroll]');
@@ -2139,6 +2185,10 @@ export default function SweetCaseView() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting' | 'hot' | 'done' | 'selfMade'>('open');
+  const updateInfo = useMemo(
+    () => (save ? sweetUpdateInfo(save) : { closingCount: 0, batches: [], nextUpdate: null }),
+    [save],
+  );
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
@@ -2301,6 +2351,21 @@ export default function SweetCaseView() {
                 <span data-sweet-case-date className="rounded-full bg-brand px-2 py-0.5 font-bold text-white">
                   {formatSweetDate(save.date)}
                 </span>
+                <span className="text-ink-faint">|</span>
+                <span className={cn('font-semibold', updateInfo.closingCount ? 'text-alert' : 'text-ink-muted')} data-sweet-case-closing>
+                  7 天内停止接取 {updateInfo.closingCount} 条
+                </span>
+                <span className="text-ink-faint">|</span>
+                {updateInfo.nextUpdate ? (
+                  <span className="text-ink-muted" data-sweet-case-next-update>
+                    下次更新 <b className="text-brand-strong">{updateInfo.nextUpdate.date} 星期{updateInfo.nextUpdate.label}</b>
+                    （{updateInfo.nextUpdate.daysAway > 0 ? `${updateInfo.nextUpdate.daysAway} 天后` : '今天'}）：
+                    {updateInfo.nextUpdate.companies.join(' / ') || '制作公司未记录'}
+                    <span className="ml-1 text-ink-faint">· {updateInfo.nextUpdate.codes.length} 条{updateInfo.nextUpdate.kinds.join('、')}</span>
+                  </span>
+                ) : (
+                  <span className="text-ink-faint">存档里没有更晚一批的通告</span>
+                )}
               </div>
 
               <details data-sweet-case-company data-sweet-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
@@ -2631,7 +2696,7 @@ export default function SweetCaseView() {
                 </details>
               )}
 
-              {/* 制作人好感：六列分组，友好度按编号从存档友好度表反查。 */}
+              {/* 制作人好感：七列分组，友好度按编号从存档友好度表反查。 */}
               {save.producers.length > 0 && (
                 <details
                   data-sweet-case-producers
@@ -2653,6 +2718,35 @@ export default function SweetCaseView() {
                   />
                 </details>
               )}
+
+              {/* 各公司开放节奏：只按页面列出的筹备中通告归并，历史批次不进这里。 */}
+              <details data-sweet-case-updates data-sweet-case-toc-target className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
+                <summary className="cursor-pointer font-semibold text-brand-strong">
+                  各公司开放节奏 · 按下面通告的接取日归并 {updateInfo.batches.length} 批
+                </summary>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {updateInfo.batches.map((batch) => (
+                    <span
+                      key={batch.date}
+                      data-sweet-case-batch
+                      className={cn(
+                        'rounded border px-2 py-1 leading-[1.5]',
+                        batch.daysAway > 0
+                          ? 'border-brand-line bg-brand-soft text-ink-muted'
+                          : 'border-line bg-surface-soft text-ink-faint',
+                      )}
+                    >
+                      <b className="text-ink-muted">{batch.date} 星期{batch.label}</b>
+                      <span className="ml-1 text-ink-faint">
+                        {batch.daysAway > 0 ? `${batch.daysAway} 天后` : batch.daysAway === 0 ? '今天' : '已开放'}
+                      </span>
+                      <br />
+                      <span>{batch.companies.join(' / ') || '公司未记录'}</span>
+                      <span className="ml-1 text-ink-faint">· {batch.codes.length} 条</span>
+                    </span>
+                  ))}
+                </div>
+              </details>
 
               <div data-sweet-case-notices data-sweet-case-toc-target className="mt-2">
                 <div data-case-tabs role="tablist" aria-label="通告状态" className="flex flex-wrap items-center gap-1.5">
