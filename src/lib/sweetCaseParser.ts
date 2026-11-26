@@ -750,11 +750,33 @@ function findBytes(haystack: Uint8Array, needle: Uint8Array): number {
   return -1;
 }
 
+/** 早期存档（如 Story0019）把预约写在存档尾部的 `[6][角色码\0][艺人编号]`，
+ *  通告本体里没有 `[6][0]` 槽。全档扫描只命中真正填了艺人的记录，作为兜底真源。 */
+function scanTailReservations(bytes: Uint8Array, stars: Record<string, string>): Map<string, string> {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const out = new Map<string, string>();
+  for (let o = 0; o + 16 <= bytes.length; o += 1) {
+    if (readI32(view, o) !== 6) continue;
+    let end = o + 4;
+    while (end < o + 11 && bytes[end] >= 0x30 && bytes[end] <= 0x7a) end += 1;
+    const length = end - (o + 4);
+    if (length < 5 || length > 6 || bytes[end] !== 0 || end + 5 > bytes.length) continue;
+    const roleCode = Array.from(bytes.subarray(o + 4, end), (c) => String.fromCharCode(c)).join('');
+    if (!/^[A-Z0-9]{5,6}$/.test(roleCode) || !/\d$/.test(roleCode)) continue;
+    const id = readI32(view, end + 1);
+    if (id < 1 || id > 110) continue;
+    const name = stars[String(id)];
+    if (name && !out.has(roleCode)) out.set(roleCode, name);
+  }
+  return out;
+}
+
 /** CaseFirm 列出的当期可接取通告，再用 Case 段本体补齐名字、角色、门槛和日期。 */
 function scanSweetNotices(
   bytes: Uint8Array, view: DataView,
   today: SweetSave['date'], tables: SweetCaseTables, stars: Record<string, string>,
 ): SweetNotice[] {
+  const tailReservations = scanTailReservations(bytes, stars);
   const firmStart = findSection(bytes, 'CaseFirm');
   const caseStart = findSection(bytes, 'Case');
   const caseEnd = findSection(bytes, 'CaseEnd');
@@ -849,6 +871,10 @@ function scanSweetNotices(
         if (id > 0 && id <= 110 && stars[String(id)]) role.reservedBy = stars[String(id)];
       });
     }
+    // 本体没有 [6][0] 槽的老存档改用尾部角色码记录兜底，不覆盖本体读到的真值。
+    roles.forEach((role) => {
+      if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
+    });
     roles.sort((a, b) => a.code.localeCompare(b.code));
 
     const dates: { offset: number; value: DateTuple }[] = [];
