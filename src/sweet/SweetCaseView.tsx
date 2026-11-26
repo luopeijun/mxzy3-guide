@@ -2,17 +2,35 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
 import {
   formatSweetDate, parseSweetSave, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
-  type SweetAward, type SweetSave,
+  type SweetAward, type SweetEvent, type SweetSave, type SweetTeam,
 } from '../lib/sweetCaseParser';
 
 /** 得奖表里也有 NPC 的奖；页面只显示本公司的，和游戏排行榜筛选一致。 */
 function awardBelongsToCompany(award: SweetAward, company: string): boolean {
-  return award.company && (award.winner === company || award.winner.includes(company));
+  return award.company && !award.group
+    && (award.winner === company || award.winner.includes(company));
 }
 
 /** 存档里主角名可能是全名「駱佩君」，得奖记录里写作「佩君」。 */
 function awardBelongsTo(award: SweetAward, name: string): boolean {
-  return !award.company && (award.winner === name || award.winner.includes(name) || name.includes(award.winner));
+  return !award.company && !award.group
+    && (award.winner === name || award.winner.includes(name) || name.includes(award.winner));
+}
+
+/** 团体奖按记事内嵌团名或挂名艺人归到所属团体，不进个人 / 公司卡。 */
+function awardBelongsToGroup(award: SweetAward, team: SweetTeam): boolean {
+  return award.group
+    && (award.winner === team.name || award.winner.includes(team.name) || team.memberIds.includes(award.artistId));
+}
+
+/** 个人场按艺人编号挂卡；团体场只在团体卡显示。 */
+function eventBelongsToArtist(event: SweetEvent, artistId: number): boolean {
+  return !event.group && event.artistId === artistId;
+}
+
+function eventBelongsToGroup(event: SweetEvent, team: SweetTeam): boolean {
+  return event.group
+    && (event.groupName === team.name || event.groupName.includes(team.name) || team.memberIds.includes(event.artistId));
 }
 
 /** 与明星志愿3 存档解析同款的小结块：右侧固定，默认收成一行，点开才列条目。 */
@@ -23,6 +41,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'clock', label: '游戏时间', selector: '[data-sweet-case-clock]', summary: formatSweetDate(save.date) },
     { id: 'company', label: '公司', selector: '[data-sweet-case-company]', summary: `主角 ${save.protagonist || '未记录'}` },
     { id: 'artists', label: '我方艺人', selector: '[data-sweet-case-artists]', summary: `${save.artists.length} 位` },
+    { id: 'teams', label: '我方团体', selector: '[data-sweet-case-teams]', summary: `${save.teams.length} 个` },
   ], [save]);
 
   useEffect(() => {
@@ -368,6 +387,22 @@ export default function SweetCaseView() {
                             ))}
                           </div>
                         )}
+                        {save.events.some((event) => eventBelongsToArtist(event, artist.id)) && (
+                          <div data-sweet-case-artist-events className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
+                            <span className="text-ink-faint">活动</span>
+                            {save.events.filter((event) => eventBelongsToArtist(event, artist.id)).map((event) => (
+                              <span
+                                key={`${event.date}-${event.label}`}
+                                data-sweet-case-artist-event
+                                data-sweet-case-event-kind={event.kind}
+                                data-sweet-case-event-scale={event.scale}
+                              >
+                                <span className="event-item font-semibold text-event">{event.label}</span>
+                                <span className="event-meta ml-1 font-normal text-ink-faint">{event.date}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {artist.contract && (
                           <details data-sweet-case-contract className="mt-1 border-t border-line pt-1 text-ui-2xs">
                             <summary className="cursor-pointer text-ink-faint">
@@ -383,6 +418,71 @@ export default function SweetCaseView() {
                               <span>艺人分红 <b data-sweet-case-contract-dividend className="font-semibold text-ink">{artist.contract.dividend}%</b></span>
                             </div>
                           </details>
+                        )}
+                      </article>
+                    </div>
+                  ))}
+                </div>
+              </details>
+
+              <details data-sweet-case-teams data-sweet-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+                <summary data-sweet-case-teams-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
+                  我方团体 · {save.teams.length} 个
+                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                    {save.teams.map((team) => team.name).join(' / ') || '未记录'}
+                  </span>
+                </summary>
+                <div data-sweet-case-team-grid className="mt-2 flex flex-wrap gap-2">
+                  {save.teams.length === 0 ? (
+                    <p className="text-ui-2xs text-ink-faint">这份存档里没有识别到旗下团体。</p>
+                  ) : save.teams.map((team) => (
+                    <div key={team.code} className="w-[344px] shrink-0">
+                      <article data-sweet-case-team={team.code} className="rounded border border-line bg-surface px-2 py-1.5">
+                        <div className="flex items-baseline gap-1.5">
+                          <span data-sweet-case-team-name className="text-ui-xs font-bold text-brand-strong">
+                            #{team.code} {team.name}
+                          </span>
+                          {team.workCount > 0 && (
+                            <span data-sweet-case-team-work-count className="rounded-full bg-brand-soft px-1.5 text-ui-2xs font-semibold text-brand-strong">
+                              团体唱片 {team.workCount}
+                            </span>
+                          )}
+                        </div>
+                        <div data-sweet-case-team-members className="mt-1 flex flex-wrap items-center gap-1 text-ui-2xs text-ink-muted">
+                          <span className="text-ink-faint">成员</span>
+                          {team.memberIds.map((id, index) => (
+                            <span key={id} data-sweet-case-team-member className="rounded bg-surface-soft px-1 py-0.5">
+                              {index === 0 ? '队长' : '团员'} {team.memberNames[index] ?? `艺人${id}`}
+                            </span>
+                          ))}
+                        </div>
+                        {save.awards.some((award) => awardBelongsToGroup(award, team)) && (
+                          <div data-sweet-case-team-awards className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
+                            <span className="text-ink-faint">团体奖</span>
+                            {save.awards.filter((award) => awardBelongsToGroup(award, team)).map((award) => (
+                              <span key={`${award.year}-${award.label}`} data-sweet-case-team-award>
+                                <span className="award-item font-semibold text-title-star">{award.ceremony}·{award.label}</span>
+                                <span className="award-meta ml-1 font-normal text-ink-faint">{award.work}</span>
+                                <span className="ml-1 font-normal text-ink-faint">{award.year}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {save.events.some((event) => eventBelongsToGroup(event, team)) && (
+                          <div data-sweet-case-team-events className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
+                            <span className="text-ink-faint">活动</span>
+                            {save.events.filter((event) => eventBelongsToGroup(event, team)).map((event) => (
+                              <span
+                                key={`${event.date}-${event.label}`}
+                                data-sweet-case-team-event
+                                data-sweet-case-event-kind={event.kind}
+                                data-sweet-case-event-scale={event.scale}
+                              >
+                                <span className="event-item font-semibold text-event">{event.label}</span>
+                                <span className="event-meta ml-1 font-normal text-ink-faint">{event.date}</span>
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </article>
                     </div>

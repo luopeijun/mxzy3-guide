@@ -23,7 +23,12 @@
  *     编号 1 是我方；知名度与公关存档 ×10，界面按整数显示（向下取整）。
  *   - 艺人成绩（与主站同构的记事表）：`[条数][108]`，每条
  *     `[年][月][日][类型][事项][艺人编号]...[8B 作品编码]`。得奖是类型 5、
- *     事项 21..53；单份存档同时保留 2008/2009/2010 的记录，年份取这里。
+ *     事项 21..53；举办活动是类型 6、事项 61..63（歌友會/影友會/演唱會），
+ *     规模在 +36、团体场看 +24 非零，团体名写在 +76。单份存档同时保留
+ *     2008/2009/2010 的记录，年份取这里。
+ *   - 我方团体与主站同构：`[编号101+][名字节长度][Big5 名字]`，名字后
+ *     +28/+32 是成员编号（第 0 个队长），+24 是团体唱片数，尾部有「Invaid」
+ *     类标记。52 号档是 101 稀奇古怪，成员 15 慕容和希 / 14 姚子奇。
  *   - 得奖记录表（艺人事件簿尾部）：15 条 48B 定长记录 + 一条「從缺」占位；
  *     只保留最近一年，用作艺人成绩表缺失时的兜底。 */
 
@@ -57,7 +62,15 @@ const SWEET_DIARY_AWARD_KIND = 5;
 const SWEET_DIARY_CEREMONY: Record<number, string> = {
   2: '金曲奖', 3: '金像奖', 4: '金钟奖', 5: '金星奖',
 };
-const SWEET_DIARY_COMPANY_AWARD_IDS = new Set([23, 24, 44]);
+/** 23 是团体荣誉，24 / 44 是公司作品奖；和主站同一套分流。 */
+const SWEET_DIARY_GROUP_AWARD_IDS = new Set([23]);
+const SWEET_DIARY_COMPANY_AWARD_IDS = new Set([24, 44]);
+/** 与主站一致：类型 6 才是「举办活动」，61 歌友會 / 62 影友會 / 63 演唱會。 */
+const SWEET_DIARY_EVENT_KIND = 6;
+const SWEET_DIARY_EVENT_NAMES: Record<number, string> = {
+  61: '歌友會', 62: '影友會', 63: '演唱會',
+};
+const SWEET_DIARY_EVENT_SCALE = ['', '大型', '中型', '小型'];
 
 export interface SweetAward {
   year: number;
@@ -65,14 +78,43 @@ export interface SweetAward {
   day: number;
   ceremony: string;
   label: string;
-  /** 得主名字：个人奖是艺人，公司奖可能是团体 / 公司名。 */
+  /** 得主名字：个人奖是艺人，团体奖是团名，公司奖是公司名。 */
   winner: string;
-  /** 作品名；个人奖也会带作品，页面只给公司 / 年度作品奖显示。 */
+  /** 作品名；个人奖也会带作品，页面只给团体 / 年度作品奖显示。 */
   work: string;
   workCode: string;
   artistId: number;
+  /** 与公司奖、个人奖互斥：只挂团体卡。 */
+  group: boolean;
   /** 与主站一致：公司奖单列，个人奖挂到艺人卡。 */
   company: boolean;
+}
+
+/** 「艺人成绩」记事里的举办活动，团体场只挂团体卡。 */
+export interface SweetEvent {
+  year: number;
+  month: number;
+  day: number;
+  date: string;
+  /** 可直接显示，例如「大型團體演唱會」。 */
+  label: string;
+  kind: number;
+  scale: number;
+  group: boolean;
+  /** 团体场的记事内嵌团名，读不到时由成员编号回查团体。 */
+  groupName: string;
+  artistId: number;
+}
+
+/** 我方团体：成员编号第 0 个是队长，名字来自存档。 */
+export interface SweetTeam {
+  code: number;
+  name: string;
+  memberIds: number[];
+  memberNames: string[];
+  leaderId: number;
+  leaderName: string;
+  workCount: number;
 }
 
 export interface SweetContract {
@@ -109,7 +151,10 @@ export interface SweetSave {
   date: { year: number; month: number; day: number; weekday: number };
   signedIds: number[];
   artists: SweetArtistCard[];
+  teams: SweetTeam[];
   awards: SweetAward[];
+  /** 演唱会 / 影友會 / 歌友會：个人场挂艺人卡，团体场挂团体卡。 */
+  events: SweetEvent[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -350,7 +395,8 @@ function scanAwards(bytes: Uint8Array, year: number): SweetAward[] {
         work,
         workCode: '',
         artistId: 0,
-        company: index === 2 || index === 3 || index === 11,
+        group: index === 2,
+        company: index === 3 || index === 11,
       });
     }
     if (ok) return rows;
@@ -413,6 +459,86 @@ function scanSweetWorkNames(bytes: Uint8Array, view: DataView): Map<string, stri
   return out;
 }
 
+/** 我方团体记录：与明星志愿3同构，但名字是紧排的 Big5，不像 .sa2 每字节占 4B。 */
+function scanSweetTeams(bytes: Uint8Array, view: DataView, stars: Record<string, string>): SweetTeam[] {
+  const marker = [73, 110, 118, 97, 105, 100]; // "Invaid"
+  const out: SweetTeam[] = [];
+  for (let o = 0; o + 128 <= bytes.length; o += 1) {
+    const code = readI32(view, o);
+    // 101..110 才是玩家可建的团体；111 起是游戏预设的 NPC 团体（馬麗安等），不能进我方卡。
+    if (code < 101 || code > 110) continue;
+    const nameBytes = readI32(view, o + 4);
+    if (nameBytes < 4 || nameBytes > 24 || nameBytes % 2 !== 0) continue;
+    const nameEnd = o + 8 + nameBytes + 1; // 名字后的 NUL
+    if (bytes[nameEnd - 1] !== 0 || nameEnd + 56 > bytes.length) continue;
+    const name = readBig5(bytes, o + 8, nameBytes);
+    if (!/^[\u4e00-\u9fff]+$/.test(name)) continue;
+    const ids = [0, 1, 2].map((j) => readI32(view, nameEnd + 28 + j * 4));
+    const hasMarker = readI32(view, nameEnd + 44) === marker.length
+      && marker.every((c, j) => bytes[nameEnd + 48 + j] === c);
+    const shapeOk = readI32(view, nameEnd + 24) <= 99
+      && ids[0] >= 1 && ids[0] <= 110 && ids[1] >= 1 && ids[1] <= 110
+      && (ids[2] === 0 || (ids[2] >= 1 && ids[2] <= 110))
+      && readI32(view, nameEnd + 40) === 0;
+    if (!hasMarker && !shapeOk) continue;
+    const memberIds = [...new Set(ids.filter((id) => id >= 1 && id <= 110))];
+    const nameOf = (id: number) => stars[String(id)] ?? `艺人${id}`;
+    const rawWorkCount = readI32(view, nameEnd + 24);
+    out.push({
+      code,
+      name,
+      memberIds,
+      memberNames: memberIds.map(nameOf),
+      leaderId: memberIds[0] ?? 0,
+      leaderName: memberIds.length ? nameOf(memberIds[0]) : '',
+      workCount: rawWorkCount >= 0 && rawWorkCount <= 99 ? rawWorkCount : 0,
+    });
+  }
+  return out.sort((a, b) => a.code - b.code);
+}
+
+/** 艺人成绩里的举办活动：`[年][月][日][类型=6][事项=61..63][艺人编号]...`；
+ *  +24 非零是团体场、+36 是规模（1 大型 / 2 中型 / 3 小型），团体名在 +76。 */
+function scanDiaryEvents(
+  bytes: Uint8Array,
+  view: DataView,
+  table: { offset: number; count: number } | null,
+): SweetEvent[] {
+  if (!table) return [];
+  const rows: { event: SweetEvent; day: number }[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * SWEET_DIARY_STRIDE;
+    if (readI32(view, p + 12) !== SWEET_DIARY_EVENT_KIND) continue;
+    const kind = readI32(view, p + 16);
+    const name = SWEET_DIARY_EVENT_NAMES[kind];
+    if (!name) continue;
+    const scale = readI32(view, p + 36);
+    if (scale < 1 || scale > 3) continue;
+    const artistId = readI32(view, p + 20);
+    if (artistId < 1 || artistId > 110) continue;
+    const year = readI32(view, p);
+    const month = readI32(view, p + 4);
+    const day = readI32(view, p + 8);
+    const group = readI32(view, p + 24) > 0;
+    const groupName = group ? readBig5(bytes, p + 76, 16) : '';
+    const key = `${year}/${month}/${day}|${kind}|${scale}|${group}|${artistId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push({
+      event: {
+        year, month, day,
+        date: `${year}/${month}/${day}`,
+        label: `${SWEET_DIARY_EVENT_SCALE[scale]}${group ? '團體' : kind === 63 ? '個人' : ''}${name}`,
+        kind, scale, group, groupName, artistId,
+      },
+      day: year * 10000 + month * 100 + day,
+    });
+  }
+  return rows.sort((a, b) => a.day - b.day || a.event.artistId - b.event.artistId)
+    .map((row) => row.event);
+}
+
 /**
  * 艺人成绩里的得奖记录：`[年][月][日][类型=5][事项=21..53][艺人编号]...[作品编码]`。
  * 这是与明星志愿3同构的真源，单份存档就能覆盖多年；事件簿尾部 48B 表只作兜底。
@@ -423,8 +549,8 @@ function scanDiaryAwards(
   protagonist: string,
   company: string,
   stars: Record<string, string>,
+  table: { offset: number; count: number } | null,
 ): SweetAward[] {
-  const table = findSweetDiaryTable(view, bytes.length);
   if (!table) return [];
   const workNames = scanSweetWorkNames(bytes, view);
   const rows: SweetAward[] = [];
@@ -444,17 +570,22 @@ function scanDiaryAwards(
     const key = `${year}-${awardId}-${artistId}-${workCode}`;
     if (seen.has(key)) continue;
     seen.add(key);
+    const groupAward = SWEET_DIARY_GROUP_AWARD_IDS.has(awardId);
     const companyAward = SWEET_DIARY_COMPANY_AWARD_IDS.has(awardId);
+    const embeddedGroup = groupAward ? readBig5(bytes, p + 76, 16) : '';
     rows.push({
       year,
       month,
       day,
       ceremony: SWEET_DIARY_CEREMONY[Math.floor(awardId / 10)] ?? '',
       label,
-      winner: companyAward ? company : artistId === 1 ? protagonist : stars[String(artistId)] ?? `艺人${artistId}`,
+      winner: groupAward ? (embeddedGroup || stars[String(artistId)] || `团体${artistId}`)
+        : companyAward ? company
+          : artistId === 1 ? protagonist : stars[String(artistId)] ?? `艺人${artistId}`,
       work: workNames.get(workCode) ?? (workCode || '作品未记录'),
       workCode,
       artistId,
+      group: groupAward,
       company: companyAward,
     });
   }
@@ -502,16 +633,21 @@ export async function parseSweetSave(file: File, stars: Record<string, string>):
     day: readI32(view, 0x48),
     weekday: readI32(view, 0x4c),
   };
-  const diaryAwards = scanDiaryAwards(bytes, view, protagonist, readBig5(bytes, 0x19), stars);
+  const companyName = readBig5(bytes, 0x19);
+  const teams = scanSweetTeams(bytes, view, stars);
+  const diaryTable = findSweetDiaryTable(view, bytes.length);
+  const diaryAwards = scanDiaryAwards(bytes, view, protagonist, companyName, stars, diaryTable);
   return {
     protagonist: readBig5(bytes, 0x04),
-    company: readBig5(bytes, 0x19),
+    company: companyName,
     companyImage: company.image,
     fame: company.fame,
     pr: company.pr,
     date,
     signedIds,
     artists,
+    teams,
     awards: diaryAwards.length > 0 ? diaryAwards : scanAwards(bytes, date.year),
+    events: scanDiaryEvents(bytes, view, diaryTable),
   };
 }
