@@ -476,39 +476,59 @@ export default function SweetCaseView() {
                 </div>
               </details>
 
+              {/* 和明星志愿3「我方团体」同一套卡片：标题 + 编码徽标、队长高亮、
+                  通告统计 / 团体奖 / 活动分行，团体奖不进任何艺人卡。 */}
               <details data-sweet-case-teams data-sweet-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
                 <summary data-sweet-case-teams-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
                   我方团体 · {save.teams.length} 个
-                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                    {save.teams.map((team) => team.name).join(' / ') || '未记录'}
-                  </span>
+                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">名称与成员从存档读取</span>
                 </summary>
-                <div data-sweet-case-team-grid className="mt-2 flex flex-wrap gap-2">
-                  {save.teams.length === 0 ? (
-                    <p className="text-ui-2xs text-ink-faint">这份存档里没有识别到旗下团体。</p>
-                  ) : save.teams.map((team) => (
-                    <div key={team.code} className="w-[344px] shrink-0">
-                      <article data-sweet-case-team={team.code} className="rounded border border-line bg-surface px-2 py-1.5">
-                        <div className="flex items-baseline gap-1.5">
-                          <span data-sweet-case-team-name className="text-ui-xs font-bold text-brand-strong">
-                            #{team.code} {team.name}
+                {save.teams.length === 0 ? (
+                  <p data-sweet-case-team-empty className="mt-2 text-ui-2xs text-ink-faint">—</p>
+                ) : (
+                  <div data-sweet-case-team-grid className="mt-2 flex flex-wrap gap-2">
+                    {save.teams.map((team) => (
+                      <div
+                        key={team.code}
+                        data-sweet-case-team={team.code}
+                        data-sweet-case-team-code={team.code}
+                        className="w-[340px] shrink-0 rounded-ui-md border border-line bg-surface px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span data-sweet-case-team-name className="text-ui-xs font-semibold text-ink">{team.name}</span>
+                          <span className="rounded-full bg-brand px-2 py-0.5 text-ui-2xs font-semibold text-white">
+                            团体编码 {team.code}
                           </span>
-                          {team.workCount > 0 && (
-                            <span data-sweet-case-team-work-count className="rounded-full bg-brand-soft px-1.5 text-ui-2xs font-semibold text-brand-strong">
-                              团体唱片 {team.workCount}
-                            </span>
-                          )}
                         </div>
-                        <div data-sweet-case-team-members className="mt-1 flex flex-wrap items-center gap-1 text-ui-2xs text-ink-muted">
-                          <span className="text-ink-faint">成员</span>
+                        <div data-sweet-case-team-members className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          <span className="text-ui-2xs text-ink-faint">成员</span>
                           {team.memberIds.map((id, index) => (
-                            <span key={id} data-sweet-case-team-member className="rounded bg-surface-soft px-1 py-0.5">
-                              {index === 0 ? '队长' : '团员'} {team.memberNames[index] ?? `艺人${id}`}
+                            <span
+                              key={id}
+                              data-sweet-case-team-member
+                              data-sweet-case-team-leader={index === 0 ? team.memberNames[index] : undefined}
+                              className={cn(
+                                'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-ui-2xs',
+                                index === 0
+                                  ? 'border-brand bg-brand-soft font-semibold text-brand-strong'
+                                  : 'border-line bg-surface-soft text-ink-muted',
+                              )}
+                            >
+                              {team.memberNames[index] ?? `艺人${id}`}
+                              {index === 0 && <span className="text-[10px]">队长</span>}
                             </span>
                           ))}
                         </div>
+                        <div data-sweet-case-team-counts className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
+                          <span className="text-ink-faint">通告统计</span>
+                          <span className="work-count-chip relative inline-flex">
+                            <span data-sweet-case-team-work-count className="rounded px-1 py-0.5 text-ink-faint">
+                              唱片 <b className="font-semibold text-ink">{team.workCount}</b>张
+                            </span>
+                          </span>
+                        </div>
                         {save.awards.some((award) => awardBelongsToGroup(award, team)) && (
-                          <div data-sweet-case-team-awards className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
+                          <div data-sweet-case-team-awards className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                             <span className="text-ink-faint">团体奖</span>
                             {save.awards.filter((award) => awardBelongsToGroup(award, team)).map((award) => (
                               <span key={`${award.year}-${award.label}`} data-sweet-case-team-award>
@@ -520,7 +540,7 @@ export default function SweetCaseView() {
                           </div>
                         )}
                         {save.events.some((event) => eventBelongsToGroup(event, team)) && (
-                          <div data-sweet-case-team-events className="mt-1 flex flex-wrap items-center gap-1 border-t border-line pt-1 text-ui-2xs">
+                          <div data-sweet-case-team-events className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                             <span className="text-ink-faint">活动</span>
                             {save.events.filter((event) => eventBelongsToGroup(event, team)).map((event) => (
                               <span
@@ -535,10 +555,10 @@ export default function SweetCaseView() {
                             ))}
                           </div>
                         )}
-                      </article>
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </details>
             </>
           )}
