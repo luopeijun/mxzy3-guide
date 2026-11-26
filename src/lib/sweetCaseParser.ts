@@ -32,7 +32,14 @@
  *     +28/+32 是成员编号（第 0 个队长），+24 是团体唱片数，尾部有「Invaid」
  *     类标记。52 号档是 101 稀奇古怪，成员 15 慕容和希 / 14 姚子奇。
  *   - 得奖记录表（艺人事件簿尾部）：15 条 48B 定长记录 + 一条「從缺」占位；
- *     只保留最近一年，用作艺人成绩表缺失时的兜底。 */
+ *     只保留最近一年，用作艺人成绩表缺失时的兜底。
+ *   - 筹备中通告：`CaseFirm` 段 `[count][seq u32][公司槽 u32][5 u32][5B 通告码]`
+ *     每条 18B；通告本体在 `Case`..`CaseEnd` 段里按 `[4][5B 通告码]` 定位，
+ *     +10 大类、+14 长度/效果子类（查 Length.dat）、+18 界面题材类型（查 XxxType.dat），
+ *     +22 是名字字节数、+26 起 Big5 名字，
+ *     角色槽以 `[1][6B 角色码][类型 u32][星级 u32]...[9 项门槛 u32]` 定长排布，
+ *     尾部三组日期四元组是开放 / 开拍 / 杀青（停止接取＝开拍前一日）。
+ *     公司名、角色名、工作天数来自烘焙的 `sweet/case-tables.json`。 */
 
 
 export const SWEET_ABILITY_LABELS = [
@@ -124,6 +131,55 @@ export interface SweetTeam {
   workCount: number;
 }
 
+/** 筹备中通告的一行：九项门槛里只留非 0 项，展示成「所需数值」胶囊。 */
+export interface SweetNoticeRequirement {
+  attr: string;
+  value: number;
+}
+
+export interface SweetNoticeRole {
+  /** 角色码，例如 `TVA111`，也是表格里的稳定 key。 */
+  code: string;
+  role: string;
+  roleType: number;
+  star: number;
+  requirements: SweetNoticeRequirement[];
+  workDays: number;
+  daysPerWeek: number;
+  /** 通告记录尾部角色预约槽里读到的艺人编号，空表示无人预约。 */
+  reservedBy: string;
+}
+
+export interface SweetNotice {
+  seq: number;
+  code: string;
+  name: string;
+  category: string;
+  /** 大类下的子类型，如「爱情偶像剧」「说话B」，与主站类型列同位置。 */
+  type: string;
+  company: string;
+  openDate: string;
+  deadline: string;
+  startDate: string;
+  endDate: string;
+  daysToDeadline: number;
+  daysToStart: number;
+  status: 'open' | 'closing' | 'upcoming' | 'expired';
+  roles: SweetNoticeRole[];
+}
+
+/** 从真实游戏目录烘焙的通告静态表；缺表时解析器仍尽量用存档自身信息。 */
+export interface SweetCaseTables {
+  classes?: Record<string, string>;
+  roles?: Record<string, string>;
+  companyBySeq?: Record<string, string>;
+  lengths?: Record<string, [number, number]>;
+  cases?: Record<string, string>;
+  genders?: Record<string, number>;
+  /** `classId|subId` -> 简体子类型名（来自各 XxxType.dat）。 */
+  subtypes?: Record<string, string>;
+}
+
 export interface SweetContract {
   signDate: string;
   expireDate: string;
@@ -168,6 +224,8 @@ export interface SweetSave {
   awards: SweetAward[];
   /** 演唱会 / 影友會 / 歌友會：个人场挂艺人卡，团体场挂团体卡。 */
   events: SweetEvent[];
+  /** 筹备中通告：CaseFirm 当期可接取列表 + Case 段的通告本体。 */
+  notices: SweetNotice[];
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -625,6 +683,214 @@ function scanDiaryAwards(
   return rows.sort((a, b) => a.year - b.year || a.month - b.month || a.day - b.day || a.label.localeCompare(b.label));
 }
 
+type DateTuple = [number, number, number, number];
+
+/** 页面沿用主站的分类色，所以把游戏里的繁体大类归一成主站用词。 */
+const SWEET_CATEGORY_SIMPLE: Record<string, string> = {
+  廣告: '广告', 電視: '电视剧', 電影: '电影', 唱片: '唱片',
+  主持: '主持', 舞台劇: '舞台剧', 時裝秀: '时装',
+};
+const SWEET_CATEGORY_BY_PREFIX: Record<string, string> = {
+  CF: '广告', TV: '电视剧', MV: '电影', CD: '唱片',
+  SH: '主持', TH: '舞台剧', FS: '时装',
+};
+
+/** 男性 / 女性角色才按性别过滤；个人、团体、主持类任何艺人都能接。 */
+export function sweetRoleGender(roleType: number): 'male' | 'female' | undefined {
+  if (roleType === 1 || roleType === 5 || roleType === 7) return 'male';
+  if (roleType === 2 || roleType === 6 || roleType === 8) return 'female';
+  return undefined;
+}
+
+/** 找 `[4]name\0` 段头，返回 payload 起点。 */
+function findSection(bytes: Uint8Array, name: string): number {
+  const marker = [name.length & 0xff, 0, 0, 0, ...Array.from(name).map((c) => c.charCodeAt(0)), 0];
+  for (let i = 0; i + marker.length <= bytes.length; i += 1) {
+    let ok = true;
+    for (let k = 0; k < marker.length; k += 1) {
+      if (bytes[i + k] !== marker[k]) { ok = false; break; }
+    }
+    if (ok) return i + marker.length;
+  }
+  return -1;
+}
+
+function readDateTuple(view: DataView, offset: number): DateTuple | null {
+  const year = readI32(view, offset);
+  const month = readI32(view, offset + 4);
+  const day = readI32(view, offset + 8);
+  const weekday = readI32(view, offset + 12);
+  if (year < 2000 || year > 2099 || month < 1 || month > 12
+    || day < 1 || day > 31 || weekday < 1 || weekday > 7) return null;
+  return [year, month, day, weekday];
+}
+
+function dateText(value: [number, number, number] | DateTuple): string {
+  return `${value[0]}/${value[1]}/${value[2]}`;
+}
+
+/** 日历差用 UTC 天数，不能用 `y*10000+m*100+d`：跨年会算出八千多天。 */
+function dayValue(year: number, month: number, day: number): number {
+  return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+}
+
+function previousDay(tuple: DateTuple): [number, number, number] {
+  const date = new Date(Date.UTC(tuple[0], tuple[1] - 1, tuple[2] - 1));
+  return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate()];
+}
+
+function findBytes(haystack: Uint8Array, needle: Uint8Array): number {
+  for (let i = 0; i + needle.length <= haystack.length; i += 1) {
+    let ok = true;
+    for (let k = 0; k < needle.length; k += 1) {
+      if (haystack[i + k] !== needle[k]) { ok = false; break; }
+    }
+    if (ok) return i;
+  }
+  return -1;
+}
+
+/** CaseFirm 列出的当期可接取通告，再用 Case 段本体补齐名字、角色、门槛和日期。 */
+function scanSweetNotices(
+  bytes: Uint8Array, view: DataView,
+  today: SweetSave['date'], tables: SweetCaseTables, stars: Record<string, string>,
+): SweetNotice[] {
+  const firmStart = findSection(bytes, 'CaseFirm');
+  const caseStart = findSection(bytes, 'Case');
+  const caseEnd = findSection(bytes, 'CaseEnd');
+  if (firmStart < 0 || caseStart < 0 || caseEnd <= caseStart) return [];
+  const count = readI32(view, firmStart);
+  if (count < 1 || count > 200) return [];
+  const caseBytes = bytes.subarray(caseStart, caseEnd);
+  const out: SweetNotice[] = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const p = firmStart + 4 + index * 18;
+    if (p + 18 > bytes.length) break;
+    const seq = readI32(view, p);
+    const length = readI32(view, p + 8);
+    let code = '';
+    for (let k = 0; k < 5; k += 1) {
+      const c = bytes[p + 12 + k];
+      if (c < 0x30 || c > 0x7a) break;
+      code += String.fromCharCode(c);
+    }
+    if (length !== 5 || !/^[A-Z]{2}[0-9A-Z]{3}$/.test(code)) continue;
+
+    const needle = new Uint8Array(10);
+    needle.set([5, 0, 0, 0]);
+    for (let k = 0; k < 5; k += 1) needle[4 + k] = code.charCodeAt(k);
+    const at = findBytes(caseBytes, needle);
+    if (at < 0 || at + 256 > caseBytes.length) continue;
+    const rec = caseBytes.subarray(at, at + 1024);
+    const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
+    const nameLength = readI32(recView, 22);
+    if (nameLength < 1 || nameLength > 64) continue;
+    const name = readBig5(rec, 26, nameLength) || tables.cases?.[code] || code;
+
+    const classId = readI32(recView, 10);
+    // +14 是 Length/NeedEffect 用的剧集长度子类，+18 才是界面上显示的题材类型
+    // （如「轻松幽默剧」「爱情文艺片」「动感S」），两者不能混用。
+    const lengthSubId = readI32(recView, 14);
+    const typeId = readI32(recView, 18);
+    const rawCategory = tables.classes?.[String(classId)] ?? '';
+    const category = SWEET_CATEGORY_SIMPLE[rawCategory]
+      ?? SWEET_CATEGORY_BY_PREFIX[code.slice(0, 2)] ?? rawCategory ?? '';
+    const type = tables.subtypes?.[`${classId}|${typeId}`] ?? '';
+    const company = tables.companyBySeq?.[String(seq)] ?? '';
+
+    const roles: SweetNoticeRole[] = [];
+    const seen = new Set<string>();
+    for (let o = 0; o + 64 <= rec.length; o += 1) {
+      if (rec[o] !== 1 || rec[o + 1] || rec[o + 2] || rec[o + 3]) continue;
+      let end = o + 4;
+      while (end < o + 11 && rec[end] >= 0x30 && rec[end] <= 0x7a) end += 1;
+      const codeLength = end - (o + 4);
+      if (codeLength < 5 || codeLength > 6 || rec[end] !== 0) continue;
+      const roleCode = Array.from(rec.subarray(o + 4, end), (c) => String.fromCharCode(c)).join('');
+      if (roleCode !== code && !(roleCode.startsWith(code) && roleCode.length === code.length + 1)) continue;
+      if (seen.has(roleCode)) continue;
+      const roleType = readI32(recView, o + 12);
+      const star = readI32(recView, o + 16);
+      if (roleType < 1 || roleType > 11 || star < 1 || star > 5) continue;
+      const values = Array.from({ length: 9 }, (_, i) => readI32(recView, o + 28 + i * 4));
+      if (!values.every((value) => value >= 0 && value <= 999)) continue;
+      seen.add(roleCode);
+      const roleName = tables.roles?.[String(roleType)] ?? '';
+      const lengthKey = classId === 2 && lengthSubId > 0
+        ? `電視${lengthSubId}|${roleName}` : `${rawCategory}|${roleName}`;
+      const [workDays, daysPerWeek] = tables.lengths?.[lengthKey]
+        ?? tables.lengths?.[`${rawCategory}|${roleName}`] ?? [0, 0];
+      roles.push({
+        code: roleCode,
+        role: roleName,
+        roleType,
+        star,
+        requirements: values
+          .map((value, i) => ({ attr: SWEET_ABILITY_LABELS[i], value }))
+          .filter((item) => item.value > 0),
+        workDays,
+        daysPerWeek,
+        reservedBy: '',
+      });
+    }
+    // 预约真源＝通告本体尾部的 24B 角色槽：先找到 [6][0] 标记，再按角色顺序
+    // 读 marker+8+i*24 的艺人编号。0 表示空缺，编号再由 StarRole 表换名字。
+    let reservationAt = -1;
+    for (let o = 700; o + 40 <= rec.length; o += 1) {
+      if (readI32(recView, o) === 6 && readI32(recView, o + 4) === 0) {
+        reservationAt = o;
+        break;
+      }
+    }
+    if (reservationAt >= 0) {
+      roles.forEach((role, i) => {
+        const id = readI32(recView, reservationAt + 8 + i * 24);
+        if (id > 0 && id <= 110 && stars[String(id)]) role.reservedBy = stars[String(id)];
+      });
+    }
+    roles.sort((a, b) => a.code.localeCompare(b.code));
+
+    const dates: { offset: number; value: DateTuple }[] = [];
+    for (let o = 860; o + 16 <= rec.length && dates.length < 3; o += 1) {
+      const tuple = readDateTuple(recView, o);
+      if (!tuple) continue;
+      if (dates.length && o <= dates[dates.length - 1].offset + 4) continue;
+      dates.push({ offset: o, value: tuple });
+    }
+    const first = dates[0]?.value ?? [0, 0, 0, 0];
+    const start = dates[1]?.value ?? first;
+    const end = dates[2]?.value ?? start;
+    const deadline = previousDay(start);
+    const todayValue = dayValue(today.year, today.month, today.day);
+    const startValue = dayValue(start[0], start[1], start[2]);
+    const endValue = dayValue(end[0], end[1], end[2]);
+    const deadlineValue = dayValue(deadline[0], deadline[1], deadline[2]);
+    let status: SweetNotice['status'] = 'open';
+    if (todayValue > endValue) status = 'expired';
+    else if (todayValue < dayValue(first[0], first[1], first[2])) status = 'upcoming';
+    else if (todayValue <= deadlineValue && deadlineValue - todayValue <= 7) status = 'closing';
+
+    out.push({
+      seq,
+      code,
+      name,
+      category,
+      type,
+      company,
+      openDate: first[0] ? dateText(first) : '',
+      deadline: start[0] ? dateText(deadline) : '',
+      startDate: start[0] ? dateText(start) : '',
+      endDate: end[0] ? dateText(end) : '',
+      daysToDeadline: deadlineValue - todayValue,
+      daysToStart: startValue - todayValue,
+      status,
+      roles,
+    });
+  }
+  return out;
+}
+
 export function formatSweetDate(date: SweetSave['date']): string {
   const w = WEEKDAYS[date.weekday - 1] ?? String(date.weekday);
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
@@ -634,6 +900,7 @@ export async function parseSweetSave(
   file: File,
   stars: Record<string, string>,
   titles: Record<string, string> = {},
+  tables: SweetCaseTables = {},
 ): Promise<SweetSave> {
   const bytes = await inflateSave(file);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -674,6 +941,7 @@ export async function parseSweetSave(
   const teams = scanSweetTeams(bytes, view, stars);
   const diaryTable = findSweetDiaryTable(view, bytes.length);
   const diaryAwards = scanDiaryAwards(bytes, view, protagonist, companyName, stars, diaryTable);
+  const notices = scanSweetNotices(bytes, view, date, tables, stars);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -686,5 +954,6 @@ export async function parseSweetSave(
     teams,
     awards: diaryAwards.length > 0 ? diaryAwards : scanAwards(bytes, date.year),
     events: scanDiaryEvents(bytes, view, diaryTable),
+    notices,
   };
 }

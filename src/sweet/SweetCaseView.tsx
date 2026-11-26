@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import type { TitleMeta } from '../lib/caseParser';
 import { nextTitle } from '../lib/titleLadder';
 import {
-  formatSweetDate, parseSweetSave, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
-  type SweetAward, type SweetArtistCard, type SweetEvent, type SweetSave, type SweetTeam,
+  formatSweetDate, parseSweetSave, sweetRoleGender, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
+  type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetEvent,
+  type SweetNotice, type SweetNoticeRole, type SweetSave, type SweetTeam,
 } from '../lib/sweetCaseParser';
 import { TitleBadge } from '../ui/TitleBadge';
 
@@ -65,6 +66,26 @@ function eventBelongsToGroup(event: SweetEvent, team: SweetTeam): boolean {
     && (event.groupName === team.name || event.groupName.includes(team.name) || team.memberIds.includes(event.artistId));
 }
 
+/** 与主站 CATEGORY_CLASS 同一套通告类别色，筹备中表格直接沿用。 */
+const SWEET_CATEGORY_CLASS: Record<string, string> = {
+  唱片: 'bg-tag-talk-soft text-tag-talk',
+  广告: 'bg-tag-follow-soft text-tag-follow',
+  电影: 'bg-tag-manual-soft text-tag-manual',
+  电视剧: 'bg-tag-news-soft text-tag-news',
+  主持: 'bg-tag-scene-soft text-tag-scene',
+  时装: 'bg-tag-auto-soft text-tag-auto',
+  舞台剧: 'bg-tag-talk-soft text-tag-talk',
+};
+
+function sweetChipClass(active: boolean) {
+  return cn(
+    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-ui-2xs transition-colors',
+    active
+      ? 'border-brand bg-brand font-semibold text-white'
+      : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+  );
+}
+
 /** 与明星志愿3 存档解析同款的小结块：右侧固定，默认收成一行，点开才列条目。 */
 function SweetCaseToc({ save }: { save: SweetSave }) {
   const [active, setActive] = useState('');
@@ -74,6 +95,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'company', label: '公司', selector: '[data-sweet-case-company]', summary: `主角 ${save.protagonist || '未记录'}` },
     { id: 'artists', label: '我方艺人', selector: '[data-sweet-case-artists]', summary: `${save.artists.length} 位` },
     { id: 'teams', label: '我方团体', selector: '[data-sweet-case-teams]', summary: `${save.teams.length} 个` },
+    { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
   ], [save]);
 
   useEffect(() => {
@@ -192,6 +214,379 @@ function sweetMoney(value: number): string {
   return sign + out;
 }
 
+function Th({ children, className, dataAttrs }: {
+  children: ReactNode;
+  className?: string;
+  dataAttrs?: Record<string, string>;
+}) {
+  return (
+    <th {...dataAttrs} className={cn('border-b border-line px-3 py-2 font-semibold', className)}>
+      {children}
+    </th>
+  );
+}
+
+function Td({ children, className, title, colSpan, dataAttrs }: {
+  children?: ReactNode;
+  className?: string;
+  title?: string;
+  colSpan?: number;
+  dataAttrs?: Record<string, string>;
+}) {
+  return (
+    <td title={title} colSpan={colSpan} {...dataAttrs} className={cn('border-b border-line px-3 py-2 align-top', className)}>
+      {children}
+    </td>
+  );
+}
+
+/** 与主站筹备中表格同款的角色胶囊。 */
+function SweetRolePill({ role }: { role: SweetNoticeRole }) {
+  return (
+    <span
+      data-case-role-code={role.code}
+      title={role.code}
+      className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border border-line-strong bg-surface px-2 py-0.5 text-ui-2xs text-ink-muted"
+    >
+      {role.role}
+      <b className="text-ui-2xs text-brand-strong">{role.star}★</b>
+    </span>
+  );
+}
+
+function SweetRequirementChips({ role }: { role: SweetNoticeRole }) {
+  if (role.requirements.length === 0) return <span className="text-ui-2xs text-ink-faint">无能力要求</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {role.requirements.map((req) => (
+        <span
+          key={req.attr}
+          data-case-value
+          title={`${req.attr} ${req.value}`}
+          className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-full border border-line-strong bg-surface px-2 py-0.5 text-ui-2xs text-ink-muted"
+        >
+          {req.attr}
+          <b className="text-ui-xs text-brand-strong">{req.value}</b>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** 存档里的能力值是 ×10 存的，差值可能出现 14.800000000000011 这种浮点噪声。 */
+function formatGap(value: number): string {
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+interface SweetMatch {
+  artistName: string;
+  canAccept: boolean;
+  gaps: { attr: string; diff: number }[];
+}
+
+function sweetMatchRole(
+  role: SweetNoticeRole, artist: SweetArtistCard, genders: Record<string, number>,
+): SweetMatch | null {
+  const gender = genders[String(artist.id)];
+  const need = sweetRoleGender(role.roleType);
+  if (need === 'male' && gender !== undefined && gender !== 1) return null;
+  if (need === 'female' && gender !== undefined && gender !== 0) return null;
+  const gaps = role.requirements.map((req) => {
+    const index = SWEET_ABILITY_LABELS.findIndex((label) => label === req.attr);
+    const have = index >= 0 ? artist.abilities[index] ?? 0 : 0;
+    // 艺人数值存档是 ×10，这里按同一精度四舍五入，避免 14.800000000000011。
+    return { attr: req.attr, diff: Math.round((req.value - have) * 10) / 10 };
+  });
+  return {
+    artistName: artist.name,
+    canAccept: gaps.every((gap) => gap.diff <= 0),
+    gaps: gaps.filter((gap) => gap.diff > 0),
+  };
+}
+
+/** 数值对比合成一列、每位艺人一行；和主站一样绿色在上、缺口在下面。 */
+function SweetMatchList({ role, save, genders }: {
+  role: SweetNoticeRole;
+  save: SweetSave;
+  genders: Record<string, number>;
+}) {
+  const rows = save.artists
+    .map((artist) => sweetMatchRole(role, artist, genders))
+    .filter((row): row is SweetMatch => Boolean(row))
+    .sort((a, b) => Number(b.canAccept) - Number(a.canAccept));
+  return (
+    <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined} dataAttrs={undefined}>
+      <div data-case-match-list className="flex flex-col gap-1">
+        {rows.length === 0 ? (
+          <span className="text-ui-2xs text-ink-faint">—</span>
+        ) : rows.map((row) => (
+          <div
+            key={row.artistName}
+            data-case-match
+            data-match-artist={row.artistName}
+            data-match-result={row.canAccept ? 'yes' : 'no'}
+            className={cn(
+              'flex items-start gap-1.5 text-ui-2xs leading-[1.5]',
+              row.canAccept ? 'font-semibold' : 'text-alert',
+            )}
+          >
+            <span className="shrink-0 select-none leading-[1.6] text-ink-faint" aria-hidden="true">•</span>
+            <span className="min-w-0 flex-1">
+              {row.canAccept ? (
+                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-title-model-line bg-title-model-soft px-2 py-0.5 align-middle text-title-model">
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" className="h-2.5 w-2.5">
+                    <path d="M2.5 6.2 4.8 8.5 9.5 3.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <b>{row.artistName}</b> 可以接
+                </span>
+              ) : (
+                <span>
+                  <b>{row.artistName}</b> 差{' '}
+                  {row.gaps.map((gap, index) => (
+                    <span key={gap.attr}>
+                      {index > 0 && ' · '}{gap.attr} {formatGap(gap.diff)}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+    </Td>
+  );
+}
+
+function SweetNoticeRows({ notice, save, genders }: {
+  notice: SweetNotice;
+  save: SweetSave;
+  genders: Record<string, number>;
+}) {
+  const workDaysBadge = (role?: SweetNoticeRole) => {
+    const workDays = role?.workDays ?? notice.roles[0]?.workDays ?? 0;
+    const daysPerWeek = role?.daysPerWeek ?? notice.roles[0]?.daysPerWeek ?? 0;
+    if (!workDays) return null;
+    return (
+      <div data-case-workdays data-case-work-days={workDays} className="mt-1 flex flex-wrap items-center gap-1">
+        <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-brand-strong">
+          工作 {workDays} 天
+        </span>
+        <span className="inline-flex items-center whitespace-nowrap rounded-ui-md bg-brand-soft px-1.5 py-0.5 text-ui-2xs font-normal text-brand-strong">
+          每周 ≤{daysPerWeek} 次
+        </span>
+      </div>
+    );
+  };
+  const noticeCells = (
+    <>
+      <Td>
+        <div className="font-semibold">{notice.name}</div>
+        <div className="mt-0.5 text-ui-2xs text-ink-faint">{notice.code}</div>
+        {notice.status === 'upcoming' && (
+          <span className="mt-1 inline-block rounded-full bg-tag-follow-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-tag-follow">
+            下周更新
+          </span>
+        )}
+        {notice.status === 'closing' && (
+          <span className="mt-1 inline-block rounded-full bg-alert-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-alert">
+            即将截止
+          </span>
+        )}
+      </Td>
+      <Td>
+        <span className={cn(
+          'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
+          SWEET_CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
+        )}>
+          {notice.category}
+        </span>
+        {notice.type && <div className="mt-1 text-ui-2xs text-ink-faint">{notice.type}</div>}
+      </Td>
+      <Td>{notice.company || '—'}</Td>
+      <Td title="开放接取与停止接取">
+        <div className="whitespace-nowrap text-ui-2xs leading-[1.7]">
+          <div><span className="text-ink-faint">开放</span> <b className="text-ink-muted">{notice.openDate || '—'}</b></div>
+          <div><span className="text-ink-faint">停止</span> <b className="text-ink-muted">{notice.deadline || '—'}</b></div>
+        </div>
+        {notice.daysToDeadline >= 0 && (
+          <span className="mt-1 inline-block rounded-full bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-faint">
+            还剩 {notice.daysToDeadline} 天
+          </span>
+        )}
+      </Td>
+      <Td title="通告执行期间，以及每个角色自己的工作天数">
+        <div className="text-ui-2xs leading-[1.7]">
+          <div className="whitespace-nowrap">起 <b className="text-ink-muted">{notice.startDate || '—'}</b></div>
+          <div className="whitespace-nowrap">止 <b className="text-ink-muted">{notice.endDate || '—'}</b></div>
+        </div>
+        {workDaysBadge(notice.roles[0])}
+        {notice.daysToStart > 0 && (
+          <span className="mt-1 inline-block rounded-full bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-faint">
+            {notice.daysToStart} 天后开拍
+          </span>
+        )}
+      </Td>
+    </>
+  );
+  const blankCells = (role: SweetNoticeRole) => (
+    <><Td /><Td /><Td /><Td /><Td>{workDaysBadge(role)}</Td></>
+  );
+
+  return (
+    <tbody data-case-notice data-case-status={notice.status}>
+      {notice.roles.length === 0 ? (
+        <tr data-case-role className="border-t border-line-strong">
+          {noticeCells}
+          <Td className="text-ink-faint" colSpan={3}>存档里没有该通告的角色需求记录</Td>
+          <Td className="text-ink-faint">—</Td>
+        </tr>
+      ) : notice.roles.map((role, index) => (
+        <tr
+          key={role.code}
+          data-case-role
+          data-case-role-name={role.role}
+          className={cn('hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
+        >
+          {index === 0 ? noticeCells : blankCells(role)}
+          <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined}>
+            <SweetRolePill role={role} />
+          </Td>
+          <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined}>
+            <SweetRequirementChips role={role} />
+          </Td>
+          <SweetMatchList role={role} save={save} genders={genders} />
+          <Td>
+            {role.reservedBy ? (
+              <span className="whitespace-nowrap text-ui-2xs font-semibold text-brand-strong">{role.reservedBy}</span>
+            ) : <span className="text-ui-2xs text-ink-faint">—</span>}
+          </Td>
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+
+/** 筹备中通告：筛选条 + 主站同款九列表格，一个角色一行。 */
+function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<string, number> }) {
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('all');
+  const [company, setCompany] = useState('all');
+  const all = save.notices;
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>();
+    all.forEach((notice) => counts.set(notice.category, (counts.get(notice.category) ?? 0) + 1));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [all]);
+  const companies = useMemo(
+    () => [...new Set(all.map((notice) => notice.company).filter(Boolean))].sort(),
+    [all],
+  );
+  const notices = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return all.filter((notice) => {
+      if (category !== 'all' && notice.category !== category) return false;
+      if (company !== 'all' && notice.company !== company) return false;
+      if (!needle) return true;
+      return [notice.name, notice.code, notice.category, notice.company,
+        ...notice.roles.map((role) => `${role.role}${role.code}`)]
+        .some((value) => value.toLowerCase().includes(needle));
+    });
+  }, [all, query, category, company]);
+  const dirty = Boolean(query || category !== 'all' || company !== 'all');
+  const reset = () => { setQuery(''); setCategory('all'); setCompany('all'); };
+
+  return (
+    <>
+      <div data-sweet-notice-filter className="flex flex-wrap items-center gap-2">
+        <label className="flex min-w-[220px] flex-1 items-center gap-1.5 rounded-ui-md border border-line bg-surface-soft px-2.5 py-1.5">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-ink-faint">
+            <circle cx="6" cy="6" r="4.5" />
+            <path d="M9.5 9.5 13 13" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            data-sweet-notice-search
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => { if (event.key === 'Escape') setQuery(''); }}
+            placeholder="搜索通告名称、编号、公司或角色"
+            aria-label="筛选筹备中通告"
+            className="min-w-0 flex-1 bg-transparent text-ui-xs text-ink outline-none placeholder:text-ink-faint"
+          />
+        </label>
+        <label className="flex shrink-0 items-center gap-1.5 rounded-ui-md border border-line bg-surface-soft px-2.5 py-1.5 text-ui-2xs text-ink-faint">
+          公司
+          <select
+            data-sweet-notice-company
+            value={company}
+            onChange={(event) => setCompany(event.target.value)}
+            className="max-w-[150px] bg-transparent text-ui-2xs text-ink outline-none"
+            aria-label="按制作公司筛选"
+          >
+            <option value="all">全部</option>
+            {companies.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
+        {dirty && (
+          <button
+            type="button"
+            data-sweet-notice-reset
+            onClick={reset}
+            className="shrink-0 rounded-ui-md border border-line bg-surface px-2.5 py-1.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+          >
+            重置筛选
+          </button>
+        )}
+        <span data-sweet-notice-count className="ml-auto whitespace-nowrap text-ui-2xs tabular-nums text-ink-faint">
+          当前 {notices.length} / {all.length} 条
+        </span>
+      </div>
+      <div data-sweet-notice-cats className="flex flex-wrap items-center gap-1.5" role="group" aria-label="按类型筛选">
+        <button type="button" data-sweet-notice-cat="all" aria-pressed={category === 'all'} onClick={() => setCategory('all')} className={sweetChipClass(category === 'all')}>
+          全部 <span className="tabular-nums">{all.length}</span>
+        </button>
+        {categories.map(([name, count]) => (
+          <button
+            key={name}
+            type="button"
+            data-sweet-notice-cat={name}
+            aria-pressed={category === name}
+            onClick={() => setCategory(category === name ? 'all' : name)}
+            className={sweetChipClass(category === name)}
+          >
+            {name} <span className="tabular-nums">{count}</span>
+          </button>
+        ))}
+      </div>
+      {notices.length === 0 ? (
+        <p className="mt-2 text-ui-2xs text-ink-faint">没有符合条件的通告。</p>
+      ) : (
+        <div data-sweet-notice-table className="rounded-ui-md border border-line bg-surface">
+          <table className="w-full table-fixed border-collapse text-ui-xs">
+            <thead>
+              <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
+                <Th className="w-[11%]">通告</Th>
+                <Th className="w-[7%]">类型</Th>
+                <Th className="w-[7%]">制作公司</Th>
+                <Th className="w-[10%]">接取时间</Th>
+                <Th className="w-[10%]">执行期间</Th>
+                <Th className="w-[10%]">角色 / 难度</Th>
+                <Th className="w-[14%]">所需数值</Th>
+                <Th className="w-[24%]" dataAttrs={{ 'data-case-match-col': 'yes' }}>数值对比</Th>
+                <Th className="w-[7%]">预约</Th>
+              </tr>
+            </thead>
+            {notices.map((notice) => (
+              <SweetNoticeRows key={`${notice.code}-${notice.seq}`} notice={notice} save={save} genders={genders} />
+            ))}
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
 /** 甜蜜乐章存档解析：游戏时间 / 公司 / 艺人卡片与合约信息。 */
 export default function SweetCaseView() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -199,6 +594,8 @@ export default function SweetCaseView() {
   const [dragging, setDragging] = useState(false);
   const [save, setSave] = useState<SweetSave | null>(null);
   const [stars, setStars] = useState<Record<string, string>>({});
+  const [genders, setGenders] = useState<Record<string, number>>({});
+  const [tables, setTables] = useState<SweetCaseTables>({});
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
@@ -207,8 +604,15 @@ export default function SweetCaseView() {
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('艺人表加载失败'))))
-      .then((data: { stars?: Record<string, string> }) => setStars(data.stars ?? {}))
+      .then((data: { stars?: Record<string, string>; genders?: Record<string, number> }) => {
+        setStars(data.stars ?? {});
+        setGenders(data.genders ?? {});
+      })
       .catch(() => setError('艺人表加载失败，艺人姓名可能显示为编号。'));
+    fetch(`${import.meta.env.BASE_URL}data/sweet/case-tables.json?v=${Date.now()}`)
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('通告表加载失败'))))
+      .then((data: SweetCaseTables) => setTables(data))
+      .catch(() => { /* 不挡住存档解析，通告会退回只用存档自身信息 */ });
     // 编号体系沿用主站，但门槛来自甜蜜乐章自己的 Nickname.dat（多了舞台剧 / 走秀 / 演唱会）。
     fetch(`${import.meta.env.BASE_URL}data/sweet/title-meta.json?v=${Date.now()}`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('称号表加载失败'))))
@@ -229,7 +633,7 @@ export default function SweetCaseView() {
     setSave(null);
     setBusy(true);
     try {
-      setSave(await parseSweetSave(file, stars, titles));
+      setSave(await parseSweetSave(file, stars, titles, tables));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '存档读取失败');
     } finally {
@@ -579,6 +983,18 @@ export default function SweetCaseView() {
                     ))}
                   </div>
                 )}
+              </details>
+
+              <details data-sweet-case-notices data-sweet-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
+                <summary data-sweet-case-notices-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
+                  筹备中通告 · {save.notices.length} 条
+                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                    当期可接取，按角色逐行显示
+                  </span>
+                </summary>
+                <div className="mt-2 flex flex-col gap-2">
+                  <SweetNoticePanel save={save} genders={genders} />
+                </div>
               </details>
             </>
           )}
