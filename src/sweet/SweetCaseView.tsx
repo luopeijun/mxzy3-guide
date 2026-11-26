@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
 import {
-  formatSweetDate, parseSweetSave, SWEET_ABILITY_LABELS, type SweetSave,
+  formatSweetDate, parseSweetSave, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
+  type SweetSave,
 } from '../lib/sweetCaseParser';
 
 /** 与明星志愿3 存档解析同款的小结块：右侧固定，默认收成一行，点开才列条目。 */
@@ -279,6 +280,32 @@ export default function SweetCaseView() {
                               </b>
                             </span>
                           ))}
+                        </div>
+                        {/* 与主站同一套分层：友好度 > 人气 > 压力/疲劳 > 其余社交项。 */}
+                        <div data-sweet-case-social className="mt-1 flex flex-wrap items-center gap-x-1.5 border-y border-line py-1 text-ui-2xs leading-[1.7]">
+                          <span data-sweet-case-friendship className="friendship-value font-semibold text-brand-strong">
+                            友好度 {artist.friendship}
+                          </span>
+                          <span data-sweet-case-popularity className="social-item font-semibold text-ink">
+                            人气 {artist.social[3]}
+                          </span>
+                          <span data-sweet-case-stress className="social-item font-medium text-ink-muted">
+                            压力 {artist.stress} · 疲劳 {artist.fatigue}
+                          </span>
+                          <span data-sweet-case-other-social className="text-ink-faint">
+                            叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]} · 曝光 {artist.social[4]} · 礼物 {artist.gifts}
+                          </span>
+                        </div>
+                        <div data-sweet-case-counts className="mt-0.5 flex flex-wrap items-center text-ui-2xs">
+                          <span className="mr-1 text-ink-faint">通告统计</span>
+                          {SWEET_NOTICE_LABELS.map((label, index) => (
+                            <span key={label} data-sweet-case-notice-count={label} className="rounded px-1 py-0.5 text-ink-faint">
+                              {label} <b className="font-semibold text-ink">{artist.noticeCounts[index] ?? 0}</b>
+                            </span>
+                          ))}
+                          <span data-sweet-case-notice-total className="rounded px-1 py-0.5 text-ink-faint">
+                            合计 <b className="font-semibold text-ink">{artist.noticeCounts.reduce((sum, n) => sum + n, 0)}</b>
+                          </span>
                         </div>
                       </article>
                     </div>
