@@ -1156,14 +1156,14 @@ function scanTailReservations(bytes: Uint8Array, stars: Record<string, string>):
 }
 
 /** 排期余量：剩下的日子里按每周上限折算最多还能排几天。 */
-function shootableDays(remaining: number, perWeek: number): number {
+export function shootableDays(remaining: number, perWeek: number): number {
   if (!(remaining > 0) || !(perWeek > 0)) return 0;
   const weeks = Math.ceil(remaining / 7);
   return Math.min(remaining, weeks * perWeek);
 }
 
 /** 与主站同一套风险口径：排不下=违约、余量 ≤5 天=逾期风险。 */
-function sweetRiskOf(needDays: number, canShootDays: number, daysPerWeek: number): SweetShootingRisk {
+export function sweetRiskOf(needDays: number, canShootDays: number, daysPerWeek: number): SweetShootingRisk {
   if (needDays <= 0) return 'ok';
   if (!(daysPerWeek > 0)) return 'unknown';
   const slack = canShootDays - needDays;
