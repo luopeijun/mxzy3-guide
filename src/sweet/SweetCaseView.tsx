@@ -7,6 +7,7 @@ import {
   type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetEvent,
   type SweetNotice, type SweetNoticeRole, type SweetSave, type SweetTeam,
 } from '../lib/sweetCaseParser';
+import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
 
 /** 称号门槛走甜蜜乐章自己的 Nickname.dat：作品统计八项同序（唱片＝专辑、主持＝节目），
@@ -83,6 +84,16 @@ function sweetChipClass(active: boolean) {
     active
       ? 'border-brand bg-brand font-semibold text-white'
       : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+  );
+}
+
+/** 通告状态页签：与主站 CaseReaderApp 的 tabClass 完全一致。 */
+function sweetTabClass(active: boolean) {
+  return cn(
+    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-t border-b-2 px-3 py-1.5 text-ui-xs transition-colors',
+    active
+      ? 'border-brand bg-surface font-bold text-brand-strong'
+      : 'border-transparent text-ink-muted hover:text-brand-strong',
   );
 }
 
@@ -363,6 +374,7 @@ function SweetNoticeRows({ notice, save, genders }: {
   save: SweetSave;
   genders: Record<string, number>;
 }) {
+  const closing = notice.status === 'closing';
   const workDaysBadge = (role?: SweetNoticeRole) => {
     const workDays = role?.workDays ?? notice.roles[0]?.workDays ?? 0;
     const daysPerWeek = role?.daysPerWeek ?? notice.roles[0]?.daysPerWeek ?? 0;
@@ -410,10 +422,13 @@ function SweetNoticeRows({ notice, save, genders }: {
       <Td title="开放接取与停止接取">
         <div className="whitespace-nowrap text-ui-2xs leading-[1.7]">
           <div><span className="text-ink-faint">开放</span> <b className="text-ink-muted">{notice.openDate || '—'}</b></div>
-          <div><span className="text-ink-faint">停止</span> <b className="text-ink-muted">{notice.deadline || '—'}</b></div>
+          <div><span className="text-ink-faint">停止</span> <b className={closing ? 'text-alert' : 'text-ink-muted'}>{notice.deadline || '—'}</b></div>
         </div>
         {notice.daysToDeadline >= 0 && (
-          <span className="mt-1 inline-block rounded-full bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-faint">
+          <span className={cn(
+            'mt-1 inline-block rounded-full px-1.5 py-0.5 text-ui-2xs',
+            closing ? 'bg-alert-soft font-semibold text-alert' : 'bg-surface-soft text-ink-faint',
+          )}>
             还剩 {notice.daysToDeadline} 天
           </span>
         )}
@@ -449,6 +464,7 @@ function SweetNoticeRows({ notice, save, genders }: {
           key={role.code}
           data-case-role
           data-case-role-name={role.role}
+          data-case-reserved={role.reservedBy ? 'yes' : 'no'}
           className={cn('hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
         >
           {index === 0 ? noticeCells : blankCells(role)}
@@ -459,9 +475,9 @@ function SweetNoticeRows({ notice, save, genders }: {
             <SweetRequirementChips role={role} />
           </Td>
           <SweetMatchList role={role} save={save} genders={genders} />
-          <Td>
+          <Td className={role.reservedBy ? 'bg-surface-soft' : undefined}>
             {role.reservedBy ? (
-              <span className="whitespace-nowrap text-ui-2xs font-semibold text-brand-strong">{role.reservedBy}</span>
+              <span data-case-reservation className="whitespace-nowrap text-ui-2xs font-semibold text-brand-strong">{role.reservedBy}</span>
             ) : <span className="text-ui-2xs text-ink-faint">—</span>}
           </Td>
         </tr>
@@ -501,71 +517,86 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
 
   return (
     <>
-      <div data-sweet-notice-filter className="flex flex-wrap items-center gap-2">
-        <label className="flex min-w-[220px] flex-1 items-center gap-1.5 rounded-ui-md border border-line bg-surface-soft px-2.5 py-1.5">
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-ink-faint">
-            <circle cx="6" cy="6" r="4.5" />
-            <path d="M9.5 9.5 13 13" strokeLinecap="round" />
-          </svg>
-          <input
-            type="text"
-            data-sweet-notice-search
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => { if (event.key === 'Escape') setQuery(''); }}
-            placeholder="搜索通告名称、编号、公司或角色"
-            aria-label="筛选筹备中通告"
-            className="min-w-0 flex-1 bg-transparent text-ui-xs text-ink outline-none placeholder:text-ink-faint"
-          />
-        </label>
-        <label className="flex shrink-0 items-center gap-1.5 rounded-ui-md border border-line bg-surface-soft px-2.5 py-1.5 text-ui-2xs text-ink-faint">
-          公司
-          <select
-            data-sweet-notice-company
-            value={company}
-            onChange={(event) => setCompany(event.target.value)}
-            className="max-w-[150px] bg-transparent text-ui-2xs text-ink outline-none"
-            aria-label="按制作公司筛选"
-          >
-            <option value="all">全部</option>
-            {companies.map((name) => <option key={name} value={name}>{name}</option>)}
-          </select>
-        </label>
-        {dirty && (
-          <button
-            type="button"
-            data-sweet-notice-reset
-            onClick={reset}
-            className="shrink-0 rounded-ui-md border border-line bg-surface px-2.5 py-1.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
-          >
-            重置筛选
+      <div data-sweet-notice-filter className="mt-2 rounded-ui-md border border-line bg-surface px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex min-w-[220px] flex-1 items-center gap-2 rounded-ui-md border border-line bg-surface-soft px-3 py-1.5 transition-colors focus-within:border-brand-line">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-faint">
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="M10.5 10.5 14 14" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              data-sweet-notice-search
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => { if (event.key === 'Escape') setQuery(''); }}
+              placeholder="搜索通告名称、编号、类型、公司或角色"
+              aria-label="筛选筹备中通告"
+              autoComplete="off"
+              spellCheck={false}
+              className="min-w-0 flex-1 bg-transparent text-ui-xs text-ink outline-none placeholder:text-ink-faint"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="shrink-0 rounded-full px-2 py-0.5 text-ui-2xs text-ink-faint transition-colors hover:bg-brand-soft hover:text-brand-strong"
+              >
+                清空
+              </button>
+            )}
+          </label>
+          <label className="flex shrink-0 items-center gap-1.5 rounded-ui-md border border-line bg-surface-soft px-2.5 py-1.5 text-ui-2xs text-ink-faint">
+            公司
+            <select
+              data-sweet-notice-company
+              value={company}
+              onChange={(event) => setCompany(event.target.value)}
+              className="max-w-[150px] bg-transparent text-ui-2xs text-ink outline-none"
+              aria-label="按制作公司筛选"
+            >
+              <option value="all">全部</option>
+              {companies.map((name) => <option key={name} value={name}>{name}</option>)}
+            </select>
+          </label>
+          {dirty && (
+            <button
+              type="button"
+              data-sweet-notice-reset
+              onClick={reset}
+              className="shrink-0 rounded-ui-md border border-line bg-surface px-2.5 py-1.5 text-ui-2xs text-ink-muted transition-colors hover:border-brand-line hover:text-brand-strong"
+            >
+              重置筛选
+            </button>
+          )}
+          <span data-sweet-notice-count className="ml-auto whitespace-nowrap text-ui-2xs tabular-nums text-ink-faint">
+            当前 {notices.length} / {all.length} 条
+          </span>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5" data-sweet-notice-cats role="group" aria-label="按类型筛选">
+          <button type="button" data-sweet-notice-cat="all" aria-pressed={category === 'all'} onClick={() => setCategory('all')} className={sweetChipClass(category === 'all')}>
+            全部 <span className={cn('tabular-nums', category === 'all' ? 'text-white/80' : 'text-ink-faint')}>{all.length}</span>
           </button>
-        )}
-        <span data-sweet-notice-count className="ml-auto whitespace-nowrap text-ui-2xs tabular-nums text-ink-faint">
-          当前 {notices.length} / {all.length} 条
-        </span>
-      </div>
-      <div data-sweet-notice-cats className="flex flex-wrap items-center gap-1.5" role="group" aria-label="按类型筛选">
-        <button type="button" data-sweet-notice-cat="all" aria-pressed={category === 'all'} onClick={() => setCategory('all')} className={sweetChipClass(category === 'all')}>
-          全部 <span className="tabular-nums">{all.length}</span>
-        </button>
-        {categories.map(([name, count]) => (
-          <button
-            key={name}
-            type="button"
-            data-sweet-notice-cat={name}
-            aria-pressed={category === name}
-            onClick={() => setCategory(category === name ? 'all' : name)}
-            className={sweetChipClass(category === name)}
-          >
-            {name} <span className="tabular-nums">{count}</span>
-          </button>
-        ))}
+          {categories.map(([name, count]) => (
+            <button
+              key={name}
+              type="button"
+              data-sweet-notice-cat={name}
+              aria-pressed={category === name}
+              onClick={() => setCategory(category === name ? 'all' : name)}
+              className={sweetChipClass(category === name)}
+            >
+              {name} <span className={cn('tabular-nums', category === name ? 'text-white/80' : 'text-ink-faint')}>{count}</span>
+            </button>
+          ))}
+        </div>
       </div>
       {notices.length === 0 ? (
-        <p className="mt-2 text-ui-2xs text-ink-faint">没有符合条件的通告。</p>
+        <div className="mt-2">
+          <EmptyState title="没有符合条件的通告" text="改一下筛选条件或清空搜索再试。" />
+        </div>
       ) : (
-        <div data-sweet-notice-table className="rounded-ui-md border border-line bg-surface">
+        <div data-sweet-notice-table className="mt-2 rounded-ui-md border border-line bg-surface">
           <table className="w-full table-fixed border-collapse text-ui-xs">
             <thead>
               <tr className="bg-surface-soft text-left text-ui-2xs font-semibold text-ink-muted">
@@ -988,17 +1019,20 @@ export default function SweetCaseView() {
                 )}
               </details>
 
-              <details data-sweet-case-notices data-sweet-case-toc-target open className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5">
-                <summary data-sweet-case-notices-summary className="cursor-pointer text-ui-xs font-bold text-brand-strong">
-                  筹备中通告 · {save.notices.length} 条
-                  <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                    当期可接取，按角色逐行显示
-                  </span>
-                </summary>
-                <div className="mt-2 flex flex-col gap-2">
-                  <SweetNoticePanel save={save} genders={genders} />
+              <div data-sweet-case-notices data-sweet-case-toc-target className="mt-2">
+                <div data-case-tabs role="tablist" aria-label="通告状态" className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    role="tab"
+                    data-case-tab="open"
+                    aria-selected="true"
+                    className={sweetTabClass(true)}
+                  >
+                    筹备中 <span className="tabular-nums">{save.notices.length}</span>
+                  </button>
                 </div>
-              </details>
+                <SweetNoticePanel save={save} genders={genders} />
+              </div>
             </>
           )}
         </div>
