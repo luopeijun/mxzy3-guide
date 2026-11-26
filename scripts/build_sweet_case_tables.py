@@ -14,8 +14,9 @@
 - Item.dat：391 条 × 452B 定长记录，道具编号 -> 名称 / 分类 / 说明 / 属性行，
   以及每条记录 +48 起的 21 格送礼向量。艺人槽位由 sources/sweet/favorite-gifts.txt
   的八位可送礼对象反推，只用真实有数据的那八格。
-- World.dat：11 条 × 288B；记录 0 的 +44 起是八座国际场景费用，记录 1..8
-  是场景名（+12 起 Big5）。存档里同构的记录 +4 是解锁标志。
+- World.dat：11 条 × 288B；记录 0 的 +44 起是十座国际场景费用（含甜蜜乐章
+  新增的倫敦 / 米蘭，对应舞台剧 / 时装秀），记录 1..10 是场景名（+12 起
+  Big5）。存档里同构的记录 +4 是解锁标志。
 
 用法：
     python scripts/build_sweet_case_tables.py [--data <game data dir>]
@@ -59,10 +60,12 @@ PROMO_KIND_NAMES = {
     "唱片宣傳": "唱片宣传", "拍攝MTV": "拍摄MTV", "簽名會": "签名会",
     "舞台劇演出": "舞台剧演出", "國際時裝週": "国际时装周",
 }
-# World.dat 里 id 2..9 的八座国际场景；界面沿用主站的简体显示名。
+# World.dat 里 id 2..11 的十座国际场景；界面沿用主站的简体显示名。
+# 最后两座是甜蜜乐章新增舞台剧 / 时装秀通告才有的场景。
 WORLD_SCENE_NAMES = {
     "長城": "长城", "東京": "东京", "好萊塢": "好莱坞", "巴黎": "巴黎",
     "維也納": "维也纳", "夏威夷": "夏威夷", "紐約": "纽约", "開羅": "开罗",
+    "倫敦": "伦敦", "米蘭": "米兰",
 }
 
 SUBTYPE_SIMPLE = {
@@ -287,21 +290,22 @@ def load_sweet_items(data_dir):
 
 
 def load_sweet_scenes(data_dir):
-    """从 World.dat 取八座国际场景的费用与繁体原名。
+    """从 World.dat 取十座国际场景的费用与繁体原名。
 
-    记录 0 的 +44 起是八个 int32 费用（与主站 World.tab 一致）；记录 1..8
-    的 +12 起是 16B Big5 名字。存档里同样按 288B 步长排布，紧挨名字前的
-    int32 才是解锁标志，解析器按 rawName 对齐这两份数据。
+    记录 0 的 +44 起是十个 int32 费用：前八个与主站 World.tab 一致，
+    第九 / 十个是倫敦 / 米蘭（甜蜜乐章新增舞台剧 / 时装秀场景）。记录
+    1..10 的 +12 起是 16B Big5 名字。存档里同样按 288B 步长排布，紧挨
+    名字前的 int32 才是解锁标志，解析器按 rawName 对齐这两份数据。
     """
     path = os.path.join(data_dir, "World.dat")
     if not os.path.isfile(path):
         return []
     records = read_table(path)
-    if len(records) < 9:
+    if len(records) < 11:
         return []
-    costs = struct.unpack_from("<8i", records[0], 44)
+    costs = struct.unpack_from("<10i", records[0], 44)
     out = []
-    for i in range(1, 9):
+    for i in range(1, 11):
         ident = struct.unpack_from("<I", records[i], 0)[0]
         raw_name = text(records[i], 12, 16)
         if ident != i + 1 or raw_name not in WORLD_SCENE_NAMES:
