@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import type { TitleMeta } from '../lib/caseParser';
 import { nextTitle } from '../lib/titleLadder';
 import {
-  formatSweetDate, parseSweetSave, sweetRoleGender, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
+  formatSweetDate, parseSweetSave, shootableDays, sweetRiskOf, sweetRoleGender,
+  SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
   type SweetAward, type SweetArtistCard, type SweetCaseTables, type SweetDoneNotice, type SweetEvent,
   type SweetNotice, type SweetNoticeRole, type SweetPromoNotice, type SweetSave,
   type SweetSelfMadeNotice, type SweetSelfMadeStatus,
-  type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetTeam,
+  type SweetShootingCast, type SweetShootingNotice, type SweetShootingOtherCast, type SweetShootingRisk, type SweetTeam,
   type SweetWaitingNotice, type SweetWorkRecord,
 } from '../lib/sweetCaseParser';
 import { companyDot, companyText } from '../components/notices/infoStyle';
@@ -81,6 +82,297 @@ const SWEET_CATEGORY_CLASS: Record<string, string> = {
   时装秀: 'bg-tag-runway-soft text-tag-runway',
   舞台剧: 'bg-tag-stage-soft text-tag-stage',
 };
+
+/** 右栏在拍小块用与表格同样的类别色；与主站 ACTIVE_NOTICE_TILE_CLASS 对齐。 */
+const SWEET_ACTIVE_TILE_CLASS: Record<string, string> = {
+  唱片: 'border-l-tag-talk bg-tag-talk-soft/70',
+  广告: 'border-l-tag-follow bg-tag-follow-soft/70',
+  电影: 'border-l-tag-manual bg-tag-manual-soft/70',
+  电视剧: 'border-l-tag-news bg-tag-news-soft/70',
+  主持: 'border-l-tag-scene bg-tag-scene-soft/70',
+  时装秀: 'border-l-tag-runway bg-tag-runway-soft/70',
+  舞台剧: 'border-l-tag-stage bg-tag-stage-soft/70',
+};
+
+/** 挂在右栏艺人名下的在拍通告：拍摄中与自制通告里明确还在拍的那一条。 */
+interface SweetActiveNotice {
+  key: string;
+  source: 'shooting' | 'selfMade';
+  code: string;
+  name: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  doneDays: number;
+  workDays: number;
+  risk: SweetShootingRisk;
+  groupName?: string;
+}
+
+/** 把存档里的在拍记录按艺人展开；团体通告只算一块，进度用队长那份。 */
+function buildSweetActiveNotices(save: SweetSave): Map<number, SweetActiveNotice[]> {
+  const byArtist = new Map<number, SweetActiveNotice[]>();
+  const signedIds = new Set(save.artists.map((artist) => artist.id));
+  const groupOf = (artistId: number): SweetTeam | null =>
+    save.teams.find((team) => team.memberIds.includes(artistId)) ?? null;
+  const add = (artistId: number, notice: SweetActiveNotice) => {
+    if (!signedIds.has(artistId)) return;
+    const list = byArtist.get(artistId) ?? [];
+    if (list.some((item) => item.key === notice.key)) return;
+    list.push(notice);
+    byArtist.set(artistId, list);
+  };
+  const isGroupRole = (role: SweetNoticeRole | null): boolean =>
+    !!role && (role.roleType === 4 || role.role === '團體' || role.role === '团体');
+
+  for (const notice of save.shooting) {
+    const groupRole = notice.roles.some(isGroupRole);
+    for (const cast of notice.casts) {
+      if (cast.status === 'done') continue;
+      const group = groupRole ? groupOf(cast.artistId) : null;
+      const targets = group ? group.memberIds : [cast.artistId];
+      const item: SweetActiveNotice = {
+        key: `shooting:${notice.code}`,
+        source: 'shooting',
+        code: notice.code,
+        name: notice.name,
+        category: notice.category,
+        startDate: notice.startDate,
+        endDate: notice.endDate,
+        doneDays: cast.doneDays,
+        workDays: cast.workDays,
+        risk: cast.risk,
+        groupName: group?.name,
+      };
+      for (const id of targets) add(id, item);
+    }
+  }
+
+  for (const notice of save.selfMade) {
+    if (notice.status !== 'shooting') continue;
+    for (const cast of notice.casts) {
+      if (!cast.mine && !cast.group) continue;
+      const group = cast.group ? groupOf(cast.artistId) : null;
+      const risk: SweetShootingRisk = cast.needDays > 0
+        ? sweetRiskOf(
+          cast.needDays,
+          shootableDays(notice.daysLeft, notice.daysPerWeek),
+          notice.daysPerWeek,
+        )
+        : 'ok';
+      const item: SweetActiveNotice = {
+        key: `selfMade:${notice.code}`,
+        source: 'selfMade',
+        code: notice.code,
+        name: notice.name,
+        category: notice.category,
+        startDate: notice.startDate,
+        endDate: notice.endDate,
+        doneDays: cast.doneDays,
+        workDays: cast.workDays,
+        risk,
+        groupName: group?.name ?? cast.group?.name,
+      };
+      for (const id of (group ? group.memberIds : [cast.artistId])) add(id, item);
+    }
+  }
+  return byArtist;
+}
+
+/** 右栏太窄，横滑小块只写月/日；完整日期留在悬停提示里。 */
+function shortNoticeDate(date: string): string {
+  const parts = date.split('/');
+  return parts.length === 3 ? `${parts[1]}/${parts[2]}` : (date || '—');
+}
+
+/** 每位艺人名下的在拍横滑条：左右箭头按一格滚动，轨道自身保留横向滚动条。 */
+function SweetActiveNoticeStrip({ notices }: { notices: SweetActiveNotice[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  const updateEdges = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setEdges({
+      left: el.scrollLeft > 2,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateEdges();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateEdges, { passive: true });
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateEdges);
+      observer.disconnect();
+    };
+  }, [updateEdges, notices]);
+
+  const step = (direction: -1 | 1) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const tile = el.querySelector('[data-sweet-case-quickref-notice]') as HTMLElement | null;
+    el.scrollBy({ left: direction * ((tile?.offsetWidth ?? 148) + 6), behavior: 'smooth' });
+  };
+
+  return (
+    <div className="mt-1.5 border-t border-line pt-1" data-sweet-case-quickref-notice-strip>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-ui-2xs font-semibold text-ink-faint">
+          在拍通告 <span className="tabular-nums">{notices.length}</span>
+        </span>
+        <span className="flex items-center gap-0.5">
+          <button
+            type="button"
+            data-sweet-case-quickref-scroll-prev
+            aria-label="向左滑动在拍通告"
+            disabled={!edges.left}
+            onClick={() => step(-1)}
+            className={cn(
+              'flex h-4 w-4 items-center justify-center rounded border border-line bg-surface text-ui-2xs leading-none text-ink-muted transition-colors',
+              edges.left ? 'hover:border-brand-line hover:text-brand-strong' : 'cursor-not-allowed opacity-40',
+            )}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            data-sweet-case-quickref-scroll-next
+            aria-label="向右滑动在拍通告"
+            disabled={!edges.right}
+            onClick={() => step(1)}
+            className={cn(
+              'flex h-4 w-4 items-center justify-center rounded border border-line bg-surface text-ui-2xs leading-none text-ink-muted transition-colors',
+              edges.right ? 'hover:border-brand-line hover:text-brand-strong' : 'cursor-not-allowed opacity-40',
+            )}
+          >
+            ›
+          </button>
+        </span>
+      </div>
+      <div
+        ref={scrollRef}
+        data-sweet-case-quickref-notice-scroll
+        className="case-active-notice-scroll flex gap-1.5 overflow-x-auto pb-1.5"
+      >
+        {notices.map((item) => (
+          <div
+            key={item.key}
+            data-sweet-case-quickref-notice={item.code}
+            data-sweet-case-quickref-notice-source={item.source}
+            data-sweet-case-quickref-notice-risk={item.risk}
+            title={`${item.name}（${item.code}）${item.groupName ? ` · ${item.groupName}` : ''}\n${item.startDate || '—'} ~ ${item.endDate || '—'}`}
+            className={cn(
+              'relative w-[148px] shrink-0 rounded border border-line border-l-[3px] px-1.5 py-1',
+              SWEET_ACTIVE_TILE_CLASS[item.category] ?? 'bg-surface',
+            )}
+          >
+            <div className="flex items-center gap-1 pr-2">
+              <span className={cn(
+                'shrink-0 rounded px-1 text-ui-2xs',
+                SWEET_CATEGORY_CLASS[item.category] ?? 'bg-surface text-ink-muted',
+              )}
+              >
+                {item.category}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-ui-2xs font-semibold text-ink">
+                {item.name}
+              </span>
+            </div>
+            <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-muted">
+              {shortNoticeDate(item.startDate)} ~ {shortNoticeDate(item.endDate)}
+            </div>
+            <div className={cn(
+              'tabular-nums text-ui-2xs text-ink-faint',
+              item.risk === 'tight' || item.risk === 'late' ? 'pr-3' : '',
+            )}
+            >
+              {item.groupName && <span className="mr-0.5">团 </span>}
+              {item.doneDays} / {item.workDays || '—'} 天
+              {item.risk === 'tight' && <span className="ml-1 font-semibold text-gold">逾期</span>}
+              {item.risk === 'late' && <span className="ml-1 font-semibold text-alert">违约</span>}
+            </div>
+            {(item.risk === 'tight' || item.risk === 'late') && (
+              <span
+                aria-hidden
+                className={cn(
+                  'absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full ring-2 ring-white',
+                  item.risk === 'late' ? 'bg-alert' : 'bg-gold',
+                )}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 右栏「艺人速查」：顶部完整卡片不动，这里只留对照通告表格时一眼要扫的
+ *  九项属性 + 状态 + 社交三项 + 当前在拍通告；友好度、压力疲劳、通告统计
+ *  仍在顶部卡片里。列表在剩余高度内自己滚，本页小结钉在上方不受影响。 */
+function SweetArtistQuickRef({ save }: { save: SweetSave }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const activeNotices = useMemo(() => buildSweetActiveNotices(save), [save]);
+  return (
+    <section data-sweet-case-quickref className="flex min-h-0 flex-1 flex-col rounded-ui-md border border-line bg-surface p-2.5 shadow-soft">
+      <div className="flex items-center justify-between px-0.5">
+        <span className="text-ui-2xs font-semibold text-ink-faint">艺人速查 · {save.artists.length} 位</span>
+        <button
+          type="button"
+          data-sweet-case-quickref-toggle
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+          className="rounded px-1 text-ui-2xs text-ink-faint transition-colors hover:bg-surface-soft hover:text-brand-strong"
+        >
+          {collapsed ? '展开' : '收起'}
+        </button>
+      </div>
+      {!collapsed && (
+        <div data-sweet-case-quickref-list className="mt-1.5 min-h-0 space-y-1.5 overflow-y-auto pr-0.5">
+          {save.artists.length === 0 ? (
+            <p className="px-0.5 text-ui-2xs text-ink-faint">这份存档里没有识别到旗下艺人。</p>
+          ) : save.artists.map((artist) => {
+            const active = activeNotices.get(artist.id) ?? [];
+            return (
+              <div key={artist.id} data-sweet-case-quickref-artist={artist.name} className="rounded border border-line bg-surface-soft px-2 py-1.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-ui-2xs font-bold text-brand-strong">#{artist.id} {artist.name}</span>
+                  <span
+                    data-sweet-case-quickref-condition
+                    className={cn(
+                      'ml-auto text-ui-2xs',
+                      artist.condition && artist.condition !== '正常'
+                        ? 'font-semibold text-alert' : 'text-ink-faint',
+                    )}
+                  >
+                    {artist.condition || '—'}
+                  </span>
+                </div>
+                <div data-sweet-case-quickref-attrs className="mt-1 grid grid-cols-3 gap-x-1.5 gap-y-0.5 text-ui-2xs text-ink-muted">
+                  {SWEET_ABILITY_LABELS.map((label, index) => (
+                    <span key={label} className="flex justify-between gap-0.5 whitespace-nowrap">
+                      <span className="text-ink-faint">{label}</span>
+                      <b className="tabular-nums">{artist.abilities[index] ?? 0}</b>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-1 whitespace-nowrap border-t border-line pt-1 text-ui-2xs leading-[1.5] text-ink-faint">
+                  叛逆 {artist.social[0]} · 性感 {artist.social[1]} · 亲和 {artist.social[2]}
+                </div>
+                {active.length > 0 && <SweetActiveNoticeStrip notices={active} />}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function sweetChipClass(active: boolean) {
   return cn(
@@ -2039,6 +2331,7 @@ export default function SweetCaseView() {
           <div className="shrink-0">
             <SweetCaseToc save={save} />
           </div>
+          <SweetArtistQuickRef save={save} />
         </aside>
       )}
     </div>
