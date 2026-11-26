@@ -3,10 +3,11 @@
 
 真源是甜蜜乐章安装目录的 Data/*.dat：
 - CaseClass.dat / RoleType.dat：通告大类 / 角色类型编号到繁体原文。
-- Studio.dat + World.dat + StudioProduce.dat：制作公司。StudioProduce 每条
-  `[seq][class][kind][studioId][...]`，当事人看到的公司名由 studioId 决定；
-  21..30 是 World.dat 的城市名（id-20），按通告大类补「廣告 / 電視劇 /
-  電影 / 唱片 / 主持 / 舞台劇 / 走秀」后缀。
+- Studio.dat + StudioProduce.dat：制作公司。Studio.dat 的键是记录里的公司
+  编号（不是数组下标）；StudioProduce 每条 `[seq][class][caseNo][studioId][...]`，
+  当事人看到的公司名由 studioId 决定。海外通告按通告大类取制作公司：
+  广告＝伊莉莎白、电影＝大宇宙影业、唱片＝京风唱片、舞台剧＝巴洛克之诗、
+  时装秀＝柯里昂；城市只是场景，不是公司名。
 - Length.dat：`[class/ subtype][role]` -> [工作天数, 每周上限]，与存档里的
   角色类型一起决定表格上的两枚胶囊。
 - 各 XxxCase.dat：通告码 -> 名字（存档里也有名字，这份只做回查）。
@@ -30,11 +31,10 @@ CASE_FILES = (
     "CFCase.dat", "TVCase.dat", "CDCase.dat", "MVCase.dat",
     "SHCase.dat", "THCase.dat", "FSCase.dat",
 )
-# World.dat 公司（id 21..30）按通告大类补的后缀；Studio.dat 自带公司性质，不再补。
-WORLD_SUFFIX = {
-    1: "廣告", 2: "電視劇", 3: "電影", 4: "唱片",
-    5: "主持", 6: "舞台劇", 7: "走秀",
-}
+# CaseFirm 里这五个槽是海外通告；公司按通告大类取，不按槽号取。
+# 存档槽 21/24/25/26/27 与通告大类的对应在不同周次可能错位。
+OVERSEAS_SEQS = {21, 24, 25, 26, 27}
+CODE_PREFIX = {1: "CF", 2: "TV", 3: "MV", 4: "CD", 5: "SH", 6: "TH", 7: "FS"}
 # 存档 sub 编号到 Length.dat 的通告类型名；只覆盖电视剧的三种子类型。
 TV_SUBTYPES = {1: "連續劇", 2: "單元劇", 5: "短片"}
 # 主持类在 Length.dat 里按节目型细分；先统一取歌舞综艺的 10 天 / 每周 2 次，
@@ -96,27 +96,48 @@ def load_names(path, value_offset=4, limit=20):
 
 
 def load_companies(data_dir):
-    studios = load_names(os.path.join(data_dir, "Studio.dat"), 4, 28)
-    world = load_names(os.path.join(data_dir, "World.dat"), 12, 20)
-    companies = {key: value for key, value in studios.items()}
-    for ident in range(21, 31):
-        name = world.get(str(ident - 20), "")
-        if name:
-            companies[str(ident)] = name
-    return companies
+    """Studio.dat 的键是记录内公司编号，不能用数组下标（编号有跳号）。"""
+    out = {}
+    for rec in read_table(os.path.join(data_dir, "Studio.dat")):
+        ident = struct.unpack_from("<I", rec, 0)[0]
+        name = text(rec, 4, 28)
+        if ident and name:
+            out[str(ident)] = name
+    return out
 
 
 def load_company_by_seq(data_dir, companies):
     out = {}
     for rec in read_table(os.path.join(data_dir, "StudioProduce.dat")):
-        seq, kind, _sub, studio_id = struct.unpack_from("<4I", rec, 0)
-        base = companies.get(str(studio_id), "")
-        if not base:
+        seq, _class, _case_no, studio_id = struct.unpack_from("<4I", rec, 0)
+        name = companies.get(str(studio_id), "")
+        if seq and name:
+            out.setdefault(str(seq), name)
+    return out
+
+
+def load_company_by_code(data_dir, companies):
+    """StudioProduce 的 caseNo 是通告码数字段；class=0 表示全大类通用。"""
+    out = {}
+    for rec in read_table(os.path.join(data_dir, "StudioProduce.dat")):
+        _seq, class_id, case_no, studio_id = struct.unpack_from("<4I", rec, 0)
+        name = companies.get(str(studio_id), "")
+        if not case_no or not name:
             continue
-        # 21..30 是城市名，拼上大类后缀才是界面里的制作公司。
-        if studio_id >= 21:
-            base += WORLD_SUFFIX.get(kind, "")
-        out[str(seq)] = base
+        for ident, prefix in CODE_PREFIX.items():
+            if class_id in (0, ident):
+                out.setdefault(prefix + ("%03d" % case_no), name)
+    return out
+
+
+def load_overseas_companies(data_dir, companies):
+    """海外通告按大类取固定制作公司，槽号只表示刷新位次。"""
+    out = {}
+    for rec in read_table(os.path.join(data_dir, "StudioProduce.dat")):
+        seq, class_id, _case_no, studio_id = struct.unpack_from("<4I", rec, 0)
+        name = companies.get(str(studio_id), "")
+        if seq in OVERSEAS_SEQS and class_id and name:
+            out.setdefault(str(class_id), name)
     return out
 
 
@@ -177,11 +198,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
     args = parser.parse_args()
+    companies = load_companies(args.data)
     data = {
         "classes": load_names(os.path.join(args.data, "CaseClass.dat")),
         "roles": load_names(os.path.join(args.data, "RoleType.dat")),
-        "companies": load_companies(args.data),
-        "companyBySeq": load_company_by_seq(args.data, load_companies(args.data)),
+        "companies": companies,
+        "companyBySeq": load_company_by_seq(args.data, companies),
+        "companyByCode": load_company_by_code(args.data, companies),
+        "overseasCompanies": load_overseas_companies(args.data, companies),
         "lengths": load_lengths(args.data),
         "cases": load_cases(args.data),
         "subtypes": load_subtypes(args.data),

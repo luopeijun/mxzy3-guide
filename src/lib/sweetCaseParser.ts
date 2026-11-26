@@ -173,6 +173,10 @@ export interface SweetCaseTables {
   classes?: Record<string, string>;
   roles?: Record<string, string>;
   companyBySeq?: Record<string, string>;
+  /** 通告码末尾三位 -> 制作公司（StudioProduce.dat 的 caseNo）。 */
+  companyByCode?: Record<string, string>;
+  /** 海外通告按大类取真实公司名（StudioProduce.dat 的海外槽）。 */
+  overseasCompanies?: Record<string, string>;
   lengths?: Record<string, [number, number]>;
   cases?: Record<string, string>;
   genders?: Record<string, number>;
@@ -742,6 +746,21 @@ const SWEET_CATEGORY_BY_PREFIX: Record<string, string> = {
   CF: '广告', TV: '电视剧', MV: '电影', CD: '唱片',
   SH: '主持', TH: '舞台剧', FS: '时装秀',
 };
+/** CaseFirm 的海外刷新位次；这些槽的公司由通告大类决定，不是槽号本身。 */
+const OVERSEAS_SEQS = new Set([21, 24, 25, 26, 27]);
+
+/** 制作公司只认游戏表；查不到就留空，绝不按城市/类别猜名字。 */
+function sweetCompany(
+  code: string, seq: number, classId: number, tables: SweetCaseTables,
+): string {
+  const overseas = tables.overseasCompanies?.[String(classId)];
+  if (overseas && (OVERSEAS_SEQS.has(seq) || classId === 6 || classId === 7)) {
+    return overseas;
+  }
+  return tables.companyBySeq?.[String(seq)]
+    ?? tables.companyByCode?.[code]
+    ?? '';
+}
 
 /** 男性 / 女性角色才按性别过滤；个人、团体、主持类任何艺人都能接。 */
 export function sweetRoleGender(roleType: number): 'male' | 'female' | undefined {
@@ -867,8 +886,7 @@ function readNoticeBody(
     ?? SWEET_CATEGORY_BY_PREFIX[code.slice(0, 2)] ?? rawCategory ?? '';
   const type = tables.subtypes?.[`${classId}|${typeId}`] ?? '';
 
-  const seq = Number(code.replace(/[^0-9]/g, '')) || 0;
-  const company = tables.companyBySeq?.[String(seq)] ?? '';
+  const company = sweetCompany(code, 0, classId, tables);
 
   const roles: SweetNoticeRole[] = [];
   const seen = new Set<string>();
@@ -983,7 +1001,7 @@ function scanSweetNotices(
     const category = SWEET_CATEGORY_SIMPLE[rawCategory]
       ?? SWEET_CATEGORY_BY_PREFIX[code.slice(0, 2)] ?? rawCategory ?? '';
     const type = tables.subtypes?.[`${classId}|${typeId}`] ?? '';
-    const company = tables.companyBySeq?.[String(seq)] ?? '';
+    const company = sweetCompany(code, seq, classId, tables);
 
     const roles: SweetNoticeRole[] = [];
     const seen = new Set<string>();
