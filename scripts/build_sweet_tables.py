@@ -26,26 +26,30 @@ def load_stars(data_dir):
     if magic != 0x3F2 or 12 + count * size != len(raw):
         raise SystemExit("unexpected StarRole.dat layout")
     stars = {}
+    genders = {}
     for i in range(count):
         rec = raw[12 + i * size:12 + (i + 1) * size]
         name = rec[20:60].split(b"\x00")[0].decode("big5", "replace")
         if not name:
             continue
-        # 性别字段位置尚未确认（+8 是别的编号），第一步只烘焙名字，避免放入错值。
         stars[str(i)] = name
-    return stars
+        # +4：1 男 / 0 女。杜云芊 0、姚子奇 1、慕容和希 1、方若绮 0、黎华 1。
+        gender = struct.unpack_from("<i", rec, 4)[0]
+        if gender in (0, 1):
+            genders[str(i)] = gender
+    return stars, genders
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
     args = parser.parse_args()
-    stars = load_stars(args.data)
+    stars, genders = load_stars(args.data)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
-        json.dump({"stars": stars}, f, ensure_ascii=False, indent=1)
+        json.dump({"stars": stars, "genders": genders}, f, ensure_ascii=False, indent=1)
         f.write("\n")
-    print("wrote", OUT, "stars", len(stars))
+    print("wrote", OUT, "stars", len(stars), "genders", len(genders))
 
 
 if __name__ == "__main__":
