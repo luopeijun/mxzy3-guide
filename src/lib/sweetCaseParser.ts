@@ -223,6 +223,8 @@ export interface SweetCaseTables {
   giftSlots?: Record<string, number>;
   /** 十座国际场景的显示名 / 存档繁体原名 / 费用，来自 World.dat。 */
   scenes?: SweetScene[];
+  /** 制作人编号 -> [显示名, 六类分组 key]，来自 MapRole + StudioProduce 烘焙。 */
+  producers?: Array<{ code: number; name: string; group: string }>;
 }
 
 /** 存档里一座国际场景的解锁状态；费用与显示名来自 World.dat 烘焙表。 */
@@ -447,6 +449,10 @@ export interface SweetSave {
   items: SweetOwnedItem[];
   /** 十座国际场景的解锁标志；费用 / 显示名来自 World.dat。 */
   scenes: SweetScene[];
+  /** 制作人编号 -> 友好度（存档友好度表制作人段）。 */
+  producerFriendship: Record<number, number>;
+  /** 制作人清单（编号 / 名字 / 分组），来自烘焙表，随 save 一起带给页面。 */
+  producers: Array<{ code: number; name: string; group: string }>;
 }
 
 const BLOCK_MARK = 0x00050000; // 327680，艺人属性块头标记
@@ -2063,6 +2069,39 @@ function scanSweetScenes(bytes: Uint8Array, view: DataView, tables: SweetCaseTab
   return [];
 }
 
+/** 制作人友好度：与艺人友好度同在一张 200B 步长表里，但不同段。每条
+ *  `[友好度 int32 @0][…][编号 int32 @76]`。艺人段是 id 1..99，制作人段从
+ *  id 302 起（编号不连续、有空槽），所以按编号反查、不数序号。定位靠
+ *  「锚点编号 302 + 后续编号递增且落在 300..899、友好度 0..999」校验，
+ *  不写死绝对偏移——存档长度随通告数变化。 */
+function scanProducerFriendship(bytes: Uint8Array, view: DataView): Record<number, number> {
+  const out: Record<number, number> = {};
+  const stride = 200;
+  const limit = bytes.length;
+  for (let start = 270; start + stride <= limit; start += 1) {
+    if (readI32(view, start + 76) !== 302) continue;
+    if (readI32(view, start) < 0 || readI32(view, start) > 999) continue;
+    let ok = true;
+    for (let k = 0; k < 5; k += 1) {
+      const off = start + k * stride;
+      if (off + 80 > limit) { ok = false; break; }
+      const code = readI32(view, off + 76);
+      const fr = readI32(view, off);
+      if (code < 300 || code > 899 || fr < 0 || fr > 999) { ok = false; break; }
+    }
+    if (!ok) continue;
+    for (let off = start; off + 80 <= limit; off += stride) {
+      const code = readI32(view, off + 76);
+      if (code < 300 || code > 899) break;
+      const fr = readI32(view, off);
+      if (fr < 0 || fr > 999) break;
+      out[code] = fr;
+    }
+    break;
+  }
+  return out;
+}
+
 /** 甜站 Item 段是真段头：`[4]["Item\0"][条数][16B × 条数]`，
  *  每条 `[编号][状态位][数量][附字段]`。状态位可能是 -12 / 96 这类标记，
  *  不能当类型或过滤条件；数量为 0 的行也保留，由页面决定不显示。 */
@@ -2161,6 +2200,7 @@ export async function parseSweetSave(
   );
   const items = scanSweetItems(bytes, view, tables);
   const scenes = scanSweetScenes(bytes, view, tables);
+  const producerFriendship = scanProducerFriendship(bytes, view);
   return {
     protagonist: readBig5(bytes, 0x04),
     company: companyName,
@@ -2183,5 +2223,7 @@ export async function parseSweetSave(
     selfMade,
     items,
     scenes,
+    producerFriendship,
+    producers: tables.producers ?? [],
   };
 }
