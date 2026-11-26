@@ -486,6 +486,14 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
           summary: `${save.items.filter((it) => it.quantity > 0).length} 件`,
         }]
       : []),
+    ...(save.scenes.length > 0
+      ? [{
+          id: 'scenes',
+          label: '场景',
+          selector: '[data-sweet-case-scenes]',
+          summary: `${save.scenes.filter((s) => s.unlocked).length}/${save.scenes.length} 解锁`,
+        }]
+      : []),
     { id: 'notices', label: '筹备中通告', selector: '[data-sweet-case-notices]', summary: `${save.notices.length} 条` },
     { id: 'shooting', label: '拍摄中通告', selector: '[data-sweet-case-notices]', summary: `${save.shooting.length} 条` },
     { id: 'promo', label: '宣传中通告', selector: '[data-sweet-case-notices]', summary: `${save.promo.length} 条` },
@@ -2513,6 +2521,46 @@ export default function SweetCaseView() {
                     gifts={tables.gifts ?? {}}
                     giftSlots={tables.giftSlots ?? {}}
                   />
+                </details>
+              )}
+
+              {/* 场景：与主站同款 2/4 列卡片；解锁标志来自存档 World 记录，费用来自 World.dat。 */}
+              {save.scenes.length > 0 && (
+                <details
+                  data-sweet-case-scenes
+                  data-sweet-case-toc-target
+                  className="mt-2 rounded-ui-md border-2 border-brand-line bg-surface-soft px-3 py-2.5"
+                >
+                  <summary
+                    data-sweet-case-scenes-summary
+                    className="cursor-pointer text-ui-xs font-bold text-brand-strong"
+                  >
+                    场景
+                    <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
+                      {save.scenes.filter((scene) => scene.unlocked).length}/{save.scenes.length} 已解锁
+                    </span>
+                  </summary>
+                  <div data-sweet-case-scene-grid className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                    {save.scenes.map((scene) => (
+                      <div
+                        key={scene.name}
+                        data-sweet-case-scene
+                        data-sweet-case-scene-unlocked={scene.unlocked}
+                        data-sweet-case-scene-cost={scene.cost}
+                        className={cn(
+                          'flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
+                          scene.unlocked
+                            ? 'border-growth-line bg-growth-soft text-growth-strong'
+                            : 'border-line bg-surface text-ink-faint',
+                        )}
+                      >
+                        <b className="font-semibold">{scene.name}</b>
+                        <span className="ml-1 tabular-nums">
+                          {scene.unlocked ? '已解锁' : scene.cost.toLocaleString('zh-CN')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </details>
               )}
 
