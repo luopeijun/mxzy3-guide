@@ -52,6 +52,9 @@ export const SWEET_AWARD_LABELS = [
   '最上镜头', '最佳模特儿', '最佳代言人',
 ] as const;
 
+/** 与主站事项编号同序，让称号升级的奖项门槛可以直接按编号计数。 */
+const SWEET_AWARD_IDS = [21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53];
+
 /** 艺人成绩记事里的事项编号，沿用主站 21..53 那一套。 */
 const SWEET_DIARY_AWARD_NAMES: Record<number, string> = {
   21: '最佳新人', 22: '最佳演唱人', 23: '最佳团体', 24: '年度专辑',
@@ -75,6 +78,8 @@ const SWEET_DIARY_EVENT_NAMES: Record<number, string> = {
 const SWEET_DIARY_EVENT_SCALE = ['', '大型', '中型', '小型'];
 
 export interface SweetAward {
+  /** 事项编号（21..53），与主站同一套；称号升级的额外奖项按它计数。 */
+  awardId: number;
   year: number;
   month: number;
   day: number;
@@ -412,6 +417,7 @@ function scanAwards(bytes: Uint8Array, year: number): SweetAward[] {
       const work = readBig5(bytes, offset + 20, 16);
       if (!winner || !work || winner === '從缺') { ok = false; break; }
       rows.push({
+        awardId: SWEET_AWARD_IDS[index],
         year,
         month: 0,
         day: 0,
@@ -600,6 +606,7 @@ function scanDiaryAwards(
     const companyAward = SWEET_DIARY_COMPANY_AWARD_IDS.has(awardId);
     const embeddedGroup = groupAward ? readBig5(bytes, p + 76, 16) : '';
     rows.push({
+      awardId,
       year,
       month,
       day,

@@ -1,19 +1,38 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
+import type { TitleMeta } from '../lib/caseParser';
+import { nextTitle } from '../lib/titleLadder';
 import {
   formatSweetDate, parseSweetSave, SWEET_ABILITY_LABELS, SWEET_NOTICE_LABELS,
-  type SweetAward, type SweetEvent, type SweetSave, type SweetTeam,
+  type SweetAward, type SweetArtistCard, type SweetEvent, type SweetSave, type SweetTeam,
 } from '../lib/sweetCaseParser';
+import { TitleBadge } from '../ui/TitleBadge';
 
-/** 称号徽标跟主站同一套分线配色；line 来自 case-tables.json 的 titleMeta。 */
-const TITLE_LINE_CLASS: Record<string, string> = {
-  music: 'border-title-music-line bg-title-music-soft text-title-music',
-  host: 'border-title-host-line bg-title-host-soft text-title-host',
-  model: 'border-title-model-line bg-title-model-soft text-title-model',
-  screen: 'border-title-screen-line bg-title-screen-soft text-title-screen',
-  star: 'border-title-star-line bg-title-star-soft text-title-star',
-  other: 'border-title-other-line bg-title-other-soft text-title-other',
-};
+/** 称号门槛与主站共用：奖项编号 21..53 同套，作品统计前五项同序（唱片＝专辑、主持＝节目），
+ *  演唱会按事项 63 的活动计，团体场给同团成员都算。 */
+function sweetTitleStats(save: SweetSave, artist: SweetArtistCard) {
+  const awardIds = save.awards
+    .filter((award) => award.artistId === artist.id)
+    .map((award) => award.awardId);
+  const concerts = save.events.filter((event) => {
+    if (event.kind !== 63) return false;
+    if (!event.group) return event.artistId === artist.id;
+    return save.teams.some((team) =>
+      team.memberIds.includes(event.artistId) && team.memberIds.includes(artist.id));
+  }).length;
+  return {
+    abilities: artist.abilities,
+    social: artist.social,
+    noticeCounts: artist.noticeCounts.slice(0, 5),
+    awardIds,
+    concerts,
+  };
+}
+
+/** 甜站艺人编号与主站不同，性别从当前称号的性别位推；通用称号不过滤候选。 */
+function sweetTitleGender(meta: TitleMeta | null): string | undefined {
+  return meta?.sex === 1 ? 'male' : meta?.sex === 0 ? 'female' : undefined;
+}
 
 /** 得奖表里也有 NPC 的奖；页面只显示本公司的，和游戏排行榜筛选一致。 */
 function awardBelongsToCompany(award: SweetAward, company: string): boolean {
@@ -178,7 +197,7 @@ export default function SweetCaseView() {
   const [save, setSave] = useState<SweetSave | null>(null);
   const [stars, setStars] = useState<Record<string, string>>({});
   const [titles, setTitles] = useState<Record<string, string>>({});
-  const [titleMeta, setTitleMeta] = useState<Record<string, { line?: string }>>({});
+  const [titleMeta, setTitleMeta] = useState<Record<string, TitleMeta>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -192,7 +211,7 @@ export default function SweetCaseView() {
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('称号表加载失败'))))
       .then((data: {
         titles?: Record<string, string>;
-        titleMeta?: Record<string, { line?: string }>;
+        titleMeta?: Record<string, TitleMeta>;
       }) => {
         setTitles(data.titles ?? {});
         setTitleMeta(data.titleMeta ?? {});
@@ -362,18 +381,16 @@ export default function SweetCaseView() {
                             </span>
                           )}
                           {(artist.title || artist.titleId > 0) && (() => {
-                            const line = titleMeta[String(artist.titleId)]?.line ?? 'other';
+                            const meta = titleMeta[String(artist.titleId)] ?? null;
                             return (
-                              <span
-                                data-sweet-case-artist-title
-                                data-title-line={line}
-                                className={cn(
-                                  'rounded-full border px-1.5 text-ui-2xs font-semibold',
-                                  TITLE_LINE_CLASS[line] ?? TITLE_LINE_CLASS.other,
+                              <TitleBadge
+                                title={artist.title || `称号${artist.titleId}`}
+                                meta={meta}
+                                next={nextTitle(
+                                  titleMeta, titles, artist.titleId,
+                                  sweetTitleStats(save, artist), sweetTitleGender(meta),
                                 )}
-                              >
-                                {artist.title || `称号${artist.titleId}`}
-                              </span>
+                              />
                             );
                           })()}
                           {artist.condition && (
