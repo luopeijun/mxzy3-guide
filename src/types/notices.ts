@@ -46,12 +46,15 @@ export interface Notice {
   roles?: NoticeRole[];
 }
 
-/** 类型 × 征求对象 → 每项能力的要求等级（A/B/C/D）与每日成长。 */
+/** 类型 × 征求对象 → 每项能力的要求等级（A/B/C/D）、每天的能力影响与特殊要求。 */
 export interface GradeRow {
   type: string;
   role: string;
   grades: Record<string, string>;
+  /** 拍摄期间每天结算的能力增减；游戏表里以 ×10 整数存储，这里已换算成小数。 */
   gains?: Record<string, number>;
+  /** 七种特殊要求标志，名字来自 CaseSpecial.dat。 */
+  specialKinds?: string[];
 }
 
 export interface ScaleRow {

@@ -79,9 +79,18 @@ const TONE_FIELDS: { key: 'affinity' | 'rebellion' | 'sexy'; label: string }[] =
   { key: 'sexy', label: '性感' },
 ];
 
-/** 「搞笑」这类特殊要求每天对三项属性造成的增减；和「能力影响」一样按天结算。 */
-export function specialNotes(data: NoticeData, role: NoticeRole): SpecialNote[] {
-  return (role.specialKinds ?? []).map((kind) => {
+/** 「搞笑」这类特殊要求每天对三项属性造成的增减；和「能力影响」一样按天结算。
+ *  甜蜜乐章的静态通告表里，标志挂在「类型 × 征求对象」等级行上而不是角色上，
+ *  角色自身没写时回退到那一行，避免详情面板漏掉这七种要求。 */
+export function specialNotes(
+  data: NoticeData,
+  notice: Notice,
+  role: NoticeRole,
+): SpecialNote[] {
+  const kinds = role.specialKinds?.length
+    ? role.specialKinds
+    : findGrade(data, notice, role)?.specialKinds ?? [];
+  return kinds.map((kind) => {
     const effect = data.specialEffects.find((item) => item.kind === kind);
     const deltas = TONE_FIELDS.flatMap(({ key, label }) => {
       const value = effect?.[key];

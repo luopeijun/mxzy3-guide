@@ -8,12 +8,14 @@
   +2036/+4076/+6116/+8156 是最多四条角色记录。
 - XxxType.dat / TVLength.dat / CaseClass.dat / RoleType.dat / CaseSpecial.dat：
   子类型、角色类型与特殊要求的编号到繁体原文。
-- NeedEffect.dat：类型 × 征求对象 → 九项能力的 A/B/C/D 要求；Difficulty.dat：
-  星级 → 四档数值区间。
+- NeedEffect.dat：类型 × 征求对象 → 九项能力的 A/B/C/D 要求、七种特殊要求
+  标志，以及九项能力在拍摄期间「每天」的影响值（整数存储，除以 10 即游戏
+  内的小数）；Difficulty.dat：星级 → 四档数值区间。
 - Studio.dat + StudioProduce.dat + MapRole.dat：制作公司与制作人。
 
-社区表格里的「默认艺人 / 能力影响每日值 / 特殊要求每日增减 / 艺人成长率 /
-原表说明」不在游戏数据里，脚本不会编造，只留空并在 notes 里交代。
+社区表格里的「默认艺人 / 特殊要求每日增减 / 艺人成长率 / 原表说明」不在
+游戏数据里，脚本不会编造，只留空并在 notes 里交代。能力影响每日值原本也
+被误判为缺失，实际就在 NeedEffect.dat 后半段，现已接入。
 
 用法：
     python scripts/build_sweet_notices.py [--data <game data dir>]
@@ -181,10 +183,22 @@ def load_character_names(data_dir):
 
 
 def load_grades(data_dir):
-    """NeedEffect.dat 的等级数组在 +12，九个能力依序 A=1..D=4。"""
+    """NeedEffect.dat 的完整等级行。
+
+    记录长 120B、30 个 int32：
+    - +12..+44（列 3..11）：九项能力的 A/B/C/D 档位，0 表示不要求；
+    - +48..+76（列 12..18）：七位 0/1，对应 CaseSpecial.dat 的七种特殊要求；
+    - +76..+108（列 19..27）：九项能力在拍摄期间每天的影响，整数存储，
+      除以 10 才是游戏里的小数（例如 28 → 每天 +2.8）；0 为不增减，999 是
+      游戏里不作数值展示的保留标记，跳过。
+    同名类型 × 征求对象在社区表「能力影响（每天）」里的数值，与本文件逐格
+    核对一致（广告 / 唱片 / 主持全命中），字段顺序同九项能力。
+    """
     type_names = {}
     for file_name in NEED_TYPE_FILE.values():
         type_names[file_name] = load_names(os.path.join(data_dir, file_name))
+    special_names = load_names(os.path.join(data_dir, "CaseSpecial.dat"))
+    special_names.pop(0, None)  # 0 = 無，不是特殊要求
     rows = []
     for record in read_table(os.path.join(data_dir, "NeedEffect.dat")):
         values = [struct.unpack_from("<i", record, off)[0] for off in range(0, 120, 4)]
@@ -223,8 +237,23 @@ def load_grades(data_dir):
         for ability, value in zip(ABILITIES, values[3:12]):
             if value in (1, 2, 3, 4):
                 grades[ability] = "ABCD"[value - 1]
-        if grades:
-            rows.append({"type": type_name, "role": role, "grades": grades})
+        gains = {}
+        for ability, value in zip(ABILITIES, values[19:28]):
+            if value == 0 or value == 999:
+                continue
+            gains[ability] = round(value / 10.0, 1)
+        kinds = [
+            special_names[index]
+            for index in range(1, 8)
+            if values[11 + index] == 1 and special_names.get(index)
+        ]
+        if grades or gains:
+            row = {"type": type_name, "role": role, "grades": grades}
+            if gains:
+                row["gains"] = gains
+            if kinds:
+                row["specialKinds"] = kinds
+            rows.append(row)
     return rows
 
 
@@ -361,16 +390,20 @@ def main():
         "specialEffects": load_special_effects(args.data),
         "growth": [],
         "notes": [
-            "编号、名称、剧情简介、角色与角色简介、子类型、等级要求与数值区间来自游戏数据文件。",
-            "默认艺人、能力影响每日值、特殊要求的每日属性增减与艺人成长率不在游戏数据文件里，暂留空。",
+            "编号、名称、剧情简介、角色与角色简介、子类型、等级要求、数值区间、拍摄期间每天的能力影响与特殊要求标志来自游戏数据文件。",
+            "默认艺人、特殊要求的每日属性增减与艺人成长率不在游戏数据文件里，暂留空。",
         ],
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as handle:
         json.dump(data, handle, ensure_ascii=False, indent=2)
         handle.write("\n")
+    grade_rows = data["grades"]
     print("notices: %d  roles: %d  grades: %d  -> %s" %
-          (len(notices), role_count, len(data["grades"]), OUT))
+          (len(notices), role_count, len(grade_rows), OUT))
+    print("grades with gains: %d  with special kinds: %d" %
+          (sum(1 for row in grade_rows if row.get("gains")),
+           sum(1 for row in grade_rows if row.get("specialKinds"))))
     print("categories: " + ", ".join("%s %d" % (row["name"], row["count"]) for row in categories))
 
 

@@ -78,7 +78,7 @@ function RoleBlock({
 }) {
   const stars = starsOf(role);
   const requirements = useMemo(() => requirementsFor(data, notice, role), [data, notice, role]);
-  const notes = specialNotes(data, role);
+  const notes = specialNotes(data, notice, role);
   const thresholds = thresholdsFor(role);
   const gains = gainsFor(data, notice, role);
   const gainEntries = Object.entries(gains).filter(([, value]) => value !== 0);
