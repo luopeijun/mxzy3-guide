@@ -347,7 +347,8 @@ export interface SweetSelfMadeNotice {
 export type SweetShootingRisk = 'ok' | 'tight' | 'late' | 'unknown';
 export type SweetShootingStatus = 'pending' | 'shooting' | 'done';
 
-/** 拍摄中的一位我方艺人：进度、酬劳按「通告 × 艺人」单独记。 */
+/** 拍摄中的一位我方艺人：进度、酬劳按「通告 × 艺人」单独记。
+ *  doneDays = successDays + perfectDays（游戏界面的「完成」），失败天数不计入完成。 */
 export interface SweetShootingCast {
   artistId: number;
   artistName: string;
@@ -355,6 +356,9 @@ export interface SweetShootingCast {
   workDays: number;
   daysPerWeek: number;
   doneDays: number;
+  successDays: number;
+  perfectDays: number;
+  failDays: number;
   pay: number;
   needDays: number;
   canShootDays: number;
@@ -1829,10 +1833,10 @@ function scanSweetSelfMade(
       }
       if (role) claimed.add(role.code);
       else if (sortedRoles.length === 1) role = sortedRoles[0];
-      // 与拍摄中同口径：done/a/b＝成功/失败/完美天数，三者相加才是已拍天数。
-      const shotDays = doneDays + a + b;
+      // 与拍摄中同口径：完成 = 成功 + 完美（失败不计入完成），剩余 = 需完成 − 完成。
+      const finishedDays = doneDays + b;
       const workDays = role?.workDays && role.workDays > 0
-        ? Math.max(role.workDays, shotDays) : shotDays;
+        ? Math.max(role.workDays, finishedDays) : finishedDays;
       const team = teams.find((item) => item.leaderId === artistId || item.memberIds.includes(artistId));
       const groupRole = role?.roleType === 4 || role?.role === '團體';
       casts.push({
@@ -1842,8 +1846,8 @@ function scanSweetSelfMade(
         pay,
         mine: mineIds.has(artistId)
           || Boolean(team && team.memberIds.some((id) => mineIds.has(id))),
-        doneDays,
-        needDays: Math.max(0, workDays - shotDays),
+        doneDays: finishedDays,
+        needDays: Math.max(0, workDays - finishedDays),
         workDays,
         group: groupRole && team ? {
           name: team.name,
@@ -2065,16 +2069,20 @@ function scanSweetShooting(
       }
       const workDays = role?.workDays ?? 0;
       const daysPerWeek = role?.daysPerWeek ?? 0;
-      const shotDays = row.done + row.a + row.b;
-      const done = workDays > 0 && shotDays >= workDays;
-      const needDays = done ? 0 : workDays > 0 ? Math.max(0, workDays - shotDays) : 0;
+      // 游戏界面口径：完成 = 成功 + 完美（失败不计入完成），剩余 = 需完成 − 完成。
+      const doneDays = row.done + row.b;
+      const done = workDays > 0 && doneDays >= workDays;
+      const needDays = done ? 0 : workDays > 0 ? Math.max(0, workDays - doneDays) : 0;
       const canShoot = shootableDays(daysLeft, daysPerWeek);
       casts.push({
         artistId: row.artistId,
         artistName: name,
         role,
         workDays, daysPerWeek,
-        doneDays: row.done,
+        doneDays,
+        successDays: row.done,
+        perfectDays: row.b,
+        failDays: row.a,
         pay: row.pay,
         needDays, canShootDays: canShoot,
         risk: done ? 'ok' : sweetRiskOf(needDays, canShoot, daysPerWeek),

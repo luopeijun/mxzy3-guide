@@ -1883,6 +1883,13 @@ function SweetShootingPanel({ notices }: { notices: SweetShootingNotice[] }) {
                       <>
                         <span className="text-ui-xs font-bold text-ink">{mine.doneDays}</span>
                         <span className="text-ink-faint"> / {mine.workDays || '—'} 天</span>
+                        <div
+                          data-case-shooting-days-split
+                          className="mt-0.5 leading-tight text-ink-faint"
+                          title={`成功 ${mine.successDays} 天 · 完美 ${mine.perfectDays} 天 · 失败 ${mine.failDays} 天（完成 = 成功 + 完美，失败不计入完成）`}
+                        >
+                          成功 {mine.successDays} · 完美 {mine.perfectDays} · 失败 {mine.failDays}
+                        </div>
                         <div className="mt-0.5 text-ink-faint">每週 ≤ {mine.daysPerWeek || '—'} 天</div>
                       </>
                     ) : <span className="text-ink-faint">—</span>}
