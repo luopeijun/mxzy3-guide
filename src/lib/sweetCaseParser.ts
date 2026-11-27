@@ -219,6 +219,8 @@ export interface SweetCaseTables {
   promoKinds?: Record<string, string>;
   /** `code -> [名称, 分类, 说明, 属性行]`，来自甜蜜乐章 Item.dat 烘焙。 */
   items?: Record<string, [string, string, string, string]>;
+  /** `code -> [名称, 说明]`，来自甜蜜乐章 Cloth.dat 烘焙。 */
+  clothes?: Record<string, [string, string]>;
   /** `code -> 21 个送礼槽位的好感加成`，来自 Item.dat 记录 +48。 */
   gifts?: Record<string, number[]>;
   /** 艺人编号 -> 送礼槽位下标，由甜站偏好礼物清单反推。 */
@@ -450,6 +452,8 @@ export interface SweetSave {
   selfMade: SweetSelfMadeNotice[];
   /** 存档 Item 段记录的道具清单（含数量为 0 的条目，页面自行过滤）。 */
   items: SweetOwnedItem[];
+  /** 存档 Clothes 段记录的衣服清单（数量即拥有标志）。 */
+  clothes: SweetOwnedItem[];
   /** 十座国际场景的解锁标志；费用 / 显示名来自 World.dat。 */
   scenes: SweetScene[];
   /** 制作人编号 -> 友好度（存档友好度表制作人段）。 */
@@ -2143,6 +2147,33 @@ function scanSweetItems(bytes: Uint8Array, view: DataView, tables: SweetCaseTabl
   return out;
 }
 
+/** 甜站 Clothes 段是真段头：`[7]["Clothes\0"][条数][8B × 条数]`，
+ *  每条 `[编号][拥有标志]`；名字 / 说明由 Cloth.dat 烘焙表回查。 */
+function scanSweetClothes(bytes: Uint8Array, view: DataView, tables: SweetCaseTables): SweetOwnedItem[] {
+  const start = findSection(bytes, 'Clothes');
+  if (start < 0) return [];
+  const count = readI32(view, start);
+  if (count < 0 || count > 200 || start + 4 + count * 8 > bytes.length) return [];
+  const out: SweetOwnedItem[] = [];
+  for (let k = 0; k < count; k += 1) {
+    const o = start + 4 + k * 8;
+    const code = readI32(view, o);
+    const quantity = readI32(view, o + 4);
+    const info = tables.clothes?.[String(code)];
+    if (!info?.[0]) continue;
+    out.push({
+      code,
+      flag: 0,
+      quantity,
+      meta: 0,
+      name: info[0],
+      category: '衣服',
+      desc: info[1],
+    });
+  }
+  return out;
+}
+
 export function formatSweetDate(date: SweetSave['date']): string {
   const w = WEEKDAYS[date.weekday - 1] ?? String(date.weekday);
   return `${date.year}年${date.month}月${date.day}日 星期${w}`;
@@ -2243,6 +2274,7 @@ export async function parseSweetSave(
     locations, parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade),
   );
   const items = scanSweetItems(bytes, view, tables);
+  const clothes = scanSweetClothes(bytes, view, tables);
   const scenes = scanSweetScenes(bytes, view, tables);
   const producerFriendship = scanProducerFriendship(bytes, view);
   return {
@@ -2267,6 +2299,7 @@ export async function parseSweetSave(
     done,
     selfMade,
     items,
+    clothes,
     scenes,
     producerFriendship,
     producers: tables.producers ?? [],

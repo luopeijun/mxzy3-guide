@@ -291,6 +291,22 @@ def load_sweet_items(data_dir):
     return items, gifts
 
 
+def load_sweet_clothes(data_dir):
+    """解析甜蜜乐章 Cloth.dat：头部 [1010][11][248][0]，11 条定长 248B。
+
+    +0 编号、+24 名称（Big5，NUL 结束，字段固定 21B）、+45 说明。存档里的
+    Clothes 段只写「编号 + 拥有标志」，名字 / 说明全靠这张表回查。
+    """
+    out = {}
+    for rec in read_table(os.path.join(data_dir, "Cloth.dat")):
+        code = struct.unpack_from("<I", rec, 0)[0]
+        name = text(rec, 24, 21)
+        if not code or not name:
+            continue
+        out[str(code)] = [name, text(rec, 45, 200)]
+    return out
+
+
 def load_sweet_scenes(data_dir):
     """从 World.dat 取十座国际场景的费用与繁体原名。
 
@@ -380,6 +396,7 @@ def main():
         "subtypes": load_subtypes(args.data),
         "promoKinds": load_promo_kinds(args.data),
         "items": items,
+        "clothes": load_sweet_clothes(args.data),
         "gifts": gifts,
         "giftSlots": SWEET_GIFT_SLOTS,
         "scenes": load_sweet_scenes(args.data),
@@ -392,7 +409,7 @@ def main():
     print("wrote", OUT, "classes", len(data["classes"]), "roles", len(data["roles"]),
           "companies", len(data["companyBySeq"]), "lengths", len(data["lengths"]),
           "subtypes", len(data["subtypes"]), "promoKinds", len(data["promoKinds"]),
-          "items", len(items), "gifts", len(gifts), "giftSlots", len(SWEET_GIFT_SLOTS),
+          "items", len(items), "clothes", len(data["clothes"]), "gifts", len(gifts), "giftSlots", len(SWEET_GIFT_SLOTS),
           "scenes", len(data["scenes"]), "producers", len(data["producers"]))
 
 

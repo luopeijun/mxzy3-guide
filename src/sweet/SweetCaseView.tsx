@@ -533,12 +533,12 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
     { id: 'company', label: '公司', selector: '[data-sweet-case-company]', summary: `主角 ${save.protagonist || '未记录'}` },
     { id: 'artists', label: '我方艺人', selector: '[data-sweet-case-artists]', summary: `${save.artists.length} 位` },
     { id: 'teams', label: '我方团体', selector: '[data-sweet-case-teams]', summary: `${save.teams.length} 个` },
-    ...(save.items.some((it) => it.quantity > 0)
+    ...((save.items.some((it) => it.quantity > 0) || save.clothes.some((it) => it.quantity > 0))
       ? [{
           id: 'items',
           label: '道具',
           selector: '[data-sweet-case-items]',
-          summary: `${save.items.filter((it) => it.quantity > 0).length} 件`,
+          summary: `${[...save.items, ...save.clothes].filter((it) => it.quantity > 0).length} 件`,
         }]
       : []),
     ...(save.scenes.length > 0
@@ -1931,8 +1931,8 @@ function SweetShootingPanel({ notices }: { notices: SweetShootingNotice[] }) {
   );
 }
 
-/** 道具分类页签的固定顺序：一般 / 特殊 / 公司。 */
-const ITEM_CAT_ORDER = ['一般物品', '特殊物品', '公司物品'] as const;
+/** 道具分类页签的固定顺序：一般 / 特殊 / 公司 / 衣服。 */
+const ITEM_CAT_ORDER = ['一般物品', '特殊物品', '公司物品', '衣服'] as const;
 type ItemCat = typeof ITEM_CAT_ORDER[number];
 
 /** 分类胶囊沿用明星志愿3：公司物品绿、特殊物品粉、一般物品中性描边。 */
@@ -1998,21 +1998,26 @@ function SweetProducerPanel({
 function itemCategoryClass(category: string): string {
   if (category === '公司物品') return 'bg-accept-soft text-accept';
   if (category === '特殊物品') return 'border border-brand-line bg-brand-soft text-brand-strong';
+  if (category === '衣服') return 'border border-line bg-surface-soft text-ink';
   return 'border border-line text-ink-faint';
 }
 
-/** 道具面板：三个分类页签，每页 10 件，末页补占位行保持表格高度不跳。
- *  数量 / 编号来自存档 Item 段，名称 / 分类 / 说明 / 属性来自烘焙的 Item.dat 表。 */
+/** 道具面板：四个分类页签（含衣服），每页 10 件，末页补占位行保持表格高度不跳。
+ *  数量 / 编号来自存档 Item / Clothes 段，名称 / 说明来自烘焙的 Item.dat / Cloth.dat 表。 */
 function SweetItemsPanel({
-  items, tableCount, signed, gifts, giftSlots,
+  items, clothes, tableCount, signed, gifts, giftSlots,
 }: {
   items: SweetOwnedItem[];
+  clothes: SweetOwnedItem[];
   tableCount: number;
   signed: { id: number; name: string }[];
   gifts: Record<string, number[]>;
   giftSlots: Record<string, number>;
 }) {
-  const owned = useMemo(() => items.filter((it) => it.quantity > 0), [items]);
+  const owned = useMemo(
+    () => [...items, ...clothes].filter((it) => it.quantity > 0),
+    [items, clothes],
+  );
   /** 送礼好感：只列这份存档里的签约艺人，且 Item.dat 对应槽位加成 > 0。 */
   const giftHints = useMemo(() => {
     const out: Record<number, { name: string; value: number }[]> = {};
@@ -2126,7 +2131,7 @@ function SweetItemsPanel({
                 }
                 return (
                   <tr
-                    key={it.code}
+                    key={`${it.category}-${it.code}`}
                     data-case-item
                     data-case-item-code={it.code}
                     data-case-item-qty={it.quantity}
@@ -2240,7 +2245,7 @@ function SweetItemsPanel({
       )}
 
       <p className="mt-2 text-ui-2xs text-ink-faint">
-        编号与数量取自存档；名称 / 分类 / 说明来自烘焙进站点的道具表（Item.dat），共 {tableCount} 件。
+        编号与数量取自存档；道具名称 / 分类 / 说明来自 Item.dat（共 {tableCount} 件），衣服名称 / 说明来自 Cloth.dat。
       </p>
     </div>
   );
@@ -2711,8 +2716,8 @@ export default function SweetCaseView() {
                 )}
               </details>
 
-              {/* 道具：与主站同款三页签 + 每页 10 件；数量 0 不展示。 */}
-              {save.items.length > 0 && (
+              {/* 道具：与主站同款页签 + 每页 10 件；数量 0 不展示。衣服来自 Clothes 段，单列一页签。 */}
+              {(save.items.length > 0 || save.clothes.length > 0) && (
                 <details
                   data-sweet-case-items
                   data-sweet-case-toc-target
@@ -2724,11 +2729,12 @@ export default function SweetCaseView() {
                   >
                     道具
                     <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                      {save.items.filter((it) => it.quantity > 0).length} 件
+                      {[...save.items, ...save.clothes].filter((it) => it.quantity > 0).length} 件
                     </span>
                   </summary>
                   <SweetItemsPanel
                     items={save.items}
+                    clothes={save.clothes}
                     tableCount={Object.keys(tables.items ?? {}).length}
                     signed={save.artists.map((artist) => ({ id: artist.id, name: artist.name }))}
                     gifts={tables.gifts ?? {}}
