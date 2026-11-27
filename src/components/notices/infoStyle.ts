@@ -1,4 +1,4 @@
-/** 通告元信息的配色：时间四档文字色 + 十一家公司的索引点色。
+/** 通告元信息的配色：时间四档文字色 + 十四家公司的索引点色。
  *
  *  时间有顺序性（第一年 → 第二年 → 第三年 → 特殊），值得给文字色；公司没有
  *  顺序，11 家都给文字色会花，所以只落在 6px 小圆点上做「识别索引」——
@@ -42,6 +42,10 @@ const COMPANY_COLORS: CompanyColor[] = [
   { name: '追梦广告', dot: 'bg-dot-zhuimeng', text: 'text-dot-zhuimeng' },
   { name: '翱翔天际', dot: 'bg-dot-aoxiang', text: 'text-dot-aoxiang' },
   { name: '钜子娱乐', dot: 'bg-dot-juzi', text: 'text-dot-juzi' },
+  // 甜蜜乐章海外公司：此前未登记，三家都回落成同一个灰点。
+  { name: '伊莉莎白', dot: 'bg-dot-yilisha', text: 'text-dot-yilisha' },
+  { name: '巴洛克之诗', dot: 'bg-dot-baluoke', text: 'text-dot-baluoke' },
+  { name: '柯里昂', dot: 'bg-dot-keliang', text: 'text-dot-keliang' },
 ];
 
 /** 存档里的公司名沿用繁体，且 EAMI 有「音乐 / 唱片」两块牌子；归一到同一套色号。 */
@@ -58,6 +62,8 @@ const COMPANY_ALIAS: Record<string, string> = {
   '追夢廣告': '追梦广告',
   '翱翔天際': '翱翔天际',
   '鉅子娛樂': '钜子娱乐',
+  // 存档解析页沿用繁体，甜站烘焙表已转简体；海外三家归一到同一套色号。
+  '巴洛克之詩': '巴洛克之诗',
 };
 
 function companyKey(company?: string | null): string {

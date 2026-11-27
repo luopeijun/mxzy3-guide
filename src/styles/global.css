@@ -128,6 +128,10 @@
   --color-dot-zhuimeng: #825935;
   --color-dot-aoxiang: #3e985c;
   --color-dot-juzi: #615a87;
+  /* 甜蜜乐章的三家海外公司，此前未登记、全部回落成同一个灰点。 */
+  --color-dot-yilisha: #a83a6e;
+  --color-dot-baluoke: #9c5a2e;
+  --color-dot-keliang: #2f7d70;
   --color-year-1: #0e7490;
   --color-year-2: #b45309;
   --color-year-3: #be123c;
