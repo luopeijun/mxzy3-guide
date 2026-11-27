@@ -225,7 +225,7 @@ export interface SweetCaseTables {
   gifts?: Record<string, number[]>;
   /** 艺人编号 -> 送礼槽位下标，由甜站偏好礼物清单反推。 */
   giftSlots?: Record<string, number>;
-  /** 十座国际场景的显示名 / 存档繁体原名 / 费用，来自 World.dat。 */
+  /** 「國外情報」展示的六座场景显示名 / 存档繁体原名 / 费用，来自 World.dat。 */
   scenes?: SweetScene[];
   /** 制作人编号 -> [显示名, 六类分组 key]，来自 MapRole + StudioProduce 烘焙。 */
   producers?: Array<{ code: number; name: string; group: string }>;
@@ -454,7 +454,7 @@ export interface SweetSave {
   items: SweetOwnedItem[];
   /** 存档 Clothes 段记录的衣服清单（数量即拥有标志）。 */
   clothes: SweetOwnedItem[];
-  /** 十座国际场景的解锁标志；费用 / 显示名来自 World.dat。 */
+  /** 「國外情報」六座场景的解锁标志；费用 / 显示名来自 World.dat。 */
   scenes: SweetScene[];
   /** 制作人编号 -> 友好度（存档友好度表制作人段）。 */
   producerFriendship: Record<number, number>;
@@ -2043,41 +2043,43 @@ function scanSweetShooting(
   return out;
 }
 
-/** 静态兜底；正常运行时从 case-tables.json 读 World.dat 烘焙结果。 */
+/** 静态兜底；正常运行时从 case-tables.json 读 World.dat 烘焙结果。
+ *  「世界脈動 → 國外情報」只展示这六座。 */
 const SWEET_SCENE_TABLE: ReadonlyArray<{ name: string; rawName: string; cost: number }> = [
-  { name: '长城', rawName: '長城', cost: 11000 },
   { name: '东京', rawName: '東京', cost: 7000 },
   { name: '好莱坞', rawName: '好萊塢', cost: 11000 },
   { name: '巴黎', rawName: '巴黎', cost: 13000 },
-  { name: '维也纳', rawName: '維也納', cost: 13000 },
-  { name: '夏威夷', rawName: '夏威夷', cost: 10000 },
   { name: '纽约', rawName: '紐約', cost: 15000 },
-  { name: '开罗', rawName: '開羅', cost: 21000 },
   { name: '伦敦', rawName: '倫敦', cost: 16000 },
   { name: '米兰', rawName: '米蘭', cost: 15000 },
 ];
 const SWEET_SCENE_RECORD_STRIDE = 288;
+/** 存档里场景记录仍是编号 2..11 的十座，界面只展示其中六座。 */
+const SWEET_SCENE_RECORD_COUNT = 10;
 
-/** 十座国际场景的解锁记录与主站同构但更宽：每条 288B，
+/** 存档里十座场景的解锁记录与主站同构但更宽：每条 288B，
  *  `[编号 int32 小端 2..11][解锁标志 int32 0/1][场景码 int32][名字 16B Big5…]`，
  *  间隔与 World.dat 一致。标志就在名字前 8 字节（第二个 int32），不是更靠前的
- *  那个计数表；靠编号 + 间隔 + 繁体原名三重校验定位，不写死绝对偏移。 */
+ *  那个计数表。先把十条记录读成 rawName -> 标志，再按表筛选：界面只展示六座，
+ *  若直接按表下标配编号会把 東京 错配到 長城 那条。靠编号 + 间隔 + 名字非空
+ *  三重校验定位，不写死绝对偏移。 */
 function scanSweetScenes(bytes: Uint8Array, view: DataView, tables: SweetCaseTables): SweetScene[] {
-  const table = tables.scenes?.length === SWEET_SCENE_TABLE.length ? tables.scenes : SWEET_SCENE_TABLE;
+  const table = tables.scenes?.length ? tables.scenes : SWEET_SCENE_TABLE;
   for (let i = 0; i + 28 <= bytes.length; i += 1) {
     if (readI32(view, i) !== 2) continue;
-    const flags: boolean[] = [];
+    const flags = new Map<string, boolean>();
     let ok = true;
-    for (let k = 0; k < table.length; k += 1) {
+    for (let k = 0; k < SWEET_SCENE_RECORD_COUNT; k += 1) {
       const off = i + k * SWEET_SCENE_RECORD_STRIDE;
       if (off + 28 > bytes.length || readI32(view, off) !== k + 2) { ok = false; break; }
       const flag = readI32(view, off + 4);
       if (flag !== 0 && flag !== 1) { ok = false; break; }
-      if (readBig5(bytes, off + 12, 16) !== table[k].rawName) { ok = false; break; }
-      flags.push(flag === 1);
+      const name = readBig5(bytes, off + 12, 16);
+      if (!name) { ok = false; break; }
+      flags.set(name, flag === 1);
     }
-    if (!ok) continue;
-    return table.map((scene, k) => ({ ...scene, unlocked: flags[k] }));
+    if (!ok || table.some((scene) => !flags.has(scene.rawName))) continue;
+    return table.map((scene) => ({ ...scene, unlocked: flags.get(scene.rawName) ?? false }));
   }
   return [];
 }
