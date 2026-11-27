@@ -1028,6 +1028,7 @@ function parseSweetWorkHistory(
   tables: SweetCaseTables,
   selfMade: SweetSelfMadeNotice[],
   noticeInfo: Map<string, { name: string; company: string }>,
+  events: SweetEvent[],
 ): SweetWorkRecord[] {
   // 参与清单里连早期没有接演记录的自制作品也会累积进来，官方统计同样算它们；
   // 只有明确还在拍摄中的才没完成。旧作品本体没留档期时 status 是 unknown，
@@ -1084,6 +1085,28 @@ function parseSweetWorkHistory(
         role: '',
         order: k,
         seq: workIndex.seqs.get(`${location.id}|${noticeIndex}`)?.get(workCode),
+      });
+    }
+    // 演唱会（事项 63）不在参与清单的 1..7 大类里，明细真源是艺人成绩的活动记录。
+    // 只取个人场：团体演唱会挂团体卡、不进艺人通告统计；日期与「小型個人演唱會」
+    // 这类名字直接沿用活动解析结果，避免单名单造作品名。
+    const concerts = events.filter(
+      (event) => event.kind === 63 && !event.group && event.artistId === location.id,
+    );
+    for (let k = 0; k < concerts.length; k += 1) {
+      const event = concerts[k];
+      out.push({
+        date: event.date,
+        year: event.year,
+        month: event.month,
+        day: event.day,
+        workCode: '',
+        workName: event.label,
+        company: '',
+        artistId: location.id,
+        noticeIndex: 7,
+        role: '',
+        order: k,
       });
     }
   }
@@ -2308,8 +2331,10 @@ export async function parseSweetSave(
   const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'done');
   const selfMade = scanSweetSelfMade(bytes, date, tables, reservationStars, teams, signedIds);
   const noticeInfo = buildSweetNoticeInfoIndex(bytes, view, tables);
+  const events = scanDiaryEvents(bytes, view, diaryTable);
   const works = alignSweetWorks(
-    locations, parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade, noticeInfo),
+    locations,
+    parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade, noticeInfo, events),
   );
   const items = scanSweetItems(bytes, view, tables);
   const clothes = scanSweetClothes(bytes, view, tables);
@@ -2327,7 +2352,7 @@ export async function parseSweetSave(
     artists,
     teams,
     awards: diaryAwards.length > 0 ? diaryAwards : scanAwards(bytes, date.year),
-    events: scanDiaryEvents(bytes, view, diaryTable),
+    events,
     works,
     notices,
     shooting,
