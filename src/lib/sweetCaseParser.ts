@@ -1426,13 +1426,26 @@ interface SweetNoticeBody {
   at: number;
 }
 
-/** 从 Case 段的一条本体读出名字、分类、角色和日期元组。 */
-/** 筹备中通告的预约真源：本体 +796..+828 附近的 4 个 24B 角色槽，
- *  `[flag][0][artistId][0,0,0]`，flag 是 3 / 10 这类标记，艺人编号在 flag+8。
- *  旧逻辑靠 `[6][0]` 定位在 Story0008 等存档上完全落空（记录里根本没有这个标记），
- *  所以改成直接找槽区起点：flag ∈ {3,10}、+4 为 0，且后续四槽都满足同样形状。
+/** 筹备中通告的预约真源：本体尾部 4 个 24B 角色槽，艺人编号在槽的 +8，0 表示空缺。
+ *
+ *  槽区**锚定在记录末尾**：`槽起点 = 记录长度 - 208`。记录长度随作品名 / 角色名
+ *  长度浮动（1014~1034B），所以固定 +796 读法在 CF212（名字 15B）这类通告上会整体
+ *  错开、预约全空；改用尾部锚点后 Story0008 的 481 条记录四槽全部合法。
  *  返回按槽位顺序的艺人编号（0 = 空缺）。 */
 function readReservationIds(recView: DataView, limit: number): number[] {
+  // 记录长度已知（调用方按真实记录切片）时直接按尾部锚点取槽。
+  if (limit >= 900 && limit <= 1400) {
+    const base = limit - 208;
+    const ids: number[] = [];
+    let ok = true;
+    for (let k = 0; k < 4; k += 1) {
+      const id = readI32(recView, base + k * 24 + 8);
+      if (id < 0 || id > 110) { ok = false; break; }
+      ids.push(id);
+    }
+    if (ok) return ids;
+  }
+  // 兜底：只拿到固定长度窗口时按旧方式扫槽区起点。
   for (let base = 796; base <= 828; base += 1) {
     if (base + 4 * 24 > limit) break;
     const flag = readI32(recView, base);
@@ -1454,6 +1467,25 @@ function readReservationIds(recView: DataView, limit: number): number[] {
     if (ok) return ids;
   }
   return [];
+}
+
+/** Case 段里一条本体的真实结尾：下一条 `[5][5B 通告码][NUL]` 的起点。
+ *  记录长度不是定值（1014~1034B，随名字长度浮动），而预约槽锚定在记录尾部，
+ *  所以必须按真实长度切本体。找不到下一条时退回固定窗口。 */
+function caseRecordEnd(caseBytes: Uint8Array, view: DataView, at: number): number {
+  for (let o = at + 64; o + 32 <= caseBytes.length; o += 1) {
+    if (caseBytes[o] !== 5 || caseBytes[o + 1] || caseBytes[o + 2] || caseBytes[o + 3]) continue;
+    let ok = true;
+    for (let k = 0; k < 5; k += 1) {
+      const c = caseBytes[o + 4 + k];
+      if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a))) { ok = false; break; }
+    }
+    if (!ok || caseBytes[o + 9] !== 0) continue;
+    const nameLength = readI32(view, o + 22);
+    if (nameLength < 1 || nameLength > 64) continue;
+    return o;
+  }
+  return Math.min(at + 1024, caseBytes.length);
 }
 
 function readNoticeBody(
@@ -1550,6 +1582,7 @@ function scanSweetNotices(
   const count = readI32(view, firmStart);
   if (count < 1 || count > 200) return [];
   const caseBytes = bytes.subarray(caseStart, caseEnd);
+  const caseView = new DataView(caseBytes.buffer, caseBytes.byteOffset, caseBytes.byteLength);
   const out: SweetNotice[] = [];
 
   for (let index = 0; index < count; index += 1) {
@@ -1570,7 +1603,8 @@ function scanSweetNotices(
     for (let k = 0; k < 5; k += 1) needle[4 + k] = code.charCodeAt(k);
     const at = findBytes(caseBytes, needle);
     if (at < 0 || at + 256 > caseBytes.length) continue;
-    const rec = caseBytes.subarray(at, at + 1024);
+    const recEnd = caseRecordEnd(caseBytes, caseView, at);
+    const rec = caseBytes.subarray(at, recEnd);
     const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
     const nameLength = readI32(recView, 22);
     if (nameLength < 1 || nameLength > 64) continue;
@@ -1703,9 +1737,9 @@ function scanSweetPromo(
   const caseEnd = findSection(bytes, 'CaseEnd');
   if (caseStart < 0 || caseEnd <= caseStart) return [];
   const caseBytes = bytes.subarray(caseStart, caseEnd);
+  const caseView = new DataView(caseBytes.buffer, caseBytes.byteOffset, caseBytes.byteLength);
   const emptyReservations = new Map<string, string>();
   const out: SweetPromoNotice[] = [];
-
   for (let i = 0; i + 10 <= caseBytes.length; i += 1) {
     if (caseBytes[i] !== 5 || caseBytes[i + 1] || caseBytes[i + 2] || caseBytes[i + 3]) continue;
     let code = '';
@@ -1716,7 +1750,8 @@ function scanSweetPromo(
       code += String.fromCharCode(c);
     }
     if (!ok || caseBytes[i + 9] || !/^[A-Z]{2}[0-9A-Z]{3}$/.test(code)) continue;
-    const rec = caseBytes.subarray(i, Math.min(i + 1024, caseBytes.length));
+    const recEnd = caseRecordEnd(caseBytes, caseView, i);
+    const rec = caseBytes.subarray(i, recEnd);
     const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
     if (recView.byteLength < 32) continue;
     const classId = readI32(recView, 10);
