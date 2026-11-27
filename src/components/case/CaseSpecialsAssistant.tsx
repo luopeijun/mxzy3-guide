@@ -1,14 +1,13 @@
 import {
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from 'react';
 import { useSpecialsData } from '../../hooks/useSpecialsData';
 import { useSelfMadeData } from '../../hooks/useSelfMadeData';
 import AssistantDock from '../../ui/AssistantDock';
+import FloatingCard, { type HoverAnchor } from '../../ui/FloatingCard';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
 import type { SelfMadeData, SelfMadeEntry, SelfMadeThreshold } from '../../types/selfmade';
@@ -30,8 +29,6 @@ interface Props {
   tables: CaseTables;
 }
 
-type HoverAnchor = { left: number; right: number; top: number; bottom: number };
-
 type HoverState =
   | { kind: 'match'; match: ArtistMatch; hideSlotLabel: boolean; anchor: HoverAnchor }
   | { kind: 'group'; group: GroupMatch; anchor: HoverAnchor }
@@ -47,58 +44,6 @@ interface SelfMadeArtistView {
   abilities: number[] | null;
   friendship: number | null;
   gifts: number | null;
-}
-
-/** 统一的 hover 浮层：优先贴在锚点上方，空间不够再翻到下方；最后夹在视口内。 */
-function FloatingCard({
-  anchor,
-  onEnter,
-  onLeave,
-  className,
-  children,
-}: {
-  anchor: HoverAnchor;
-  onEnter: () => void;
-  onLeave: () => void;
-  className?: string;
-  children: ReactNode;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
-
-  useLayoutEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-    const { width, height } = card.getBoundingClientRect();
-    const padding = 8;
-    const gap = 8;
-    const maxLeft = Math.max(padding, window.innerWidth - width - padding);
-    const left = Math.min(Math.max(padding, anchor.right - width), maxLeft);
-    let top = anchor.top - height - gap;
-    if (top < padding) top = anchor.bottom + gap;
-    if (top + height > window.innerHeight - padding) {
-      top = Math.max(padding, window.innerHeight - height - padding);
-    }
-    setPosition({ left, top });
-  }, [anchor.left, anchor.right, anchor.top, anchor.bottom]);
-
-  return (
-    <div
-      ref={cardRef}
-      data-case-special-hover
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      className={cn(
-        'fixed z-50 max-h-[calc(100vh-16px)] overflow-y-auto rounded-ui-md border border-line-strong bg-canvas shadow-soft',
-        className,
-      )}
-      style={position
-        ? { left: position.left, top: position.top }
-        : { left: -9999, top: -9999, visibility: 'hidden' }}
-    >
-      {children}
-    </div>
-  );
 }
 
 function shortValue(value: number): string {
