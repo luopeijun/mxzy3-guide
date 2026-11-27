@@ -1,0 +1,2488 @@
+{
+  "meta": {
+    "entryCount": 73,
+    "extraCount": 13,
+    "artistCount": 10,
+    "sources": [
+      "sources/sweet/self-notices.txt（攻略整理的自制通告一览）",
+      "public/data/sweet/notices.json（Data/*.dat 烘出的通告名与通告码）"
+    ],
+    "generatedBy": "scripts/build_sweet_selfmade.py"
+  },
+  "sections": [
+    {
+      "key": "music",
+      "label": "唱片",
+      "count": 43,
+      "extraCount": 0
+    },
+    {
+      "key": "tv",
+      "label": "电视剧",
+      "count": 13,
+      "extraCount": 1
+    },
+    {
+      "key": "movie",
+      "label": "电影",
+      "count": 17,
+      "extraCount": 0
+    },
+    {
+      "key": "stage",
+      "label": "舞台剧",
+      "count": 0,
+      "extraCount": 12
+    }
+  ],
+  "entries": [
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "music",
+      "code": "CD701",
+      "name": "晴天娃娃",
+      "guideName": "晴天娃娃",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 16,
+      "condition": "特殊，录制完第一张专辑且上市后，累积16天自由活动获得",
+      "tags": [
+        "民歌个人",
+        "两星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "music",
+      "code": "CD702",
+      "name": "夏天小说",
+      "guideName": "夏天小说",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 17,
+      "condition": "特殊，录制完第二张专辑且上市后，累积17天自由活动获得",
+      "tags": [
+        "抒情个人",
+        "两星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "music",
+      "code": "CD703",
+      "name": "逃离过去",
+      "guideName": "逃离过去",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "摇滚个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 550
+        },
+        {
+          "label": "体能",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "music",
+      "code": "CD704",
+      "name": "我们和你们",
+      "guideName": "我们和你们",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 18,
+      "condition": "一般，累积18天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 450
+        },
+        {
+          "label": "仪态",
+          "value": 600
+        },
+        {
+          "label": "自信",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "music",
+      "code": "CD711",
+      "name": "雨天",
+      "guideName": "雨天",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 18,
+      "condition": "特殊，进公司一个月后，累积18天自由活动获得",
+      "tags": [
+        "抒情个人",
+        "三星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "music",
+      "code": "CD712",
+      "name": "倒数计时",
+      "guideName": "倒数计时",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 16,
+      "condition": "一般，累积16天自由活动后获得",
+      "tags": [
+        "舞曲个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 520
+        },
+        {
+          "label": "动感",
+          "value": 600
+        },
+        {
+          "label": "体能",
+          "value": 600
+        },
+        {
+          "label": "自信",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "music",
+      "code": "CD713",
+      "name": "掌心的温度",
+      "guideName": "掌心的温度",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 18,
+      "condition": "一般，累积18天自由活动后获得",
+      "tags": [
+        "摇滚个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 550
+        },
+        {
+          "label": "体能",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "music",
+      "code": "CD714",
+      "name": "最后一封信",
+      "guideName": "最后一封信",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 16,
+      "condition": "一般，累积16天自由活动后获得",
+      "tags": [
+        "蓝调个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "才智",
+          "value": 500
+        },
+        {
+          "label": "自信",
+          "value": 700
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "music",
+      "code": "CD721",
+      "name": "藏梦",
+      "guideName": "藏梦",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "蓝调个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 450
+        },
+        {
+          "label": "才智",
+          "value": 450
+        },
+        {
+          "label": "自信",
+          "value": 600
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "music",
+      "code": "CD722",
+      "name": "蓝色咖啡厅",
+      "guideName": "蓝色咖啡厅",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "爵士个人",
+        "三星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 480
+        },
+        {
+          "label": "名气",
+          "value": 330
+        },
+        {
+          "label": "仪态",
+          "value": 420
+        },
+        {
+          "label": "自信",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD731",
+      "name": "禁忌之吻",
+      "guideName": "禁忌之吻",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 15,
+      "condition": "特殊，跟丹尼斯一个团体并出过团体唱片后，满足数值要求后累积15天自由活动获得",
+      "tags": [
+        "摇滚团体",
+        "三星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 480
+        },
+        {
+          "label": "名气",
+          "value": 330
+        },
+        {
+          "label": "动感",
+          "value": 420
+        },
+        {
+          "label": "体能",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD732",
+      "name": "舞台风暴",
+      "guideName": "舞台风暴",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 15,
+      "condition": "特殊，跟丹尼斯一个团体并出过团体唱片后，满足数值要求后累积15天自由活动后获得",
+      "tags": [
+        "舞曲团体",
+        "三星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 420
+        },
+        {
+          "label": "动感",
+          "value": 480
+        },
+        {
+          "label": "体能",
+          "value": 480
+        },
+        {
+          "label": "自信",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD737",
+      "name": "没有雪的耶诞节",
+      "guideName": "没有雪的耶诞夜",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，史蒂芬剧情3-8发生后获得",
+      "tags": [
+        "抒情个人",
+        "五星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD738",
+      "name": "飞跃午夜",
+      "guideName": "飞跃午夜",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动后获得",
+      "tags": [
+        "摇滚团体",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 550
+        },
+        {
+          "label": "体能",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD733",
+      "name": "突如其来的爱恋",
+      "guideName": "突如其来的爱恋",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动获得",
+      "tags": [
+        "蓝调个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "才智",
+          "value": 500
+        },
+        {
+          "label": "自信",
+          "value": 700
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD734",
+      "name": "十字路的我们",
+      "guideName": "十字路的我们",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动后获得",
+      "tags": [
+        "民歌个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "仪态",
+          "value": 550
+        },
+        {
+          "label": "才智",
+          "value": 400
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD735",
+      "name": "恋爱公式题",
+      "guideName": "恋爱公式题",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "仪态",
+          "value": 700
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "史蒂芬",
+      "artistId": 13,
+      "section": "music",
+      "code": "CD736",
+      "name": "往星光前进",
+      "guideName": "往星光前进",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 450
+        },
+        {
+          "label": "仪态",
+          "value": 600
+        },
+        {
+          "label": "自信",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD742",
+      "name": "红花",
+      "guideName": "红花",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，姚子奇剧情1-2发生后获得",
+      "tags": [
+        "摇滚个人",
+        "两星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD749",
+      "name": "浪漫赌注",
+      "guideName": "浪漫赌注",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，姚子奇剧情4-2发生后获得",
+      "tags": [
+        "抒情个人",
+        "三星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD746",
+      "name": "寂寞国度",
+      "guideName": "寂寞国度",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，姚子奇剧情6-3发生后获得",
+      "tags": [
+        "蓝调个人",
+        "四星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD741",
+      "name": "恋爱最终章续篇",
+      "guideName": "恋爱最终章续篇",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，慕容和希剧情9-6发生后获得",
+      "tags": [
+        "摇滚个人",
+        "五星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD747",
+      "name": "最爱的朋友",
+      "guideName": "最爱的朋友",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 15,
+      "condition": "特殊，出过团体唱片后，满足数值要求后累积15天自由活动后获得",
+      "tags": [
+        "舞曲团体",
+        "三星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 420
+        },
+        {
+          "label": "动感",
+          "value": 480
+        },
+        {
+          "label": "体能",
+          "value": 480
+        },
+        {
+          "label": "自信",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD748",
+      "name": "四手连弹爱情曲",
+      "guideName": "四手连弹爱情曲",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 12,
+      "condition": "特殊，跟慕容和希同一个团体并出过团体唱片后，满足数值要求后累积12天自由活动后获得",
+      "tags": [
+        "抒情团体",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "仪态",
+          "value": 700
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD743",
+      "name": "小王子的花园",
+      "guideName": "小王子的花园",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 12,
+      "condition": "一般，累积12天自由活动后获得",
+      "tags": [
+        "爵士个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "仪态",
+          "value": 550
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD744",
+      "name": "西元2050年",
+      "guideName": "公元2025年",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动后获得",
+      "tags": [
+        "蓝调个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 450
+        },
+        {
+          "label": "才智",
+          "value": 450
+        },
+        {
+          "label": "自信",
+          "value": 600
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD745",
+      "name": "银河漂流",
+      "guideName": "银河漂流",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 12,
+      "condition": "一般，累积12天自由活动后获得",
+      "tags": [
+        "摇滚个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 550
+        },
+        {
+          "label": "体能",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "music",
+      "code": "CD750",
+      "name": "封印之钥",
+      "guideName": "封印之钥",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 12,
+      "condition": "一般，累积12天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "仪态",
+          "value": 700
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "music",
+      "code": "CD752",
+      "name": "秋草旧长营",
+      "guideName": "秋草旧长营",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，慕容和希剧情5-1发生后获得",
+      "tags": [
+        "蓝调个人",
+        "两星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "music",
+      "code": "CD751",
+      "name": "因风飞过蔷薇",
+      "guideName": "因风飞过蔷薇",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，慕容和希剧情9-7发生后获得",
+      "tags": [
+        "抒情个人",
+        "五星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "music",
+      "code": "CD756",
+      "name": "凉夏",
+      "guideName": "凉夏",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 15,
+      "condition": "特殊，出过团体唱片后，累积15天自由活动后获得",
+      "tags": [
+        "抒情团体",
+        "两星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 400
+        },
+        {
+          "label": "名气",
+          "value": 200
+        },
+        {
+          "label": "仪态",
+          "value": 400
+        },
+        {
+          "label": "自信",
+          "value": 360
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "music",
+      "code": "CD753",
+      "name": "梦红楼",
+      "guideName": "梦红楼",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 450
+        },
+        {
+          "label": "仪态",
+          "value": 600
+        },
+        {
+          "label": "自信",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "music",
+      "code": "CD754",
+      "name": "蝴蝶轨迹",
+      "guideName": "蝴蝶轨迹",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 12,
+      "condition": "一般，累积12天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 450
+        },
+        {
+          "label": "仪态",
+          "value": 600
+        },
+        {
+          "label": "自信",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "music",
+      "code": "CD755",
+      "name": "左岸无战事",
+      "guideName": "左岸无战事",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 15,
+      "condition": "一般，累积15天自由活动后获得",
+      "tags": [
+        "蓝调个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "才智",
+          "value": 500
+        },
+        {
+          "label": "自信",
+          "value": 700
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "卫亚",
+      "artistId": 16,
+      "section": "music",
+      "code": "CD761",
+      "name": "奈何天",
+      "guideName": "奈何天",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "另类个人",
+        "两星"
+      ],
+      "thresholds": [
+        {
+          "label": "口才",
+          "value": 300
+        },
+        {
+          "label": "歌艺",
+          "value": 360
+        },
+        {
+          "label": "自信",
+          "value": 400
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "卫亚",
+      "artistId": 16,
+      "section": "music",
+      "code": "CD762",
+      "name": "黑暗之心",
+      "guideName": "黑暗之心",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "爵士个人",
+        "三星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 480
+        },
+        {
+          "label": "名气",
+          "value": 330
+        },
+        {
+          "label": "仪态",
+          "value": 420
+        },
+        {
+          "label": "自信",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "纪翔",
+      "artistId": 17,
+      "section": "music",
+      "code": "CD771",
+      "name": "昨日约定",
+      "guideName": "昨日约定",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，纪翔剧情4-3发生后获得",
+      "tags": [
+        "蓝调个人",
+        "五星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "纪翔",
+      "artistId": 17,
+      "section": "music",
+      "code": "CD774",
+      "name": "烟花下的你",
+      "guideName": "烟花下的你",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，纪翔剧情9-4发生后获得",
+      "tags": [
+        "抒情个人",
+        "五星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "纪翔",
+      "artistId": 17,
+      "section": "music",
+      "code": "CD772",
+      "name": "拜伦的诗句",
+      "guideName": "拜伦的诗句",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 450
+        },
+        {
+          "label": "仪态",
+          "value": 600
+        },
+        {
+          "label": "自信",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "纪翔",
+      "artistId": 17,
+      "section": "music",
+      "code": "CD773",
+      "name": "宿醉",
+      "guideName": "宿醉",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "抒情个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "仪态",
+          "value": 700
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "城仲瑄",
+      "artistId": 18,
+      "section": "music",
+      "code": "CD781",
+      "name": "如雪",
+      "guideName": "如雪",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "民歌个人",
+        "五星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "仪态",
+          "value": 550
+        },
+        {
+          "label": "才智",
+          "value": 400
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "城仲瑄",
+      "artistId": 18,
+      "section": "music",
+      "code": "CD782",
+      "name": "十二月的企鹅",
+      "guideName": "十二月的企鹅",
+      "category": "唱片",
+      "kind": "一般",
+      "days": 20,
+      "condition": "一般，累积20天自由活动后获得",
+      "tags": [
+        "儿歌个人",
+        "四星"
+      ],
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 520
+        },
+        {
+          "label": "名气",
+          "value": 520
+        },
+        {
+          "label": "才智",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "其他",
+      "artistId": 0,
+      "section": "music",
+      "code": "CD791",
+      "name": "温柔时刻",
+      "guideName": "温柔时刻",
+      "category": "唱片",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，林芬芬作品，丹尼斯剧情2-3发生后获得",
+      "tags": [
+        "儿歌个人",
+        "三星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "tv",
+      "code": "TV701",
+      "name": "学园的王子们",
+      "guideName": "学院的王子们",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 40,
+      "condition": "一般，累积40天自由活动后获得",
+      "tags": [
+        "爱情偶像剧",
+        "连续剧",
+        "双五星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 500
+        },
+        {
+          "label": "名气",
+          "value": 700
+        },
+        {
+          "label": "仪态",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "tv",
+      "code": "TV702",
+      "name": "名字",
+      "guideName": "名字",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 38,
+      "condition": "一般，累积38天自由活动后获得",
+      "tags": [
+        "冒险动作片",
+        "连续剧",
+        "双四星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 520
+        },
+        {
+          "label": "名气",
+          "value": 520
+        },
+        {
+          "label": "动感",
+          "value": 450
+        },
+        {
+          "label": "体能",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "tv",
+      "code": "TV711",
+      "name": "回到爱上那天",
+      "guideName": "回到爱上那天",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 40,
+      "condition": "一般，累积40天自由活动后获得",
+      "tags": [
+        "爱情偶像剧",
+        "10天短剧",
+        "男三星",
+        "女二星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 330
+        },
+        {
+          "label": "名气",
+          "value": 480
+        },
+        {
+          "label": "仪态",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "tv",
+      "code": "TV712",
+      "name": "恋爱魔镜",
+      "guideName": "恋爱魔镜",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 40,
+      "condition": "一般，累积40天自由活动后获得",
+      "tags": [
+        "爱情偶像剧",
+        "20天短剧",
+        "双三星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 330
+        },
+        {
+          "label": "名气",
+          "value": 480
+        },
+        {
+          "label": "仪态",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "tv",
+      "code": "TV713",
+      "name": "青春玛奇朵",
+      "guideName": "青春玛奇朵",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 40,
+      "condition": "一般，累积40天自由活动后获得",
+      "tags": [
+        "少年励志剧",
+        "连续剧",
+        "女五星",
+        "男配二星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 550
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "体能",
+          "value": 500
+        },
+        {
+          "label": "才智",
+          "value": 500
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "tv",
+      "code": "TV721",
+      "name": "医院风云",
+      "guideName": "医院风云",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "社会乡土剧",
+        "20天短剧",
+        "男四星",
+        "女三星",
+        "男配一星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 600
+        },
+        {
+          "label": "口才",
+          "value": 450
+        },
+        {
+          "label": "名气",
+          "value": 520
+        },
+        {
+          "label": "自信",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "tv",
+      "code": "TV722",
+      "name": "美酒贵公子",
+      "guideName": "美酒贵公子",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "爱情偶像剧",
+        "连续剧",
+        "双四星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 520
+        },
+        {
+          "label": "名气",
+          "value": 600
+        },
+        {
+          "label": "仪态",
+          "value": 520
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "tv",
+      "code": "TV723",
+      "name": "刑事侦察一周间",
+      "guideName": "刑事侦查一周间",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后活动",
+      "tags": [
+        "侦探悬疑剧",
+        "连续剧",
+        "双五星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 550
+        },
+        {
+          "label": "名气",
+          "value": 500
+        },
+        {
+          "label": "才智",
+          "value": 500
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "卫亚",
+      "artistId": 16,
+      "section": "tv",
+      "code": "TV761",
+      "name": "状元红",
+      "guideName": "状元红",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "古装宫廷剧",
+        "10天短剧",
+        "双三星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 420
+        },
+        {
+          "label": "名气",
+          "value": 420
+        },
+        {
+          "label": "仪态",
+          "value": 330
+        },
+        {
+          "label": "自信",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "卫亚",
+      "artistId": 16,
+      "section": "tv",
+      "code": "TV762",
+      "name": "情剑无双",
+      "guideName": "情剑无双",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 30,
+      "condition": "一般，累积30天自由活动后获得",
+      "tags": [
+        "古装宫廷剧",
+        "连续剧",
+        "双五星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 550
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "仪态",
+          "value": 500
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "卫亚",
+      "artistId": 16,
+      "section": "tv",
+      "code": "TV763",
+      "name": "梅岭情缘",
+      "guideName": "梅岭情缘",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "古装宫廷剧",
+        "连续剧",
+        "男五星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 550
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "仪态",
+          "value": 500
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "城仲瑄",
+      "artistId": 18,
+      "section": "tv",
+      "code": "TV781",
+      "name": "减肥大作战",
+      "guideName": "减肥大作战",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "温馨伦理剧",
+        "连续剧",
+        "女五星",
+        "女配二星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "仪态",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "城仲瑄",
+      "artistId": 18,
+      "section": "tv",
+      "code": "TV782",
+      "name": "十八岁新娘",
+      "guideName": "十八岁新娘",
+      "category": "电视剧",
+      "kind": "一般",
+      "days": 33,
+      "condition": "一般，累积33天自由活动后获得",
+      "tags": [
+        "社会乡土剧",
+        "连续剧",
+        "双四星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 700
+        },
+        {
+          "label": "口才",
+          "value": 500
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "movie",
+      "code": "MV710",
+      "name": "落日",
+      "guideName": "落日",
+      "category": "电影",
+      "kind": "特殊",
+      "days": 30,
+      "condition": "特殊，公司主线剧情4-3发生后累积1个月自由活动后获得",
+      "tags": [
+        "剧情片",
+        "双五星",
+        "男配一四星",
+        "男配二三星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "杜云芊",
+      "artistId": 1,
+      "section": "movie",
+      "code": "MV701",
+      "name": "沉默的告白",
+      "guideName": "沉默的告白",
+      "category": "电影",
+      "kind": "一般",
+      "days": 40,
+      "condition": "一般，累积40天自由活动后获得",
+      "tags": [
+        "剧情片",
+        "双三星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 480
+        },
+        {
+          "label": "名气",
+          "value": 420
+        },
+        {
+          "label": "仪态",
+          "value": 330
+        },
+        {
+          "label": "动感",
+          "value": 330
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "沈惟真",
+      "artistId": 11,
+      "section": "movie",
+      "code": "MV711",
+      "name": "无瑕四重奏",
+      "guideName": "无瑕四重奏",
+      "category": "电影",
+      "kind": "一般",
+      "days": 40,
+      "condition": "一般，累积40天自由活动后获得",
+      "tags": [
+        "剧情片",
+        "双五星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "仪态",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 500
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "movie",
+      "code": "MV721",
+      "name": "塔罗牌杀人事件",
+      "guideName": "塔罗牌杀人事件",
+      "category": "电影",
+      "kind": "一般",
+      "days": 33,
+      "condition": "一般，累积33天自由活动后获得",
+      "tags": [
+        "剧情片",
+        "男四星",
+        "女三星",
+        "男配一星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 520
+        },
+        {
+          "label": "仪态",
+          "value": 450
+        },
+        {
+          "label": "动感",
+          "value": 450
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "movie",
+      "code": "MV722",
+      "name": "花样年华",
+      "guideName": "花样年华",
+      "category": "电影",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "剧情片",
+        "双五星",
+        "男配四星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "仪态",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 500
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "丹尼斯",
+      "artistId": 12,
+      "section": "movie",
+      "code": "MV723",
+      "name": "梧桐雨之秋",
+      "guideName": "梧桐雨之秋",
+      "category": "电影",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "剧情片",
+        "双五星",
+        "男配三星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "仪态",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 500
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "姚子奇",
+      "artistId": 14,
+      "section": "movie",
+      "code": "MV741",
+      "name": "讨厌爱上你",
+      "guideName": "讨厌爱上你",
+      "category": "电影",
+      "kind": "特殊",
+      "days": 40,
+      "condition": "特殊，与慕容和希一同拍过《从来不曾爱你》杀青后，累积40天自由活动后获得",
+      "tags": [
+        "爱情文艺片",
+        "男双五星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "movie",
+      "code": "MV751",
+      "name": "现在如此爱你",
+      "guideName": "现在如此爱你",
+      "category": "电影",
+      "kind": "特殊",
+      "days": 40,
+      "condition": "特殊，与姚子奇一同拍过《从来不曾爱你》杀青后，累积40天自由活动后获得",
+      "tags": [
+        "爱情文艺片",
+        "男双五星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "慕容和希",
+      "artistId": 15,
+      "section": "movie",
+      "code": "MV752",
+      "name": "万事如意",
+      "guideName": "万事如意",
+      "category": "电影",
+      "kind": "一般",
+      "days": 40,
+      "condition": "一般，累积40天自由活动后获得",
+      "tags": [
+        "爱情文艺片",
+        "双三星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 420
+        },
+        {
+          "label": "名气",
+          "value": 480
+        },
+        {
+          "label": "仪态",
+          "value": 420
+        },
+        {
+          "label": "自信",
+          "value": 330
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "卫亚",
+      "artistId": 16,
+      "section": "movie",
+      "code": "MV761",
+      "name": "异世界神话",
+      "guideName": "异世界童话",
+      "category": "电影",
+      "kind": "特殊",
+      "days": 0,
+      "condition": "特殊，卫亚剧情5-9发生后获得",
+      "tags": [
+        "科幻未来片",
+        "男五星",
+        "男配三星"
+      ],
+      "thresholds": [],
+      "guide": true
+    },
+    {
+      "artist": "卫亚",
+      "artistId": 16,
+      "section": "movie",
+      "code": "MV762",
+      "name": "校园怪谭",
+      "guideName": "校园怪谈",
+      "category": "电影",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "侦探悬疑片",
+        "双五星",
+        "男配四星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "才智",
+          "value": 550
+        },
+        {
+          "label": "自信",
+          "value": 500
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "纪翔",
+      "artistId": 17,
+      "section": "movie",
+      "code": "MV771",
+      "name": "王子复仇记",
+      "guideName": "王子复仇记",
+      "category": "电影",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "剧情片",
+        "男四星",
+        "男配女配一星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 600
+        },
+        {
+          "label": "名气",
+          "value": 520
+        },
+        {
+          "label": "仪态",
+          "value": 450
+        },
+        {
+          "label": "动感",
+          "value": 450
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "纪翔",
+      "artistId": 17,
+      "section": "movie",
+      "code": "MV772",
+      "name": "雪莱传记",
+      "guideName": "雪莱传记",
+      "category": "电影",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "剧情片",
+        "双五星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 700
+        },
+        {
+          "label": "名气",
+          "value": 550
+        },
+        {
+          "label": "仪态",
+          "value": 500
+        },
+        {
+          "label": "动感",
+          "value": 500
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "城仲瑄",
+      "artistId": 18,
+      "section": "movie",
+      "code": "MV781",
+      "name": "老鼠嫁女",
+      "guideName": "老鼠嫁女",
+      "category": "电影",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "轻松喜剧片",
+        "女三星",
+        "男配双一星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 420
+        },
+        {
+          "label": "口才",
+          "value": 330
+        },
+        {
+          "label": "名气",
+          "value": 480
+        },
+        {
+          "label": "自信",
+          "value": 420
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "城仲瑄",
+      "artistId": 18,
+      "section": "movie",
+      "code": "MV782",
+      "name": "丑小鸭的天空",
+      "guideName": "丑小鸭的天空",
+      "category": "电影",
+      "kind": "一般",
+      "days": 33,
+      "condition": "一般，累积33天自由活动后获得",
+      "tags": [
+        "爱情文艺片",
+        "双五星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 550
+        },
+        {
+          "label": "名气",
+          "value": 700
+        },
+        {
+          "label": "仪态",
+          "value": 550
+        },
+        {
+          "label": "自信",
+          "value": 500
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "城仲瑄",
+      "artistId": 18,
+      "section": "movie",
+      "code": "MV783",
+      "name": "单身套房",
+      "guideName": "单身套房",
+      "category": "电影",
+      "kind": "一般",
+      "days": 35,
+      "condition": "一般，累积35天自由活动后获得",
+      "tags": [
+        "轻松喜剧片",
+        "女五星",
+        "男配女配三星"
+      ],
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 550
+        },
+        {
+          "label": "口才",
+          "value": 500
+        },
+        {
+          "label": "名气",
+          "value": 700
+        },
+        {
+          "label": "自信",
+          "value": 550
+        }
+      ],
+      "guide": true
+    },
+    {
+      "artist": "其他",
+      "artistId": 0,
+      "section": "movie",
+      "code": "MV791",
+      "name": "从来不曾爱过",
+      "guideName": "从来不曾爱过",
+      "category": "电影",
+      "kind": "",
+      "days": 0,
+      "condition": "第二年6月~12月，公司资金大于300万，苏嫚君上门募捐，答应捐钱可得剧本",
+      "tags": [
+        "剧情片",
+        "男双五星",
+        "女配3星"
+      ],
+      "thresholds": [],
+      "guide": true
+    }
+  ],
+  "extras": [
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "tv",
+      "code": "TV791",
+      "name": "流泪的天堂",
+      "guideName": "",
+      "category": "电视剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH711",
+      "name": "窗外",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH721",
+      "name": "永恒之钥",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH722",
+      "name": "驯妻记",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH723",
+      "name": "从接吻开始",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH751",
+      "name": "彻夜谋杀",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH761",
+      "name": "杀死我杀死你",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH762",
+      "name": "爱是无限回圈",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH771",
+      "name": "直到永远",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH781",
+      "name": "地下铁之旅",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH782",
+      "name": "未来启示录",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH783",
+      "name": "乡愁",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    },
+    {
+      "artist": "",
+      "artistId": 0,
+      "section": "stage",
+      "code": "TH791",
+      "name": "寂寞微光",
+      "guideName": "",
+      "category": "舞台剧",
+      "kind": "",
+      "days": 0,
+      "condition": "",
+      "tags": [],
+      "thresholds": [],
+      "guide": false
+    }
+  ]
+}

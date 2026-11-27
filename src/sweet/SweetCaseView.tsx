@@ -21,6 +21,7 @@ import {
   type MemoData,
 } from '../lib/memoNotes';
 import { MemoNote } from '../ui/MemoNote';
+import SweetSelfMadeAssistant from './SweetSelfMadeAssistant';
 
 /** 称号门槛走甜蜜乐章自己的 Nickname.dat：作品统计八项同序（唱片＝专辑、主持＝节目），
  *  作品总数是八项之和；奖项编号 21..53 与主站同套。演唱会已写进称号表，
@@ -3122,6 +3123,8 @@ export default function SweetCaseView() {
           <SweetArtistQuickRef save={save} />
         </aside>
       )}
+
+      <SweetSelfMadeAssistant save={save} />
     </div>
   );
 }
