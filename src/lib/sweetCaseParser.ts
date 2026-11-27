@@ -1190,6 +1190,13 @@ export function sweetRoleGender(roleType: number): 'male' | 'female' | undefined
   return undefined;
 }
 
+/** StarRole.dat +4 的性别真值：0=女 / 1=男（姚子奇 1、雲芊 0）。
+ *  主角编号 1 在表里就是 0（女），不再需要特判；统一走这里避免各 tab 口径漂移。 */
+export function sweetArtistGender(artistId: number, tables: SweetCaseTables): 'male' | 'female' | undefined {
+  const g = tables.genders?.[String(artistId)];
+  return g === 0 ? 'female' : g === 1 ? 'male' : undefined;
+}
+
 /** 找 `[4]name\0` 段头，返回 payload 起点。 */
 function findSection(bytes: Uint8Array, name: string): number {
   const marker = [name.length & 0xff, 0, 0, 0, ...Array.from(name).map((c) => c.charCodeAt(0)), 0];
@@ -1579,18 +1586,32 @@ function scanSweetPromo(
     if (!body || body.roleAt < 0 || body.roles.length === 0 || body.dates.length < 2) continue;
 
     const casts: SweetPromoCast[] = [];
+    const claimedRoles = new Set<string>();
+    const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
     for (let slot = 0; slot < 4; slot += 1) {
       const at = body.roleAt + 777 + slot * 24;
       if (at + 8 > recView.byteLength) break;
       const artistId = readI32(recView, at);
       const doneDays = readI32(recView, at + 4);
       if (artistId < 1 || artistId > 110 || doneDays < 0 || doneDays > 60) continue;
-      const artistName = sweetPromoSigner(artistId, teams, allStars);
+      // 角色先按接演槽位落位；性别明显冲突时回退到同性别未认领的角色。
+      let role = sortedRoles[Math.min(slot, sortedRoles.length - 1)] ?? null;
+      const want = sweetArtistGender(artistId, tables);
+      if (role && want && sweetRoleGender(role.roleType) !== want && sortedRoles.length > 1) {
+        role = sortedRoles.find((item) => !claimedRoles.has(item.code)
+          && sweetRoleGender(item.roleType) === want) ?? role;
+      }
+      if (role) claimedRoles.add(role.code);
+      // 「又怎么了」这类是团体名。只有团体角色才显示团名；主角编号 1 即便在团体里，
+      // 个人宣传作品也一律显示存档自命名（reservationStars['1']）。
+      const groupRole = role?.roleType === 4 || role?.role === '團體';
+      const artistName = groupRole ? sweetPromoSigner(artistId, teams, allStars)
+        : allStars[String(artistId)] ?? '';
       if (!isRealReservationName(artistName)) continue;
       casts.push({
         artistId,
         artistName,
-        role: body.roles[Math.min(slot, body.roles.length - 1)]?.role ?? '個人',
+        role: role?.role ?? '個人',
         doneDays,
       });
     }
@@ -1683,6 +1704,8 @@ function scanSweetArchive(
 
     const casts: SweetWaitingCast[] = [];
     const seenArtists = new Set<number>();
+    const claimedRoles = new Set<string>();
+    const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
     // 归档作品的接演记录只有前 4 格是艺人；第 5 格起正好落在五组发行档期上，
     // 继续按 24B 读会把年份当成艺人编号。等待上市/热卖中仍按 8 格读（主角在第 8 格）。
     const slotLimit = status === 'done' ? 4 : 8;
@@ -1705,11 +1728,15 @@ function scanSweetArchive(
         || Boolean(team && team.memberIds.some((id) => mineIds.has(id)));
       if (!isMine) continue;
       seenArtists.add(artistId);
-      // 接演网格的槽位顺序就是本体角色槽顺序（body.roles 已按角色码排好）：
-      // MVAN1 的 16 衛亞/13 史蒂芬/12 丹尼斯 正好落男主角/男配角/男配角，
-      // TVA0Y 的 14 姚子奇/32 桑禾蓓/15 慕容和希/39 聆香 正好落男/女/男/女配。
-      // 按槽位精确落位即可，不再按性别猜着换角色。
-      const role = slot < body.roles.length ? body.roles[slot] : null;
+      // 角色先按接演槽位落位；性别明显冲突时回退到同性别未认领的角色，
+      // 否则 TV157 的女主角会被写成男配角。
+      let role = slot < sortedRoles.length ? sortedRoles[slot] : null;
+      const want = sweetArtistGender(artistId, tables);
+      if (role && want && sweetRoleGender(role.roleType) !== want && sortedRoles.length > 1) {
+        role = sortedRoles.find((item) => !claimedRoles.has(item.code)
+          && sweetRoleGender(item.roleType) === want) ?? role;
+      }
+      if (role) claimedRoles.add(role.code);
       // 只有团体角色才显示团体名；主角即便在团体里，个人作品仍显示本人姓名。
       const groupRole = role?.roleType === 4 || role?.role === '團體';
       casts.push({
@@ -1820,9 +1847,7 @@ function scanSweetSelfMade(
       if (doneDays < 0 || doneDays > 90 || a < 0 || a > 99 || b < 0 || b > 99) continue;
       if (pay < 0 || pay > 1e9) continue;
       let role: SweetNoticeRole | null = sortedRoles[slot] ?? null;
-      // 主角在 StarRole 里被误标成男，这里与归档作品一样按女角处理。
-      const gender = artistId === 1 ? 1 : tables.genders?.[String(artistId)];
-      const want = gender === 0 ? 'male' : gender === 1 ? 'female' : undefined;
+      const want = sweetArtistGender(artistId, tables);
       if (role && want && sweetRoleGender(role.roleType) !== want && sortedRoles.length > 1) {
         role = sortedRoles.find((item) => !claimed.has(item.code)
           && sweetRoleGender(item.roleType) === want) ?? role;
@@ -2046,17 +2071,12 @@ function scanSweetShooting(
       const name = allStars[String(row.artistId)] ?? `艺人${row.artistId}`;
       const isMine = mineIds.has(row.artistId);
       // 角色按接取记录顺序精确落位（主站 1804 条零反例），只在性别明显冲突时回退。
-      // 甜站 StarRole 表里主角编号 1 误标成男，实际是女性，这里特判。
-      const gender = row.artistId === 1 ? 1 : tables.genders?.[String(row.artistId)];
       let role: SweetNoticeRole | null = sortedRoles[i] ?? null;
       const need = role ? sweetRoleGender(role.roleType) : undefined;
-      if (role && need && gender !== undefined
-        && ((need === 'male' && gender !== 0) || (need === 'female' && gender !== 1))
-        && sortedRoles.length > 1) {
-        // 性别冲突时改找与艺人性别相符的角色（0=男、1=女）。
-        const wanted = gender === 0 ? 'male' : 'female';
+      const want = sweetArtistGender(row.artistId, tables);
+      if (role && need && want && need !== want && sortedRoles.length > 1) {
         role = sortedRoles.find((r) => !claimed.has(r.code)
-          && sweetRoleGender(r.roleType) === wanted) ?? role;
+          && sweetRoleGender(r.roleType) === want) ?? role;
       }
       if (role) claimed.add(role.code);
       else if (body.roles.length === 1) {

@@ -2320,7 +2320,9 @@ export default function SweetCaseView() {
     setSave(null);
     setBusy(true);
     try {
-      setSave(await parseSweetSave(file, stars, titles, tables));
+      // 性别表来自 star-roles.json，解析器按 tables.genders 读取，必须并进去，
+      // 否则归档 / 宣传的角色性别回退失效（主角会被写成男配角）。
+      setSave(await parseSweetSave(file, stars, titles, { ...tables, genders }));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '存档读取失败');
     } finally {
