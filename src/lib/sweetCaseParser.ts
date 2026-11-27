@@ -1330,9 +1330,10 @@ function readNoticeBody(
     seen.add(roleCode);
     if (firstRoleAt < 0) firstRoleAt = o;
     const roleName = tables.roles?.[String(roleType)] ?? '';
-    const lengthSubId = readI32(recView, 14);
-    const lengthKey = classId === 2 && lengthSubId > 0
-      ? `電視${lengthSubId}|${roleName}` : `${rawCategory}|${roleName}`;
+    // +14 不是 Length 表的剧集子类编号（TVA1K 的 +14=2 实际是 45 天连续剧），
+    // 电视剧统一按烘焙表里的「電視|角色」取值（连续剧 45 / 配角 20）。
+    const lengthKey = classId === 2
+      ? `電視|${roleName}` : `${rawCategory}|${roleName}`;
     const [workDays, daysPerWeek] = tables.lengths?.[lengthKey]
       ?? tables.lengths?.[`${rawCategory}|${roleName}`] ?? [0, 0];
     roles.push({
@@ -1419,9 +1420,9 @@ function scanSweetNotices(
     const name = readBig5(rec, 26, nameLength) || tables.cases?.[code] || code;
 
     const classId = readI32(recView, 10);
-    // +14 是 Length/NeedEffect 用的剧集长度子类，+18 才是界面上显示的题材类型
-    // （如「轻松幽默剧」「爱情文艺片」「动感S」），两者不能混用。
-    const lengthSubId = readI32(recView, 14);
+    // +18 才是界面上显示的题材类型（如「轻松幽默剧」「爱情文艺片」）。
+    // +14 不是 Length 表的剧集子类编号（TVA1K 的 +14=2 实际是 45 天连续剧），
+    // 电视剧统一按「電視|角色」取长度，不再用 +14 拼 key。
     const typeId = readI32(recView, 18);
     const rawCategory = tables.classes?.[String(classId)] ?? '';
     const category = SWEET_CATEGORY_SIMPLE[rawCategory]
@@ -1447,8 +1448,8 @@ function scanSweetNotices(
       if (!values.every((value) => value >= 0 && value <= 999)) continue;
       seen.add(roleCode);
       const roleName = tables.roles?.[String(roleType)] ?? '';
-      const lengthKey = classId === 2 && lengthSubId > 0
-        ? `電視${lengthSubId}|${roleName}` : `${rawCategory}|${roleName}`;
+      const lengthKey = classId === 2
+        ? `電視|${roleName}` : `${rawCategory}|${roleName}`;
       const [workDays, daysPerWeek] = tables.lengths?.[lengthKey]
         ?? tables.lengths?.[`${rawCategory}|${roleName}`] ?? [0, 0];
       roles.push({
@@ -1828,8 +1829,10 @@ function scanSweetSelfMade(
       }
       if (role) claimed.add(role.code);
       else if (sortedRoles.length === 1) role = sortedRoles[0];
+      // 与拍摄中同口径：done/a/b＝成功/失败/完美天数，三者相加才是已拍天数。
+      const shotDays = doneDays + a + b;
       const workDays = role?.workDays && role.workDays > 0
-        ? Math.max(role.workDays, doneDays) : doneDays + b;
+        ? Math.max(role.workDays, shotDays) : shotDays;
       const team = teams.find((item) => item.leaderId === artistId || item.memberIds.includes(artistId));
       const groupRole = role?.roleType === 4 || role?.role === '團體';
       casts.push({
@@ -1840,7 +1843,7 @@ function scanSweetSelfMade(
         mine: mineIds.has(artistId)
           || Boolean(team && team.memberIds.some((id) => mineIds.has(id))),
         doneDays,
-        needDays: Math.max(0, workDays - doneDays),
+        needDays: Math.max(0, workDays - shotDays),
         workDays,
         group: groupRole && team ? {
           name: team.name,
@@ -1993,20 +1996,22 @@ function scanSweetShooting(
       const r = readAt(p);
       if (r.pay >= 1000 && valid(r)) { anchor = p; break; }
     }
-    const progress: { artistId: number; done: number; pay: number }[] = [];
+    // done/a/b 分别是成功/失败/完美天数，三者相加才是已拍天数；
+    // 还差天数＝通告总天数减掉这三项（Story0050 TVA1K 40+0+1，45 天里还差 4 天）。
+    const progress: { artistId: number; done: number; a: number; b: number; pay: number }[] = [];
     if (anchor >= 0) {
       for (let p = anchor - 24; p >= from && p + 24 <= to; p -= 24) {
         const r = readAt(p);
         if (!valid(r)) break;
         if (!progress.some((row) => row.artistId === r.id)) {
-          progress.unshift({ artistId: r.id, done: r.done, pay: r.pay });
+          progress.unshift({ artistId: r.id, done: r.done, a: r.a, b: r.b, pay: r.pay });
         }
       }
       for (let p = anchor; p + 24 <= to; p += 24) {
         const r = readAt(p);
         if (!valid(r)) break;
         if (!progress.some((row) => row.artistId === r.id)) {
-          progress.push({ artistId: r.id, done: r.done, pay: r.pay });
+          progress.push({ artistId: r.id, done: r.done, a: r.a, b: r.b, pay: r.pay });
         }
       }
     } else {
@@ -2021,7 +2026,7 @@ function scanSweetShooting(
         if (!valid(r)) continue;
         if (r.done === 0 && r.a === 0 && r.b === 0 && r.pay === 0) continue;
         if (!progress.some((row) => row.artistId === r.id)) {
-          progress.push({ artistId: r.id, done: r.done, pay: r.pay });
+          progress.push({ artistId: r.id, done: r.done, a: r.a, b: r.b, pay: r.pay });
         }
       }
     }
@@ -2060,8 +2065,9 @@ function scanSweetShooting(
       }
       const workDays = role?.workDays ?? 0;
       const daysPerWeek = role?.daysPerWeek ?? 0;
-      const done = workDays > 0 && row.done >= workDays;
-      const needDays = done ? 0 : workDays > 0 ? Math.max(0, workDays - row.done) : 0;
+      const shotDays = row.done + row.a + row.b;
+      const done = workDays > 0 && shotDays >= workDays;
+      const needDays = done ? 0 : workDays > 0 ? Math.max(0, workDays - shotDays) : 0;
       const canShoot = shootableDays(daysLeft, daysPerWeek);
       casts.push({
         artistId: row.artistId,
