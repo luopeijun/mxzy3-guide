@@ -966,6 +966,47 @@ def _merge_date(slug: str, blocks: list[dict]) -> list[dict]:
     return [*blocks[:split], *head, *blocks[split:], *body]
 
 
+MONOPOLY_QUESTION_RE = re.compile(r"^(\d+)\)\s*(.+)$")
+MONOPOLY_ANSWER_RE = re.compile(r"^Ans[:：]\s*(.+)$")
+
+
+def parse_monopoly(path: Path) -> tuple[list[dict], str]:
+    """大富翁题库：`N) 题目` + `Ans: 答案`，N 是「第几题」组号。
+
+    题目与组号来自甜蜜乐章 `Data/RichBa.dat`（`build_sweet_monopoly.py` 生成），
+    答案沿用明星志愿3 题库；版式与主站 `build_monopoly_blocks` 完全一致：
+    组号变化开一个 `第N题` section，每题一个 `qa`。
+    """
+    blocks: list[dict] = []
+    group = 0
+    number: int | None = None
+    question = ""
+    subtitle = ""
+    for line in _read_lines(path):
+        if line.startswith("★"):
+            subtitle = line.lstrip("★").strip()
+            continue
+        ask = MONOPOLY_QUESTION_RE.match(line)
+        if ask:
+            current = int(ask.group(1))
+            question = ask.group(2).strip()
+            if current != number:
+                number = current
+                group += 1
+                blocks.append({"kind": "section", "text": f"第{current}题", "group": group})
+            continue
+        ans = MONOPOLY_ANSWER_RE.match(line)
+        if ans:
+            blocks.append({
+                "kind": "qa",
+                "text": question,
+                "answer": ans.group(1).strip(),
+                "group": group,
+            })
+            continue
+    return blocks, subtitle
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
@@ -977,6 +1018,7 @@ PARSERS = {
     "favorite-gifts": parse_favorite_gifts,
     "career-endings": parse_career_endings,
     "endings": parse_endings,
+    "monopoly": parse_monopoly,
     "cheng-zhongxuan": parse_character,
     "danisi": parse_character,
     "ji-xiang": parse_character,
@@ -1011,6 +1053,7 @@ CATEGORIES: list[dict] = [
             ("favorite-gifts", "角色喜爱物品一览"),
             ("career-endings", "女主事业结局达成条件"),
             ("endings", "结局条件一览"),
+            ("monopoly", "大富翁BaBaBa答案"),
         ],
     },
     {
