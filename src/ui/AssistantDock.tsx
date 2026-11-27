@@ -53,6 +53,10 @@ export default function AssistantDock({
   const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
   const [panelHeight, setPanelHeight] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
+  /* 过渡只在「面板已经摆到正确位置并画过一帧」之后才开。
+   * 面板初次渲染要躲在视口外量尺寸，此时若已带 transition，top 会从 -9999 滑到真实位置，
+   * 看起来就是从天上飞下来；所以先定位、再开过渡、最后淡入。 */
+  const [settled, setSettled] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const panelBodyRef = useRef<HTMLDivElement>(null);
@@ -85,6 +89,7 @@ export default function AssistantDock({
     if (!open) {
       setPanelPos(null);
       setPanelHeight(null);
+      setSettled(false);
       return;
     }
     const measure = () => {
@@ -125,6 +130,9 @@ export default function AssistantDock({
     };
     apply(measure());
     let frame = 0;
+    // 位置已经落到样式里了，等下一帧再放开过渡并淡入。
+    // 若在同一次提交里就带上 transition，top 会从视口外的 -9999 一路滑进来。
+    const settleFrame = requestAnimationFrame(() => setSettled(true));
     const queue = () => {
       if (frame) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
@@ -137,11 +145,17 @@ export default function AssistantDock({
     if (headRef.current) observer.observe(headRef.current);
     window.addEventListener('resize', queue);
     return () => {
+      cancelAnimationFrame(settleFrame);
       if (frame) cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener('resize', queue);
     };
   }, [open, orbPos.x, orbPos.y]);
+
+  // 每次打开都从顶部开始看，别带着上次的滚动位置。
+  useEffect(() => {
+    if (open && panelBodyRef.current) panelBodyRef.current.scrollTop = 0;
+  }, [open]);
 
   // 点面板外面或按 Esc 收起。
   useEffect(() => {
@@ -215,8 +229,9 @@ export default function AssistantDock({
           aria-label={label}
           className={cn(
             'fixed flex w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft',
-            panelHeight === null ? 'max-h-[min(72vh,560px)]' : '',
-            dragging || panelHeight === null ? '' : 'transition-[height,top] duration-200 ease-out',
+            panelHeight === null && 'max-h-[min(72vh,560px)]',
+            !dragging && settled ? 'transition-[height,top,opacity] duration-200 ease-out motion-reduce:transition-none' : '',
+            settled ? 'opacity-100' : 'opacity-0',
           )}
           style={panelPos
             ? {

@@ -889,7 +889,9 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
     [data, result, tables],
   );
 
-  const selfMadeState = useSelfMadeData(open && view === 'selfmade');
+  // 面板一打开就把自制清单取回来：等切到页签才 fetch 的话，
+  // 首帧会是空态、面板先缩一下再长回来，看着像抖了一下。
+  const selfMadeState = useSelfMadeData(open);
 
   /** 自制通告只挂在当前签约艺人名下 + 「其他」，其他类别永远排最后。 */
   const selfMadeGroups = useMemo(() => {
