@@ -1769,8 +1769,10 @@ function scanSweetArchive(
 
     // 本体记录起点前 4 字节就是公司 seq（CaseFirm 同款编号）：筹备中从 CaseFirm
     // 拿，归档作品只能从本体拿。原先这里传 0，导致已完成整列公司都是空的。
+    // seq 不止 1..30：烘焙表还有 31..34 / 41 / 51 / 61 / 71 / 81 / 91，写死上限会
+    // 把 TVA1A（seq=32 純真年代）这类作品漏成空；直接查表，查不到仍留空。
     const seq = at >= 4 ? readI32(caseView, at - 4) : 0;
-    const company = seq > 0 && seq <= 30
+    const company = seq > 0
       ? sweetCompany(code, seq, classId, tables) : body.company;
 
     const casts: SweetWaitingCast[] = [];
