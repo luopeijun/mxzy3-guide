@@ -15,6 +15,7 @@ import { companyDot, companyText } from '../components/notices/infoStyle';
 import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
 import { GapCourseHint, itemHintsFor } from '../ui/GapCourseHint';
+import { SWEET_SCENE_UNLOCKS } from '../lib/sweetSceneUnlocks';
 
 /** 称号门槛走甜蜜乐章自己的 Nickname.dat：作品统计八项同序（唱片＝专辑、主持＝节目），
  *  作品总数是八项之和；奖项编号 21..53 与主站同套。演唱会已写进称号表，
@@ -381,6 +382,14 @@ function sweetChipClass(active: boolean) {
     active
       ? 'border-brand bg-brand font-semibold text-white'
       : 'border-line bg-surface text-ink-muted hover:border-brand-line hover:text-brand-strong',
+  );
+}
+
+/** 与主站场景格同一套 tooltip 对齐：2 列 / 4 列切换时都别让浮窗冲出容器。 */
+function sweetSceneTooltipAlign(index: number): string {
+  return cn(
+    index % 2 === 1 ? 'right-0 left-auto' : 'left-0 right-auto',
+    index % 4 === 3 ? 'sm:right-0 sm:left-auto' : 'sm:left-0 sm:right-auto',
   );
 }
 
@@ -2745,25 +2754,65 @@ export default function SweetCaseView() {
                     </span>
                   </summary>
                   <div data-sweet-case-scene-grid className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                    {save.scenes.map((scene) => (
-                      <div
-                        key={scene.name}
-                        data-sweet-case-scene
-                        data-sweet-case-scene-unlocked={scene.unlocked}
-                        data-sweet-case-scene-cost={scene.cost}
-                        className={cn(
-                          'flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
-                          scene.unlocked
-                            ? 'border-growth-line bg-growth-soft text-growth-strong'
-                            : 'border-line bg-surface text-ink-faint',
-                        )}
-                      >
-                        <b className="font-semibold">{scene.name}</b>
-                        <span className="ml-1 tabular-nums">
-                          {scene.unlocked ? '已解锁' : scene.cost.toLocaleString('zh-CN')}
-                        </span>
-                      </div>
-                    ))}
+                    {save.scenes.map((scene, index) => {
+                      const hints = SWEET_SCENE_UNLOCKS[scene.name] ?? [];
+                      const showHints = hints.length > 0;
+                      return (
+                        <div
+                          key={scene.name}
+                          data-sweet-case-scene
+                          data-sweet-case-scene-unlocked={scene.unlocked}
+                          data-sweet-case-scene-cost={scene.cost}
+                          tabIndex={showHints ? 0 : undefined}
+                          className={cn(
+                            'group relative flex items-baseline justify-between rounded border px-2 py-1 text-ui-2xs',
+                            scene.unlocked
+                              ? 'border-growth-line bg-growth-soft text-growth-strong'
+                              : 'border-line bg-surface text-ink-faint',
+                            showHints && 'cursor-help outline-none focus-visible:ring-2 focus-visible:ring-brand-line',
+                          )}
+                        >
+                          <b className="font-semibold">{scene.name}</b>
+                          <span className={cn(
+                            'ml-1 tabular-nums',
+                            showHints && 'decoration-dotted underline-offset-2 hover:underline',
+                          )}>
+                            {scene.unlocked ? '已解锁' : scene.cost.toLocaleString('zh-CN')}
+                          </span>
+                          {showHints && (
+                            <span
+                              data-case-scene-unlock
+                              role="tooltip"
+                              className={cn(
+                                'pointer-events-none absolute top-full z-30 w-[320px] pt-1 opacity-0 transition-opacity duration-150',
+                                'group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100',
+                                sweetSceneTooltipAlign(index),
+                              )}
+                            >
+                              <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
+                                <span className="mb-1 block text-ui-2xs font-semibold text-brand-strong">
+                                  解锁方式 · {scene.name}
+                                </span>
+                                <span data-case-scene-unlock-scroll className="block max-h-[240px] overflow-y-auto overscroll-contain pr-1">
+                                  {hints.map((line, lineIndex) => (
+                                    <span
+                                      key={`${lineIndex}-${line}`}
+                                      data-case-scene-unlock-line
+                                      className={cn(
+                                        'block text-ui-2xs leading-[1.5] text-ink-muted',
+                                        lineIndex > 0 && 'mt-1 border-t border-line pt-1',
+                                      )}
+                                    >
+                                      {line}
+                                    </span>
+                                  ))}
+                                </span>
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </details>
               )}
