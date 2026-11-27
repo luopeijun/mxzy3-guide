@@ -1622,6 +1622,7 @@ function scanSweetArchive(
   const caseEnd = findSection(bytes, 'CaseEnd');
   if (caseStart < 0 || caseEnd <= caseStart) return [];
   const caseBytes = bytes.subarray(caseStart, caseEnd);
+  const caseView = new DataView(caseBytes.buffer, caseBytes.byteOffset, caseBytes.byteLength);
   const emptyReservations = new Map<string, string>();
   const mineIds = new Set([1, ...signedIds.filter((id) => id >= 1 && id <= 110)]);
   const starIds = new Set(Object.keys(allStars).map(Number).filter((id) => id >= 1 && id <= 110));
@@ -1669,11 +1670,18 @@ function scanSweetArchive(
         : todayValue > saleEndDay;
     if (!eligible) continue;
 
-    const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
-    const claimed = new Set<string>();
+    // 本体记录起点前 4 字节就是公司 seq（CaseFirm 同款编号）：筹备中从 CaseFirm
+    // 拿，归档作品只能从本体拿。原先这里传 0，导致已完成整列公司都是空的。
+    const seq = at >= 4 ? readI32(caseView, at - 4) : 0;
+    const company = seq > 0 && seq <= 30
+      ? sweetCompany(code, seq, classId, tables) : body.company;
+
     const casts: SweetWaitingCast[] = [];
-    // 接演网格最多 8 格：主角固定落在第 8 格（+984），只读前四格会漏掉他。
-    for (let slot = 0; slot < 8; slot += 1) {
+    const seenArtists = new Set<number>();
+    // 归档作品的接演记录只有前 4 格是艺人；第 5 格起正好落在五组发行档期上，
+    // 继续按 24B 读会把年份当成艺人编号。等待上市/热卖中仍按 8 格读（主角在第 8 格）。
+    const slotLimit = status === 'done' ? 4 : 8;
+    for (let slot = 0; slot < slotLimit; slot += 1) {
       const p = 816 + slot * 24;
       if (p + 24 > length) break;
       const flag = readI32(recView, p);
@@ -1685,29 +1693,16 @@ function scanSweetArchive(
       if (flag < 0 || flag > 3 || !starIds.has(artistId)) continue;
       if (doneDays < 0 || doneDays > 90 || a < 0 || a > 99 || b < 0 || b > 99) continue;
       if (pay < 0 || pay > 1e9) continue;
+      // 同一作品同一艺人只列一次：老本体里主角的槽位可能被重复写入。
+      if (seenArtists.has(artistId)) continue;
       const team = teams.find((item) => item.leaderId === artistId || item.memberIds.includes(artistId));
       const isMine = mineIds.has(artistId)
         || Boolean(team && team.memberIds.some((id) => mineIds.has(id)));
       if (!isMine) continue;
-      let role: SweetNoticeRole | null = sortedRoles[slot] ?? null;
-      // 主角在 StarRole 里被误标成男，这里与拍摄中一样特判。
-      const gender = artistId === 1 ? 1 : tables.genders?.[String(artistId)];
-      // 第 8 槽主角没有同序角色格时，从还没认领的角色里按性别补一个。
-      if (!role && gender !== undefined && sortedRoles.length > 1) {
-        const wanted = gender === 0 ? 'male' : 'female';
-        role = sortedRoles.find((item) => !claimed.has(item.code)
-          && sweetRoleGender(item.roleType) === wanted) ?? null;
-      }
-      const need = role ? sweetRoleGender(role.roleType) : undefined;
-      if (role && need && gender !== undefined
-        && ((need === 'male' && gender !== 0) || (need === 'female' && gender !== 1))
-        && sortedRoles.length > 1) {
-        const wanted = gender === 0 ? 'male' : 'female';
-        role = sortedRoles.find((item) => !claimed.has(item.code)
-          && sweetRoleGender(item.roleType) === wanted) ?? role;
-      }
-      if (role) claimed.add(role.code);
-      else if (body.roles.length === 1) role = body.roles[0];
+      seenArtists.add(artistId);
+      // 角色槽只记录了本作的角色定义，没有「谁演哪个」的对应关系。
+      // 唯一角色时可以直接认领；多角色时宁可留空，也不按槽位/性别猜。
+      const role = body.roles.length === 1 ? body.roles[0] : null;
       // 只有团体角色才显示团体名；主角即便在团体里，个人作品仍显示本人姓名。
       const groupRole = role?.roleType === 4 || role?.role === '團體';
       casts.push({
@@ -1725,7 +1720,7 @@ function scanSweetArchive(
       name: body.name,
       category: body.category,
       type: body.type,
-      company: body.company,
+      company,
       startDate: dateText(body.dates[1].value),
       endDate: dateText(end),
       saleStart: dateText(saleStart),

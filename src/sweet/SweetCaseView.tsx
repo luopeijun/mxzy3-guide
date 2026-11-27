@@ -1466,7 +1466,7 @@ function SweetDonePanel({ notices }: { notices: SweetDoneNotice[] }) {
                 ) : null}
                 <Td className="align-top">
                   <span className="rounded-full bg-surface-soft px-2 py-0.5 text-ui-2xs text-ink-muted">
-                    {cast.role?.role ?? '个人'}
+                    {cast.role?.role ?? '—'}
                   </span>
                 </Td>
                 <Td className="align-top text-ink">{cast.artistName}</Td>
