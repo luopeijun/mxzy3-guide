@@ -1427,6 +1427,35 @@ interface SweetNoticeBody {
 }
 
 /** 从 Case 段的一条本体读出名字、分类、角色和日期元组。 */
+/** 筹备中通告的预约真源：本体 +796..+828 附近的 4 个 24B 角色槽，
+ *  `[flag][0][artistId][0,0,0]`，flag 是 3 / 10 这类标记，艺人编号在 flag+8。
+ *  旧逻辑靠 `[6][0]` 定位在 Story0008 等存档上完全落空（记录里根本没有这个标记），
+ *  所以改成直接找槽区起点：flag ∈ {3,10}、+4 为 0，且后续四槽都满足同样形状。
+ *  返回按槽位顺序的艺人编号（0 = 空缺）。 */
+function readReservationIds(recView: DataView, limit: number): number[] {
+  for (let base = 796; base <= 828; base += 1) {
+    if (base + 4 * 24 > limit) break;
+    const flag = readI32(recView, base);
+    if (flag !== 3 && flag !== 10) continue;
+    if (readI32(recView, base + 4) !== 0) continue;
+    const ids: number[] = [];
+    let ok = true;
+    for (let k = 0; k < 4; k += 1) {
+      const off = base + k * 24;
+      const slotFlag = readI32(recView, off);
+      const second = readI32(recView, off + 4);
+      const id = readI32(recView, off + 8);
+      if (slotFlag < 0 || slotFlag > 20 || second !== 0 || id < 0 || id > 110) {
+        ok = false;
+        break;
+      }
+      ids.push(id);
+    }
+    if (ok) return ids;
+  }
+  return [];
+}
+
 function readNoticeBody(
   rec: Uint8Array, recView: DataView, code: string,
   tables: SweetCaseTables, stars: Record<string, string>,
@@ -1485,18 +1514,10 @@ function readNoticeBody(
       reservedBy: '',
     });
   }
-  let reservationAt = -1;
-  for (let o = 700; o + 40 <= rec.length; o += 1) {
-    if (readI32(recView, o) === 6 && readI32(recView, o + 4) === 0) {
-      reservationAt = o;
-      break;
-    }
-  }
-  if (reservationAt >= 0) {
+  const reservationIds = readReservationIds(recView, recView.byteLength);
+  if (reservationIds.length > 0) {
     roles.forEach((role, i) => {
-      const at = reservationAt + 8 + i * 24;
-      if (at + 4 > recView.byteLength) return;
-      const id = readI32(recView, at);
+      const id = reservationIds[i] ?? 0;
       const reservedName = stars[String(id)] ?? '';
       if (id > 0 && id <= 110 && isRealReservationName(reservedName)) role.reservedBy = reservedName;
     });
@@ -1601,18 +1622,11 @@ function scanSweetNotices(
         reservedBy: '',
       });
     }
-    // 预约真源＝通告本体尾部的 24B 角色槽：先找到 [6][0] 标记，再按角色顺序
-    // 读 marker+8+i*24 的艺人编号。0 表示空缺，编号再由 StarRole 表换名字。
-    let reservationAt = -1;
-    for (let o = 700; o + 40 <= rec.length; o += 1) {
-      if (readI32(recView, o) === 6 && readI32(recView, o + 4) === 0) {
-        reservationAt = o;
-        break;
-      }
-    }
-    if (reservationAt >= 0) {
+    // 预约真源＝本体 +796..+828 附近的 4 个 24B 角色槽（见 readReservationIds）。
+    const reservationIds = readReservationIds(recView, recView.byteLength);
+    if (reservationIds.length > 0) {
       roles.forEach((role, i) => {
-        const id = readI32(recView, reservationAt + 8 + i * 24);
+        const id = reservationIds[i] ?? 0;
         const name = stars[String(id)] ?? '';
         if (id > 0 && id <= 110 && isRealReservationName(name)) role.reservedBy = name;
       });
