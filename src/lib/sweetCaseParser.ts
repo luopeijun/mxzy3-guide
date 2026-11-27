@@ -2416,10 +2416,21 @@ function scanProducerFriendship(bytes: Uint8Array, view: DataView): Record<numbe
       if (code < 300 || code > 899 || fr < 0 || fr > 999) { ok = false; break; }
     }
     if (!ok) continue;
-    for (let off = start; off + 80 <= limit; off += stride) {
+    // 记录 200B：`+76` 是本条编号，但本条的好感度写在「下一条记录」的 `+0`
+    // （Story0008 实测 301→309、302→304、306→227…全部对齐游戏界面）。
+    // 锚点 302 之前还有 301，所以要先向前退到表头再统一扫，否则麦可永远读不到。
+    let first = start;
+    while (first - stride >= 0) {
+      const off = first - stride;
+      const code = readI32(view, off + 76);
+      const fr = readI32(view, off);
+      if (code < 300 || code > 899 || fr < 0 || fr > 999) break;
+      first = off;
+    }
+    for (let off = first; off + stride <= limit; off += stride) {
       const code = readI32(view, off + 76);
       if (code < 300 || code > 899) break;
-      const fr = readI32(view, off);
+      const fr = readI32(view, off + stride);
       if (fr < 0 || fr > 999) break;
       out[code] = fr;
     }
