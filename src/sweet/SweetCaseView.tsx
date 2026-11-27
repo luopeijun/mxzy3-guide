@@ -14,6 +14,7 @@ import {
 import { companyDot, companyText } from '../components/notices/infoStyle';
 import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
+import { GapCourseHint, itemHintsFor } from '../ui/GapCourseHint';
 
 /** 称号门槛走甜蜜乐章自己的 Nickname.dat：作品统计八项同序（唱片＝专辑、主持＝节目），
  *  作品总数是八项之和；奖项编号 21..53 与主站同套。演唱会已写进称号表，
@@ -780,6 +781,8 @@ function SweetMatchList({ role, save, genders }: {
     .map((artist) => sweetMatchRole(role, artist, genders))
     .filter((row): row is SweetMatch => Boolean(row))
     .sort((a, b) => Number(b.canAccept) - Number(a.canAccept));
+  // 缺口 hover 的训练 / 打工 / 道具提示与主站共用同一组件；甜站存档道具同构。
+  const itemHints = useMemo(() => itemHintsFor(save.items), [save.items]);
   return (
     <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined} dataAttrs={undefined}>
       <div data-case-match-list className="flex flex-col gap-1">
@@ -810,7 +813,12 @@ function SweetMatchList({ role, save, genders }: {
                   <b>{row.artistName}</b> 差{' '}
                   {row.gaps.map((gap, index) => (
                     <span key={gap.attr}>
-                      {index > 0 && ' · '}{gap.attr} {formatGap(gap.diff)}
+                      {index > 0 && ' · '}
+                      <GapCourseHint
+                        gap={gap}
+                        itemHints={itemHints}
+                        label={`${gap.attr} ${formatGap(gap.diff)}`}
+                      />
                     </span>
                   ))}
                 </span>
