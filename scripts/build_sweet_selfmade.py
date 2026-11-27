@@ -54,6 +54,10 @@ ARTIST_IDS = {
     '杜云芊': 1, '沈惟真': 11, '丹尼斯': 12, '史蒂芬': 13, '姚子奇': 14,
     '慕容和希': 15, '卫亚': 16, '纪翔': 17, '城仲瑄': 18, '其他': 0,
 }
+# 攻略把个别条目归在「其他」，但条件原文写明挂在某位艺人身上，按条件改归。
+# CD791《温柔时刻》：条件写「林芬芬作品，丹尼斯剧情2-3发生后获得」→ 归丹尼斯。
+ARTIST_OVERRIDES = {'CD791': (12, '丹尼斯')}
+
 # 出品方是玩家公司，这些通告就是自制作品；攻略漏掉的靠它兜底。
 PLAYER_COMPANY = '纯真年代'
 CATEGORY_LABEL = {'music': '唱片', 'tv': '电视剧', 'movie': '电影', 'stage': '舞台剧'}
@@ -193,6 +197,11 @@ def main():
                 'guide': True,
                 'acquire': '',
             })
+
+    for entry in entries:
+        override = ARTIST_OVERRIDES.get(entry['code'])
+        if override:
+            entry['artistId'], entry['artist'] = override
 
     covered = {entry['code'] for entry in entries if entry['code']}
     extras = []
