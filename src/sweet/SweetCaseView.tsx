@@ -559,7 +559,7 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
           id: 'producers',
           label: '制作人好感',
           selector: '[data-sweet-case-producers]',
-          summary: `${save.producers.filter((p) => !SWEET_PRODUCER_HIDDEN_GROUPS.has(p.group) && save.producerFriendship[p.code] !== undefined).length} 位`,
+          summary: `${save.producers.filter((p) => save.producerFriendship[p.code] !== undefined).length} 位`,
         }]
       : []),
     { id: 'updates', label: '开放节奏', selector: '[data-sweet-case-updates]', summary: `归并 ${updates.batches.length} 批` },
@@ -1959,12 +1959,6 @@ const SWEET_PRODUCER_GROUPS = [
   { key: 'stage', label: '舞台剧 / 时装秀' },
   { key: 'other', label: '其他' },
 ];
-/** 「其他」是经纪人 / 老板这类非七类制作人，甜站暂时不展示；定义保留，
- *  以后需要恢复时把 key 从这里去掉即可。 */
-const SWEET_PRODUCER_HIDDEN_GROUPS = new Set(['other']);
-const SWEET_PRODUCER_VISIBLE_GROUPS = SWEET_PRODUCER_GROUPS.filter(
-  (group) => !SWEET_PRODUCER_HIDDEN_GROUPS.has(group.key),
-);
 
 function SweetProducerPanel({
   producers, friendship,
@@ -1973,8 +1967,8 @@ function SweetProducerPanel({
   friendship: Record<number, number>;
 }) {
   return (
-    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-      {SWEET_PRODUCER_VISIBLE_GROUPS.map((group) => {
+    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
+      {SWEET_PRODUCER_GROUPS.map((group) => {
         const members = producers.filter((p) => p.group === group.key);
         return (
           <div
@@ -2939,8 +2933,7 @@ export default function SweetCaseView() {
                   >
                     制作人好感
                     <span className="ml-2 font-normal text-ui-2xs text-ink-faint">
-                      {save.producers.filter((p) => !SWEET_PRODUCER_HIDDEN_GROUPS.has(p.group) && save.producerFriendship[p.code] !== undefined).length}
-                      /{save.producers.filter((p) => !SWEET_PRODUCER_HIDDEN_GROUPS.has(p.group)).length} 位
+                      {save.producers.filter((p) => save.producerFriendship[p.code] !== undefined).length}/{save.producers.length} 位
                     </span>
                   </summary>
                   <SweetProducerPanel

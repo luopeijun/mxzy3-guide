@@ -351,11 +351,18 @@ PRODUCER_CLASS_GROUP = {
 }
 
 
+# 「其他」组只展示有剧情的四位：金皓薰（StudioProduce 里的 401）+ 夏以军 / 杜司臣 / 徐世杰
+# （453/454/455，不在 StudioProduce，是剧情角色但存档友好度表同样有他们的编号）。
+# 贺总、陈萍、张湘葳、周先生、郭秘书等 NPC 不进页面。
+OTHER_PRODUCER_IDS = (401, 453, 454, 455)
+
+
 def load_producers(data_dir):
     """制作人清单：StudioProduce.dat 的 `[seq][class][charId]` -> 分组 + MapRole 名字。
 
     存档友好度表制作人段用的就是这里的 charId；id=1 是主角，不算制作人。
     同名多个编号时按编号保留，页面按编号反查，避免重名互相覆盖。
+    其他组只留 `OTHER_PRODUCER_IDS`，其余 NPC 过滤掉。
     """
     mr = os.path.join(data_dir, "MapRole.dat")
     sp = os.path.join(data_dir, "StudioProduce.dat")
@@ -375,8 +382,20 @@ def load_producers(data_dir):
         name = names.get(char_id, "")
         if not group or char_id == 1 or not name or char_id in seen:
             continue
+        if group == "other" and char_id not in OTHER_PRODUCER_IDS:
+            continue
         seen.add(char_id)
         out.append({"code": char_id, "name": name, "group": group})
+    # 夏以军 / 杜司臣 / 徐世杰 不在 StudioProduce，但存档友好度表按 453..455 记录，
+    # 名字同样取 MapRole；补进「其他」组后排在有剧情的四位里。
+    for char_id in OTHER_PRODUCER_IDS:
+        if char_id in seen:
+            continue
+        name = names.get(char_id, "")
+        if not name:
+            continue
+        seen.add(char_id)
+        out.append({"code": char_id, "name": name, "group": "other"})
     return out
 
 
