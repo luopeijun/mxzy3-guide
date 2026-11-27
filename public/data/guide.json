@@ -6,7 +6,7 @@
     "stats": {
       "categories": 5,
       "items": 56,
-      "blocks": 3907,
+      "blocks": 3909,
       "readyItems": 53,
       "missingItems": 0,
       "sourceParagraphs": 3706
@@ -6488,6 +6488,12 @@
               "group": 3
             },
             {
+              "kind": "qa",
+              "text": "下列何者属于打击乐器？",
+              "answer": "钢琴／响板／云锣",
+              "group": 3
+            },
+            {
               "kind": "section",
               "text": "第4题",
               "group": 4
@@ -6759,6 +6765,12 @@
               "kind": "qa",
               "text": "哪一只为中国的四灵兽之一？",
               "answer": "青龙／玄武／朱雀",
+              "group": 5
+            },
+            {
+              "kind": "qa",
+              "text": "以下哪个剧本不是莎士比亚的四大悲剧？",
+              "answer": "威尼斯商人／罗密欧与茱丽叶／仲夏夜之梦",
               "group": 5
             },
             {
