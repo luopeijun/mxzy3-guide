@@ -2758,6 +2758,15 @@ export default function SweetCaseView() {
                             </span>
                           ))}
                         </div>
+                        <div data-sweet-case-team-stats className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
+                          <span className="text-ink-faint">团体数值</span>
+                          <span className="rounded px-1 py-0.5 text-ink-faint">
+                            名气 <b data-sweet-case-team-fame className="font-semibold tabular-nums text-ink">{team.fame}</b>
+                          </span>
+                          <span className="rounded px-1 py-0.5 text-ink-faint">
+                            人气 <b data-sweet-case-team-popularity className="font-semibold tabular-nums text-ink">{team.popularity}</b>
+                          </span>
+                        </div>
                         <div data-sweet-case-team-counts className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                           <span className="text-ink-faint">通告统计</span>
                           <span className="work-count-chip relative inline-flex">

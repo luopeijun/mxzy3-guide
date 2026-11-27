@@ -165,6 +165,10 @@ export interface SweetTeam {
   leaderId: number;
   leaderName: string;
   workCount: number;
+  /** 团体名气：存档 nameEnd+4 是累加值，除以 1000 取整即游戏界面显示值。 */
+  fame: number;
+  /** 团体人气：存档 nameEnd+8 是累加值，除以 1000 取整即游戏界面显示值。 */
+  popularity: number;
 }
 
 /** 筹备中通告的一行：九项门槛里只留非 0 项，展示成「所需数值」胶囊。 */
@@ -824,6 +828,11 @@ function scanSweetWorkNames(bytes: Uint8Array, view: DataView): Map<string, stri
   return out;
 }
 
+/** 团体名气/人气在存档里是千分位累计值，游戏界面显示 floor(raw / 1000)。 */
+function sweetTeamDisplayValue(raw: number): number {
+  return Math.max(0, Math.floor(raw / 1000));
+}
+
 /** 我方团体记录：与明星志愿3同构，但名字是紧排的 Big5，不像 .sa2 每字节占 4B。 */
 function scanSweetTeams(bytes: Uint8Array, view: DataView, stars: Record<string, string>): SweetTeam[] {
   const marker = [73, 110, 118, 97, 105, 100]; // "Invaid"
@@ -857,6 +866,8 @@ function scanSweetTeams(bytes: Uint8Array, view: DataView, stars: Record<string,
       leaderId: memberIds[0] ?? 0,
       leaderName: memberIds.length ? nameOf(memberIds[0]) : '',
       workCount: rawWorkCount >= 0 && rawWorkCount <= 99 ? rawWorkCount : 0,
+      fame: sweetTeamDisplayValue(readI32(view, nameEnd + 4)),
+      popularity: sweetTeamDisplayValue(readI32(view, nameEnd + 8)),
     });
   }
   return out.sort((a, b) => a.code - b.code);
@@ -999,7 +1010,9 @@ function buildSweetWorkDateIndex(
 interface SweetNoticeInfo {
   name: string;
   company: string;
-  /** 本体倒数第二组档期的上档日再退一天，即游戏内发行日；记事表挤掉早期作品时用它兜底。 */
+  /** 本体倒数第二组档期的上档日再退一天，即游戏内发行日。与艺人成绩表交叉核对过：
+   *  发行日＝倒数第二组上档日 - 1 天（Story0008 15/16、Ending0012 18/19 条命中），
+   *  严格成绩表容量有限时用它兜底，保证早期作品也有日期。 */
   release?: { date: string; year: number; month: number; day: number };
 }
 
@@ -1053,7 +1066,9 @@ function buildSweetNoticeInfoIndex(
 
 /** 每位艺人属性块后面挂着和 CaseCreate 同构的参与清单：
  *  `[条数][5]` + 每条 `[5B ASCII 通告码][NUL][大类 int32][5]`。
- *  这是「通告统计」明细的真源：记事表只剩最近几十条，早期作品会被挤掉。
+ *  这是「通告统计」明细的作品清单真源（早期作品也完整保留，从第一年就能拿到）；
+ *  严格 108B 艺人成绩表只留最近几十条，另有一份 1022B 作品成绩表可回查作品名，
+ *  逐条发行日期则以通告本体档期为准，详见 buildSweetNoticeInfoIndex。
  *  10/15/16/20/21/22/26/31 是同一作品的版本记录，只取大类 1..7；
  *  未杀青的自制通告还没完成，不能算进已接作品。 */
 function parseSweetWorkHistory(
@@ -1106,8 +1121,8 @@ function parseSweetWorkHistory(
       const key = `${noticeIndex}|${workCode}|${location.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      // 记事表只留最近几十条，早期作品会被挤掉；回不到记事表时用本体发行日兜底，
-      // 否则通告统计 hover 上电视/电影这类老作品会整行没日期。
+      // 发行日真源＝通告本体倒数第二组档期的上档日 - 1 天，已与艺人成绩表交叉核对；
+      // 严格成绩表查不到时用本体发行日兜底，电视/电影这类老作品才不会整行没日期。
       const info = noticeInfo.get(workCode);
       const dated = workIndex.dates.get(workCode) ?? info?.release;
       out.push({
@@ -1868,6 +1883,26 @@ function scanSweetArchive(
   return out;
 }
 
+/** 归档作品再按官方「通告统计」校验一次：参与清单里有记录、但官方同类计数为 0
+ *  的作品（典型是艺人加入公司前拍的通告）不算我方作品。Ending0012 姚子奇参与清单
+ *  有二十多条广告，官方广告却是 0，这些广告不该整列挂到他名下。
+ *  官方计数是真源，不要再叠加「拍摄日 vs 签约日」这类推算——签约日字段可能是
+ *  续约日，姚子奇 2009/12/27 之后签，但他的电视剧官方计数 11，仍是我方作品。 */
+function filterSweetArchiveByOfficialCounts(
+  notices: SweetWaitingNotice[], locations: SweetArtistLocation[],
+): SweetWaitingNotice[] {
+  const counts = new Map(locations.map((location) => [location.id, location.noticeCounts]));
+  const categoryIndex: Record<string, number> = {
+    '电视': 0, '电视剧': 0, '电影': 1, '唱片': 2, '广告': 3,
+    '主持': 4, '舞台剧': 5, '时装秀': 6, '走秀': 6, '演唱会': 7,
+  };
+  return notices.filter((notice) => {
+    const index = categoryIndex[notice.category];
+    if (index === undefined) return true;
+    return notice.casts.some((cast) => (counts.get(cast.artistId)?.[index] ?? 0) > 0);
+  });
+}
+
 /** 自制作品及其他：CaseCreate 段只列通告码，名字 / 档期 / 接演记录仍在 Case 本体。
  *
  *  甜蜜乐章的 CaseCreate 与主站不同：段头是 `[条数][5]`，之后每条 14 字节
@@ -2477,9 +2512,15 @@ export async function parseSweetSave(
   const notices = scanSweetNotices(bytes, view, date, tables, reservationStars);
   const shooting = scanSweetShooting(bytes, view, date, tables, reservationStars, signedIds);
   const promo = scanSweetPromo(bytes, tables, reservationStars, teams);
-  const waiting = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'waiting');
-  const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'hot');
-  const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'done');
+  const waiting = filterSweetArchiveByOfficialCounts(
+    scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'waiting'), locations,
+  );
+  const hot = filterSweetArchiveByOfficialCounts(
+    scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'hot'), locations,
+  );
+  const done = filterSweetArchiveByOfficialCounts(
+    scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'done'), locations,
+  );
   const selfMade = scanSweetSelfMade(bytes, date, tables, reservationStars, teams, signedIds);
   const noticeInfo = buildSweetNoticeInfoIndex(bytes, view, tables);
   const events = scanDiaryEvents(bytes, view, diaryTable);
