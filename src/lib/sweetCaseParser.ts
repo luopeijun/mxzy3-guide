@@ -1968,6 +1968,9 @@ function scanSweetShooting(
     const endDay = dayValue(end[0], end[1], end[2]);
     // 早就杀青的旧块接取记录也非零（作品清单是历史累积），不能进拍摄中。
     if (todayValue > endDay) continue;
+    // 开拍日晚于杀青日是历史残留块（Story0050 的 CFA3O 6/14→6/13），
+    // 不是当前在拍的通告；逐 4B 兜底还会把错位读到的主角算进去，直接排除。
+    if (startDay > endDay) continue;
     const daysLeft = endDay - todayValue;
 
     const readAt = (p: number) => ({
@@ -2079,9 +2082,8 @@ function scanSweetShooting(
       if (claimed.has(role.code)) continue;
       otherCasts.push({ artistId: null, artistName: '', role, vacant: true });
     }
-    // 自家艺人都交差了就收起，只剩对手演员的噪音不算在拍。
-    if (casts.every((cast) => cast.status === 'done')) continue;
-
+    // 我方已拍够但通告整体还没到杀青日，游戏仍显示在拍（Story0050 的
+    // TVA1K 主角 40 天拍完、档期到 8/8），不能因为「自家都交差」整条收起。
     const open = casts.filter((cast) => cast.status !== 'done');
     const risk: SweetShootingRisk = open.some((c) => c.risk === 'late') ? 'late'
       : open.some((c) => c.risk === 'tight') ? 'tight'
