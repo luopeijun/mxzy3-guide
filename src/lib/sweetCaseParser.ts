@@ -424,6 +424,7 @@ export interface SweetSave {
   companyImage: string;
   fame: number;
   pr: number;
+  money: number;
   date: { year: number; month: number; day: number; weekday: number };
   signedIds: number[];
   artists: SweetArtistCard[];
@@ -2151,6 +2152,7 @@ export function formatSweetDate(date: SweetSave['date']): string {
 function sweetHeaderLayout(view: DataView): {
   protagonist: number;
   company: number;
+  money: number;
   signed: number[];
   date: number[];
 } {
@@ -2166,12 +2168,15 @@ function sweetHeaderLayout(view: DataView): {
     ? {
         protagonist: 0x58,
         company: 0x6d,
+        // 结局档把头部重排，资金不在「普通头 +84」，而是固定 @0x30
+        money: 0x30,
         signed: [0x08, 0x0c, 0x10],
         date: [0x14, 0x18, 0x1c, 0x20],
       }
     : {
         protagonist: 0x04,
         company: 0x19,
+        money: 0x58,
         signed: [0x34, 0x38, 0x3c],
         date: [0x40, 0x44, 0x48, 0x4c],
       };
@@ -2246,6 +2251,7 @@ export async function parseSweetSave(
     companyImage: company.image,
     fame: company.fame,
     pr: company.pr,
+    money: readI32(view, header.money),
     date,
     signedIds,
     artists,

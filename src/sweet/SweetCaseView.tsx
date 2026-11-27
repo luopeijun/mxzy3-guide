@@ -642,14 +642,20 @@ function SweetCaseToc({ save }: { save: SweetSave }) {
 }
 
 /** 公司信息里的一格：与主站 CompanyStat 同一套样式。 */
-function SweetCaseStat({ label, value, attr }: { label: string; value: string; attr: string }) {
+function SweetCaseStat({ label, value, attr, hint, alert }: {
+  label: string; value: string; attr: string; hint?: string; alert?: boolean;
+}) {
   return (
     <div
       data-sweet-case-company-stat={attr}
+      title={hint}
       className="rounded-ui-md border border-line bg-surface px-2.5 py-1.5"
     >
       <div className="text-ui-2xs text-ink-faint">{label}</div>
-      <div className="mt-0.5 whitespace-nowrap text-ui-sm font-bold tabular-nums text-ink">
+      <div className={cn(
+        'mt-0.5 whitespace-nowrap text-ui-sm font-bold tabular-nums',
+        alert ? 'text-alert' : 'text-ink',
+      )}>
         {value}
       </div>
     </div>
@@ -2379,7 +2385,13 @@ export default function SweetCaseView() {
                   <SweetCaseStat label="公司形象" value={save.companyImage || '未读出'} attr="image" />
                   <SweetCaseStat label="知名度" value={String(save.fame)} attr="fame" />
                   <SweetCaseStat label="公关" value={String(save.pr)} attr="pr" />
-                  <SweetCaseStat label="主角" value={save.protagonist || '—'} attr="protagonist" />
+                  <SweetCaseStat
+                    label="资金"
+                    value={sweetMoney(save.money)}
+                    hint={Number.isFinite(save.money) ? `¥${save.money.toLocaleString('en-US')}` : undefined}
+                    attr="money"
+                    alert={save.money < 0}
+                  />
                 </div>
                 <div data-sweet-case-company-awards className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                   <span className="text-ink-faint">奖项</span>
