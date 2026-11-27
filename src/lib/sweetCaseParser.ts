@@ -282,6 +282,8 @@ export interface SweetWaitingCast {
   role: SweetNoticeRole | null;
   doneDays: number;
   pay: number;
+  /** pay=0 时的区分：zero＝拍摄时已签约、明确 0 元；unsigned＝拍摄时尚未签约、无数据。 */
+  payStatus?: 'zero' | 'unsigned';
 }
 
 /** 等待上市的作品：已杀青、还没到发行日，只列我方艺人/团体参与的角色行。 */
@@ -1638,7 +1640,7 @@ function scanSweetPromo(
  *  网格起点随角色定义块长度浮动（Story0050 里 +812~+848 都出现过），
  *  写死 +816 会把日期年份当成艺人编号 / 酬劳。用「第一条有酬劳的真记录」
  *  定出 24B 网格，再向前后双向扩展；没有酬劳时才退回逐字节找最长合法链。
- *  pay=0 是真值不是错位：该艺人拍摄时尚未签约，酬劳不归我方，页面显示「—」。 */
+ *  pay=0 分两种：开拍日早于签约日＝未签约无数据（页面显示 —）；已过签约日＝明确 0 元（显示 0）。 */
 function readSweetArchiveGrid(recView: DataView, starIds: Set<number>) {
   type Row = { artistId: number; success: number; fail: number; perfect: number; pay: number; slot: number };
   const from = 700;
@@ -1711,7 +1713,7 @@ function readSweetArchiveGrid(recView: DataView, starIds: Set<number>) {
 function scanSweetArchive(
   bytes: Uint8Array, today: SweetSave['date'], tables: SweetCaseTables,
   allStars: Record<string, string>, teams: SweetTeam[], signedIds: number[],
-  status: 'waiting' | 'hot' | 'done',
+  signDates: Map<number, number>, status: 'waiting' | 'hot' | 'done',
 ): SweetWaitingNotice[] {
   const caseStart = findSection(bytes, 'Case');
   const caseEnd = findSection(bytes, 'CaseEnd');
@@ -1776,6 +1778,8 @@ function scanSweetArchive(
     const claimedRoles = new Set<string>();
     const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
     const grid = readSweetArchiveGrid(recView, starIds);
+    const shootDate = body.dates[1].value;
+    const shootDay = dayValue(shootDate[0], shootDate[1], shootDate[2]);
     for (const row of grid) {
       const { artistId, pay } = row;
       // 与拍摄中同口径：游戏界面的「完成天数」＝成功 + 完美，失败不计入完成。
@@ -1798,12 +1802,18 @@ function scanSweetArchive(
       if (role) claimedRoles.add(role.code);
       // 只有团体角色才显示团体名；主角即便在团体里，个人作品仍显示本人姓名。
       const groupRole = role?.roleType === 4 || role?.role === '團體';
+      // 同为 pay=0：拍在签约日之前＝加入公司前无数据（显示 —）；已签约＝明确 0 元（显示 0）。
+      const signDay = signDates.get(artistId);
+      const payStatus: SweetWaitingCast['payStatus'] = pay === 0
+        ? (signDay === undefined || signDay <= shootDay ? 'zero' : 'unsigned')
+        : undefined;
       casts.push({
         artistId,
         artistName: groupRole && team ? team.name : allStars[String(artistId)] ?? `艺人${artistId}`,
         role,
         doneDays,
         pay,
+        payStatus,
       });
     }
     if (casts.length === 0) continue;
@@ -2414,6 +2424,12 @@ export async function parseSweetSave(
     })),
   ];
 
+  // 归档酬劳为 0 时靠「拍摄日是否早于签约日」区分无数据 / 明确 0 元。
+  const signDates = new Map<number, number>();
+  for (const artist of artists) {
+    const match = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(artist.contract?.signDate ?? '');
+    if (match) signDates.set(artist.id, dayValue(Number(match[1]), Number(match[2]), Number(match[3])));
+  }
   const date = {
     year: readI32(view, header.date[0]),
     month: readI32(view, header.date[1]),
@@ -2427,9 +2443,9 @@ export async function parseSweetSave(
   const notices = scanSweetNotices(bytes, view, date, tables, reservationStars);
   const shooting = scanSweetShooting(bytes, view, date, tables, reservationStars, signedIds);
   const promo = scanSweetPromo(bytes, tables, reservationStars, teams);
-  const waiting = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'waiting');
-  const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'hot');
-  const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'done');
+  const waiting = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'waiting');
+  const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'hot');
+  const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, signDates, 'done');
   const selfMade = scanSweetSelfMade(bytes, date, tables, reservationStars, teams, signedIds);
   const noticeInfo = buildSweetNoticeInfoIndex(bytes, view, tables);
   const events = scanDiaryEvents(bytes, view, diaryTable);

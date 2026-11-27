@@ -1298,7 +1298,7 @@ function SweetWaitingPanel({
                   <Td className="text-ink">{cast.artistName}</Td>
                   <Td className="tabular-nums text-ink">{cast.doneDays}</Td>
                   <Td className="tabular-nums text-ink">
-                    {cast.pay > 0 ? sweetMoney(cast.pay) : '—'}
+                    {cast.pay > 0 ? sweetMoney(cast.pay) : cast.payStatus === 'zero' ? '0' : '—'}
                   </Td>
                 </tr>
               ))}
@@ -1470,7 +1470,7 @@ function SweetDonePanel({ notices }: { notices: SweetDoneNotice[] }) {
                   </span>
                 </Td>
                 <Td className="align-top text-ink">{cast.artistName}</Td>
-                <Td className="align-top tabular-nums text-ink">{cast.pay > 0 ? sweetMoney(cast.pay) : '—'}</Td>
+                <Td className="align-top tabular-nums text-ink">{cast.pay > 0 ? sweetMoney(cast.pay) : cast.payStatus === 'zero' ? '0' : '—'}</Td>
               </tr>
             )))}
           </tbody>
