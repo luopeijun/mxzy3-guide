@@ -1,9 +1,8 @@
 /** 制作人好感：存档解析页的参考清单数据。
  *
- *  按唱片 / 电视剧 / 电影 / 广告 / 主持 / 其他六类分列，每类单独填制作人。
- *  `code` 是存档里的角色编号，也是查友好度的锚点：存档制作人友好度表每条
- *  284 字节，`+0` 角色编号、`+148` 友好度。友好度从当前存档动态读取，
- *  这里只放编号与静态说明。
+ *  分组不再写死在代码里，而是按存档 284B 角色记录 `+181` 的 ASCII 项目代号
+ *  动态生成。`code` 仍是查友好度的锚点：`+0` 角色编号、`+148` 友好度，
+ *  友好度与名字都从当前存档动态读取，这里只放代号白名单和兜底信息。
  */
 
 export type ProducerKind = 'record' | 'tv' | 'movie' | 'ad' | 'host' | 'other';
@@ -14,7 +13,7 @@ export interface Producer {
   /** 存档里的角色编号，查友好度用（401 周映彤 / 501 小熊 / 601 陈查理 / 701 麦克…）。 */
   code: number;
   name: string;
-  /** 身份 / 所属。 */
+  /** 身份 / 所属，仅存档没有项目代号时兜底。 */
   title?: string;
 }
 
@@ -47,55 +46,75 @@ export function producerProjectLabel(project: string | undefined): string {
   return PRODUCER_PROJECT_LABELS[project] ?? project;
 }
 
-export const PRODUCER_GROUPS: ProducerGroup[] = [
-  {
-    kind: 'record',
-    label: '唱片',
-    producers: [
-      { key: 'zhou-yingtong', code: 401, name: '周映彤', title: 'EAMI唱片公司负责人' },
-      { key: 'xiao-xiong', code: 501, name: '小熊', title: '日月光音乐负责人' },
-      { key: 'jia-he-da-ze', code: 1301, name: '加贺大泽' },
-    ],
-  },
-  {
-    kind: 'tv',
-    label: '电视剧',
-    producers: [
-      { key: 'chen-ge-fei', code: 301, name: '陈革非' },
-      { key: 'zheng-chao-yi', code: 201, name: '郑超一' },
-    ],
-  },
-  {
-    kind: 'movie',
-    label: '电影',
-    producers: [
-      { key: 'wang-rui-en', code: 101, name: '王瑞恩' },
-      { key: 'shi-mai-ke', code: 1302, name: '史麦克' },
-    ],
-  },
-  {
-    kind: 'ad',
-    label: '广告',
-    producers: [
-      { key: 'chen-chali', code: 601, name: '陈查理' },
-      { key: 'mai-ke', code: 701, name: '麦克' },
-    ],
-  },
-  {
-    kind: 'host',
-    label: '主持',
-    producers: [
-      { key: 'qiang-ni-dai', code: 302, name: '强尼戴' },
-      { key: 'qian-jun', code: 202, name: '钱钧' },
-    ],
-  },
-  {
-    kind: 'other',
-    label: '其他',
-    producers: [
-      { key: 'he-zong', code: 3, name: '贺总' },
-      { key: 'steven', code: 38, name: '史蒂芬' },
-      { key: 'dennis', code: 39, name: '丹尼斯' },
-    ],
-  },
+interface ProducerSeed {
+  kind: ProducerKind;
+  key: string;
+  name: string;
+  /** 存档缺项目代号时的兜底角色编号。 */
+  code: number;
+}
+
+/** 项目代号白名单：存档 `+181` 代号 -> 分组 + 稳定 key。
+ *  角色编号只作兜底，正常情况下从存档里按代号反查，避免编号漂移。 */
+const PROJECT_SEEDS: Array<ProducerSeed & { project: string }> = [
+  { project: 'EAMI_CD', kind: 'record', key: 'zhou-yingtong', name: '周映彤', code: 401 },
+  { project: 'SML_CD', kind: 'record', key: 'xiao-xiong', name: '小熊', code: 501 },
+  { project: 'Tokyo_CD', kind: 'record', key: 'jia-he-da-ze', name: '加贺大泽', code: 1301 },
+  { project: 'Movie_Wang', kind: 'movie', key: 'wang-rui-en', name: '王瑞恩', code: 101 },
+  { project: 'LAMovie', kind: 'movie', key: 'shi-mai-ke', name: '史麦克', code: 1302 },
+  { project: 'LCTV_Drama', kind: 'tv', key: 'zheng-chao-yi', name: '郑超一', code: 201 },
+  { project: 'SoSaTV_Drama', kind: 'tv', key: 'chen-ge-fei', name: '陈革非', code: 301 },
+  { project: 'LCTV_Show', kind: 'host', key: 'qian-jun', name: '钱钧', code: 202 },
+  { project: 'SoSaTV_Show', kind: 'host', key: 'qiang-ni-dai', name: '强尼戴', code: 302 },
+  { project: 'I_AM_I_AD', kind: 'ad', key: 'chen-chali', name: '陈查理', code: 601 },
+  { project: 'DreamAD', kind: 'ad', key: 'mai-ke', name: '麦克', code: 701 },
 ];
+
+/** 存档里没有项目代号、但仍属于制作人序列的角色，按编号白名单收进「其他」。 */
+const CODE_ONLY_SEEDS: ProducerSeed[] = [
+  { kind: 'other', key: 'he-zong', name: '贺总', code: 3 },
+  { kind: 'other', key: 'steven', name: '史蒂芬', code: 38 },
+  { kind: 'other', key: 'dennis', name: '丹尼斯', code: 39 },
+];
+
+const GROUP_LAYOUT: Array<{ kind: ProducerKind; label: string }> = [
+  { kind: 'record', label: '唱片' },
+  { kind: 'tv', label: '电视剧' },
+  { kind: 'movie', label: '电影' },
+  { kind: 'ad', label: '广告' },
+  { kind: 'host', label: '主持' },
+  { kind: 'other', label: '其他' },
+];
+
+/** 按存档项目代号生成六列分组；名字仍以存档 Big5 为真源，缺档时用白名单中文兜底。 */
+export function buildProducerGroups(
+  projects: Record<number, string>,
+  names: Record<number, string>,
+): ProducerGroup[] {
+  const buckets = Object.fromEntries(
+    GROUP_LAYOUT.map(({ kind }) => [kind, [] as Producer[]]),
+  ) as Record<ProducerKind, Producer[]>;
+  const usedCodes = new Set<number>();
+
+  const add = (seed: ProducerSeed, resolvedCode?: number) => {
+    const code = resolvedCode ?? seed.code;
+    if (usedCodes.has(code)) return;
+    usedCodes.add(code);
+    buckets[seed.kind].push({
+      key: seed.key,
+      code,
+      name: names[code] || seed.name,
+    });
+  };
+
+  const codeByProject = new Map<string, number>();
+  for (const [codeText, project] of Object.entries(projects)) {
+    const code = Number(codeText);
+    if (Number.isFinite(code) && !codeByProject.has(project)) codeByProject.set(project, code);
+  }
+
+  for (const seed of PROJECT_SEEDS) add(seed, codeByProject.get(seed.project));
+  for (const seed of CODE_ONLY_SEEDS) add(seed);
+
+  return GROUP_LAYOUT.map(({ kind, label }) => ({ kind, label, producers: buckets[kind] }));
+}

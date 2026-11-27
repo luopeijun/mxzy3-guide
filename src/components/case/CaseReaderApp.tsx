@@ -9,7 +9,7 @@ import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
 import { artistCertificates } from '../../lib/caseCertificates';
-import { PRODUCER_GROUPS, producerProjectLabel } from '../../lib/caseProducers';
+import { buildProducerGroups, producerProjectLabel } from '../../lib/caseProducers';
 import { findNodePath } from '../../lib/guide';
 import {
   ARTIST_DIRECTORY, ATTRS, EMPTY_TABLES, NOTICE_COUNT_LABELS, NOTICE_COUNT_UNITS, NOTICE_TOTAL_LABEL,
@@ -538,15 +538,17 @@ function CaseToc({
 
 /** 制作人好感清单：唱片 / 电视剧 / 电影 / 广告 / 主持 / 其他六列并排，每列纵向列制作人。
  *  每位制作人一行：名字与项目身份取存档真源（284B 记录 +8 Big5 / +181 代号），
- *  存档没有时用静态清单回退；友好度也按角色编号从存档反查。六列等宽，空列保留标题占位。 */
+ *  分组也按存档项目代号动态生成，代号缺失时按白名单编号回退；友好度按角色编号从存档反查。
+ *  六列等宽，空列保留标题占位。 */
 function ProducerPanel({ friendship, names, projects }: {
   friendship: Record<number, number>;
   names: Record<number, string>;
   projects: Record<number, string>;
 }) {
+  const groups = buildProducerGroups(projects, names);
   return (
     <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-      {PRODUCER_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.kind} data-case-producer-group={group.kind} className="rounded-ui-sm border border-line bg-surface px-2 py-1.5">
           <div className="mb-1 border-b border-line pb-1 text-ui-2xs font-bold text-brand-strong">
             {group.label}
