@@ -751,6 +751,12 @@ interface SweetMatch {
   gaps: { attr: string; diff: number }[];
 }
 
+/** 与主站 isAcceptable 同口径：还没停止接取（open / closing）且至少有一个角色空着。 */
+function sweetNoticeAcceptable(notice: SweetNotice): boolean {
+  if (notice.status !== 'open' && notice.status !== 'closing') return false;
+  return notice.roles.some((role) => !role.reservedBy);
+}
+
 function sweetMatchRole(
   role: SweetNoticeRole, artist: SweetArtistCard, genders: Record<string, number>,
 ): SweetMatch | null {
@@ -953,6 +959,7 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [company, setCompany] = useState('all');
+  const [takeFilter, setTakeFilter] = useState<'all' | 'slots' | 'qualified'>('all');
   const all = save.notices;
   const categories = useMemo(() => {
     const counts = new Map<string, number>();
@@ -963,9 +970,24 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
     () => [...new Set(all.map((notice) => notice.company).filter(Boolean))].sort(),
     [all],
   );
+  /** 「满足条件」与表格里同一列数值对比同口径：性别 + 九项能力全达标。
+   *  甜蜜乐章角色记录没有社交门槛字段，所以只有这两项，别照搬主站社交判断。 */
+  const fitsRole = useCallback((role: SweetNoticeRole) => (
+    save.artists.some((artist) => sweetMatchRole(role, artist, genders)?.canAccept)
+  ), [save.artists, genders]);
+  // 两个接取标签的数字只按存档本身算，不受搜索 / 类型 / 公司影响。
+  const slotCount = useMemo(() => all.filter(sweetNoticeAcceptable).length, [all]);
+  const qualifiedCount = useMemo(
+    () => all.filter((notice) => sweetNoticeAcceptable(notice)
+      && notice.roles.some((role) => !role.reservedBy && fitsRole(role))).length,
+    [all, fitsRole],
+  );
   const notices = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return all.filter((notice) => {
+      if (takeFilter === 'slots' && !sweetNoticeAcceptable(notice)) return false;
+      if (takeFilter === 'qualified' && !(sweetNoticeAcceptable(notice)
+        && notice.roles.some((role) => !role.reservedBy && fitsRole(role)))) return false;
       if (category !== 'all' && notice.category !== category) return false;
       if (company !== 'all' && notice.company !== company) return false;
       if (!needle) return true;
@@ -973,9 +995,9 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
         ...notice.roles.map((role) => `${role.role}${role.code}`)]
         .some((value) => value.toLowerCase().includes(needle));
     });
-  }, [all, query, category, company]);
-  const dirty = Boolean(query || category !== 'all' || company !== 'all');
-  const reset = () => { setQuery(''); setCategory('all'); setCompany('all'); };
+  }, [all, query, category, company, takeFilter, fitsRole]);
+  const dirty = Boolean(query || category !== 'all' || company !== 'all' || takeFilter !== 'all');
+  const reset = () => { setQuery(''); setCategory('all'); setCompany('all'); setTakeFilter('all'); };
 
   return (
     <>
@@ -1021,6 +1043,36 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
               {companies.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
+          {/* 接取情况两档与主站同款：未预约＝还有角色空着；满足条件＝空角色里
+              至少有一位我方艺人性别与所需数值全达标。数字不受其它筛选影响。 */}
+          <div data-sweet-notice-take-filter role="group" aria-label="按接取情况筛选" className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              data-sweet-filter-slots
+              aria-pressed={takeFilter === 'slots'}
+              onClick={() => setTakeFilter((value) => (value === 'slots' ? 'all' : 'slots'))}
+              title="还有角色没被人预约，也还没停止接取 —— 我方数值够不够另说"
+              className={sweetChipClass(takeFilter === 'slots')}
+            >
+              未预约
+              <span className={cn('tabular-nums', takeFilter === 'slots' ? 'text-white/80' : 'text-ink-faint')}>
+                {slotCount}
+              </span>
+            </button>
+            <button
+              type="button"
+              data-sweet-filter-qualified
+              aria-pressed={takeFilter === 'qualified'}
+              onClick={() => setTakeFilter((value) => (value === 'qualified' ? 'all' : 'qualified'))}
+              title="还有角色没被预约，并且我方至少有一位艺人的性别与所需数值都达标"
+              className={sweetChipClass(takeFilter === 'qualified')}
+            >
+              满足条件
+              <span className={cn('tabular-nums', takeFilter === 'qualified' ? 'text-white/80' : 'text-ink-faint')}>
+                {qualifiedCount}
+              </span>
+            </button>
+          </div>
           {dirty && (
             <button
               type="button"
