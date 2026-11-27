@@ -982,6 +982,39 @@ function buildSweetWorkDateIndex(
   return { dates, seqs };
 }
 
+/** 通告本体里的真实名字与制作公司槽位。游戏运行时生成的随机通告码
+ *  （CFABY / TVANK 等）不会写进静态 Case dat，通告统计明细只能回查本体：
+ *  `[5][5B ASCII 通告码][NUL]` 是锚点，锚点前 4 字节是 CaseFirm 的槽位 seq，
+ *  本体 +22 是名字长度、+26 起是 Big5 名字。seq 经 sweetCompany 查公司名，
+ *  广告/电视剧/唱片/电影/海外各槽位都与游戏界面一致。 */
+function buildSweetNoticeInfoIndex(
+  bytes: Uint8Array, view: DataView, tables: SweetCaseTables,
+): Map<string, { name: string; company: string }> {
+  const out = new Map<string, { name: string; company: string }>();
+  const start = findSection(bytes, 'Case');
+  const end = findSection(bytes, 'CaseEnd');
+  if (start < 0 || end <= start) return out;
+  for (let at = start + 8; at + 28 <= end; at += 1) {
+    if (bytes[at] !== 5 || bytes[at + 1] || bytes[at + 2] || bytes[at + 3]) continue;
+    let code = '';
+    let ok = true;
+    for (let k = 0; k < 5; k += 1) {
+      const c = bytes[at + 4 + k];
+      if (c < 0x30 || c > 0x7a) { ok = false; break; }
+      code += String.fromCharCode(c);
+    }
+    if (!ok || !/^[A-Z]{2}[0-9A-Z]{3}$/.test(code) || out.has(code)) continue;
+    const nameLength = readI32(view, at + 22);
+    if (nameLength < 1 || nameLength > 64 || at + 26 + nameLength > end) continue;
+    const name = readBig5(bytes, at + 26, nameLength);
+    if (!name) continue;
+    const seq = readI32(view, at - 4);
+    const classId = readI32(view, at + 10);
+    out.set(code, { name, company: sweetCompany(code, seq, classId, tables) });
+  }
+  return out;
+}
+
 /** 每位艺人属性块后面挂着和 CaseCreate 同构的参与清单：
  *  `[条数][5]` + 每条 `[5B ASCII 通告码][NUL][大类 int32][5]`。
  *  这是「通告统计」明细的真源：记事表只剩最近几十条，早期作品会被挤掉。
@@ -994,6 +1027,7 @@ function parseSweetWorkHistory(
   diaryTable: { offset: number; count: number } | null,
   tables: SweetCaseTables,
   selfMade: SweetSelfMadeNotice[],
+  noticeInfo: Map<string, { name: string; company: string }>,
 ): SweetWorkRecord[] {
   // 参与清单里连早期没有接演记录的自制作品也会累积进来，官方统计同样算它们；
   // 只有明确还在拍摄中的才没完成。旧作品本体没留档期时 status 是 unknown，
@@ -1036,14 +1070,15 @@ function parseSweetWorkHistory(
       if (seen.has(key)) continue;
       seen.add(key);
       const dated = workIndex.dates.get(workCode);
+      const info = noticeInfo.get(workCode);
       out.push({
         date: dated?.date ?? '',
         year: dated?.year ?? 0,
         month: dated?.month ?? 0,
         day: dated?.day ?? 0,
         workCode,
-        workName: tables.cases?.[workCode] || workCode,
-        company: tables.companyByCode?.[workCode] || '',
+        workName: info?.name || tables.cases?.[workCode] || workCode,
+        company: info?.company || tables.companyByCode?.[workCode] || '',
         artistId: location.id,
         noticeIndex,
         role: '',
@@ -2272,8 +2307,9 @@ export async function parseSweetSave(
   const hot = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'hot');
   const done = scanSweetArchive(bytes, date, tables, reservationStars, teams, signedIds, 'done');
   const selfMade = scanSweetSelfMade(bytes, date, tables, reservationStars, teams, signedIds);
+  const noticeInfo = buildSweetNoticeInfoIndex(bytes, view, tables);
   const works = alignSweetWorks(
-    locations, parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade),
+    locations, parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade, noticeInfo),
   );
   const items = scanSweetItems(bytes, view, tables);
   const clothes = scanSweetClothes(bytes, view, tables);
