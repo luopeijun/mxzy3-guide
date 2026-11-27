@@ -56,8 +56,9 @@ CAT_NAMES = {
 ABILITY_IDS = (2, 3, 1, 9, 4, 5, 6, 7, 8)
 ABILITIES = ("演技", "口才", "歌艺", "名气", "仪态", "动感", "体能", "才智", "自信")
 CODE_PREFIX = {1: "CF", 2: "TV", 3: "MV", 4: "CD", 5: "SH", 6: "TH", 7: "FS"}
-OVERSEAS_CASE = {341: "伊莉莎白", 344: "大宇宙影业", 345: "京风唱片",
-                 346: "巴洛克之诗", 347: "柯里昂"}
+# CaseFirm 刷新槽位里，这几个 seq 的公司由通告大类决定，不按槽号本身查。
+# 与存档解析器 sweetCompany() / build_sweet_case_tables.py 完全同口径。
+OVERSEAS_SEQS = {21, 24, 25, 26, 27}
 NEED_TYPE_FILE = {
     1: "CFType.dat", 2: "TVType.dat", 3: "MVType.dat", 4: "CDType.dat",
     5: "SHType.dat", 7: "FSType.dat",
@@ -125,6 +126,27 @@ def load_studios(data_dir):
         if ident and name and name != "無":
             out[ident] = simplify(name)
     return out
+
+
+def load_company_tables(data_dir):
+    """公司槽位真源：Studio.dat + StudioProduce.dat，与存档解析器同口径。
+
+    StudioProduce 的 `[seq][class][caseNo][studioId]` 里，seq 是 CaseFirm 槽位；
+    海外刷新槽 21/24/25/26/27 的公司按通告大类取，不能按槽号直接查。
+    """
+    studios = load_studios(data_dir)
+    by_seq = {}
+    overseas = {}
+    for record in read_table(os.path.join(data_dir, "StudioProduce.dat")):
+        seq, class_id, _case_no, studio_id = struct.unpack_from("<4I", record, 0)
+        name = studios.get(studio_id, "")
+        if not name:
+            continue
+        if seq:
+            by_seq.setdefault(seq, name)
+        if seq in OVERSEAS_SEQS and class_id:
+            overseas.setdefault(class_id, name)
+    return by_seq, overseas
 
 
 def load_production(data_dir):
@@ -232,11 +254,11 @@ def load_special_effects(data_dir):
     return out
 
 
-def load_cases(data_dir, roles, companies, producers, characters):
+def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters):
     notices = []
     cat_counts = {}
     seen = set()
-    for file_name, cat, _class_id, type_file in CASE_FILES:
+    for file_name, cat, class_id, type_file in CASE_FILES:
         path = os.path.join(data_dir, file_name)
         raw = open(path, "rb").read()
         body = zlib.decompress(raw[4:])[12:]
@@ -265,15 +287,22 @@ def load_cases(data_dir, roles, companies, producers, characters):
                 notice["type"] = type_name
                 if cat == "ad":
                     notice["level"] = type_name
+            elif cat == "stage":
+                # 舞台剧本体 +76 取 1~8，但 THType.dat 只给 1~4 配了春夏秋冬
+                # 公演名，5~8 在游戏表里就是 `_` 占位。不编季节名，回退到
+                # classes 表里的大类真源，避免同一类通告的类型时有时无。
+                notice["type"] = CAT_NAMES[cat]
             brief = simplify(text_runs(main, 104))
             if brief:
                 notice["brief"] = brief
-            company = companies.get(code, "")
+            # 通告本体 +88 就是 CaseFirm 槽位 seq，与存档解析器同口径：海外
+            # 刷新槽按大类取公司，其余按 seq 查 StudioProduce → Studio.dat。
+            seq = struct.unpack_from("<i", main, 88)[0]
+            company = overseas.get(class_id, "") if seq in OVERSEAS_SEQS else ""
             if not company:
-                # 海外通告的槽位编号与大类会错位，按通告码兜底。
-                company = OVERSEAS_CASE.get(int(code[2:]), "")
+                company = company_by_seq.get(seq, "")
             if company:
-                notice["company"] = company
+                notice["company"] = simplify(company)
             producer_id = producers.get(code)
             if producer_id and characters.get(producer_id):
                 notice["producer"] = characters[producer_id]
@@ -305,9 +334,12 @@ def main():
     args = parser.parse_args()
 
     roles = load_names(os.path.join(args.data, "RoleType.dat"))
-    companies, producers = load_production(args.data)
+    company_by_seq, overseas = load_company_tables(args.data)
+    _companies, producers = load_production(args.data)
     characters = load_character_names(args.data)
-    notices, cat_counts = load_cases(args.data, roles, companies, producers, characters)
+    notices, cat_counts = load_cases(
+        args.data, roles, company_by_seq, overseas, producers, characters
+    )
 
     categories = [
         {"key": cat, "name": CAT_NAMES[cat], "count": cat_counts[cat]}
