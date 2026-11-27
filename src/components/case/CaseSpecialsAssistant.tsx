@@ -4,11 +4,11 @@ import {
   useMemo,
   useRef,
   useState,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import { useSpecialsData } from '../../hooks/useSpecialsData';
 import { useSelfMadeData } from '../../hooks/useSelfMadeData';
+import AssistantDock from '../../ui/AssistantDock';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
 import type { SelfMadeData, SelfMadeEntry, SelfMadeThreshold } from '../../types/selfmade';
@@ -28,20 +28,6 @@ import { ATTRS } from '../../lib/caseParser';
 interface Props {
   result: ParseResult | null;
   tables: CaseTables;
-}
-
-const ORB_WIDTH = 60;
-const ORB_HEIGHT = 54;
-const ORB_EDGE = 8;
-const PANEL_GAP = 10;
-const PANEL_EDGE = 8;
-/** 浮窗高度跟着内容走，但要封顶；最小高度避免空态时缩成一条。 */
-const PANEL_MAX_HEIGHT = 560;
-const PANEL_MAX_RATIO = 0.72;
-const PANEL_MIN_HEIGHT = 160;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), Math.max(min, max));
 }
 
 type HoverAnchor = { left: number; right: number; top: number; bottom: number };
@@ -927,25 +913,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState('');
   const [hover, setHover] = useState<HoverState | null>(null);
-  const [orbPos, setOrbPos] = useState(() => ({
-    x: typeof window === 'undefined'
-      ? 0
-      : Math.max(ORB_EDGE, window.innerWidth - ORB_WIDTH - (window.innerWidth >= 1120 ? 280 : 20)),
-    y: typeof window === 'undefined' ? 0 : Math.max(ORB_EDGE, window.innerHeight - ORB_HEIGHT - 64),
-  }));
-  const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLElement>(null);
-  const panelBodyRef = useRef<HTMLDivElement>(null);
-  const panelContentRef = useRef<HTMLDivElement>(null);
-  const headRef = useRef<HTMLDivElement>(null);
-  const [panelHeight, setPanelHeight] = useState<number | null>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dragRef = useRef<{
-    pointerId: number; startX: number; startY: number; x: number; y: number; moved: boolean;
-  } | null>(null);
-  const suppressClickRef = useRef(false);
 
   const clearHoverTimer = () => {
     if (hoverTimer.current) {
@@ -970,10 +938,6 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
   }, []);
 
-  // 切页签时把滚动条拉回顶部，否则会带着上一个视图的滚动位置跳一下。
-  useEffect(() => {
-    if (panelBodyRef.current) panelBodyRef.current.scrollTop = 0;
-  }, [view]);
 
   const report = useMemo(
     () => (data && result ? evaluateLiveSpecials(data, result, tables) : null),
@@ -1032,253 +996,9 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
       current && report?.notices.some((item) => item.notice.id === current) ? current : '');
   }, [report]);
 
-  // 窗口缩放后把 NP鸡夹回视口，避免拖到边缘再缩窗导致图标消失。
-  useEffect(() => {
-    const onResize = () => {
-      setOrbPos((current) => ({
-        x: clamp(current.x, ORB_EDGE, window.innerWidth - ORB_WIDTH - ORB_EDGE),
-        y: clamp(current.y, ORB_EDGE, window.innerHeight - ORB_HEIGHT - ORB_EDGE),
-      }));
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  // 浮窗跟着 NP鸡走：左右按 NP鸡在视口的位置选对齐边，上下优先放在空间更大的一侧。
-  // 高度按内容算但带过渡：两个视图内容差很多，直接改高度会让整个面板「跳」一下。
-  useLayoutEffect(() => {
-    if (!open) {
-      setPanelPos(null);
-      setPanelHeight(null);
-      return;
-    }
-    const measure = () => {
-      const panel = panelRef.current;
-      const content = panelContentRef.current;
-      if (!panel || !content) return null;
-      const width = panel.getBoundingClientRect().width;
-      const contentHeight = content.offsetHeight + (headRef.current?.offsetHeight ?? 0);
-      const above = orbPos.y + ORB_HEIGHT / 2 >= window.innerHeight / 2;
-      const space = above
-        ? orbPos.y - PANEL_GAP - PANEL_EDGE
-        : window.innerHeight - (orbPos.y + ORB_HEIGHT) - PANEL_GAP - PANEL_EDGE;
-      const limit = Math.min(PANEL_MAX_HEIGHT, window.innerHeight * PANEL_MAX_RATIO);
-      const height = Math.max(
-        PANEL_MIN_HEIGHT,
-        Math.min(contentHeight, limit, Math.max(PANEL_MIN_HEIGHT, space)),
-      );
-      const centerX = orbPos.x + ORB_WIDTH / 2;
-      let left: number;
-      if (centerX < window.innerWidth / 3) left = orbPos.x;
-      else if (centerX > window.innerWidth * 2 / 3) left = orbPos.x + ORB_WIDTH - width;
-      else left = centerX - width / 2;
-      left = clamp(left, PANEL_EDGE, window.innerWidth - width - PANEL_EDGE);
-      const top = clamp(
-        above ? orbPos.y - PANEL_GAP - height : orbPos.y + ORB_HEIGHT + PANEL_GAP,
-        PANEL_EDGE,
-        Math.max(PANEL_EDGE, window.innerHeight - height - PANEL_EDGE),
-      );
-      return { left, top, height };
-    };
-    const apply = (box: { left: number; top: number; height: number } | null) => {
-      if (!box) return;
-      setPanelPos((current) => (
-        current && current.left === box.left && current.top === box.top
-          ? current : { left: box.left, top: box.top }
-      ));
-      setPanelHeight(box.height);
-    };
-    apply(measure());
-    // 内容高度在 ResizeObserver 回调里量到，直接在同一帧写样式浏览器不会给过渡，
-    // 挪到下一帧再写，切页签时面板才是平滑长高 / 收缩而不是瞬移。
-    let frame = 0;
-    const queue = () => {
-      if (frame) cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        apply(measure());
-      });
-    };
-    const observer = new ResizeObserver(queue);
-    if (panelContentRef.current) observer.observe(panelContentRef.current);
-    if (headRef.current) observer.observe(headRef.current);
-    window.addEventListener('resize', queue);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      observer.disconnect();
-      window.removeEventListener('resize', queue);
-    };
-  }, [open, orbPos.x, orbPos.y]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const onOrbPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    dragRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      x: orbPos.x,
-      y: orbPos.y,
-      moved: false,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragging(true);
-  };
-  const onOrbPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
-    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
-    drag.moved = true;
-    hideHoverNow();
-    setOrbPos({
-      x: clamp(drag.x + dx, ORB_EDGE, window.innerWidth - ORB_WIDTH - ORB_EDGE),
-      y: clamp(drag.y + dy, ORB_EDGE, window.innerHeight - ORB_HEIGHT - ORB_EDGE),
-    });
-  };
-  const onOrbPointerEnd = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    if (drag.moved) {
-      // 拖动结束后的 click 不应再切换抽屉开合。
-      suppressClickRef.current = true;
-      window.setTimeout(() => { suppressClickRef.current = false; }, 0);
-    }
-    dragRef.current = null;
-    setDragging(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  };
-
   const badge = report ? `${report.doneCount}/6` : '';
 
-  return (
-    <div
-      ref={rootRef}
-      data-case-special-assistant
-      className="fixed z-30"
-      style={{ left: orbPos.x, top: orbPos.y }}
-    >
-      {open && (
-        <section
-          ref={panelRef}
-          data-case-special-panel
-          aria-label="六大通告助手"
-          className={cn(
-            'fixed flex w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft',
-            panelHeight === null ? 'max-h-[min(72vh,560px)]' : '',
-            dragging || panelHeight === null ? '' : 'transition-[height,top] duration-200 ease-out',
-          )}
-          style={panelPos
-            ? {
-              left: panelPos.left,
-              top: panelPos.top,
-              ...(panelHeight === null ? {} : { height: panelHeight }),
-            }
-            : { left: -9999, top: -9999, visibility: 'hidden' }}
-        >
-          <div ref={headRef} className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2">
-            <div
-              data-case-assistant-view
-              className="flex items-center gap-0.5 rounded-full border border-line bg-canvas p-0.5"
-            >
-              {([
-                ['specials', '六大通告'],
-                ['selfmade', '自制通告'],
-              ] as const).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  data-case-assistant-tab={key}
-                  aria-pressed={view === key}
-                  onClick={() => { setView(key); hideHoverNow(); }}
-                  className={cn(
-                    'rounded-full px-2 py-0.5 text-ui-2xs transition-colors',
-                    view === key
-                      ? 'bg-brand-strong font-semibold text-canvas'
-                      : 'text-ink-muted hover:text-ink',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            {view === 'specials' && report && (
-              <span className="text-ui-2xs text-ink" data-case-assistant-progress>
-                {report.doneCount}/6
-              </span>
-            )}
-            {view === 'selfmade' && selfMadeTotal > 0 && (
-              <span className="text-ui-2xs text-ink" data-case-selfmade-progress>
-                {selfMadeOwned}/{selfMadeTotal}
-              </span>
-            )}
-            <span className="ml-auto rounded-full border border-line px-1.5 py-0.5 text-ui-2xs text-ink-faint">
-              基于当前存档
-            </span>
-            <button
-              type="button"
-              aria-label="关闭六大通告助手"
-              onClick={() => setOpen(false)}
-              className="rounded px-1 text-ui-xs text-ink-faint transition-colors hover:bg-surface-soft hover:text-ink"
-            >
-              ×
-            </button>
-          </div>
-
-          <div ref={panelBodyRef} className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" onScroll={hideHoverNow}>
-            <div ref={panelContentRef}>
-              {!result && (
-                <p className="pt-2 text-ui-2xs text-ink-faint">先载入一份存档，就能看到六大目标的实时完成程度。</p>
-              )}
-              {result && (view === 'specials' ? (
-              <DetailSection
-                report={report}
-                expanded={expanded}
-                onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
-                onMatchHover={(match, hideSlotLabel, anchor) =>
-                  showHover({ kind: 'match', match, hideSlotLabel, anchor })}
-                onGroupHover={(group, anchor) => showHover({ kind: 'group', group, anchor })}
-                onCertGuideHover={(cert, guide, anchor) => showHover({ kind: 'certGuide', cert, guide, anchor })}
-                onCertPersonHover={(cert, guide, person, anchor) =>
-                  showHover({ kind: 'certPerson', cert, guide, person, anchor })}
-                onItemHover={(item, anchor) => showHover({ kind: 'item', item, anchor })}
-                onHoverLeave={hideHoverSoon}
-                dataError={error}
-              />
-            ) : (
-              <SelfMadeSection
-                data={selfMadeState.data}
-                groups={selfMadeGroups}
-                error={selfMadeState.error}
-                onHover={(entry, artist, owned, anchor) =>
-                  showHover({ kind: 'selfmade', entry, artist, owned, anchor })}
-                onLeave={hideHoverSoon}
-              />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {open && hover && (() => {
+  const hoverOverlay = open && hover ? (() => {
         if (hover.kind === 'match') {
           return (
             <MatchHoverCard
@@ -1348,45 +1068,94 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             onLeave={hideHoverNow}
           />
         );
-      })()}
+  })() : null;
 
-      <button
-        type="button"
-        data-case-special-orb
-        aria-label="拖动或点击六大通告助手"
-        aria-expanded={open}
-        draggable={false}
-        onPointerDown={onOrbPointerDown}
-        onPointerMove={onOrbPointerMove}
-        onPointerUp={onOrbPointerEnd}
-        onPointerCancel={onOrbPointerEnd}
-        onClick={() => {
-          if (suppressClickRef.current) {
-            suppressClickRef.current = false;
-            return;
-          }
-          setHover(null);
-          setOpen((value) => !value);
-        }}
-        className={cn(
-          'relative flex h-[54px] w-[60px] touch-none select-none items-center justify-center',
-          dragging ? 'cursor-grabbing' : 'cursor-grab',
-          open && 'drop-shadow-[0_2px_5px_rgba(192,48,111,0.35)]',
-        )}
+  const header = (
+    <>
+      <div
+        data-case-assistant-view
+        className="flex items-center gap-0.5 rounded-full border border-line bg-canvas p-0.5"
       >
-        <img
-          data-case-mascot
-          src={`${import.meta.env.BASE_URL}six-notice-mascot.png`}
-          alt=""
-          className="h-full w-full object-contain"
-          draggable={false}
+        {([
+          ['specials', '六大通告'],
+          ['selfmade', '自制通告'],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            data-case-assistant-tab={key}
+            aria-pressed={view === key}
+            onClick={() => { setView(key); hideHoverNow(); }}
+            className={cn(
+              'rounded-full px-2 py-0.5 text-ui-2xs transition-colors',
+              view === key
+                ? 'bg-brand-strong font-semibold text-canvas'
+                : 'text-ink-muted hover:text-ink',
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {view === 'specials' && report && (
+        <span className="text-ui-2xs text-ink" data-case-assistant-progress>
+          {report.doneCount}/6
+        </span>
+      )}
+      {view === 'selfmade' && selfMadeTotal > 0 && (
+        <span className="text-ui-2xs text-ink" data-case-selfmade-progress>
+          {selfMadeOwned}/{selfMadeTotal}
+        </span>
+      )}
+      <span className="ml-auto rounded-full border border-line px-1.5 py-0.5 text-ui-2xs text-ink-faint">
+        基于当前存档
+      </span>
+    </>
+  );
+
+  return (
+    <AssistantDock
+      label="六大通告助手"
+      badge={badge}
+      open={open}
+      onOpenChange={(next: boolean) => {
+        setHover(null);
+        setOpen(next);
+      }}
+      onClose={() => setHover(null)}
+      onPanelScroll={hideHoverNow}
+      onDragStart={hideHoverNow}
+      header={header}
+      overlay={hoverOverlay}
+    >
+              {!result && (
+        <p className="pt-2 text-ui-2xs text-ink-faint">先载入一份存档，就能看到六大目标的实时完成程度。</p>
+      )}
+      {result && (view === 'specials' ? (
+        <DetailSection
+          report={report}
+          expanded={expanded}
+          onToggle={(id) => setExpanded((current) => (current === id ? '' : id))}
+          onMatchHover={(match, hideSlotLabel, anchor) =>
+            showHover({ kind: 'match', match, hideSlotLabel, anchor })}
+          onGroupHover={(group, anchor) => showHover({ kind: 'group', group, anchor })}
+          onCertGuideHover={(cert, guide, anchor) => showHover({ kind: 'certGuide', cert, guide, anchor })}
+          onCertPersonHover={(cert, guide, person, anchor) =>
+            showHover({ kind: 'certPerson', cert, guide, person, anchor })}
+          onItemHover={(item, anchor) => showHover({ kind: 'item', item, anchor })}
+          onHoverLeave={hideHoverSoon}
+          dataError={error}
         />
-        {badge && (
-          <span className="absolute -right-1 -top-0.5 min-w-[20px] rounded-full border border-brand-line bg-brand-soft px-1 text-center text-[10px] leading-[16px] text-brand-strong">
-            {badge}
-          </span>
-        )}
-      </button>
-    </div>
+      ) : (
+        <SelfMadeSection
+          data={selfMadeState.data}
+          groups={selfMadeGroups}
+          error={selfMadeState.error}
+          onHover={(entry, artist, owned, anchor) =>
+            showHover({ kind: 'selfmade', entry, artist, owned, anchor })}
+          onLeave={hideHoverSoon}
+        />
+      ))}
+    </AssistantDock>
   );
 }

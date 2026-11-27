@@ -352,8 +352,9 @@ async function main() {
 
     // NP鸡头像必须用 Vite base 相对路径；线上 GitHub Pages 有子路径，写死 /xxx 会 404。
     // 开发服务器会把 BASE_URL 归一化成 '/'，所以源码层检查 + 浏览器层加载分开断言。
+    // 浮窗外壳已抽到 src/ui/AssistantDock.tsx，鸡仔头像在那里渲染。
     const assistantSource = fs.readFileSync(
-      path.join(root, 'src', 'components', 'case', 'CaseSpecialsAssistant.tsx'), 'utf8');
+      path.join(root, 'src', 'ui', 'AssistantDock.tsx'), 'utf8');
     check(assistantSource.includes('${import.meta.env.BASE_URL}six-notice-mascot.png')
       && !assistantSource.includes('src="/six-notice-mascot.png"'),
     'NP鸡头像源码使用 base 相对路径');
