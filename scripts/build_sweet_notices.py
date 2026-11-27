@@ -52,6 +52,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DATA = r"D:\Program Files (x86)\Softstar\Stardom3 - Sweet Melody\Data"
 OUT = os.path.join(ROOT, "public", "data", "sweet", "notices.json")
 DEFAULT_SAVES = os.path.join(ROOT, "tests", "fixtures", "saves", "sweet")
+GAME_SAVES = r"D:\Program Files (x86)\Softstar\Stardom3 - Sweet Melody\Save"
 BLOCK_SIZE = 10188
 ROLE_OFFSETS = (2036, 4076, 6116, 8156)
 
@@ -367,22 +368,33 @@ def star_from_gates(gates, difficulty, needs):
     return next(iter(stars)) if len(stars) == 1 else None
 
 
-def load_role_stars(save_dir, difficulty, needs):
-    """从冻结存档 + Difficulty.dat 区间表烘焙「通告角色码 → 星级」真值表。
+def load_role_stars(save_dirs, difficulty, needs):
+    """从存档 + Difficulty.dat 区间表烘焙「通告角色码 → 星级」真值表。
 
     存档格式是 4B 长度头 + zlib；角色记录以 `[1][0][0][0][ASCII 码][NUL]`
     起头，`+12` 角色类型、`+16` 星级、`+28..+64` 九项门槛。星级优先用门槛区间
     反推（真源在游戏源码），歧义时回退到 `+16`；严格过滤宽松扫描的假阳性
     （例如 SH005 在非角色记录上被误读成 2★）。跨存档验证 100% 稳定。
+
+    `save_dirs` 可传单个目录或多个目录列表：冻结存档保证可复现基线，游戏目录
+    存档补齐冻结样本没玩到的通告（如 CF001）。两份存档门槛抽取会变但星级稳定，
+    先扫到的先定，跨目录一致。
     """
+    if isinstance(save_dirs, str):
+        save_dirs = [save_dirs]
     stars = {}
-    if not os.path.isdir(save_dir):
-        raise SystemExit("存档目录不存在：%s" % save_dir)
-    files = sorted(
-        os.path.join(save_dir, name)
-        for name in os.listdir(save_dir)
-        if name.lower().endswith(".sav")
-    )
+    files = []
+    for save_dir in save_dirs:
+        if not os.path.isdir(save_dir):
+            continue
+        files.extend(
+            os.path.join(save_dir, name)
+            for name in os.listdir(save_dir)
+            if name.lower().endswith(".sav")
+        )
+    if not files:
+        raise SystemExit("没有找到任何存档：%s" % ", ".join(save_dirs))
+    files = sorted(files, key=lambda p: (os.path.dirname(p), os.path.basename(p)))
     for path in files:
         with open(path, "rb") as handle:
             packed = handle.read()
@@ -513,7 +525,7 @@ def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
-    parser.add_argument("--saves", default=DEFAULT_SAVES)
+    parser.add_argument("--saves", nargs="+", default=[DEFAULT_SAVES, GAME_SAVES])
     args = parser.parse_args()
 
     roles = load_names(os.path.join(args.data, "RoleType.dat"))
@@ -543,7 +555,7 @@ def main():
             "starCount": star_count,
             "sources": [
                 "甜蜜乐章安装目录 Data/*.dat",
-                "NeedEffect.dat 等级 + Difficulty.dat 星级区间 + 存档能力门槛匹配（跨存档交叉验证）",
+                "NeedEffect.dat 等级 + Difficulty.dat 星级区间 + 冻结存档与游戏存档的能力门槛匹配（跨存档交叉验证）",
             ],
             "generatedBy": "scripts/build_sweet_notices.py",
         },
@@ -556,7 +568,7 @@ def main():
         "growth": [],
         "notes": [
             "编号、名称、剧情简介、角色与角色简介、子类型、等级要求、数值区间、拍摄期间每天的能力影响与特殊要求标志来自游戏数据文件。",
-            "角色星级（1~5★）由游戏源码 Difficulty.dat 的星级区间表匹配存档里的九项能力门槛反推得出，跨存档验证一致；静态 Case 本体没有这个字段。区间重叠时回退到存档记录的星级字段。存档没覆盖到的角色不显示星级，不用默认值代替。",
+            "角色星级（1~5★）由游戏源码 Difficulty.dat 的星级区间表匹配存档里的九项能力门槛反推得出，冻结存档与游戏目录存档交叉验证一致；静态 Case 本体没有这个字段。区间重叠时回退到存档记录的星级字段。存档没覆盖到的角色不显示星级，不用默认值代替。",
             "能力门槛每次接取会在该星级的区间内重新抽取，所以只给星级、不烘焙门槛值；能力要求按等级与星级区间现算。",
             "默认艺人、特殊要求的每日属性增减与艺人成长率不在游戏数据文件里，暂留空。",
         ],
