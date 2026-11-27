@@ -8,8 +8,10 @@ import {
   type ReactNode,
 } from 'react';
 import { useSpecialsData } from '../../hooks/useSpecialsData';
+import { useSelfMadeData } from '../../hooks/useSelfMadeData';
 import { cn } from '../../lib/cn';
 import { workRoleClass } from '../../lib/workRoleStyle';
+import type { SelfMadeData, SelfMadeEntry, SelfMadeThreshold } from '../../types/selfmade';
 import {
   evaluateLiveSpecials,
   SINGLE_ROLE_NOTICES,
@@ -21,6 +23,7 @@ import {
   type LiveSpecialsReport,
 } from '../../lib/caseSpecials';
 import type { CaseTables, ParseResult } from '../../lib/caseParser';
+import { ATTRS } from '../../lib/caseParser';
 
 interface Props {
   result: ParseResult | null;
@@ -44,7 +47,17 @@ type HoverState =
   | { kind: 'group'; group: GroupMatch; anchor: HoverAnchor }
   | { kind: 'certGuide'; cert: string; guide: CertMatchGuide; anchor: HoverAnchor }
   | { kind: 'certPerson'; cert: string; guide: CertMatchGuide; person: string; anchor: HoverAnchor }
-  | { kind: 'item'; item: ItemCheck; anchor: HoverAnchor };
+  | { kind: 'item'; item: ItemCheck; anchor: HoverAnchor }
+  | { kind: 'selfmade'; entry: SelfMadeEntry; artist: SelfMadeArtistView; owned: boolean; anchor: HoverAnchor };
+
+/** 自制通告某一条挂在谁名下：旗下艺人（带数值）或「其他」（无归属）。 */
+interface SelfMadeArtistView {
+  id: number | null;
+  name: string;
+  abilities: number[] | null;
+  friendship: number | null;
+  gifts: number | null;
+}
 
 /** 统一的 hover 浮层：优先贴在锚点上方，空间不够再翻到下方；最后夹在视口内。 */
 function FloatingCard({
@@ -716,8 +729,195 @@ function DetailSection({
   );
 }
 
+/** 九项属性名 -> 存档数值下标，跟 ATTRS 同序。 */
+const ATTR_INDEX: Record<string, number> = Object.fromEntries(
+  ATTRS.map((name, index) => [name, index]),
+);
+
+/** 一条数值门槛在当前艺人身上的对比结果；读不到当前值就是 null。 */
+function thresholdGap(
+  threshold: SelfMadeThreshold,
+  artist: SelfMadeArtistView,
+): { have: number | null; diff: number | null } {
+  let have: number | null = null;
+  if (threshold.kind === 'attr') {
+    const index = ATTR_INDEX[threshold.label];
+    have = index === undefined ? null : artist.abilities?.[index] ?? null;
+  } else if (threshold.kind === 'friendship') {
+    have = artist.friendship;
+  } else if (threshold.kind === 'gifts') {
+    have = artist.gifts;
+  }
+  return {
+    have,
+    diff: have === null ? null : Math.max(0, Math.ceil(threshold.value - have)),
+  };
+}
+
+interface SelfMadeGroup {
+  artist: SelfMadeArtistView;
+  entries: { entry: SelfMadeEntry; owned: boolean }[];
+  owned: number;
+}
+
+/** 自制通告清单：按「歌曲 / 剧本」分段，每段按旗下艺人分组，已拿到打勾。
+ *  「其他」没有归属艺人，永远显示在最下面，不参与艺人过滤。 */
+function SelfMadeSection({
+  data,
+  groups,
+  onHover,
+  onLeave,
+  error,
+}: {
+  data: SelfMadeData | null;
+  groups: { key: string; name: string; note: string; artists: SelfMadeGroup[] }[];
+  onHover: (entry: SelfMadeEntry, artist: SelfMadeArtistView, owned: boolean, anchor: HoverAnchor) => void;
+  onLeave: () => void;
+  error: string | null;
+}) {
+  if (error) {
+    return <p className="px-1 py-4 text-ui-2xs text-alert">自制表读取失败：{error}</p>;
+  }
+  if (!data) {
+    return <p className="px-1 py-4 text-ui-2xs text-ink-faint">正在读取自制通告条件…</p>;
+  }
+  const sections = groups.filter((section) => section.artists.length > 0);
+  if (sections.length === 0) {
+    return <p className="px-1 py-4 text-ui-2xs text-ink-faint">当前存档的旗下艺人在自制表里没有对应作品。</p>;
+  }
+
+  return (
+    <div className="space-y-2.5" data-case-selfmade-list>
+      {sections.map((section) => (
+        <div key={section.key} data-case-selfmade-section={section.key}>
+          <p className="mb-1 flex flex-wrap items-baseline gap-x-1.5 text-ui-2xs font-bold text-brand-strong">
+            {section.name}
+            {section.note && <span className="font-normal text-ink-faint">{section.note}</span>}
+          </p>
+          <div className="space-y-1.5">
+            {section.artists.map((group) => (
+              <div key={group.artist.name} data-case-selfmade-artist={group.artist.name}>
+                <p className="mb-0.5 flex items-baseline gap-1 text-ui-2xs">
+                  <span className="font-semibold text-ink">{group.artist.name}</span>
+                  <span className="tabular-nums text-ink-faint">{group.owned}/{group.entries.length}</span>
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {group.entries.map(({ entry, owned }) => (
+                    <button
+                      key={`${entry.name}-${entry.code ?? ''}`}
+                      type="button"
+                      data-case-selfmade={entry.code ?? entry.name}
+                      data-case-selfmade-owned={owned ? 'true' : 'false'}
+                      onMouseEnter={(event) => {
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        onHover(entry, group.artist, owned, {
+                          left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+                        });
+                      }}
+                      onMouseLeave={onLeave}
+                      className={cn(
+                        'inline-flex cursor-help items-center gap-1 rounded-full border px-1.5 text-ui-2xs transition-colors',
+                        owned
+                          ? 'border-growth-line bg-growth-soft font-semibold text-growth-strong'
+                          : 'border-line bg-surface-soft text-ink-muted hover:border-line-strong hover:text-ink',
+                      )}
+                    >
+                      <span aria-hidden="true" className={owned ? 'text-growth-strong' : 'text-ink-faint'}>
+                        {owned ? '✓' : '·'}
+                      </span>
+                      {entry.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 自制通告浮层：条件原文 + 能算的数值对比，算不了的明确标「剧情条件」。 */
+function SelfMadeHoverCard({
+  entry,
+  artist,
+  owned,
+  anchor,
+  onEnter,
+  onLeave,
+}: {
+  entry: SelfMadeEntry;
+  artist: SelfMadeArtistView;
+  owned: boolean;
+  anchor: HoverAnchor;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <FloatingCard anchor={anchor} onEnter={onEnter} onLeave={onLeave} className="w-[300px] p-2.5">
+      <p className="mb-1 flex items-baseline gap-2 text-ui-xs font-semibold text-ink" data-case-selfmade-title>
+        {entry.name}
+        {entry.code && <span className="text-ui-2xs font-normal text-ink-faint">{entry.code}</span>}
+        <span
+          className={cn(
+            'ml-auto text-ui-2xs font-semibold',
+            owned ? 'text-growth-strong' : 'text-alert',
+          )}
+        >
+          {owned ? '已拿到' : '未拿到'}
+        </span>
+      </p>
+      <p className="mb-1.5 flex items-baseline gap-1 text-ui-2xs text-ink-faint">
+        <span>{artist.name}</span>
+        <span>·</span>
+        <span>{entry.section === 'script' ? '剧本' : '歌曲'}</span>
+      </p>
+      <div className="border-t border-line pt-1.5 text-ui-2xs leading-relaxed text-ink-muted" data-case-selfmade-condition>
+        <span className="mr-1 font-semibold text-ink">条件</span>
+        {entry.condition}
+      </div>
+      {entry.thresholds.length > 0 && (
+        <div className="mt-1.5 border-t border-line pt-1.5" data-case-selfmade-thresholds>
+          <p className="mb-1 text-ui-2xs font-semibold text-ink">
+            数值门槛 <span className="font-normal text-ink-faint">· 当前 {artist.name}</span>
+          </p>
+          <div className="space-y-0.5">
+            {entry.thresholds.map((threshold) => {
+              const { have, diff } = thresholdGap(threshold, artist);
+              return (
+                <div
+                  key={`${threshold.label}-${threshold.value}`}
+                  data-case-selfmade-threshold={threshold.label}
+                  className="flex items-baseline gap-1"
+                >
+                  <span className="text-ink-muted">{threshold.label}</span>
+                  <span className="tabular-nums text-ink-faint">{threshold.value}</span>
+                  {have === null ? (
+                    <span className="ml-auto text-ink-faint">—</span>
+                  ) : diff === 0 ? (
+                    <span className="ml-auto font-semibold text-growth-strong">已达标</span>
+                  ) : (
+                    <span className="ml-auto text-alert">
+                      差 {diff}（{have}/{threshold.value}）
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {entry.note && (
+        <p className="mt-1.5 border-t border-line pt-1.5 text-ui-2xs text-ink-faint">{entry.note}</p>
+      )}
+    </FloatingCard>
+  );
+}
+
 export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const { data, error } = useSpecialsData(true);
+  const [view, setView] = useState<'specials' | 'selfmade'>('specials');
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState('');
   const [hover, setHover] = useState<HoverState | null>(null);
@@ -764,6 +964,52 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
     () => (data && result ? evaluateLiveSpecials(data, result, tables) : null),
     [data, result, tables],
   );
+
+  const selfMadeState = useSelfMadeData(open && view === 'selfmade');
+
+  /** 自制通告只挂在当前签约艺人名下 + 「其他」，其他类别永远排最后。 */
+  const selfMadeGroups = useMemo(() => {
+    const source = selfMadeState.data;
+    if (!source || !result) return [];
+    const ownedCodes = new Set(result.selfMade.map((item) => item.code));
+    const others: SelfMadeArtistView = { id: null, name: '其他', abilities: null, friendship: null, gifts: null };
+    const signedByName = new Map<string, SelfMadeArtistView>();
+    for (const option of result.artistDirectory) {
+      if (!option.signed) continue;
+      const stats = result.artists.find((artist) => artist.roleId === option.id);
+      signedByName.set(option.name, {
+        id: option.id,
+        name: option.name,
+        abilities: stats?.abilities ?? null,
+        friendship: stats?.friendship ?? null,
+        gifts: stats?.gifts ?? null,
+      });
+    }
+    return source.sections.map((section) => {
+      const byArtist = new Map<string, { entry: SelfMadeEntry; owned: boolean }[]>();
+      for (const entry of source.entries) {
+        if (entry.section !== section.key) continue;
+        const artist = entry.artist === '其他' ? others : signedByName.get(entry.artist);
+        if (!artist) continue;
+        const list = byArtist.get(entry.artist) ?? [];
+        list.push({ entry, owned: !!entry.code && ownedCodes.has(entry.code) });
+        byArtist.set(entry.artist, list);
+      }
+      const artists: SelfMadeGroup[] = [];
+      for (const [name, list] of byArtist) {
+        const artist = name === '其他' ? others : signedByName.get(name);
+        if (!artist) continue;
+        artists.push({ artist, entries: list, owned: list.filter((item) => item.owned).length });
+      }
+      artists.sort((a, b) => (a.artist.id === null ? 1 : 0) - (b.artist.id === null ? 1 : 0));
+      return { key: section.key, name: section.name, note: section.note, artists };
+    });
+  }, [selfMadeState.data, result]);
+
+  const selfMadeOwned = selfMadeGroups.reduce((sum, section) => sum + section.artists.reduce(
+    (inner, group) => inner + group.owned, 0), 0);
+  const selfMadeTotal = selfMadeGroups.reduce((sum, section) => sum + section.artists.reduce(
+    (inner, group) => inner + group.entries.length, 0), 0);
 
   useEffect(() => {
     // 默认全部收起；换存档后清掉指向旧通告的展开项。
@@ -894,10 +1140,39 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             : { left: -9999, top: -9999, visibility: 'hidden' }}
         >
           <div className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2">
-            <span className="text-ui-sm font-semibold text-brand-strong">六大通告助手</span>
-            {report && (
+            <div
+              data-case-assistant-view
+              className="flex items-center gap-0.5 rounded-full border border-line bg-canvas p-0.5"
+            >
+              {([
+                ['specials', '六大通告'],
+                ['selfmade', '自制通告'],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  data-case-assistant-tab={key}
+                  aria-pressed={view === key}
+                  onClick={() => { setView(key); hideHoverNow(); }}
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-ui-2xs transition-colors',
+                    view === key
+                      ? 'bg-brand-strong font-semibold text-canvas'
+                      : 'text-ink-muted hover:text-ink',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {view === 'specials' && report && (
               <span className="text-ui-2xs text-ink" data-case-assistant-progress>
                 {report.doneCount}/6
+              </span>
+            )}
+            {view === 'selfmade' && selfMadeTotal > 0 && (
+              <span className="text-ui-2xs text-ink" data-case-selfmade-progress>
+                {selfMadeOwned}/{selfMadeTotal}
               </span>
             )}
             <span className="ml-auto rounded-full border border-line px-1.5 py-0.5 text-ui-2xs text-ink-faint">
@@ -918,7 +1193,7 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
           )}
 
           <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" onScroll={hideHoverNow}>
-            {result && (
+            {result && (view === 'specials' ? (
               <DetailSection
                 report={report}
                 expanded={expanded}
@@ -933,7 +1208,16 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
                 onHoverLeave={hideHoverSoon}
                 dataError={error}
               />
-            )}
+            ) : (
+              <SelfMadeSection
+                data={selfMadeState.data}
+                groups={selfMadeGroups}
+                error={selfMadeState.error}
+                onHover={(entry, artist, owned, anchor) =>
+                  showHover({ kind: 'selfmade', entry, artist, owned, anchor })}
+                onLeave={hideHoverSoon}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -980,6 +1264,19 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
               key={`person-${hover.cert}-${hover.person}`}
               guide={hover.guide}
               person={hover.person}
+              anchor={hover.anchor}
+              onEnter={clearHoverTimer}
+              onLeave={hideHoverNow}
+            />
+          );
+        }
+        if (hover.kind === 'selfmade') {
+          return (
+            <SelfMadeHoverCard
+              key={`selfmade-${hover.entry.code ?? hover.entry.name}-${hover.artist.name}`}
+              entry={hover.entry}
+              artist={hover.artist}
+              owned={hover.owned}
               anchor={hover.anchor}
               onEnter={clearHoverTimer}
               onLeave={hideHoverNow}

@@ -1,0 +1,1201 @@
+{
+  "meta": {
+    "source": "sources/self-made.txt",
+    "count": 74,
+    "coded": 72,
+    "note": "当公司资金大于1000万时，秘书会提示自制通告已经可以开启，通过自制通告可大量累积资金。"
+  },
+  "sections": [
+    {
+      "key": "song",
+      "name": "歌曲部分",
+      "note": "满足条件后需安排自由活动大于20天"
+    },
+    {
+      "key": "script",
+      "name": "剧本部分",
+      "note": "满足条件后需安排自由活动大于40天"
+    }
+  ],
+  "entries": [
+    {
+      "section": "song",
+      "artist": "林芬芬",
+      "name": "薰衣草之恋",
+      "code": "CD731",
+      "condition": "与关古威组团出唱片",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "林芬芬",
+      "name": "莎乐美之吻",
+      "code": "CD732",
+      "condition": "与姚子奇分手后且歌艺550、自信550、动感700、体能700（尚待研究）",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 550,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 550,
+          "kind": "attr"
+        },
+        {
+          "label": "动感",
+          "value": 700,
+          "kind": "attr"
+        },
+        {
+          "label": "体能",
+          "value": 700,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "Good Night",
+      "code": null,
+      "condition": "日本逛街后，歌艺300、名气200、仪态250、自信250",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 300,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 200,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 250,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 250,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "Sleep In My Heart",
+      "code": "CD744",
+      "condition": "美国探险后，歌艺400、名气300、仪态360、自信360、才智350",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 400,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 300,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 360,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 360,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 350,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "Spice Girl",
+      "code": "CD745",
+      "condition": "岛屿度假后，歌艺480、名气330、仪态420、自信420、才智450",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 480,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 330,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 420,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 420,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 450,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "Please Tell Me",
+      "code": "CD746",
+      "condition": "塞外观光后，歌艺480、名气330、仪态420、自信420、才智450",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 480,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 330,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 420,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 420,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 450,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "Summer Of Love",
+      "code": "CD747",
+      "condition": "欧洲旅游后，歌艺600、名气450、仪态520、自信520、才智500",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 450,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 520,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 520,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 500,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "No More Cry:",
+      "code": "CD748",
+      "condition": "古国寻奇后，歌艺600、名气450、仪态520、自信520、才智5000",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 450,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 520,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 520,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 5000,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "10 Years",
+      "code": "CD749",
+      "condition": "歌艺600、名气450、仪态520、自信520、才智500",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 450,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 520,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 520,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 500,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "Sweat Season",
+      "code": "CD750",
+      "condition": "被路风从欧洲带回再度签约后，歌艺700、名气500、仪态550、自信550、才智650",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 550,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 550,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 650,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "欧怡青",
+      "name": "飞行日记",
+      "code": "CD667",
+      "condition": "路欧恋情确定，回欧洲两周后，寄至公司",
+      "thresholds": [],
+      "note": "需安装资料片“星光圆舞曲”"
+    },
+    {
+      "section": "song",
+      "artist": "姚子莹",
+      "name": "新凉时节",
+      "code": "CD652",
+      "condition": "与姚子奇同在旗下时",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子莹",
+      "name": "在水一方",
+      "code": "CD653",
+      "condition": "乐谱事件中受到慕容和希称赞后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子莹",
+      "name": "夏之恋",
+      "code": "CD654",
+      "condition": "出席慕容和希的演唱会后，相关报道出现，跟随子莹时，慕容和希会赠送",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子莹",
+      "name": "沙漏",
+      "code": "CD660",
+      "condition": "子莹收到慕容和希的赠曲后，次周由子奇赠送",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "聆香",
+      "name": "晚安明天见",
+      "code": "CD755",
+      "condition": "获得金曲奖任一奖项后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "聆香",
+      "name": "阿妈的肉棕",
+      "code": "CD756",
+      "condition": "表示愿意娶聆香，相亲事件后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "新名纱雪",
+      "name": "下弦月",
+      "code": "CD752",
+      "condition": "推出专辑后且友好度大于200",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 200,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "新名纱雪",
+      "name": "星光圆舞曲",
+      "code": "CD753",
+      "condition": "推出国际专辑且未承认弟弟",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "陈奕夫",
+      "name": "Game Over",
+      "code": "CD741",
+      "condition": "歌艺450、自信300、动感500、体能450、才智450",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 450,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 300,
+          "kind": "attr"
+        },
+        {
+          "label": "动感",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "体能",
+          "value": 450,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 450,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "陈奕夫",
+      "name": "Don't Speak",
+      "code": "CD742",
+      "condition": "当球季特派记者回来后，触发欢迎回国的对话",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "爱、却步",
+      "code": "CD721",
+      "condition": "加入公司一个月后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "流浪猫",
+      "code": "CD722",
+      "condition": "加入公司三个月后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "唐朝栗子",
+      "code": "CD723",
+      "condition": "加入公司六个月后，歌艺480、名气330、动感420、体能420",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 480,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 330,
+          "kind": "attr"
+        },
+        {
+          "label": "动感",
+          "value": 420,
+          "kind": "attr"
+        },
+        {
+          "label": "体能",
+          "value": 420,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "寓言柚子",
+      "code": "CD724",
+      "condition": "歌艺480、名气330、动感420、体能420",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 480,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 330,
+          "kind": "attr"
+        },
+        {
+          "label": "动感",
+          "value": 420,
+          "kind": "attr"
+        },
+        {
+          "label": "体能",
+          "value": 420,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "毕业之歌",
+      "code": "CD725",
+      "condition": "第二年9月从学校毕业后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "恋爱最终章",
+      "code": "CD728",
+      "condition": "母亲再婚后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "红色情热蓝色忧伤",
+      "code": "CD726",
+      "condition": "与林芬芬分手后，触发主角去喝酒的事件",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "记得忘记",
+      "code": "CD727",
+      "condition": "歌艺700、名气500、动感550、体能550",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "动感",
+          "value": 550,
+          "kind": "attr"
+        },
+        {
+          "label": "体能",
+          "value": 550,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "侠客行",
+      "code": "CD601",
+      "condition": "触发认识金勇的事件，看到两人聊天数次后获得",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "姚子奇",
+      "name": "夏之夜不可思议",
+      "code": "CD668",
+      "condition": "姚子莹在旗下，未解决附身事件，第二年7月警戒主角时赠送",
+      "thresholds": [],
+      "note": "需安装资料片“星光圆舞曲”"
+    },
+    {
+      "section": "song",
+      "artist": "纪翔",
+      "name": "心扉的信",
+      "code": "CD711",
+      "condition": "跟随大于30天、友好度大于100",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 100,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "纪翔",
+      "name": "恋人再见",
+      "code": "CD712",
+      "condition": "得到上一首后继续跟随大于30天、友好度大于150",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 150,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "纪翔",
+      "name": "爱在星期天",
+      "code": "CD713",
+      "condition": "得到上一首后继续跟随大于30天、友好度大于200",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 200,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "纪翔",
+      "name": "你就是你",
+      "code": "CD714",
+      "condition": "得到上一首后继续跟随大于30天，友好度大于250",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 250,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "纪翔",
+      "name": "模糊的轮廓",
+      "code": "CD715",
+      "condition": "参与同志电影，杀青后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "纪翔",
+      "name": "那一年夏天",
+      "code": "CD716",
+      "condition": "一起看过烟火后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "天晴",
+      "name": "恋爱三部曲",
+      "code": "CD704",
+      "condition": "劝天晴不要放弃和凌玮翎的感情，两人分手新闻出现后（尚待研究）",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "天晴",
+      "name": "雨天浪漫梦",
+      "code": "CD705",
+      "condition": "路敏借伞后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "天晴",
+      "name": "午夜迷香",
+      "code": "CD702",
+      "condition": "称赞路敏歌声后（不需自由活动）",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "天晴",
+      "name": "感谢之歌",
+      "code": "CD703",
+      "condition": "跟随120天后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "天晴",
+      "name": "蓝色信笺的单恋",
+      "code": "CD706",
+      "condition": "歌艺600、名气450、仪态520、才智350",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 600,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 450,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 520,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 350,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "天晴",
+      "name": "珍珠耳环的少女",
+      "code": "CD707",
+      "condition": "歌艺700、名气500、仪态550、才智450",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 550,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 450,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "天晴",
+      "name": "有朋自远方来",
+      "code": "CD701",
+      "condition": "游戏一开始在公园见到天晴，之后在19号酒馆看到他打工，两周后再去找他，会赠送",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "关古威",
+      "name": "直到爱上那天",
+      "code": "CD729",
+      "condition": "与方若绮合作后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "关古威",
+      "name": "在你醒来之前",
+      "code": "CD730",
+      "condition": "歌艺700、名气500、仪态700、自信550、才智650",
+      "thresholds": [
+        {
+          "label": "歌艺",
+          "value": 700,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 700,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 550,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 650,
+          "kind": "attr"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "克烈斯",
+      "name": "白色蔷薇",
+      "code": "CD666",
+      "condition": "为史蒂芬选打歌服后，跟随克烈斯，下一次见到史蒂芬时，他会送克烈斯歌曲，周日与克烈斯沟通获得",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "卫亚",
+      "name": "梦的十四行诗",
+      "code": "CD754",
+      "condition": "卖艺第四周，到商店街，看见子奇、慕容和希比赛音乐的CG图后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "原少纬",
+      "name": "倾城之恋",
+      "code": "CD757",
+      "condition": "推出首张专辑后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "原少纬",
+      "name": "我的空气",
+      "code": "CD758",
+      "condition": "耿言颢过世后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "song",
+      "artist": "其他",
+      "name": "爱·隐",
+      "code": "CD751",
+      "condition": "把NP鸡还给方若绮后会赠送",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "萧依莉",
+      "name": "无价的相遇",
+      "code": "TV704",
+      "condition": "第一轮萧依莉去世后选择公开笔记本，甄红会赠送",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "萧依莉",
+      "name": "一夜绯闻",
+      "code": "TV701",
+      "condition": "从第二轮开始且友好度大于100",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 100,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "萧依莉",
+      "name": "二见钟情",
+      "code": "TV702",
+      "condition": "从第二轮开始且友好度大于180",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 180,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "萧依莉",
+      "name": "三世情缘",
+      "code": "TV703",
+      "condition": "从第二轮开始且友好度大于250",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 250,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "苏嫚君",
+      "name": "佳偶天成",
+      "code": "TV711",
+      "condition": "赠送喜欢的物品大于5件",
+      "thresholds": [
+        {
+          "label": "赠送件数",
+          "value": 5,
+          "kind": "gifts"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "苏嫚君",
+      "name": "长夜未央",
+      "code": "TV712",
+      "condition": "赠送喜欢的物品大于10件",
+      "thresholds": [
+        {
+          "label": "赠送件数",
+          "value": 10,
+          "kind": "gifts"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "苏嫚君",
+      "name": "陌上云朗",
+      "code": "TV713",
+      "condition": "赠送喜欢的物品大于20件，友好度大于160，且演技500、仪态600、才智500、名气500、自信500",
+      "thresholds": [
+        {
+          "label": "演技",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "仪态",
+          "value": 600,
+          "kind": "attr"
+        },
+        {
+          "label": "才智",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "名气",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "自信",
+          "value": 500,
+          "kind": "attr"
+        },
+        {
+          "label": "友好度",
+          "value": 160,
+          "kind": "friendship"
+        },
+        {
+          "label": "赠送件数",
+          "value": 20,
+          "kind": "gifts"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "聆香",
+      "name": "朱槿花开",
+      "code": "TV729",
+      "condition": "友好度大于100时",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 100,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "聆香",
+      "name": "商场风云",
+      "code": "TV730",
+      "condition": "引发裸照事件，且看到CG后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "新名纱雪",
+      "name": "樱似雪",
+      "code": "TV727",
+      "condition": "父亲再婚事件后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "新名纱雪",
+      "name": "琉璃色少年",
+      "code": "TV728",
+      "condition": "承认弟弟后且友好度大于200",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 200,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "路风",
+      "name": "相亲不相爱",
+      "code": "TV731",
+      "condition": "与桑禾蓓或欧怡青同在旗下且发展感情后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "姚子奇",
+      "name": "幽灵新娘",
+      "code": "TV721",
+      "condition": "触发替女鬼完成心愿事件，三个月后（需要10天左右的自由活动）",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "克烈斯",
+      "name": "真假太子",
+      "code": "TV653",
+      "condition": "纪翔为私生子的新闻出现后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "克烈斯",
+      "name": "公主盟约",
+      "code": "TV655",
+      "condition": "出现和杨安妤的绯闻，安妤要求不再见面后",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "克烈斯",
+      "name": "昨日约定",
+      "code": "TV654",
+      "condition": "友好度大于100后",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 100,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "克烈斯",
+      "name": "向日葵的夏天",
+      "code": "TV656",
+      "condition": "友好度大于200后",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 200,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "克烈斯",
+      "name": "维纳斯之恋",
+      "code": null,
+      "condition": "决斗失败回国，将克烈斯留下的信交给杨安妤后会赠送",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "卫亚",
+      "name": "捉迷藏",
+      "code": "TV723",
+      "condition": "与原少纬吃过饭后，友好度大于100",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 100,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "卫亚",
+      "name": "明天的我们",
+      "code": "TV725",
+      "condition": "新名纱雪在旗下时，送给纱雪的生日礼物",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "卫亚",
+      "name": "也许、未来",
+      "code": "TV726",
+      "condition": "获得任一戏剧类奖项",
+      "thresholds": [],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "卫亚",
+      "name": "恋爱的十字街",
+      "code": "TV724",
+      "condition": "跟随大于六个月，友好度大于200",
+      "thresholds": [
+        {
+          "label": "友好度",
+          "value": 200,
+          "kind": "friendship"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "section": "script",
+      "artist": "其他",
+      "name": "握斧长龙",
+      "code": "TV601",
+      "condition": "参加笑傲天际电影宣传会后金父会给",
+      "thresholds": [],
+      "note": ""
+    }
+  ]
+}
