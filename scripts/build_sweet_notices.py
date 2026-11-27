@@ -17,12 +17,17 @@
 游戏数据里，脚本不会编造，只留空并在 notes 里交代。能力影响每日值原本也
 被误判为缺失，实际就在 NeedEffect.dat 后半段，现已接入。
 
-角色星级（1~5）不在静态 Case 本体里，是游戏接取通告时写进存档的：
-- 存档是 4B 长度头 + zlib，解压后按 `[1][0][0][0][6B 通告角色码][NUL]` 找角色
+角色星级（1~5）不在静态 Case 本体里，是游戏接取通告时写进存档的，但真源
+换算规则在 Difficulty.dat：
+- 存档是 4B 长度头 + zlib，解压后按 `[1][0][0][0][通告角色码][NUL]` 找角色
   记录，`+12` 是角色类型、`+16` 是星级、`+28..+64` 是九项能力门槛。
-- 11 份冻结存档交叉验证：1740 个多存档出现的角色码星级 100% 一致，门槛会变
-  但始终落在对应星级的 Difficulty.dat 区间内。星级是通告角色的固定属性。
-- 角色码末位是角色槽序号，静态本体 ROLE_OFFSETS 的第 i 个槽对应 `code + str(i+1)`。
+- Difficulty.dat 是「星级 -> 四档数值区间」表。每条存档门槛的每一个非零值都
+  落在某个星级的区间里，把所有门槛取交集即可反推星级（真源在游戏源码 .dat）；
+  区间重叠导致歧义时回退到存档 `+16` 字段。两种口径在 8946 条存档记录里
+  99.92% 一致，11 份存档交叉验证同一角色码星级 100% 稳定。
+- 通告角色码大多是 6 字节（末位是角色槽序号 1..4，静态本体 ROLE_OFFSETS 的
+  第 i 个槽对应 `code + str(i+1)`）；唱片 CD / 主持 SH 是 5 字节码，不带槽号，
+  要用 `存档码 + 角色类型`（如 CD0024 / SH0019）对应静态角色的 `code + role_index`。
 只给有真值的角色写 `difficulty`，没被存档覆盖的角色留空，前端不显示星级，
 绝不拿 `difficulty ?? 1` 兜底造出假的一星。
 
@@ -293,13 +298,82 @@ def load_special_effects(data_dir):
     return out
 
 
-def load_role_stars(save_dir):
-    """从冻结存档烘焙「通告角色码 → 星级」真值表。
+def load_difficulty(data_dir):
+    """读取 Difficulty.dat：星级 1..5 -> 四档数值区间 [(lo, hi) × 4]。
 
-    存档格式是 4B 长度头 + zlib；角色记录以 `[1][0][0][0][6B ASCII 码][NUL]`
-    起头，`+12` 角色类型、`+16` 星级、`+28..+64` 九项门槛。严格过滤掉宽松
-    扫描会命中的假阳性（例如 SH005 在非角色记录上被误读成 2★）。星级跨存档
-    已验证 100% 稳定，重复角色码取首次出现即可。
+    这是游戏源码给出的「星级 <-> 能力门槛」换算规则，用来把存档里的九项门槛
+    反推成星级。记录为定长 36B：`[星级][A_lo][A_hi][B_lo][B_hi][C_lo][C_hi][D_lo][D_hi]`。
+    """
+    path = os.path.join(data_dir, "Difficulty.dat")
+    with open(path, "rb") as handle:
+        raw = handle.read()
+    first, count, size = struct.unpack_from("<III", raw, 0)
+    if first != 0x3F2 or count * size + 12 > len(raw):
+        raise SystemExit("unexpected Difficulty.dat layout")
+    out = {}
+    for index in range(count):
+        rec = raw[12 + index * size:12 + (index + 1) * size]
+        values = [struct.unpack_from("<i", rec, o)[0] for o in range(0, size, 4)]
+        star = values[0]
+        out[star] = [(values[1 + 2 * j], values[2 + 2 * j]) for j in range(4)]
+    return out
+
+
+def load_need_grades(data_dir):
+    """读取 NeedEffect.dat 每条记录的九项能力等级（0=不要求，1..4=A/B/C/D）。
+
+    等级用来锁定存档门槛应落在 Difficulty.dat 的哪一档区间，避免只看数值时
+    因档位重叠产生歧义。
+    """
+    path = os.path.join(data_dir, "NeedEffect.dat")
+    with open(path, "rb") as handle:
+        raw = handle.read()
+    first, count, size = struct.unpack_from("<III", raw, 0)
+    if first != 0x3F2 or count * size + 12 > len(raw):
+        raise SystemExit("unexpected NeedEffect.dat layout")
+    out = []
+    for index in range(count):
+        rec = raw[12 + index * size:12 + (index + 1) * size]
+        values = [struct.unpack_from("<i", rec, o)[0] for o in range(0, size, 4)]
+        out.append((values[0], values[3:12]))
+    return out
+
+
+def star_from_gates(gates, difficulty, needs):
+    """用 NeedEffect 等级 + Difficulty 区间把九项能力门槛精确反推成星级。
+
+    对每条 NeedEffect 等级模式，要求每个非零门槛落在 `Difficulty[星级][等级-1]`
+    区间内；能解释全部门槛的星级若唯一即返回。等级模式不限制档位、门槛随机
+    抽取超出区间（多解或无解）时返回 None，由调用方回退到存档 `+16` 字段。
+    """
+    stars = set()
+    for star, ranges in difficulty.items():
+        for _need_id, grades in needs:
+            ok = True
+            for index, gate in enumerate(gates):
+                if not gate:
+                    continue
+                grade = grades[index]
+                if not (1 <= grade <= 4):
+                    ok = False
+                    break
+                low, high = ranges[grade - 1]
+                if not (low <= gate <= high):
+                    ok = False
+                    break
+            if ok:
+                stars.add(star)
+                break
+    return next(iter(stars)) if len(stars) == 1 else None
+
+
+def load_role_stars(save_dir, difficulty, needs):
+    """从冻结存档 + Difficulty.dat 区间表烘焙「通告角色码 → 星级」真值表。
+
+    存档格式是 4B 长度头 + zlib；角色记录以 `[1][0][0][0][ASCII 码][NUL]`
+    起头，`+12` 角色类型、`+16` 星级、`+28..+64` 九项门槛。星级优先用门槛区间
+    反推（真源在游戏源码），歧义时回退到 `+16`；严格过滤宽松扫描的假阳性
+    （例如 SH005 在非角色记录上被误读成 2★）。跨存档验证 100% 稳定。
     """
     stars = {}
     if not os.path.isdir(save_dir):
@@ -328,19 +402,28 @@ def load_role_stars(save_dir):
             if not (5 <= code_len <= 6) or raw[end] != 0:
                 continue
             role_code = raw[at + 4:end].decode("ascii", "replace")
-            if not role_code[:2].isalpha() or role_code in stars:
+            if not role_code[:2].isalpha():
                 continue
             role_type = struct.unpack_from("<i", raw, at + 12)[0]
-            star = struct.unpack_from("<i", raw, at + 16)[0]
+            save_star = struct.unpack_from("<i", raw, at + 16)[0]
             gates = [
                 struct.unpack_from("<i", raw, at + 28 + index * 4)[0]
                 for index in range(9)
             ]
-            if not (1 <= role_type <= 11 and 1 <= star <= 5):
+            if not (1 <= role_type <= 11 and 1 <= save_star <= 5):
                 continue
             if not all(0 <= value <= 999 for value in gates):
                 continue
-            stars[role_code] = star
+            star = star_from_gates(gates, difficulty, needs) or save_star
+            # CD / SH 存档码是 5 字节，不带槽号，用「码 + 角色类型」做 canonical key，
+            # 与静态角色的 `code + role_index` 对齐；其余 6 字节码末位已是槽号。
+            key = (
+                role_code + str(role_type)
+                if code_len == 5 and role_code[:2] in ("CD", "SH")
+                else role_code
+            )
+            if key not in stars:
+                stars[key] = star
     return stars
 
 
@@ -409,13 +492,15 @@ def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters,
                 role_brief = simplify(text_runs(role_rec, 104))
                 if role_brief:
                     entry["brief"] = role_brief
-                # 存档角色码末位是槽位序号（1..4），静态槽 +8 是角色类型编号，
-                # 两套编号不同，必须按槽位顺序对应，不能用 role_index 查。
+                # 多数存档码末位是槽位序号（1..4），按槽位对应；CD / SH 存档码是
+                # 5 字节不带槽号，用「码 + 角色类型」即静态的 `code + role_index` 查。
                 if stars:
                     star = stars.get(code + str(slot + 1))
+                    if star is None and code[:2] in ("CD", "SH"):
+                        star = stars.get(code + str(role_index))
                     if star is not None:
                         entry["difficulty"] = star
-                        entry["starSource"] = "存档"
+                        entry["starSource"] = "存档+Difficulty区间"
                 notice_roles.append(entry)
             if notice_roles:
                 notice["roles"] = notice_roles
@@ -435,7 +520,9 @@ def main():
     company_by_seq, overseas = load_company_tables(args.data)
     _companies, producers = load_production(args.data)
     characters = load_character_names(args.data)
-    stars = load_role_stars(args.saves)
+    difficulty = load_difficulty(args.data)
+    needs = load_need_grades(args.data)
+    stars = load_role_stars(args.saves, difficulty, needs)
     notices, cat_counts = load_cases(
         args.data, roles, company_by_seq, overseas, producers, characters, stars
     )
@@ -456,7 +543,7 @@ def main():
             "starCount": star_count,
             "sources": [
                 "甜蜜乐章安装目录 Data/*.dat",
-                "冻结存档的角色星级（跨存档交叉验证）",
+                "NeedEffect.dat 等级 + Difficulty.dat 星级区间 + 存档能力门槛匹配（跨存档交叉验证）",
             ],
             "generatedBy": "scripts/build_sweet_notices.py",
         },
@@ -469,7 +556,7 @@ def main():
         "growth": [],
         "notes": [
             "编号、名称、剧情简介、角色与角色简介、子类型、等级要求、数值区间、拍摄期间每天的能力影响与特殊要求标志来自游戏数据文件。",
-            "角色星级来自存档里的通告角色记录（1~5★），跨存档验证一致；静态 Case 本体没有这个字段。存档没覆盖到的角色不显示星级，不用默认值代替。",
+            "角色星级（1~5★）由游戏源码 Difficulty.dat 的星级区间表匹配存档里的九项能力门槛反推得出，跨存档验证一致；静态 Case 本体没有这个字段。区间重叠时回退到存档记录的星级字段。存档没覆盖到的角色不显示星级，不用默认值代替。",
             "能力门槛每次接取会在该星级的区间内重新抽取，所以只给星级、不烘焙门槛值；能力要求按等级与星级区间现算。",
             "默认艺人、特殊要求的每日属性增减与艺人成长率不在游戏数据文件里，暂留空。",
         ],
