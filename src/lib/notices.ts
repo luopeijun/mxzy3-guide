@@ -9,7 +9,9 @@ export function gradeRole(cat: Notice['cat'], roleName: string): string {
     if (roleName.includes('配角')) return '配角';
     return roleName;
   }
-  if (cat === 'ad' || cat === 'music') return '';
+  // 广告 / 唱片 / 时装秀按节目或作品整体要求能力，征求对象里的男女只是出镜
+  // 性别；参照表这三个大类也不按角色拆行，统一归一到空角色。
+  if (cat === 'ad' || cat === 'music' || cat === 'fashion') return '';
   return roleName;
 }
 

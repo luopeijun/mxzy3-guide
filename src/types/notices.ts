@@ -1,4 +1,4 @@
-export type NoticeCategory = 'movie' | 'tv' | 'music' | 'ad' | 'show';
+export type NoticeCategory = 'movie' | 'tv' | 'music' | 'ad' | 'show' | 'stage' | 'fashion';
 
 /** 特殊要求里的数值门槛（亲和 / 叛逆 / 性感）。 */
 export interface NoticeSpecial {

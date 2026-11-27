@@ -18,13 +18,15 @@ const EMPTY_FILTER: NoticeFilter = {
 
 interface Props {
   data: NoticeData;
+  /** 甜蜜乐章只展示游戏数据能覆盖的参照表，不显示主站玩家整理的静态便签。 */
+  dataOnly?: boolean;
 }
 
 /** 通告库：顶部筛选 + 中间卡片列表 + 右侧详情。
  *
  *  列表按页渲染（全量 1500+，一页 24 张），翻页由底部分页器控制——避免一次性
  *  挂上几千张卡片。窄屏没有右侧栏，点卡片会从底部盖一层全屏详情。 */
-export default function NoticesApp({ data }: Props) {
+export default function NoticesApp({ data, dataOnly = false }: Props) {
   const [view, setView] = useState<'list' | 'reference'>('list');
   const [filter, setFilter] = useState<NoticeFilter>(EMPTY_FILTER);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -161,7 +163,7 @@ export default function NoticesApp({ data }: Props) {
             )}
 
             {view === 'reference' ? (
-              <ReferenceView data={data} />
+              <ReferenceView data={data} dataOnly={dataOnly} />
             ) : (
               <>
                 <div

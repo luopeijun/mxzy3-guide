@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { NoticeData } from '../../types/notices';
 import { cn } from '../../lib/cn';
 import type { NoticeFilter } from '../../lib/notices';
@@ -100,8 +101,11 @@ export default function NoticeFilterBar({ data, filter, companies, onChange, onR
         )}
       </div>
 
+      {/* 列数跟着站点自己的分类数走：主站五类、甜蜜乐章七类，都在一行铺满；
+          窄屏仍退回三列，和原来的 tab 断点一致。 */}
       <div
-        className="mt-2 grid grid-cols-5 gap-1.5 tab:grid-cols-3"
+        className="mt-2 grid grid-cols-3 gap-1.5 min-[680px]:grid-cols-[repeat(var(--notice-cat-cols),minmax(0,1fr))]"
+        style={{ '--notice-cat-cols': String(data.categories.length) } as CSSProperties}
         data-notice-cats
         role="group"
         aria-label="按分类筛选"

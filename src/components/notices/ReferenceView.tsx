@@ -17,7 +17,14 @@ import {
 
 interface Props {
   data: NoticeData;
+  /** 甜蜜乐章只有游戏数据文件能覆盖的表；玩家整理的静态表不显示。 */
+  dataOnly?: boolean;
 }
+
+/** 这些便签是主站玩家从社区表格整理的，游戏数据文件里没有对应真源。 */
+const COMMUNITY_SECTIONS = new Set([
+  'debut', 'album', 'penalty', 'schedule', 'leniency', 'awards',
+]);
 
 /** 便签索引：标题与滚动定位都用这一份，顺序即页面顺序。 */
 const SECTIONS = [
@@ -85,7 +92,7 @@ function AlbumTd({ cell, colSpan }: { cell?: AlbumCell; colSpan?: number }) {
  *
  *  宽屏排成两列便签（表窄的两块并排），右侧是「本页小结」：点条目滚到对应便签，
  *  滚动时反过来高亮当前所在的那块。 */
-export default function ReferenceView({ data }: Props) {
+export default function ReferenceView({ data, dataOnly = false }: Props) {
   // 类型 → 分类，用通告数据本身推导，避免在代码里再维护一份类型清单。
   const typeCategory = useMemo(() => {
     const map = new Map<string, string>();
@@ -125,8 +132,11 @@ export default function ReferenceView({ data }: Props) {
 
   const hasNotes = (data.notes ?? []).length > 0;
   const sections = useMemo(
-    () => SECTIONS.filter((section) => section.key !== 'notes' || hasNotes),
-    [hasNotes],
+    () => SECTIONS.filter((section) =>
+      (section.key !== 'notes' || hasNotes) &&
+      (!dataOnly || !COMMUNITY_SECTIONS.has(section.key))
+    ),
+    [hasNotes, dataOnly],
   );
 
   return (
@@ -225,6 +235,7 @@ export default function ReferenceView({ data }: Props) {
             </p>
           </NoteCard>
 
+          {!dataOnly && (
           <NoteCard
             name="debut"
             tone="bg-tag-news"
@@ -265,7 +276,9 @@ export default function ReferenceView({ data }: Props) {
               ))}
             </div>
           </NoteCard>
+          )}
 
+          {!dataOnly && (
           <NoteCard
             name="album"
             tone="bg-tag-follow"
@@ -325,6 +338,7 @@ export default function ReferenceView({ data }: Props) {
               </table>
             </div>
           </NoteCard>
+          )}
 
           <NoteCard
             name="grades"
@@ -377,6 +391,7 @@ export default function ReferenceView({ data }: Props) {
             </div>
           </NoteCard>
 
+          {!dataOnly && (
           <NoteCard
             name="penalty"
             tone="bg-alert"
@@ -396,7 +411,9 @@ export default function ReferenceView({ data }: Props) {
               </tbody>
             </table>
           </NoteCard>
+          )}
 
+          {!dataOnly && (
           <NoteCard
             name="schedule"
             tone="bg-growth"
@@ -437,7 +454,9 @@ export default function ReferenceView({ data }: Props) {
               ))}
             </div>
           </NoteCard>
+          )}
 
+          {!dataOnly && (
           <NoteCard
             name="leniency"
             tone="bg-tag-talk"
@@ -456,7 +475,9 @@ export default function ReferenceView({ data }: Props) {
               ))}
             </ul>
           </NoteCard>
+          )}
 
+          {!dataOnly && (
           <NoteCard
             name="awards"
             tone="bg-series"
@@ -491,6 +512,7 @@ export default function ReferenceView({ data }: Props) {
               </tbody>
             </table>
           </NoteCard>
+          )}
 
           <NoteCard
             name="growth"
