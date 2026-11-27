@@ -44,20 +44,23 @@ export interface RequirementRow {
 }
 
 /** 角色在自身难度下，每项能力需要落在哪个区间。数值来自「难度对照表」，
- *  组合方式是 等级字母 × 星数，和游戏内的随机要求一致。 */
+ *  组合方式是 等级字母 × 星数，和游戏内的随机要求一致。没有星级真值时
+ *  仍给等级字母，但区间留「—」，不用默认一星冒充。 */
 export function requirementsFor(
   data: NoticeData,
   notice: Notice,
   role: NoticeRole,
 ): RequirementRow[] {
   const gradeRow = findGrade(data, notice, role);
-  const scale = data.scale.find((row) => row.stars === starsOf(role));
-  if (!gradeRow || !scale) return [];
+  if (!gradeRow) return [];
+  const scale = role.difficulty == null
+    ? null
+    : data.scale.find((row) => row.stars === starsOf(role)) ?? null;
   const rows: RequirementRow[] = [];
   for (const ability of data.abilities) {
     const grade = gradeRow.grades[ability];
     if (!grade) continue;
-    rows.push({ ability, grade, range: scale.ranges[grade] ?? '—' });
+    rows.push({ ability, grade, range: scale?.ranges[grade] ?? '—' });
   }
   return rows;
 }
@@ -120,9 +123,12 @@ export function gainsFor(
   return findGrade(data, notice, role)?.gains ?? {};
 }
 
+/** 一张卡的星级区间只有全部角色都有真值才成立；缺一个就整卡不显示，
+ *  免得把没被存档覆盖的角色当成一星拉低区间。 */
 export function difficultyRange(notice: Notice): [number, number] | null {
-  const values = (notice.roles ?? []).map(starsOf);
-  if (!values.length) return null;
+  const roles = notice.roles ?? [];
+  if (!roles.length || roles.some((role) => role.difficulty == null)) return null;
+  const values = roles.map(starsOf);
   return [Math.min(...values), Math.max(...values)];
 }
 

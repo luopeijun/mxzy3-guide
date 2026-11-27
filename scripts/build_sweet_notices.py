@@ -17,8 +17,17 @@
 游戏数据里，脚本不会编造，只留空并在 notes 里交代。能力影响每日值原本也
 被误判为缺失，实际就在 NeedEffect.dat 后半段，现已接入。
 
+角色星级（1~5）不在静态 Case 本体里，是游戏接取通告时写进存档的：
+- 存档是 4B 长度头 + zlib，解压后按 `[1][0][0][0][6B 通告角色码][NUL]` 找角色
+  记录，`+12` 是角色类型、`+16` 是星级、`+28..+64` 是九项能力门槛。
+- 11 份冻结存档交叉验证：1740 个多存档出现的角色码星级 100% 一致，门槛会变
+  但始终落在对应星级的 Difficulty.dat 区间内。星级是通告角色的固定属性。
+- 角色码末位是角色槽序号，静态本体 ROLE_OFFSETS 的第 i 个槽对应 `code + str(i+1)`。
+只给有真值的角色写 `difficulty`，没被存档覆盖的角色留空，前端不显示星级，
+绝不拿 `difficulty ?? 1` 兜底造出假的一星。
+
 用法：
-    python scripts/build_sweet_notices.py [--data <game data dir>]
+    python scripts/build_sweet_notices.py [--data <game data dir>] [--saves <save dir>]
 """
 
 import argparse
@@ -37,6 +46,7 @@ except ImportError:  # pragma: no cover - 只在重新烘焙时需要
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DATA = r"D:\Program Files (x86)\Softstar\Stardom3 - Sweet Melody\Data"
 OUT = os.path.join(ROOT, "public", "data", "sweet", "notices.json")
+DEFAULT_SAVES = os.path.join(ROOT, "tests", "fixtures", "saves", "sweet")
 BLOCK_SIZE = 10188
 ROLE_OFFSETS = (2036, 4076, 6116, 8156)
 
@@ -283,7 +293,58 @@ def load_special_effects(data_dir):
     return out
 
 
-def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters):
+def load_role_stars(save_dir):
+    """从冻结存档烘焙「通告角色码 → 星级」真值表。
+
+    存档格式是 4B 长度头 + zlib；角色记录以 `[1][0][0][0][6B ASCII 码][NUL]`
+    起头，`+12` 角色类型、`+16` 星级、`+28..+64` 九项门槛。严格过滤掉宽松
+    扫描会命中的假阳性（例如 SH005 在非角色记录上被误读成 2★）。星级跨存档
+    已验证 100% 稳定，重复角色码取首次出现即可。
+    """
+    stars = {}
+    if not os.path.isdir(save_dir):
+        raise SystemExit("存档目录不存在：%s" % save_dir)
+    files = sorted(
+        os.path.join(save_dir, name)
+        for name in os.listdir(save_dir)
+        if name.lower().endswith(".sav")
+    )
+    for path in files:
+        with open(path, "rb") as handle:
+            packed = handle.read()
+        if len(packed) < 4:
+            continue
+        try:
+            raw = zlib.decompress(packed[4:])
+        except zlib.error:
+            continue
+        for at in range(len(raw) - 96):
+            if raw[at] != 1 or raw[at + 1:at + 4] != b"\x00\x00\x00":
+                continue
+            end = at + 4
+            while end < at + 11 and 0x30 <= raw[end] <= 0x7a:
+                end += 1
+            code_len = end - (at + 4)
+            if not (5 <= code_len <= 6) or raw[end] != 0:
+                continue
+            role_code = raw[at + 4:end].decode("ascii", "replace")
+            if not role_code[:2].isalpha() or role_code in stars:
+                continue
+            role_type = struct.unpack_from("<i", raw, at + 12)[0]
+            star = struct.unpack_from("<i", raw, at + 16)[0]
+            gates = [
+                struct.unpack_from("<i", raw, at + 28 + index * 4)[0]
+                for index in range(9)
+            ]
+            if not (1 <= role_type <= 11 and 1 <= star <= 5):
+                continue
+            if not all(0 <= value <= 999 for value in gates):
+                continue
+            stars[role_code] = star
+    return stars
+
+
+def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters, stars=None):
     notices = []
     cat_counts = {}
     seen = set()
@@ -336,7 +397,7 @@ def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters)
             if producer_id and characters.get(producer_id):
                 notice["producer"] = characters[producer_id]
             notice_roles = []
-            for offset in ROLE_OFFSETS:
+            for slot, offset in enumerate(ROLE_OFFSETS):
                 role_rec = block[offset:offset + 1024]
                 if role_rec[:6] != code_bytes:
                     continue
@@ -348,6 +409,13 @@ def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters)
                 role_brief = simplify(text_runs(role_rec, 104))
                 if role_brief:
                     entry["brief"] = role_brief
+                # 存档角色码末位是槽位序号（1..4），静态槽 +8 是角色类型编号，
+                # 两套编号不同，必须按槽位顺序对应，不能用 role_index 查。
+                if stars:
+                    star = stars.get(code + str(slot + 1))
+                    if star is not None:
+                        entry["difficulty"] = star
+                        entry["starSource"] = "存档"
                 notice_roles.append(entry)
             if notice_roles:
                 notice["roles"] = notice_roles
@@ -360,14 +428,16 @@ def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters)
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=DEFAULT_DATA)
+    parser.add_argument("--saves", default=DEFAULT_SAVES)
     args = parser.parse_args()
 
     roles = load_names(os.path.join(args.data, "RoleType.dat"))
     company_by_seq, overseas = load_company_tables(args.data)
     _companies, producers = load_production(args.data)
     characters = load_character_names(args.data)
+    stars = load_role_stars(args.saves)
     notices, cat_counts = load_cases(
-        args.data, roles, company_by_seq, overseas, producers, characters
+        args.data, roles, company_by_seq, overseas, producers, characters, stars
     )
 
     categories = [
@@ -375,11 +445,19 @@ def main():
         for _file, cat, _class, _type in CASE_FILES
     ]
     role_count = sum(len(notice.get("roles", [])) for notice in notices)
+    star_count = sum(
+        sum(1 for role in notice.get("roles", []) if role.get("difficulty") is not None)
+        for notice in notices
+    )
     data = {
         "meta": {
             "noticeCount": len(notices),
             "roleCount": role_count,
-            "sources": ["甜蜜乐章安装目录 Data/*.dat"],
+            "starCount": star_count,
+            "sources": [
+                "甜蜜乐章安装目录 Data/*.dat",
+                "冻结存档的角色星级（跨存档交叉验证）",
+            ],
             "generatedBy": "scripts/build_sweet_notices.py",
         },
         "abilities": list(ABILITIES),
@@ -391,6 +469,8 @@ def main():
         "growth": [],
         "notes": [
             "编号、名称、剧情简介、角色与角色简介、子类型、等级要求、数值区间、拍摄期间每天的能力影响与特殊要求标志来自游戏数据文件。",
+            "角色星级来自存档里的通告角色记录（1~5★），跨存档验证一致；静态 Case 本体没有这个字段。存档没覆盖到的角色不显示星级，不用默认值代替。",
+            "能力门槛每次接取会在该星级的区间内重新抽取，所以只给星级、不烘焙门槛值；能力要求按等级与星级区间现算。",
             "默认艺人、特殊要求的每日属性增减与艺人成长率不在游戏数据文件里，暂留空。",
         ],
     }
@@ -399,8 +479,10 @@ def main():
         json.dump(data, handle, ensure_ascii=False, indent=2)
         handle.write("\n")
     grade_rows = data["grades"]
-    print("notices: %d  roles: %d  grades: %d  -> %s" %
-          (len(notices), role_count, len(grade_rows), OUT))
+    print("notices: %d  roles: %d  starred: %d  grades: %d  -> %s" %
+          (len(notices), role_count, star_count, len(grade_rows), OUT))
+    print("save role codes: %d  star coverage: %d/%d" %
+          (len(stars), star_count, role_count))
     print("grades with gains: %d  with special kinds: %d" %
           (sum(1 for row in grade_rows if row.get("gains")),
            sum(1 for row in grade_rows if row.get("specialKinds"))))

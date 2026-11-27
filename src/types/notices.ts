@@ -12,8 +12,10 @@ export interface NoticeRole {
   id?: string;
   /** 电影/电视剧是「男主角」，广告是「男性」，唱片是「团体」，主持是「主持人」。 */
   name: string;
-  /** 1–5，来源表里是 1.0–5.0 的浮点。 */
+  /** 1–5，来源表里是 1.0–5.0 的浮点。甜蜜乐章来自存档的真值（整数）。 */
   difficulty?: number;
+  /** 甜站星级来源标记（存档），仅用于说明，不参与计算。 */
+  starSource?: string;
   /** 「搞笑」「反派」「反串」等，复合标签已拆开。 */
   specialKinds?: string[];
   special?: NoticeSpecial;

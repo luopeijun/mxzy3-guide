@@ -174,8 +174,11 @@ export default function NoticeCard({
                   )}
                 >
                   <span className="font-medium">{role.name}</span>
-                  {/* 角色行沿用「4★」这种简短写法：五颗星在这里太占宽，一排芯片会被撑开。 */}
-                  {showStars && <span className="font-semibold tabular-nums text-gold">{starsOf(role)}★</span>}
+                  {/* 角色行沿用「4★」这种简短写法：五颗星在这里太占宽，一排芯片会被撑开。
+                      没有星级真值的角色不显示，绝不拿默认一星冒充。 */}
+                  {showStars && role.difficulty != null && (
+                    <span className="font-semibold tabular-nums text-gold">{starsOf(role)}★</span>
+                  )}
                   {artist && <span className="font-semibold text-brand">{artist}</span>}
                 </span>
               );

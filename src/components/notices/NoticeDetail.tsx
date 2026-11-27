@@ -76,7 +76,9 @@ function RoleBlock({
   role: NoticeRole;
   showStars?: boolean;
 }) {
-  const stars = starsOf(role);
+  // 只有存档真值才显示星级；没覆盖到的角色保留能力等级，但区间留「—」。
+  const hasStar = showStars && role.difficulty != null;
+  const stars = hasStar ? starsOf(role) : 0;
   const requirements = useMemo(() => requirementsFor(data, notice, role), [data, notice, role]);
   const notes = specialNotes(data, notice, role);
   const thresholds = thresholdsFor(role);
@@ -90,7 +92,7 @@ function RoleBlock({
     <li data-notice-role className="rounded-ui-md border border-line bg-surface p-3">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-ui-sm font-semibold text-ink">{role.name}</span>
-        {showStars && <span className="text-ui-xs font-semibold tabular-nums text-gold">{stars}★</span>}
+        {hasStar && <span className="text-ui-xs font-semibold tabular-nums text-gold">{stars}★</span>}
         {role.defaultArtist && (
           <span className="rounded-full bg-brand-soft px-2 py-0.5 text-ui-2xs text-brand-strong">
             默认 {role.defaultArtist}
@@ -101,14 +103,14 @@ function RoleBlock({
       {requirements.length > 0 ? (
         <div className="mt-2">
           <div className="text-ui-2xs text-ink-faint">
-            能力要求{showStars ? ` · ${stars} 星` : ''}
+            能力要求{hasStar ? ` · ${stars} 星` : ''}
           </div>
           <div className="mt-1 grid max-w-[460px] grid-cols-2 gap-x-3 gap-y-1 nav:grid-cols-1">
             {requirements.map((row) => (
               <div key={row.ability} className="flex items-baseline gap-1.5 text-ui-2xs">
                 <span className="text-ink-muted">{row.ability}</span>
                 <span className="font-semibold text-brand-strong">{row.grade}</span>
-                {showStars && <span className="tabular-nums text-ink">{row.range}</span>}
+                {hasStar && <span className="tabular-nums text-ink">{row.range}</span>}
               </div>
             ))}
           </div>
