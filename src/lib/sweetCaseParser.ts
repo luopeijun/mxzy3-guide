@@ -2221,9 +2221,12 @@ function scanSweetShooting(
     const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
     const classId = readI32(recView, 10);
     const body = readNoticeBody(rec, recView, code, tables, allStars, tailReservations, classId);
-    if (!body || body.roles.length === 0 || body.dates.length < 3) continue;
-    const start = body.dates[1].value;
-    const end = body.dates[2].value;
+    // 日期组数不固定：已开拍的本体常见「开拍 / 杀青」两组（TV701），
+    // 也有「开放接取 / 开拍 / 杀青」三组（TVANK）。统一取最后两组当开拍 / 杀青，
+    // 否则只有两组时会被整条跳过（Story0008 的「學園的王子們」就是这样漏掉的）。
+    if (!body || body.roles.length === 0 || body.dates.length < 2) continue;
+    const start = body.dates[body.dates.length - 2].value;
+    const end = body.dates[body.dates.length - 1].value;
     const startDay = dayValue(start[0], start[1], start[2]);
     const endDay = dayValue(end[0], end[1], end[2]);
     // 早就杀青的旧块接取记录也非零（作品清单是历史累积），不能进拍摄中。
