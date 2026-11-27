@@ -33,6 +33,8 @@ export interface MemoData {
 }
 
 export const MEMO_STORAGE_KEY = 'mxzy3.case.memo.v1';
+/** 甜蜜乐章便签独立存档，切站不串数据。 */
+export const SWEET_MEMO_STORAGE_KEY = 'mxzy3.sweet.case.memo.v1';
 
 /** Whole days since epoch (UTC avoids timezone drift). Mirrors caseParser.dayNumber. */
 function dayNum(y: number, m: number, d: number): number {
@@ -174,10 +176,11 @@ export function findCurrentWeek(
   return memo.weeks.find((w) => day >= w.fromDay && day <= w.toDay) ?? null;
 }
 
-/** localStorage helpers — wrap in try/catch so private mode cannot break the page. */
-export function loadMemo(): MemoData | null {
+/** localStorage helpers — wrap in try/catch so private mode cannot break the page.
+ *  两站共用同一套读写，只是 key 不同；主站仍走下面的 loadMemo / saveMemo。 */
+export function loadMemoFrom(key: string): MemoData | null {
   try {
-    const raw = localStorage.getItem(MEMO_STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const data = JSON.parse(raw) as MemoData;
     if (data.version !== 1 || !Array.isArray(data.weeks)) return null;
@@ -190,11 +193,19 @@ export function loadMemo(): MemoData | null {
   }
 }
 
-export function saveMemo(data: MemoData | null): void {
+export function saveMemoTo(key: string, data: MemoData | null): void {
   try {
-    if (data) localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(data));
-    else localStorage.removeItem(MEMO_STORAGE_KEY);
+    if (data) localStorage.setItem(key, JSON.stringify(data));
+    else localStorage.removeItem(key);
   } catch {
     // ignore storage failures (private mode / quota)
   }
+}
+
+export function loadMemo(): MemoData | null {
+  return loadMemoFrom(MEMO_STORAGE_KEY);
+}
+
+export function saveMemo(data: MemoData | null): void {
+  saveMemoTo(MEMO_STORAGE_KEY, data);
 }

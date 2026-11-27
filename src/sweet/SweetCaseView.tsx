@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import type { TitleMeta } from '../lib/caseParser';
 import { nextTitle } from '../lib/titleLadder';
@@ -16,6 +16,11 @@ import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
 import { GapCourseHint, itemHintsFor } from '../ui/GapCourseHint';
 import { SWEET_SCENE_UNLOCKS } from '../lib/sweetSceneUnlocks';
+import {
+  findCurrentWeek, loadMemoFrom, parseMemoWorkbook, saveMemoTo, SWEET_MEMO_STORAGE_KEY,
+  type MemoData,
+} from '../lib/memoNotes';
+import { MemoNote } from '../ui/MemoNote';
 
 /** 称号门槛走甜蜜乐章自己的 Nickname.dat：作品统计八项同序（唱片＝专辑、主持＝节目），
  *  作品总数是八项之和；奖项编号 21..53 与主站同套。演唱会已写进称号表，
@@ -2254,6 +2259,12 @@ function SweetItemsPanel({
 /** 甜蜜乐章存档解析：游戏时间 / 公司 / 艺人卡片与合约信息。 */
 export default function SweetCaseView() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const memoInputRef = useRef<HTMLInputElement>(null);
+  /** 便签独立于存档，用自己的 localStorage key；切多少份存档都不变。 */
+  const [memo, setMemo] = useState<MemoData | null>(() => loadMemoFrom(SWEET_MEMO_STORAGE_KEY));
+  const [memoError, setMemoError] = useState('');
+  /** 翻周只是当前会话的查看位置，不写存档也不写 localStorage。 */
+  const [memoWeekOffset, setMemoWeekOffset] = useState(0);
   const [fileName, setFileName] = useState('');
   const [dragging, setDragging] = useState(false);
   const [save, setSave] = useState<SweetSave | null>(null);
@@ -2316,6 +2327,42 @@ export default function SweetCaseView() {
     setError('');
     if (inputRef.current) inputRef.current.value = '';
   };
+
+  const onPickMemo = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setMemoError('');
+    try {
+      const XLSX = await import('xlsx');
+      const buffer = await file.arrayBuffer();
+      const data = parseMemoWorkbook(buffer, file.name, XLSX);
+      saveMemoTo(SWEET_MEMO_STORAGE_KEY, data);
+      setMemo(data);
+    } catch (reason: unknown) {
+      setMemoError(reason instanceof Error ? reason.message : String(reason));
+    }
+  };
+
+  const clearMemo = () => {
+    saveMemoTo(SWEET_MEMO_STORAGE_KEY, null);
+    setMemo(null);
+    setMemoError('');
+  };
+
+  const currentMemoWeek = useMemo(
+    () => (save
+      ? findCurrentWeek(memo, { y: save.date.year, m: save.date.month, d: save.date.day })
+      : null),
+    [memo, save],
+  );
+  const currentMemoWeekIndex = currentMemoWeek && memo ? memo.weeks.indexOf(currentMemoWeek) : -1;
+  const memoWeekIndex = currentMemoWeekIndex + memoWeekOffset;
+  const memoWeek = memo && currentMemoWeekIndex >= 0 ? memo.weeks[memoWeekIndex] ?? null : null;
+  const canPrev = !!memo && currentMemoWeekIndex >= 0 && memoWeekIndex > 0;
+  const canNext = !!memo && currentMemoWeekIndex >= 0 && memoWeekIndex < memo.weeks.length - 1;
+  // 换存档或重新导入备忘录后，先回到新存档对应的那一周。
+  useEffect(() => { setMemoWeekOffset(0); }, [memo, save]);
 
   const promoGroups = useMemo(() => {
     if (!save) return [] as { code: string; name: string; category: string; items: SweetPromoNotice[] }[];
@@ -2393,6 +2440,15 @@ export default function SweetCaseView() {
               }}
               aria-label="选择甜蜜乐章存档文件"
             />
+            <input
+              ref={memoInputRef}
+              data-case-memo-upload
+              type="file"
+              accept=".xlsx,.xls,.XLSX,.XLS"
+              className="hidden"
+              onChange={(event) => { void onPickMemo(event); }}
+              aria-label="选择备忘录 Excel 文件"
+            />
             {!fileName && (
               <span className="text-ui-2xs text-ink-faint">
                 把甜蜜乐章游戏存档拖到这里，或点上面的按钮选择。
@@ -2425,6 +2481,25 @@ export default function SweetCaseView() {
 
           {save && !busy && (
             <>
+              {/* 本周便签窄屏兜底：≥1120px 右栏有常驻卡，这里只在窄屏显示。 */}
+              <div className="min-[1120px]:hidden">
+                <MemoNote
+                  week={memoWeek}
+                  weekOffset={memoWeekOffset}
+                  showNav={currentMemoWeekIndex >= 0}
+                  canPrev={canPrev}
+                  canNext={canNext}
+                  fileName={memo?.fileName ?? ''}
+                  error={memoError}
+                  onImport={() => memoInputRef.current?.click()}
+                  onClear={clearMemo}
+                  onPrev={() => setMemoWeekOffset((value) => value - 1)}
+                  onNext={() => setMemoWeekOffset((value) => value + 1)}
+                  onReset={() => setMemoWeekOffset(0)}
+                  templateHref={`${import.meta.env.BASE_URL}memo-template-sweet.xlsx`}
+                />
+              </div>
+
               {/* Game clock：与主站同一条窄条 + 品牌胶囊。 */}
               <div data-sweet-case-clock className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-ui-md border border-line bg-surface px-3 py-2 text-ui-2xs">
                 <span className="font-semibold text-ink-muted">游戏时间</span>
@@ -2977,6 +3052,22 @@ export default function SweetCaseView() {
 
       {save && !busy && (
         <aside className="fixed right-4 top-[76px] z-10 max-h-[calc(100vh-92px)] w-[248px] flex-col gap-2 hidden min-[1120px]:flex">
+          <MemoNote
+            variant="aside"
+            week={memoWeek}
+            weekOffset={memoWeekOffset}
+            showNav={currentMemoWeekIndex >= 0}
+            canPrev={canPrev}
+            canNext={canNext}
+            fileName={memo?.fileName ?? ''}
+            error={memoError}
+            onImport={() => memoInputRef.current?.click()}
+            onClear={clearMemo}
+            onPrev={() => setMemoWeekOffset((value) => value - 1)}
+            onNext={() => setMemoWeekOffset((value) => value + 1)}
+            onReset={() => setMemoWeekOffset(0)}
+            templateHref={`${import.meta.env.BASE_URL}memo-template-sweet.xlsx`}
+          />
           <div className="shrink-0">
             <SweetCaseToc save={save} />
           </div>
