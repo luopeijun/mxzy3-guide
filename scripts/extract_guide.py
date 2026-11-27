@@ -44,6 +44,8 @@ DEFAULT_HOLLYWOOD = SOURCES / "hollywood.txt"
 DEFAULT_WILL = SOURCES / "will.txt"
 # 页首提示卡：独立于 blocks，避免插入后把事件的块下标整体后移（追踪器按块下标存进度）。
 DEFAULT_WILL_NOTICE = SOURCES / "will-notice.txt"
+# 事件块下的补充说明（按事件编号挂到块上，不新增块：追踪器按块下标存进度）。
+DEFAULT_EVENT_NOTES = SOURCES / "sd-event-notes.tsv"
 DEFAULT_EXPANSION = SOURCES / "expansion.txt"
 DEFAULT_SECRETARY = SOURCES / "secretary.txt"
 DEFAULT_MANYANG = SOURCES / "manyang.txt"
@@ -2568,6 +2570,7 @@ def build(
     luousang_lufeng_sanghebei_events: Path,
     luousang_lufeng_ouyiqing_events: Path,
     will_notice: Path = DEFAULT_WILL_NOTICE,
+    event_notes: Path = DEFAULT_EVENT_NOTES,
 ) -> dict:
     rows = read_paragraphs(docx)
     sections = Sections(rows)
@@ -2855,7 +2858,65 @@ def build(
     # 攻略事件 ⇄ CG 的映射最后落到块上（手写表，缺失就跳过），
     # 放在 build 里而不是 main 里，单测才能拿同一份结果和提交的 JSON 对比。
     apply_cg_links(categories, DEFAULT_CG_LINKS)
+    apply_event_notes(categories, event_notes)
     return {"meta": meta, "categories": categories}
+
+
+def read_event_notes(path: Path) -> dict[str, dict[str, list[dict]]]:
+    """读「事件块下的补充说明」：``节点 id \\t 事件编号 \\t 分组标题 \\t 版本与条件 \\t 正文``。
+
+    同一分组的多行合成一张小卡（如三次鼓励事件的三套对话版本）。挂在块上的
+    ``eventNotes`` 字段，**不进 blocks**：追踪器按块下标存进度，插块会整体错位。
+    """
+    if not path.exists():
+        return {}
+    notes: dict[str, dict[str, list[dict]]] = {}
+    for number, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+        line = raw.rstrip("\n")
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) != 5:
+            raise ValueError(f"{path.name}:{number}: expected 5 columns, got {raw!r}")
+        node_id, label, group, condition, text = (part.strip() for part in parts)
+        if not all((node_id, label, group, condition, text)):
+            raise ValueError(f"{path.name}:{number}: empty field in {raw!r}")
+        groups = notes.setdefault(node_id, {}).setdefault(label, [])
+        bucket = next((g for g in groups if g["title"] == group), None)
+        if bucket is None:
+            bucket = {"title": group, "items": []}
+            groups.append(bucket)
+        bucket["items"].append({"label": condition, "text": text})
+    return notes
+
+
+def apply_event_notes(categories: list[dict], path: Path) -> int:
+    """把补充说明按「节点 id + 事件编号」贴到事件块上；编号对不上直接报错。"""
+    notes = read_event_notes(path)
+    if not notes:
+        return 0
+    applied = 0
+
+    def walk(node: dict) -> None:
+        nonlocal applied
+        bucket = notes.get(node["id"])
+        if bucket:
+            for block in node["blocks"]:
+                groups = bucket.get(str(block.get("label", "")))
+                if block["kind"] != "event" or not groups:
+                    continue
+                block["eventNotes"] = groups
+                bucket.pop(block["label"], None)
+                applied += len(groups)
+        for child in node["children"]:
+            walk(child)
+
+    for category in categories:
+        walk(category)
+    leftover = {node: sorted(labels) for node, labels in notes.items() if labels}
+    if leftover:
+        raise ValueError(f"{path.name}: no such event {leftover}")
+    return applied
 
 
 def apply_cg_links(categories: list[dict], path: Path) -> int:

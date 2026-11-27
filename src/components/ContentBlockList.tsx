@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import type { ReactNode } from 'react';
-import type { ContentBlock } from '../types/guide';
+import type { ContentBlock, EventNoteGroup } from '../types/guide';
 import { groupBlocks } from '../lib/guide';
 import type { IndexedBlock } from '../lib/guide';
 import { rememberCgOrigin } from '../lib/cgOrigin';
@@ -106,6 +106,31 @@ function eventDomId(head: IndexedBlock): string {
   return head.anchor ?? `ev${head.index}`;
 }
 
+/** 事件块下的补充说明：一组一张小卡，组内每行「版本 / 条件」加粗、对话另起一行。
+ *  与正文 `note` 同一套便签配色，避免另造版式。 */
+function EventNotes({ groups }: { groups: EventNoteGroup[] }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {groups.map((group) => (
+        <div
+          key={group.title}
+          className="rounded-r-ui-sm border-l-[3px] border-gold bg-note-soft px-2.5 py-1.5"
+        >
+          <p className="text-ui-2xs font-bold leading-[1.8] text-note">{group.title}</p>
+          <div className="mt-0.5 flex flex-col gap-1">
+            {group.items.map((item) => (
+              <p key={item.label} className="text-ui-2xs leading-[1.8] text-note">
+                <span className="font-bold">{item.label}</span>
+                <span className="mt-[1px] block">{item.text}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** 平铺（非嵌套）模式下的一张事件卡：自身内容 + 自己的选项/提醒。 */
 function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
   const [head, ...rest] = blocks;
@@ -116,6 +141,11 @@ function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
       className={`mb-3 scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
     >
       <EventHead head={head} />
+      {head.eventNotes && head.eventNotes.length > 0 && (
+        <div className="mt-1.5 pl-[40px]">
+          <EventNotes groups={head.eventNotes} />
+        </div>
+      )}
       {rest.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">
           {rest.map((block) => <EventDetail key={block.index} block={block} />)}
@@ -135,6 +165,11 @@ function EventNode({ node }: { node: EventNode }) {
       className={`scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
     >
       <EventHead head={head} />
+      {head.eventNotes && head.eventNotes.length > 0 && (
+        <div className="mt-1.5 pl-[40px]">
+          <EventNotes groups={head.eventNotes} />
+        </div>
+      )}
       {rest.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5 pl-[40px]">
           {rest.map((block) => <EventDetail key={block.index} block={block} />)}
@@ -249,17 +284,24 @@ function BlockView({ block, bigHeadings = false }: { block: IndexedBlock; bigHea
       );
     case 'event':
       return (
-        <div className="mb-1 flex items-start gap-2.5 text-ui-sm leading-[1.8]">
-          {block.label && (
-            <span className="mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs bg-brand-soft px-[5px] text-center text-ui-2xs font-bold leading-[1.7] text-brand-strong">
-              {block.label}
+        <>
+          <div className="mb-1 flex items-start gap-2.5 text-ui-sm leading-[1.8]">
+            {block.label && (
+              <span className="mt-[3px] min-w-[30px] shrink-0 rounded-ui-xs bg-brand-soft px-[5px] text-center text-ui-2xs font-bold leading-[1.7] text-brand-strong">
+                {block.label}
+              </span>
+            )}
+            <span className="min-w-0 flex-1 break-words">
+              {block.tag && <TypeTag label={block.tag} />}
+              <HighlightText text={block.text} />
             </span>
+          </div>
+          {block.eventNotes && block.eventNotes.length > 0 && (
+            <div className="mb-1 pl-10">
+              <EventNotes groups={block.eventNotes} />
+            </div>
           )}
-          <span className="min-w-0 flex-1 break-words">
-            {block.tag && <TypeTag label={block.tag} />}
-            <HighlightText text={block.text} />
-          </span>
-        </div>
+        </>
       );
     case 'option':
       return <OptionLine text={block.text} className="mb-[3px] ml-10 phone:ml-[22px]" />;

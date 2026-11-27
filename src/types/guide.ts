@@ -9,6 +9,14 @@ export type ContentBlockKind =
   | 'item'
   | 'table';
 
+/** 事件块下方的补充说明，按事件编号挂在块上（`eventNotes`）。一「组」渲染成
+ *  一张小卡，组内每行是「版本 / 条件 + 正文」，例如 SD 兄弟三次鼓励事件的对话版本。
+ *  不新增块的原因见 `GuideNotice`：追踪器按块下标存进度。 */
+export interface EventNoteGroup {
+  title: string;
+  items: { label: string; text: string }[];
+}
+
 export interface TableColumn {
   key: string;
   label: string;
@@ -71,6 +79,8 @@ export interface ContentBlock {
   cgIds?: string[];
   /** 事件块的锚点 id（`ev<块下标>`），CG 图鉴反跳时用 `#/guide/<nodeId>~<anchor>` 定位。 */
   anchor?: string;
+  /** 事件块下的补充说明（版本 / 条件 / 对话），来自 `sources/sd-event-notes.tsv`。 */
+  eventNotes?: EventNoteGroup[];
   /** Answer of a `qa` block, shown under the question. */
   answer?: string;
   /** Labelled lines of an `item` block (name in `text`). */
