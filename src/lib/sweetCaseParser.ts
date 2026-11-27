@@ -1637,7 +1637,8 @@ function scanSweetPromo(
 /** 归档作品的接演网格：24B `[flag][id][成功][失败][完美][酬劳]`。
  *  网格起点随角色定义块长度浮动（Story0050 里 +812~+848 都出现过），
  *  写死 +816 会把日期年份当成艺人编号 / 酬劳。用「第一条有酬劳的真记录」
- *  定出 24B 网格，再向前后双向扩展；没有酬劳时才退回逐字节找最长合法链。 */
+ *  定出 24B 网格，再向前后双向扩展；没有酬劳时才退回逐字节找最长合法链。
+ *  pay=0 是真值不是错位：该艺人拍摄时尚未签约，酬劳不归我方，页面显示「—」。 */
 function readSweetArchiveGrid(recView: DataView, starIds: Set<number>) {
   type Row = { artistId: number; success: number; fail: number; perfect: number; pay: number; slot: number };
   const from = 700;
