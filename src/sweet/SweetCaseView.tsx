@@ -2289,7 +2289,7 @@ export default function SweetCaseView() {
   );
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json`)
+    fetch(`${import.meta.env.BASE_URL}data/sweet/star-roles.json?v=${Date.now()}`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('艺人表加载失败'))))
       .then((data: { stars?: Record<string, string>; genders?: Record<string, number> }) => {
         setStars(data.stars ?? {});
@@ -2310,11 +2310,20 @@ export default function SweetCaseView() {
         setTitles(data.titles ?? {});
         setTitleMeta(data.titleMeta ?? {});
       })
-      .catch(() => { /* 不挡住存档解析 */ });
+      .catch(() => setError((prev) => prev || '称号表加载失败，称号会显示成编号。'));
   }, []);
+
+  /** 最近一次读的存档：表比存档晚到时要用它重解析一遍（见下面的 effect）。 */
+  const pickedFileRef = useRef<File | null>(null);
+  /** 已经用完整表解析过，避免表到齐后重复重解析。 */
+  const hydratedRef = useRef(false);
 
   const receive = async (file?: File | null) => {
     if (!file) return;
+    pickedFileRef.current = file;
+    hydratedRef.current = Object.keys(stars).length > 0
+      && Object.keys(titles).length > 0
+      && Object.keys(tables).length > 0;
     setFileName(file.name);
     setError('');
     setSave(null);
@@ -2330,7 +2339,24 @@ export default function SweetCaseView() {
     }
   };
 
+  // 艺人表 / 称号表 / 通告表都是异步拉的：如果存档先到、表还没加载完，艺人名会退回
+  // 「艺人+编号」、称号会退回编号。等表齐了自动用同一份存档重解析一次。
+  useEffect(() => {
+    const file = pickedFileRef.current;
+    if (!file || hydratedRef.current) return;
+    if (!Object.keys(stars).length || !Object.keys(titles).length || !Object.keys(tables).length) return;
+    hydratedRef.current = true;
+    void (async () => {
+      try {
+        setSave(await parseSweetSave(file, stars, titles, { ...tables, genders }));
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : '存档读取失败');
+      }
+    })();
+  }, [stars, titles, tables, genders]);
+
   const clear = () => {
+    pickedFileRef.current = null;
     setFileName('');
     setSave(null);
     setError('');
