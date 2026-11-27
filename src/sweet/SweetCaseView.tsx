@@ -2769,11 +2769,15 @@ export default function SweetCaseView() {
                         </div>
                         <div data-sweet-case-team-counts className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                           <span className="text-ink-faint">通告统计</span>
-                          <span className="work-count-chip relative inline-flex">
-                            <span data-sweet-case-team-work-count className="rounded px-1 py-0.5 text-ink-faint">
-                              唱片 <b className="font-semibold text-ink">{team.workCount}</b>张
-                            </span>
-                          </span>
+                          <SweetWorkCountChip
+                            dataName="data-sweet-case-team-work-count"
+                            dataValue={String(team.workCount)}
+                            dataNoticeIndex={2}
+                            label="唱片"
+                            value={team.workCount}
+                            works={team.works}
+                            title={`${team.name} 唱片`}
+                          />
                         </div>
                         {save.awards.some((award) => awardBelongsToGroup(award, team)) && (
                           <div data-sweet-case-team-awards className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">

@@ -165,6 +165,9 @@ export interface SweetTeam {
   leaderId: number;
   leaderName: string;
   workCount: number;
+  /** 团体唱片明细，供团体卡「通告统计」hover 展示。真源＝记事表事项 13 且
+   *  `+24`（团体代表艺人编号）> 0 的唱片发行记录，按 `+24` 归属到所属团体。 */
+  works: SweetWorkRecord[];
   /** 团体名气：存档 nameEnd+4 是累加值，除以 1000 取整即游戏界面显示值。 */
   fame: number;
   /** 团体人气：存档 nameEnd+8 是累加值，除以 1000 取整即游戏界面显示值。 */
@@ -866,11 +869,84 @@ function scanSweetTeams(bytes: Uint8Array, view: DataView, stars: Record<string,
       leaderId: memberIds[0] ?? 0,
       leaderName: memberIds.length ? nameOf(memberIds[0]) : '',
       workCount: rawWorkCount >= 0 && rawWorkCount <= 99 ? rawWorkCount : 0,
+      works: [],
       fame: sweetTeamDisplayValue(readI32(view, nameEnd + 4)),
       popularity: sweetTeamDisplayValue(readI32(view, nameEnd + 8)),
     });
   }
   return out.sort((a, b) => a.code - b.code);
+}
+
+/** 团体唱片明细：记事表事项 13（唱片发行）且 `+24`（团体代表艺人编号）> 0。
+ *  `+24` 与静态 CD roleType=4 双向核对零矛盾（+24>0 全是团体、=0 全是个人），
+ *  自制唱片这类动态码也适用，不必依赖静态 Case 表。按 `+24` 落到所属团体；
+ *  同团同码只保留一条（记事表会挤掉旧记录，但去重后顺序仍按发行日）。 */
+function scanSweetGroupWorks(
+  bytes: Uint8Array,
+  view: DataView,
+  teams: SweetTeam[],
+  diaryTable: { offset: number; count: number } | null,
+  noticeInfo: Map<string, SweetNoticeInfo>,
+  tables: SweetCaseTables,
+): Map<number, SweetWorkRecord[]> {
+  const out = new Map<number, SweetWorkRecord[]>();
+  if (!diaryTable) return out;
+  const teamOfMember = new Map<number, SweetTeam>();
+  for (const team of teams) {
+    for (const id of team.memberIds) teamOfMember.set(id, team);
+  }
+  const seen = new Set<string>();
+  for (let i = 0; i < diaryTable.count; i += 1) {
+    const p = diaryTable.offset + 8 + i * SWEET_DIARY_STRIDE;
+    if (readI32(view, p + 16) !== 13) continue;
+    const workCode = readCode(bytes, p + 56, 5);
+    if (!workCode || !workCode.startsWith('CD')) continue;
+    const rep = readI32(view, p + 24);
+    if (rep <= 0) continue;
+    const team = teamOfMember.get(rep);
+    if (!team) continue;
+    const key = `${team.code}|${workCode}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const year = readI32(view, p);
+    const month = readI32(view, p + 4);
+    const day = readI32(view, p + 8);
+    const info = noticeInfo.get(workCode);
+    const list = out.get(team.code) ?? [];
+    list.push({
+      date: `${year}/${month}/${day}`,
+      year, month, day,
+      workCode,
+      workName: info?.name || tables.cases?.[workCode] || workCode,
+      company: info?.company || tables.companyByCode?.[workCode] || '',
+      artistId: rep,
+      noticeIndex: 2,
+      role: '團體',
+      order: i,
+    });
+    out.set(team.code, list);
+  }
+  // 记事表容量有限会挤掉最早的发行记录，所以明细条数可能少于团体记录里的
+  // 累计唱片数。与个人作品同一口径：多的保留最近几条，缺的补「未留存」占位，
+  // 绝不编作品名，保证 hover 条数始终等于卡片上的数字。
+  for (const team of teams) {
+    const list = out.get(team.code) ?? [];
+    list.sort((a, b) =>
+      a.year * 10000 + a.month * 100 + a.day - (b.year * 10000 + b.month * 100 + b.day)
+      || a.workCode.localeCompare(b.workCode));
+    const official = team.workCount;
+    const kept = official >= 0 && list.length > official ? list.slice(list.length - official) : list;
+    for (let k = kept.length; k < official; k += 1) {
+      kept.push({
+        date: '', year: 0, month: 0, day: 0,
+        workCode: '', workName: '（存档未留存明细）', company: '',
+        artistId: team.leaderId, noticeIndex: 2, role: '團體',
+        order: 900000 + k,
+      });
+    }
+    out.set(team.code, kept);
+  }
+  return out;
 }
 
 /** 艺人成绩里的举办活动：`[年][月][日][类型=6][事项=61..63][艺人编号]...`；
@@ -2523,6 +2599,8 @@ export async function parseSweetSave(
   );
   const selfMade = scanSweetSelfMade(bytes, date, tables, reservationStars, teams, signedIds);
   const noticeInfo = buildSweetNoticeInfoIndex(bytes, view, tables);
+  const groupWorks = scanSweetGroupWorks(bytes, view, teams, diaryTable, noticeInfo, tables);
+  for (const team of teams) team.works = groupWorks.get(team.code) ?? [];
   const events = scanDiaryEvents(bytes, view, diaryTable);
   const works = alignSweetWorks(
     locations,
