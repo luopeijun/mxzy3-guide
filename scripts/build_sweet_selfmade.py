@@ -8,7 +8,13 @@
 
 攻略里的名字与游戏内译名有 7 处出入（简繁 / 译名不同），统一走 ALIASES 归一；
 游戏里另有 13 条出品方为「纯真年代」的自制品攻略没有收录（舞台剧 12 + 电视剧 1），
-这些条目照样输出，但 guide=False、不编造条件与门槛，界面只显示名字与是否已拿到。
+这些条目照样输出，但 guide=False、不编造条件与门槛。
+
+这 13 条的归属与获得方式来自存档里的「每艺人自制清单」：任何一份甜蜜乐章存档
+都有一段 9 连编码簇（80 条），每簇对应一位艺人，三份不同存档读出来完全一致，
+且与攻略的艺人归属零冲突。落在簇里的走「累积自由活动」；落在簇外的 6 条里面，
+攻略明确写「触发剧情获得」的三条（红花 / 温柔时刻 / 从来不曾爱过）全在簇外，
+所以簇外按「剧情直接获得」处理。天数与属性门槛游戏数据里没有，不编。
 """
 
 import json
@@ -51,6 +57,25 @@ ARTIST_IDS = {
 # 出品方是玩家公司，这些通告就是自制作品；攻略漏掉的靠它兜底。
 PLAYER_COMPANY = '纯真年代'
 CATEGORY_LABEL = {'music': '唱片', 'tv': '电视剧', 'movie': '电影', 'stage': '舞台剧'}
+
+# 攻略漏掉的 13 条：编号段 + 存档里的每艺人自制清单（9 个簇共 80 条）双向核对过，
+# 归属不是猜的。acquire 的 pool = 在清单里、要累积自由活动；story = 不在清单里，
+# 按「触发剧情直接获得」处理（池外三条攻略条目全写「触发剧情获得」，口径一致）。
+EXTRA_META = {
+    'TH711': (11, '沈惟真', 'pool'),
+    'TH721': (12, '丹尼斯', 'pool'),
+    'TH722': (12, '丹尼斯', 'pool'),
+    'TH723': (12, '丹尼斯', 'story'),
+    'TH751': (15, '慕容和希', 'pool'),
+    'TH761': (16, '卫亚', 'pool'),
+    'TH762': (16, '卫亚', 'pool'),
+    'TH771': (17, '纪翔', 'pool'),
+    'TH781': (18, '城仲瑄', 'pool'),
+    'TH782': (18, '城仲瑄', 'pool'),
+    'TH783': (18, '城仲瑄', 'pool'),
+    'TH791': (0, '其他', 'story'),
+    'TV791': (0, '其他', 'story'),
+}
 
 
 def split_condition(text):
@@ -166,6 +191,7 @@ def main():
                 'tags': tags,
                 'thresholds': thresholds,
                 'guide': True,
+                'acquire': '',
             })
 
     covered = {entry['code'] for entry in entries if entry['code']}
@@ -173,9 +199,10 @@ def main():
     for notice in notices:
         if notice.get('company') != PLAYER_COMPANY or notice['id'] in covered:
             continue
+        artist_id, artist, acquire = EXTRA_META.get(notice['id'], (0, '其他', ''))
         extras.append({
-            'artist': '',
-            'artistId': 0,
+            'artist': artist,
+            'artistId': artist_id,
             'section': notice['cat'],
             'code': notice['id'],
             'name': notice['name'],
@@ -187,7 +214,11 @@ def main():
             'tags': [],
             'thresholds': [],
             'guide': False,
+            'acquire': acquire,
         })
+    unknown = [row['code'] for row in extras if not row['acquire']]
+    if unknown:
+        raise SystemExit('攻略漏项里有没有归属/获得方式的行：%s' % ', '.join(unknown))
 
     order = {'music': 0, 'tv': 1, 'movie': 2, 'stage': 3}
     extras.sort(key=lambda row: (order.get(row['section'], 9), row['code']))

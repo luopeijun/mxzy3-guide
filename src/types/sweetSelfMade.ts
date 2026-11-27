@@ -33,6 +33,8 @@ export interface SweetSelfMadeEntry {
   tags: string[];
   thresholds: SweetSelfMadeThreshold[];
   guide: boolean;
+  /** 攻略漏项的获得方式：pool 需累积自由活动，story 触发剧情直接获得；攻略条目留空。 */
+  acquire: '' | 'pool' | 'story';
 }
 
 export interface SweetSelfMadeSectionInfo {

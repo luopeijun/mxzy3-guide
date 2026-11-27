@@ -52,7 +52,8 @@
         "两星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "杜云芊",
@@ -70,7 +71,8 @@
         "两星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "杜云芊",
@@ -105,7 +107,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "杜云芊",
@@ -140,7 +143,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -158,7 +162,8 @@
         "三星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -193,7 +198,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -228,7 +234,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -263,7 +270,8 @@
           "value": 700
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -298,7 +306,8 @@
           "value": 600
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -333,7 +342,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -368,7 +378,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -403,7 +414,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -421,7 +433,8 @@
         "五星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -456,7 +469,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -491,7 +505,8 @@
           "value": 700
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -526,7 +541,8 @@
           "value": 400
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -561,7 +577,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "史蒂芬",
@@ -596,7 +613,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -614,7 +632,8 @@
         "两星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -632,7 +651,8 @@
         "三星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -650,7 +670,8 @@
         "四星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -668,7 +689,8 @@
         "五星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -703,7 +725,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -738,7 +761,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -773,7 +797,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -808,7 +833,8 @@
           "value": 600
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -843,7 +869,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -878,7 +905,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -896,7 +924,8 @@
         "两星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -914,7 +943,8 @@
         "五星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -949,7 +979,8 @@
           "value": 360
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -984,7 +1015,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -1019,7 +1051,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -1054,7 +1087,8 @@
           "value": 700
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "卫亚",
@@ -1085,7 +1119,8 @@
           "value": 400
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "卫亚",
@@ -1120,7 +1155,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "纪翔",
@@ -1138,7 +1174,8 @@
         "五星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "纪翔",
@@ -1156,7 +1193,8 @@
         "五星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "纪翔",
@@ -1191,7 +1229,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "纪翔",
@@ -1226,7 +1265,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "城仲瑄",
@@ -1261,7 +1301,8 @@
           "value": 400
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "城仲瑄",
@@ -1292,7 +1333,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "其他",
@@ -1310,7 +1352,8 @@
         "三星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "杜云芊",
@@ -1342,7 +1385,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "杜云芊",
@@ -1378,7 +1422,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -1411,7 +1456,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -1443,7 +1489,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -1480,7 +1527,8 @@
           "value": 500
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -1518,7 +1566,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -1550,7 +1599,8 @@
           "value": 520
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -1586,7 +1636,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "卫亚",
@@ -1622,7 +1673,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "卫亚",
@@ -1658,7 +1710,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "卫亚",
@@ -1694,7 +1747,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "城仲瑄",
@@ -1727,7 +1781,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "城仲瑄",
@@ -1763,7 +1818,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "杜云芊",
@@ -1783,7 +1839,8 @@
         "男配二三星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "杜云芊",
@@ -1818,7 +1875,8 @@
           "value": 330
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "沈惟真",
@@ -1853,7 +1911,8 @@
           "value": 500
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -1890,7 +1949,8 @@
           "value": 450
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -1926,7 +1986,8 @@
           "value": 500
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "丹尼斯",
@@ -1962,7 +2023,8 @@
           "value": 500
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "姚子奇",
@@ -1980,7 +2042,8 @@
         "男双五星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -1998,7 +2061,8 @@
         "男双五星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "慕容和希",
@@ -2033,7 +2097,8 @@
           "value": 330
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "卫亚",
@@ -2052,7 +2117,8 @@
         "男配三星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "卫亚",
@@ -2088,7 +2154,8 @@
           "value": 500
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "纪翔",
@@ -2124,7 +2191,8 @@
           "value": 450
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "纪翔",
@@ -2159,7 +2227,8 @@
           "value": 500
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "城仲瑄",
@@ -2195,7 +2264,8 @@
           "value": 420
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "城仲瑄",
@@ -2230,7 +2300,8 @@
           "value": 500
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "城仲瑄",
@@ -2266,7 +2337,8 @@
           "value": 550
         }
       ],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     },
     {
       "artist": "其他",
@@ -2285,12 +2357,13 @@
         "女配3星"
       ],
       "thresholds": [],
-      "guide": true
+      "guide": true,
+      "acquire": ""
     }
   ],
   "extras": [
     {
-      "artist": "",
+      "artist": "其他",
       "artistId": 0,
       "section": "tv",
       "code": "TV791",
@@ -2302,11 +2375,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "story"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "沈惟真",
+      "artistId": 11,
       "section": "stage",
       "code": "TH711",
       "name": "窗外",
@@ -2317,11 +2391,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "丹尼斯",
+      "artistId": 12,
       "section": "stage",
       "code": "TH721",
       "name": "永恒之钥",
@@ -2332,11 +2407,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "丹尼斯",
+      "artistId": 12,
       "section": "stage",
       "code": "TH722",
       "name": "驯妻记",
@@ -2347,11 +2423,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "丹尼斯",
+      "artistId": 12,
       "section": "stage",
       "code": "TH723",
       "name": "从接吻开始",
@@ -2362,11 +2439,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "story"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "慕容和希",
+      "artistId": 15,
       "section": "stage",
       "code": "TH751",
       "name": "彻夜谋杀",
@@ -2377,11 +2455,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "卫亚",
+      "artistId": 16,
       "section": "stage",
       "code": "TH761",
       "name": "杀死我杀死你",
@@ -2392,11 +2471,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "卫亚",
+      "artistId": 16,
       "section": "stage",
       "code": "TH762",
       "name": "爱是无限回圈",
@@ -2407,11 +2487,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "纪翔",
+      "artistId": 17,
       "section": "stage",
       "code": "TH771",
       "name": "直到永远",
@@ -2422,11 +2503,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "城仲瑄",
+      "artistId": 18,
       "section": "stage",
       "code": "TH781",
       "name": "地下铁之旅",
@@ -2437,11 +2519,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "城仲瑄",
+      "artistId": 18,
       "section": "stage",
       "code": "TH782",
       "name": "未来启示录",
@@ -2452,11 +2535,12 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
-      "artistId": 0,
+      "artist": "城仲瑄",
+      "artistId": 18,
       "section": "stage",
       "code": "TH783",
       "name": "乡愁",
@@ -2467,10 +2551,11 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "pool"
     },
     {
-      "artist": "",
+      "artist": "其他",
       "artistId": 0,
       "section": "stage",
       "code": "TH791",
@@ -2482,7 +2567,8 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
-      "guide": false
+      "guide": false,
+      "acquire": "story"
     }
   ]
 }

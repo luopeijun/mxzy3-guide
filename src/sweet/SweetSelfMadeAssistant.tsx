@@ -10,7 +10,11 @@ import type { SweetSelfMadeData, SweetSelfMadeEntry } from '../types/sweetSelfMa
  * 已出现在自制作品列表里的打勾，悬停看条件与数值门槛对比。
  *
  * 「已拿到」＝存档 CaseCreate 段里能读到的自制作品编码（save.selfMade），
- * 和主站同口径：只看作品在列表里，不要求已经制作完成。 */
+ * 和主站同口径：只看作品在列表里，不要求已经制作完成。
+ *
+ * 攻略漏收的 13 条（舞台剧整类 + 一条电视剧）按存档里的「每艺人自制清单」
+ * 归到对应艺人组，不再单列；它们只在 hover 里多一句「攻略未收录」，
+ * 并按获得方式分成「累积自由活动 / 触发剧情直接获得」两种说明。 */
 
 /** 与存档九项属性同序，用来把门槛标签换成数值下标。 */
 const ATTRS = ['演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信'];
@@ -18,8 +22,8 @@ const ATTR_INDEX: Record<string, number> = Object.fromEntries(
   ATTRS.map((name, index) => [name, index]),
 );
 
-const EXTRA_GROUP_NAME = '攻略未收录';
-const EXTRA_CONDITION = '攻略未收录此条，只能按作品名对上，条件与门槛暂缺。';
+const EXTRA_POOL_NOTE = '累积自由活动后获得，具体天数与属性门槛攻略暂未收录。';
+const EXTRA_STORY_NOTE = '触发剧情直接获得，不用累积自由活动；具体剧情条件暂未收录。';
 
 interface ArtistView {
   id: number;
@@ -153,6 +157,11 @@ function HoverCard({
       <p className="mb-1 flex items-baseline gap-2 text-ui-xs font-semibold text-ink" data-sweet-selfmade-guide-title>
         {entry.name}
         {entry.code && <span className="text-ui-2xs font-normal text-ink-faint">{entry.code}</span>}
+        {!entry.guide && (
+          <span className="rounded-full border border-line bg-surface-soft px-1 text-ui-2xs font-normal text-ink-faint">
+            攻略未收录
+          </span>
+        )}
         <span
           className={cn(
             'ml-auto text-ui-2xs font-semibold',
@@ -168,6 +177,7 @@ function HoverCard({
         <span>{entry.category}</span>
         {entry.kind && <span>· {entry.kind}</span>}
         {entry.days > 0 && <span>· 累积 {entry.days} 天自由活动</span>}
+        {!entry.guide && <span>· {entry.acquire === 'story' ? '剧情获得' : '累积型'}</span>}
       </p>
       {entry.tags.length > 0 && (
         <div className="mb-1.5 flex flex-wrap gap-1" data-sweet-selfmade-guide-tags>
@@ -180,7 +190,11 @@ function HoverCard({
       )}
       <div className="border-t border-line pt-1.5 leading-relaxed text-ink-muted" data-sweet-selfmade-guide-condition>
         <span className="mr-1 font-semibold text-ink">条件</span>
-        {entry.guide ? entry.condition : EXTRA_CONDITION}
+        {entry.guide
+          ? entry.condition
+          : entry.acquire === 'story'
+            ? EXTRA_STORY_NOTE
+            : EXTRA_POOL_NOTE}
       </div>
       {entry.guide && entry.guideName && entry.guideName !== entry.name && (
         <p className="mt-1 text-ui-2xs text-ink-faint">攻略里写作《{entry.guideName}》。</p>
@@ -229,8 +243,6 @@ export default function SweetSelfMadeAssistant({ save }: { save: SweetSave | nul
     const rosterOrder = save.artists.map((artist) => artist.id);
 
     const view = (entry: SweetSelfMadeEntry): ArtistView => {
-      // 攻略没收录的自制品没有归属艺人，单独成组排在每节最后。
-      if (!entry.guide) return { id: -1, name: EXTRA_GROUP_NAME, abilities: null };
       if (entry.artistId === 0) return { id: 0, name: '其他', abilities: null };
       const card = roster.get(entry.artistId);
       return {
@@ -258,9 +270,15 @@ export default function SweetSelfMadeAssistant({ save }: { save: SweetSave | nul
         if (entry.artistId !== 0 && !roster.has(entry.artistId)) continue;
         bucket(entry);
       }
-      // 攻略没收录的自制品也挂在同一节里，条件留空；单独成组排在最后。
-      const extras = data.extras.filter((entry) => entry.section === section.key);
-      for (const entry of extras) bucket(entry);
+      // 攻略漏收的那 13 条挂回各自艺人组，组内排在攻略条目后面。
+      for (const entry of data.extras) {
+        if (entry.section !== section.key) continue;
+        if (entry.artistId !== 0 && !roster.has(entry.artistId)) continue;
+        bucket(entry);
+      }
+      for (const group of groups.values()) {
+        group.entries.sort((a, b) => Number(b.entry.guide) - Number(a.entry.guide));
+      }
 
       const ordered = [...groups.values()].sort((a, b) => {
         const rank = (id: number) => (id <= 0 ? Number.MAX_SAFE_INTEGER : rosterOrder.indexOf(id));
