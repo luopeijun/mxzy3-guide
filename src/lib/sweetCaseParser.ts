@@ -2010,10 +2010,16 @@ function scanSweetShooting(
         }
       }
     } else {
-      // 整条通告都没付钱也要认：逐 4 字节扫，仍只认游戏艺人表里的编号。
+      // 没有 pay 锚点时逐 4 字节兜底扫（接取网格起点随通告浮动，不固定 +816）。
+      // 但逐 4 字节会把空槽的 done 字段错位读成艺人编号：新存档里
+      // `[0][0][1][0][0][0]` 被错读成 flag=0/id=1/done=0/a=0/b=0/pay=0，
+      // 造成「新开局没排通告却有一条主角拍摄中」。真接取即使还没开拍
+      // （done=0 / pay=0），同组记录里 a 或 b 也有非零值（如 16/2、11）；
+      // 除编号外全零的只可能是错位读出来的假记录，直接排除。
       for (let p = from; p + 24 <= to; p += 4) {
         const r = readAt(p);
         if (!valid(r)) continue;
+        if (r.done === 0 && r.a === 0 && r.b === 0 && r.pay === 0) continue;
         if (!progress.some((row) => row.artistId === r.id)) {
           progress.push({ artistId: r.id, done: r.done, pay: r.pay });
         }
