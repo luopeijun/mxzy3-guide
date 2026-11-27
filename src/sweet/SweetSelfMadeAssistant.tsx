@@ -4,7 +4,7 @@ import FloatingCard, { type HoverAnchor } from '../ui/FloatingCard';
 import { useSweetSelfMadeData } from '../hooks/useSweetSelfMadeData';
 import { cn } from '../lib/cn';
 import type { SweetSave } from '../lib/sweetCaseParser';
-import type { SweetSelfMadeData, SweetSelfMadeEntry } from '../types/sweetSelfMade';
+import type { SweetSelfMadeEntry } from '../types/sweetSelfMade';
 
 /* 甜蜜乐章的自制通告浮窗：列出攻略整理的自制作品一览，按当前旗下艺人筛，
  * 已出现在自制作品列表里的打勾，悬停看条件与数值门槛对比。
@@ -13,8 +13,8 @@ import type { SweetSelfMadeData, SweetSelfMadeEntry } from '../types/sweetSelfMa
  * 和主站同口径：只看作品在列表里，不要求已经制作完成。
  *
  * 攻略漏收的 13 条（舞台剧整类 + 一条电视剧）按存档里的「每艺人自制清单」
- * 归到对应艺人组，不再单列；它们只在 hover 里多一句「攻略未收录」，
- * 并按获得方式分成「累积自由活动 / 触发剧情直接获得」两种说明。 */
+ * 归到对应艺人名下，与攻略条目同列，只是条件一栏写「待补」；
+ * 获得方式按「累积自由活动 / 触发剧情直接获得」两种说明。 */
 
 /** 与存档九项属性同序，用来把门槛标签换成数值下标。 */
 const ATTRS = ['演技', '口才', '歌艺', '名气', '仪态', '动感', '体能', '才智', '自信'];
@@ -22,8 +22,8 @@ const ATTR_INDEX: Record<string, number> = Object.fromEntries(
   ATTRS.map((name, index) => [name, index]),
 );
 
-const EXTRA_POOL_NOTE = '累积自由活动后获得，具体天数与属性门槛攻略暂未收录。';
-const EXTRA_STORY_NOTE = '触发剧情直接获得，不用累积自由活动；具体剧情条件暂未收录。';
+const EXTRA_POOL_NOTE = '累积自由活动后获得，具体天数与属性门槛待补。';
+const EXTRA_STORY_NOTE = '触发剧情直接获得，不用累积自由活动。';
 
 interface ArtistView {
   id: number;
@@ -36,16 +36,18 @@ interface EntryRow {
   owned: boolean;
 }
 
-interface ArtistGroup {
-  artist: ArtistView;
+/** 艺人下的一个类别（唱片 / 电视剧 / 电影 / 舞台剧）。 */
+interface CategoryGroup {
+  key: string;
+  label: string;
   entries: EntryRow[];
   owned: number;
 }
 
-interface SectionGroup {
-  key: string;
-  label: string;
-  groups: ArtistGroup[];
+/** 一位艺人一块，块内按类别排。 */
+interface ArtistGroup {
+  artist: ArtistView;
+  categories: CategoryGroup[];
   owned: number;
   total: number;
 }
@@ -66,38 +68,41 @@ function thresholdGap(entry: SweetSelfMadeEntry, artist: ArtistView) {
 }
 
 function SelfMadeList({
-  data,
-  sections,
+  groups,
   onHover,
 }: {
-  data: SweetSelfMadeData;
-  sections: SectionGroup[];
+  groups: ArtistGroup[];
   onHover: (next: HoverState) => void;
 }) {
-  if (sections.length === 0) {
+  if (groups.length === 0) {
     return <p className="pt-2 text-ui-2xs text-ink-faint">当前存档的旗下艺人在自制通告一览里没有对应作品。</p>;
   }
   return (
     <div className="space-y-2.5 pt-2" data-sweet-selfmade-guide-list>
-      {sections.map((section) => (
-        <div key={section.key} data-sweet-selfmade-guide-section={section.key}>
-          <p className="mb-1 flex flex-wrap items-baseline gap-x-1.5 text-ui-2xs font-bold text-brand-strong">
-            {section.label}
-            <span className="font-normal text-ink-faint tabular-nums">
-              {section.owned}/{section.total}
+      {groups.map((group) => (
+        <div
+          key={group.artist.id}
+          data-sweet-selfmade-guide-artist={group.artist.id}
+          className="border-t border-line pt-1.5 first:border-t-0 first:pt-0"
+        >
+          <p className="mb-1 flex items-baseline gap-1.5 text-ui-2xs">
+            <span className="font-bold text-brand-strong">{group.artist.name}</span>
+            <span className="tabular-nums text-ink-faint">
+              {group.owned}/{group.total}
             </span>
           </p>
-          <div className="space-y-1.5">
-            {section.groups.map((group) => (
-              <div key={`${section.key}-${group.artist.id}`} data-sweet-selfmade-guide-artist={group.artist.id}>
-                <p className="mb-0.5 flex items-baseline gap-1 text-ui-2xs">
-                  <span className="font-semibold text-ink">{group.artist.name}</span>
-                  <span className="tabular-nums text-ink-faint">
-                    {group.owned}/{group.entries.length}
-                  </span>
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {group.entries.map(({ entry, owned }) => (
+          <div className="space-y-1">
+            {group.categories.map((category) => (
+              <div
+                key={category.key}
+                data-sweet-selfmade-guide-section={category.key}
+                className="flex items-start gap-1.5"
+              >
+                <span className="w-10 shrink-0 whitespace-nowrap pt-0.5 text-ui-2xs text-ink-faint">
+                  {category.label}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+                  {category.entries.map(({ entry, owned }) => (
                     <button
                       key={`${entry.code || entry.name}`}
                       type="button"
@@ -127,16 +132,15 @@ function SelfMadeList({
                       {entry.name}
                     </button>
                   ))}
+                  {category.owned === 0 && category.entries.length === 0 && (
+                    <span className="text-ui-2xs text-ink-faint">—</span>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
       ))}
-      <p className="text-ui-2xs text-ink-faint">
-        共 {data.meta.entryCount} 条攻略条目
-        {data.meta.extraCount > 0 && `，另有 ${data.meta.extraCount} 条攻略没收录`}
-      </p>
     </div>
   );
 }
@@ -157,11 +161,6 @@ function HoverCard({
       <p className="mb-1 flex items-baseline gap-2 text-ui-xs font-semibold text-ink" data-sweet-selfmade-guide-title>
         {entry.name}
         {entry.code && <span className="text-ui-2xs font-normal text-ink-faint">{entry.code}</span>}
-        {!entry.guide && (
-          <span className="rounded-full border border-line bg-surface-soft px-1 text-ui-2xs font-normal text-ink-faint">
-            攻略未收录
-          </span>
-        )}
         <span
           className={cn(
             'ml-auto text-ui-2xs font-semibold',
@@ -235,12 +234,14 @@ export default function SweetSelfMadeAssistant({ save }: { save: SweetSave | nul
   const state = useSweetSelfMadeData(open);
 
   /** 只收当前在册艺人（主角固定 1）+ 「其他」，其余艺人的条目一律不列。 */
-  const sections = useMemo<SectionGroup[]>(() => {
+  const groups = useMemo<ArtistGroup[]>(() => {
     const data = state.data;
     if (!data || !save) return [];
     const ownedCodes = new Set(save.selfMade.map((item) => item.code));
     const roster = new Map(save.artists.map((artist) => [artist.id, artist]));
     const rosterOrder = save.artists.map((artist) => artist.id);
+    const sectionOrder = data.sections.map((section) => section.key);
+    const sectionLabel = new Map(data.sections.map((section) => [section.key, section.label]));
 
     const view = (entry: SweetSelfMadeEntry): ArtistView => {
       if (entry.artistId === 0) return { id: 0, name: '其他', abilities: null };
@@ -252,52 +253,56 @@ export default function SweetSelfMadeAssistant({ save }: { save: SweetSave | nul
       };
     };
 
-    const out: SectionGroup[] = [];
-    for (const section of data.sections) {
-      const groups = new Map<number, ArtistGroup>();
-      const bucket = (entry: SweetSelfMadeEntry) => {
-        const artist = view(entry);
-        const current = groups.get(artist.id)
-          ?? { artist, entries: [], owned: 0 };
-        const owned = Boolean(entry.code) && ownedCodes.has(entry.code);
-        current.entries.push({ entry, owned });
-        if (owned) current.owned += 1;
-        groups.set(artist.id, current);
-      };
+    const byArtist = new Map<number, ArtistGroup>();
+    const bucket = (entry: SweetSelfMadeEntry) => {
+      const artist = view(entry);
+      const group = byArtist.get(artist.id)
+        ?? { artist, categories: [], owned: 0, total: 0 };
+      let category = group.categories.find((item) => item.key === entry.section);
+      if (!category) {
+        category = {
+          key: entry.section,
+          label: sectionLabel.get(entry.section) ?? entry.category,
+          entries: [],
+          owned: 0,
+        };
+        group.categories.push(category);
+      }
+      const owned = Boolean(entry.code) && ownedCodes.has(entry.code);
+      category.entries.push({ entry, owned });
+      if (owned) {
+        category.owned += 1;
+        group.owned += 1;
+      }
+      group.total += 1;
+      byArtist.set(artist.id, group);
+    };
 
-      for (const entry of data.entries) {
-        if (entry.section !== section.key) continue;
-        if (entry.artistId !== 0 && !roster.has(entry.artistId)) continue;
-        bucket(entry);
-      }
-      // 攻略漏收的那 13 条挂回各自艺人组，组内排在攻略条目后面。
-      for (const entry of data.extras) {
-        if (entry.section !== section.key) continue;
-        if (entry.artistId !== 0 && !roster.has(entry.artistId)) continue;
-        bucket(entry);
-      }
-      for (const group of groups.values()) {
-        group.entries.sort((a, b) => Number(b.entry.guide) - Number(a.entry.guide));
-      }
-
-      const ordered = [...groups.values()].sort((a, b) => {
-        const rank = (id: number) => (id <= 0 ? Number.MAX_SAFE_INTEGER : rosterOrder.indexOf(id));
-        return rank(a.artist.id) - rank(b.artist.id);
-      });
-      if (ordered.length === 0) continue;
-      out.push({
-        key: section.key,
-        label: section.label,
-        groups: ordered,
-        owned: ordered.reduce((sum, group) => sum + group.owned, 0),
-        total: ordered.reduce((sum, group) => sum + group.entries.length, 0),
-      });
+    for (const entry of data.entries) {
+      if (entry.artistId !== 0 && !roster.has(entry.artistId)) continue;
+      bucket(entry);
     }
-    return out;
+    // 攻略漏收的那 13 条已经归到各自艺人名下，跟攻略条目同列。
+    for (const entry of data.extras) {
+      if (entry.artistId !== 0 && !roster.has(entry.artistId)) continue;
+      bucket(entry);
+    }
+
+    const all = [...byArtist.values()];
+    for (const group of all) {
+      group.categories.sort(
+        (a, b) => sectionOrder.indexOf(a.key) - sectionOrder.indexOf(b.key),
+      );
+      for (const category of group.categories) {
+        category.entries.sort((a, b) => Number(b.entry.guide) - Number(a.entry.guide));
+      }
+    }
+    const rank = (id: number) => (id <= 0 ? Number.MAX_SAFE_INTEGER : rosterOrder.indexOf(id));
+    return all.sort((a, b) => rank(a.artist.id) - rank(b.artist.id));
   }, [state.data, save]);
 
-  const ownedCount = sections.reduce((sum, section) => sum + section.owned, 0);
-  const totalCount = sections.reduce((sum, section) => sum + section.total, 0);
+  const ownedCount = groups.reduce((sum, group) => sum + group.owned, 0);
+  const totalCount = groups.reduce((sum, group) => sum + group.total, 0);
 
   return (
     <AssistantDock
@@ -344,7 +349,7 @@ export default function SweetSelfMadeAssistant({ save }: { save: SweetSave | nul
         <p className="pt-2 text-ui-2xs text-ink-faint">正在读取自制通告一览…</p>
       )}
       {save && state.data && (
-        <SelfMadeList data={state.data} sections={sections} onHover={setHover} />
+        <SelfMadeList groups={groups} onHover={setHover} />
       )}
     </AssistantDock>
   );
