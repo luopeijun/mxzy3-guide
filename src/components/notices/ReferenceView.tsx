@@ -131,12 +131,20 @@ export default function ReferenceView({ data, dataOnly = false }: Props) {
   }, [data.abilities, data.growth]);
 
   const hasNotes = (data.notes ?? []).length > 0;
+  // 数据驱动隐藏：甜站的特殊要求只有文字说明、没有亲和/叛逆/性感数值，
+  // 成长率表也是空的；没真数据就把整块连同索引一起收起来，不展示空表。
+  const hasSpecialValues = data.specialEffects.some(
+    (row) => row.affinity !== undefined || row.rebellion !== undefined || row.sexy !== undefined,
+  );
+  const hasGrowth = data.growth.length > 0;
   const sections = useMemo(
     () => SECTIONS.filter((section) =>
       (section.key !== 'notes' || hasNotes) &&
+      (section.key !== 'special' || hasSpecialValues) &&
+      (section.key !== 'growth' || hasGrowth) &&
       (!dataOnly || !COMMUNITY_SECTIONS.has(section.key))
     ),
-    [hasNotes, dataOnly],
+    [hasNotes, hasSpecialValues, hasGrowth, dataOnly],
   );
 
   return (
@@ -173,6 +181,7 @@ export default function ReferenceView({ data, dataOnly = false }: Props) {
             </table>
           </NoteCard>
 
+          {hasSpecialValues && (
           <NoteCard
             name="special"
             tone="bg-gold"
@@ -234,6 +243,7 @@ export default function ReferenceView({ data, dataOnly = false }: Props) {
               「—」表示该项不增不减，例如「吻戏」只是题材限制，不带属性变化。
             </p>
           </NoteCard>
+          )}
 
           {!dataOnly && (
           <NoteCard
@@ -514,6 +524,7 @@ export default function ReferenceView({ data, dataOnly = false }: Props) {
           </NoteCard>
           )}
 
+          {hasGrowth && (
           <NoteCard
             name="growth"
             tone="bg-tag-manual"
@@ -564,6 +575,7 @@ export default function ReferenceView({ data, dataOnly = false }: Props) {
               </table>
             </div>
           </NoteCard>
+          )}
 
           {hasNotes && (
             <NoteCard
