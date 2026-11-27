@@ -120,7 +120,7 @@ function EventNotes({ groups }: { groups: EventNoteGroup[] }) {
           <div className="mt-0.5 flex flex-col gap-1">
             {group.items.map((item) => (
               <p key={item.label} className="text-ui-2xs leading-[1.8] text-note">
-                <span className="font-bold">{item.label}</span>
+                <span className={item.label.startsWith('概要：') ? undefined : 'font-bold'}>{item.label}</span>
                 <span className="mt-[1px] block">{item.text}</span>
               </p>
             ))}
