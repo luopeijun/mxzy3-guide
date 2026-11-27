@@ -855,7 +855,7 @@ function SelfMadeHoverCard({
   onLeave: () => void;
 }) {
   return (
-    <FloatingCard anchor={anchor} onEnter={onEnter} onLeave={onLeave} className="w-[300px] p-2.5">
+    <FloatingCard anchor={anchor} onEnter={onEnter} onLeave={onLeave} className="w-[300px] p-2.5 text-ui-2xs">
       <p className="mb-1 flex items-baseline gap-2 text-ui-xs font-semibold text-ink" data-case-selfmade-title>
         {entry.name}
         {entry.code && <span className="text-ui-2xs font-normal text-ink-faint">{entry.code}</span>}
@@ -889,17 +889,19 @@ function SelfMadeHoverCard({
                 <div
                   key={`${threshold.label}-${threshold.value}`}
                   data-case-selfmade-threshold={threshold.label}
-                  className="flex items-baseline gap-1"
+                  className="flex items-baseline gap-1 text-ui-2xs"
                 >
                   <span className="text-ink-muted">{threshold.label}</span>
-                  <span className="tabular-nums text-ink-faint">{threshold.value}</span>
+                  <span className="tabular-nums text-ink-faint">需要 {threshold.value}</span>
                   {have === null ? (
-                    <span className="ml-auto text-ink-faint">—</span>
+                    <span className="ml-auto text-ink-faint">当前 —</span>
                   ) : diff === 0 ? (
-                    <span className="ml-auto font-semibold text-growth-strong">已达标</span>
+                    <span className="ml-auto font-semibold text-growth-strong">
+                      当前 {have} · 已达标
+                    </span>
                   ) : (
                     <span className="ml-auto text-alert">
-                      差 {diff}（{have}/{threshold.value}）
+                      当前 {have} · 差 {diff}
                     </span>
                   )}
                 </div>
