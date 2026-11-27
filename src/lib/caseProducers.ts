@@ -24,6 +24,29 @@ export interface ProducerGroup {
   producers: Producer[];
 }
 
+/** 存档 284 字节角色记录 `+181` 的 ASCII 项目代号 -> 游戏内身份。
+ *  只收录能跟攻略文本 / 现有静态表对上的代号；没对上的保留存档代号原文，
+ *  不硬编中文（例如 Role_* 占位本来就不放进解析结果）。 */
+export const PRODUCER_PROJECT_LABELS: Record<string, string> = {
+  Movie_Wang: '全球制片',
+  LCTV_Drama: '永振电视台·电视剧',
+  LCTV_Show: '永振电视台·主持',
+  SoSaTV_Drama: 'Sosa电视台·电视剧',
+  SoSaTV_Show: 'Sosa电视台·主持',
+  EAMI_CD: 'EAMI唱片',
+  SML_CD: '日月光音乐',
+  I_AM_I_AD: '创意广告',
+  DreamAD: '追梦广告',
+  Tokyo_CD: '东京唱片',
+  LAMovie: '好莱坞电影',
+};
+
+/** 项目代号转中文身份；表里没收录的代号原样显示，仍以存档为真源。 */
+export function producerProjectLabel(project: string | undefined): string {
+  if (!project) return '';
+  return PRODUCER_PROJECT_LABELS[project] ?? project;
+}
+
 export const PRODUCER_GROUPS: ProducerGroup[] = [
   {
     kind: 'record',

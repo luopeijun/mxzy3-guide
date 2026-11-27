@@ -737,11 +737,14 @@ async function main() {
         return { kind: g.getAttribute('data-case-producer-group'),
                  n: g.querySelectorAll('[data-case-producer]').length };
       });
-      var friends = {};
+      var friends = {}, names = {}, projects = {};
       document.querySelectorAll('[data-case-producer]').forEach(function(el){
-        friends[el.getAttribute('data-case-producer')] = el.getAttribute('data-case-producer-friendship');
+        var key = el.getAttribute('data-case-producer');
+        friends[key] = el.getAttribute('data-case-producer-friendship');
+        names[key] = el.querySelector('[data-case-producer-name]')?.getAttribute('data-case-producer-name');
+        projects[key] = el.getAttribute('data-case-producer-project');
       });
-      return JSON.stringify({ groups: groups, friends: friends });
+      return JSON.stringify({ groups: groups, friends: friends, names: names, projects: projects });
     })()`));
     check(producers.groups.length === 6 && producers.groups.every((g) => g.n > 0),
       '制作人好感按唱片/电视剧/电影/广告/主持/其他六列分组且每列都有制作人',
@@ -753,6 +756,21 @@ async function main() {
       check(producers.friends[key] === want, `制作人好感 ${key} 显示存档友好度 ${want}`,
         `实际 ${producers.friends[key] ?? '缺失'}`);
     }
+    // 名字取存档 +8 Big5，项目身份取 +181 ASCII 代号；NULL 代号留空。
+    for (const [key, wantName, wantProject] of [
+      ['zhou-yingtong', '周映彤', 'EAMI_CD'],
+      ['chen-chali', '陳查理', 'I_AM_I_AD'],
+      ['mai-ke', '麥可', 'DreamAD'],
+      ['wang-rui-en', '王瑞恩', 'Movie_Wang'],
+      ['he-zong', '賀總', ''],
+    ]) {
+      check(producers.names[key] === wantName, `制作人 ${key} 名字取存档 Big5 真源 ${wantName}`,
+        `实际 ${producers.names[key] ?? '缺失'}`);
+      check(producers.projects[key] === wantProject, `制作人 ${key} 项目代号取存档 +181 真源 ${wantProject || '（无）'}`,
+        `实际 ${producers.projects[key] ?? '缺失'}`);
+    }
+    const identityText = await evaluate(`document.querySelector('[data-case-producer="zhou-yingtong"]').innerText`);
+    check(identityText.includes('EAMI唱片'), '项目代号 EAMI_CD 映射为中文身份 EAMI唱片', identityText);
 
     // 点目录里的「通告」应平滑滚到通告页签；滚完后该页签贴近视口顶部。
     await evaluate(`document.querySelector('[data-case-toc-link="notices"]').click()`);

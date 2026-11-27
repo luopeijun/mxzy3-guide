@@ -730,6 +730,10 @@ export interface ParseResult {
   /** 角色编号 -> 友好度（整数），来自 284 字节定长友好度表：制作人（4xx/5xx/6xx/7xx）
    *  与 NPC / 其他角色（3 賀總 / 38 史蒂芬 / 39 丹尼斯…）同表，按编号反查。 */
   producerFriendship: Record<number, number>;
+  /** 角色编号 -> 存档里的 Big5 繁体名字（同表 +8），制作人卡以它为真源。 */
+  producerNames: Record<number, string>;
+  /** 角色编号 -> ASCII 项目代号（同表 +181），如 EAMI_CD / LCTV_Drama；NULL 与 Role_* 占位不收。 */
+  producerProjects: Record<number, string>;
   /** The 18 signable artists, resolved against the state blocks in this save. */
   artistDirectory: ArtistOption[];
   /** Numbers of the artists the save marks as signed (1..4 of them). */
@@ -1103,17 +1107,36 @@ function parseFriendship(
   return { friendship, gifts };
 }
 
-/** 制作人友好度表：与艺人友好度表分开的一段，每条 284 字节，
+/** 制作人 / 角色档案表：与艺人友好度表分开的一段，每条 284 字节，
  *  `+0` 角色编号（4xx 唱片 / 5xx 电视剧 / 6xx 电影 / 7xx 广告…）、`+4` 类别，
+ *  `+8` Big5 繁体名字、`+181` ASCII 项目代号（EAMI_CD / LCTV_Drama…），
  *  `+148` 友好度整数。编号不连续（401/402/404…），所以按编号反查而不是数序号。
  *  锚点用「编号落在 400..799 且类别 === 编号百位」找连续链，不写死绝对偏移——
- *  88 份存档验证过表都从 code=401 那条起、步长 284。 */
-function parseProducerFriendship(
+ *  88 份存档验证过表都从 code=401 那条起、步长 284。
+ *  这张表同时混着 NPC 与场景物件（購物袋 / c-佈景1 / 追夢佈景…），名字只收
+ *  纯 Big5 双字节串，项目代号排除 NULL 与 Role_* 占位，避免把占位当身份。 */
+function parseProducerRecords(
   view: DataView,
   bytes: Uint8Array,
-): Record<number, number> {
-  const out: Record<number, number> = {};
+): {
+  friendship: Record<number, number>;
+  names: Record<number, string>;
+  projects: Record<number, string>;
+} {
+  const friendship: Record<number, number> = {};
+  const names: Record<number, string> = {};
+  const projects: Record<number, string> = {};
   const limit = Math.min(bytes.length - 152, 200000);
+
+  const readProfile = (q: number, code: number) => {
+    const name = readBig5Name(bytes, q + 8, 16);
+    if (name && !(code in names)) names[code] = name;
+    const project = asciiString(bytes, q + 181, q + 181 + 40);
+    if (project && project !== 'NULL' && !project.startsWith('Role_') && !(code in projects)) {
+      projects[code] = project;
+    }
+  };
+
   // 找 code=401 的那条记录（类别 4），它恒是制作人表第一条。
   for (let p = 0; p + 152 <= limit; p += 4) {
     if (view.getUint32(p, true) !== 401) continue;
@@ -1127,9 +1150,10 @@ function parseProducerFriendship(
       const kind = view.getUint32(q + 4, true);
       // 中间夹着未启用的空槽（如 411 kind=0），跳过继续，不能中断整张表。
       if (kind !== Math.floor(code / 100)) continue;
-      const friendship = view.getUint32(q + 148, true);
-      if (friendship > 9999) continue;
-      out[code] = friendship;
+      const value = view.getUint32(q + 148, true);
+      if (value > 9999) continue;
+      friendship[code] = value;
+      readProfile(q, code);
     }
     break;
   }
@@ -1147,13 +1171,14 @@ function parseProducerFriendship(
       const code = view.getUint32(q, true);
       if (code > 1399) break;
       if (code < 1) continue;
-      const friendship = view.getUint32(q + 148, true);
-      if (friendship > 9999) continue;
-      if (!(code in out)) out[code] = friendship;
+      const value = view.getUint32(q + 148, true);
+      if (value > 9999) continue;
+      if (!(code in friendship)) friendship[code] = value;
+      readProfile(q, code);
     }
     break;
   }
-  return out;
+  return { friendship, names, projects };
 }
 
 /** Artist attribute blocks: nine abilities, stress/fatigue, a short Big5
@@ -3463,6 +3488,7 @@ export function parseSave(
     (a, b) => dayNumber(a.year, a.month, a.day) - dayNumber(b.year, b.month, b.day)
       || a.workCode.localeCompare(b.workCode),
   );
+  const producerRecords = parseProducerRecords(view, bytes);
 
   return {
     saveName,
@@ -3475,7 +3501,9 @@ export function parseSave(
     selfMade,
     artists,
     friendship,
-    producerFriendship: parseProducerFriendship(view, bytes),
+    producerFriendship: producerRecords.friendship,
+    producerNames: producerRecords.names,
+    producerProjects: producerRecords.projects,
     artistDirectory,
     signedArtistIds,
     teams,
