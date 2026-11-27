@@ -35,6 +35,10 @@ const ORB_HEIGHT = 54;
 const ORB_EDGE = 8;
 const PANEL_GAP = 10;
 const PANEL_EDGE = 8;
+/** 浮窗高度跟着内容走，但要封顶；最小高度避免空态时缩成一条。 */
+const PANEL_MAX_HEIGHT = 560;
+const PANEL_MAX_RATIO = 0.72;
+const PANEL_MIN_HEIGHT = 160;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), Math.max(min, max));
@@ -933,6 +937,10 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   const [dragging, setDragging] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const panelBodyRef = useRef<HTMLDivElement>(null);
+  const panelContentRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLDivElement>(null);
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragRef = useRef<{
     pointerId: number; startX: number; startY: number; x: number; y: number; moved: boolean;
@@ -961,6 +969,11 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
   useEffect(() => () => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
   }, []);
+
+  // 切页签时把滚动条拉回顶部，否则会带着上一个视图的滚动位置跳一下。
+  useEffect(() => {
+    if (panelBodyRef.current) panelBodyRef.current.scrollTop = 0;
+  }, [view]);
 
   const report = useMemo(
     () => (data && result ? evaluateLiveSpecials(data, result, tables) : null),
@@ -1031,37 +1044,69 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // 浮窗跟着 NP鸡走：左右按 NP鸡在视口的位置选对齐边，上下优先放在空间更大的一侧，最后夹回视口。
+  // 浮窗跟着 NP鸡走：左右按 NP鸡在视口的位置选对齐边，上下优先放在空间更大的一侧。
+  // 高度按内容算但带过渡：两个视图内容差很多，直接改高度会让整个面板「跳」一下。
   useLayoutEffect(() => {
     if (!open) {
       setPanelPos(null);
+      setPanelHeight(null);
       return;
     }
-    const place = () => {
+    const measure = () => {
       const panel = panelRef.current;
-      if (!panel) return;
-      const { width, height } = panel.getBoundingClientRect();
+      const content = panelContentRef.current;
+      if (!panel || !content) return null;
+      const width = panel.getBoundingClientRect().width;
+      const contentHeight = content.offsetHeight + (headRef.current?.offsetHeight ?? 0);
+      const above = orbPos.y + ORB_HEIGHT / 2 >= window.innerHeight / 2;
+      const space = above
+        ? orbPos.y - PANEL_GAP - PANEL_EDGE
+        : window.innerHeight - (orbPos.y + ORB_HEIGHT) - PANEL_GAP - PANEL_EDGE;
+      const limit = Math.min(PANEL_MAX_HEIGHT, window.innerHeight * PANEL_MAX_RATIO);
+      const height = Math.max(
+        PANEL_MIN_HEIGHT,
+        Math.min(contentHeight, limit, Math.max(PANEL_MIN_HEIGHT, space)),
+      );
       const centerX = orbPos.x + ORB_WIDTH / 2;
       let left: number;
       if (centerX < window.innerWidth / 3) left = orbPos.x;
       else if (centerX > window.innerWidth * 2 / 3) left = orbPos.x + ORB_WIDTH - width;
       else left = centerX - width / 2;
       left = clamp(left, PANEL_EDGE, window.innerWidth - width - PANEL_EDGE);
-      const below = orbPos.y + ORB_HEIGHT / 2 < window.innerHeight / 2;
       const top = clamp(
-        below ? orbPos.y + ORB_HEIGHT + PANEL_GAP : orbPos.y - PANEL_GAP - height,
+        above ? orbPos.y - PANEL_GAP - height : orbPos.y + ORB_HEIGHT + PANEL_GAP,
         PANEL_EDGE,
-        window.innerHeight - height - PANEL_EDGE,
+        Math.max(PANEL_EDGE, window.innerHeight - height - PANEL_EDGE),
       );
-      setPanelPos({ left, top });
+      return { left, top, height };
     };
-    place();
-    const observer = new ResizeObserver(place);
-    if (panelRef.current) observer.observe(panelRef.current);
-    window.addEventListener('resize', place);
+    const apply = (box: { left: number; top: number; height: number } | null) => {
+      if (!box) return;
+      setPanelPos((current) => (
+        current && current.left === box.left && current.top === box.top
+          ? current : { left: box.left, top: box.top }
+      ));
+      setPanelHeight(box.height);
+    };
+    apply(measure());
+    // 内容高度在 ResizeObserver 回调里量到，直接在同一帧写样式浏览器不会给过渡，
+    // 挪到下一帧再写，切页签时面板才是平滑长高 / 收缩而不是瞬移。
+    let frame = 0;
+    const queue = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        apply(measure());
+      });
+    };
+    const observer = new ResizeObserver(queue);
+    if (panelContentRef.current) observer.observe(panelContentRef.current);
+    if (headRef.current) observer.observe(headRef.current);
+    window.addEventListener('resize', queue);
     return () => {
+      if (frame) cancelAnimationFrame(frame);
       observer.disconnect();
-      window.removeEventListener('resize', place);
+      window.removeEventListener('resize', queue);
     };
   }, [open, orbPos.x, orbPos.y]);
 
@@ -1136,12 +1181,20 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
           ref={panelRef}
           data-case-special-panel
           aria-label="六大通告助手"
-          className="fixed flex max-h-[min(72vh,560px)] w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft"
+          className={cn(
+            'fixed flex w-[min(440px,calc(100vw-40px))] flex-col overflow-hidden rounded-ui-md border border-line-strong bg-canvas shadow-soft',
+            panelHeight === null ? 'max-h-[min(72vh,560px)]' : '',
+            dragging || panelHeight === null ? '' : 'transition-[height,top] duration-200 ease-out',
+          )}
           style={panelPos
-            ? { left: panelPos.left, top: panelPos.top }
+            ? {
+              left: panelPos.left,
+              top: panelPos.top,
+              ...(panelHeight === null ? {} : { height: panelHeight }),
+            }
             : { left: -9999, top: -9999, visibility: 'hidden' }}
         >
-          <div className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2">
+          <div ref={headRef} className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2">
             <div
               data-case-assistant-view
               className="flex items-center gap-0.5 rounded-full border border-line bg-canvas p-0.5"
@@ -1190,12 +1243,12 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
             </button>
           </div>
 
-          {!result && (
-            <p className="px-3 pb-3 text-ui-2xs text-ink-faint">先载入一份存档，就能看到六大目标的实时完成程度。</p>
-          )}
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" onScroll={hideHoverNow}>
-            {result && (view === 'specials' ? (
+          <div ref={panelBodyRef} className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" onScroll={hideHoverNow}>
+            <div ref={panelContentRef}>
+              {!result && (
+                <p className="pt-2 text-ui-2xs text-ink-faint">先载入一份存档，就能看到六大目标的实时完成程度。</p>
+              )}
+              {result && (view === 'specials' ? (
               <DetailSection
                 report={report}
                 expanded={expanded}
@@ -1219,7 +1272,8 @@ export default function CaseSpecialsAssistant({ result, tables }: Props) {
                   showHover({ kind: 'selfmade', entry, artist, owned, anchor })}
                 onLeave={hideHoverSoon}
               />
-            ))}
+              ))}
+            </div>
           </div>
         </section>
       )}
