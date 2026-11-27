@@ -390,7 +390,7 @@ def load_role_stars(save_dirs, difficulty, needs):
         files.extend(
             os.path.join(save_dir, name)
             for name in os.listdir(save_dir)
-            if name.lower().endswith(".sav")
+            if name.lower().endswith((".sav", ".bak"))
         )
     if not files:
         raise SystemExit("没有找到任何存档：%s" % ", ".join(save_dirs))
@@ -500,7 +500,10 @@ def load_cases(data_dir, roles, company_by_seq, overseas, producers, characters,
                 role_name = roles.get(role_index, "")
                 if not role_name:
                     continue
-                entry = {"id": code + str(role_index), "name": role_name}
+                # id 末位用槽位（1..4）而不是 role_index：存档角色码就是「通告码 + 槽位」，
+                # 同一通告可能有多个同 role_index 的角色（如 CF038 slot1/slot2 都是男性），
+                # 用 role_index 会撞 id、和存档码对不上。
+                entry = {"id": code + str(slot + 1), "name": role_name}
                 role_brief = simplify(text_runs(role_rec, 104))
                 if role_brief:
                     entry["brief"] = role_brief
