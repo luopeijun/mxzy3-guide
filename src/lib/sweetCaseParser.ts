@@ -97,6 +97,9 @@ const SWEET_WORK_CLASS_INDEX: Record<number, number> = {
 const SWEET_DIARY_WORK_TYPE: Record<number, number> = {
   11: 0, 12: 1, 13: 2, 14: 3, 15: 4, 16: 5, 17: 6,
 };
+/** 参与清单末字段：5 是标准记录，10/15/... 是同作品的版本记录；
+ *  同一个作品码只出现版本记录时仍是真作品（如 Story0008 的 TVACY），按码去重后算一次。 */
+const SWEET_WORK_RECORD_TAILS = new Set([5, 10, 15, 16, 20, 21, 22, 26, 31]);
 
 export interface SweetAward {
   /** 事项编号（21..53），与主站同一套；称号升级的额外奖项按它计数。 */
@@ -993,10 +996,17 @@ function buildSweetWorkDateIndex(
  *  `[5][5B ASCII 通告码][NUL]` 是锚点，锚点前 4 字节是 CaseFirm 的槽位 seq，
  *  本体 +22 是名字长度、+26 起是 Big5 名字。seq 经 sweetCompany 查公司名，
  *  广告/电视剧/唱片/电影/海外各槽位都与游戏界面一致。 */
+interface SweetNoticeInfo {
+  name: string;
+  company: string;
+  /** 本体倒数第二组档期的上档日再退一天，即游戏内发行日；记事表挤掉早期作品时用它兜底。 */
+  release?: { date: string; year: number; month: number; day: number };
+}
+
 function buildSweetNoticeInfoIndex(
   bytes: Uint8Array, view: DataView, tables: SweetCaseTables,
-): Map<string, { name: string; company: string }> {
-  const out = new Map<string, { name: string; company: string }>();
+): Map<string, SweetNoticeInfo> {
+  const out = new Map<string, SweetNoticeInfo>();
   const start = findSection(bytes, 'Case');
   const end = findSection(bytes, 'CaseEnd');
   if (start < 0 || end <= start) return out;
@@ -1016,7 +1026,27 @@ function buildSweetNoticeInfoIndex(
     if (!name) continue;
     const seq = readI32(view, at - 4);
     const classId = readI32(view, at + 10);
-    out.set(code, { name, company: sweetCompany(code, seq, classId, tables) });
+
+    // 同一部作品的档期组数会随类别变化（广告/影视 5 组、唱片 4 组），
+    // 但倒数第二组恒是上档日；游戏记事把发行记在上档前一天，逐字节验证过 CD/TVA/MVA/CFA。
+    const dates: { offset: number; value: DateTuple }[] = [];
+    const dateEnd = Math.min(end, at + 1024);
+    for (let o = at + 860; o + 16 <= dateEnd && dates.length < 5; o += 1) {
+      const tuple = readDateTuple(view, o);
+      if (!tuple) continue;
+      if (dates.length && o <= dates[dates.length - 1].offset + 4) continue;
+      dates.push({ offset: o, value: tuple });
+    }
+    let release: SweetNoticeInfo['release'];
+    const releaseTuple = dates.length >= 2 ? dates[dates.length - 2].value : null;
+    if (releaseTuple) {
+      const d = new Date(Date.UTC(releaseTuple[0], releaseTuple[1] - 1, releaseTuple[2] - 1));
+      release = {
+        date: `${d.getUTCFullYear()}/${d.getUTCMonth() + 1}/${d.getUTCDate()}`,
+        year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate(),
+      };
+    }
+    out.set(code, { name, company: sweetCompany(code, seq, classId, tables), release });
   }
   return out;
 }
@@ -1033,7 +1063,7 @@ function parseSweetWorkHistory(
   diaryTable: { offset: number; count: number } | null,
   tables: SweetCaseTables,
   selfMade: SweetSelfMadeNotice[],
-  noticeInfo: Map<string, { name: string; company: string }>,
+  noticeInfo: Map<string, SweetNoticeInfo>,
   events: SweetEvent[],
 ): SweetWorkRecord[] {
   // 参与清单里连早期没有接演记录的自制作品也会累积进来，官方统计同样算它们；
@@ -1046,10 +1076,10 @@ function parseSweetWorkHistory(
   const out: SweetWorkRecord[] = [];
   for (let i = 0; i < locations.length; i += 1) {
     const location = locations[i];
-    const stop = Math.min(
-      location.offset + 2000,
-      i + 1 < locations.length ? locations[i + 1].offset : bytes.length,
-    );
+    // 参与清单紧跟艺人属性块，可能被下一个艺人的块头打断；不能用下一个块的 offset
+    // 截断窗口，否则像姚子奇那样最后几条（TVA0Y/TVACY）会被吃掉、被误补成占位。
+    // 清单头尾都有 [count][5] / [code\0][大类][5] 严格校验，多扫一段不会误读。
+    const stop = Math.min(location.offset + 2000, bytes.length);
     let head = -1;
     for (let h = location.offset + 372; h + 22 < stop; h += 1) {
       const count = readI32(view, h);
@@ -1070,14 +1100,16 @@ function parseSweetWorkHistory(
       const workCode = readCode(bytes, p, 5);
       if (!workCode || bytes[p + 5] !== 0) break;
       const category = readI32(view, p + 6);
-      if (category < 1 || category > 31 || readI32(view, p + 10) !== 5) break;
+      if (category < 1 || category > 31 || !SWEET_WORK_RECORD_TAILS.has(readI32(view, p + 10))) break;
       const noticeIndex = SWEET_WORK_CLASS_INDEX[category];
       if (noticeIndex === undefined || unfinished.has(workCode)) continue;
       const key = `${noticeIndex}|${workCode}|${location.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const dated = workIndex.dates.get(workCode);
+      // 记事表只留最近几十条，早期作品会被挤掉；回不到记事表时用本体发行日兜底，
+      // 否则通告统计 hover 上电视/电影这类老作品会整行没日期。
       const info = noticeInfo.get(workCode);
+      const dated = workIndex.dates.get(workCode) ?? info?.release;
       out.push({
         date: dated?.date ?? '',
         year: dated?.year ?? 0,
