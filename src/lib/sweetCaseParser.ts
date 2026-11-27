@@ -2298,15 +2298,18 @@ function sweetHeaderLayout(view: DataView): {
     ? {
         protagonist: 0x58,
         company: 0x6d,
-        // 结局档把头部重排，资金不在「普通头 +84」，而是固定 @0x30
-        money: 0x30,
+        // 结局档头部重排：@0x30 是固定值（722921 / 460770…），不是资金；
+        // 全量 13 份 Ending 档里 @0x3c 都是各不相同的千万级金额，才是资金。
+        money: 0x3c,
         signed: [0x08, 0x0c, 0x10],
         date: [0x14, 0x18, 0x1c, 0x20],
       }
     : {
         protagonist: 0x04,
         company: 0x19,
-        money: 0x58,
+        // 与主站同在 @80(0x50)：Story0050 真值 134057974 精确命中；
+        // @0x58 是固定字段（722921 / 722922），抄主站偏移时常误写成它。
+        money: 0x50,
         signed: [0x34, 0x38, 0x3c],
         date: [0x40, 0x44, 0x48, 0x4c],
       };
