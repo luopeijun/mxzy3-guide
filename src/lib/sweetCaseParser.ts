@@ -1634,10 +1634,78 @@ function scanSweetPromo(
   return out;
 }
 
+/** 归档作品的接演网格：24B `[flag][id][成功][失败][完美][酬劳]`。
+ *  网格起点随角色定义块长度浮动（Story0050 里 +812~+848 都出现过），
+ *  写死 +816 会把日期年份当成艺人编号 / 酬劳。用「第一条有酬劳的真记录」
+ *  定出 24B 网格，再向前后双向扩展；没有酬劳时才退回逐字节找最长合法链。 */
+function readSweetArchiveGrid(recView: DataView, starIds: Set<number>) {
+  type Row = { artistId: number; success: number; fail: number; perfect: number; pay: number; slot: number };
+  const from = 700;
+  const to = Math.min(recView.byteLength - 24, 1010);
+  const readAt = (p: number) => ({
+    flag: readI32(recView, p),
+    id: readI32(recView, p + 4),
+    success: readI32(recView, p + 8),
+    fail: readI32(recView, p + 12),
+    perfect: readI32(recView, p + 16),
+    pay: readI32(recView, p + 20),
+  });
+  const valid = (r: ReturnType<typeof readAt>, relaxed = false) =>
+    r.flag >= 0 && r.flag <= (relaxed ? 8 : 3) && starIds.has(r.id)
+    && r.success >= 0 && r.success <= 90 && r.fail >= 0 && r.fail <= 99
+    && r.perfect >= 0 && r.perfect <= 99 && r.pay >= 0 && r.pay <= 1e9
+    && (r.pay === 0 || (r.pay >= 1000 && r.pay % 1000 === 0));
+  const chain = (anchor: number, relaxed = false): Row[] => {
+    const rows: Row[] = [];
+    const push = (p: number, front: boolean) => {
+      const r = readAt(p);
+      if (!valid(r, relaxed)) return false;
+      // 除编号外全零的是空槽 / 文本错位，不是真接演；遇到就停，别造一条 0 天参演。
+      if (r.success === 0 && r.fail === 0 && r.perfect === 0 && r.pay === 0) return false;
+      const row: Row = {
+        artistId: r.id, success: r.success, fail: r.fail,
+        perfect: r.perfect, pay: r.pay, slot: 0,
+      };
+      if (!rows.some((item) => item.artistId === row.artistId)) {
+        if (front) rows.unshift(row); else rows.push(row);
+      }
+      return true;
+    };
+    for (let p = anchor - 24; p >= from && p + 24 <= to; p -= 24) {
+      if (!push(p, true)) break;
+    }
+    for (let p = anchor; p + 24 <= to; p += 24) {
+      if (!push(p, false)) break;
+    }
+    rows.forEach((row, index) => { row.slot = index; });
+    return rows;
+  };
+
+  // 先找有酬劳的真记录；pay 必定是千元整数倍，年份 / 文本不会被误收。
+  for (let p = from; p + 24 <= to; p += 1) {
+    const r = readAt(p);
+    if (r.pay < 1000 || !valid(r)) continue;
+    const rows = chain(p);
+    // 有真实酬劳的锚点本身就是真记录，独角作品只有一格也要保留。
+    if (rows.length >= 1) return rows;
+  }
+  // 整部作品都没付酬劳：放宽首字段到角色类型（5~8 的主角记录写在网格第一格），
+  // 取最长的一条合法链；仍要求编号、天数、千元整数倍酬劳全部自洽。
+  let best: Row[] = [];
+  for (let p = from; p + 24 <= to; p += 1) {
+    const r = readAt(p);
+    if (!valid(r, true)) continue;
+    const rows = chain(p, true);
+    // 单条「编号 1 / 全 0」极可能是日期或文本错位读出来的噪声，不能凭它造一条参演。
+    if (rows.length >= 2 && rows.length > best.length) best = rows;
+  }
+  return best;
+}
+
 /** 等待上市 / 热卖中共用：Case 本体的五组档期里，第四 / 第五组是上档 / 下档。
  *  等待上市＝今天已过杀青、还没到上档日；热卖中＝今天已到上档、还没下档；
  *  已完成＝今天已过下档日（与主站 archive 分档一致）。
- *  接演记录与拍摄中同构，从本体 +816 起每 24B 一组 `[flag][id][done][a][b][pay]`；
+ *  接演记录与拍摄中同构，但网格起点随本体浮动，用 readSweetArchiveGrid 定位；
  *  不能用作品清单或宣传档期代替发行档期。 */
 function scanSweetArchive(
   bytes: Uint8Array, today: SweetSave['date'], tables: SweetCaseTables,
@@ -1706,21 +1774,11 @@ function scanSweetArchive(
     const seenArtists = new Set<number>();
     const claimedRoles = new Set<string>();
     const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
-    // 归档作品的接演记录只有前 4 格是艺人；第 5 格起正好落在五组发行档期上，
-    // 继续按 24B 读会把年份当成艺人编号。等待上市/热卖中仍按 8 格读（主角在第 8 格）。
-    const slotLimit = status === 'done' ? 4 : 8;
-    for (let slot = 0; slot < slotLimit; slot += 1) {
-      const p = 816 + slot * 24;
-      if (p + 24 > length) break;
-      const flag = readI32(recView, p);
-      const artistId = readI32(recView, p + 4);
-      const doneDays = readI32(recView, p + 8);
-      const a = readI32(recView, p + 12);
-      const b = readI32(recView, p + 16);
-      const pay = readI32(recView, p + 20);
-      if (flag < 0 || flag > 3 || !starIds.has(artistId)) continue;
-      if (doneDays < 0 || doneDays > 90 || a < 0 || a > 99 || b < 0 || b > 99) continue;
-      if (pay < 0 || pay > 1e9) continue;
+    const grid = readSweetArchiveGrid(recView, starIds);
+    for (const row of grid) {
+      const { artistId, pay } = row;
+      // 与拍摄中同口径：游戏界面的「完成天数」＝成功 + 完美，失败不计入完成。
+      const doneDays = row.success + row.perfect;
       // 同一作品同一艺人只列一次：老本体里主角的槽位可能被重复写入。
       if (seenArtists.has(artistId)) continue;
       const team = teams.find((item) => item.leaderId === artistId || item.memberIds.includes(artistId));
@@ -1730,7 +1788,7 @@ function scanSweetArchive(
       seenArtists.add(artistId);
       // 角色先按接演槽位落位；性别明显冲突时回退到同性别未认领的角色，
       // 否则 TV157 的女主角会被写成男配角。
-      let role = slot < sortedRoles.length ? sortedRoles[slot] : null;
+      let role = row.slot < sortedRoles.length ? sortedRoles[row.slot] : null;
       const want = sweetArtistGender(artistId, tables);
       if (role && want && sweetRoleGender(role.roleType) !== want && sortedRoles.length > 1) {
         role = sortedRoles.find((item) => !claimedRoles.has(item.code)
