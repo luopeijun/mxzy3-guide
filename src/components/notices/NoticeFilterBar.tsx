@@ -8,11 +8,15 @@ interface Props {
   data: NoticeData;
   filter: NoticeFilter;
   companies: string[];
+  /** 甜蜜乐章的游戏数据不含上架年份与角色星级，整行筛选条件都隐藏。 */
+  showTime?: boolean;
+  showStars?: boolean;
   onChange: (patch: Partial<NoticeFilter>) => void;
   onReset: () => void;
 }
 
 const TIMES = ['第一年', '第二年', '第三年', '特殊'] as const;
+const STARS = [1, 2, 3, 4, 5];
 
 function chipClass(active: boolean) {
   return cn(
@@ -25,11 +29,13 @@ function chipClass(active: boolean) {
 
 /** 通告库的筛选条：搜索 + 公司 + 分类 / 时间 / 难度。三种筛选互相独立，结果取交集。
  *  只负责条件本身，标题与视图页签在 `NoticesApp` 里，这样面板可以从页签底部开始围。 */
-export default function NoticeFilterBar({ data, filter, companies, onChange, onReset }: Props) {
+export default function NoticeFilterBar({
+  data, filter, companies, showTime = true, showStars = true, onChange, onReset,
+}: Props) {
   const dirty =
     filter.cat !== 'all' ||
-    filter.time !== 'all' ||
-    filter.stars !== 'all' ||
+    (showTime && filter.time !== 'all') ||
+    (showStars && filter.stars !== 'all') ||
     filter.company !== 'all' ||
     filter.query.trim() !== '';
 
@@ -141,56 +147,62 @@ export default function NoticeFilterBar({ data, filter, companies, onChange, onR
         })}
       </div>
 
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="shrink-0 text-ui-2xs text-ink-faint">时间</span>
-          <button
-            type="button"
-            aria-pressed={filter.time === 'all'}
-            onClick={() => onChange({ time: 'all' })}
-            className={chipClass(filter.time === 'all')}
-          >
-            不限
-          </button>
-          {TIMES.map((time) => (
-            <button
-              key={time}
-              type="button"
-              data-notice-time={time}
-              aria-pressed={filter.time === time}
-              onClick={() => onChange({ time: filter.time === time ? 'all' : time })}
-              className={chipClass(filter.time === time)}
-            >
-              {time}
-            </button>
-          ))}
-        </div>
+      {(showTime || showStars) && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          {showTime && (
+            <div className="flex items-center gap-1.5">
+              <span className="shrink-0 text-ui-2xs text-ink-faint">时间</span>
+              <button
+                type="button"
+                aria-pressed={filter.time === 'all'}
+                onClick={() => onChange({ time: 'all' })}
+                className={chipClass(filter.time === 'all')}
+              >
+                不限
+              </button>
+              {TIMES.map((time) => (
+                <button
+                  key={time}
+                  type="button"
+                  data-notice-time={time}
+                  aria-pressed={filter.time === time}
+                  onClick={() => onChange({ time: filter.time === time ? 'all' : time })}
+                  className={chipClass(filter.time === time)}
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+          )}
 
-        <div className="flex items-center gap-1.5">
-          <span className="shrink-0 text-ui-2xs text-ink-faint">难度</span>
-          <button
-            type="button"
-            aria-pressed={filter.stars === 'all'}
-            onClick={() => onChange({ stars: 'all' })}
-            className={chipClass(filter.stars === 'all')}
-          >
-            不限
-          </button>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              data-notice-star={star}
-              aria-pressed={filter.stars === star}
-              onClick={() => onChange({ stars: filter.stars === star ? 'all' : star })}
-              className={chipClass(filter.stars === star)}
-              title={`只看含有 ${star} 星角色的通告`}
-            >
-              {star}★
-            </button>
-          ))}
+          {showStars && (
+            <div className="flex items-center gap-1.5">
+              <span className="shrink-0 text-ui-2xs text-ink-faint">难度</span>
+              <button
+                type="button"
+                aria-pressed={filter.stars === 'all'}
+                onClick={() => onChange({ stars: 'all' })}
+                className={chipClass(filter.stars === 'all')}
+              >
+                不限
+              </button>
+              {STARS.map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  data-notice-star={star}
+                  aria-pressed={filter.stars === star}
+                  onClick={() => onChange({ stars: filter.stars === star ? 'all' : star })}
+                  className={chipClass(filter.stars === star)}
+                  title={`只看含有 ${star} 星角色的通告`}
+                >
+                  {star}★
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

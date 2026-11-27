@@ -10,6 +10,9 @@ interface Props {
   active: boolean;
   /** 这一页里最高那张卡的高度；为空时按自身内容撑开。 */
   minHeight?: number;
+  /** 数据里没有上架年份 / 角色星级时，这两格与徽标都不展示。 */
+  showTime?: boolean;
+  showStars?: boolean;
   onSelect: () => void;
 }
 
@@ -77,9 +80,11 @@ function MetaCell({
  *  卡片上真正要回答的是「这条通告是什么、什么时候、哪家公司、多难、还缺谁」，
  *  所以把这五件事排成固定位置：右上角星级徽标、名称、三格元信息、角色行。
  *  简介完整展开不做截断——同页卡片统一高度由 `NoticesApp` 量完最高的一张传进来。 */
-export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: Props) {
+export default function NoticeCard({
+  notice, active, minHeight = 0, showTime = true, showStars = true, onSelect,
+}: Props) {
   const style = CATEGORY_STYLE[notice.cat];
-  const range = difficultyRange(notice);
+  const range = showStars ? difficultyRange(notice) : null;
   const roles = notice.roles ?? [];
   // 广告的「类型」是等级（演技B），篇名另挂；电视剧则把单本/连续剧挂在类型旁边。
   const typeSub = notice.series ?? notice.kindLabel;
@@ -121,16 +126,18 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
           {notice.name}
         </h3>
 
-        <dl className="mt-2 grid grid-cols-3 gap-px overflow-hidden rounded-ui-sm border border-line bg-line">
+        <dl className={cn('mt-2 grid gap-px overflow-hidden rounded-ui-sm border border-line bg-line', showTime ? 'grid-cols-3' : 'grid-cols-2')}>
           <MetaCell field="type" label="类型" value={notice.type ?? notice.level ?? '—'} sub={typeSub} />
-          <MetaCell
-            field="time"
-            label="时间"
-            value={notice.time ?? '—'}
-            valueClass={timeText(notice.time)}
-            dotClass={timeDot(notice.time)}
-            diamond
-          />
+          {showTime && (
+            <MetaCell
+              field="time"
+              label="时间"
+              value={notice.time ?? '—'}
+              valueClass={timeText(notice.time)}
+              dotClass={timeDot(notice.time)}
+              diamond
+            />
+          )}
           <MetaCell
             field="company"
             label="公司"
@@ -168,7 +175,7 @@ export default function NoticeCard({ notice, active, minHeight = 0, onSelect }: 
                 >
                   <span className="font-medium">{role.name}</span>
                   {/* 角色行沿用「4★」这种简短写法：五颗星在这里太占宽，一排芯片会被撑开。 */}
-                  <span className="font-semibold tabular-nums text-gold">{starsOf(role)}★</span>
+                  {showStars && <span className="font-semibold tabular-nums text-gold">{starsOf(role)}★</span>}
                   {artist && <span className="font-semibold text-brand">{artist}</span>}
                 </span>
               );

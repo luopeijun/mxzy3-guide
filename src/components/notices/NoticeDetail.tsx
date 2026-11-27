@@ -18,6 +18,9 @@ import { specialStyle } from './specialStyle';
 interface Props {
   data: NoticeData;
   notice: Notice | null;
+  /** 数据里没有上架年份 / 角色星级时，对应字段与换算说明都不展示。 */
+  showTime?: boolean;
+  showStars?: boolean;
   onClose?: () => void;
 }
 
@@ -66,10 +69,12 @@ function RoleBlock({
   data,
   notice,
   role,
+  showStars = true,
 }: {
   data: NoticeData;
   notice: Notice;
   role: NoticeRole;
+  showStars?: boolean;
 }) {
   const stars = starsOf(role);
   const requirements = useMemo(() => requirementsFor(data, notice, role), [data, notice, role]);
@@ -85,7 +90,7 @@ function RoleBlock({
     <li data-notice-role className="rounded-ui-md border border-line bg-surface p-3">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-ui-sm font-semibold text-ink">{role.name}</span>
-        <span className="text-ui-xs font-semibold tabular-nums text-gold">{stars}★</span>
+        {showStars && <span className="text-ui-xs font-semibold tabular-nums text-gold">{stars}★</span>}
         {role.defaultArtist && (
           <span className="rounded-full bg-brand-soft px-2 py-0.5 text-ui-2xs text-brand-strong">
             默认 {role.defaultArtist}
@@ -95,13 +100,15 @@ function RoleBlock({
 
       {requirements.length > 0 ? (
         <div className="mt-2">
-          <div className="text-ui-2xs text-ink-faint">能力要求 · {stars} 星</div>
+          <div className="text-ui-2xs text-ink-faint">
+            能力要求{showStars ? ` · ${stars} 星` : ''}
+          </div>
           <div className="mt-1 grid max-w-[460px] grid-cols-2 gap-x-3 gap-y-1 nav:grid-cols-1">
             {requirements.map((row) => (
               <div key={row.ability} className="flex items-baseline gap-1.5 text-ui-2xs">
                 <span className="text-ink-muted">{row.ability}</span>
                 <span className="font-semibold text-brand-strong">{row.grade}</span>
-                <span className="tabular-nums text-ink">{row.range}</span>
+                {showStars && <span className="tabular-nums text-ink">{row.range}</span>}
               </div>
             ))}
           </div>
@@ -223,7 +230,9 @@ function RoleBlock({
   );
 }
 
-export default function NoticeDetail({ data, notice, onClose }: Props) {
+export default function NoticeDetail({
+  data, notice, showTime = true, showStars = true, onClose,
+}: Props) {
   if (!notice) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
@@ -236,7 +245,7 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
   }
 
   const style = CATEGORY_STYLE[notice.cat];
-  const range = difficultyRange(notice);
+  const range = showStars ? difficultyRange(notice) : null;
   return (
     <div data-notice-detail className="flex h-full flex-col">
       <div className="shrink-0 border-b border-line px-5 pb-3 pt-4">
@@ -275,13 +284,15 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
           <MetaRow label="类型" value={notice.type ?? notice.level} />
           <MetaRow label="系列" value={notice.series} />
           <MetaRow label="品类" value={notice.adType} />
-          <MetaRow
-            label="时间"
-            value={notice.time}
-            valueClass={timeText(notice.time)}
-            dotClass={timeDot(notice.time)}
-            diamond
-          />
+          {showTime && (
+            <MetaRow
+              label="时间"
+              value={notice.time}
+              valueClass={timeText(notice.time)}
+              dotClass={timeDot(notice.time)}
+              diamond
+            />
+          )}
           <MetaRow label="公司" value={notice.company} valueClass={companyText(notice.company)} dotClass={companyDot(notice.company)} />
           <MetaRow label="制作人" value={notice.producer} />
         </div>
@@ -307,13 +318,14 @@ export default function NoticeDetail({ data, notice, onClose }: Props) {
                 data={data}
                 notice={notice}
                 role={role}
+                showStars={showStars}
               />
             ))}
           </ul>
         </section>
 
         <p className="mt-4 text-ui-2xs leading-[1.8] text-ink-faint">
-          能力要求由「难度对照表」按 等级字母 × 星数 换算，S/L 会在区间内随机。
+          {showStars && '能力要求由「难度对照表」按 等级字母 × 星数 换算，S/L 会在区间内随机。'}
           「每天影响」指拍摄期间每天结算一次：拍多少天就结算多少次；特殊要求自带的增减也按同样方式每天结算。
         </p>
       </div>

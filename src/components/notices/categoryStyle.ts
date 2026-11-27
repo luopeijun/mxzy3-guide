@@ -9,6 +9,6 @@ export const CATEGORY_STYLE: Record<NoticeCategory, { label: string; pill: strin
   music: { label: '唱片', pill: 'bg-brand-soft text-brand-strong', bar: 'bg-brand' },
   ad: { label: '广告', pill: 'bg-tag-follow-soft text-tag-follow', bar: 'bg-tag-follow' },
   show: { label: '主持', pill: 'bg-tag-manual-soft text-tag-manual', bar: 'bg-tag-manual' },
-  stage: { label: '舞台剧', pill: 'bg-series-soft text-series', bar: 'bg-series' },
-  fashion: { label: '时装秀', pill: 'bg-tag-talk-soft text-tag-talk', bar: 'bg-tag-talk' },
+  stage: { label: '舞台剧', pill: 'bg-tag-stage-soft text-tag-stage', bar: 'bg-tag-stage' },
+  fashion: { label: '时装秀', pill: 'bg-tag-runway-soft text-tag-runway', bar: 'bg-tag-runway' },
 };

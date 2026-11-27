@@ -40,6 +40,12 @@ export default function NoticesApp({ data, dataOnly = false }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
 
   const companies = useMemo(() => companiesOf(data.notices), [data]);
+  // 游戏数据不带通告上架年份与角色星级（主站社区表才有），有则显示、无则整块隐藏。
+  const showTime = useMemo(() => data.notices.some((notice) => notice.time), [data]);
+  const showStars = useMemo(
+    () => data.notices.some((notice) => (notice.roles ?? []).some((role) => role.difficulty != null)),
+    [data],
+  );
   const results = useMemo(() => filterNotices(data.notices, filter), [data, filter]);
   const pageCount = Math.max(1, Math.ceil(results.length / pageSize));
   const visible = useMemo(
@@ -154,6 +160,8 @@ export default function NoticesApp({ data, dataOnly = false }: Props) {
                 data={data}
                 filter={filter}
                 companies={companies}
+                showTime={showTime}
+                showStars={showStars}
                 onChange={patch}
                 onReset={() => {
                   setFilter(EMPTY_FILTER);
@@ -185,6 +193,8 @@ export default function NoticesApp({ data, dataOnly = false }: Props) {
                             notice={notice}
                             active={notice.id === selectedId}
                             minHeight={cardHeight}
+                            showTime={showTime}
+                            showStars={showStars}
                             onSelect={() => pick(notice.id)}
                           />
                         </li>
@@ -209,7 +219,7 @@ export default function NoticesApp({ data, dataOnly = false }: Props) {
 
           {view === 'list' && (
             <aside className="hidden w-[380px] shrink-0 flex-col overflow-hidden rounded-ui-md border border-line bg-surface min-[1120px]:flex">
-              <NoticeDetail data={data} notice={selected} />
+              <NoticeDetail data={data} notice={selected} showTime={showTime} showStars={showStars} />
             </aside>
           )}
         </div>
@@ -220,7 +230,13 @@ export default function NoticesApp({ data, dataOnly = false }: Props) {
           data-notice-drawer
           className="absolute inset-0 z-50 flex flex-col bg-canvas min-[1120px]:hidden"
         >
-          <NoticeDetail data={data} notice={selected} onClose={() => setDrawerOpen(false)} />
+          <NoticeDetail
+            data={data}
+            notice={selected}
+            showTime={showTime}
+            showStars={showStars}
+            onClose={() => setDrawerOpen(false)}
+          />
         </div>
       )}
     </div>
