@@ -139,7 +139,8 @@ async function main() {
   })()`);
   check('目录有 3 个类目', tree.cats.length === 3, JSON.stringify(tree.cats));
   check('角色攻略 8 位', tree.chars === 8, `chars=${tree.chars}`);
-  check('经纪人事件簿 10 条', tree.guide === 10, `guide=${tree.guide}`);
+  // 第 11 节是后加的「自制通告一览」，目录跟着正文一起长。
+  check('经纪人事件簿 11 条', tree.guide === 11, `guide=${tree.guide}`);
   check('支线攻略 6 条', tree.side === 6, `side=${tree.side}`);
   check('第一类叫「经纪人事件簿」', tree.guideTitle.includes('经纪人事件簿'), tree.guideTitle.trim().slice(0, 20));
   check('已删掉「角色介绍」', tree.hasIntro === false, `hasIntro=${tree.hasIntro}`);

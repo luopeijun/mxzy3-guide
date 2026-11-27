@@ -1969,7 +1969,8 @@ async function main() {
       caseTab: !!document.querySelector('[data-tab="case"]')
     })`));
     console.log('sweet:', JSON.stringify(sweetState));
-    check(sweetState.tabs === 3 && !sweetState.caseTab, '甜蜜乐章 keeps its own three tabs');
+    // 甜站现在有五个页签（通告 / 事件追踪 / CG 图鉴 / 存档解析 / 说明），且存档解析是独立页。
+    check(sweetState.tabs === 5 && sweetState.caseTab, '甜蜜乐章 keeps its own five tabs');
   } finally {
     close();
   }
