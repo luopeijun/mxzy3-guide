@@ -1700,9 +1700,11 @@ function scanSweetArchive(
         || Boolean(team && team.memberIds.some((id) => mineIds.has(id)));
       if (!isMine) continue;
       seenArtists.add(artistId);
-      // 角色槽只记录了本作的角色定义，没有「谁演哪个」的对应关系。
-      // 唯一角色时可以直接认领；多角色时宁可留空，也不按槽位/性别猜。
-      const role = body.roles.length === 1 ? body.roles[0] : null;
+      // 接演网格的槽位顺序就是本体角色槽顺序（body.roles 已按角色码排好）：
+      // MVAN1 的 16 衛亞/13 史蒂芬/12 丹尼斯 正好落男主角/男配角/男配角，
+      // TVA0Y 的 14 姚子奇/32 桑禾蓓/15 慕容和希/39 聆香 正好落男/女/男/女配。
+      // 按槽位精确落位即可，不再按性别猜着换角色。
+      const role = slot < body.roles.length ? body.roles[slot] : null;
       // 只有团体角色才显示团体名；主角即便在团体里，个人作品仍显示本人姓名。
       const groupRole = role?.roleType === 4 || role?.role === '團體';
       casts.push({
