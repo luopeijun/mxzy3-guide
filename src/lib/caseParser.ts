@@ -542,6 +542,10 @@ export interface TeamRecord {
    *  这是游戏自己维护的累计值（Auto 千金小姐 6、Ending0001 莎亞之音 10），
    *  不用去重数作品清单。 */
   workCount: number;
+  /** 团体名气：存档 nameEnd+4 是千分位累计值，界面显示 floor(raw / 1000)。 */
+  fame: number;
+  /** 团体人气：存档 nameEnd+8 是千分位累计值，界面显示 floor(raw / 1000)。 */
+  popularity: number;
   offset: number;
 }
 
@@ -2216,7 +2220,12 @@ export function parseTeams(
     // 老记录靠 shapeOk 已保证 ≤99；带 Invaid 标记的也顺手校验一次。
     const rawWorkCount = view.getUint32(nameEnd + 24, true);
     const workCount = rawWorkCount <= 99 ? rawWorkCount : 0;
-    out.push({ code, name, memberIds, workCount, offset: o });
+    // 名气 / 人气与甜蜜乐章同构：nameEnd+4 / +8 是千分位累计值，界面 ÷1000 取整。
+    // 玩家截图逐项核对：Story0001 風敏樂團 8036/6608 → 8/6、Story0014 9999/9999 → 9/9、
+    // Story0062 千金小姐 4000/2890 → 4/2。三档全命中。
+    const fame = Math.max(0, Math.floor(view.getUint32(nameEnd + 4, true) / 1000));
+    const popularity = Math.max(0, Math.floor(view.getUint32(nameEnd + 8, true) / 1000));
+    out.push({ code, name, memberIds, workCount, fame, popularity, offset: o });
   }
   return out.sort((a, b) => a.code - b.code);
 }

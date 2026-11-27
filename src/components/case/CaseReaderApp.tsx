@@ -1511,6 +1511,16 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
                           </span>
                         ))}
                       </div>
+                      {/* 团体名气 / 人气：存档累计值 ÷1000 取整，与甜蜜乐章同款。 */}
+                      <div data-case-group-stats className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
+                        <span className="text-ink-faint">团体数值</span>
+                        <span className="rounded px-1 py-0.5 text-ink-faint">
+                          名气 <b data-case-group-fame className="font-semibold tabular-nums text-ink">{group.fame}</b>
+                        </span>
+                        <span className="rounded px-1 py-0.5 text-ink-faint">
+                          人气 <b data-case-group-popularity className="font-semibold tabular-nums text-ink">{group.popularity}</b>
+                        </span>
+                      </div>
                       {/* 团体通告统计：团体只接唱片通告，直接读存档累计的唱片作品数。 */}
                       <div data-case-group-counts className="mt-1.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-ui-2xs">
                         <span className="text-ink-faint">通告统计</span>
