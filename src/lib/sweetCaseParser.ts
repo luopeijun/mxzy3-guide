@@ -1329,8 +1329,17 @@ function alignSweetWorks(locations: SweetArtistLocation[], works: SweetWorkRecor
       }
     }
   }
+  // 展示顺序按「发生时间」正序，和主站同口径（UI 文案也是「按发生顺序」）：
+  // 有日期的按年/月/日；无日期的占位用缺失序号放在开头（早期未留存明细），
+  // 最后才退回参与清单原始顺序。裁剪仍按上面的 sortKey（seq 优先），
+  // 避免没有序号的预约通告顶掉真正完成的作品。
+  const displaySortKey = (work: SweetWorkRecord) => {
+    if (work.year > 0) return work.year * 10000 + work.month * 100 + work.day;
+    if (work.seq && work.seq >= 1) return -(1000000 - work.seq);
+    return 900000 + work.order;
+  };
   return aligned.sort(
-    (a, b) => sortKey(a) - sortKey(b) || a.workCode.localeCompare(b.workCode),
+    (a, b) => displaySortKey(a) - displaySortKey(b) || a.workCode.localeCompare(b.workCode),
   );
 }
 
