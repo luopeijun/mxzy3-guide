@@ -4,7 +4,8 @@
  *  measured or searched, so the markers never leak into copy or counts:
  *    `**关键词**`      — generic emphasis (used by the notice summary card)
  *    `{时间:…}` 等      — typed highlights; the label tells the UI which tint to
- *                        use, so 条件 / 时间 / 地点 / 人物 / 选项 / 物品 read apart. */
+ *                        use, so 条件 / 时间 / 地点 / 人物 / 选项 / 物品 read apart.
+ *    `{纠错:…}`         — 彩色纠错提示，与金色普通提示同块并存。 */
 
 export type HighlightKind =
   | 'time'
@@ -13,7 +14,8 @@ export type HighlightKind =
   | 'choice'
   | 'item'
   | 'condition'
-  | 'key';
+  | 'key'
+  | 'fix';
 
 export interface TextSegment {
   text: string;
@@ -27,9 +29,10 @@ const KIND_BY_LABEL: Record<string, HighlightKind> = {
   选项: 'choice',
   物品: 'item',
   条件: 'condition',
+  纠错: 'fix',
 };
 
-const TOKEN_RE = /\*\*(.+?)\*\*|\{(时间|地点|人物|选项|物品|条件):([^{}]*)\}/g;
+const TOKEN_RE = /\*\*(.+?)\*\*|\{(时间|地点|人物|选项|物品|条件|纠错):([^{}]*)\}/g;
 
 /** Split inline markup into plain and highlighted runs, in source order. */
 export function parseInline(text: string): TextSegment[] {

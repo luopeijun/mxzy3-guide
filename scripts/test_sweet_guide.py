@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 10)
+        self.assertEqual(len(first["children"]), 17)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 24)
-        self.assertEqual(stats["readyItems"], 24)
+        self.assertEqual(stats["items"], 31)
+        self.assertEqual(stats["readyItems"], 31)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -248,7 +248,8 @@ class TestSweetGuide(unittest.TestCase):
                     # 转码漏网的：全角百分号、「讃」是「赞」的异体、「著」应作语助词「着」。
                     self.assertNotIn("％", text, f"残留全角百分号：{text}")
                     self.assertNotIn("讃", text, f"残留异体字「讃」：{text}")
-                    self.assertNotIn("著", text, f"残留「著」：{text}")
+                    # 「著名 / 显著」是简体标准词，不是繁体残留；只拦语助词误用的「穿著」等。
+                    self.assertNotRegex(text, r"(?<!显)著(?!名)", f"残留「著」：{text}")
 
     def test_company_page(self) -> None:
         self.assertEqual(self.company["status"], "ready")

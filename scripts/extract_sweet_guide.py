@@ -885,6 +885,49 @@ DATE_QUESTION_RE = re.compile(r"^(\d+)[.．]\s*Q[：:](.+)$")
 DATE_ANSWER_RE = re.compile(r"^A[：:](.+)$")
 
 
+def parse_generic_list(path: Path) -> tuple[list[dict], str]:
+    """通用清单页 → 短标题开 section，其余是说明段落；注释行走金色便签。
+
+    用于从台版手册补进来的附录页（初期攻略 / 签约条件 / 制作人 / 称号属性 /
+    约会教战总则）。这些页都是「小标题 + 条目」的平铺清单，没有事件卡，
+    所以不会进入追踪器的事件下标。
+    """
+    # 原文用全角空格对齐人名（王　金）、全角数字写门槛（名气２００），
+    # 展示时统一成半角，数值本身不变。
+    lines = [
+        line.replace("\u3000", "").translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+        for line in _read_lines(path)
+    ]
+    blocks: list[dict] = []
+    group = 0
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines[1:]:
+        if text.startswith("---"):
+            continue
+        diamond = re.match(r"^◆(.+)◆$", text)
+        if diamond:
+            group += 1
+            push("section", diamond.group(1).strip())
+            continue
+        if text.startswith(("（注", "(注", "注：", "※", "【")):
+            push("note", text)
+            continue
+        bare = text.rstrip("：: ")
+        short = len(text) <= 10 and not any(
+            ch in text for ch in "：:，。、；！？（）()－—~～"
+        )
+        if (text.endswith(("：", ":")) or short) and not re.match(r"^\d+[.、]", text):
+            group += 1
+            push("section", bare)
+            continue
+        push("paragraph", text)
+
+    return blocks, lines[0]
+
+
 def parse_date(path: Path) -> tuple[list[dict], list[dict]]:
     """约会页 → 开头四条邀约限制 + 两组「地点 / 问题 / 回答」。
 
@@ -1019,6 +1062,13 @@ PARSERS = {
     "career-endings": parse_career_endings,
     "endings": parse_endings,
     "monopoly": parse_monopoly,
+    # 台版手册补进来的附录页：平铺清单，无事件卡，不影响追踪器下标。
+    "early-guide": parse_generic_list,
+    "signing": parse_generic_list,
+    "producers": parse_generic_list,
+    "titles": parse_generic_list,
+    "dating-guide": parse_generic_list,
+    "murong-yaoqi": parse_generic_list,
     "cheng-zhongxuan": parse_character,
     "danisi": parse_character,
     "ji-xiang": parse_character,
@@ -1054,6 +1104,12 @@ CATEGORIES: list[dict] = [
             ("career-endings", "女主事业结局达成条件"),
             ("endings", "结局条件一览"),
             ("monopoly", "大富翁BaBaBa答案"),
+            ("early-guide", "初期攻略"),
+            ("signing", "签约条件"),
+            ("producers", "制作人专长与自制作品规则"),
+            ("titles", "称号属性"),
+            ("dating-guide", "约会教战总则"),
+            ("murong-yaoqi", "慕容和希＆姚子奇（双人）"),
         ],
     },
     {

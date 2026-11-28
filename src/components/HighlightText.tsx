@@ -17,13 +17,14 @@ import { useHighlightPref, HIGHLIGHT_ENABLED } from '../hooks/useHighlightPref';
 interface Props {
   text: string;
   className?: string;
-  tone?: 'brand' | 'note';
+  tone?: 'brand' | 'note' | 'fix';
   persistent?: boolean;
 }
 
 const TONE_CLASS = {
   brand: 'bg-brand-soft text-brand-strong',
   note: 'bg-hl-note-soft text-hl-note',
+  fix: 'bg-fix-soft text-fix',
 };
 
 export default function HighlightText({ text, className, tone = 'brand', persistent }: Props) {
@@ -48,7 +49,7 @@ export default function HighlightText({ text, className, tone = 'brand', persist
         segment.kind ? (
           <mark
             key={index}
-            className={`rounded-[3px] px-[3px] font-semibold ${TONE_CLASS[tone]}`}
+            className={`rounded-[3px] px-[3px] font-semibold ${TONE_CLASS[segment.kind === 'fix' ? 'fix' : tone]}`}
           >
             {segment.text}
           </mark>

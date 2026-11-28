@@ -38,6 +38,9 @@
      5.98:1 on the tint and the tint still reads as a tint on #fdf5e9. */
   --color-hl-note: #6d4409;
   --color-hl-note-soft: #f3d68f;
+  /* 攻略纠错：台版手册的口径冲突压在原提示上，用红底与金色普通提示区分。 */
+  --color-fix: #8f2f2f;
+  --color-fix-soft: #f8dede;
   --color-missing: #6b5860;
   --color-missing-soft: #f4e9ee;
   /* Trigger-type tags (自动 / 场景 / 新闻 / 跟随 / 手动 / 沟通). Six hues spread
