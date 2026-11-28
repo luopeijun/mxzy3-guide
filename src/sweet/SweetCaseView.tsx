@@ -427,15 +427,12 @@ function SweetWorkCountChip({
       >
         {label} <b className="font-semibold text-ink">{value}</b>
       </span>
-      {works.length > 0 && (
+      {works.length > 0 && open && (
         <span
           data-sweet-case-works-card
           {...handlers}
           role="tooltip"
-          className={cn(
-            'absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1 transition-opacity duration-150',
-            open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
-          )}
+          className="pointer-events-auto absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1"
         >
           <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
             <span className="mb-1 flex items-baseline gap-1">
