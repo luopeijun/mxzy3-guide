@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 21)
+        self.assertEqual(len(first["children"]), 20)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 35)
-        self.assertEqual(stats["readyItems"], 35)
+        self.assertEqual(stats["items"], 34)
+        self.assertEqual(stats["readyItems"], 34)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -293,8 +293,13 @@ class TestSweetGuide(unittest.TestCase):
         node = _node(self.data, "self-notices")
         blocks = node["blocks"]
 
-        # 三种介质各一章；艺人分组是小标题，「其他」也在里面。
-        self.assertEqual([b["text"] for b in blocks if b["kind"] == "section"], ["唱片", "电视剧", "电影"])
+        # 三种介质各一章；末尾接创作取得补充节（两页合一，只留这一个入口）。
+        sections = [b["text"] for b in blocks if b["kind"] == "section"]
+        self.assertEqual(sections[:3], ["唱片", "电视剧", "电影"])
+        self.assertEqual(sections[3], "艺人创作取得")
+        self.assertNotIn("creations", [n["id"] for c in self.data["categories"] for n in c["children"]])
+        # 通告页前 234 块原样保留，事件下标与 CG 锚点不受合并影响。
+        self.assertEqual(len(blocks), 253)
         headings = [b["text"] for b in blocks if b["kind"] == "heading"]
         self.assertEqual(len(headings), 24)
         self.assertEqual(headings[:2], ["杜云芊", "沈惟真"])
@@ -1522,9 +1527,9 @@ class TestSweetGuide(unittest.TestCase):
             for c in self.data["categories"] for n in c["children"]
         }
 
-        # 创作总表：每位艺人一节 + 一张四列表，85 条创作都保留取得条件。
-        creation = nodes["creations"]["blocks"]
-        self.assertEqual(len(creation), 18)
+        # 创作总表并入「自制通告一览」末尾：9 位艺人各一张四列表，85 条都对上。
+        creation = nodes["self-notices"]["blocks"][234:]
+        self.assertEqual(creation[0]["text"], "艺人创作取得")
         tables = [b for b in creation if b["kind"] == "table"]
         self.assertEqual(len(tables), 9)
         self.assertEqual([c["label"] for c in tables[0]["table"]["columns"]],
@@ -1587,6 +1592,23 @@ class TestSweetGuide(unittest.TestCase):
         # 资料卡在 blocks 之外：角色页与主线的事件锚点、追踪下标不变。
         for slug, count in (("shen-weizhen", 190), ("danisi", 236), ("main-story", 80)):
             self.assertEqual(len(nodes[slug]["blocks"]), count, slug)
+
+    def test_selfmade_merges_creation_conditions(self) -> None:
+        """自制通告与创作取得合成一份按作品码对齐的数据，供存档侧直查。
+
+        85 条创作条件全部并进条目；作品码是存档与攻略的共同 key，不能有
+        空码或重复条件导致的错配。
+        """
+        data = json.loads((ROOT / "public" / "data" / "sweet" / "selfmade.json").read_text(encoding="utf-8"))
+        rows = data["entries"] + data["extras"]
+        merged = [row for row in rows if row.get("creation")]
+        self.assertEqual(len(merged), 85)
+        self.assertTrue(all(row["code"] for row in rows))
+        # 特殊作品的剧情条件是联动的关键信息，不能只剩天数。
+        by_name = {row["name"]: row for row in rows}
+        self.assertIn("主动赠送", by_name["雨天"]["creation"]["condition"])
+        self.assertIn("林芬芬", by_name["温柔时刻"]["creation"]["condition"])
+        self.assertIn("公司金钱", by_name["从来不曾爱过"]["creation"]["condition"])
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

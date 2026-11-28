@@ -347,6 +347,10 @@ def parse_self_notices(path: Path) -> tuple[list[dict], str]:
 
     源文本有两种「1、」编号：开头的获得方式说明和后面的艺人都长这样，只能靠
     「是否已经出现过 ●…●」来区分。歌名后的说明与属性行留在同一张卡里。
+
+    艺人创作取得页并入本文末：它和自制通告是同一批作品的两种视角（前者写
+    特殊作品的剧情条件，后者写天数 / 类型星级 / 属性门槛），合并后只留这
+    一个入口。原页的事件块排在前面，下标不动，追踪器与 CG 锚点都不受影响。
     """
     lines = _read_lines(path)
     blocks: list[dict] = []
@@ -410,6 +414,22 @@ def parse_self_notices(path: Path) -> tuple[list[dict], str]:
                 continue
 
         push("paragraph", text)
+
+    # 创作取得页作为末尾补充节并进来：表头是「每种作品一张表」，艺人分节
+    # 的 group 从末尾重新编号，避免并进上一节最后一位艺人的卡片里。
+    creations = SOURCES / "creations.txt"
+    if creations.exists():
+        extra, _ = parse_creations(creations)
+        if extra:
+            offset = max((block["group"] for block in blocks), default=0) + 10
+            for block in extra:
+                block["group"] += offset
+            group = offset
+            group += 1
+            blocks.append({"kind": "section", "text": "艺人创作取得", "group": group})
+            for block in extra:
+                block["group"] += 1
+            blocks.extend(extra)
 
     return blocks, lines[0]
 
@@ -1363,7 +1383,7 @@ PARSERS = {
     "romance-endings": parse_romance_endings,
     "endings": parse_endings,
     "award-dates": parse_award_dates,
-    "creations": parse_creations,
+    # 艺人创作取得已并入 self-notices（同一批作品的两种视角），不再单独成页。
     "special-creations": parse_event_page,
     "monopoly": parse_monopoly,
     # 台版手册补进来的附录页：平铺清单，无事件卡，不影响追踪器下标。
@@ -1401,7 +1421,6 @@ CATEGORIES: list[dict] = [
             ("company", "公司改建攻略"),
             ("abroad-notices", "国外通告接拍条件"),
             ("self-notices", "自制通告一览"),
-            ("creations", "艺人创作取得"),
             ("special-creations", "特殊创作取得攻略"),
             ("outfits", "服装获得方法和剧情"),
             ("festivals", "三大节日相关"),

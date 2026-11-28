@@ -5,11 +5,11 @@
     "generatedBy": "scripts/extract_sweet_guide.py",
     "stats": {
       "categories": 3,
-      "items": 35,
-      "blocks": 3525,
-      "readyItems": 35,
+      "items": 34,
+      "blocks": 3526,
+      "readyItems": 34,
       "missingItems": 0,
-      "sourceParagraphs": 3525
+      "sourceParagraphs": 3526
     }
   },
   "categories": [
@@ -1988,24 +1988,21 @@
               "kind": "paragraph",
               "text": "第二年6月~12月，公司资金大于300万，苏嫚君上门募捐，答应捐钱可得剧本（剧情片，男双五星，女配3星）",
               "group": 100
-            }
-          ],
-          "children": []
-        },
-        {
-          "id": "sweet-guide/creations",
-          "title": "艺人创作取得",
-          "status": "ready",
-          "blocks": [
+            },
+            {
+              "kind": "section",
+              "text": "艺人创作取得",
+              "group": 111
+            },
             {
               "kind": "section",
               "text": "杜云芊",
-              "group": 1
+              "group": 112
             },
             {
               "kind": "table",
               "text": "",
-              "group": 1,
+              "group": 112,
               "table": {
                 "columns": [
                   {
@@ -2086,12 +2083,12 @@
             {
               "kind": "section",
               "text": "沈惟真",
-              "group": 2
+              "group": 113
             },
             {
               "kind": "table",
               "text": "",
-              "group": 2,
+              "group": 113,
               "table": {
                 "columns": [
                   {
@@ -2172,12 +2169,12 @@
             {
               "kind": "section",
               "text": "丹尼斯",
-              "group": 3
+              "group": 114
             },
             {
               "kind": "table",
               "text": "",
-              "group": 3,
+              "group": 114,
               "table": {
                 "columns": [
                   {
@@ -2276,12 +2273,12 @@
             {
               "kind": "section",
               "text": "史蒂芬",
-              "group": 4
+              "group": 115
             },
             {
               "kind": "table",
               "text": "",
-              "group": 4,
+              "group": 115,
               "table": {
                 "columns": [
                   {
@@ -2356,12 +2353,12 @@
             {
               "kind": "section",
               "text": "姚子奇",
-              "group": 5
+              "group": 116
             },
             {
               "kind": "table",
               "text": "",
-              "group": 5,
+              "group": 116,
               "table": {
                 "columns": [
                   {
@@ -2454,12 +2451,12 @@
             {
               "kind": "section",
               "text": "慕容和希",
-              "group": 6
+              "group": 117
             },
             {
               "kind": "table",
               "text": "",
-              "group": 6,
+              "group": 117,
               "table": {
                 "columns": [
                   {
@@ -2540,12 +2537,12 @@
             {
               "kind": "section",
               "text": "卫亚",
-              "group": 7
+              "group": 118
             },
             {
               "kind": "table",
               "text": "",
-              "group": 7,
+              "group": 118,
               "table": {
                 "columns": [
                   {
@@ -2632,12 +2629,12 @@
             {
               "kind": "section",
               "text": "纪翔",
-              "group": 8
+              "group": 119
             },
             {
               "kind": "table",
               "text": "",
-              "group": 8,
+              "group": 119,
               "table": {
                 "columns": [
                   {
@@ -2706,12 +2703,12 @@
             {
               "kind": "section",
               "text": "城仲瑄",
-              "group": 9
+              "group": 120
             },
             {
               "kind": "table",
               "text": "",
-              "group": 9,
+              "group": 120,
               "table": {
                 "columns": [
                   {

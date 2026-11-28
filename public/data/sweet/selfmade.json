@@ -5,6 +5,7 @@
     "artistCount": 10,
     "sources": [
       "sources/sweet/self-notices.txt（攻略整理的自制通告一览）",
+      "sources/sweet/creations.txt（艺人创作取得，特殊作品条件）",
       "public/data/sweet/notices.json（Data/*.dat 烘出的通告名与通告码）"
     ],
     "generatedBy": "scripts/build_sweet_selfmade.py"
@@ -52,6 +53,10 @@
         "两星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "录制第1张专辑且上市后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -71,6 +76,10 @@
         "两星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "录制第2张专辑且上市后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -107,6 +116,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -143,6 +156,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动18天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -162,6 +179,10 @@
         "三星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "进公司一个月后主动赠送"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -198,6 +219,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动16天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -234,6 +259,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动18天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -270,6 +299,10 @@
           "value": 700
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动16天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -306,6 +339,10 @@
           "value": 600
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -342,6 +379,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -378,6 +419,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和丹尼斯同一团体才会创作"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -414,6 +459,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和丹尼斯同一团体才会创作"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -433,6 +482,10 @@
         "五星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "克烈斯退出演艺圈，史蒂芬大受打击，云芊陪伴至事件结束后赠送，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -469,6 +522,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -505,6 +562,10 @@
           "value": 700
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -541,6 +602,10 @@
           "value": 400
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -577,6 +642,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -613,6 +682,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -632,6 +705,10 @@
         "两星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "参加音乐祭"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -651,6 +728,10 @@
         "三星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "云芊得到音乐奖项且约会5次以上，子奇赠送，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -670,6 +751,10 @@
         "四星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "云芊唱子奇的创作销售不到9万，表示是歌迷不懂欣赏，子奇再赠送，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -689,6 +774,10 @@
         "五星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和慕容和希拍《从来不曾爱过》上市后票房>30万触发假戏真做支线，慕容和希有得奖，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -725,6 +814,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "特殊",
+        "condition": "出过团体专辑后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -761,6 +854,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和慕容和希同一团体才会创作"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -797,6 +894,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动12天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -833,6 +934,10 @@
           "value": 600
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -869,6 +974,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动12天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -905,6 +1014,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动12天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -924,6 +1037,10 @@
         "两星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "得到「浪漫赌注」后触发子奇对云芊有好感新闻，慕容和希主动赠送，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -943,6 +1060,10 @@
         "五星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和姚子奇拍《从来不曾爱过》上市后票房>30万触发假戏真做支线，姚子奇有得奖，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -979,6 +1100,10 @@
           "value": 360
         }
       ],
+      "creation": {
+        "kind": "特殊",
+        "condition": "出过团体专辑后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1015,6 +1140,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1051,6 +1180,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动12天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1087,6 +1220,10 @@
           "value": 700
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动15天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1119,6 +1256,10 @@
           "value": 400
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1155,6 +1296,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1174,6 +1319,10 @@
         "五星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "纪翔离开后一个月托欧怡青赠送创作，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1193,6 +1342,10 @@
         "五星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "纪翔告白成功后赠送，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1229,6 +1382,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1265,6 +1422,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1301,6 +1462,10 @@
           "value": 400
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1333,6 +1498,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动20天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1352,6 +1521,10 @@
         "三星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "《林芬芬的作品》跟随丹尼斯遇到林芬芬吐苦水，再跟随时林芬芬赠送，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1385,6 +1558,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1422,6 +1599,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动38天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1456,6 +1637,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1489,6 +1674,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1527,6 +1716,10 @@
           "value": 500
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1566,6 +1759,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1599,6 +1796,10 @@
           "value": 520
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1636,6 +1837,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1673,6 +1878,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1710,6 +1919,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动30天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1747,6 +1960,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1781,6 +1998,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1818,6 +2039,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1839,6 +2064,10 @@
         "男配二三星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和摩登时代负责人合作后，详见落日攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1875,6 +2104,10 @@
           "value": 330
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1911,6 +2144,10 @@
           "value": 500
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1949,6 +2186,10 @@
           "value": 450
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -1986,6 +2227,10 @@
           "value": 500
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2023,6 +2268,10 @@
           "value": 500
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2042,6 +2291,10 @@
         "男双五星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和慕容和希拍《从来不曾爱过》杀青后开始创作"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2061,6 +2314,10 @@
         "男双五星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和姚子奇拍《从来不曾爱过》杀青后开始创作"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2097,6 +2354,10 @@
           "value": 330
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2117,6 +2378,10 @@
         "男配三星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "卫亚低分通过期末考萌生退意，退出半年后云芊电影卖座，卫亚感动后赠送，详见特殊创作攻略"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2154,6 +2419,10 @@
           "value": 500
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2191,6 +2460,10 @@
           "value": 450
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2227,6 +2500,10 @@
           "value": 500
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2264,6 +2541,10 @@
           "value": 420
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2300,6 +2581,10 @@
           "value": 500
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2337,6 +2622,10 @@
           "value": 550
         }
       ],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": true,
       "acquire": ""
     },
@@ -2357,6 +2646,10 @@
         "女配3星"
       ],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "公司金钱>300万，苏嫚君主动募款并赠送《从来不曾爱过》"
+      },
       "guide": true,
       "acquire": ""
     }
@@ -2375,6 +2668,7 @@
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": null,
       "guide": false,
       "acquire": "story"
     },
@@ -2386,11 +2680,15 @@
       "name": "窗外",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2402,11 +2700,15 @@
       "name": "永恒之钥",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2418,11 +2720,15 @@
       "name": "驯妻记",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2434,11 +2740,15 @@
       "name": "从接吻开始",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "特殊",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "和林芬芬分手后，与云芊合作舞台剧后赠送，需已取得情人节CG，详见特殊创作攻略"
+      },
       "guide": false,
       "acquire": "story"
     },
@@ -2450,11 +2760,15 @@
       "name": "彻夜谋杀",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动40天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2466,11 +2780,15 @@
       "name": "杀死我杀死你",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动30天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2482,11 +2800,15 @@
       "name": "爱是无限回圈",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2498,11 +2820,15 @@
       "name": "直到永远",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2514,11 +2840,15 @@
       "name": "地下铁之旅",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2530,11 +2860,15 @@
       "name": "未来启示录",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动35天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2546,11 +2880,15 @@
       "name": "乡愁",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "一般",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "一般",
+        "condition": "累积自由活动33天后"
+      },
       "guide": false,
       "acquire": "pool"
     },
@@ -2562,11 +2900,15 @@
       "name": "寂寞微光",
       "guideName": "",
       "category": "舞台剧",
-      "kind": "",
+      "kind": "特殊",
       "days": 0,
       "condition": "",
       "tags": [],
       "thresholds": [],
+      "creation": {
+        "kind": "特殊",
+        "condition": "《新名纱雪的作品》卫亚与新名纱雪绯闻平息后，新名纱雪赠送，详见特殊创作攻略"
+      },
       "guide": false,
       "acquire": "story"
     }

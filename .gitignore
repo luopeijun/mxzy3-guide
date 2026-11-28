@@ -14,3 +14,4 @@ release-*/
 # 压缩后的缩略图由 scripts/extract_cg.py 输出到 public/images/cg/，随仓库发布
 outputs/
 .tmp-cdp-profile/
+.tmp-cdp-profile-*/
