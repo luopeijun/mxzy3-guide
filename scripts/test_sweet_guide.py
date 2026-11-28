@@ -1238,10 +1238,10 @@ class TestSweetGuide(unittest.TestCase):
         texts = [b["text"] for b in blocks]
         self.assertIn("提示：电影票房30万以上才会触发。", texts)
         self.assertFalse(any("30亿" in t for t in texts))
-        # 角色页都读同一份备注表，目前只有慕容和希、卫亚、纪翔、城仲瑄、史蒂芬五页有条目。
+        # 角色页都读同一份备注表，目前只有慕容和希、卫亚、纪翔、城仲瑄、史蒂芬、姚子奇六页有条目。
         others = [
             slug for slug, node in nodes.items()
-            if slug not in ("murong-hexi", "wei-ya", "ji-xiang", "cheng-zhongxuan", "shi-difen")
+            if slug not in ("murong-hexi", "wei-ya", "ji-xiang", "cheng-zhongxuan", "shi-difen", "yao-ziqi")
             and node["id"].startswith("sweet-characters/")
             and any(b.get("eventNotes") for b in node["blocks"])
         ]
@@ -1360,6 +1360,35 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("事件图：史蒂芬02", note_text("4-3"))
         self.assertIn("团体举办海外巡回演唱会才会触发，个人巡回演唱会不会触发", note_text("5-1"))
         self.assertIn("事件图：史蒂芬04", note_text("5-3"))
+
+    def test_yao_ziqi_guide(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+        blocks = nodes["yao-ziqi"]["blocks"]
+        # 只加备注字段，不插块、不改事件编号（追踪器按原始下标存进度）。
+        self.assertEqual(len(blocks), 228)
+        self.assertEqual(sum(b["kind"] == "event" for b in blocks), 40)
+        annotated = {b["label"]: b["eventNotes"] for b in blocks
+                     if b["kind"] == "event" and b.get("eventNotes")}
+        self.assertEqual(list(annotated), ["4-1", "5-8", "8-1", "8-5", "9-2"])
+        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+
+        def note_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"]
+                for group in annotated[label] for item in group["items"]
+            )
+
+        self.assertIn("约会开启条件：和姚子奇约会>5且颇有好感", note_text("4-1"))
+        self.assertIn("和慕容和希约会>15次", note_text("5-8"))
+        self.assertIn("2008/8/1-8/30", note_text("8-1"))
+        self.assertIn("2010/8/10-9/7", note_text("8-1"))
+        self.assertIn("2009/8/20-9/18", note_text("8-5"))
+        self.assertIn("事件图：姚子奇03", note_text("8-5"))
+        self.assertIn("事件图：姚子奇05", note_text("9-2"))
+        self.assertIn("邀约其他人都失败", note_text("9-2"))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []
