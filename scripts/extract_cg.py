@@ -23,8 +23,6 @@ import io
 import json
 from pathlib import Path
 
-from PIL import Image
-
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "outputs" / "明星志愿3_CG图鉴"
 OUT_IMAGES = ROOT / "public" / "images" / "cg"
@@ -188,6 +186,8 @@ def apply_node_links(items: list[dict], titles: dict[str, str]) -> int:
 
 
 def main() -> None:
+    from PIL import Image  # 只在生成缩略图时才需要；纯数据测试不必装 Pillow。
+
     manifest = json.loads(read_text(SRC / "manifest.json"))
     rows = list(csv.DictReader(io.StringIO(read_text(SRC / "CG清单.csv"))))
     if len(manifest) != len(rows):
