@@ -158,8 +158,18 @@ export interface SweetWorkRecord {
 
 /** 作品明细的角色真源索引：`作品码|艺人编号` -> 角色名（男/女主角、配角、主持人）。
  *  和主站 buildWorkRoleIndex 同口径，来自存档通告本体里的角色槽 + 接演人配对；
- *  hover 明细据此显示「接的是男主角还是配角」，早期作品命中不到就留空，不猜。 */
+ *  hover 明细优先用它，早期作品本体已清掉时回退到作品成绩表的角色定义。 */
 export type SweetWorkRoleIndex = Map<string, string>;
+
+/** 作品成绩表里一条角色定义：类型编号 + 星级，和主站角色记录同构。 */
+interface SweetWorkRoleDef {
+  role: string;
+  roleType: number;
+  star: number;
+}
+
+/** `作品码 -> 该作品的角色定义`，早期作品本体没留档时仍可读。 */
+export type SweetWorkRoleDefs = Map<string, SweetWorkRoleDef[]>;
 
 const MAIN_WORK_ROLES = new Set([
   '男主角', '女主角', '男配角', '女配角', '主持人', '助理主持', '外景主持',
@@ -840,6 +850,51 @@ function scanSweetWorkNames(bytes: Uint8Array, view: DataView): Map<string, stri
   return out;
 }
 
+/** 1022B 作品成绩表里还留着每个作品的四个角色槽：`作品码+槽号\0` 后 +8 是
+ *  角色类型（RoleType.dat）、+12 是 1~5 星。老作品（如 2008/8 的 MVA75《千年》）
+ *  通告本体已被清掉，但角色定义还在，这里按主站同款结构取出来做兜底。 */
+function scanSweetWorkRoleDefs(
+  bytes: Uint8Array,
+  view: DataView,
+  tables: SweetCaseTables,
+): SweetWorkRoleDefs {
+  const out: SweetWorkRoleDefs = new Map();
+  const stride = 1022;
+  for (let offset = 0; offset + stride <= bytes.length; offset += 1) {
+    const code = readCode(bytes, offset + 68, 5);
+    if (!code || bytes[offset + 73] !== 0) continue;
+    const kind = readI32(view, offset + 64);
+    const nameLength = readI32(view, offset + 74);
+    const field = readI32(view, offset + 78);
+    if (kind < 1 || kind > 31 || nameLength < 1 || nameLength > 64 || field < 1 || field > 64) continue;
+    const years = [readI32(view, offset + 4), readI32(view, offset + 20)];
+    if (!years.every((year) => year >= 2000 && year <= 2099)) continue;
+    const tags = [1, 2, 3, 4].map((n) => `${code}${n}`);
+    const defs: SweetWorkRoleDef[] = [];
+    const end = offset + stride;
+    for (let i = offset + 100; i + 16 <= end; i += 1) {
+      for (let n = 0; n < tags.length; n += 1) {
+        const tag = tags[n];
+        let matched = true;
+        for (let k = 0; k < tag.length; k += 1) {
+          if (bytes[i + k] !== tag.charCodeAt(k)) { matched = false; break; }
+        }
+        if (!matched || bytes[i + tag.length] !== 0) continue;
+        const roleType = readI32(view, i + tag.length + 2);
+        const star = readI32(view, i + tag.length + 6);
+        const role = tables.roles?.[String(roleType)] ?? '';
+        if (star >= 1 && star <= 5 && MAIN_WORK_ROLES.has(role)) {
+          defs.push({ role, roleType, star });
+        }
+        i += tag.length + 9;
+        break;
+      }
+    }
+    if (defs.length && !out.has(code)) out.set(code, defs);
+  }
+  return out;
+}
+
 /** 团体名气/人气在存档里是千分位累计值，游戏界面显示 floor(raw / 1000)。 */
 function sweetTeamDisplayValue(raw: number): number {
   return Math.max(0, Math.floor(raw / 1000));
@@ -1199,10 +1254,36 @@ function buildSweetNoticeInfoIndex(
  *  逐条发行日期则以通告本体档期为准，详见 buildSweetNoticeInfoIndex。
  *  10/15/16/20/21/22/26/31 是同一作品的版本记录，只取大类 1..7；
  *  未杀青的自制通告还没完成，不能算进已接作品。 */
+/** 用户实机「艺人成绩」截图逐条核对过的角色归属，和主站 WORK_ROLE_OVERRIDES
+ *  同用途：性别+星级会挑错时才用，绝不凭印象扩写。 */
+const SWEET_WORK_ROLE_OVERRIDES: Record<string, string> = {
+  // Story0017：丹尼斯《千年》MVA75 是男配角，作品成绩表里男主角星级更高会挑错。
+  '12|MVA75': '男配角',
+};
+
+/** 和主站 pickWorkRole 同款兜底：通告本体命中不到时，先用实机核对过的例外，
+ *  再按艺人性别过滤作品成绩表的角色定义，星级高的（主角）优先。 */
+function pickSweetWorkRole(
+  workCode: string,
+  artistId: number,
+  tables: SweetCaseTables,
+  roleDefs: SweetWorkRoleDefs,
+): string {
+  const override = SWEET_WORK_ROLE_OVERRIDES[`${artistId}|${workCode}`];
+  if (override) return override;
+  const candidates = (roleDefs.get(workCode) ?? []).filter((def) => {
+    const want = sweetRoleGender(def.roleType);
+    const have = sweetArtistGender(artistId, tables);
+    return !want || !have || want === have;
+  });
+  if (!candidates.length) return '';
+  candidates.sort((a, b) => b.star - a.star || a.roleType - b.roleType);
+  return candidates[0].role;
+}
+
 /** 从存档里所有带接演配对的通告建作品角色真源索引。
  *  筹备中通告只有预约槽（reservedBy）没有确认接演，所以只取拍摄中 / 等待上市 /
- *  热卖 / 已完成 / 宣传这些已经有 cast 的段；同一作品同一艺人只留第一个。
- *  早期作品本体没留档时命中不到，明细角色留空，不编。 */
+ *  热卖 / 已完成 / 宣传这些已经有 cast 的段；同一作品同一艺人只留第一个。 */
 function buildSweetWorkRoleIndex(
   shooting: SweetShootingNotice[], waiting: SweetWaitingNotice[],
   hot: SweetWaitingNotice[], done: SweetWaitingNotice[], promo: SweetPromoNotice[],
@@ -1235,6 +1316,7 @@ function parseSweetWorkHistory(
   noticeInfo: Map<string, SweetNoticeInfo>,
   events: SweetEvent[],
   roleIndex: SweetWorkRoleIndex,
+  roleDefs: SweetWorkRoleDefs,
 ): SweetWorkRecord[] {
   // 参与清单里连早期没有接演记录的自制作品也会累积进来，官方统计同样算它们；
   // 只有明确还在拍摄中的才没完成。旧作品本体没留档期时 status 是 unknown，
@@ -1326,11 +1408,13 @@ function parseSweetWorkHistory(
       });
     }
   }
-  // 角色真源：用存档通告本体的接演配对回填，命中不到就留空（早期作品不猜）。
+  // 角色真源：通告本体的接演配对优先；老作品本体已清掉时走主站同款兜底
+  // （实机核对例外 + 作品成绩表角色类型/星级按性别过滤）。
   for (const work of out) {
     if (work.noticeIndex !== 0 && work.noticeIndex !== 1 && work.noticeIndex !== 4) continue;
     if (!work.workCode) continue;
-    work.role = roleIndex.get(`${work.workCode}|${work.artistId}`) ?? '';
+    work.role = roleIndex.get(`${work.workCode}|${work.artistId}`)
+      ?? pickSweetWorkRole(work.workCode, work.artistId, tables, roleDefs);
   }
   return out;
 }
@@ -2746,9 +2830,10 @@ export async function parseSweetSave(
   for (const team of teams) team.works = groupWorks.get(team.code) ?? [];
   const events = scanDiaryEvents(bytes, view, diaryTable);
   const workRoleIndex = buildSweetWorkRoleIndex(shooting, waiting, hot, done, promo);
+  const workRoleDefs = scanSweetWorkRoleDefs(bytes, view, tables);
   const works = alignSweetWorks(
     locations,
-    parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade, noticeInfo, events, workRoleIndex),
+    parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade, noticeInfo, events, workRoleIndex, workRoleDefs),
   );
   const items = scanSweetItems(bytes, view, tables);
   const clothes = scanSweetClothes(bytes, view, tables);
