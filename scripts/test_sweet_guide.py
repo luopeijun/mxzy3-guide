@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 20)
+        self.assertEqual(len(first["children"]), 19)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 34)
-        self.assertEqual(stats["readyItems"], 34)
+        self.assertEqual(stats["items"], 33)
+        self.assertEqual(stats["readyItems"], 33)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -1181,30 +1181,33 @@ class TestSweetGuide(unittest.TestCase):
         )
 
     def test_romance_endings(self) -> None:
+        # 感情结局已并入约会教战总则页尾，不再单独成页；原有 129 块保持原位。
         node = next(
             n for c in self.data["categories"] for n in c["children"]
-            if n["id"] == "sweet-guide/romance-endings"
+            if n["id"] == "sweet-guide/dating-guide"
         )
         blocks = node["blocks"]
-        self.assertEqual(node["title"], "感情结局（结婚图取得条件）")
-        self.assertNotIn("description", node)
-        # 资料页没有事件块，不进追踪器。
-        self.assertFalse(any(b["kind"] == "event" for b in blocks))
+        start = next(
+            i for i, b in enumerate(blocks)
+            if b["kind"] == "section" and b["text"] == "感情结局（结婚图取得条件）"
+        )
+        self.assertEqual(start, 129)
+        tail = blocks[start:]
         self.assertEqual(
-            [b["text"] for b in blocks if b["kind"] == "section"],
-            ["沈惟真结婚", "丹尼斯结婚", "史蒂芬结婚", "姚子奇结婚",
-             "慕容和希结婚", "卫亚结婚", "纪翔结婚", "城仲瑄结婚"],
+            [b["text"] for b in tail if b["kind"] == "section"],
+            ["感情结局（结婚图取得条件）", "沈惟真结婚", "丹尼斯结婚", "史蒂芬结婚",
+             "姚子奇结婚", "慕容和希结婚", "卫亚结婚", "纪翔结婚", "城仲瑄结婚"],
         )
         self.assertEqual(
-            [b["text"] for b in blocks if b.get("label") == "角色"],
+            [b["text"] for b in tail if b.get("label") == "角色"],
             ["沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄"],
         )
-        notes = [b["text"] for b in blocks if b["kind"] == "note"]
+        notes = [b["text"] for b in tail if b["kind"] == "note"]
         self.assertEqual(len(notes), 3)
         self.assertIn("开启感情结局", notes[0])
         self.assertIn("艺人不在旗下就不会有结婚图", notes[-1])
 
-        conditions = [b["text"] for b in blocks if b.get("bullet")]
+        conditions = [b["text"] for b in tail if b.get("bullet")]
         self.assertEqual(len(conditions), 28)
         for token in (
             "收到喜欢的礼物10个以上", "沈惟真称号在实力派以上",
@@ -1219,7 +1222,7 @@ class TestSweetGuide(unittest.TestCase):
             "公司结局为顶尖国际经纪公司或迈向国际的经纪公司", "公司自制作品10个以上",
         ):
             self.assertIn(token, conditions, token)
-        self.assertNotIn("慕蓉", " ".join(b["text"] for b in blocks))
+        self.assertNotIn("慕蓉", " ".join(b["text"] for b in tail))
 
     def test_murong_hexi_guide(self) -> None:
         nodes = {
@@ -1480,7 +1483,8 @@ class TestSweetGuide(unittest.TestCase):
 
         # 约会页：总则与地点素质 + 八位艺人守则 + 圣诞真值。
         date_blocks = nodes["dating-guide"]["blocks"]
-        self.assertEqual(len(date_blocks), 129)
+        # 原有 129 块 + 末尾追加的感情结局 48 块（大节 + 3 总纲 + 8×「角色」与条件）。
+        self.assertEqual(len(date_blocks), 177)
         self.assertEqual(nodes["dating-guide"]["description"], "艺人约会教战守则")
         self.assertIn("约会地点素质相关", texts("dating-guide"))
         self.assertIn("植物园：压力↓、疲劳↓", texts("dating-guide"))

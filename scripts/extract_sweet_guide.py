@@ -1160,8 +1160,22 @@ def parse_generic_list(
 
 
 def parse_dating_guide(path: Path) -> tuple[list[dict], str]:
-    """约会教战总则：艺人约会守则下的人名降为 5-1 / 5-2 … 子项。"""
-    return parse_generic_list(path, numbered_children_of="艺人约会守则")
+    """约会教战总则：艺人约会守则下的人名降为 5-1 / 5-2 … 子项。
+
+    感情结局（结婚图取得条件）已并入本页末尾：原文与八位艺人的条件一条不删，
+    只追加块，约会页原有块的顺序和下标不变。
+    """
+    blocks, title = parse_generic_list(path, numbered_children_of="艺人约会守则")
+    romance, _ = parse_romance_endings(SOURCES / "romance-endings.txt")
+    base = max((b["group"] for b in blocks), default=0)
+    blocks.append({
+        "kind": "section", "text": "感情结局（结婚图取得条件）", "group": base + 1,
+    })
+    for block in romance:
+        # 感情结局自己的 group 从 0 起，整体后移，避免与约会页前面的块混组。
+        block["group"] += base + 1
+        blocks.append(block)
+    return blocks, title
 
 
 def parse_date(path: Path) -> tuple[list[dict], list[dict]]:
@@ -1380,7 +1394,7 @@ PARSERS = {
     "sweet-mode": parse_sweet_mode,
     "favorite-gifts": parse_favorite_gifts,
     "career-endings": parse_career_endings,
-    "romance-endings": parse_romance_endings,
+    # 感情结局已并入 dating-guide，由 parse_dating_guide 直接调用解析器。
     "endings": parse_endings,
     "award-dates": parse_award_dates,
     # 艺人创作取得已并入 self-notices（同一批作品的两种视角），不再单独成页。
@@ -1427,7 +1441,6 @@ CATEGORIES: list[dict] = [
             ("sweet-mode", "甜蜜模式的影响"),
             ("favorite-gifts", "角色喜爱物品一览"),
             ("career-endings", "女主事业结局达成条件"),
-            ("romance-endings", "感情结局（结婚图取得条件）"),
             ("endings", "结局条件一览"),
             ("award-dates", "各类奖项颁奖日期及内容"),
             ("monopoly", "大富翁BaBaBa答案"),
