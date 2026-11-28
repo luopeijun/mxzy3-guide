@@ -1231,6 +1231,49 @@ def parse_monopoly(path: Path) -> tuple[list[dict], str]:
     return blocks, subtitle
 
 
+def parse_creations(path: Path) -> tuple[list[dict], str]:
+    """艺人创作取得 → 每位艺人一节 + 一张「种类 / 名称 / 模式 / 取得条件」表。"""
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+    rows: list[dict] = []
+
+    def flush() -> None:
+        nonlocal rows
+        if not rows:
+            return
+        blocks.append({
+            "kind": "table",
+            "text": "",
+            "group": group,
+            "table": {
+                "columns": [
+                    {"key": "kind", "label": "种类"},
+                    {"key": "name", "label": "名称"},
+                    {"key": "mode", "label": "模式"},
+                    {"key": "condition", "label": "取得条件"},
+                ],
+                "rows": rows,
+            },
+        })
+        rows = []
+
+    for text in lines[1:]:
+        if not text.strip():
+            continue
+        if "\t" in text:
+            parts = [part.strip() for part in text.split("\t")]
+            if len(parts) != 4:
+                raise ValueError(f"{path.name}: 创作行不是四列：{text!r}")
+            rows.append(dict(zip(("kind", "name", "mode", "condition"), parts)))
+            continue
+        flush()
+        group += 1
+        blocks.append({"kind": "section", "text": text.strip(), "group": group})
+    flush()
+    return blocks, lines[0]
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
@@ -1244,12 +1287,15 @@ PARSERS = {
     "romance-endings": parse_romance_endings,
     "endings": parse_endings,
     "award-dates": parse_award_dates,
+    "creations": parse_creations,
+    "special-creations": parse_event_page,
     "monopoly": parse_monopoly,
     # 台版手册补进来的附录页：平铺清单，无事件卡，不影响追踪器下标。
     "early-guide": parse_generic_list,
     "signing": parse_generic_list,
     "producers": parse_generic_list,
     "titles": parse_generic_list,
+    "artist-profiles": parse_generic_list,
     "dating-guide": parse_generic_list,
     "murong-yaoqi": parse_generic_list,
     "cheng-zhongxuan": parse_character,
@@ -1280,6 +1326,8 @@ CATEGORIES: list[dict] = [
             ("company", "公司改建攻略"),
             ("abroad-notices", "国外通告接拍条件"),
             ("self-notices", "自制通告一览"),
+            ("creations", "艺人创作取得"),
+            ("special-creations", "特殊创作取得攻略"),
             ("outfits", "服装获得方法和剧情"),
             ("festivals", "三大节日相关"),
             ("sweet-mode", "甜蜜模式的影响"),
@@ -1291,6 +1339,7 @@ CATEGORIES: list[dict] = [
             ("monopoly", "大富翁BaBaBa答案"),
             ("early-guide", "初期攻略"),
             ("signing", "签约条件"),
+            ("artist-profiles", "艺人基本资料与合约条件"),
             ("producers", "制作人专长与自制作品规则"),
             ("titles", "称号属性"),
             ("dating-guide", "约会教战总则"),

@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 19)
+        self.assertEqual(len(first["children"]), 22)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 33)
-        self.assertEqual(stats["readyItems"], 33)
+        self.assertEqual(stats["items"], 36)
+        self.assertEqual(stats["readyItems"], 36)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -379,7 +379,7 @@ class TestSweetGuide(unittest.TestCase):
         # 女仆装 / 小红帽的时间、概要、提示、薪资与募款分支挂在事件块上，不新增块
         # ——追踪器按块下标存进度，插块会让老存档整体错位。
         annotated = {b["label"]: b for b in blocks if b.get("eventNotes")}
-        self.assertEqual(len(annotated), 15)
+        self.assertEqual(len(annotated), 26)  # 女仆装 / 小红帽 15 + 甜蜜新娘礼服 11
 
         def note_text(label: str) -> str:
             return "\n".join(
@@ -410,6 +410,19 @@ class TestSweetGuide(unittest.TestCase):
         self.assertNotIn("杨安妤", note_text("1-4"))
         self.assertIn("绯闻为新闻炒作", note_text("1-6"))
         self.assertIn("公司知名度+100、云芊人气-30", note_text("1-6"))
+
+        # 甜蜜新娘礼服：物件 / 报酬 / 损失与两次花钱分支都要挂在对应事件上。
+        self.assertIn("虚宝新娘礼服一件", note_text("2-1"))
+        self.assertIn("事件图一枚", note_text("2-1"))
+        self.assertIn("550万", note_text("2-1"))
+        self.assertIn("仪态超过550", note_text("2-2"))
+        self.assertIn("要记得点摄影师二次", note_text("2-2"))
+        self.assertIn("失去50万", note_text("2-5"))
+        self.assertIn("不答应→事件结束", note_text("2-6"))
+        self.assertIn("没穿→事件结束", note_text("2-7"))
+        self.assertIn("失去500万", note_text("2-8"))
+        self.assertIn("得到一封信", note_text("2-9"))
+        self.assertIn("人气上升5", note_text("2-11"))
 
     def test_festivals(self) -> None:
         node = _node(self.data, "festivals")
@@ -447,8 +460,12 @@ class TestSweetGuide(unittest.TestCase):
         self.assertFalse(any(t.startswith(("第", "沈惟真：")) for t in numbered))
         # 作者注是便签，不是圆点条目。
         self.assertEqual(
-            [b["kind"] for b in blocks if b["text"].startswith("注：")], ["note"]
+            [b["kind"] for b in blocks if b["text"].startswith("注：")], ["note", "note"]
         )
+        # 用户给的节日真值：生日好感须为旗下最高、圣诞是 12/24、结局 CG 提示。
+        self.assertTrue(any("且是旗下艺人之中最高的" in t for t in texts))
+        self.assertIn("2.该艺人12月24日当天没有特殊行程和约会", texts)
+        self.assertTrue(any("达成结局" in b["text"] for b in blocks))
         # 普通说明句不该带圆点（第一年生日那句）。
         solo = next(b for b in blocks if b["text"].startswith("只有杜司臣"))
         self.assertFalse(solo.get("bullet"))
@@ -1238,10 +1255,11 @@ class TestSweetGuide(unittest.TestCase):
         texts = [b["text"] for b in blocks]
         self.assertIn("提示：电影票房30万以上才会触发。", texts)
         self.assertFalse(any("30亿" in t for t in texts))
-        # 角色页都读同一份备注表，目前只有慕容和希、卫亚、纪翔、城仲瑄、史蒂芬、姚子奇六页有条目。
+        # 角色页都读同一份备注表，目前只有这八页有条目。
         others = [
             slug for slug, node in nodes.items()
-            if slug not in ("murong-hexi", "wei-ya", "ji-xiang", "cheng-zhongxuan", "shi-difen", "yao-ziqi")
+            if slug not in ("murong-hexi", "wei-ya", "ji-xiang", "cheng-zhongxuan",
+                            "shi-difen", "yao-ziqi", "danisi", "shen-weizhen")
             and node["id"].startswith("sweet-characters/")
             and any(b.get("eventNotes") for b in node["blocks"])
         ]
@@ -1389,6 +1407,150 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("事件图：姚子奇03", note_text("8-5"))
         self.assertIn("事件图：姚子奇05", note_text("9-2"))
         self.assertIn("邀约其他人都失败", note_text("9-2"))
+
+    def test_danisi_guide_notes(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+        blocks = nodes["danisi"]["blocks"]
+        # 只加备注字段，不插块、不改事件编号（追踪器按原始下标存进度）。
+        self.assertEqual(len(blocks), 236)
+        self.assertEqual(sum(b["kind"] == "event" for b in blocks), 51)
+        annotated = {b["label"]: b["eventNotes"] for b in blocks
+                     if b["kind"] == "event" and b.get("eventNotes")}
+        self.assertEqual(list(annotated), ["2-4", "3-2", "7-3", "7-6", "8-4", "8-5"])
+        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+
+        def note_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"]
+                for group in annotated[label] for item in group["items"]
+            )
+
+        self.assertIn("林芬芬还没分手前是无法邀约", note_text("2-4"))
+        self.assertIn("约会开启条件：和丹尼斯约会>10", note_text("3-2"))
+        self.assertIn("事件图：丹尼斯05", note_text("7-3"))
+        self.assertIn("触发事件14", note_text("7-6"))
+        self.assertIn("没去探病则走8-2", note_text("8-4"))
+        self.assertIn("事件图：丹尼斯03", note_text("8-5"))
+
+    def test_shen_weizhen_guide_notes(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+        blocks = nodes["shen-weizhen"]["blocks"]
+        self.assertEqual(len(blocks), 190)
+        self.assertEqual(sum(b["kind"] == "event" for b in blocks), 36)
+        annotated = {b["label"]: b["eventNotes"] for b in blocks
+                     if b["kind"] == "event" and b.get("eventNotes")}
+        self.assertEqual(list(annotated), ["2-1", "3-5", "4-1", "4-6", "5-2", "6-3", "7-4"])
+        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+
+        def note_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"]
+                for group in annotated[label] for item in group["items"]
+            )
+
+        self.assertIn("事件图：沈惟真03", note_text("2-1"))
+        self.assertIn("触发方式：探班", note_text("3-5"))
+        self.assertIn("约会开启条件：和沈惟真约会>5且云芊才智>550", note_text("4-1"))
+        self.assertIn("事件图：沈惟真06", note_text("4-6"))
+        self.assertIn("连续两周邀约失败", note_text("4-6"))
+        self.assertIn("事件图：沈惟真04", note_text("5-2"))
+        self.assertIn("八卦记者质问", note_text("5-2"))
+        self.assertIn("触发方式：探班", note_text("6-3"))
+        self.assertIn("事件图：沈惟真05", note_text("7-4"))
+
+    def test_reference_pages_updates(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+
+        def texts(slug: str) -> list[str]:
+            return [b["text"] for b in nodes[slug]["blocks"]]
+
+        # 约会页：总则与地点素质 + 八位艺人守则 + 圣诞真值。
+        date_blocks = nodes["dating-guide"]["blocks"]
+        self.assertEqual(len(date_blocks), 129)
+        self.assertEqual(nodes["dating-guide"]["description"], "艺人约会教战守则")
+        self.assertIn("约会地点素质相关", texts("dating-guide"))
+        self.assertIn("植物园：压力↓、疲劳↓", texts("dating-guide"))
+        self.assertIn("海生馆：压力↓、动感↑", texts("dating-guide"))
+        for artist in ("沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄"):
+            self.assertIn(artist, texts("dating-guide"), artist)
+        self.assertTrue(any("特殊约会不受连续约会的限制（原文标注??）" in t
+                            for t in texts("dating-guide")))
+        self.assertIn("2.该艺人12月24日当天没有特殊行程和约会", texts("dating-guide"))
+        self.assertTrue(any("旗下艺人之中最高的" in t for t in texts("dating-guide")))
+
+        # 签约页：补齐签约事件流程，史蒂芬合约特殊要求为「无」。
+        self.assertEqual(len(nodes["signing"]["blocks"]), 133)
+        for name in ("雨中重逢", "我们看错了贺总", "姚子奇02", "城仲瑄04", "子奇交给你我就放心了"):
+            self.assertTrue(any(name in t for t in texts("signing")), name)
+        self.assertTrue(any("史蒂芬无" in t for t in texts("signing")))
+
+        # 称号真值修正：国际名模需时装秀1、戏剧天王奖项正确、顶级称号条件完整。
+        self.assertTrue(any("国际名模－广告15、时装秀1" in t for t in texts("titles")))
+        self.assertTrue(any("电视剧7、总数10" in t and "金像奖最佳主角或金钟奖最佳演员" in t
+                            for t in texts("titles")))
+        self.assertTrue(any("超级天后、超级天王（1）" in t for t in texts("titles")))
+        self.assertTrue(any("大型演唱会2、国外舞台剧1、时装秀1" in t for t in texts("titles")))
+
+        # 公司改建 / 主线：金额单位与八卦讨论地点按用户真值。
+        self.assertTrue(any("公司金钱1500万以上才会触发" in t for t in texts("company")))
+        self.assertTrue(any("永振主持通告旁四人组、SOSA孙小美旁四人组会讨论" in t
+                            for t in texts("main-story")))
+        # 主线是事件页，正文改字不插块，追踪下标不变。
+        self.assertEqual(len(nodes["main-story"]["blocks"]), 80)
+
+    def test_creation_and_profile_pages(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+
+        # 创作总表：每位艺人一节 + 一张四列表，85 条创作都保留取得条件。
+        creation = nodes["creations"]["blocks"]
+        self.assertEqual(len(creation), 18)
+        tables = [b for b in creation if b["kind"] == "table"]
+        self.assertEqual(len(tables), 9)
+        self.assertEqual([c["label"] for c in tables[0]["table"]["columns"]],
+                         ["种类", "名称", "模式", "取得条件"])
+        rows = [row for t in tables for row in t["table"]["rows"]]
+        self.assertEqual(len(rows), 85)
+        self.assertTrue(all(len(row) == 4 for row in rows))
+        names = {row["name"] for row in rows}
+        for name in ("晴天娃娃", "温柔时刻", "没有雪的耶诞节", "寂寞国度",
+                     "秋草旧长营", "异世界神话", "烟花下的你"):
+            self.assertIn(name, names)
+
+        # 特殊创作：10 组作品 / 78 个事件，末尾事件与关键门槛都在。
+        special = nodes["special-creations"]["blocks"]
+        self.assertEqual(len(special), 272)
+        self.assertEqual(sum(b["kind"] == "section" for b in special), 10)
+        self.assertEqual(sum(b["kind"] == "event" for b in special), 78)
+        texts = [b["text"] for b in special]
+        for name in ("温柔时刻（丹尼斯·林芬芬）", "从接吻开始（丹尼斯）",
+                     "寂寞微光（卫亚·新名纱雪）", "烟花下的你（纪翔）"):
+            self.assertIn(name, texts)
+        self.assertIn("一切都是你的功劳", texts)
+        self.assertTrue(any("和纪翔约会>5次且颇有好感" in t for t in texts))
+        self.assertTrue(any("票房>30万才会触发" in t for t in texts))
+
+        # 艺人资料：九位艺人，合约真值（史蒂芬无特殊要求、城仲瑄签约金 0）。
+        profiles = nodes["artist-profiles"]["blocks"]
+        self.assertEqual(len(profiles), 112)
+        ptexts = [b["text"] for b in profiles]
+        # 9 位艺人 + 8 位合约内容小节（杜云芊是主角，没有签约合约）。
+        self.assertEqual(sum(b["kind"] == "section" for b in profiles), 17)
+        self.assertIn("年龄：20", ptexts)
+        self.assertIn("特殊要求：无", ptexts)
+        self.assertIn("签约金：0", ptexts)
+        self.assertTrue(any("特殊要求：不要跟慕容和希合作" in t for t in ptexts))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []
