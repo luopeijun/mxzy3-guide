@@ -10953,7 +10953,18 @@
               "text": "我可以叫你妹妹吗？",
               "group": 11,
               "label": "3-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "约会开启条件：",
+                      "text": "和慕容和希约会>5次"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -11021,6 +11032,17 @@
               "label": "4-1",
               "cg": true,
               "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "慕容和希02"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "murong-hexi-2"
               ],
@@ -11089,6 +11111,17 @@
               "group": 18,
               "label": "4-4",
               "cg": true,
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "慕容和希03"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "murong-hexi-3"
               ],
@@ -11232,7 +11265,18 @@
               "kind": "event",
               "text": "因为我喜欢你！",
               "group": 27,
-              "label": "5-8"
+              "label": "5-8",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "告白分支：",
+                      "text": "回答「因为我喜欢你」后，接下来3个月向慕容和希邀约皆会失败；不要气馁，继续邀约"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -11287,7 +11331,18 @@
               "kind": "event",
               "text": "你让我觉得好失望…",
               "group": 31,
-              "label": "6-3"
+              "label": "6-3",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "触发条件：",
+                      "text": "邀约被拒>6次"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -11383,6 +11438,17 @@
               "label": "7-4",
               "cg": true,
               "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "慕容和希04"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "murong-hexi-4"
               ],
@@ -11467,7 +11533,26 @@
               "kind": "event",
               "text": "爱心不落人后",
               "group": 42,
-              "label": "8-1"
+              "label": "8-1",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "支线门槛：",
+                      "text": "公司金钱>300万"
+                    },
+                    {
+                      "label": "剧本取得：",
+                      "text": "取得剧本后指定希奇拍摄才会触发；拍摄期间的暧昧事件（2-6）、杀青上市后的假戏真做（7-13）都在这一段"
+                    },
+                    {
+                      "label": "完成奖励：",
+                      "text": "完成本支线可得创作"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -11590,7 +11675,7 @@
             },
             {
               "kind": "note",
-              "text": "提示：电影票房30亿以上才会触发。",
+              "text": "提示：电影票房30万以上才会触发。",
               "group": 49
             },
             {
@@ -11652,6 +11737,21 @@
               "group": 53,
               "label": "9-5",
               "cg": true,
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "慕容和希07"
+                    },
+                    {
+                      "label": "事业结局：",
+                      "text": "撮合希奇（事业结局《腐女大本营》必要条件）"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "murong-hexi-5"
               ],

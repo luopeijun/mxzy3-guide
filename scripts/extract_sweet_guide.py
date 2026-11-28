@@ -900,14 +900,23 @@ def parse_character(path: Path) -> tuple[list[dict], str]:
     8 位角色的源文本是同一套排法，所以一个解析器吃全部。四个区靠小节名切换：
     `可创作作品：` / `事件：` / 三个「…条件：」，在区外的编号行不能按编号猜
     ——「1.公司自制作品10个以上」是条件条目，`6-2.取消友好度检查…` 也不是事件。
+    角色页也读 `side-event-notes.tsv`（键＝页面 slug + 事件编号），把用户补的
+    说明挂到事件块上，不插块——追踪器按原始块下标存进度。
     """
     lines = _read_lines(path)
+    event_notes = read_side_event_notes(SIDE_EVENT_NOTES)
+    page = path.stem
     blocks: list[dict] = []
     group = 0
     zone = "info"
 
     def push(kind: str, text: str, **extra) -> None:
-        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+        block = {"kind": kind, "text": text, "group": group, **extra}
+        if kind == "event":
+            groups = event_notes.get((page, str(extra.get("label", ""))))
+            if groups:
+                block["eventNotes"] = groups
+        blocks.append(block)
 
     for text in lines[1:]:
         label = text.rstrip("：:")

@@ -1199,6 +1199,53 @@ class TestSweetGuide(unittest.TestCase):
             self.assertIn(token, conditions, token)
         self.assertNotIn("慕蓉", " ".join(b["text"] for b in blocks))
 
+    def test_murong_hexi_guide(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+        blocks = nodes["murong-hexi"]["blocks"]
+        # 只加备注字段，不插块、不改事件编号（追踪器按原始下标存进度）。
+        self.assertEqual(len(blocks), 207)
+        events = [b for b in blocks if b["kind"] == "event"]
+        self.assertEqual(len(events), 44)
+        annotated = {b["label"]: b["eventNotes"] for b in events if b.get("eventNotes")}
+        self.assertEqual(
+            list(annotated), ["3-1", "4-1", "4-4", "5-8", "6-3", "7-4", "8-1", "9-5"]
+        )
+        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+
+        def note_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"]
+                for group in annotated[label] for item in group["items"]
+            )
+
+        self.assertIn("约会开启条件：和慕容和希约会>5次", note_text("3-1"))
+        self.assertIn("事件图：慕容和希02", note_text("4-1"))
+        self.assertIn("事件图：慕容和希03", note_text("4-4"))
+        self.assertIn("告白分支：回答「因为我喜欢你」后，接下来3个月", note_text("5-8"))
+        self.assertIn("触发条件：邀约被拒>6次", note_text("6-3"))
+        self.assertIn("事件图：慕容和希04", note_text("7-4"))
+        self.assertIn("支线门槛：公司金钱>300万", note_text("8-1"))
+        self.assertIn("剧本取得：取得剧本后指定希奇拍摄才会触发", note_text("8-1"))
+        self.assertIn("暧昧事件（2-6）", note_text("8-1"))
+        self.assertIn("假戏真做（7-13）", note_text("8-1"))
+        self.assertIn("完成奖励：完成本支线可得创作", note_text("8-1"))
+        self.assertIn("事件图：慕容和希07", note_text("9-5"))
+        self.assertIn("事业结局：撮合希奇（事业结局《腐女大本营》必要条件）", note_text("9-5"))
+
+        texts = [b["text"] for b in blocks]
+        self.assertIn("提示：电影票房30万以上才会触发。", texts)
+        self.assertFalse(any("30亿" in t for t in texts))
+        # 角色页都读同一份备注表，但只有慕容和希这一页有条目。
+        others = [
+            slug for slug, node in nodes.items()
+            if slug != "murong-hexi" and node["id"].startswith("sweet-characters/")
+            and any(b.get("eventNotes") for b in node["blocks"])
+        ]
+        self.assertEqual(others, [])
+
     def test_ids_unique(self) -> None:
         ids: list[str] = []
 
