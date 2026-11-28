@@ -922,6 +922,50 @@ class TestSweetGuide(unittest.TestCase):
              "天晴&原少纬 EAMI唱片公司二楼", "姚子奇 永振电视台"],
         )
 
+        # 舞台秘影 16 条流程提示挂到 14 个事件块上（1-4 三段、1-10/1-12 各两段共用块），
+        # 不插块：事件数仍是 15，老存档的追踪下标不变。
+        stage_notes = {b["label"]: b.get("eventNotes", []) for b in stage if b.get("eventNotes")}
+        self.assertEqual(
+            list(stage_notes),
+            ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6", "1-8", "1-9",
+             "1-10", "1-11", "1-12", "1-13", "1-14", "1-15"],
+        )
+
+        def stage_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"] for group in stage_notes[label] for item in group["items"]
+            )
+
+        for label, token in (
+            ("1-1", "新闻自动发生"),
+            ("1-2", "2008/2"),
+            ("1-3", "2发生当周日"),
+            ("1-4", "育幼院志工>3"),
+            ("1-5", "则新闻主角为云芊"),
+            ("1-6", "若选择「回头」则走天晴支线"),
+            ("1-8", "8发生1周后"),
+            ("1-9", "9发生后1个月内"),
+            ("1-10", "姚子莹被附身"),
+            ("1-11", "每条10万，共买8条"),
+            ("1-12", "SOSA边间"),
+            ("1-13", "体能<600云芊会昏倒"),
+            ("1-14", "高明权师弟会苏醒"),
+            ("1-15", "嫚君登门拜访，并赠送在永振拍的照片"),
+        ):
+            self.assertIn(token, stage_text(label), label)
+
+        # 八位收礼人与八处出现地点都在；末条附「舞台秘影」CG 提示。
+        for name in ("姚子奇", "纪翔", "姚子莹", "关古威", "克烈斯", "天晴", "原少纬", "丹尼斯"):
+            self.assertIn(name, stage_text("1-11"))
+            self.assertIn(name, stage_text("1-12"))
+        self.assertIn("舞台秘影", stage_text("1-15"))
+        self.assertEqual(
+            [g["title"] for g in stage_notes["1-4"]], ["志工团", "到医院探访老人", "探访老人"]
+        )
+        self.assertEqual(
+            [g["title"] for g in stage_notes["1-10"]], ["拜访活动（永振）", "姚子莹被附身"]
+        )
+
         # 杜司臣的事件带 时间 / 概要 / 提示，尾号（CG）走徽标。
         self.assertEqual([b["label"] for b in nodes["du-sichen"] if b.get("cg")], ["4-5"])
         self.assertTrue(any(b["text"].startswith("时间：第3年8月") for b in nodes["du-sichen"]))
