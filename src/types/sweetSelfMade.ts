@@ -29,6 +29,9 @@ export interface SweetSelfMadeEntry {
   /** 需要累积的自由活动天数；攻略没写就是 0。 */
   days: number;
   condition: string;
+  /** 艺人创作取得页的同名条目：更具体的取得条件（特殊作品多为剧情触发）。
+   *  与 condition 合看才是完整版；通告页没写的漏项也能靠它补上。 */
+  creation: { kind: string; condition: string } | null;
   /** （类型、星级）括号里的内容，逐段拆开。 */
   tags: string[];
   thresholds: SweetSelfMadeThreshold[];

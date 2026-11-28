@@ -22,6 +22,7 @@ import {
 } from '../lib/memoNotes';
 import { MemoNote } from '../ui/MemoNote';
 import SweetSelfMadeAssistant from './SweetSelfMadeAssistant';
+import { useSweetWorkGuide, workGuideText, type WorkGuide } from './useSweetWorkGuide';
 
 /** 称号门槛走甜蜜乐章自己的 Nickname.dat：作品统计八项同序（唱片＝专辑、主持＝节目），
  *  作品总数是八项之和；奖项编号 21..53 与主站同套。演唱会已写进称号表，
@@ -400,7 +401,7 @@ function sweetSceneTooltipAlign(index: number): string {
 
 /** 通告统计的小胶囊 + 悬停作品清单，与主站 WorkCountChip 同一套样式和交互。 */
 function SweetWorkCountChip({
-  label, value, works, title, dataName, dataValue, dataNoticeIndex,
+  label, value, works, title, dataName, dataValue, dataNoticeIndex, guideByCode,
 }: {
   label: string;
   value: number;
@@ -409,6 +410,7 @@ function SweetWorkCountChip({
   dataName?: string;
   dataValue?: string;
   dataNoticeIndex?: number;
+  guideByCode?: Map<string, WorkGuide>;
 }) {
   return (
     <span className="work-count-chip group relative inline-flex">
@@ -464,6 +466,17 @@ function SweetWorkCountChip({
                       {work.company}
                     </span>
                   )}
+                  {guideByCode && (() => {
+                    const text = workGuideText(guideByCode.get(work.workCode));
+                    return text ? (
+                      <span
+                        data-sweet-case-work-guide
+                        className="block w-full text-ui-2xs leading-[1.4] text-ink-faint"
+                      >
+                        {text}
+                      </span>
+                    ) : null;
+                  })()}
                 </span>
               ))}
             </span>
@@ -816,35 +829,63 @@ function sweetMatchGroupRole(
   };
 }
 
+/** 同一通告里一个人只能接一个角色：已预约的人（含团体队长）不再参与其他角色的比较。 */
+function sweetTakenNames(notice: SweetNotice): Set<string> {
+  return new Set(notice.roles.map((role) => role.reservedBy).filter(Boolean));
+}
+
+function sweetTeamLeaderName(team: SweetTeam, artists: SweetArtistCard[]): string {
+  return team.leaderName || artists.find((artist) => artist.id === team.leaderId)?.name || '';
+}
+
 /** 该角色我方接不接得上：团体角色按团体（队长）比，其余按艺人比。 */
 function sweetFitsRole(
-  role: SweetNoticeRole, save: SweetSave, genders: Record<string, number>,
+  role: SweetNoticeRole, save: SweetSave, genders: Record<string, number>, taken?: Set<string>,
 ): boolean {
   if (sweetIsGroupRole(role)) {
-    return save.teams.some((team) => sweetMatchGroupRole(role, team, save.artists)?.canAccept);
+    return save.teams.some((team) => {
+      if (taken?.has(sweetTeamLeaderName(team, save.artists))) return false;
+      return sweetMatchGroupRole(role, team, save.artists).canAccept;
+    });
   }
-  return save.artists.some((artist) => sweetMatchRole(role, artist, genders)?.canAccept);
+  return save.artists.some((artist) => (!taken || !taken.has(artist.name))
+    && sweetMatchRole(role, artist, genders)?.canAccept);
 }
 
 /** 数值对比合成一列、每位艺人一行；和主站一样绿色在上、缺口在下面。 */
-function SweetMatchList({ role, save, genders }: {
+function SweetMatchList({ role, save, genders, taken }: {
   role: SweetNoticeRole;
   save: SweetSave;
   genders: Record<string, number>;
+  taken: Set<string>;
 }) {
   const groupRole = sweetIsGroupRole(role);
+  // 缺口 hover 的训练 / 打工 / 道具提示与主站共用同一组件；甜站存档道具同构。
+  const itemHints = useMemo(() => itemHintsFor(save.items), [save.items]);
+  // 已被预约的角色只留一条横杠；谁占用的只写在「预约」列，同一句话不说两遍。
+  if (role.reservedBy) {
+    return (
+      <Td className="bg-surface-soft text-ink-faint opacity-60" dataAttrs={undefined}>
+        <div data-case-match-list className="flex flex-col gap-1">
+          <div data-case-match data-match-result="no" className="text-ui-2xs text-ink-faint">
+            <span aria-label="已被预约" title="已被预约">—</span>
+          </div>
+        </div>
+      </Td>
+    );
+  }
   const rows: (SweetMatch & { team?: SweetTeam })[] = groupRole
     ? save.teams
+      .filter((team) => !taken.has(sweetTeamLeaderName(team, save.artists)))
       .map((team) => ({ ...sweetMatchGroupRole(role, team, save.artists), team }))
       .filter((row) => Boolean(row.artistName))
     : save.artists
+      .filter((artist) => !taken.has(artist.name))
       .map((artist) => sweetMatchRole(role, artist, genders))
       .filter((row): row is SweetMatch => Boolean(row));
   rows.sort((a, b) => Number(b.canAccept) - Number(a.canAccept));
-  // 缺口 hover 的训练 / 打工 / 道具提示与主站共用同一组件；甜站存档道具同构。
-  const itemHints = useMemo(() => itemHintsFor(save.items), [save.items]);
   return (
-    <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined} dataAttrs={undefined}>
+    <Td dataAttrs={undefined}>
       <div data-case-match-list className="flex flex-col gap-1">
         {rows.length === 0 ? (
           <span className="text-ui-2xs text-ink-faint">—</span>
@@ -908,6 +949,7 @@ function SweetNoticeRows({ notice, save, genders }: {
   genders: Record<string, number>;
 }) {
   const closing = notice.status === 'closing';
+  const taken = sweetTakenNames(notice);
   const workDaysBadge = (role?: SweetNoticeRole) => {
     const workDays = role?.workDays ?? notice.roles[0]?.workDays ?? 0;
     const daysPerWeek = role?.daysPerWeek ?? notice.roles[0]?.daysPerWeek ?? 0;
@@ -1007,7 +1049,7 @@ function SweetNoticeRows({ notice, save, genders }: {
           <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined}>
             <SweetRequirementChips role={role} />
           </Td>
-          <SweetMatchList role={role} save={save} genders={genders} />
+          <SweetMatchList role={role} save={save} genders={genders} taken={taken} />
           <Td className={role.reservedBy ? 'bg-surface-soft' : undefined}>
             {role.reservedBy ? (
               <span data-case-reservation className="whitespace-nowrap text-ui-2xs font-semibold text-brand-strong">{role.reservedBy}</span>
@@ -1036,23 +1078,24 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
     [all],
   );
   /** 「满足条件」与表格里同一列数值对比同口径：团体角色按团体（队长）比，
-   *  其余按艺人比；甜蜜乐章角色记录没有社交门槛字段，别照搬主站社交判断。 */
-  const fitsRole = useCallback((role: SweetNoticeRole) => (
-    sweetFitsRole(role, save, genders)
-  ), [save, genders]);
+   *  其余按艺人比；同一通告里已预约的人不再参与其他角色的比较。 */
+  const fitsNotice = useCallback((notice: SweetNotice) => {
+    if (!sweetNoticeAcceptable(notice)) return false;
+    const taken = sweetTakenNames(notice);
+    return notice.roles.some((role) => !role.reservedBy
+      && sweetFitsRole(role, save, genders, taken));
+  }, [save, genders]);
   // 两个接取标签的数字只按存档本身算，不受搜索 / 类型 / 公司影响。
   const slotCount = useMemo(() => all.filter(sweetNoticeAcceptable).length, [all]);
   const qualifiedCount = useMemo(
-    () => all.filter((notice) => sweetNoticeAcceptable(notice)
-      && notice.roles.some((role) => !role.reservedBy && fitsRole(role))).length,
-    [all, fitsRole],
+    () => all.filter(fitsNotice).length,
+    [all, fitsNotice],
   );
   const notices = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return all.filter((notice) => {
       if (takeFilter === 'slots' && !sweetNoticeAcceptable(notice)) return false;
-      if (takeFilter === 'qualified' && !(sweetNoticeAcceptable(notice)
-        && notice.roles.some((role) => !role.reservedBy && fitsRole(role)))) return false;
+      if (takeFilter === 'qualified' && !fitsNotice(notice)) return false;
       if (category !== 'all' && notice.category !== category) return false;
       if (company !== 'all' && notice.company !== company) return false;
       if (!needle) return true;
@@ -1060,7 +1103,7 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
         ...notice.roles.map((role) => `${role.role}${role.code}`)]
         .some((value) => value.toLowerCase().includes(needle));
     });
-  }, [all, query, category, company, takeFilter, fitsRole]);
+  }, [all, query, category, company, takeFilter, fitsNotice]);
   const dirty = Boolean(query || category !== 'all' || company !== 'all' || takeFilter !== 'all');
   const reset = () => { setQuery(''); setCategory('all'); setCompany('all'); setTakeFilter('all'); };
 
@@ -1582,8 +1625,13 @@ const SELF_MADE_STATUS_ORDER: SweetSelfMadeStatus[] = ['shooting', 'pending', 'd
 /** 自制作品及其他：照主站 SelfMadePanel 的八列表格，一位旗下艺人一行，
  *  通告 / 档期 / 状态 / 出品用 rowSpan 合起来；对手演员占角色格但不占行。 */
 function SweetSelfMadePanel({
-  notices, emptyTitle, emptyText,
-}: { notices: SweetSelfMadeNotice[]; emptyTitle: string; emptyText: string }) {
+  notices, emptyTitle, emptyText, guideByCode,
+}: {
+  notices: SweetSelfMadeNotice[];
+  emptyTitle: string;
+  emptyText: string;
+  guideByCode?: Map<string, WorkGuide>;
+}) {
   const [filter, setFilter] = useState('all');
   const byCategory = new Map<string, number>();
   const byStatus = new Map<SweetSelfMadeStatus, number>();
@@ -1694,6 +1742,17 @@ function SweetSelfMadePanel({
                       <span className="text-ui-xs font-semibold text-ink">{notice.name}</span>
                     </div>
                     <div className="mt-0.5 tabular-nums text-ui-2xs text-ink-faint">{notice.code}</div>
+                    {guideByCode && (() => {
+                      const text = workGuideText(guideByCode.get(notice.code));
+                      return text ? (
+                        <div
+                          data-case-selfmade-guide-condition
+                          className="mt-0.5 text-ui-2xs leading-[1.4] text-ink-faint"
+                        >
+                          {text}
+                        </div>
+                      ) : null;
+                    })()}
                     <div className="mt-1 flex flex-wrap items-center gap-1">
                       <span className={cn(
                         'inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-ui-2xs',
@@ -2339,6 +2398,8 @@ export default function SweetCaseView({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [board, setBoard] = useState<'promo' | 'open' | 'shooting' | 'waiting' | 'hot' | 'done' | 'selfMade'>('open');
+  /** 作品码 → 取得条件：通告统计悬停与自制作品表共用同一份索引。 */
+  const guideByCode = useSweetWorkGuide(Boolean(save));
   const updateInfo = useMemo(
     () => (save ? sweetUpdateInfo(save) : { closingCount: 0, batches: [], nextUpdate: null }),
     [save],
@@ -2746,6 +2807,7 @@ export default function SweetCaseView({
                               value={artist.noticeCounts[index] ?? 0}
                               works={save.works.filter((work) => work.artistId === artist.id && work.noticeIndex === index)}
                               title={`${label}作品`}
+                              guideByCode={guideByCode}
                             />
                           ))}
                           <SweetWorkCountChip
@@ -2754,6 +2816,7 @@ export default function SweetCaseView({
                             value={artist.noticeCounts.reduce((sum, n) => sum + n, 0)}
                             works={save.works.filter((work) => work.artistId === artist.id)}
                             title="全部作品"
+                            guideByCode={guideByCode}
                           />
                         </div>
                         {save.awards.some((award) => awardBelongsTo(award, artist.name)) && (
@@ -2868,6 +2931,7 @@ export default function SweetCaseView({
                             value={team.workCount}
                             works={team.works}
                             title={`${team.name} 唱片`}
+                            guideByCode={guideByCode}
                           />
                         </div>
                         {save.awards.some((award) => awardBelongsToGroup(award, team)) && (
@@ -3155,6 +3219,7 @@ export default function SweetCaseView({
                                 notices={save.selfMade}
                                 emptyTitle="还没有自制作品"
                                 emptyText="这份存档的 CaseCreate 段里没有自制通告。自己制作唱片或戏剧之后再读一次。"
+                                guideByCode={guideByCode}
                               />
                             : <SweetDonePanel notices={save.done} />}
               </div>

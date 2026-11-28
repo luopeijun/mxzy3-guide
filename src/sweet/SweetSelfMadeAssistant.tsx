@@ -195,6 +195,12 @@ function HoverCard({
             ? EXTRA_STORY_NOTE
             : EXTRA_POOL_NOTE}
       </div>
+      {entry.creation?.condition && entry.creation.condition !== entry.condition && (
+        <div className="mt-1 leading-relaxed text-ink-muted" data-sweet-selfmade-guide-creation>
+          <span className="mr-1 font-semibold text-ink">创作页</span>
+          {entry.creation.condition}
+        </div>
+      )}
       {entry.guide && entry.guideName && entry.guideName !== entry.name && (
         <p className="mt-1 text-ui-2xs text-ink-faint">攻略里写作《{entry.guideName}》。</p>
       )}
