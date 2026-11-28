@@ -886,6 +886,44 @@ class TestSweetGuide(unittest.TestCase):
             any(b["text"] == "1.要有古典晚礼服，CG必要" for b in nodes["xia-yijun"])
         )
 
+        # 夏以军 18 条流程提示 + 页首注记挂到 19 个事件块，不插块；
+        # 原文 2-13/2-14 编号重复，避开它们免得同一份备注挂到两张卡上。
+        xia = kinds(nodes["xia-yijun"], "event")
+        xia_notes = {b["label"]: b.get("eventNotes", []) for b in xia if b.get("eventNotes")}
+        self.assertEqual(
+            list(xia_notes),
+            ["1-1", "1-2", "1-3", "1-4", "1-7", "1-8", "1-11", "1-12", "1-16", "1-17", "1-18",
+             "2-2", "2-3", "2-5", "2-6", "2-8", "2-11", "2-16", "2-17"],
+        )
+        self.assertEqual(
+            [b["label"] for b in xia if b["label"] in ("2-13", "2-14")],
+            ["2-13", "2-14", "2-13", "2-14"],
+        )
+        self.assertTrue(all(not b.get("eventNotes") for b in xia if b["label"] in ("2-13", "2-14")))
+
+        def xia_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"] for group in xia_notes[label] for item in group["items"]
+            )
+
+        self.assertIn("需同时完成落日主线", xia_text("1-1"))
+        for label, token in (
+            ("2-2", "体能>300"), ("2-3", "每周的2、4、6可以过去"),
+            ("2-5", "8-9月间维也纳有紫罗兰玫瑰花"), ("2-6", "她女儿生前喜欢的花"),
+            ("2-8", "穿着古典晚礼服"), ("1-2", "2月底去接"),
+            ("1-3", "王导告知云芊演技有问题"), ("1-4", "强尼戴慷慨出借刘铮以前的DVD"),
+            ("1-7", "王导称赞云芊进步很多"), ("1-8", "照片背面写着几个花名"),
+            ("1-12", "陶醉喉糖"), ("1-11", "花150万买下另两组"),
+            ("1-16", "结婚纪念日（1/31）"), ("1-17", "必须花费100万"),
+            ("2-11", "3月前他不会回维也纳"), ("1-18", "1/31前往蔷薇花园"),
+            ("2-16", "前往维也纳鼓励他面对人生"), ("2-17", "12月28日"),
+        ):
+            self.assertIn(token, xia_text(label), label)
+        self.assertEqual(
+            [item["label"] for item in xia_notes["2-17"][0]["items"]],
+            ["时间：", "概要：", "提示：", "12月27日：", "12月28日：", "12月29日：", "装扮提示："],
+        )
+
         # 天晴是「（1）～（37）」连续编号，跨章节也不重来。
         tian = kinds(nodes["tian-qing"], "event")
         self.assertEqual([b["label"] for b in tian], [str(n) for n in range(1, 38)])
