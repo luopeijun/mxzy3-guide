@@ -97,6 +97,10 @@
   --color-alert: #97351f;
   --color-alert-soft: #fbe4dc;
   --color-alert-line: #efc6b9;
+  /* 已停止接取：警示红往品牌莓红靠一档，既有「不能接了」的警示，又落在整站粉调里。 */
+  --color-closed: #a82e56;
+  --color-closed-soft: #fbe0ea;
+  --color-closed-line: #f2bfd4;
   /* Choices (A. / B. / C. …) — neutral grey so a list of options reads as a
      block of its own instead of one more line of event text. */
   --color-choice: #494048;

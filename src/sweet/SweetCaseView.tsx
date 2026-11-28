@@ -949,6 +949,10 @@ function SweetNoticeRows({ notice, save, genders }: {
   genders: Record<string, number>;
 }) {
   const closing = notice.status === 'closing';
+  // 停止接取＝整条通告作废：日期/需求/比较压暗，不再做「能不能接」的比较，
+  // 鼠标不再高亮。状态标签本身保持醒目，所以只压暗数据格。
+  const closed = notice.status === 'expired';
+  const disabledCell = closed ? 'text-ink-faint opacity-55' : '';
   const taken = sweetTakenNames(notice);
   const workDaysBadge = (role?: SweetNoticeRole) => {
     const workDays = role?.workDays ?? notice.roles[0]?.workDays ?? 0;
@@ -980,13 +984,16 @@ function SweetNoticeRows({ notice, save, genders }: {
             即将截止
           </span>
         )}
-        {notice.status === 'expired' && (
-          <span className="mt-1 inline-block rounded-full bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-faint">
+        {closed && (
+          <span
+            data-case-closed-tag
+            className="mt-1 inline-block rounded-full border border-closed-line bg-closed-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-closed"
+          >
             已停止接取
           </span>
         )}
       </Td>
-      <Td>
+      <Td className={disabledCell}>
         <span
           data-case-notice-category={notice.category}
           className={cn(
@@ -998,8 +1005,8 @@ function SweetNoticeRows({ notice, save, genders }: {
         </span>
         {notice.type && <div className="mt-1 text-ui-2xs text-ink-faint">{notice.type}</div>}
       </Td>
-      <Td>{notice.company || '—'}</Td>
-      <Td title="开放接取与停止接取">
+      <Td className={disabledCell}>{notice.company || '—'}</Td>
+      <Td title="开放接取与停止接取" className={disabledCell}>
         <div className="whitespace-nowrap text-ui-2xs leading-[1.7]">
           <div><span className="text-ink-faint">开放</span> <b className="text-ink-muted">{notice.openDate || '—'}</b></div>
           <div><span className="text-ink-faint">停止</span> <b className={closing ? 'text-alert' : 'text-ink-muted'}>{notice.deadline || '—'}</b></div>
@@ -1013,7 +1020,7 @@ function SweetNoticeRows({ notice, save, genders }: {
           </span>
         )}
       </Td>
-      <Td title="通告执行期间，以及每个角色自己的工作天数">
+      <Td title="通告执行期间，以及每个角色自己的工作天数" className={disabledCell}>
         <div className="text-ui-2xs leading-[1.7]">
           <div className="whitespace-nowrap">起 <b className="text-ink-muted">{notice.startDate || '—'}</b></div>
           <div className="whitespace-nowrap">止 <b className="text-ink-muted">{notice.endDate || '—'}</b></div>
@@ -1032,12 +1039,12 @@ function SweetNoticeRows({ notice, save, genders }: {
   );
 
   return (
-    <tbody data-case-notice data-case-status={notice.status}>
+    <tbody data-case-notice data-case-status={notice.status} data-case-disabled={closed ? 'true' : undefined}>
       {notice.roles.length === 0 ? (
         <tr data-case-role className="border-t border-line-strong">
           {noticeCells}
-          <Td className="text-ink-faint" colSpan={3}>存档里没有该通告的角色需求记录</Td>
-          <Td className="text-ink-faint">—</Td>
+          <Td className={cn('text-ink-faint', disabledCell)} colSpan={3}>存档里没有该通告的角色需求记录</Td>
+          <Td className={cn('text-ink-faint', disabledCell)}>—</Td>
         </tr>
       ) : notice.roles.map((role, index) => (
         <tr
@@ -1045,17 +1052,21 @@ function SweetNoticeRows({ notice, save, genders }: {
           data-case-role
           data-case-role-name={role.role}
           data-case-reserved={role.reservedBy ? 'yes' : 'no'}
-          className={cn('hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
+          className={cn(!closed && 'hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
         >
           {index === 0 ? noticeCells : blankCells(role)}
-          <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined}>
+          <Td className={cn(role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined, disabledCell)}>
             <SweetRolePill role={role} />
           </Td>
-          <Td className={role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined}>
+          <Td className={cn(role.reservedBy ? 'bg-surface-soft text-ink-faint opacity-60' : undefined, disabledCell)}>
             <SweetRequirementChips role={role} />
           </Td>
-          <SweetMatchList role={role} save={save} genders={genders} taken={taken} />
-          <Td className={role.reservedBy ? 'bg-surface-soft' : undefined}>
+          {closed ? (
+            <Td className={disabledCell}><span className="text-ui-2xs text-ink-faint">—</span></Td>
+          ) : (
+            <SweetMatchList role={role} save={save} genders={genders} taken={taken} />
+          )}
+          <Td className={cn(role.reservedBy ? 'bg-surface-soft' : undefined, disabledCell)}>
             {role.reservedBy ? (
               <span data-case-reservation className="whitespace-nowrap text-ui-2xs font-semibold text-brand-strong">{role.reservedBy}</span>
             ) : <span className="text-ui-2xs text-ink-faint">—</span>}

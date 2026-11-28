@@ -3640,6 +3640,11 @@ function NoticeRows({
   itemHints: Record<string, CourseHint[]>;
 }) {
   const closing = notice.status === 'closing';
+  // 停止接取＝整条通告作废：不发 hover、不再做「能不能接」的比较，只留信息。
+  const closed = notice.status === 'expired';
+  // 已停止接取的通告整条禁用：日期/需求/比较压暗，鼠标不再高亮——它已经不能接了，
+  // 别让人对着绿色「可以接」空欢喜。状态标签本身保持醒目，所以只压暗数据格。
+  const disabledCell = closed ? 'text-ink-faint opacity-55' : '';
   // 工作天数按角色显示：电视剧 / 电影里男主角、配角各自的天数不同，通告第一行
   // 只显示第一个角色的天数会漏掉其他人。这里给每个角色行渲染自己的胶囊；
   // 起止日期仍是通告级信息，只在第一行给。无角色记录时退回通告自带的 workDays。
@@ -3685,13 +3690,16 @@ function NoticeRows({
             下周更新
           </span>
         )}
-        {notice.status === 'expired' && (
-          <span className="mt-1 inline-block rounded-full bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-faint">
+        {closed && (
+          <span
+            data-case-closed-tag
+            className="mt-1 inline-block rounded-full border border-closed-line bg-closed-soft px-1.5 py-0.5 text-ui-2xs font-semibold text-closed"
+          >
             已停止接取
           </span>
         )}
       </Td>
-      <Td>
+      <Td className={disabledCell}>
         <span className={cn(
           'inline-block rounded-full px-2 py-0.5 text-ui-2xs font-semibold',
           CATEGORY_CLASS[notice.category] ?? 'bg-surface-soft text-ink-muted',
@@ -3700,8 +3708,8 @@ function NoticeRows({
         </span>
         {notice.type && <div className="mt-1 text-ui-2xs text-ink-faint">{notice.type}</div>}
       </Td>
-      <Td>{notice.company || '—'}</Td>
-      <Td title="开放接取与停止接取">
+      <Td className={disabledCell}>{notice.company || '—'}</Td>
+      <Td title="开放接取与停止接取" className={disabledCell}>
         <div className="whitespace-nowrap text-ui-2xs leading-[1.7]">
           <div><span className="text-ink-faint">开放</span> <b className="text-ink-muted">{notice.openDate || '—'}</b></div>
           <div><span className="text-ink-faint">停止</span> <b className={closing ? 'text-alert' : 'text-ink-muted'}>{notice.deadline || '—'}</b></div>
@@ -3715,7 +3723,7 @@ function NoticeRows({
           </span>
         )}
       </Td>
-      <Td title="通告执行期间，以及这张通告实际需要的工作天数">
+      <Td title="通告执行期间，以及这张通告实际需要的工作天数" className={disabledCell}>
         <div className="text-ui-2xs leading-[1.7]">
           <div className="whitespace-nowrap">起 <b className="text-ink-muted">{notice.periodStart || '—'}</b></div>
           <div className="whitespace-nowrap">
@@ -3744,8 +3752,8 @@ function NoticeRows({
   );
 
   /** 只显示结果，不在这里编辑：设置入口在表格上方的「预约设置」。 */
-  const reservationCell = (role: RoleRecord, reserved: boolean) => (
-    <Td className={reserved ? 'bg-surface-soft' : undefined}>
+  const reservationCell = (role: RoleRecord, reserved: boolean, dim = '') => (
+    <Td className={cn(reserved ? 'bg-surface-soft' : undefined, dim)}>
       {role.reservedBy ? (
         <span data-case-reservation className="whitespace-nowrap text-ui-2xs font-semibold text-brand-strong">
           {role.reservedBy}
@@ -3758,35 +3766,36 @@ function NoticeRows({
 
   if (notice.roles.length === 0) {
     return (
-      <tbody data-case-notice data-case-status={notice.status}>
+      <tbody data-case-notice data-case-status={notice.status} data-case-disabled={closed ? 'true' : undefined}>
         <tr data-case-role className="border-t border-line-strong">
           {noticeCells}
-          <Td className="text-ink-faint" colSpan={4}>
+          <Td className={cn('text-ink-faint', disabledCell)} colSpan={4}>
             存档里没有该通告的角色需求记录
             {workDaysBadge()}
           </Td>
-          <Td className="text-ink-faint">—</Td>
+          <Td className={cn('text-ink-faint', disabledCell)}>—</Td>
         </tr>
       </tbody>
     );
   }
 
   return (
-    <tbody data-case-notice data-case-status={notice.status}>
+    <tbody data-case-notice data-case-status={notice.status} data-case-disabled={closed ? 'true' : undefined}>
       {notice.roles.map((role, index) => {
         const reserved = Boolean(role.reservedBy);
         const taken = takenNamesOf(notice.roles);
         // Only the role-level cells dim; notice-level cells stay bright.
-        const roleCell = reserved
-          ? 'bg-surface-soft text-ink-faint opacity-60'
-          : undefined;
+        const roleCell = cn(
+          reserved ? 'bg-surface-soft text-ink-faint opacity-60' : undefined,
+          disabledCell,
+        );
         return (
           <tr
             key={role.roleCode + role.offset}
             data-case-role
             data-case-reserved={reserved ? 'yes' : 'no'}
             data-case-role-name={role.role}
-            className={cn('hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
+            className={cn(!closed && 'hover:bg-surface-soft', index === 0 && 'border-t border-line-strong')}
           >
             {index === 0 ? noticeCells : blankCells(role)}
             <Td className={roleCell}>
@@ -3795,8 +3804,14 @@ function NoticeRows({
             <Td className={roleCell}>
               <RequirementChips role={role} />
             </Td>
-            <MatchList role={role} signed={signed} groups={groups} artists={artists} itemHints={itemHints} cellClass={roleCell} taken={taken} />
-            {reservationCell(role, reserved)}
+            {closed ? (
+              <Td className={roleCell} dataAttrs={{ 'data-case-match-list': 'yes' }}>
+                <span className="text-ui-2xs text-ink-faint">—</span>
+              </Td>
+            ) : (
+              <MatchList role={role} signed={signed} groups={groups} artists={artists} itemHints={itemHints} cellClass={roleCell} taken={taken} />
+            )}
+            {reservationCell(role, reserved, disabledCell)}
           </tr>
         );
       })}
