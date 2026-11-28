@@ -1471,6 +1471,16 @@ function readReservationIds(recView: DataView, limit: number): number[] {
   return [];
 }
 
+/** 本体槽整组为空，但第一槽已经明确初始化（flag=1）时，说明这份存档确实
+ *  「查过第一个角色且没人预约」。此时 StarRole 里同码第一角色的非空记录是
+ *  历史残留，不能再兜底填回（Story0016 的 TVA921 就被填成了沈惟真）。 */
+function bodyFirstSlotIsEmpty(recView: DataView, limit: number): boolean {
+  if (limit < 900 || limit > 1400) return false;
+  const base = limit - 208;
+  if (readI32(recView, base) !== 1 || readI32(recView, base + 4) !== 0) return false;
+  return [0, 1, 2, 3].every((k) => readI32(recView, base + k * 24 + 8) === 0);
+}
+
 /** Case 段里一条本体的真实结尾：下一条 `[5][5B 通告码][NUL]` 的起点。
  *  记录长度不是定值（1014~1034B，随名字长度浮动），而预约槽锚定在记录尾部，
  *  所以必须按真实长度切本体。找不到下一条时退回固定窗口。 */
@@ -1560,8 +1570,11 @@ function readNoticeBody(
   // 此时不能再拿 StarRole 段的同码记录兜底（Story0005 的 MVAMM4=1 会把主角误填进去）。
   // 只有本体槽全 0 的老存档才走全档兜底。
   if (reservationIds.length === 0 || reservationIds.every((id) => id === 0)) {
-    roles.forEach((role) => {
-      if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
+    const skipFirstTail = bodyFirstSlotIsEmpty(recView, recView.byteLength);
+    roles.forEach((role, index) => {
+      if (!role.reservedBy && !(skipFirstTail && index === 0)) {
+        role.reservedBy = tailReservations.get(role.code) ?? '';
+      }
     });
   }
   roles.sort((a, b) => a.code.localeCompare(b.code));
@@ -1673,9 +1686,13 @@ function scanSweetNotices(
       });
     }
     // 同上：本体槽有真编号时整体可信，空槽不兜底；只有全 0 槽的老存档才走全档兜底。
+    // 但第一槽明确初始化为空时不算「老存档没有槽」，别把 StarRole 残留填回第一角色。
     if (reservationIds.length === 0 || reservationIds.every((id) => id === 0)) {
-      roles.forEach((role) => {
-        if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
+      const skipFirstTail = bodyFirstSlotIsEmpty(recView, recView.byteLength);
+      roles.forEach((role, index) => {
+        if (!role.reservedBy && !(skipFirstTail && index === 0)) {
+          role.reservedBy = tailReservations.get(role.code) ?? '';
+        }
       });
     }
     roles.sort((a, b) => a.code.localeCompare(b.code));
