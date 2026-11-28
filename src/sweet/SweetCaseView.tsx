@@ -130,8 +130,7 @@ function buildSweetActiveNotices(save: SweetSave): Map<number, SweetActiveNotice
     list.push(notice);
     byArtist.set(artistId, list);
   };
-  const isGroupRole = (role: SweetNoticeRole | null): boolean =>
-    !!role && (role.roleType === 4 || role.role === '團體' || role.role === '团体');
+  const isGroupRole = (role: SweetNoticeRole | null): boolean => sweetIsGroupRole(role);
 
   for (const notice of save.shooting) {
     const groupRole = notice.roles.some(isGroupRole);
@@ -772,6 +771,12 @@ function sweetNoticeAcceptable(notice: SweetNotice): boolean {
   return notice.roles.some((role) => !role.reservedBy);
 }
 
+/** 团体角色（roleType=4 / 名为「團體」）：专辑这类通告是整团接的，
+ *  不能拿单个艺人的数值去比，和主站 isGroupRole 同口径。 */
+function sweetIsGroupRole(role: SweetNoticeRole | null): boolean {
+  return !!role && (role.roleType === 4 || role.role === '團體' || role.role === '团体');
+}
+
 function sweetMatchRole(
   role: SweetNoticeRole, artist: SweetArtistCard, genders: Record<string, number>,
 ): SweetMatch | null {
@@ -792,16 +797,50 @@ function sweetMatchRole(
   };
 }
 
+/** 团体角色的数值对比：整团一起接，只看队长的九项数值，名字写团名。
+ *  与主站 matchGroupRole 同口径（不判性别、成员数值不算）；存档里没有
+ *  玩家团体时返回空，不拿任何一个艺人的个人数值冒充。 */
+function sweetMatchGroupRole(
+  role: SweetNoticeRole, team: SweetTeam, artists: SweetArtistCard[],
+): SweetMatch {
+  const leader = artists.find((artist) => artist.id === team.leaderId) ?? null;
+  const gaps = role.requirements.map((req) => {
+    const index = SWEET_ABILITY_LABELS.findIndex((label) => label === req.attr);
+    const have = index >= 0 ? leader?.abilities[index] ?? 0 : 0;
+    return { attr: req.attr, diff: Math.round((req.value - have) * 10) / 10 };
+  });
+  return {
+    artistName: team.name || team.leaderName,
+    canAccept: gaps.every((gap) => gap.diff <= 0),
+    gaps: gaps.filter((gap) => gap.diff > 0),
+  };
+}
+
+/** 该角色我方接不接得上：团体角色按团体（队长）比，其余按艺人比。 */
+function sweetFitsRole(
+  role: SweetNoticeRole, save: SweetSave, genders: Record<string, number>,
+): boolean {
+  if (sweetIsGroupRole(role)) {
+    return save.teams.some((team) => sweetMatchGroupRole(role, team, save.artists)?.canAccept);
+  }
+  return save.artists.some((artist) => sweetMatchRole(role, artist, genders)?.canAccept);
+}
+
 /** 数值对比合成一列、每位艺人一行；和主站一样绿色在上、缺口在下面。 */
 function SweetMatchList({ role, save, genders }: {
   role: SweetNoticeRole;
   save: SweetSave;
   genders: Record<string, number>;
 }) {
-  const rows = save.artists
-    .map((artist) => sweetMatchRole(role, artist, genders))
-    .filter((row): row is SweetMatch => Boolean(row))
-    .sort((a, b) => Number(b.canAccept) - Number(a.canAccept));
+  const groupRole = sweetIsGroupRole(role);
+  const rows: (SweetMatch & { team?: SweetTeam })[] = groupRole
+    ? save.teams
+      .map((team) => ({ ...sweetMatchGroupRole(role, team, save.artists), team }))
+      .filter((row) => Boolean(row.artistName))
+    : save.artists
+      .map((artist) => sweetMatchRole(role, artist, genders))
+      .filter((row): row is SweetMatch => Boolean(row));
+  rows.sort((a, b) => Number(b.canAccept) - Number(a.canAccept));
   // 缺口 hover 的训练 / 打工 / 道具提示与主站共用同一组件；甜站存档道具同构。
   const itemHints = useMemo(() => itemHintsFor(save.items), [save.items]);
   return (
@@ -813,6 +852,7 @@ function SweetMatchList({ role, save, genders }: {
           <div
             key={row.artistName}
             data-case-match
+            data-case-match-group={groupRole ? 'yes' : undefined}
             data-match-artist={row.artistName}
             data-match-result={row.canAccept ? 'yes' : 'no'}
             className={cn(
@@ -842,6 +882,16 @@ function SweetMatchList({ role, save, genders }: {
                       />
                     </span>
                   ))}
+                </span>
+              )}
+              {/* 团体通告是整团接的：队长与团员另起一行列全，与主站同款。 */}
+              {row.team && row.team.memberNames.length > 0 && (
+                <span
+                  data-case-match-members
+                  className="mt-1 block font-normal text-ink-faint"
+                >
+                  队长 {row.team.memberNames[0]}
+                  {row.team.memberNames.length > 1 && ` · 团员 ${row.team.memberNames.slice(1).join(' · ')}`}
                 </span>
               )}
             </span>
@@ -985,11 +1035,11 @@ function SweetNoticePanel({ save, genders }: { save: SweetSave; genders: Record<
     () => [...new Set(all.map((notice) => notice.company).filter(Boolean))].sort(),
     [all],
   );
-  /** 「满足条件」与表格里同一列数值对比同口径：性别 + 九项能力全达标。
-   *  甜蜜乐章角色记录没有社交门槛字段，所以只有这两项，别照搬主站社交判断。 */
+  /** 「满足条件」与表格里同一列数值对比同口径：团体角色按团体（队长）比，
+   *  其余按艺人比；甜蜜乐章角色记录没有社交门槛字段，别照搬主站社交判断。 */
   const fitsRole = useCallback((role: SweetNoticeRole) => (
-    save.artists.some((artist) => sweetMatchRole(role, artist, genders)?.canAccept)
-  ), [save.artists, genders]);
+    sweetFitsRole(role, save, genders)
+  ), [save, genders]);
   // 两个接取标签的数字只按存档本身算，不受搜索 / 类型 / 公司影响。
   const slotCount = useMemo(() => all.filter(sweetNoticeAcceptable).length, [all]);
   const qualifiedCount = useMemo(
