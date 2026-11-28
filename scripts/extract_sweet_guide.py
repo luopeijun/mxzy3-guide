@@ -63,9 +63,9 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
     ●数值条件                 ← 小标题（heading）
     歌唱：600↑                ← 门槛数值都是普通段落
 
-**表格页（带说明）**（结局条件一览）
+**表格页（带说明）**（结局条件一览，已并入 career-endings 页尾）
 
-    结局条件一览              ← 首行，页内不重复
+    结局条件一览              ← 首行，合并后当作页尾小节的标题
     公司显示名称   知名度   公关   ← 原表头（列间用两个以上空格对齐，读入时跳过）
     1.傲视全球的演艺帝国  2500以上  150以上
     完成夏以军相关剧情……       ← 紧跟着的一行是这一个结局的条件说明
@@ -622,6 +622,8 @@ def parse_career_endings(path: Path) -> tuple[list[dict], str]:
 
     「巨星条件」里的六项数值与四个奖项都是并列名单，加圆点；带数字序号的
     通告 / 其他条件不加（序号本身已经是标记），奖项再缩进一级。
+
+    结局条件一览（公司结局表）也收在本页末尾，原文当作一个小节，单独成章。
     """
     lines = _read_lines(path)
     blocks: list[dict] = []
@@ -670,6 +672,17 @@ def parse_career_endings(path: Path) -> tuple[list[dict], str]:
             continue
 
         push("paragraph", text)
+
+    # 结局条件一览（公司结局）合并到本页：只追加末尾的小节与表格，
+    # 前面事业结局的块顺序、下标都不动。
+    endings = SOURCES / "endings.txt"
+    if endings.exists():
+        extra, extra_title = parse_endings(endings)
+        base = max((b["group"] for b in blocks), default=0)
+        blocks.append({"kind": "section", "text": extra_title, "group": base + 1})
+        for block in extra:
+            block["group"] += base + 1
+            blocks.append(block)
 
     return blocks, lines[0]
 
@@ -1463,7 +1476,7 @@ PARSERS = {
     "favorite-gifts": parse_favorite_gifts,
     "career-endings": parse_career_endings,
     # 感情结局已并入 dating-guide，由 parse_dating_guide 直接调用解析器。
-    "endings": parse_endings,
+    # 结局条件一览已并入 career-endings，由 parse_career_endings 直接调用解析器。
     "award-dates": parse_award_dates,
     # 特殊创作取得已并入艺人攻略页，事件上标 creation；不再单独成页。
     "monopoly": parse_monopoly,
@@ -1507,7 +1520,6 @@ CATEGORIES: list[dict] = [
             ("sweet-mode", "甜蜜模式的影响"),
             ("favorite-gifts", "角色喜爱物品一览"),
             ("career-endings", "女主事业结局达成条件"),
-            ("endings", "结局条件一览"),
             ("award-dates", "各类奖项颁奖日期及内容"),
             ("monopoly", "大富翁BaBaBa答案"),
             ("signing", "签约条件"),

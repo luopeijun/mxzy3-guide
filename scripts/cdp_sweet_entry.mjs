@@ -373,7 +373,7 @@ async function main() {
     'ok',
   );
 
-  // 5c. 女主事业结局 / 结局条件一览 / 甜蜜模式 / 喜爱物品一览
+  // 5c. 女主事业结局（含合并进来的结局条件一览）/ 甜蜜模式 / 喜爱物品一览
   await openNode('sweet-guide/career-endings');
   const career = await readPage();
   check('点女主事业结局写入深链', career.hash === '#/guide/sweet-guide/career-endings', career.hash);
@@ -381,17 +381,17 @@ async function main() {
     '11 个事业结局各是一个大标题',
     career.heads.slice(0, 3).join('/') === '天王巨星/演员/模特儿'
       && career.heads[10] === '公司倒闭'
-      && career.heads.length === 16,
+      && career.heads.length === 17,
     `${career.heads.length} 个标题`,
   );
   check(
     '巨星条件四项都在',
-    career.heads.slice(-5).join('/') === '巨星条件/数值条件/通告条件（1或2）/其他条件（1和2）/奖项条件',
-    JSON.stringify(career.heads.slice(-5)),
+    career.heads.slice(-6, -1).join('/') === '巨星条件/数值条件/通告条件（1或2）/其他条件（1和2）/奖项条件',
+    JSON.stringify(career.heads.slice(-6, -1)),
   );
   check('全角数字已归一（歌唱：600↑）', career.text.includes('歌唱：600↑'), 'ok');
 
-  await openNode('sweet-guide/endings');
+  // 结局条件一览已并入本页，表格与前文共用同一个深链。
   const endings = await evaluate(`(() => {
     const table = document.querySelector('main table');
     if (!table) return { hash: location.hash, found: false, headers: [], rows: [] };
@@ -403,7 +403,7 @@ async function main() {
         [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())),
     };
   })()`);
-  check('点结局条件写入深链', endings.hash === '#/guide/sweet-guide/endings', endings.hash);
+  check('结局条件一览并入同一深链', endings.hash === '#/guide/sweet-guide/career-endings', endings.hash);
   check('结局条件渲染成表格', endings.found === true, String(endings.found));
   check(
     '表头是 序号 / 名称 / 知名度 / 公关 / 达成条件',

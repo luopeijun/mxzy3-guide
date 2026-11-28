@@ -5,11 +5,11 @@
     "generatedBy": "scripts/extract_sweet_guide.py",
     "stats": {
       "categories": 3,
-      "items": 31,
-      "blocks": 3256,
-      "readyItems": 31,
+      "items": 30,
+      "blocks": 3257,
+      "readyItems": 30,
       "missingItems": 0,
-      "sourceParagraphs": 3256
+      "sourceParagraphs": 3257
     }
   },
   "categories": [
@@ -5017,19 +5017,16 @@
               "group": 16,
               "bullet": true,
               "depth": 1
-            }
-          ],
-          "children": []
-        },
-        {
-          "id": "sweet-guide/endings",
-          "title": "结局条件一览",
-          "status": "ready",
-          "blocks": [
+            },
+            {
+              "kind": "section",
+              "text": "结局条件一览",
+              "group": 17
+            },
             {
               "kind": "table",
               "text": "",
-              "group": 1,
+              "group": 18,
               "table": {
                 "columns": [
                   {

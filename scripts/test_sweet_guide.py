@@ -121,9 +121,11 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 17)
+        self.assertEqual(len(first["children"]), 16)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
+        # 结局条件一览已并入女主事业结局页，不再单独占一个目录项。
+        self.assertNotIn("sweet-guide/endings", [n["id"] for n in first["children"]])
 
     def test_three_categories(self) -> None:
         self.assertEqual(
@@ -132,8 +134,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 31)
-        self.assertEqual(stats["readyItems"], 31)
+        self.assertEqual(stats["items"], 30)
+        self.assertEqual(stats["readyItems"], 30)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -482,8 +484,9 @@ class TestSweetGuide(unittest.TestCase):
 
         # 前 11 条事业结局：每条都是一个大标题，条件跟在下面一行。
         sections = [b["text"] for b in blocks if b["kind"] == "section"]
-        self.assertEqual(len(sections), 12)  # 11 个结局 + 巨星条件
-        self.assertEqual((sections[0], sections[10], sections[-1]), ("天王巨星", "公司倒闭", "巨星条件"))
+        self.assertEqual(len(sections), 13)  # 11 个结局 + 巨星条件 + 合并进来的结局条件一览
+        self.assertEqual((sections[0], sections[10], sections[11], sections[-1]),
+                         ("天王巨星", "公司倒闭", "巨星条件", "结局条件一览"))
         by_group: dict[int, list[dict]] = {}
         for block in blocks:
             by_group.setdefault(block["group"], []).append(block)
@@ -527,10 +530,16 @@ class TestSweetGuide(unittest.TestCase):
         self.assertFalse(any(b.get("bullet") for b in blocks if "电影6" in b["text"] or "演唱会2场" in b["text"]))
 
     def test_endings_table(self) -> None:
-        node = _node(self.data, "endings")
-        self.assertEqual(len(node["blocks"]), 1)
-        block = node["blocks"][0]
-        self.assertEqual(block["kind"], "table")
+        # 公司结局表已并入女主事业结局页：原文小节 + 表格追加在末尾，
+        # 事业结局原有的块一个不动。
+        node = _node(self.data, "career-endings")
+        blocks = node["blocks"]
+        tables = [b for b in blocks if b["kind"] == "table"]
+        self.assertEqual(len(tables), 1)
+        index = blocks.index(tables[0])
+        self.assertEqual((blocks[index - 1]["kind"], blocks[index - 1]["text"]),
+                         ("section", "结局条件一览"))
+        block = tables[0]
         table = block["table"]
         self.assertEqual(
             [c["label"] for c in table["columns"]],
