@@ -5,11 +5,11 @@
     "generatedBy": "scripts/extract_sweet_guide.py",
     "stats": {
       "categories": 3,
-      "items": 31,
-      "blocks": 2958,
-      "readyItems": 31,
+      "items": 32,
+      "blocks": 3001,
+      "readyItems": 32,
       "missingItems": 0,
-      "sourceParagraphs": 2958
+      "sourceParagraphs": 3001
     }
   },
   "categories": [
@@ -4113,6 +4113,260 @@
                   }
                 ]
               }
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "sweet-guide/award-dates",
+          "title": "各类奖项颁奖日期及内容",
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "section",
+              "text": "金星奖 － 广告",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "公布时间：2月以前完成的通告",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "颁奖时间：2月最后一个星期",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 08/02/04（一） 颁奖 08/02/29（五）",
+              "group": 1,
+              "label": "2008"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 09/02/02（一） 颁奖 09/02/27（五）",
+              "group": 1,
+              "label": "2009"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 10/02/01（一） 颁奖 10/02/26（五）",
+              "group": 1,
+              "label": "2010"
+            },
+            {
+              "kind": "heading",
+              "text": "奖项",
+              "group": 1,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "最上镜头奖",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳模特儿奖",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳代言人奖",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "金钟奖 － 电视剧、主持",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "公布时间：5月以前完成的通告",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "颁奖时间：5月最后一个星期",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 08/05/05（一） 颁奖 08/05/30（五）",
+              "group": 2,
+              "label": "2008"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 09/05/04（一） 颁奖 09/05/29（五）",
+              "group": 2,
+              "label": "2009"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 10/05/03（一） 颁奖 10/05/28（五）",
+              "group": 2,
+              "label": "2010"
+            },
+            {
+              "kind": "heading",
+              "text": "奖项",
+              "group": 2,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳女演员奖",
+              "group": 2,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳男演员奖",
+              "group": 2,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳主持人奖",
+              "group": 2,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "年度最佳戏剧奖",
+              "group": 2,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "金曲奖 － 唱片",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "公布时间：8月以前完成的通告",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "颁奖时间：8月最后一个星期",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 08/08/04（一） 颁奖 08/08/29（五）",
+              "group": 3,
+              "label": "2008"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 09/08/03（一） 颁奖 09/08/28（五）",
+              "group": 3,
+              "label": "2009"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 10/08/02（一） 颁奖 10/08/27（五）",
+              "group": 3,
+              "label": "2010"
+            },
+            {
+              "kind": "heading",
+              "text": "奖项",
+              "group": 3,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "唱片新人奖",
+              "group": 3,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳演唱人奖",
+              "group": 3,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳团体奖",
+              "group": 3,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳年度专辑",
+              "group": 3,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "金像奖 － 电影",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "公布时间：11月以前完成的通告",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "颁奖时间：11月最后一个星期",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 08/11/03（一） 颁奖 08/11/28（五）",
+              "group": 4,
+              "label": "2008"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 09/11/02（一） 颁奖 09/11/27（五）",
+              "group": 4,
+              "label": "2009"
+            },
+            {
+              "kind": "paragraph",
+              "text": "入围名单 10/11/01（一） 颁奖 10/11/26（五）",
+              "group": 4,
+              "label": "2010"
+            },
+            {
+              "kind": "heading",
+              "text": "奖项",
+              "group": 4,
+              "depth": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳女配角奖",
+              "group": 4,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳男配角奖",
+              "group": 4,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳女主角奖",
+              "group": 4,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "最佳男主角奖",
+              "group": 4,
+              "bullet": true
             }
           ],
           "children": []

@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 17)
+        self.assertEqual(len(first["children"]), 18)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 31)
-        self.assertEqual(stats["readyItems"], 31)
+        self.assertEqual(stats["items"], 32)
+        self.assertEqual(stats["readyItems"], 32)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -1111,6 +1111,52 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("苏嫚君", joined)
         # 全角字母（ＥAＭＩ）已归一。
         self.assertFalse(any("Ｅ" in b["text"] or "Ｍ" in b["text"] for blocks in nodes.values() for b in blocks))
+
+    def test_award_dates(self) -> None:
+        node = next(
+            n for c in self.data["categories"] for n in c["children"]
+            if n["id"] == "sweet-guide/award-dates"
+        )
+        blocks = node["blocks"]
+        self.assertEqual(node["title"], "各类奖项颁奖日期及内容")
+        # 首行与页面标题同名，不写副标题；资料页没有事件，追踪器下标不受影响。
+        self.assertNotIn("description", node)
+        self.assertFalse(any(b["kind"] == "event" for b in blocks))
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "section"],
+            ["金星奖 － 广告", "金钟奖 － 电视剧、主持", "金曲奖 － 唱片", "金像奖 － 电影"],
+        )
+        self.assertEqual([b["text"] for b in blocks if b["kind"] == "heading"], ["奖项"] * 4)
+
+        dated = [b for b in blocks if b.get("label") in ("2008", "2009", "2010")]
+        self.assertEqual(len(dated), 12)
+        self.assertEqual(
+            [(b["label"], b["text"]) for b in dated[:3]],
+            [
+                ("2008", "入围名单 08/02/04（一） 颁奖 08/02/29（五）"),
+                ("2009", "入围名单 09/02/02（一） 颁奖 09/02/27（五）"),
+                ("2010", "入围名单 10/02/01（一） 颁奖 10/02/26（五）"),
+            ],
+        )
+        self.assertEqual(
+            dated[-1]["text"], "入围名单 10/11/01（一） 颁奖 10/11/26（五）"
+        )
+        texts = [b["text"] for b in blocks]
+        for token in (
+            "公布时间：2月以前完成的通告", "颁奖时间：2月最后一个星期",
+            "公布时间：5月以前完成的通告", "颁奖时间：5月最后一个星期",
+            "公布时间：8月以前完成的通告", "颁奖时间：8月最后一个星期",
+            "公布时间：11月以前完成的通告", "颁奖时间：11月最后一个星期",
+            "入围名单 08/05/05（一） 颁奖 08/05/30（五）",
+            "入围名单 09/08/03（一） 颁奖 09/08/28（五）",
+        ):
+            self.assertIn(token, texts, token)
+        awards = [b["text"] for b in blocks if b.get("bullet")]
+        self.assertEqual(len(awards), 15)
+        self.assertEqual(awards[:3], ["最上镜头奖", "最佳模特儿奖", "最佳代言人奖"])
+        self.assertEqual(
+            awards[-4:], ["最佳女配角奖", "最佳男配角奖", "最佳女主角奖", "最佳男主角奖"]
+        )
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

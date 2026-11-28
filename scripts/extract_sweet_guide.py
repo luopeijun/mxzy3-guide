@@ -11,7 +11,7 @@ public/data/guide.json。
 sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应节点。还没有
 正文的节点保留 status="missing"，页面上给出「这一页还没整理」的占位提示。
 
-目前有八种页面形态：
+目前的页面形态有（解析器按首行与行形态识别）：
 
 **事件页**（主线攻略、公司改建攻略）
 
@@ -69,6 +69,14 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
     公司显示名称   知名度   公关   ← 原表头（列间用两个以上空格对齐，读入时跳过）
     1.傲视全球的演艺帝国  2500以上  150以上
     完成夏以军相关剧情……       ← 紧跟着的一行是这一个结局的条件说明
+
+**奖项表页**（各类奖项颁奖日期及内容）
+
+    各类奖项颁奖日期及内容      ← 首行，与页面标题同名 → 不当副标题
+    金星奖 － 广告              ← 四个奖项各开一章（section）
+    公布时间：...               ← 单行说明，颁奖时间同理
+    入围名单08/02/04(一)　颁奖08/02/29(五)  ← 年份进 pill，日期留在正文
+    奖项：                      ← 次级标题，下面是圆点条列的奖项名单
 
 **清单页（按角色）**（甜蜜模式的影响 / 角色喜爱物品一览）
 
@@ -659,6 +667,56 @@ def parse_endings(path: Path) -> tuple[list[dict], str]:
     return [{"kind": "table", "text": "", "group": 1, "table": {"columns": columns, "rows": rows}}], lines[0]
 
 
+# 「金星奖 － 广告」——四个奖项各开一章，章名保留原文的破折号写法。
+AWARD_SECTION_RE = re.compile(r"^金[星钟曲像]奖\s*[－-]\s*.+$")
+# 「入围名单08/02/04(一)　颁奖08/02/29(五)」——源文本用半角括号，这里两种都认。
+AWARD_DATE_RE = re.compile(
+    r"^入围名单(\d{2}/\d{2}/\d{2})[（(]([一二三四五六日])[）)]\s+"
+    r"颁奖(\d{2}/\d{2}/\d{2})[（(]([一二三四五六日])[）)]$"
+)
+
+
+def parse_award_dates(path: Path) -> tuple[list[dict], str]:
+    """各类奖项颁奖日期及内容 → 四个奖项分章，日期按年份一行一条。
+
+    日期行不做成表格：整页只有「年份 / 入围 / 颁奖」三个短字段，带年份 pill 的
+    单行比一张表更紧凑，窄屏也不会出横向滚动条。奖项名用圆点条列。
+    """
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines[1:]:
+        if AWARD_SECTION_RE.match(text):
+            group += 1
+            push("section", text)
+            continue
+
+        date = AWARD_DATE_RE.match(text)
+        if date:
+            push(
+                "paragraph",
+                f"入围名单 {date.group(1)}（{date.group(2)}） 颁奖 {date.group(3)}（{date.group(4)}）",
+                label=f"20{date.group(1)[:2]}",
+            )
+            continue
+
+        if text.rstrip("：:") == "奖项":
+            push("heading", "奖项", depth=1)
+            continue
+
+        if text.startswith(("公布时间：", "颁奖时间：")):
+            push("paragraph", text)
+            continue
+
+        push("paragraph", text, bullet=True)
+
+    return blocks, lines[0]
+
+
 # 甜蜜模式这一页的首行就是「启动方法」，没有单独的页面总标题。
 SWEET_MODE_SECTIONS = {"启动方法", "使用时机", "影响"}
 # 「沈惟真： 收到喜欢的礼物5个以上。」——角色名 + 该角色的条件。
@@ -1134,6 +1192,7 @@ PARSERS = {
     "favorite-gifts": parse_favorite_gifts,
     "career-endings": parse_career_endings,
     "endings": parse_endings,
+    "award-dates": parse_award_dates,
     "monopoly": parse_monopoly,
     # 台版手册补进来的附录页：平铺清单，无事件卡，不影响追踪器下标。
     "early-guide": parse_generic_list,
@@ -1176,6 +1235,7 @@ CATEGORIES: list[dict] = [
             ("favorite-gifts", "角色喜爱物品一览"),
             ("career-endings", "女主事业结局达成条件"),
             ("endings", "结局条件一览"),
+            ("award-dates", "各类奖项颁奖日期及内容"),
             ("monopoly", "大富翁BaBaBa答案"),
             ("early-guide", "初期攻略"),
             ("signing", "签约条件"),
