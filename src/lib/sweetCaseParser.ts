@@ -156,6 +156,15 @@ export interface SweetWorkRecord {
   seq?: number;
 }
 
+/** 作品明细的角色真源索引：`作品码|艺人编号` -> 角色名（男/女主角、配角、主持人）。
+ *  和主站 buildWorkRoleIndex 同口径，来自存档通告本体里的角色槽 + 接演人配对；
+ *  hover 明细据此显示「接的是男主角还是配角」，早期作品命中不到就留空，不猜。 */
+export type SweetWorkRoleIndex = Map<string, string>;
+
+const MAIN_WORK_ROLES = new Set([
+  '男主角', '女主角', '男配角', '女配角', '主持人', '助理主持', '外景主持',
+]);
+
 /** 我方团体：成员编号第 0 个是队长，名字来自存档。 */
 export interface SweetTeam {
   code: number;
@@ -1190,6 +1199,32 @@ function buildSweetNoticeInfoIndex(
  *  逐条发行日期则以通告本体档期为准，详见 buildSweetNoticeInfoIndex。
  *  10/15/16/20/21/22/26/31 是同一作品的版本记录，只取大类 1..7；
  *  未杀青的自制通告还没完成，不能算进已接作品。 */
+/** 从存档里所有带接演配对的通告建作品角色真源索引。
+ *  筹备中通告只有预约槽（reservedBy）没有确认接演，所以只取拍摄中 / 等待上市 /
+ *  热卖 / 已完成 / 宣传这些已经有 cast 的段；同一作品同一艺人只留第一个。
+ *  早期作品本体没留档时命中不到，明细角色留空，不编。 */
+function buildSweetWorkRoleIndex(
+  shooting: SweetShootingNotice[], waiting: SweetWaitingNotice[],
+  hot: SweetWaitingNotice[], done: SweetWaitingNotice[], promo: SweetPromoNotice[],
+): SweetWorkRoleIndex {
+  const index: SweetWorkRoleIndex = new Map();
+  const add = (code: string, artistId: number, role: string | { role: string } | null) => {
+    const roleName = typeof role === 'string' ? role : role?.role ?? '';
+    if (!code || !artistId || !MAIN_WORK_ROLES.has(roleName)) return;
+    const key = `${code}|${artistId}`;
+    if (!index.has(key)) index.set(key, roleName);
+  };
+  for (const list of [shooting, waiting, hot, done]) {
+    for (const notice of list) {
+      for (const cast of notice.casts) add(notice.code, cast.artistId, cast.role);
+    }
+  }
+  for (const notice of promo) {
+    for (const cast of notice.casts) add(notice.code, cast.artistId, cast.role);
+  }
+  return index;
+}
+
 function parseSweetWorkHistory(
   bytes: Uint8Array,
   view: DataView,
@@ -1199,6 +1234,7 @@ function parseSweetWorkHistory(
   selfMade: SweetSelfMadeNotice[],
   noticeInfo: Map<string, SweetNoticeInfo>,
   events: SweetEvent[],
+  roleIndex: SweetWorkRoleIndex,
 ): SweetWorkRecord[] {
   // 参与清单里连早期没有接演记录的自制作品也会累积进来，官方统计同样算它们；
   // 只有明确还在拍摄中的才没完成。旧作品本体没留档期时 status 是 unknown，
@@ -1289,6 +1325,12 @@ function parseSweetWorkHistory(
         order: k,
       });
     }
+  }
+  // 角色真源：用存档通告本体的接演配对回填，命中不到就留空（早期作品不猜）。
+  for (const work of out) {
+    if (work.noticeIndex !== 0 && work.noticeIndex !== 1 && work.noticeIndex !== 4) continue;
+    if (!work.workCode) continue;
+    work.role = roleIndex.get(`${work.workCode}|${work.artistId}`) ?? '';
   }
   return out;
 }
@@ -2703,9 +2745,10 @@ export async function parseSweetSave(
   const groupWorks = scanSweetGroupWorks(bytes, view, teams, diaryTable, noticeInfo, tables);
   for (const team of teams) team.works = groupWorks.get(team.code) ?? [];
   const events = scanDiaryEvents(bytes, view, diaryTable);
+  const workRoleIndex = buildSweetWorkRoleIndex(shooting, waiting, hot, done, promo);
   const works = alignSweetWorks(
     locations,
-    parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade, noticeInfo, events),
+    parseSweetWorkHistory(bytes, view, locations, diaryTable, tables, selfMade, noticeInfo, events, workRoleIndex),
   );
   const items = scanSweetItems(bytes, view, tables);
   const clothes = scanSweetClothes(bytes, view, tables);

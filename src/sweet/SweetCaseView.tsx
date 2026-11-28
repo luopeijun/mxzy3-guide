@@ -12,6 +12,7 @@ import {
   type SweetWaitingNotice, type SweetWorkRecord,
 } from '../lib/sweetCaseParser';
 import { companyDot, companyText } from '../components/notices/infoStyle';
+import { workRoleClass } from '../lib/workRoleStyle';
 import EmptyState from '../components/EmptyState';
 import { TitleBadge } from '../ui/TitleBadge';
 import { GapCourseHint, itemHintsFor } from '../ui/GapCourseHint';
@@ -401,12 +402,13 @@ function sweetSceneTooltipAlign(index: number): string {
 
 /** 通告统计的小胶囊 + 悬停作品清单，与主站 WorkCountChip 同一套样式和交互。 */
 function SweetWorkCountChip({
-  label, value, works, title, dataName, dataValue, dataNoticeIndex, guideByCode,
+  label, value, works, title, showRole = false, dataName, dataValue, dataNoticeIndex, guideByCode,
 }: {
   label: string;
   value: number;
   works: readonly SweetWorkRecord[];
   title: string;
+  showRole?: boolean;
   dataName?: string;
   dataValue?: string;
   dataNoticeIndex?: number;
@@ -449,6 +451,9 @@ function SweetWorkCountChip({
                   <span className={cn('font-semibold', work.workCode ? 'text-ink' : 'text-ink-faint')}>
                     {work.workName}
                   </span>
+                  {showRole && work.role && (
+                    <span data-sweet-case-work-role className={workRoleClass(work.role)}>{work.role}</span>
+                  )}
                   {work.company && (
                     <span
                       className={cn(
@@ -2819,6 +2824,7 @@ export default function SweetCaseView({
                               dataName="data-sweet-case-notice-count"
                               dataValue={label}
                               dataNoticeIndex={index}
+                              showRole
                               label={label}
                               value={artist.noticeCounts[index] ?? 0}
                               works={save.works.filter((work) => work.artistId === artist.id && work.noticeIndex === index)}
@@ -2828,6 +2834,7 @@ export default function SweetCaseView({
                           ))}
                           <SweetWorkCountChip
                             dataName="data-sweet-case-notice-total"
+                            showRole
                             label="合计"
                             value={artist.noticeCounts.reduce((sum, n) => sum + n, 0)}
                             works={save.works.filter((work) => work.artistId === artist.id)}
