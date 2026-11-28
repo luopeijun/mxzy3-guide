@@ -14479,7 +14479,18 @@
               "kind": "event",
               "text": "时间完全不够用…",
               "group": 15,
-              "label": "3-1"
+              "label": "3-1",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "约会开启条件：",
+                      "text": "和卫亚约会>5且颇有好感"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -14546,7 +14557,18 @@
               "text": "可以多给我一点时间吗？",
               "group": 19,
               "label": "4-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "分支提示：",
+                      "text": "选择以工作为主，会走退出支线"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -14613,6 +14635,17 @@
               "label": "4-4",
               "cg": true,
               "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "卫亚03"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "wei-ya-2"
               ],
@@ -14687,7 +14720,18 @@
               "text": "可以多给我一点时间吗？",
               "group": 26,
               "label": "5-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "分支提示：",
+                      "text": "选择给卫亚多一点时间，则走书卷奖支线"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -14893,6 +14937,17 @@
               "label": "6-3",
               "cg": true,
               "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "卫亚04"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "wei-ya-3"
               ],
@@ -14933,7 +14988,18 @@
               "kind": "event",
               "text": "请你多多照顾他",
               "group": 40,
-              "label": "6-5"
+              "label": "6-5",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "剧情提示：",
+                      "text": "表现太小气，将来可是拿不到纱雪的创作"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -15060,6 +15126,17 @@
               "group": 48,
               "label": "8-2",
               "cg": true,
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "卫亚05"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "wei-ya-6"
               ],

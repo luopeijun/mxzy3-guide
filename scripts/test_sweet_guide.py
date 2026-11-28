@@ -1238,13 +1238,43 @@ class TestSweetGuide(unittest.TestCase):
         texts = [b["text"] for b in blocks]
         self.assertIn("提示：电影票房30万以上才会触发。", texts)
         self.assertFalse(any("30亿" in t for t in texts))
-        # 角色页都读同一份备注表，但只有慕容和希这一页有条目。
+        # 角色页都读同一份备注表，目前只有慕容和希、卫亚两页有条目。
         others = [
             slug for slug, node in nodes.items()
-            if slug != "murong-hexi" and node["id"].startswith("sweet-characters/")
+            if slug not in ("murong-hexi", "wei-ya") and node["id"].startswith("sweet-characters/")
             and any(b.get("eventNotes") for b in node["blocks"])
         ]
         self.assertEqual(others, [])
+
+    def test_wei_ya_guide(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+        blocks = nodes["wei-ya"]["blocks"]
+        # 只加备注字段，不插块、不改事件编号（追踪器按原始下标存进度）。
+        self.assertEqual(len(blocks), 206)
+        self.assertEqual(sum(b["kind"] == "event" for b in blocks), 40)
+        annotated = {b["label"]: b["eventNotes"] for b in blocks
+                     if b["kind"] == "event" and b.get("eventNotes")}
+        self.assertEqual(
+            list(annotated), ["3-1", "4-1", "4-4", "5-1", "6-3", "6-5", "8-2"]
+        )
+        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+
+        def note_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"]
+                for group in annotated[label] for item in group["items"]
+            )
+
+        self.assertIn("约会开启条件：和卫亚约会>5且颇有好感", note_text("3-1"))
+        self.assertIn("分支提示：选择以工作为主，会走退出支线", note_text("4-1"))
+        self.assertIn("事件图：卫亚03", note_text("4-4"))
+        self.assertIn("分支提示：选择给卫亚多一点时间，则走书卷奖支线", note_text("5-1"))
+        self.assertIn("事件图：卫亚04", note_text("6-3"))
+        self.assertIn("剧情提示：表现太小气，将来可是拿不到纱雪的创作", note_text("6-5"))
+        self.assertIn("事件图：卫亚05", note_text("8-2"))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []
