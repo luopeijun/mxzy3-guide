@@ -1554,9 +1554,14 @@ function readNoticeBody(
       if (id > 0 && id <= 110 && isRealReservationName(reservedName)) role.reservedBy = reservedName;
     });
   }
-  roles.forEach((role) => {
-    if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
-  });
+  // 本体槽里只要有一个真艺人编号，就说明这份存档的槽数据有效，空槽是真·无人预约；
+  // 此时不能再拿 StarRole 段的同码记录兜底（Story0005 的 MVAMM4=1 会把主角误填进去）。
+  // 只有本体槽全 0 的老存档才走全档兜底。
+  if (reservationIds.length === 0 || reservationIds.every((id) => id === 0)) {
+    roles.forEach((role) => {
+      if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
+    });
+  }
   roles.sort((a, b) => a.code.localeCompare(b.code));
 
   const dates: { offset: number; value: DateTuple }[] = [];
@@ -1665,10 +1670,12 @@ function scanSweetNotices(
         if (id > 0 && id <= 110 && isRealReservationName(name)) role.reservedBy = name;
       });
     }
-    // 本体没有 [6][0] 槽的老存档改用尾部角色码记录兜底，不覆盖本体读到的真值。
-    roles.forEach((role) => {
-      if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
-    });
+    // 同上：本体槽有真编号时整体可信，空槽不兜底；只有全 0 槽的老存档才走全档兜底。
+    if (reservationIds.length === 0 || reservationIds.every((id) => id === 0)) {
+      roles.forEach((role) => {
+        if (!role.reservedBy) role.reservedBy = tailReservations.get(role.code) ?? '';
+      });
+    }
     roles.sort((a, b) => a.code.localeCompare(b.code));
 
     const dates: { offset: number; value: DateTuple }[] = [];
