@@ -295,13 +295,12 @@ class TestSweetGuide(unittest.TestCase):
         node = _node(self.data, "self-notices")
         blocks = node["blocks"]
 
-        # 三种介质各一章；末尾接创作取得补充节（两页合一，只留这一个入口）。
+        # 三种介质各一章；重复的「艺人创作取得」整表已撤掉，不再另立模块。
         sections = [b["text"] for b in blocks if b["kind"] == "section"]
-        self.assertEqual(sections[:3], ["唱片", "电视剧", "电影"])
-        self.assertEqual(sections[3], "艺人创作取得")
+        self.assertEqual(sections, ["唱片", "电视剧", "电影"])
         self.assertNotIn("creations", [n["id"] for c in self.data["categories"] for n in c["children"]])
-        # 通告页前 234 块原样保留，事件下标与 CG 锚点不受合并影响。
-        self.assertEqual(len(blocks), 253)
+        # 通告页 234 块原样保留，事件下标与 CG 锚点不受影响。
+        self.assertEqual(len(blocks), 234)
         headings = [b["text"] for b in blocks if b["kind"] == "heading"]
         self.assertEqual(len(headings), 24)
         self.assertEqual(headings[:2], ["杜云芊", "沈惟真"])
@@ -1552,20 +1551,11 @@ class TestSweetGuide(unittest.TestCase):
             for c in self.data["categories"] for n in c["children"]
         }
 
-        # 创作总表并入「自制通告一览」末尾：9 位艺人各一张四列表，85 条都对上。
-        creation = nodes["self-notices"]["blocks"][234:]
-        self.assertEqual(creation[0]["text"], "艺人创作取得")
-        tables = [b for b in creation if b["kind"] == "table"]
-        self.assertEqual(len(tables), 9)
-        self.assertEqual([c["label"] for c in tables[0]["table"]["columns"]],
-                         ["种类", "名称", "模式", "取得条件"])
-        rows = [row for t in tables for row in t["table"]["rows"]]
-        self.assertEqual(len(rows), 85)
-        self.assertTrue(all(len(row) == 4 for row in rows))
-        names = {row["name"] for row in rows}
-        for name in ("晴天娃娃", "温柔时刻", "没有雪的耶诞节", "寂寞国度",
-                     "秋草旧长营", "异世界神话", "烟花下的你"):
-            self.assertIn(name, names)
+        # 创作取得整表与自制通告重复，已从攻略页撤掉；条件留在各作品自己的
+        # 说明里，并按作品码进 selfmade.json 供存档解析直查。
+        notice_blocks = nodes["self-notices"]["blocks"]
+        self.assertNotIn("艺人创作取得", [b["text"] for b in notice_blocks])
+        self.assertEqual(len([b for b in notice_blocks if b["kind"] == "table"]), 0)
 
         # 特殊创作取得并入艺人攻略页：独立页撤掉，78 条事件在原事件块上加
         # creation 高亮字段（寂寞微光一链同时出现在卫亚与金皓薰页，故 79 处）。

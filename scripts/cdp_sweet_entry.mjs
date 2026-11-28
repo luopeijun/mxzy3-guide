@@ -312,8 +312,9 @@ async function main() {
   const notice = await readPage();
   check('点自制通告写入深链', notice.hash === '#/guide/sweet-guide/self-notices', notice.hash);
   check(
-    '自制通告按唱片/电视剧/电影分章，艺人小标题 24 条',
-    notice.heads.slice(0, 2).join('/') === '唱片/杜云芊' && notice.heads.length === 27,
+    '自制通告按唱片/电视剧/电影分章，无重复创作模块',
+    notice.heads.slice(0, 3).join('/') === '唱片/杜云芊/沈惟真'
+      && !notice.heads.includes('艺人创作取得'),
     JSON.stringify(notice.heads.slice(0, 3)),
   );
   check('一首歌一张卡（69 张带编号）', notice.cards === 69, `cards=${notice.cards}`);

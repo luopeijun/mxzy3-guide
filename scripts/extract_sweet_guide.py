@@ -362,9 +362,9 @@ def parse_self_notices(path: Path) -> tuple[list[dict], str]:
     源文本有两种「1、」编号：开头的获得方式说明和后面的艺人都长这样，只能靠
     「是否已经出现过 ●…●」来区分。歌名后的说明与属性行留在同一张卡里。
 
-    艺人创作取得页并入本文末：它和自制通告是同一批作品的两种视角（前者写
-    特殊作品的剧情条件，后者写天数 / 类型星级 / 属性门槛），合并后只留这
-    一个入口。原页的事件块排在前面，下标不动，追踪器与 CG 锚点都不受影响。
+    作品取得条件已经写在本页每条作品的说明里，存档解析另有按作品码对齐的
+    数据可直查，所以不再重复附「艺人创作取得」整表——那是同一批作品的
+    第二种视角。原有事件块一个不动，追踪器与 CG 锚点都不受影响。
     """
     lines = _read_lines(path)
     blocks: list[dict] = []
@@ -428,22 +428,6 @@ def parse_self_notices(path: Path) -> tuple[list[dict], str]:
                 continue
 
         push("paragraph", text)
-
-    # 创作取得页作为末尾补充节并进来：表头是「每种作品一张表」，艺人分节
-    # 的 group 从末尾重新编号，避免并进上一节最后一位艺人的卡片里。
-    creations = SOURCES / "creations.txt"
-    if creations.exists():
-        extra, _ = parse_creations(creations)
-        if extra:
-            offset = max((block["group"] for block in blocks), default=0) + 10
-            for block in extra:
-                block["group"] += offset
-            group = offset
-            group += 1
-            blocks.append({"kind": "section", "text": "艺人创作取得", "group": group})
-            for block in extra:
-                block["group"] += 1
-            blocks.extend(extra)
 
     return blocks, lines[0]
 
@@ -1327,47 +1311,8 @@ def parse_monopoly(path: Path) -> tuple[list[dict], str]:
     return blocks, subtitle
 
 
-def parse_creations(path: Path) -> tuple[list[dict], str]:
-    """艺人创作取得 → 每位艺人一节 + 一张「种类 / 名称 / 模式 / 取得条件」表。"""
-    lines = _read_lines(path)
-    blocks: list[dict] = []
-    group = 0
-    rows: list[dict] = []
-
-    def flush() -> None:
-        nonlocal rows
-        if not rows:
-            return
-        blocks.append({
-            "kind": "table",
-            "text": "",
-            "group": group,
-            "table": {
-                "columns": [
-                    {"key": "kind", "label": "种类"},
-                    {"key": "name", "label": "名称"},
-                    {"key": "mode", "label": "模式"},
-                    {"key": "condition", "label": "取得条件"},
-                ],
-                "rows": rows,
-            },
-        })
-        rows = []
-
-    for text in lines[1:]:
-        if not text.strip():
-            continue
-        if "\t" in text:
-            parts = [part.strip() for part in text.split("\t")]
-            if len(parts) != 4:
-                raise ValueError(f"{path.name}: 创作行不是四列：{text!r}")
-            rows.append(dict(zip(("kind", "name", "mode", "condition"), parts)))
-            continue
-        flush()
-        group += 1
-        blocks.append({"kind": "section", "text": text.strip(), "group": group})
-    flush()
-    return blocks, lines[0]
+# `sources/sweet/creations.txt` 仍留作 selfmade.json 的取得条件真源，由
+# build_sweet_selfmade.py 单独读取；攻略页不再把它渲染成「艺人创作取得」模块。
 
 
 def parse_artist_profiles() -> dict[str, dict]:
