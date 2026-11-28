@@ -70,6 +70,12 @@ async function connect() {
 const c = await connect();
 console.log('page url:', c.url);
 
+// 桌面版启动停在「选择游戏」首页；原有回归针对明星志愿3解析页，先切过去。
+if (!c.url.includes('#/case')) {
+  await c.send('Page.navigate', { url: 'mxzy://local/desktop.html#/case' });
+  await sleep(1200);
+}
+
 // 1) 桌面端是独立入口，走自定义协议。
 check(c.url.includes('mxzy://') && c.url.includes('desktop.html'),
   '桌面端走 mxzy:// 自定义协议加载 desktop.html', c.url);

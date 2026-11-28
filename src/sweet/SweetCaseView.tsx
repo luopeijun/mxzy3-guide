@@ -2265,7 +2265,12 @@ function SweetItemsPanel({
 }
 
 /** 甜蜜乐章存档解析：游戏时间 / 公司 / 艺人卡片与合约信息。 */
-export default function SweetCaseView() {
+export default function SweetCaseView({
+  externalSave,
+}: {
+  /** 桌面版经文件桥读出的存档字节；网页版不传，保持原有的选文件 / 拖拽入口。 */
+  externalSave?: { buffer: ArrayBuffer; name: string; token: number } | null;
+} = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const memoInputRef = useRef<HTMLInputElement>(null);
   /** 便签独立于存档，用自己的 localStorage key；切多少份存档都不变。 */
@@ -2355,6 +2360,15 @@ export default function SweetCaseView() {
       }
     })();
   }, [stars, titles, tables, genders]);
+
+  // 桌面版把桥读出的字节包装成 File，和网页版共用同一条 receive 通道。
+  const receiveRef = useRef(receive);
+  receiveRef.current = receive;
+  useEffect(() => {
+    if (!externalSave) return;
+    const file = new File([externalSave.buffer], externalSave.name);
+    void receiveRef.current(file);
+  }, [externalSave]);
 
   const clear = () => {
     pickedFileRef.current = null;

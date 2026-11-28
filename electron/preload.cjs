@@ -2,11 +2,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('desktopBridge', {
-  getState: () => ipcRenderer.invoke('desktop:getState'),
-  chooseDir: () => ipcRenderer.invoke('desktop:chooseDir'),
-  refresh: () => ipcRenderer.invoke('desktop:refresh'),
-  setAutoFollow: (enabled) => ipcRenderer.invoke('desktop:setAutoFollow', enabled),
-  setSelected: (name) => ipcRenderer.invoke('desktop:setSelected', name),
+  // 两个游戏各有一份目录 / 档位 / 自动跟随配置，调用方必须传 site。
+  getState: (site) => ipcRenderer.invoke('desktop:getState', site),
+  chooseDir: (site) => ipcRenderer.invoke('desktop:chooseDir', site),
+  refresh: (site) => ipcRenderer.invoke('desktop:refresh', site),
+  setAutoFollow: (enabled, site) => ipcRenderer.invoke('desktop:setAutoFollow', enabled, site),
+  setSelected: (name, site) => ipcRenderer.invoke('desktop:setSelected', name, site),
+  setSite: (site) => ipcRenderer.invoke('desktop:setSite', site),
   readSave: async (filePath) => {
     const bytes = await ipcRenderer.invoke('desktop:readSave', filePath);
     // 克隆回来的 Uint8Array 转成 ArrayBuffer，交给现有 parseSave。

@@ -1,6 +1,6 @@
-/* Electron 主进程：只做三件事——把 dist 目录经自定义协议喂给页面（本地 JSON
- * 的 fetch 在 file:// 下会被浏览器拦掉）、向渲染进程提供只读的存档文件桥、
- * 以及监听用户选定的 Save2 目录变化。绝不回写存档。 */
+/* Electron 主进程：把 dist 目录经自定义协议喂给页面（本地 JSON 的 fetch 在
+ * file:// 下会被浏览器拦掉）、向渲染进程提供只读的存档文件桥，并按游戏分别
+ * 记住存档目录 / 档位 / 自动跟随。绝不回写存档。 */
 const { app, BrowserWindow, Menu, dialog, ipcMain, protocol } = require('electron');
 const fs = require('node:fs/promises');
 const fsSync = require('node:fs');
@@ -22,6 +22,12 @@ const MIME = {
   '.woff2': 'font/woff2',
 };
 
+const KEYS = {
+  main: { dir: 'saveDir', auto: 'autoFollow', selected: 'selectedName' },
+  sweet: { dir: 'sweetSaveDir', auto: 'sweetAutoFollow', selected: 'sweetSelectedName' },
+};
+const SAVE_PATTERN = { main: /\.sa2$/i, sweet: /\.(sav|bak)$/i };
+
 // 必须在 app.whenReady 之前声明为标准协议，相对路径与 fetch 才会正常解析。
 protocol.registerSchemesAsPrivileged([
   { scheme: 'mxzy', privileges: { standard: true, secure: true, supportFetchAPI: true, bypassCSP: true } },
@@ -31,17 +37,35 @@ let mainWindow = null;
 let watcher = null;
 let notifyTimer = null;
 
+const normalizeSite = (site) => (site === 'sweet' ? 'sweet' : 'main');
+
+function configForSite(cfg, site) {
+  const key = KEYS[normalizeSite(site)];
+  return {
+    saveDir: typeof cfg[key.dir] === 'string' ? cfg[key.dir] : '',
+    autoFollow: Boolean(cfg[key.auto]),
+    selectedName: typeof cfg[key.selected] === 'string' ? cfg[key.selected] : '',
+  };
+}
+
 async function readConfig() {
   try {
     const raw = await fs.readFile(configPath(), 'utf8');
     const cfg = JSON.parse(raw);
     return {
+      site: normalizeSite(cfg.site),
       saveDir: typeof cfg.saveDir === 'string' ? cfg.saveDir : '',
+      sweetSaveDir: typeof cfg.sweetSaveDir === 'string' ? cfg.sweetSaveDir : '',
       autoFollow: Boolean(cfg.autoFollow),
+      sweetAutoFollow: Boolean(cfg.sweetAutoFollow),
       selectedName: typeof cfg.selectedName === 'string' ? cfg.selectedName : '',
+      sweetSelectedName: typeof cfg.sweetSelectedName === 'string' ? cfg.sweetSelectedName : '',
     };
   } catch {
-    return { saveDir: '', autoFollow: false, selectedName: '' };
+    return {
+      site: 'main', saveDir: '', sweetSaveDir: '', autoFollow: false, sweetAutoFollow: false,
+      selectedName: '', sweetSelectedName: '',
+    };
   }
 }
 
@@ -52,13 +76,24 @@ async function writeConfig(patch) {
   return next;
 }
 
-async function listSaves(dir) {
+async function stateFor(site) {
+  const cfg = await readConfig();
+  const view = configForSite(cfg, site);
+  return {
+    ...view,
+    saves: await listSaves(view.saveDir, site),
+  };
+}
+
+async function listSaves(dir, site = 'main') {
   if (!dir) return [];
   try {
+    const pattern = SAVE_PATTERN[normalizeSite(site)];
     const entries = await fs.readdir(dir, { withFileTypes: true });
     const files = [];
     for (const entry of entries) {
-      if (!entry.isFile() || !/\.sa2$/i.test(entry.name)) continue;
+      // .mem 是游戏内存镜像、不是存档，别让用户误读。
+      if (!entry.isFile() || !pattern.test(entry.name)) continue;
       const full = path.join(dir, entry.name);
       const stat = await fs.stat(full);
       files.push({ name: entry.name, path: full, mtime: stat.mtimeMs, size: stat.size });
@@ -70,7 +105,7 @@ async function listSaves(dir) {
   }
 }
 
-/** 游戏跑着的时候 Auto.sa2 可能正在被写：读前后各 stat 一次，大小 / 修改时间
+/** 游戏跑着的时候 Auto 存档可能正在被写：读前后各 stat 一次，大小 / 修改时间
  *  不一致就等一下重读，避免把半截文件交给解析器。只读，绝不写回。 */
 async function readSaveStable(filePath) {
   let last = null;
@@ -91,9 +126,12 @@ function sendState() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   void (async () => {
     const cfg = await readConfig();
+    const site = cfg.site;
+    const view = configForSite(cfg, site);
     mainWindow.webContents.send('desktop:state', {
-      ...cfg,
-      saves: await listSaves(cfg.saveDir),
+      ...view,
+      site,
+      saves: await listSaves(view.saveDir, site),
     });
   })();
 }
@@ -137,17 +175,19 @@ function registerProtocol() {
 }
 
 /** 原生 File 菜单：打开存档走系统文件框，读到字节后推给渲染层，
- *  和目录里点「读取当前游戏状态」共用同一条 feedSave 通道，不另开解析路径。
- *  reload 也由主进程发事件，渲染层自己决定重读目录档位还是上次打开的文件。 */
+ *  和目录里点「读取当前游戏状态」共用同一条 feedSave 通道。 */
 async function openSaveFromFile(pickedPath) {
+  const cfg = await readConfig();
+  const site = cfg.site;
   let filePath = pickedPath;
   if (!filePath) {
-    const cfg = await readConfig();
+    const view = configForSite(cfg, site);
+    const isSweet = site === 'sweet';
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: '打开存档（.sa2）',
-      defaultPath: cfg.saveDir || undefined,
+      title: isSweet ? '打开存档（.sav）' : '打开存档（.sa2）',
+      defaultPath: view.saveDir || undefined,
       filters: [
-        { name: '明星志愿3 存档', extensions: ['sa2'] },
+        { name: isSweet ? '甜蜜乐章存档' : '明星志愿3 存档', extensions: isSweet ? ['sav', 'bak'] : ['sa2'] },
         { name: '所有文件', extensions: ['*'] },
       ],
       properties: ['openFile'],
@@ -208,38 +248,45 @@ function registerMenu() {
 }
 
 function registerIpc() {
-  ipcMain.handle('desktop:getState', async () => {
-    const cfg = await readConfig();
-    return { ...cfg, saves: await listSaves(cfg.saveDir) };
-  });
+  ipcMain.handle('desktop:getState', async (_event, site) => stateFor(normalizeSite(site)));
 
-  ipcMain.handle('desktop:chooseDir', async () => {
-    const current = (await readConfig()).saveDir;
+  ipcMain.handle('desktop:chooseDir', async (_event, site) => {
+    const target = normalizeSite(site);
+    const key = KEYS[target];
+    const cfg = await readConfig();
+    const current = cfg[key.dir];
+    const isSweet = target === 'sweet';
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: '选择游戏的 Save2 存档目录',
+      title: isSweet ? '选择甜蜜乐章的 Save 存档目录' : '选择明星志愿3 的 Save2 存档目录',
       defaultPath: current || undefined,
       properties: ['openDirectory'],
     });
     if (result.canceled || !result.filePaths.length) return null;
-    const cfg = await writeConfig({ saveDir: result.filePaths[0], selectedName: '' });
-    startWatch(cfg.saveDir);
-    return { ...cfg, saves: await listSaves(cfg.saveDir) };
+    const next = await writeConfig({ [key.dir]: result.filePaths[0], [key.selected]: '' });
+    if (cfg.site === target) startWatch(configForSite(next, target).saveDir);
+    return stateFor(target);
   });
 
-  ipcMain.handle('desktop:setAutoFollow', async (_event, enabled) => {
-    const cfg = await writeConfig({ autoFollow: Boolean(enabled) });
-    return cfg.autoFollow;
+  ipcMain.handle('desktop:setAutoFollow', async (_event, enabled, site) => {
+    const key = KEYS[normalizeSite(site)];
+    const cfg = await writeConfig({ [key.auto]: Boolean(enabled) });
+    return Boolean(cfg[key.auto]);
   });
 
-  ipcMain.handle('desktop:setSelected', async (_event, name) => {
-    const cfg = await writeConfig({ selectedName: typeof name === 'string' ? name : '' });
-    return cfg.selectedName;
+  ipcMain.handle('desktop:setSelected', async (_event, name, site) => {
+    const key = KEYS[normalizeSite(site)];
+    const cfg = await writeConfig({ [key.selected]: typeof name === 'string' ? name : '' });
+    return cfg[key.selected];
   });
 
-  ipcMain.handle('desktop:refresh', async () => {
-    const cfg = await readConfig();
-    return { ...cfg, saves: await listSaves(cfg.saveDir) };
+  ipcMain.handle('desktop:setSite', async (_event, site) => {
+    const target = normalizeSite(site);
+    const cfg = await writeConfig({ site: target });
+    startWatch(configForSite(cfg, target).saveDir);
+    return target;
   });
+
+  ipcMain.handle('desktop:refresh', async (_event, site) => stateFor(normalizeSite(site)));
 
   ipcMain.handle('desktop:readSave', async (_event, filePath) => {
     if (typeof filePath !== 'string' || !path.isAbsolute(filePath)) {
@@ -262,7 +309,7 @@ async function createWindow() {
     height: 900,
     minWidth: 1024,
     minHeight: 680,
-    title: '明星志愿3 · 存档解析',
+    title: '明星志愿3 攻略助手 · 桌面版',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -275,9 +322,8 @@ async function createWindow() {
   if (devUrl) {
     await mainWindow.loadURL(devUrl);
   } else {
-    await mainWindow.loadURL('mxzy://local/desktop.html#/case');
+    await mainWindow.loadURL('mxzy://local/desktop.html#/home');
   }
-
 
   mainWindow.on('closed', () => {
     stopWatch();
@@ -296,7 +342,7 @@ app.whenReady().then(async () => {
   registerMenu();
   await createWindow();
   const cfg = await readConfig();
-  startWatch(cfg.saveDir);
+  startWatch(configForSite(cfg, cfg.site).saveDir);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) void createWindow();
   });
