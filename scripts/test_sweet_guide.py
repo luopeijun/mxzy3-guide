@@ -121,11 +121,13 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 16)
+        self.assertEqual(len(first["children"]), 15)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
         # 结局条件一览已并入女主事业结局页，不再单独占一个目录项。
         self.assertNotIn("sweet-guide/endings", [n["id"] for n in first["children"]])
+        # 签约条件已并入艺人页，不再单独成页。
+        self.assertNotIn("sweet-guide/signing", [n["id"] for n in first["children"]])
 
     def test_three_categories(self) -> None:
         self.assertEqual(
@@ -134,8 +136,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 30)
-        self.assertEqual(stats["readyItems"], 30)
+        self.assertEqual(stats["items"], 29)
+        self.assertEqual(stats["readyItems"], 29)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -1293,9 +1295,12 @@ class TestSweetGuide(unittest.TestCase):
         annotated = {b["label"]: b["eventNotes"] for b in blocks
                      if b["kind"] == "event" and b.get("eventNotes")}
         self.assertEqual(
-            list(annotated), ["3-1", "4-1", "4-4", "5-1", "6-3", "6-5", "8-2"]
+            list(annotated), ["1-2", "1-3", "3-1", "4-1", "4-4", "5-1", "6-3", "6-5", "8-2"]
         )
-        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+        self.assertTrue(all(
+            g["title"] in ("艺人攻略补充", "签约流程补充")
+            for gs in annotated.values() for g in gs
+        ))
 
         def note_text(label: str) -> str:
             return "\n".join(
@@ -1354,8 +1359,11 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(sum(b["kind"] == "event" for b in blocks), 37)
         annotated = {b["label"]: b["eventNotes"] for b in blocks
                      if b["kind"] == "event" and b.get("eventNotes")}
-        self.assertEqual(list(annotated), ["4-1", "6-2", "8-2"])
-        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+        self.assertEqual(list(annotated), ["1-2", "4-1", "6-2", "8-2"])
+        self.assertTrue(all(
+            g["title"] in ("艺人攻略补充", "签约流程补充")
+            for gs in annotated.values() for g in gs
+        ))
 
         def note_text(label: str) -> str:
             return "\n".join(
@@ -1461,8 +1469,11 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(sum(b["kind"] == "event" for b in blocks), 36)
         annotated = {b["label"]: b["eventNotes"] for b in blocks
                      if b["kind"] == "event" and b.get("eventNotes")}
-        self.assertEqual(list(annotated), ["2-1", "3-5", "4-1", "4-6", "5-2", "6-3", "7-4"])
-        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+        self.assertEqual(list(annotated), ["1-4", "2-1", "3-5", "4-1", "4-6", "5-2", "6-3", "7-4"])
+        self.assertTrue(all(
+            g["title"] in ("艺人攻略补充", "签约流程补充")
+            for gs in annotated.values() for g in gs
+        ))
 
         def note_text(label: str) -> str:
             return "\n".join(
@@ -1513,11 +1524,24 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("2.该艺人12月24日当天没有特殊行程和约会", texts("dating-guide"))
         self.assertTrue(any("旗下艺人之中最高的" in t for t in texts("dating-guide")))
 
-        # 签约页：补齐签约事件流程，史蒂芬合约特殊要求为「无」。
-        self.assertEqual(len(nodes["signing"]["blocks"]), 133)
-        for name in ("雨中重逢", "我们看错了贺总", "姚子奇02", "城仲瑄04", "子奇交给你我就放心了"):
-            self.assertTrue(any(name in t for t in texts("signing")), name)
-        self.assertTrue(any("史蒂芬无" in t for t in texts("signing")))
+        # 签约条件页已撤：签约金 / 分红 / 目标在艺人页头与资料卡，事件流程在
+        # 各艺人「加入」章节；签约页独有的选项提示走 eventNotes 补到对应事件。
+        self.assertNotIn("signing", nodes)
+        extra = {
+            ("shen-weizhen", "1-4"): "请选择「我很了解」",
+            ("wei-ya", "1-2"): "选择「不要气馁」",
+            ("wei-ya", "1-3"): "请选择「请他自己解决」",
+            ("cheng-zhongxuan", "1-2"): "请选择「不，是我不小心」",
+        }
+        for (slug, label), needle in extra.items():
+            event = next(
+                b for b in nodes[slug]["blocks"]
+                if b.get("kind") == "event" and b.get("label") == label
+            )
+            self.assertTrue(
+                any(needle in item["text"] for g in event["eventNotes"] for item in g["items"]),
+                f"{slug} {label}",
+            )
 
         # 称号真值修正：国际名模需时装秀1、戏剧天王奖项正确、顶级称号条件完整。
         self.assertTrue(any("国际名模－广告15、时装秀1" in t for t in texts("titles")))

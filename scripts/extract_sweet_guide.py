@@ -1107,9 +1107,10 @@ def parse_generic_list(
 ) -> tuple[list[dict], str]:
     """通用清单页 → 短标题开 section，其余是说明段落；注释行走金色便签。
 
-    用于从台版手册补进来的附录页（初期攻略 / 签约条件 / 制作人 / 称号属性 /
+    用于从台版手册补进来的附录页（初期攻略 / 制作人 / 称号属性 /
     约会教战总则）。这些页都是「小标题 + 条目」的平铺清单，没有事件卡，
-    所以不会进入追踪器的事件下标。
+    所以不会进入追踪器的事件下标。签约条件已并入艺人页的「加入」章节，
+    不再单独成页。
 
     `numbered_children_of` 给某一节下面的短人名降级成带编号的子项卡片：
     约会教战总则的「艺人约会守则」是第 5 节，下面的「沈惟真」等名字原本
@@ -1427,7 +1428,7 @@ PARSERS = {
     "monopoly": parse_monopoly,
     # 初期攻略已并入 main-story，由 parse_main_story 直接读取。
     # 台版手册补进来的附录页：平铺清单，无事件卡，不影响追踪器下标。
-    "signing": parse_generic_list,
+    # 签约条件已并入艺人页，独有的选项提示走 side-event-notes.tsv。
     "producers": parse_generic_list,
     "titles": parse_generic_list,
     "dating-guide": parse_dating_guide,
@@ -1467,7 +1468,6 @@ CATEGORIES: list[dict] = [
             ("career-endings", "女主事业结局达成条件"),
             ("award-dates", "各类奖项颁奖日期及内容"),
             ("monopoly", "大富翁BaBaBa答案"),
-            ("signing", "签约条件"),
             ("producers", "制作人专长与自制作品规则"),
             ("titles", "称号属性"),
             ("dating-guide", "约会教战总则"),

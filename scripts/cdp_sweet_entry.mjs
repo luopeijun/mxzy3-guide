@@ -139,8 +139,8 @@ async function main() {
   })()`);
   check('目录有 3 个类目', tree.cats.length === 3, JSON.stringify(tree.cats));
   check('角色攻略 8 位', tree.chars === 8, `chars=${tree.chars}`);
-  // 第 11 节是后加的「自制通告一览」，目录跟着正文一起长。
-  check('经纪人事件簿 11 条', tree.guide === 11, `guide=${tree.guide}`);
+  // 目录跟着正文一起调整；签约条件已并入艺人页，不再单列。
+  check('经纪人事件簿 15 条', tree.guide === 15, `guide=${tree.guide}`);
   check('支线攻略 6 条', tree.side === 6, `side=${tree.side}`);
   check('第一类叫「经纪人事件簿」', tree.guideTitle.includes('经纪人事件簿'), tree.guideTitle.trim().slice(0, 20));
   check('已删掉「角色介绍」', tree.hasIntro === false, `hasIntro=${tree.hasIntro}`);
@@ -538,6 +538,12 @@ async function main() {
     '友好度与 CG 拆成两个标记（18 + 3）',
     cheng.friendChips === 18 && cheng.cgChips === 3,
     `${cheng.friendChips} / ${cheng.cgChips}`,
+  );
+  const chengSigning = await evaluate(`document.querySelector('main')?.innerText ?? ''`);
+  check(
+    '签约页独有选项提示已并入城仲瑄事件',
+    chengSigning.includes('请选择「不，是我不小心」'),
+    'ok',
   );
   check(
     'CG 事件按原站方式高亮（卡片换玫红底）',
