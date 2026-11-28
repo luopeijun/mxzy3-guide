@@ -9607,9 +9607,10 @@
               "group": 5
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "沈惟真",
-              "group": 6
+              "group": 6,
+              "label": "5-1"
             },
             {
               "kind": "paragraph",
@@ -9642,9 +9643,10 @@
               "group": 6
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "丹尼斯",
-              "group": 7
+              "group": 7,
+              "label": "5-2"
             },
             {
               "kind": "paragraph",
@@ -9677,9 +9679,10 @@
               "group": 7
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "史蒂芬",
-              "group": 8
+              "group": 8,
+              "label": "5-3"
             },
             {
               "kind": "paragraph",
@@ -9722,9 +9725,10 @@
               "group": 8
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "姚子奇",
-              "group": 9
+              "group": 9,
+              "label": "5-4"
             },
             {
               "kind": "paragraph",
@@ -9757,9 +9761,10 @@
               "group": 9
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "慕容和希",
-              "group": 10
+              "group": 10,
+              "label": "5-5"
             },
             {
               "kind": "paragraph",
@@ -9792,9 +9797,10 @@
               "group": 10
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "卫亚",
-              "group": 11
+              "group": 11,
+              "label": "5-6"
             },
             {
               "kind": "paragraph",
@@ -9827,9 +9833,10 @@
               "group": 11
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "纪翔",
-              "group": 12
+              "group": 12,
+              "label": "5-7"
             },
             {
               "kind": "paragraph",
@@ -9862,9 +9869,10 @@
               "group": 12
             },
             {
-              "kind": "section",
+              "kind": "event",
               "text": "城仲瑄",
-              "group": 13
+              "group": 13,
+              "label": "5-8"
             },
             {
               "kind": "paragraph",

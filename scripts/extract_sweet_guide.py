@@ -1071,12 +1071,19 @@ DATE_QUESTION_RE = re.compile(r"^(\d+)[.．]\s*Q[：:](.+)$")
 DATE_ANSWER_RE = re.compile(r"^A[：:](.+)$")
 
 
-def parse_generic_list(path: Path) -> tuple[list[dict], str]:
+def parse_generic_list(
+    path: Path, numbered_children_of: str | None = None
+) -> tuple[list[dict], str]:
     """通用清单页 → 短标题开 section，其余是说明段落；注释行走金色便签。
 
     用于从台版手册补进来的附录页（初期攻略 / 签约条件 / 制作人 / 称号属性 /
     约会教战总则）。这些页都是「小标题 + 条目」的平铺清单，没有事件卡，
     所以不会进入追踪器的事件下标。
+
+    `numbered_children_of` 给某一节下面的短人名降级成带编号的子项卡片：
+    约会教战总则的「艺人约会守则」是第 5 节，下面的「沈惟真」等名字原本
+    和它同级，现在排成 5-1、5-2…，紧随其后的条件行留在同一张卡里。编号
+    取父节的序号动态算，别人的清单页不传这个参数，行为完全不变。
     """
     # 原文用全角空格对齐人名（王　金）、全角数字写门槛（名气２００），
     # 展示时统一成半角，数值本身不变。
@@ -1086,15 +1093,24 @@ def parse_generic_list(path: Path) -> tuple[list[dict], str]:
     ]
     blocks: list[dict] = []
     group = 0
+    section_no = 0
+    parent_no: int | None = None
+    child_no = 0
 
     def push(kind: str, text: str, **extra) -> None:
         blocks.append({"kind": kind, "text": text, "group": group, **extra})
 
     for text in lines[1:]:
         if text.startswith("---"):
+            # 分隔线是区块边界：艺人守则到这儿结束，后面的「三大节日守则」
+            # 不该继续挂 5-n 编号。
+            parent_no = None
+            child_no = 0
             continue
         diamond = re.match(r"^◆(.+)◆$", text)
         if diamond:
+            section_no += 1
+            parent_no = None
             group += 1
             push("section", diamond.group(1).strip())
             continue
@@ -1105,13 +1121,27 @@ def parse_generic_list(path: Path) -> tuple[list[dict], str]:
         short = len(text) <= 10 and not any(
             ch in text for ch in "：:，。、；！？（）()－—~～"
         )
+        # 目标节下的短人名 → 编号子项（event 块），必须在 section 判断之前拦下。
+        if parent_no is not None and short:
+            child_no += 1
+            group += 1
+            push("event", text, label=f"{parent_no}-{child_no}")
+            continue
         if (text.endswith(("：", ":")) or short) and not re.match(r"^\d+[.、]", text):
+            section_no += 1
+            parent_no = section_no if numbered_children_of == bare else None
+            child_no = 0
             group += 1
             push("section", bare)
             continue
         push("paragraph", text)
 
     return blocks, lines[0]
+
+
+def parse_dating_guide(path: Path) -> tuple[list[dict], str]:
+    """约会教战总则：艺人约会守则下的人名降为 5-1 / 5-2 … 子项。"""
+    return parse_generic_list(path, numbered_children_of="艺人约会守则")
 
 
 def parse_date(path: Path) -> tuple[list[dict], list[dict]]:
@@ -1341,7 +1371,7 @@ PARSERS = {
     "signing": parse_generic_list,
     "producers": parse_generic_list,
     "titles": parse_generic_list,
-    "dating-guide": parse_generic_list,
+    "dating-guide": parse_dating_guide,
     "murong-yaoqi": parse_generic_list,
     "cheng-zhongxuan": parse_character,
     "danisi": parse_character,

@@ -1480,8 +1480,17 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("约会地点素质相关", texts("dating-guide"))
         self.assertIn("植物园：压力↓、疲劳↓", texts("dating-guide"))
         self.assertIn("海生馆：压力↓、动感↑", texts("dating-guide"))
-        for artist in ("沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄"):
+        # 艺人约会守则下的名字降为 5-1～5-8 子项，条件行收进各自卡片。
+        artists = ("沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄")
+        dated = [b for b in date_blocks if b["kind"] == "event"]
+        self.assertEqual(
+            [(b["label"], b["text"]) for b in dated],
+            [(f"5-{n}", artist) for n, artist in enumerate(artists, 1)],
+        )
+        for artist in artists:
             self.assertIn(artist, texts("dating-guide"), artist)
+        # 分隔线后的「三大节日守则」不能被卷进 5-n 编号。
+        self.assertIn("三大节日守则", [b["text"] for b in date_blocks if b["kind"] == "section"])
         self.assertTrue(any("特殊约会不受连续约会的限制（原文标注??）" in t
                             for t in texts("dating-guide")))
         self.assertIn("2.该艺人12月24日当天没有特殊行程和约会", texts("dating-guide"))
