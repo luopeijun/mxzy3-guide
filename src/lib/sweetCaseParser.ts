@@ -2287,9 +2287,15 @@ function scanSweetShooting(
     const from = Math.min(700, Math.max(0, length - 260));
     const to = Math.min(length - 24, 960);
     let anchor = -1;
-    for (let p = from; p + 24 <= to; p += 4) {
+    // 接取网格的起点不是本体固定偏移：名字长度、角色槽数量都会让它整体平移，
+    // Story0004 的 CFA1D 就落在 +847（非 4B 对齐），按 4 字节步进会整条漏掉。
+    // 逐字节找锚点，但要求酬劳是千元整数且结构字段合法，避免把日期/字符串误当记录。
+    for (let p = from; p + 24 <= to; p += 1) {
       const r = readAt(p);
-      if (r.pay >= 1000 && valid(r)) { anchor = p; break; }
+      if (r.pay >= 1000 && r.pay <= 20_000_000 && r.pay % 1000 === 0 && valid(r)) {
+        anchor = p;
+        break;
+      }
     }
     // done/a/b 分别是成功/失败/完美天数，三者相加才是已拍天数；
     // 还差天数＝通告总天数减掉这三项（Story0050 TVA1K 40+0+1，45 天里还差 4 天）。
