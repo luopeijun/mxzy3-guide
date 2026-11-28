@@ -4,6 +4,7 @@ import EmptyState from '../EmptyState';
 import CaseSpecialsAssistant from './CaseSpecialsAssistant';
 import { TitleBadge } from '../../ui/TitleBadge';
 import { GapCourseHint, itemHintsFor, type CourseHint } from '../../ui/GapCourseHint';
+import { useHoverPopover } from '../../ui/useHoverPopover';
 import { companyDot, companyText } from '../notices/infoStyle';
 import { useGuideContext } from '../../hooks/useGuideContext';
 import { cn } from '../../lib/cn';
@@ -255,9 +256,11 @@ function WorkCountChip({
   const rowData = group
     ? { 'data-case-group-work': '' }
     : { 'data-case-artist-work': '' };
+  const { open, handlers } = useHoverPopover();
   return (
     <span className="work-count-chip group relative inline-flex">
       <span
+        {...handlers}
         {...(dataName ? { [dataName]: '' } : {})}
         data-notice-index={dataNoticeIndex}
         tabIndex={0}
@@ -269,8 +272,12 @@ function WorkCountChip({
       {works.length > 0 && (
         <span
           {...cardData}
+          {...handlers}
           role="tooltip"
-          className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+          className={cn(
+            'absolute bottom-full left-0 z-30 mb-1 w-[320px] pb-1 transition-opacity duration-150',
+            open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
+          )}
         >
           <span className="block rounded-ui-sm border border-line bg-surface p-2 text-left shadow-lg">
             <span className="mb-1 flex items-baseline gap-1">
