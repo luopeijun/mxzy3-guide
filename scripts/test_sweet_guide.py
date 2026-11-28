@@ -1051,6 +1051,30 @@ class TestSweetGuide(unittest.TestCase):
         )
         self.assertFalse(any("（友好度上升）" in b["text"] for b in jin))
 
+        # 金皓薰 15 条核对表挂到全部 15 个事件块，不插块（原文本就带时间/概要段落）。
+        jin_notes = {b["label"]: b.get("eventNotes", []) for b in jin if b.get("eventNotes")}
+        self.assertEqual(
+            list(jin_notes),
+            ["1-1", "1-2", "1-3"] + [f"2-{n}" for n in range(1, 7)] + [f"3-{n}" for n in range(1, 7)],
+        )
+
+        def jin_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"] for group in jin_notes[label] for item in group["items"]
+            )
+
+        for label, token in (
+            ("1-1", "2009/1-2010/12"), ("1-2", "左为改造前，右为改造后"),
+            ("1-3", "此事件可重复3次（每次间隔1个月）"), ("2-1", "可以和我去植物园吗"),
+            ("2-2", "4中约定的日期"), ("2-3", "2010/2/14"),
+            ("2-4", "杨安妤前来与云芊确认此事"), ("2-5", "纪翔&金皓薰只能2择1"),
+            ("2-6", "称号都在实力派以上才会触发"), ("3-1", "事件7、8都要表示喜欢金皓薰"),
+            ("3-2", "公司知名度>300才看得到完整剧情"), ("3-3", "2010/10"),
+            ("3-4", "事件12新闻发生后，云芊自言自语"), ("3-5", "到翱翔天际探望金皓薰"),
+            ("3-6", "请不要跟随纪翔"),
+        ):
+            self.assertIn(token, jin_text(label), label)
+
         # 原文错字 / 错名按本仓统一写法补正。
         joined = "\n".join(b["text"] for blocks in nodes.values() for b in blocks)
         for bad in ("溷溷", "遇刺桉", "项炼", "萤幕", "苏曼君", "原少伟", "郭秘术", "天睛"):
