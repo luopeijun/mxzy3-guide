@@ -980,6 +980,11 @@ function SweetNoticeRows({ notice, save, genders }: {
             即将截止
           </span>
         )}
+        {notice.status === 'expired' && (
+          <span className="mt-1 inline-block rounded-full bg-surface-soft px-1.5 py-0.5 text-ui-2xs text-ink-faint">
+            已停止接取
+          </span>
+        )}
       </Td>
       <Td>
         <span

@@ -1691,10 +1691,10 @@ function scanSweetNotices(
     const deadline = previousDay(start);
     const todayValue = dayValue(today.year, today.month, today.day);
     const startValue = dayValue(start[0], start[1], start[2]);
-    const endValue = dayValue(end[0], end[1], end[2]);
     const deadlineValue = dayValue(deadline[0], deadline[1], deadline[2]);
     let status: SweetNotice['status'] = 'open';
-    if (todayValue > endValue) status = 'expired';
+    // 与主站同口径：过了停止接取日（开拍前一天）就不能再接，不必等到杀青。
+    if (start[0] && todayValue > deadlineValue) status = 'expired';
     else if (todayValue < dayValue(first[0], first[1], first[2])) status = 'upcoming';
     else if (todayValue <= deadlineValue && deadlineValue - todayValue <= 7) status = 'closing';
 
