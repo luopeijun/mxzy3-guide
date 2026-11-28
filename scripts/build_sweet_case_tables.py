@@ -43,11 +43,16 @@ CASE_FILES = (
 # 存档槽 21/24/25/26/27 与通告大类的对应在不同周次可能错位。
 OVERSEAS_SEQS = {21, 24, 25, 26, 27}
 CODE_PREFIX = {1: "CF", 2: "TV", 3: "MV", 4: "CD", 5: "SH", 6: "TH", 7: "FS"}
-# 存档 sub 编号到 Length.dat 的通告类型名；只覆盖电视剧的三种子类型。
-TV_SUBTYPES = {1: "連續劇", 2: "單元劇", 5: "短片"}
-# 主持类在 Length.dat 里按节目型细分；先统一取歌舞综艺的 10 天 / 每周 2 次，
-# 与 Auto 存档截图里的「主持」通告一致。
-HOST_KIND = "歌舞綜藝"
+# 存档通告本体紧跟作品名之后的 1 字节是剧集长度编号，真源是 Length.dat 的
+# 姊妹表 TVLength.dat（4 条：[0]無 / [1]短片 / [2]單元劇 / [3]連續劇）。
+# 只有电视剧用这一格：Auto 的「夢想」「愛上山上的楓」=1（短片 10/10/5/5）、
+# 「幸福的抉擇」=2（單元劇 20/20/12/12）、TVA1K「旋轉木馬與許願洞」=3
+# （連續劇 45/45/20/20），逐条与 Length.dat 三种子类型吻合。烘焙成
+# 「電視1/2/3|角色」供解析器按这一格查，不能再一刀切取连续剧 45 天。
+TV_SUBTYPES = {1: "短片", 2: "單元劇", 3: "連續劇"}
+# 主持类 Length.dat 按 5 种节目型细分（知性談話/運動競賽/歌舞綜藝/採訪報導/
+# 益智休閒）；存档 +18 是 SHType.dat 的节目型编号，下面烘成「主持N|角色」
+# 供解析器按这个编号查，不再统一取歌舞综艺。
 
 # 通告子类型按大类分表；界面沿用主站简体用词，烘焙时直接转好。
 TYPE_FILES = {
@@ -174,17 +179,29 @@ def load_lengths(data_dir):
         if not kind or not role or not days or not per_week:
             continue
         out[kind + "|" + role] = [days, per_week]
-    # 存档只写「電視 + sub」，sub 再映射到 Length.dat 的真实子类型。
+    # 本体名字后一格是剧集长度编号（TVLength.dat：1 短片 / 2 單元劇 / 3 連續劇），
+    # 烘成「電視N|角色」；保留「電視|角色」=连续剧作旧块 / 无该格时的兜底。
     for sub, kind in TV_SUBTYPES.items():
         for role in ("男主角", "女主角", "男配角", "女配角"):
             value = out.get(kind + "|" + role)
             if value:
                 out["電視%d|%s" % (sub, role)] = value
-                out.setdefault("電視|" + role, value)
-    for role in ("主持人", "助理主持", "外景主持"):
-        value = out.get(HOST_KIND + "|" + role)
+    for role in ("男主角", "女主角", "男配角", "女配角"):
+        value = out.get("連續劇|" + role)
         if value:
-            out["主持|" + role] = value
+            out.setdefault("電視|" + role, value)
+    # 主持本体 +18 是 SHType.dat 的节目型编号（1..5），繁体名与 Length.dat 的
+    # kind 一致。烘成「主持N|角色」：Auto 的「有氧一身輕」+18=2（運動競賽）
+    # 是 10 天，统一取歌舞综艺会把它也算成 10 天，但知性談話/外景主持是 20 天。
+    for rec in read_table(os.path.join(data_dir, "SHType.dat")):
+        ident = struct.unpack_from("<I", rec, 0)[0]
+        kind = text(rec, 4, len(rec) - 4)
+        if not ident or not kind:
+            continue
+        for role in ("主持人", "助理主持", "外景主持"):
+            value = out.get(kind + "|" + role)
+            if value:
+                out["主持%d|%s" % (ident, role)] = value
     return out
 
 

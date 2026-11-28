@@ -1499,6 +1499,35 @@ function caseRecordEnd(caseBytes: Uint8Array, view: DataView, at: number): numbe
   return Math.min(at + 1024, caseBytes.length);
 }
 
+/**
+ * 角色工作天数 / 每周上限。真源是 Length.dat，key＝「通告种类|角色」：
+ * - 电视剧：本体紧跟作品名之后的 1 字节是剧集长度编号（1 短片 / 2 單元劇 /
+ *   3 連續劇，真源 TVLength.dat），用「電視N|角色」，查不到退回「電視|角色」
+ *   （连续剧）。不能一刀切成 45 天——Auto 的夢想/愛上山上的楓是短片 10/5、
+ *   幸福的抉擇是單元劇 20/12。
+ * - 主持：+18 是 SHType.dat 节目型编号（1..5），用「主持N|角色」，每种节目型
+ *   天数不同（知性談話 20/3、運動競賽 10/2 等，外景主持 20/3）。
+ * - 其余大类：直接「大类|角色」（电影 / 广告 / 唱片 / 舞台劇 / 時裝秀）。
+ */
+function sweetLengthOf(
+  tables: SweetCaseTables, classId: number, typeId: number,
+  seriesId: number, roleName: string, rawCategory: string,
+): [number, number] {
+  const keys: string[] = [];
+  if (classId === 2) {
+    if (seriesId >= 1 && seriesId <= 3) keys.push(`電視${seriesId}|${roleName}`);
+    keys.push(`電視|${roleName}`);
+  } else if (classId === 5) {
+    if (typeId >= 1 && typeId <= 5) keys.push(`主持${typeId}|${roleName}`);
+  }
+  keys.push(`${rawCategory}|${roleName}`);
+  for (const key of keys) {
+    const hit = tables.lengths?.[key];
+    if (hit && hit[0]) return hit;
+  }
+  return [0, 0];
+}
+
 function readNoticeBody(
   rec: Uint8Array, recView: DataView, code: string,
   tables: SweetCaseTables, stars: Record<string, string>, classId: number,
@@ -1537,12 +1566,10 @@ function readNoticeBody(
     seen.add(roleCode);
     if (firstRoleAt < 0) firstRoleAt = o;
     const roleName = tables.roles?.[String(roleType)] ?? '';
-    // +14 不是 Length 表的剧集子类编号（TVA1K 的 +14=2 实际是 45 天连续剧），
-    // 电视剧统一按烘焙表里的「電視|角色」取值（连续剧 45 / 配角 20）。
-    const lengthKey = classId === 2
-      ? `電視|${roleName}` : `${rawCategory}|${roleName}`;
-    const [workDays, daysPerWeek] = tables.lengths?.[lengthKey]
-      ?? tables.lengths?.[`${rawCategory}|${roleName}`] ?? [0, 0];
+    // 剧集长度编号＝紧跟作品名之后的 1 字节（27+nameLength），只电视剧用；
+    // 主持用 +18 节目型编号。具体查表见 sweetLengthOf。
+    const seriesId = 27 + nameLength < recView.byteLength ? recView.getUint8(27 + nameLength) : 0;
+    const [workDays, daysPerWeek] = sweetLengthOf(tables, classId, typeId, seriesId, roleName, rawCategory);
     roles.push({
       code: roleCode,
       role: roleName,
@@ -1646,10 +1673,8 @@ function scanSweetNotices(
       if (!values.every((value) => value >= 0 && value <= 999)) continue;
       seen.add(roleCode);
       const roleName = tables.roles?.[String(roleType)] ?? '';
-      const lengthKey = classId === 2
-        ? `電視|${roleName}` : `${rawCategory}|${roleName}`;
-      const [workDays, daysPerWeek] = tables.lengths?.[lengthKey]
-        ?? tables.lengths?.[`${rawCategory}|${roleName}`] ?? [0, 0];
+      const seriesId = 27 + nameLength < recView.byteLength ? recView.getUint8(27 + nameLength) : 0;
+      const [workDays, daysPerWeek] = sweetLengthOf(tables, classId, typeId, seriesId, roleName, rawCategory);
       roles.push({
         code: roleCode,
         role: roleName,
