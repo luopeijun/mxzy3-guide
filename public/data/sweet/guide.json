@@ -491,6 +491,7 @@
           "children": [],
           "description": "主线任务（落日相关）",
           "profile": {
+            "name": "杜云芊",
             "rows": [
               {
                 "label": "年龄",
@@ -10219,6 +10220,7 @@
           "avatar": "images/sweet/cheng-zhongxuan-logo.png",
           "cover": "images/sweet/cheng-zhongxuan-cover.jpg",
           "profile": {
+            "name": "城仲瑄",
             "rows": [
               {
                 "label": "年龄",
@@ -11697,6 +11699,7 @@
           "avatar": "images/sweet/danisi-logo.png",
           "cover": "images/sweet/danisi-cover.jpg",
           "profile": {
+            "name": "丹尼斯",
             "rows": [
               {
                 "label": "年龄",
@@ -13002,6 +13005,7 @@
           "avatar": "images/sweet/ji-xiang-logo.png",
           "cover": "images/sweet/ji-xiang-cover.jpg",
           "profile": {
+            "name": "纪翔",
             "rows": [
               {
                 "label": "年龄",
@@ -14349,6 +14353,7 @@
           "avatar": "images/sweet/murong-hexi-logo.png",
           "cover": "images/sweet/murong-hexi-cover.jpg",
           "profile": {
+            "name": "慕容和希",
             "rows": [
               {
                 "label": "年龄",
@@ -15595,6 +15600,7 @@
           "avatar": "images/sweet/shen-weizhen-logo.png",
           "cover": "images/sweet/shen-weizhen-cover.jpg",
           "profile": {
+            "name": "沈惟真",
             "rows": [
               {
                 "label": "年龄",
@@ -16791,6 +16797,7 @@
           "avatar": "images/sweet/shi-difen-logo.png",
           "cover": "images/sweet/shi-difen-cover.jpg",
           "profile": {
+            "name": "史蒂芬",
             "rows": [
               {
                 "label": "年龄",
@@ -18127,6 +18134,7 @@
           "avatar": "images/sweet/wei-ya-logo.png",
           "cover": "images/sweet/wei-ya-cover.jpg",
           "profile": {
+            "name": "卫亚",
             "rows": [
               {
                 "label": "年龄",
@@ -19597,6 +19605,7 @@
           "avatar": "images/sweet/yao-ziqi-logo.png",
           "cover": "images/sweet/yao-ziqi-cover.jpg",
           "profile": {
+            "name": "姚子奇",
             "rows": [
               {
                 "label": "年龄",

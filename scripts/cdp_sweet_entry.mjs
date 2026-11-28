@@ -179,6 +179,10 @@ async function main() {
   check('点主线攻略写入深链', story.hash === '#/guide/sweet-guide/main-story', story.hash);
   check('正文标题是「主线攻略」', story.title === '主线攻略', story.title);
   check('副标题是「主线任务（落日相关）」', story.subtitle === '主线任务（落日相关）', story.subtitle);
+  const profileTitle = await evaluate(
+    `[...document.querySelectorAll('main h2')].find((h) => h.textContent.includes('艺人基本资料'))?.textContent.trim() ?? ''`,
+  );
+  check('主线页资料卡标出杜云芊', profileTitle === '杜云芊 · 艺人基本资料与合约条件', profileTitle);
   check('渲染 23 张事件卡', story.cards === 23, `cards=${story.cards}`);
   check('事件编号从 1-1 起', story.labels[0] === '1-1', JSON.stringify(story.labels));
   check(

@@ -1390,7 +1390,7 @@ def parse_artist_profiles() -> dict[str, dict]:
         if "：" not in text and ":" not in text:
             if text in people:
                 raise SystemExit(f"artist-profiles.txt：重复的人名 {text!r}")
-            current = {"rows": []}
+            current = {"name": text, "rows": []}
             people[text] = current
             contract = None
             continue

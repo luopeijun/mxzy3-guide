@@ -28,7 +28,9 @@ export default function ArtistProfileCard({ profile }: Props) {
   return (
     <section className="mb-6 overflow-hidden rounded-ui-md border border-line bg-surface shadow-soft">
       <div className="border-b border-line bg-brand-soft px-5 py-2.5">
-        <h2 className="text-ui-sm font-bold tracking-[0.01em] text-brand-strong">艺人基本资料与合约条件</h2>
+        <h2 className="text-ui-sm font-bold tracking-[0.01em] text-brand-strong">
+          {profile.name ? `${profile.name} · 艺人基本资料与合约条件` : '艺人基本资料与合约条件'}
+        </h2>
       </div>
 
       <div className="px-5 pt-3.5 pb-4">

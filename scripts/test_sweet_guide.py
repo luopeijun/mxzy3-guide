@@ -1590,8 +1590,8 @@ class TestSweetGuide(unittest.TestCase):
         # 艺人资料并入各艺人攻略页头部（profile 字段），不再单独成页。
         self.assertNotIn("artist-profiles", nodes)
         by_name = {
-            ("杜云芊" if slug == "main-story" else n["title"]): n["profile"]
-            for slug, n in nodes.items() if n.get("profile")
+            n["profile"]["name"]: n["profile"]
+            for n in nodes.values() if n.get("profile")
         }
         self.assertEqual(
             set(by_name),

@@ -145,6 +145,8 @@ export interface ProfileRow {
  *  `blocks` so adding or editing a field never shifts event anchors or tracker
  *  progress. */
 export interface ArtistProfile {
+  /** Name from the source file's own heading; shown in the card header. */
+  name?: string;
   rows: ProfileRow[];
   intro?: ProfileRow;
   contract?: { title: string; rows: ProfileRow[] };
