@@ -1080,6 +1080,47 @@ function buildSweetWorkDateIndex(
   return { dates, seqs };
 }
 
+/** 记事表里的发行记录是「真正完成」的权威明细：每条带游戏官方「第 N 部」序号。
+ *  参与清单只留最近若干条（早期作品会被挤掉），而预约但未拍摄的通告却会挂进去；
+ *  所以明细必须以这里的发行记录为主，参与清单只用来补没有发行记录的早期作品。 */
+function buildSweetDiaryWorks(
+  bytes: Uint8Array,
+  view: DataView,
+  table: { offset: number; count: number } | null,
+  noticeInfo: Map<string, SweetNoticeInfo>,
+  tables: SweetCaseTables,
+): SweetWorkRecord[] {
+  if (!table) return [];
+  const out: SweetWorkRecord[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < table.count; i += 1) {
+    const p = table.offset + 8 + i * SWEET_DIARY_STRIDE;
+    const workCode = readCode(bytes, p + 56);
+    if (!workCode) continue;
+    const noticeIndex = SWEET_DIARY_WORK_TYPE[readI32(view, p + 16)];
+    if (noticeIndex === undefined) continue;
+    const seq = readI32(view, p + 36);
+    if (seq < 1 || seq > 999) continue;
+    const artistId = readI32(view, p + 20);
+    if (artistId < 1 || artistId > 110) continue;
+    const key = `${artistId}|${noticeIndex}|${workCode}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const year = readI32(view, p);
+    const month = readI32(view, p + 4);
+    const day = readI32(view, p + 8);
+    const info = noticeInfo.get(workCode);
+    out.push({
+      date: `${year}/${month}/${day}`, year, month, day,
+      workCode,
+      workName: info?.name || tables.cases?.[workCode] || workCode,
+      company: info?.company || tables.companyByCode?.[workCode] || '',
+      artistId, noticeIndex, role: '', order: 0, seq,
+    });
+  }
+  return out;
+}
+
 /** 通告本体里的真实名字与制作公司槽位。游戏运行时生成的随机通告码
  *  （CFABY / TVANK 等）不会写进静态 Case dat，通告统计明细只能回查本体：
  *  `[5][5B ASCII 通告码][NUL]` 是锚点，锚点前 4 字节是 CaseFirm 的槽位 seq，
@@ -1166,7 +1207,12 @@ function parseSweetWorkHistory(
     .filter((notice) => notice.status === 'shooting')
     .map((notice) => notice.code));
   const workIndex = buildSweetWorkDateIndex(bytes, view, diaryTable);
-  const out: SweetWorkRecord[] = [];
+  // 记事表的发行记录才是「真正完成」的权威明细：带官方「第 N 部」序号，
+  // 还能补回参与清单容量不足时被挤掉的早期作品。参与清单里没有发行记录的码
+  // （预约了但没开拍／尚未发行）不算完成，不能进通告统计。
+  const diaryWorks = buildSweetDiaryWorks(bytes, view, diaryTable, noticeInfo, tables);
+  const diaryKeys = new Set(diaryWorks.map((w) => `${w.artistId}|${w.noticeIndex}|${w.workCode}`));
+  const out: SweetWorkRecord[] = [...diaryWorks];
   for (let i = 0; i < locations.length; i += 1) {
     const location = locations[i];
     // 参与清单紧跟艺人属性块，可能被下一个艺人的块头打断；不能用下一个块的 offset
@@ -1196,6 +1242,9 @@ function parseSweetWorkHistory(
       if (category < 1 || category > 31 || !SWEET_WORK_RECORD_TAILS.has(readI32(view, p + 10))) break;
       const noticeIndex = SWEET_WORK_CLASS_INDEX[category];
       if (noticeIndex === undefined || unfinished.has(workCode)) continue;
+      // 记事表已有发行记录的用那边的序号与日期，这里不重复添加；没有发行记录的
+      // 才会落到这里，作为早期作品的兜底（未开拍的会在对齐时按序号被裁掉）。
+      if (diaryKeys.has(`${location.id}|${noticeIndex}|${workCode}`)) continue;
       const key = `${noticeIndex}|${workCode}|${location.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -1244,11 +1293,13 @@ function parseSweetWorkHistory(
   return out;
 }
 
-/** 明细条数必须和游戏「通告统计」上的数字一致：多的裁掉，缺的补占位，不编作品名。 */
+/** 明细条数必须和游戏「通告统计」上的数字一致：多的裁掉，缺的补占位，不编作品名。
+ *  排序按游戏官方「第 N 部」序号——序号是游戏认账的作品顺序，日期只是展示用；
+ *  没有序号的早期作品排在后面，这样预约未拍摄的通告不会顶掉真正完成的作品。 */
 function alignSweetWorks(locations: SweetArtistLocation[], works: SweetWorkRecord[]): SweetWorkRecord[] {
   const sortKey = (work: SweetWorkRecord) => {
-    if (work.year > 0) return work.year * 10000 + work.month * 100 + work.day;
-    if (work.seq && work.seq >= 1) return -(1000000 - work.seq);
+    if (work.seq && work.seq >= 1) return work.seq;
+    if (work.year > 0) return 100000 + work.year * 10000 + work.month * 100 + work.day;
     return 900000 + work.order;
   };
   const sorted = [...works].sort(
@@ -1261,7 +1312,7 @@ function alignSweetWorks(locations: SweetArtistLocation[], works: SweetWorkRecor
         (work) => work.artistId === location.id && work.noticeIndex === noticeIndex,
       );
       const official = location.noticeCounts[noticeIndex] ?? list.length;
-      const kept = list.slice(Math.max(0, list.length - official));
+      const kept = list.slice(0, official);
       aligned.push(...kept);
       const usedSeqs = new Set(kept.map((work) => work.seq).filter((seq): seq is number => !!seq && seq >= 1));
       let missing = 1;
