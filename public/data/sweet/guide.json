@@ -7518,7 +7518,22 @@
               "text": "你太轻忽事业了…",
               "group": 18,
               "label": "4-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "约会开启条件：",
+                      "text": "和城仲瑄约会>10"
+                    },
+                    {
+                      "label": "后续影响：",
+                      "text": "此事件触发后，接下来1-2月对城仲瑄邀约皆会失败"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "paragraph",
@@ -7749,6 +7764,17 @@
               "label": "6-2",
               "cg": true,
               "tag": "友好度上升",
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "城仲瑄02"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "cheng-zhongxuan-5"
               ],
@@ -7919,6 +7945,17 @@
               "group": 42,
               "label": "8-2",
               "cg": true,
+              "eventNotes": [
+                {
+                  "title": "艺人攻略补充",
+                  "items": [
+                    {
+                      "label": "事件图：",
+                      "text": "城仲瑄05"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "cheng-zhongxuan-3"
               ],
