@@ -892,6 +892,42 @@ class TestSweetGuide(unittest.TestCase):
         # ※ 行是便签，挂在上面那一步里。
         self.assertEqual(len(kinds(nodes["tian-qing"], "note")), 2)
 
+        # 天晴 32 条流程提示挂到 30 个事件块上（前 7 条是舞台秘影共用前置），不插块。
+        tian_notes = {b["label"]: b.get("eventNotes", []) for b in tian if b.get("eventNotes")}
+        self.assertEqual(
+            list(tian_notes),
+            [str(n) for n in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 14, 16, 17, 18, 19,
+                              20, 21, 22, 23, 24, 27, 28, 29, 31, 32, 33, 34, 35, 36)],
+        )
+
+        def tian_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"] for group in tian_notes[label] for item in group["items"]
+            )
+
+        self.assertIn("需先解过舞台秘影支线并存档", tian_text("1"))
+        for label, token in (
+            ("1", "2008/1"), ("2", "2发生当周日"), ("3", "育幼院志工>3"),
+            ("4", "每周六可到医院探访老人"), ("5", "则新闻主角为云芊"),
+            ("6", "云芊EAMI唱片录制>1"), ("7", "天晴捉老鼠"),
+            ("8", "映彤姊约云芊去酒吧庆功"), ("10", "不能飞翔的天使是天晴的创作"),
+            ("11", "11发生后2个月内"), ("12", "歌艺会增加"), ("14", "公园练功>3次"),
+            ("16", "凌玮翎吵架"), ("17", "2008/12"), ("18", "无法专心工作"),
+            ("19", "云芊自言自语凌玮翎的事"), ("20", "路敏向云芊询问天晴的事"),
+            ("21", "2009/1-2010/4"), ("22", "对天晴的感觉"), ("23", "穿着春夏洋装"),
+            ("24", "天晴主动跟云芊说已开始认真工作"), ("27", "世界环保组织3个月"),
+            ("28", "天晴参加世界环保组织的新闻"), ("29", "2010/6"),
+            ("31", "路风跟路敏在看天晴寄的信"), ("32", "下定决心自己要坚强"),
+            ("33", "治愈系单曲"), ("34", "映彤姊给云芊1个大红包"),
+            ("35", "寄错地址的信"), ("36", "天晴出现，并告白了"),
+        ):
+            self.assertIn(token, tian_text(label), label)
+        # 酒吧聊心事按次数拆开，每一条选项各有唯一标签。
+        self.assertEqual(
+            [item["label"] for group in tian_notes["12"] for item in group["items"]],
+            ["时间：", "概要：", "提示：", "第一次：", "第二次：", "第三次：", "之后每次：", "好感后："],
+        )
+
         # 徐世杰有两步漏了点号（`1-11与…` / `1-12十一月…`），照样是步骤而不是正文。
         shijie = kinds(nodes["xu-shijie"], "event")
         self.assertIn("1-11", [b["label"] for b in shijie])
