@@ -12,8 +12,10 @@
     "desktop:dev": "electron .",
     "package:desktop": "npm run build && electron-builder --win && node scripts/inject_desktop_icon.mjs",
     "typecheck": "tsc -b --noEmit",
+    "test": "npm run test:guide && npm run test:parser",
     "test:guide": "python -m unittest discover -s scripts -p \"test_*.py\" -v",
-    "test:sweet": "python -m unittest scripts.test_sweet_guide scripts.test_sweet_cg -v"
+    "test:sweet": "python -m unittest scripts.test_sweet_guide scripts.test_sweet_cg -v",
+    "test:parser": "node scripts/test_case_parser.mjs && node scripts/test_sweet_case_parser.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",
