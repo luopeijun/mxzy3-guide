@@ -1398,6 +1398,60 @@ def parse_artist_profiles() -> dict[str, dict]:
     return people
 
 
+# 特殊创作取得攻略已并入艺人攻略页：78 条事件在艺人页都有对应事件，只是标题
+# 有简繁 / 语气词差异（惨澹→惨淡、1次→一次、做我的→做我）。归一后建立索引，
+# 给艺人页命中的事件块加 `creation` 字段做高亮，不插块、不改事件下标。
+CREATION_TITLE_ALIASES = {
+    "专心在工作上吧": "专心在工作吧",
+    "史蒂芬跟克烈斯的关系": "史蒂芬跟克烈斯的关系是",
+    "唱片销售惨澹": "唱片销售惨淡",
+    "仅此1次，下不为例": "仅此一次，下不为例",
+    "引导他说出内心话吧": "引导他说出真心话吧",
+    "不要让纪翔失望": "不要让纪翔失望喔",
+    "不然你做我的男朋友": "不然你做我男朋友",
+    "你这个无可救药的滥好人": "你这无可救药的滥好人",
+    "你是不是喜欢他": "你不是喜欢他",
+}
+
+
+def _norm_event_title(text: str) -> str:
+    text = re.sub(r"[（(].*?[）)]", "", text.strip())
+    return re.sub(r"[\s　…．。.！!？?，,、：:；;]", "", text)
+
+
+def _creation_index() -> dict[str, str]:
+    """特殊创作攻略的事件标题 → 作品名（章节名去掉括号内艺人名）。"""
+    index: dict[str, str] = {}
+    work = ""
+    for line in _read_lines(SOURCES / "special-creations.txt"):
+        text = line.strip()
+        group = re.match(r"^\d+[.．](?!\d)(.+)$", text)
+        if group:
+            works = [
+                re.sub(r"[（(].*?[）)]", "", part).strip()
+                for part in group.group(1).split("／")
+            ]
+            work = "／".join(part for part in works if part)
+            continue
+        event = re.match(r"^\d+-\d+[.．](.+)$", text)
+        if event and work:
+            key = _norm_event_title(event.group(1))
+            index[key] = work
+            for alias, target in CREATION_TITLE_ALIASES.items():
+                if key == _norm_event_title(alias):
+                    index[_norm_event_title(target)] = work
+    return index
+
+
+def _apply_creation_marks(node: dict, index: dict[str, str]) -> None:
+    for block in node["blocks"]:
+        if block["kind"] != "event":
+            continue
+        work = index.get(_norm_event_title(block["text"]))
+        if work:
+            block["creation"] = work
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
@@ -1411,8 +1465,7 @@ PARSERS = {
     # 感情结局已并入 dating-guide，由 parse_dating_guide 直接调用解析器。
     "endings": parse_endings,
     "award-dates": parse_award_dates,
-    # 艺人创作取得已并入 self-notices（同一批作品的两种视角），不再单独成页。
-    "special-creations": parse_event_page,
+    # 特殊创作取得已并入艺人攻略页，事件上标 creation；不再单独成页。
     "monopoly": parse_monopoly,
     # 初期攻略已并入 main-story，由 parse_main_story 直接读取。
     # 台版手册补进来的附录页：平铺清单，无事件卡，不影响追踪器下标。
@@ -1449,7 +1502,6 @@ CATEGORIES: list[dict] = [
             ("company", "公司改建攻略"),
             ("abroad-notices", "国外通告接拍条件"),
             ("self-notices", "自制通告一览"),
-            ("special-creations", "特殊创作取得攻略"),
             ("outfits", "服装获得方法和剧情"),
             ("festivals", "三大节日相关"),
             ("sweet-mode", "甜蜜模式的影响"),
@@ -1548,6 +1600,7 @@ def _apply_cg_links(node: dict, links: dict[str, list[tuple[str, str, str]]]) ->
 def build() -> dict:
     links = _read_cg_links()
     profiles = parse_artist_profiles()
+    creation_index = _creation_index()
     categories: list[dict] = []
     for category in CATEGORIES:
         children: list[dict] = []
@@ -1575,6 +1628,8 @@ def build() -> dict:
                 node["blocks"] = _merge_date(slug, blocks)
                 # 合并完再做映射：anchor 用的是最终块下标。
                 _apply_cg_links(node, links)
+                # 创作取得只是给已有事件加高亮字段，不插块、不动 anchor。
+                _apply_creation_marks(node, creation_index)
                 node["status"] = "ready"
                 # 副标题只取原文首行；与页面标题重复（或原文没写）就不写，绝不自己编一句概述。
                 if subtitle and subtitle != title:

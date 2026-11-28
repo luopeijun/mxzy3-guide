@@ -5,11 +5,11 @@
     "generatedBy": "scripts/extract_sweet_guide.py",
     "stats": {
       "categories": 3,
-      "items": 32,
-      "blocks": 3528,
-      "readyItems": 32,
+      "items": 31,
+      "blocks": 3256,
+      "readyItems": 31,
       "missingItems": 0,
-      "sourceParagraphs": 3528
+      "sourceParagraphs": 3256
     }
   },
   "categories": [
@@ -2826,1462 +2826,6 @@
                   }
                 ]
               }
-            }
-          ],
-          "children": []
-        },
-        {
-          "id": "sweet-guide/special-creations",
-          "title": "特殊创作取得攻略",
-          "status": "ready",
-          "blocks": [
-            {
-              "kind": "section",
-              "text": "温柔时刻（丹尼斯·林芬芬）",
-              "group": 1,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "这样忍耐值得吗",
-              "group": 2,
-              "label": "1-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2008/6-10",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随丹尼斯，有可能遇到林芬芬向云芊诉苦",
-              "group": 2
-            },
-            {
-              "kind": "event",
-              "text": "谢谢你听我诉苦",
-              "group": 3,
-              "label": "1-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：1-1发生1个月内",
-              "group": 3
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随丹尼斯，林芬芬会送上创作「温柔时刻」",
-              "group": 3
-            },
-            {
-              "kind": "section",
-              "text": "从接吻开始（丹尼斯）",
-              "group": 4,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "一辈子都别想",
-              "group": 5,
-              "label": "2-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：SD加入后",
-              "group": 5
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：云芊和丹尼斯约会10次以上，就会收到影迷呛声的信",
-              "group": 5
-            },
-            {
-              "kind": "event",
-              "text": "我来接你回家",
-              "group": 6,
-              "label": "2-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2-1发生1周内",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：突然出现要接云芊回家的丹尼斯，展现意外的温柔",
-              "group": 6
-            },
-            {
-              "kind": "event",
-              "text": "别以为你有机会",
-              "group": 7,
-              "label": "2-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2-2发生后",
-              "group": 7
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：2-2后又跟丹尼斯约会8次以上，影迷会再一次来信恐吓",
-              "group": 7
-            },
-            {
-              "kind": "event",
-              "text": "我是为了你的安全",
-              "group": 8,
-              "label": "2-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2-3发生1周内",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：丹尼斯送云芊回家途中，提出两人保持距离的想法",
-              "group": 8
-            },
-            {
-              "kind": "event",
-              "text": "人要有自知之明",
-              "group": 9,
-              "label": "2-5"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2-4发生1周内",
-              "group": 9
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：丹尼斯出面澄清两人只是朋友，影迷照旧寄信示威",
-              "group": 9
-            },
-            {
-              "kind": "event",
-              "text": "因为我不喜欢说谎",
-              "group": 10,
-              "label": "2-6"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2-4发生1周内",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：丹尼斯告诉云芊已经澄清两人只是好友，并希望从此保持距离",
-              "group": 10
-            },
-            {
-              "kind": "event",
-              "text": "很高兴跟你合作",
-              "group": 11,
-              "label": "2-7"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2008/6-2009/12",
-              "group": 11
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：云芊和丹尼斯一起合作舞台剧，看到丹尼斯的专注，心思放在工作进度上就能留下好印象",
-              "group": 11
-            },
-            {
-              "kind": "event",
-              "text": "专心在工作上吧",
-              "group": 12,
-              "label": "2-8"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2-1发生后～通告结束",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：丹尼斯想起林芬芬，只有工作才能让他抛开烦恼",
-              "group": 12
-            },
-            {
-              "kind": "note",
-              "text": "提示：丹尼斯和林芬芬分手后，要约会5次以上且很有好感",
-              "group": 12
-            },
-            {
-              "kind": "event",
-              "text": "那只是演技",
-              "group": 13,
-              "label": "2-9"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2010/2-12",
-              "group": 13
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：两人合作舞台剧时，决定留下来排练且酝酿情绪，两人关系会有重大突破。给予回应之后，丹尼斯却说一切都是演技",
-              "group": 13
-            },
-            {
-              "kind": "note",
-              "text": "提示：2-6发生且取得丹尼斯情人节CG，详情见三大节日相关",
-              "group": 13
-            },
-            {
-              "kind": "event",
-              "text": "我有一些灵感",
-              "group": 14,
-              "label": "2-10"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2-3发生后",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：2-3有CG，丹尼斯就会创作剧本「从接吻开始」送给云芊",
-              "group": 14
-            },
-            {
-              "kind": "section",
-              "text": "没有雪的耶诞节（史蒂芬）",
-              "group": 15,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "克烈斯退出演艺圈",
-              "group": 16,
-              "label": "3-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2009/5",
-              "group": 16
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：新闻自动发生，克烈斯即将回国继承家业",
-              "group": 16
-            },
-            {
-              "kind": "event",
-              "text": "好不容易交到一位好朋友",
-              "group": 17,
-              "label": "3-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3-1发生1个月内",
-              "group": 17
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随史蒂芬可看到他为离别而感伤",
-              "group": 17
-            },
-            {
-              "kind": "event",
-              "text": "史蒂芬跟克烈斯的关系",
-              "group": 18,
-              "label": "3-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3-2发生1周内",
-              "group": 18
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：八卦记者前来探消息，史蒂芬虽然感伤，仍会祝福克烈斯",
-              "group": 18
-            },
-            {
-              "kind": "event",
-              "text": "谢谢你帮我解释",
-              "group": 19,
-              "label": "3-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3-3发生后",
-              "group": 19
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：3-3中帮史蒂芬说了祝福的话，跟随史蒂芬，他会前来道谢",
-              "group": 19
-            },
-            {
-              "kind": "event",
-              "text": "他总是一个人独处",
-              "group": 20,
-              "label": "3-5"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3-4发生后",
-              "group": 20
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随史蒂芬，他会提到和克烈斯的相遇",
-              "group": 20
-            },
-            {
-              "kind": "event",
-              "text": "祈求下次的相聚",
-              "group": 21,
-              "label": "3-6"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3-5发生后",
-              "group": 21
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随史蒂芬，杨安妤会和史蒂芬讨论克烈斯",
-              "group": 21
-            },
-            {
-              "kind": "event",
-              "text": "我陪你散散步",
-              "group": 22,
-              "label": "3-7"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3-6发生1周内",
-              "group": 22
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随史蒂芬，会看到和克烈斯饯行，多陪陪他吧",
-              "group": 22
-            },
-            {
-              "kind": "event",
-              "text": "原来你比我惨",
-              "group": 23,
-              "label": "3-8"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3-7发生1个月内",
-              "group": 23
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：史蒂芬听了云芊悲惨的经历，重新振作并写歌赠送",
-              "group": 23
-            },
-            {
-              "kind": "section",
-              "text": "寂寞国度（姚子奇）",
-              "group": 24,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "唱片销售惨澹",
-              "group": 25,
-              "label": "4-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：子奇加入后",
-              "group": 25
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：云芊唱子奇的创作，结算卖不到9万就会发生此新闻",
-              "group": 25
-            },
-            {
-              "kind": "event",
-              "text": "你怎么解释",
-              "group": 26,
-              "label": "4-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：4-1发生1周内",
-              "group": 26
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：子奇来问销售结果，道歉只会让他更生气",
-              "group": 26
-            },
-            {
-              "kind": "event",
-              "text": "不要停止前进的脚步",
-              "group": 27,
-              "label": "4-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：4-2发生1个月后",
-              "group": 27
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：4-2表示是歌迷不懂欣赏，子奇就会再给云芊一次机会，赠送创作「寂寞国度」",
-              "group": 27
-            },
-            {
-              "kind": "section",
-              "text": "浪漫赌注（姚子奇）／秋草旧长营（慕容和希）",
-              "group": 28,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "担心你自己吧",
-              "group": 29,
-              "label": "5-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：子奇加入后",
-              "group": 29
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：云芊得过音乐奖项后，子奇前来关心，他似乎喜欢女孩子强势一点",
-              "group": 29
-            },
-            {
-              "kind": "note",
-              "text": "提示：和子奇约会5次以上且颇有好感才会触发",
-              "group": 29
-            },
-            {
-              "kind": "event",
-              "text": "仅此1次，下不为例",
-              "group": 30,
-              "label": "5-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2009/8或2010/8",
-              "group": 30
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：云芊得到音乐奖项后，姚子奇会破例赠送个人创作「浪漫赌注」",
-              "group": 30
-            },
-            {
-              "kind": "event",
-              "text": "姚子奇送歌表情意",
-              "group": 31,
-              "label": "5-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：5-2发生1周内",
-              "group": 31
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：捕风捉影的新闻报导",
-              "group": 31
-            },
-            {
-              "kind": "note",
-              "text": "提示：要跟姚子奇很有好感才会触发",
-              "group": 31
-            },
-            {
-              "kind": "event",
-              "text": "请比较看看",
-              "group": 32,
-              "label": "5-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：5-3发生1周内",
-              "group": 32
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：因为某种偏执，慕容和希硬是要送云芊一首创作「秋草旧长营」",
-              "group": 32
-            },
-            {
-              "kind": "section",
-              "text": "恋爱最终章续篇（姚子奇）／因风飞过蔷薇（慕容和希）",
-              "group": 33,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "爱心不落人后",
-              "group": 34,
-              "label": "6-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2009/6-12",
-              "group": 34
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：公司金钱>300万，苏嫚君主动来募款，并得到创作「从来不曾爱过」",
-              "group": 34
-            },
-            {
-              "kind": "note",
-              "text": "提示：公司金钱>300万",
-              "group": 34
-            },
-            {
-              "kind": "event",
-              "text": "疑似假戏真作",
-              "group": 35,
-              "label": "6-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：「从来不曾爱过」杀青后",
-              "group": 35
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：由姚子奇与慕容和希合演，上市三个月后发生此新闻",
-              "group": 35
-            },
-            {
-              "kind": "note",
-              "text": "提示：票房>30万才会触发",
-              "group": 35
-            },
-            {
-              "kind": "event",
-              "text": "我只想告诉你一个人",
-              "group": 36,
-              "label": "6-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：6-2发生后",
-              "group": 36
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：慕容和希特地来澄清和姚子奇的关系，要云芊别误会",
-              "group": 36
-            },
-            {
-              "kind": "note",
-              "text": "提示：和慕容和希约会>20且颇有好感才会触发",
-              "group": 36
-            },
-            {
-              "kind": "event",
-              "text": "记得去帮我澄清",
-              "group": 37,
-              "label": "6-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：6-2发生2个月后",
-              "group": 37
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：姚子奇主动沟通，表示新闻只是造谣，别相信八卦",
-              "group": 37
-            },
-            {
-              "kind": "event",
-              "text": "两人的关系是",
-              "group": 38,
-              "label": "6-5"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：6-3发生后",
-              "group": 38
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：两人都要求澄清绯闻；每周二、四、六去PUB或公园都可遇到八卦记者，想加油添醋得花大钱",
-              "group": 38
-            },
-            {
-              "kind": "event",
-              "text": "交往看看也没关系",
-              "group": 39,
-              "label": "6-6"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：6-4发生后～2010/9",
-              "group": 39
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：颁奖典礼后，子奇或慕容和希有得奖，跟随其中一人可看到两人亲密对话",
-              "group": 39
-            },
-            {
-              "kind": "note",
-              "text": "提示：撮合希奇，有CG",
-              "group": 39
-            },
-            {
-              "kind": "event",
-              "text": "我做了一首歌给慕容",
-              "group": 40,
-              "label": "6-7"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：6-5发生2周内",
-              "group": 40
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：慕容和希得奖后，姚子奇表示要送自己的创作「恋爱最终章续篇」来恭喜慕容和希",
-              "group": 40
-            },
-            {
-              "kind": "event",
-              "text": "我做了一首歌给子奇",
-              "group": 41,
-              "label": "6-8"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：6-5发生2周内",
-              "group": 41
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：姚子奇得奖后，慕容和希表示要送自己的创作「因风飞过蔷薇」来恭喜姚子奇",
-              "group": 41
-            },
-            {
-              "kind": "section",
-              "text": "异世界神话（卫亚）",
-              "group": 42,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "可以多给我一点时间吗",
-              "group": 43,
-              "label": "7-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2010/5",
-              "group": 43
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：卫亚主动沟通要求多一点时间念书，选择「以工作为主」",
-              "group": 43
-            },
-            {
-              "kind": "note",
-              "text": "提示：选择「给卫亚时间」则不会触发后续",
-              "group": 43
-            },
-            {
-              "kind": "event",
-              "text": "卫亚低分通过期末考",
-              "group": 44,
-              "label": "7-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-1发生1周后",
-              "group": 44
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：要求卫亚以工作为主，就会出现此新闻",
-              "group": 44
-            },
-            {
-              "kind": "event",
-              "text": "考试没有考好",
-              "group": 45,
-              "label": "7-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-2发生2周内",
-              "group": 45
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟卫亚沟通考试的事，发现他很沮丧",
-              "group": 45
-            },
-            {
-              "kind": "event",
-              "text": "卫亚萌生退意",
-              "group": 46,
-              "label": "7-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-3发生2周内",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：卫亚想退出演艺圈的新闻",
-              "group": 46
-            },
-            {
-              "kind": "event",
-              "text": "想要退出演艺圈",
-              "group": 47,
-              "label": "7-5"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-4发生2周内",
-              "group": 47
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟卫亚沟通退出的事，他表示如果无法兼顾事业与学业，将以学业为主",
-              "group": 47
-            },
-            {
-              "kind": "event",
-              "text": "引导他说出内心话吧",
-              "group": 48,
-              "label": "7-6"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-5发生后",
-              "group": 48
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：学长来找云芊讨论卫亚的事，透露卫亚同时承受来自家里的压力",
-              "group": 48
-            },
-            {
-              "kind": "event",
-              "text": "我相信你的能力",
-              "group": 49,
-              "label": "7-7"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-6发生1个月内",
-              "group": 49
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟卫亚沟通学业的事，只要给他信心就还有希望",
-              "group": 49
-            },
-            {
-              "kind": "note",
-              "text": "提示：选择「相信他的能力」则后续不会触发",
-              "group": 49
-            },
-            {
-              "kind": "event",
-              "text": "可以让我离开公司吗",
-              "group": 50,
-              "label": "7-8"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-6发生1个月内",
-              "group": 50
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：卫亚主动表示要离开公司，如果承诺多给他一点时间或许还有机会",
-              "group": 50
-            },
-            {
-              "kind": "note",
-              "text": "提示：跟卫亚超有好感才能留住他",
-              "group": 50
-            },
-            {
-              "kind": "event",
-              "text": "请收下我的创作",
-              "group": 51,
-              "label": "7-9"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：7-8发生半年后",
-              "group": 51
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：卫亚离开公司后，云芊主演的电影卖座，卫亚深受感动，于是创作「异世界神话」送给云芊",
-              "group": 51
-            },
-            {
-              "kind": "section",
-              "text": "寂寞微光（卫亚·新名纱雪）",
-              "group": 52,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "可以多给我一点时间吗",
-              "group": 53,
-              "label": "8-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2009/5",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：卫亚主动沟通要求多一点时间念书，选择「给卫亚时间」",
-              "group": 53
-            },
-            {
-              "kind": "event",
-              "text": "卫亚获取书卷奖",
-              "group": 54,
-              "label": "8-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-1发生后～2009/12",
-              "group": 54
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：称赞卫亚的新闻",
-              "group": 54
-            },
-            {
-              "kind": "note",
-              "text": "提示：才智>500",
-              "group": 54
-            },
-            {
-              "kind": "event",
-              "text": "一切都拜托你了",
-              "group": 55,
-              "label": "8-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-2发生2个月内",
-              "group": 55
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随卫亚，会看到他和新名纱雪窃窃私语，似乎有什么神秘计划",
-              "group": 55
-            },
-            {
-              "kind": "note",
-              "text": "提示：跟卫亚约会>12次且很有好感",
-              "group": 55
-            },
-            {
-              "kind": "event",
-              "text": "可以跟我去植物园吗",
-              "group": 56,
-              "label": "8-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-3发生2周内",
-              "group": 56
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：卫亚主动沟通，想邀请云芊去植物园走走",
-              "group": 56
-            },
-            {
-              "kind": "note",
-              "text": "提示：跟卫亚超有好感才会触发",
-              "group": 56
-            },
-            {
-              "kind": "event",
-              "text": "大家一起野餐吧",
-              "group": 57,
-              "label": "8-5"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-4中约定的日期",
-              "group": 57
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：和卫亚在植物园巧遇新名纱雪，大方承认正在约会并邀请她加入，三人度过愉快的时光",
-              "group": 57
-            },
-            {
-              "kind": "note",
-              "text": "提示：穿着春夏洋装才有CG",
-              "group": 57
-            },
-            {
-              "kind": "event",
-              "text": "跟新名纱雪的关系",
-              "group": 58,
-              "label": "8-6"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-5发生2周内",
-              "group": 58
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟卫亚沟通新名纱雪的事，话才讲一半，卫亚就默默离开",
-              "group": 58
-            },
-            {
-              "kind": "event",
-              "text": "请你多多照顾他",
-              "group": 59,
-              "label": "8-7"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-5发生后",
-              "group": 59
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：新名纱雪主动找云芊说卫亚的好话，并邀请下次一起野餐，身为经纪人要表现大方",
-              "group": 59
-            },
-            {
-              "kind": "note",
-              "text": "提示：务必表示很欢迎才能拿到创作",
-              "group": 59
-            },
-            {
-              "kind": "event",
-              "text": "跟新名纱雪在交往",
-              "group": 60,
-              "label": "8-8"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-5发生1周内",
-              "group": 60
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：卫亚和新名纱雪的关系被记者拿来炒作，跟卫亚沟通此事，他只担心纱雪受到伤害",
-              "group": 60
-            },
-            {
-              "kind": "event",
-              "text": "请你务必要相信我",
-              "group": 61,
-              "label": "8-9"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-5发生1周内",
-              "group": 61
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：新名纱雪主动找云芊澄清，希望能平息风波",
-              "group": 61
-            },
-            {
-              "kind": "event",
-              "text": "我帮你陷害新名纱雪",
-              "group": 62,
-              "label": "8-10"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-5发生后",
-              "group": 62
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：到电视或电影公司找八卦记者，他提出了邪恶的交易，当然不能被蛊惑",
-              "group": 62
-            },
-            {
-              "kind": "note",
-              "text": "提示：金钱>500万才会触发",
-              "group": 62
-            },
-            {
-              "kind": "event",
-              "text": "我非常感谢你",
-              "group": 63,
-              "label": "8-11"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：8-10发生后",
-              "group": 63
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：风波平息，新名纱雪为了表示谢意，赠送创作「寂寞微光」",
-              "group": 63
-            },
-            {
-              "kind": "section",
-              "text": "昨日约定（纪翔）",
-              "group": 64,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "纪翔传出同志疑云",
-              "group": 65,
-              "label": "9-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：纪翔加入后",
-              "group": 65
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：中伤纪翔的报导",
-              "group": 65
-            },
-            {
-              "kind": "note",
-              "text": "提示：跟纪翔约会>6次且很有好感才会触发",
-              "group": 65
-            },
-            {
-              "kind": "event",
-              "text": "谁都不能欺负纪翔",
-              "group": 66,
-              "label": "9-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：9-1发生后～2009/6",
-              "group": 66
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：一直不去处理纪翔的丑闻，杨安妤会主动前来，代替克烈斯表达能够处理这件事",
-              "group": 66
-            },
-            {
-              "kind": "event",
-              "text": "不能为我留下吗",
-              "group": 67,
-              "label": "9-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：9-1发生3个月后",
-              "group": 67
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：9-2中拒绝克烈斯的帮忙，纪翔会表示想回欧洲过自在的生活。如果是为了云芊，或许有机会留下他",
-              "group": 67
-            },
-            {
-              "kind": "event",
-              "text": "不要让纪翔失望",
-              "group": 68,
-              "label": "9-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：9-3发生1个月后",
-              "group": 68
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔离开后，为了感谢云芊，请欧怡青代他送来创作「昨日约定」",
-              "group": 68
-            },
-            {
-              "kind": "section",
-              "text": "烟花下的你（纪翔）",
-              "group": 69,
-              "depth": 0
-            },
-            {
-              "kind": "event",
-              "text": "愿意陪我去散步吗",
-              "group": 70,
-              "label": "10-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2009/2-7",
-              "group": 70
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔主动沟通，邀请云芊去公园走走",
-              "group": 70
-            },
-            {
-              "kind": "note",
-              "text": "提示：和纪翔约会>5次且颇有好感才会触发",
-              "group": 70
-            },
-            {
-              "kind": "event",
-              "text": "下次再一起出来吧",
-              "group": 71,
-              "label": "10-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-1中约定的日子",
-              "group": 71
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：到了公园，发现纪翔原来是探望已经过世的母亲，请给他正面的想法",
-              "group": 71
-            },
-            {
-              "kind": "note",
-              "text": "提示：穿春夏洋装有CG图",
-              "group": 71
-            },
-            {
-              "kind": "event",
-              "text": "你怎么一直傻笑",
-              "group": 72,
-              "label": "10-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-2发生1个月内",
-              "group": 72
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔主动沟通，感谢云芊帮他打开心结，并表示会试着更坦率一些",
-              "group": 72
-            },
-            {
-              "kind": "event",
-              "text": "我只是在发呆",
-              "group": 73,
-              "label": "10-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-3发生1周内",
-              "group": 73
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：云芊因为与纪翔拉近距离而自言自语，两人的关系接下来会怎么发展呢",
-              "group": 73
-            },
-            {
-              "kind": "event",
-              "text": "我想邀请你吃一顿饭",
-              "group": 74,
-              "label": "10-5"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-4发生后",
-              "group": 74
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔主动沟通，邀请云芊去餐厅用餐",
-              "group": 74
-            },
-            {
-              "kind": "note",
-              "text": "提示：与纪翔在餐厅约会>5次才会触发",
-              "group": 74
-            },
-            {
-              "kind": "event",
-              "text": "你是鼓励我还是试探我",
-              "group": 75,
-              "label": "10-6"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-5中约定的日子",
-              "group": 75
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：到了餐厅，碰巧遇到金皓薰和萧依莉，纪翔有些不大方地祝福对方",
-              "group": 75
-            },
-            {
-              "kind": "event",
-              "text": "我想去海边走走",
-              "group": 76,
-              "label": "10-7"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-6发生后",
-              "group": 76
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔主动沟通，邀请云芊到海边走走",
-              "group": 76
-            },
-            {
-              "kind": "note",
-              "text": "提示：与纪翔约会>15次且云芊人气>400才会触发",
-              "group": 76
-            },
-            {
-              "kind": "event",
-              "text": "不然你做我的男朋友",
-              "group": 77,
-              "label": "10-8"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-7中约定的日子",
-              "group": 77
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：在海边，纪翔终于说出对「那个人」的思念",
-              "group": 77
-            },
-            {
-              "kind": "event",
-              "text": "找一段新的恋情吧",
-              "group": 78,
-              "label": "10-9"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-8发生后",
-              "group": 78
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔突然出现，邀请云芊共进晚餐，仍难掩沮丧，云芊的回应将决定纪翔未来的归属",
-              "group": 78
-            },
-            {
-              "kind": "note",
-              "text": "提示：云芊连续7天工作完美才会触发，第二轮的选项内容有所不同",
-              "group": 78
-            },
-            {
-              "kind": "event",
-              "text": "我想邀请你吃一顿饭",
-              "group": 79,
-              "label": "10-10"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-9发生1个月内",
-              "group": 79
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔主动沟通，邀请云芊到餐厅一同用餐",
-              "group": 79
-            },
-            {
-              "kind": "note",
-              "text": "提示：10-9中第二轮跟纪翔说还有机会，才会触发",
-              "group": 79
-            },
-            {
-              "kind": "event",
-              "text": "你这个无可救药的滥好人",
-              "group": 80,
-              "label": "10-11"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-10中约定的日期",
-              "group": 80
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：在餐厅再次巧遇金皓薰和萧依莉，纪翔发挥毒舌功力",
-              "group": 80
-            },
-            {
-              "kind": "note",
-              "text": "提示：穿古典晚礼服有CG图",
-              "group": 80
-            },
-            {
-              "kind": "event",
-              "text": "你为什么在这里",
-              "group": 81,
-              "label": "10-12"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：第三年的情人节",
-              "group": 81
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随纪翔，看到金皓薰跟纪翔共度情人节",
-              "group": 81
-            },
-            {
-              "kind": "note",
-              "text": "提示：10-9中第二轮跟纪翔说还有机会，才会触发",
-              "group": 81
-            },
-            {
-              "kind": "event",
-              "text": "你有喜欢的人吗",
-              "group": 82,
-              "label": "10-13"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-12发生1个月内",
-              "group": 82
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟随纪翔，有机会聊感情方面的事，如果说自己，纪翔会笑得很开心",
-              "group": 82
-            },
-            {
-              "kind": "event",
-              "text": "我会选择我爱的人",
-              "group": 83,
-              "label": "10-14"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-13发生1个月内",
-              "group": 83
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：在电视或电影公司遇到金皓薰，在感情方面似乎有点问题，提供他一点意见吧",
-              "group": 83
-            },
-            {
-              "kind": "event",
-              "text": "你是不是喜欢他",
-              "group": 84,
-              "label": "10-15"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-14发生1个月内",
-              "group": 84
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：跟纪翔沟通，请面对金皓薰",
-              "group": 84
-            },
-            {
-              "kind": "note",
-              "text": "提示：跟纪翔极有好感才会触发",
-              "group": 84
-            },
-            {
-              "kind": "event",
-              "text": "我一直都喜欢着你",
-              "group": 85,
-              "label": "10-16"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-15发生1个月内～2010/9",
-              "group": 85
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔自由活动时，在公园可以看到他跟金皓薰表明自己的感情",
-              "group": 85
-            },
-            {
-              "kind": "note",
-              "text": "提示：纪翔称号是天王巨星才会告白成功",
-              "group": 85
-            },
-            {
-              "kind": "event",
-              "text": "你不会跳回翱翔天际吧",
-              "group": 86,
-              "label": "10-17"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-16发生1周内",
-              "group": 86
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔主动跟云芊通知好消息",
-              "group": 86
-            },
-            {
-              "kind": "event",
-              "text": "我们比以前更好了",
-              "group": 87,
-              "label": "10-18"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-16发生2周后",
-              "group": 87
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：金皓薰前来拜访，感谢云芊一直以来的协助",
-              "group": 87
-            },
-            {
-              "kind": "event",
-              "text": "一切都是你的功劳",
-              "group": 88,
-              "label": "10-19"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：10-18发生1个月内",
-              "group": 88
-            },
-            {
-              "kind": "paragraph",
-              "text": "概要：纪翔主动沟通，为了感谢云芊，特地送上创作「烟花下的你」",
-              "group": 88
             }
           ],
           "children": []
@@ -11968,7 +10512,8 @@
               "kind": "event",
               "text": "这样忍耐值得吗？",
               "group": 11,
-              "label": "2-1"
+              "label": "2-1",
+              "creation": "温柔时刻"
             },
             {
               "kind": "paragraph",
@@ -11984,7 +10529,8 @@
               "kind": "event",
               "text": "谢谢你听我诉苦",
               "group": 12,
-              "label": "2-2"
+              "label": "2-2",
+              "creation": "温柔时刻"
             },
             {
               "kind": "paragraph",
@@ -12306,7 +10852,8 @@
               "kind": "event",
               "text": "一辈子都别想！",
               "group": 31,
-              "label": "5-1"
+              "label": "5-1",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12322,7 +10869,8 @@
               "kind": "event",
               "text": "我来接你回家",
               "group": 32,
-              "label": "5-2"
+              "label": "5-2",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12338,7 +10886,8 @@
               "kind": "event",
               "text": "别以为你有机会",
               "group": 33,
-              "label": "5-3"
+              "label": "5-3",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12354,7 +10903,8 @@
               "kind": "event",
               "text": "我是为了你的安全",
               "group": 34,
-              "label": "5-4"
+              "label": "5-4",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12370,7 +10920,8 @@
               "kind": "event",
               "text": "人要有自知之明！",
               "group": 35,
-              "label": "5-5"
+              "label": "5-5",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12386,7 +10937,8 @@
               "kind": "event",
               "text": "因为我不喜欢说谎",
               "group": 36,
-              "label": "5-6"
+              "label": "5-6",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12464,7 +11016,8 @@
               "text": "很高兴跟你合作",
               "group": 42,
               "label": "7-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12481,7 +11034,8 @@
               "text": "专心在工作吧！",
               "group": 43,
               "label": "7-2",
-              "tag": "好感度上升"
+              "tag": "好感度上升",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12519,7 +11073,8 @@
               "cgIds": [
                 "danisi-3"
               ],
-              "anchor": "ev134"
+              "anchor": "ev134",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -12540,7 +11095,8 @@
               "kind": "event",
               "text": "我有一些灵感…",
               "group": 45,
-              "label": "7-4"
+              "label": "7-4",
+              "creation": "从接吻开始"
             },
             {
               "kind": "paragraph",
@@ -13428,7 +11984,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "昨日约定"
             },
             {
               "kind": "paragraph",
@@ -13596,7 +12153,8 @@
               "kind": "event",
               "text": "谁都不能欺负纪翔！",
               "group": 21,
-              "label": "4-1"
+              "label": "4-1",
+              "creation": "昨日约定"
             },
             {
               "kind": "paragraph",
@@ -13612,7 +12170,8 @@
               "kind": "event",
               "text": "不能为我留下吗？",
               "group": 22,
-              "label": "4-2"
+              "label": "4-2",
+              "creation": "昨日约定"
             },
             {
               "kind": "paragraph",
@@ -13628,7 +12187,8 @@
               "kind": "event",
               "text": "不要让纪翔失望喔！",
               "group": 23,
-              "label": "4-3"
+              "label": "4-3",
+              "creation": "昨日约定"
             },
             {
               "kind": "paragraph",
@@ -13651,7 +12211,8 @@
               "text": "愿意陪我去散步吗？",
               "group": 25,
               "label": "5-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13689,7 +12250,8 @@
               "cgIds": [
                 "ji-xiang-3"
               ],
-              "anchor": "ev79"
+              "anchor": "ev79",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13710,7 +12272,8 @@
               "kind": "event",
               "text": "你怎么一直傻笑？",
               "group": 27,
-              "label": "5-3"
+              "label": "5-3",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13726,7 +12289,8 @@
               "kind": "event",
               "text": "我只是在发呆…",
               "group": 28,
-              "label": "5-4"
+              "label": "5-4",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13749,7 +12313,8 @@
               "text": "我想邀请你吃一顿饭",
               "group": 30,
               "label": "6-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13770,7 +12335,8 @@
               "kind": "event",
               "text": "你是鼓励我还是试探我？",
               "group": 31,
-              "label": "6-2"
+              "label": "6-2",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13787,7 +12353,8 @@
               "text": "我想去海边走走…",
               "group": 32,
               "label": "6-3",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13808,7 +12375,8 @@
               "kind": "event",
               "text": "不然你做我男朋友！",
               "group": 33,
-              "label": "6-4"
+              "label": "6-4",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -13835,7 +12403,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14008,7 +12577,8 @@
               "text": "我想邀请你吃一顿饭",
               "group": 44,
               "label": "8-1",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14045,7 +12615,8 @@
               "cgIds": [
                 "ji-xiang-4"
               ],
-              "anchor": "ev137"
+              "anchor": "ev137",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14066,7 +12637,8 @@
               "kind": "event",
               "text": "你为什么在这里？",
               "group": 46,
-              "label": "8-3"
+              "label": "8-3",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14083,7 +12655,8 @@
               "text": "你有喜欢的人吗？",
               "group": 47,
               "label": "8-4",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14099,7 +12672,8 @@
               "kind": "event",
               "text": "我会选择我爱的人",
               "group": 48,
-              "label": "8-5"
+              "label": "8-5",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14115,7 +12689,8 @@
               "kind": "event",
               "text": "你不是喜欢他？",
               "group": 49,
-              "label": "8-6"
+              "label": "8-6",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14158,7 +12733,8 @@
               "cgIds": [
                 "ji-xiang-1"
               ],
-              "anchor": "ev155"
+              "anchor": "ev155",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14179,7 +12755,8 @@
               "kind": "event",
               "text": "你不会跳回翱翔天际吧！",
               "group": 52,
-              "label": "9-2"
+              "label": "9-2",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14195,7 +12772,8 @@
               "kind": "event",
               "text": "我们比以前更好了",
               "group": 53,
-              "label": "9-3"
+              "label": "9-3",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -14211,7 +12789,8 @@
               "kind": "event",
               "text": "一切都是你的功劳",
               "group": 54,
-              "label": "9-4"
+              "label": "9-4",
+              "creation": "烟花下的你"
             },
             {
               "kind": "paragraph",
@@ -15301,7 +13880,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -15410,7 +13990,8 @@
               "kind": "event",
               "text": "疑似假戏真作！？",
               "group": 49,
-              "label": "9-1"
+              "label": "9-1",
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -15431,7 +14012,8 @@
               "kind": "event",
               "text": "我只想告诉你一个人",
               "group": 50,
-              "label": "9-2"
+              "label": "9-2",
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -15452,7 +14034,8 @@
               "kind": "event",
               "text": "记得去帮我澄清",
               "group": 51,
-              "label": "9-3"
+              "label": "9-3",
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -15468,7 +14051,8 @@
               "kind": "event",
               "text": "两人的关系是…",
               "group": 52,
-              "label": "9-4"
+              "label": "9-4",
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -15504,7 +14088,8 @@
               "cgIds": [
                 "murong-hexi-5"
               ],
-              "anchor": "ev163"
+              "anchor": "ev163",
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -15520,7 +14105,8 @@
               "kind": "event",
               "text": "我做了一首歌给慕容…",
               "group": 54,
-              "label": "9-6"
+              "label": "9-6",
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -15536,7 +14122,8 @@
               "kind": "event",
               "text": "我做了一首歌给子奇…",
               "group": 55,
-              "label": "9-7"
+              "label": "9-7",
+              "creation": "恋爱最终章续篇／因风飞过蔷薇"
             },
             {
               "kind": "paragraph",
@@ -17438,7 +16025,8 @@
               "kind": "event",
               "text": "克烈斯退出演艺圈！",
               "group": 20,
-              "label": "3-1"
+              "label": "3-1",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -17454,7 +16042,8 @@
               "kind": "event",
               "text": "好不容易交到一位好朋友…",
               "group": 21,
-              "label": "3-2"
+              "label": "3-2",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -17470,7 +16059,8 @@
               "kind": "event",
               "text": "史蒂芬跟克烈斯的关系是？",
               "group": 22,
-              "label": "3-3"
+              "label": "3-3",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -17487,7 +16077,8 @@
               "text": "谢谢你帮我解释",
               "group": 23,
               "label": "3-4",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -17503,7 +16094,8 @@
               "kind": "event",
               "text": "他总是一个人独处…",
               "group": 24,
-              "label": "3-5"
+              "label": "3-5",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -17519,7 +16111,8 @@
               "kind": "event",
               "text": "祈求下次的相聚",
               "group": 25,
-              "label": "3-6"
+              "label": "3-6",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -17536,7 +16129,8 @@
               "text": "我陪你散散步！",
               "group": 26,
               "label": "3-7",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -17552,7 +16146,8 @@
               "kind": "event",
               "text": "原来你比我惨…",
               "group": 27,
-              "label": "3-8"
+              "label": "3-8",
+              "creation": "没有雪的耶诞节"
             },
             {
               "kind": "paragraph",
@@ -18620,7 +17215,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -18722,7 +17318,8 @@
               "kind": "event",
               "text": "卫亚获取书卷奖！",
               "group": 23,
-              "label": "4-5"
+              "label": "4-5",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -18783,7 +17380,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -18804,7 +17402,8 @@
               "kind": "event",
               "text": "卫亚低分通过期末考",
               "group": 27,
-              "label": "5-2"
+              "label": "5-2",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18820,7 +17419,8 @@
               "kind": "event",
               "text": "考试没有考好？",
               "group": 28,
-              "label": "5-3"
+              "label": "5-3",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18836,7 +17436,8 @@
               "kind": "event",
               "text": "卫亚萌生退意！",
               "group": 29,
-              "label": "5-4"
+              "label": "5-4",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18852,7 +17453,8 @@
               "kind": "event",
               "text": "想要退出演艺圈？",
               "group": 30,
-              "label": "5-5"
+              "label": "5-5",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18868,7 +17470,8 @@
               "kind": "event",
               "text": "引导他说出真心话吧…",
               "group": 31,
-              "label": "5-6"
+              "label": "5-6",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18884,7 +17487,8 @@
               "kind": "event",
               "text": "我相信你的能力！",
               "group": 32,
-              "label": "5-7"
+              "label": "5-7",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18900,7 +17504,8 @@
               "kind": "event",
               "text": "可以让我离开公司吗？",
               "group": 33,
-              "label": "5-8"
+              "label": "5-8",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18921,7 +17526,8 @@
               "kind": "event",
               "text": "请收下我的创作",
               "group": 34,
-              "label": "5-9"
+              "label": "5-9",
+              "creation": "异世界神话"
             },
             {
               "kind": "paragraph",
@@ -18943,7 +17549,8 @@
               "kind": "event",
               "text": "一切都拜托你了",
               "group": 36,
-              "label": "6-1"
+              "label": "6-1",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -18965,7 +17572,8 @@
               "text": "可以跟我去植物园吗？",
               "group": 37,
               "label": "6-2",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19003,7 +17611,8 @@
               "cgIds": [
                 "wei-ya-3"
               ],
-              "anchor": "ev123"
+              "anchor": "ev123",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19024,7 +17633,8 @@
               "kind": "event",
               "text": "跟新名纱雪的关系？",
               "group": 39,
-              "label": "6-4"
+              "label": "6-4",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19051,7 +17661,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19073,7 +17684,8 @@
               "kind": "event",
               "text": "跟新名纱雪在交往？",
               "group": 42,
-              "label": "7-1"
+              "label": "7-1",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19090,7 +17702,8 @@
               "text": "请你务必要相信我！",
               "group": 43,
               "label": "7-2",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19106,7 +17719,8 @@
               "kind": "event",
               "text": "我帮你陷害新名纱雪",
               "group": 44,
-              "label": "7-3"
+              "label": "7-3",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19127,7 +17741,8 @@
               "kind": "event",
               "text": "我非常感谢你！",
               "group": 45,
-              "label": "7-4"
+              "label": "7-4",
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",
@@ -19827,7 +18442,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "浪漫赌注／秋草旧长营"
             },
             {
               "kind": "paragraph",
@@ -19848,7 +18464,8 @@
               "kind": "event",
               "text": "仅此一次，下不为例！",
               "group": 14,
-              "label": "4-2"
+              "label": "4-2",
+              "creation": "浪漫赌注／秋草旧长营"
             },
             {
               "kind": "paragraph",
@@ -19864,7 +18481,8 @@
               "kind": "event",
               "text": "姚子奇送歌表情意？",
               "group": 15,
-              "label": "4-3"
+              "label": "4-3",
+              "creation": "浪漫赌注／秋草旧长营"
             },
             {
               "kind": "paragraph",
@@ -19907,7 +18525,8 @@
               "kind": "event",
               "text": "请比较看看",
               "group": 18,
-              "label": "5-1"
+              "label": "5-1",
+              "creation": "浪漫赌注／秋草旧长营"
             },
             {
               "kind": "paragraph",
@@ -20073,7 +18692,8 @@
               "kind": "event",
               "text": "唱片销售惨淡！",
               "group": 27,
-              "label": "6-1"
+              "label": "6-1",
+              "creation": "寂寞国度"
             },
             {
               "kind": "paragraph",
@@ -20090,7 +18710,8 @@
               "text": "你怎么解释？",
               "group": 28,
               "label": "6-2",
-              "tag": "友好度上升"
+              "tag": "友好度上升",
+              "creation": "寂寞国度"
             },
             {
               "kind": "paragraph",
@@ -20106,7 +18727,8 @@
               "kind": "event",
               "text": "不要停止前进的脚步",
               "group": 29,
-              "label": "6-3"
+              "label": "6-3",
+              "creation": "寂寞国度"
             },
             {
               "kind": "paragraph",
@@ -24285,7 +22907,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "creation": "寂寞微光"
             },
             {
               "kind": "paragraph",

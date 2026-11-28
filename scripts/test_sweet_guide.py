@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 18)
+        self.assertEqual(len(first["children"]), 17)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 32)
-        self.assertEqual(stats["readyItems"], 32)
+        self.assertEqual(stats["items"], 31)
+        self.assertEqual(stats["readyItems"], 31)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -1558,18 +1558,25 @@ class TestSweetGuide(unittest.TestCase):
                      "秋草旧长营", "异世界神话", "烟花下的你"):
             self.assertIn(name, names)
 
-        # 特殊创作：10 组作品 / 78 个事件，末尾事件与关键门槛都在。
-        special = nodes["special-creations"]["blocks"]
-        self.assertEqual(len(special), 272)
-        self.assertEqual(sum(b["kind"] == "section" for b in special), 10)
-        self.assertEqual(sum(b["kind"] == "event" for b in special), 78)
-        texts = [b["text"] for b in special]
-        for name in ("温柔时刻（丹尼斯·林芬芬）", "从接吻开始（丹尼斯）",
-                     "寂寞微光（卫亚·新名纱雪）", "烟花下的你（纪翔）"):
-            self.assertIn(name, texts)
-        self.assertIn("一切都是你的功劳", texts)
-        self.assertTrue(any("和纪翔约会>5次且颇有好感" in t for t in texts))
-        self.assertTrue(any("票房>30万才会触发" in t for t in texts))
+        # 特殊创作取得并入艺人攻略页：独立页撤掉，78 条事件在原事件块上加
+        # creation 高亮字段（寂寞微光一链同时出现在卫亚与金皓薰页，故 79 处）。
+        self.assertNotIn("special-creations", nodes)
+        marked = [
+            (slug, b) for slug, n in nodes.items()
+            for b in n["blocks"] if b.get("creation")
+        ]
+        self.assertEqual(len(marked), 79)
+        works = {b["creation"] for _, b in marked}
+        self.assertEqual(len(works), 10)
+        for name in ("温柔时刻", "从接吻开始", "没有雪的耶诞节", "寂寞国度",
+                     "浪漫赌注／秋草旧长营", "恋爱最终章续篇／因风飞过蔷薇",
+                     "异世界神话", "寂寞微光", "昨日约定", "烟花下的你"):
+            self.assertIn(name, works)
+        by_event = {(slug, b["text"]): b["creation"] for slug, b in marked}
+        self.assertEqual(by_event[("danisi", "我有一些灵感…")], "从接吻开始")
+        self.assertEqual(by_event[("shi-difen", "原来你比我惨…")], "没有雪的耶诞节")
+        self.assertEqual(by_event[("ji-xiang", "一切都是你的功劳")], "烟花下的你")
+        self.assertTrue(all(b["kind"] == "event" for _, b in marked))
 
         # 艺人资料并入各艺人攻略页头部（profile 字段），不再单独成页。
         self.assertNotIn("artist-profiles", nodes)
