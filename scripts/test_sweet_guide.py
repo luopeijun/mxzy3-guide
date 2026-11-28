@@ -1238,10 +1238,10 @@ class TestSweetGuide(unittest.TestCase):
         texts = [b["text"] for b in blocks]
         self.assertIn("提示：电影票房30万以上才会触发。", texts)
         self.assertFalse(any("30亿" in t for t in texts))
-        # 角色页都读同一份备注表，目前只有慕容和希、卫亚两页有条目。
+        # 角色页都读同一份备注表，目前只有慕容和希、卫亚、纪翔三页有条目。
         others = [
             slug for slug, node in nodes.items()
-            if slug not in ("murong-hexi", "wei-ya") and node["id"].startswith("sweet-characters/")
+            if slug not in ("murong-hexi", "wei-ya", "ji-xiang") and node["id"].startswith("sweet-characters/")
             and any(b.get("eventNotes") for b in node["blocks"])
         ]
         self.assertEqual(others, [])
@@ -1275,6 +1275,38 @@ class TestSweetGuide(unittest.TestCase):
         self.assertIn("事件图：卫亚04", note_text("6-3"))
         self.assertIn("剧情提示：表现太小气，将来可是拿不到纱雪的创作", note_text("6-5"))
         self.assertIn("事件图：卫亚05", note_text("8-2"))
+
+    def test_ji_xiang_guide(self) -> None:
+        nodes = {
+            n["id"].split("/")[-1]: n
+            for c in self.data["categories"] for n in c["children"]
+        }
+        blocks = nodes["ji-xiang"]["blocks"]
+        # 只加备注字段，不插块、不改事件编号（追踪器按原始下标存进度）。
+        self.assertEqual(len(blocks), 201)
+        self.assertEqual(sum(b["kind"] == "event" for b in blocks), 43)
+        annotated = {b["label"]: b["eventNotes"] for b in blocks
+                     if b["kind"] == "event" and b.get("eventNotes")}
+        self.assertEqual(
+            list(annotated), ["2-1", "2-4", "5-2", "6-5", "7-6", "8-2", "9-1"]
+        )
+        self.assertTrue(all(g["title"] == "艺人攻略补充" for gs in annotated.values() for g in gs))
+
+        def note_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"]
+                for group in annotated[label] for item in group["items"]
+            )
+
+        self.assertIn("约会开启条件：和纪翔约会>6且很有好感", note_text("2-1"))
+        self.assertIn("交给金皓薰处理（2-2～2-5）", note_text("2-1"))
+        self.assertIn("都不处理（4-1～4-3）", note_text("2-1"))
+        self.assertIn("选「还是很介意」进入第二轮", note_text("2-4"))
+        self.assertIn("事件图：纪翔02", note_text("5-2"))
+        self.assertIn("第二轮会出现「还有机会」", note_text("6-5"))
+        self.assertIn("事件图：纪翔06", note_text("7-6"))
+        self.assertIn("事件图：纪翔05", note_text("8-2"))
+        self.assertIn("事件图：纪翔07", note_text("9-1"))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []
