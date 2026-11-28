@@ -849,7 +849,9 @@ function scanSweetTeams(bytes: Uint8Array, view: DataView, stars: Record<string,
     const nameEnd = o + 8 + nameBytes + 1; // 名字后的 NUL
     if (bytes[nameEnd - 1] !== 0 || nameEnd + 56 > bytes.length) continue;
     const name = readBig5(bytes, o + 8, nameBytes);
-    if (!/^[\u4e00-\u9fff]+$/.test(name)) continue;
+    // 团名允许字母 / 数字（例如「SD樂團」），但不能有空白或标点，
+    // 否则会在存档里乱扫到别的字符串。
+    if (!/^[\u4e00-\u9fffA-Za-z0-9]+$/.test(name)) continue;
     const ids = [0, 1, 2].map((j) => readI32(view, nameEnd + 28 + j * 4));
     const hasMarker = readI32(view, nameEnd + 44) === marker.length
       && marker.every((c, j) => bytes[nameEnd + 48 + j] === c);
