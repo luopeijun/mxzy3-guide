@@ -373,8 +373,9 @@ class TestSweetGuide(unittest.TestCase):
         self.assertTrue(step["text"].startswith("周三"), step["text"])
 
         notes = [b["text"] for b in blocks if b["kind"] == "note"]
-        self.assertEqual(len(notes), 3)
-        self.assertTrue(all(n.startswith("※") for n in notes))
+        self.assertEqual(len(notes), 9)
+        self.assertTrue(all(n.startswith(("※", "提示：")) for n in notes))
+        self.assertIn("提示：穿着女仆装进京风唱片", notes)
 
     def test_festivals(self) -> None:
         node = _node(self.data, "festivals")

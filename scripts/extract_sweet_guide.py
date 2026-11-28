@@ -44,7 +44,7 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
     服装获得方法              ← 首行，页面副标题
     春夏洋装                  ← 服装名（heading）
     1-1差不多该换季了…2008/3   ← 编号 + 标题 + 省略号后的条件与年月
-    ※杜云芊仪态350↑才触发     ← 提示
+    ※杜云芊仪态350↑才触发     ← 提示（「提示：」同样走便签）
     虚拟服装相关剧情           ← 分章（section）
     1-1.穿上小红帽服装后…      ← 编号带句点、整行都是正文
 
@@ -423,7 +423,7 @@ def parse_outfits(path: Path) -> tuple[list[dict], str]:
             push("event", step.group(2).strip(), label=step.group(1))
             continue
 
-        if text.startswith("※"):
+        if text.startswith(("※", "提示：")):
             push("note", text)
             continue
 

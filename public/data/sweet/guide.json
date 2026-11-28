@@ -6,10 +6,10 @@
     "stats": {
       "categories": 3,
       "items": 31,
-      "blocks": 2958,
+      "blocks": 3001,
       "readyItems": 31,
       "missingItems": 0,
-      "sourceParagraphs": 2958
+      "sourceParagraphs": 3001
     }
   },
   "categories": [
@@ -2444,61 +2444,276 @@
             },
             {
               "kind": "event",
-              "text": "穿上卡哇伊女仆装后到19号酒馆点席若云，她会说主角这套衣服很适合她们酒馆，让主角周末一有空就到店里打工。",
+              "text": "席若芸的请求",
               "group": 45,
               "label": "3-1"
             },
             {
+              "kind": "paragraph",
+              "text": "时间：2008/4-6",
+              "group": 45
+            },
+            {
+              "kind": "paragraph",
+              "text": "穿着女仆装的云芊好可爱，老板娘席若芸询问云芊要不要周末穿女仆装到酒吧打工。",
+              "group": 45
+            },
+            {
+              "kind": "note",
+              "text": "提示：穿着女仆装进19号酒吧",
+              "group": 45
+            },
+            {
               "kind": "event",
-              "text": "到酒馆打工一段时间后会碰上加贺大泽，前去点击，他会建议你说“主人，欢迎回来!”",
+              "text": "云芊到酒吧打工赚钱",
               "group": 46,
               "label": "3-2"
             },
             {
+              "kind": "paragraph",
+              "text": "时间：1发生后",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "周六日穿女仆装到酒吧打工。",
+              "group": 46
+            },
+            {
+              "kind": "note",
+              "text": "※记得和席若芸对话领薪水喔~",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "打工薪资：",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第1-19次 薪水1万",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第20-99次 薪水2万",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第100-199次 薪水5万",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第200次&超过200次 薪水10万",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第10次 奖金50万",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第20次 +公关10",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第50次 奖金500万+公关100",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第100次 奖金1000万+公关200",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第200次 +公关500",
+              "group": 46
+            },
+            {
+              "kind": "paragraph",
+              "text": "第250次 奖金5000万+公关1000",
+              "group": 46
+            },
+            {
               "kind": "event",
-              "text": "10月，新闻“国际慈善表演计划”。",
+              "text": "国际慈善表演计划",
               "group": 47,
               "label": "3-3"
             },
             {
+              "kind": "paragraph",
+              "text": "时间：2009/10",
+              "group": 47
+            },
+            {
+              "kind": "paragraph",
+              "text": "新闻自动产生：加贺大泽将举办大型慈善晚会。",
+              "group": 47
+            },
+            {
               "kind": "event",
-              "text": "新闻出现后到19号酒馆，点加贺大泽的小人，他会说要的就是这种风格，然后扬长而去。",
+              "text": "遇到加贺大泽",
               "group": 48,
               "label": "3-4"
             },
             {
+              "kind": "paragraph",
+              "text": "时间：2009/10-12",
+              "group": 48
+            },
+            {
+              "kind": "paragraph",
+              "text": "酒吧打工时遇到加贺大泽，加贺好奇酒吧也走女仆风；前去点击，他会建议你说“主人，欢迎回来！”",
+              "group": 48
+            },
+            {
               "kind": "event",
-              "text": "12月，新闻“跨国大型慈善晚会正式定名”",
+              "text": "寻找灵感",
               "group": 49,
               "label": "3-5"
             },
             {
+              "kind": "paragraph",
+              "text": "时间：3发生后~2009/11",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "加贺大泽到酒吧寻找晚会灵感。",
+              "group": 49
+            },
+            {
+              "kind": "note",
+              "text": "提示：穿着女仆装进19号酒吧（不限打工）",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "云芊到京风唱片，加贺大泽突然想到晚会的灵感。",
+              "group": 49
+            },
+            {
+              "kind": "note",
+              "text": "提示：穿着女仆装进京风唱片",
+              "group": 49
+            },
+            {
+              "kind": "paragraph",
+              "text": "加贺大泽会说要的就是这种风格，然后扬长而去。",
+              "group": 49
+            },
+            {
               "kind": "event",
-              "text": "周末，加贺大泽来访，邀请主角参加慈善晚会，选“我愿意试试看”",
+              "text": "Service for You",
               "group": 50,
               "label": "3-6"
             },
             {
-              "kind": "event",
-              "text": "接上一个月后收到晚会海报，CG入手",
-              "group": 51,
-              "label": "3-7",
-              "cgIds": [
-                "protagonist-3"
-              ],
-              "anchor": "ev92"
+              "kind": "paragraph",
+              "text": "时间：5发生后；2009/12",
+              "group": 50
+            },
+            {
+              "kind": "paragraph",
+              "text": "新闻自动产生：慈善晚会正式定名为「Service for You」。",
+              "group": 50
             },
             {
               "kind": "event",
-              "text": "接上一个月后，主角属性高时会出现“主持人完美演出，慈善晚会圆满落幕”的新闻。",
+              "text": "晚会主持",
+              "group": 51,
+              "label": "3-7"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：6发生后",
+              "group": 51
+            },
+            {
+              "kind": "paragraph",
+              "text": "加贺大泽到办公室邀请云芊担任晚会主持，选“我愿意试试看”。",
+              "group": 51
+            },
+            {
+              "kind": "note",
+              "text": "※2010/1/30、1/31不能有特殊行程",
+              "group": 51
+            },
+            {
+              "kind": "event",
+              "text": "晚会海报",
               "group": 52,
               "label": "3-8"
             },
             {
+              "kind": "paragraph",
+              "text": "时间：2010/1",
+              "group": 52
+            },
+            {
+              "kind": "paragraph",
+              "text": "收到晚会海报，女仆装造型，CG入手。",
+              "group": 52,
+              "cgIds": [
+                "protagonist-3"
+              ],
+              "anchor": "ev127"
+            },
+            {
+              "kind": "note",
+              "text": "※若事件7对自己没自信的话，事件就结束了喔！",
+              "group": 52
+            },
+            {
               "kind": "event",
-              "text": "如果主角属性偏低，则会出现“场面略显冷清，大型慈善活动落幕”的新闻。",
+              "text": "晚会募款结果",
               "group": 53,
               "label": "3-8-1"
+            },
+            {
+              "kind": "paragraph",
+              "text": "时间：2010/2",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "新闻自动产生——",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "新闻一：主持人完美演出，总共募得上亿捐款！",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "云芊口才>500、仪态>500、自信>500，后续接京风唱片的通告，酬劳会较多。",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "新闻二：场面略显冷清，捐款情况不如预期。",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "云芊口才、仪态、自信任一项<200。",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "新闻三：主持人表现出色，总共募得千万捐款！",
+              "group": 53
+            },
+            {
+              "kind": "paragraph",
+              "text": "上述条件皆不相符。",
+              "group": 53
             }
           ],
           "children": [],
