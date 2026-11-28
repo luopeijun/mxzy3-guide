@@ -402,7 +402,7 @@ function sweetSceneTooltipAlign(index: number): string {
 
 /** 通告统计的小胶囊 + 悬停作品清单，与主站 WorkCountChip 同一套样式和交互。 */
 function SweetWorkCountChip({
-  label, value, works, title, showRole = false, dataName, dataValue, dataNoticeIndex, guideByCode,
+  label, value, works, title, showRole = false, dataName, dataValue, dataNoticeIndex,
 }: {
   label: string;
   value: number;
@@ -412,7 +412,6 @@ function SweetWorkCountChip({
   dataName?: string;
   dataValue?: string;
   dataNoticeIndex?: number;
-  guideByCode?: Map<string, WorkGuide>;
 }) {
   return (
     <span className="work-count-chip group relative inline-flex">
@@ -471,17 +470,6 @@ function SweetWorkCountChip({
                       {work.company}
                     </span>
                   )}
-                  {guideByCode && (() => {
-                    const text = workGuideText(guideByCode.get(work.workCode));
-                    return text ? (
-                      <span
-                        data-sweet-case-work-guide
-                        className="block w-full text-ui-2xs leading-[1.4] text-ink-faint"
-                      >
-                        {text}
-                      </span>
-                    ) : null;
-                  })()}
                 </span>
               ))}
             </span>
@@ -2829,7 +2817,6 @@ export default function SweetCaseView({
                               value={artist.noticeCounts[index] ?? 0}
                               works={save.works.filter((work) => work.artistId === artist.id && work.noticeIndex === index)}
                               title={`${label}作品`}
-                              guideByCode={guideByCode}
                             />
                           ))}
                           <SweetWorkCountChip
@@ -2839,7 +2826,6 @@ export default function SweetCaseView({
                             value={artist.noticeCounts.reduce((sum, n) => sum + n, 0)}
                             works={save.works.filter((work) => work.artistId === artist.id)}
                             title="全部作品"
-                            guideByCode={guideByCode}
                           />
                         </div>
                         {save.awards.some((award) => awardBelongsTo(award, artist.name)) && (
@@ -2954,7 +2940,6 @@ export default function SweetCaseView({
                             value={team.workCount}
                             works={team.works}
                             title={`${team.name} 唱片`}
-                            guideByCode={guideByCode}
                           />
                         </div>
                         {save.awards.some((award) => awardBelongsToGroup(award, team)) && (
