@@ -51,9 +51,14 @@ function buildEventTree(groups: EventGroup[]): { roots: EventNode[]; byGroup: Ma
   return { roots, byGroup };
 }
 
-/** 事件卡外壳：CG 事件用玫红描边 + 浅粉底，普通事件用浅灰描边 + 白底。 */
-function eventCardClasses(cg: boolean): string {
-  return `rounded-ui-sm border px-3 py-2.5 ${cg ? 'border-brand bg-brand-soft' : 'border-line bg-surface'}`;
+/** 事件卡外壳：创作取得用青色，CG 用玫红，普通事件用浅灰描边 + 白底。 */
+function eventCardClasses(cg: boolean, creation?: string): string {
+  const tone = creation
+    ? 'border-creation-line bg-creation-soft'
+    : cg
+      ? 'border-brand bg-brand-soft'
+      : 'border-line bg-surface';
+  return `rounded-ui-sm border px-3 py-2.5 ${tone}`;
 }
 
 /** 整组内容的白底卡片外壳（甜蜜乐章里一位艺人的条件清单）。
@@ -70,6 +75,7 @@ function EventHead({ head }: { head: IndexedBlock }) {
   const firstCg = head.cgIds?.[0];
   const cgHref = firstCg ? `#/cg/${firstCg}` : undefined;
   const badge = 'mr-1.5 inline-flex items-center gap-0.5 rounded-ui-xs border border-gold-line bg-gold-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-gold align-middle';
+  const creationBadge = 'mr-1.5 rounded-ui-xs border border-creation-line bg-creation-soft px-[5px] py-[1px] text-ui-2xs font-bold leading-[1.6] text-creation';
   return (
     <div className="flex items-start gap-2.5 text-ui-sm leading-[1.85]">
       {head.label && (
@@ -79,6 +85,9 @@ function EventHead({ head }: { head: IndexedBlock }) {
       )}
       <span className="min-w-0 flex-1 break-words">
         {head.tag && <TypeTag label={head.tag} />}
+        {head.creation && (
+          <span className={creationBadge} title="这条事件会取得创作">创作：{head.creation}</span>
+        )}
         {cg && (cgHref ? (
           <a
             data-cg-link
@@ -138,7 +147,7 @@ function EventCard({ blocks }: { blocks: IndexedBlock[] }) {
     <div
       id={eventDomId(head)}
       data-event-label={head.label}
-      className={`mb-3 scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
+      className={`mb-3 scroll-mt-3 ${eventCardClasses(!!head.cg, head.creation)}`}
     >
       <EventHead head={head} />
       {head.eventNotes && head.eventNotes.length > 0 && (
@@ -162,7 +171,7 @@ function EventNode({ node }: { node: EventNode }) {
     <div
       id={eventDomId(head)}
       data-event-label={head.label}
-      className={`scroll-mt-3 ${eventCardClasses(!!head.cg)}`}
+      className={`scroll-mt-3 ${eventCardClasses(!!head.cg, head.creation)}`}
     >
       <EventHead head={head} />
       {head.eventNotes && head.eventNotes.length > 0 && (

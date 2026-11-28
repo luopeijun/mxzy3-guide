@@ -33,6 +33,10 @@
   --color-gold-line: #f0dfb4;
   --color-note: #87551f;
   --color-note-soft: #fdf5e9;
+  /* 创作取得事件：青色描边 + 浅青底，与 CG 的玫红、提示的金色区分。 */
+  --color-creation: #12656e;
+  --color-creation-soft: #d9f0ef;
+  --color-creation-line: #a8d6d4;
   /* Highlights that sit inside a cream reminder block: the rose tint would fight
      the note's own background, so the same weight is re-cut in amber. Text keeps
      5.98:1 on the tint and the tint still reads as a tint on #fdf5e9. */

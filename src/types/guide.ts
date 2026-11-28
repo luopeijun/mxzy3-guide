@@ -74,6 +74,8 @@ export interface ContentBlock {
   special?: boolean;
   /** Marks an `event` that yields a CG, rendered with a brand highlight + 标签. */
   cg?: boolean;
+  /** 艺人攻略里这条事件会取得哪部创作；渲染成青色高亮徽标（原特殊创作页已并入）。 */
+  creation?: string;
   /** CG 图鉴里的 item id（`lin-1` 这种）。只有「事件 ⇄ CG 一一对应」才有，
    *  映射写在 `sources/cg-links.tsv`，由 `extract_guide.py` 落到块上。 */
   cgIds?: string[];
