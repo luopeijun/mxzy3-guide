@@ -114,6 +114,9 @@ CG_LINKS = SOURCES / "cg-links.tsv"
 # 五列：服装名 / 事件编号 / 分组标题 / 条件 / 正文；编号在不同服装间会重复，
 # 所以用服装名 + 编号做键。
 OUTFIT_EVENT_NOTES = SOURCES / "outfit-event-notes.tsv"
+# 支线页的事件说明：同样挂在事件块上，不新增块。五列，键是（页面 slug，事件编号），
+# 因为 2-1 / 1-1 这类编号在六页之间会重复。
+SIDE_EVENT_NOTES = SOURCES / "side-event-notes.tsv"
 # 角色头像按约定命名放在 public/images/sweet/：`<slug>-logo.*` 是目录与
 # 角色卡在人名左侧展示的圆圈头像（与主站 images/characters/ 同一套约定）。
 SWEET_IMAGES = ROOT / "public" / "images" / "sweet"
@@ -415,6 +418,30 @@ def read_outfit_event_notes(path: Path) -> dict[tuple[str, str], list[dict]]:
         if not all((outfit, label, group, condition, text)):
             raise ValueError(f"{path.name}:{number}: empty field in {raw!r}")
         groups = notes.setdefault((outfit, label), [])
+        bucket = next((g for g in groups if g["title"] == group), None)
+        if bucket is None:
+            bucket = {"title": group, "items": []}
+            groups.append(bucket)
+        bucket["items"].append({"label": condition, "text": text})
+    return notes
+
+
+def read_side_event_notes(path: Path) -> dict[tuple[str, str], list[dict]]:
+    """读支线页补充说明，键是（页面 slug，事件编号）。"""
+    if not path.exists():
+        return {}
+    notes: dict[tuple[str, str], list[dict]] = {}
+    for number, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+        line = raw.rstrip("\n")
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) != 5:
+            raise ValueError(f"{path.name}:{number}: expected 5 columns, got {raw!r}")
+        page, label, group, condition, text = (part.strip() for part in parts)
+        if not all((page, label, group, condition, text)):
+            raise ValueError(f"{path.name}:{number}: empty field in {raw!r}")
+        groups = notes.setdefault((page, label), [])
         bucket = next((g for g in groups if g["title"] == group), None)
         if bucket is None:
             bucket = {"title": group, "items": []}
@@ -850,14 +877,17 @@ SIDE_SECTION_RE = re.compile(r"^(条件|附注|附)[：:]\s*(.*)$")
 SIDE_BULLET_PREFIXES = ("公司结局：", "感情结局：")
 
 
-def parse_side(path: Path) -> tuple[list[dict], str]:
+def parse_side(path: Path, event_notes: dict[tuple[str, str], list[dict]] | None = None) -> tuple[list[dict], str]:
     """支线页 → 章节 + 步骤 + 条件 / 附注。
 
     六页排法不完全一样（见上面的常量说明），但都在「分章 → 编号步骤 → 说明行」这
     三层里，所以一个解析器吃全部。步骤做成事件卡：编号进 pill，后面跟在同一步里的
     `※` / `提示：` / 续行成为卡内的备注与细节，和角色页的事件卡是同一套。
+    用户补的时间 / 概要 / 提示走 `side-event-notes.tsv`，挂在事件块上不插块。
     """
     lines = _read_lines(path)
+    event_notes = event_notes if event_notes is not None else read_side_event_notes(SIDE_EVENT_NOTES)
+    page = path.stem
     # 首行是页名（金皓薰 / 杜司臣 / 舞台秘影）时当标题用；其余页首行本身就是正文
     # （徐世杰 / 夏以军首行是「条件：…」，天晴首行是 `#加入志工团`）。
     head_is_title = bool(lines) and len(lines[0]) <= 8 and not re.search(r"[：:#＃（(0-9]", lines[0])
@@ -866,7 +896,12 @@ def parse_side(path: Path) -> tuple[list[dict], str]:
     group = 0
 
     def push(kind: str, text: str, **extra) -> None:
-        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+        block = {"kind": kind, "text": text, "group": group, **extra}
+        if kind == "event":
+            groups = event_notes.get((page, str(extra.get("label", ""))))
+            if groups:
+                block["eventNotes"] = groups
+        blocks.append(block)
 
     for index, text in enumerate(body):
         chapter = SIDE_CHAPTER_RE.match(text)

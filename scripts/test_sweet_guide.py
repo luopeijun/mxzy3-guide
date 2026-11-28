@@ -376,28 +376,40 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(len(notes), 3)
         self.assertTrue(all(n.startswith("※") for n in notes))
 
-        # 女仆装 / 小红帽的时间、提示、薪资与募款分支挂在事件块上，不新增块
+        # 女仆装 / 小红帽的时间、概要、提示、薪资与募款分支挂在事件块上，不新增块
         # ——追踪器按块下标存进度，插块会让老存档整体错位。
         annotated = {b["label"]: b for b in blocks if b.get("eventNotes")}
         self.assertEqual(len(annotated), 15)
-        self.assertEqual(
-            [g["title"] for g in annotated["3-1"]["eventNotes"]], ["触发条件"]
-        )
-        self.assertIn(
-            "穿着女仆装进19号酒吧",
-            annotated["3-1"]["eventNotes"][0]["items"][0]["text"],
-        )
-        self.assertEqual(
-            [g["title"] for g in annotated["1-1"]["eventNotes"]], ["触发时间", "触发条件"]
-        )
-        self.assertIn(
-            "公司知名度+100、云芊人气-30",
-            " ".join(
+
+        def note_text(label: str) -> str:
+            return "\n".join(
                 item["text"]
-                for group in annotated["1-6"]["eventNotes"]
+                for group in annotated[label]["eventNotes"]
                 for item in group["items"]
-            ),
-        )
+            )
+
+        # 3-1 的时间 / 概要 / 老板娘请求 / 装扮提示四项都要在。
+        self.assertEqual([g["title"] for g in annotated["3-1"]["eventNotes"]], ["流程提示"])
+        self.assertIn("2008/4-6", note_text("3-1"))
+        self.assertIn("席若芸的请求", note_text("3-1"))
+        self.assertIn("老板娘询问云芊要不要周末穿女仆装到酒吧打工", note_text("3-1"))
+        self.assertIn("穿着女仆装进19号酒吧", note_text("3-1"))
+
+        # 3-5 的两处灵感 / 两处装扮提示及「不限打工」不能漏。
+        self.assertIn("3发生后~2009/11", note_text("3-5"))
+        self.assertIn("穿着女仆装进19号酒吧（不限打工）", note_text("3-5"))
+        self.assertIn("云芊到京风唱片，加贺大泽突然想到晚会的灵感", note_text("3-5"))
+        self.assertIn("穿着女仆装进京风唱片", note_text("3-5"))
+
+        # 小红帽：1-1 时间 / 概要 / 装扮齐全；新闻那条挂在 1-6 上（源文本只有 6 个事件）。
+        self.assertEqual([g["title"] for g in annotated["1-1"]["eventNotes"]], ["流程提示"])
+        self.assertIn("2008/6", note_text("1-1"))
+        self.assertIn("合照", note_text("1-1"))
+        self.assertIn("穿着小红帽装", note_text("1-1"))
+        self.assertIn("安妤约云芊到公园", note_text("1-4"))
+        self.assertNotIn("杨安妤", note_text("1-4"))
+        self.assertIn("绯闻为新闻炒作", note_text("1-6"))
+        self.assertIn("公司知名度+100、云芊人气-30", note_text("1-6"))
 
     def test_festivals(self) -> None:
         node = _node(self.data, "festivals")
@@ -886,6 +898,20 @@ class TestSweetGuide(unittest.TestCase):
         self.assertTrue(
             next(b for b in shijie if b["label"] == "1-11")["text"].startswith("与徐世杰第二次遇袭")
         )
+
+        # 性骚扰疑云 2-1～2-11 的时间/概要/提示挂在事件块上，不新增块。
+        notes = {b["label"]: b.get("eventNotes", []) for b in shijie if b["label"].startswith("2-")}
+        self.assertEqual(list(notes), [f"2-{n}" for n in range(1, 12)])
+        self.assertTrue(all(notes.values()))
+
+        def note_text(label: str) -> str:
+            return "\n".join(item["text"] for group in notes[label] for item in group["items"])
+
+        self.assertIn("2008/6-8", note_text("2-1"))
+        self.assertIn("花50万买消息", note_text("2-8"))
+        self.assertIn("得到自信粉底", note_text("2-10"))
+        self.assertIn("得到机智唇膏", note_text("2-11"))
+        self.assertEqual(len(kinds(nodes["xu-shijie"], "note")), 0)
 
         # 舞台秘影 1-12 下面是六个送礼地点的续行，归在同一步里当细节。
         stage = nodes["stage-shadow"]
