@@ -6,10 +6,10 @@
     "stats": {
       "categories": 3,
       "items": 31,
-      "blocks": 3001,
+      "blocks": 2958,
       "readyItems": 31,
       "missingItems": 0,
-      "sourceParagraphs": 3001
+      "sourceParagraphs": 2958
     }
   },
   "categories": [
@@ -2307,33 +2307,106 @@
             },
             {
               "kind": "event",
-              "text": "穿上小红帽服装后，在街边偶遇伦敦广告的负责人杰西卡。",
+              "text": "遇到洁西卡（伊莉莎白的负责人），洁西卡要求合照，选择“没问题”。",
               "group": 26,
-              "label": "1-1"
+              "label": "1-1",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "2008/6",
+                      "text": "遇到洁西卡（伊莉莎白的负责人）"
+                    }
+                  ]
+                },
+                {
+                  "title": "触发条件",
+                  "items": [
+                    {
+                      "label": "穿着小红帽装",
+                      "text": "洁西卡要求合照，选择「没问题」"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "当主角达到演技220、仪态415、自信285且拍过几辑广告后，杰西卡上门邀约《相遇花精》。",
+              "text": "洁西卡上门邀约广告《相遇花精》。",
               "group": 27,
-              "label": "1-2"
+              "label": "1-2",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "2009/1",
+                      "text": "洁西卡上门邀约广告《相遇花精》"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "接下《相遇花精》后，隔天出新闻“和克烈斯互动亲密，横刀夺爱？杜云芊背叛好友？”",
+              "text": "《相遇花精》拍摄期间，和克烈斯的绯闻新闻跑出来。",
               "group": 28,
-              "label": "1-3"
+              "label": "1-3",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "《相遇花精》拍摄期间",
+                      "text": "绯闻新闻自动产生"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "周末，杨安妤来找主角，相约下周公园见。",
+              "text": "《相遇花精》杀青后1周，杨安妤约云芊到公园。",
               "group": 29,
-              "label": "1-4"
+              "label": "1-4",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "杀青后1周",
+                      "text": "杨安妤约云芊到公园"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "隔周周一到公园，必须身穿甜美小红帽装。安妤与主角冰释前嫌，得到CG",
+              "text": "找一天到公园，安妤与主角冰释前嫌，得到CG。",
               "group": 30,
               "label": "1-5",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "4发生后1周内",
+                      "text": "找一天到公园，和安妤解开心结"
+                    }
+                  ]
+                },
+                {
+                  "title": "触发条件",
+                  "items": [
+                    {
+                      "label": "穿着小红帽装",
+                      "text": "解开心结后得到CG"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "protagonist-29"
               ],
@@ -2341,9 +2414,29 @@
             },
             {
               "kind": "event",
-              "text": "与安妤冰释前嫌后接拍电视剧，会看见克烈斯跟安妤解释。",
+              "text": "听见克烈斯和安妤的对话，之后新闻自动产生「绯闻为新闻炒作」。",
               "group": 31,
-              "label": "1-6"
+              "label": "1-6",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "5发生后2周内",
+                      "text": "听见克烈斯和安妤的对话"
+                    }
+                  ]
+                },
+                {
+                  "title": "新闻结果",
+                  "items": [
+                    {
+                      "label": "新闻自动产生",
+                      "text": "公司知名度+100、云芊人气-30"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "heading",
@@ -2444,276 +2537,209 @@
             },
             {
               "kind": "event",
-              "text": "席若芸的请求",
-              "group": 45,
-              "label": "3-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2008/4-6",
-              "group": 45
-            },
-            {
-              "kind": "paragraph",
               "text": "穿着女仆装的云芊好可爱，老板娘席若芸询问云芊要不要周末穿女仆装到酒吧打工。",
-              "group": 45
-            },
-            {
-              "kind": "note",
-              "text": "提示：穿着女仆装进19号酒吧",
-              "group": 45
+              "group": 45,
+              "label": "3-1",
+              "eventNotes": [
+                {
+                  "title": "触发条件",
+                  "items": [
+                    {
+                      "label": "女仆装",
+                      "text": "穿着女仆装进19号酒吧"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "云芊到酒吧打工赚钱",
+              "text": "周六日穿女仆装到19号酒吧打工，记得和席若芸对话领薪水。",
               "group": 46,
-              "label": "3-2"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：1发生后",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "周六日穿女仆装到酒吧打工。",
-              "group": 46
-            },
-            {
-              "kind": "note",
-              "text": "※记得和席若芸对话领薪水喔~",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "打工薪资：",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第1-19次 薪水1万",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第20-99次 薪水2万",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第100-199次 薪水5万",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第200次&超过200次 薪水10万",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第10次 奖金50万",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第20次 +公关10",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第50次 奖金500万+公关100",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第100次 奖金1000万+公关200",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第200次 +公关500",
-              "group": 46
-            },
-            {
-              "kind": "paragraph",
-              "text": "第250次 奖金5000万+公关1000",
-              "group": 46
+              "label": "3-2",
+              "eventNotes": [
+                {
+                  "title": "打工薪资",
+                  "items": [
+                    {
+                      "label": "第1-19次",
+                      "text": "薪水1万；第20-99次 薪水2万；第100-199次 薪水5万；第200次&超过200次 薪水10万"
+                    }
+                  ]
+                },
+                {
+                  "title": "打工奖励",
+                  "items": [
+                    {
+                      "label": "奖金",
+                      "text": "第10次 奖金50万；第20次 +公关10；第50次 奖金500万+公关100；第100次 奖金1000万+公关200；第200次 +公关500；第250次 奖金5000万+公关1000"
+                    }
+                  ]
+                },
+                {
+                  "title": "领薪提示",
+                  "items": [
+                    {
+                      "label": "别忘了",
+                      "text": "记得和席若芸对话领薪水喔~"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "国际慈善表演计划",
-              "group": 47,
-              "label": "3-3"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2009/10",
-              "group": 47
-            },
-            {
-              "kind": "paragraph",
               "text": "新闻自动产生：加贺大泽将举办大型慈善晚会。",
-              "group": 47
+              "group": 47,
+              "label": "3-3",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "2009/10",
+                      "text": "新闻自动产生：加贺大泽将举办大型慈善晚会"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "遇到加贺大泽",
+              "text": "酒吧打工遇到加贺大泽，他好奇酒吧也走女仆风，点击他会建议你说“主人，欢迎回来！”",
               "group": 48,
-              "label": "3-4"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2009/10-12",
-              "group": 48
-            },
-            {
-              "kind": "paragraph",
-              "text": "酒吧打工时遇到加贺大泽，加贺好奇酒吧也走女仆风；前去点击，他会建议你说“主人，欢迎回来！”",
-              "group": 48
+              "label": "3-4",
+              "eventNotes": [
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "2009/10-12",
+                      "text": "酒吧打工遇到加贺大泽（不限打工）"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "寻找灵感",
+              "text": "加贺大泽到酒吧寻找晚会的灵感；云芊到京风唱片时，加贺大泽突然想到晚会的灵感。",
               "group": 49,
-              "label": "3-5"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：3发生后~2009/11",
-              "group": 49
-            },
-            {
-              "kind": "paragraph",
-              "text": "加贺大泽到酒吧寻找晚会灵感。",
-              "group": 49
-            },
-            {
-              "kind": "note",
-              "text": "提示：穿着女仆装进19号酒吧（不限打工）",
-              "group": 49
-            },
-            {
-              "kind": "paragraph",
-              "text": "云芊到京风唱片，加贺大泽突然想到晚会的灵感。",
-              "group": 49
-            },
-            {
-              "kind": "note",
-              "text": "提示：穿着女仆装进京风唱片",
-              "group": 49
-            },
-            {
-              "kind": "paragraph",
-              "text": "加贺大泽会说要的就是这种风格，然后扬长而去。",
-              "group": 49
+              "label": "3-5",
+              "eventNotes": [
+                {
+                  "title": "寻找灵感",
+                  "items": [
+                    {
+                      "label": "19号酒吧",
+                      "text": "穿女仆装进19号酒吧"
+                    },
+                    {
+                      "label": "京风唱片",
+                      "text": "穿女仆装进京风唱片"
+                    }
+                  ]
+                },
+                {
+                  "title": "触发时间",
+                  "items": [
+                    {
+                      "label": "3发生后～2009/11",
+                      "text": "加贺大泽到酒吧寻找晚会灵感"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "Service for You",
-              "group": 50,
-              "label": "3-6"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：5发生后；2009/12",
-              "group": 50
-            },
-            {
-              "kind": "paragraph",
               "text": "新闻自动产生：慈善晚会正式定名为「Service for You」。",
-              "group": 50
+              "group": 50,
+              "label": "3-6",
+              "eventNotes": [
+                {
+                  "title": "定名时间",
+                  "items": [
+                    {
+                      "label": "5发生后／2009/12",
+                      "text": "新闻自动产生，晚会定名「Service for You」"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "晚会主持",
-              "group": 51,
-              "label": "3-7"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：6发生后",
-              "group": 51
-            },
-            {
-              "kind": "paragraph",
               "text": "加贺大泽到办公室邀请云芊担任晚会主持，选“我愿意试试看”。",
-              "group": 51
-            },
-            {
-              "kind": "note",
-              "text": "※2010/1/30、1/31不能有特殊行程",
-              "group": 51
+              "group": 51,
+              "label": "3-7",
+              "eventNotes": [
+                {
+                  "title": "排程限制",
+                  "items": [
+                    {
+                      "label": "2010/1/30、1/31",
+                      "text": "不能有特殊行程"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "kind": "event",
-              "text": "晚会海报",
-              "group": 52,
-              "label": "3-8"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2010/1",
-              "group": 52
-            },
-            {
-              "kind": "paragraph",
               "text": "收到晚会海报，女仆装造型，CG入手。",
               "group": 52,
+              "label": "3-8",
+              "eventNotes": [
+                {
+                  "title": "中断条件",
+                  "items": [
+                    {
+                      "label": "事件7",
+                      "text": "若对自己没自信，事件就结束了喔！"
+                    }
+                  ]
+                }
+              ],
               "cgIds": [
                 "protagonist-3"
               ],
-              "anchor": "ev127"
-            },
-            {
-              "kind": "note",
-              "text": "※若事件7对自己没自信的话，事件就结束了喔！",
-              "group": 52
+              "anchor": "ev93"
             },
             {
               "kind": "event",
-              "text": "晚会募款结果",
+              "text": "新闻自动产生：按云芊口才、仪态、自信分三档募款结果。",
               "group": 53,
-              "label": "3-8-1"
-            },
-            {
-              "kind": "paragraph",
-              "text": "时间：2010/2",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "新闻自动产生——",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "新闻一：主持人完美演出，总共募得上亿捐款！",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "云芊口才>500、仪态>500、自信>500，后续接京风唱片的通告，酬劳会较多。",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "新闻二：场面略显冷清，捐款情况不如预期。",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "云芊口才、仪态、自信任一项<200。",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "新闻三：主持人表现出色，总共募得千万捐款！",
-              "group": 53
-            },
-            {
-              "kind": "paragraph",
-              "text": "上述条件皆不相符。",
-              "group": 53
+              "label": "3-8-1",
+              "eventNotes": [
+                {
+                  "title": "募款结果一",
+                  "items": [
+                    {
+                      "label": "口才>500、仪态>500、自信>500",
+                      "text": "主持人完美演出，总共募得上亿捐款；后续接京风唱片的通告酬劳较多"
+                    }
+                  ]
+                },
+                {
+                  "title": "募款结果二",
+                  "items": [
+                    {
+                      "label": "三项任一<200",
+                      "text": "场面略显冷清，捐款情况不如预期"
+                    }
+                  ]
+                },
+                {
+                  "title": "募款结果三",
+                  "items": [
+                    {
+                      "label": "其他情况",
+                      "text": "主持人表现出色，总共募得千万捐款"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "children": [],

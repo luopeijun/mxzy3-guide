@@ -110,6 +110,10 @@ OUTPUT = ROOT / "public" / "data" / "sweet" / "guide.json"
 # 反查图鉴落点）+ `anchor`（页内 DOM id，形如 `ev12`，与 ContentBlockList 的兜底
 # 同一套编号）。`event` 类还会补 `cg: true`，让卡片和原生标了（CG）的事件长得一样。
 CG_LINKS = SOURCES / "cg-links.tsv"
+# 服装页的事件说明：挂在事件块上，不新增块（追踪器按块下标存进度）。
+# 五列：服装名 / 事件编号 / 分组标题 / 条件 / 正文；编号在不同服装间会重复，
+# 所以用服装名 + 编号做键。
+OUTFIT_EVENT_NOTES = SOURCES / "outfit-event-notes.tsv"
 # 角色头像按约定命名放在 public/images/sweet/：`<slug>-logo.*` 是目录与
 # 角色卡在人名左侧展示的圆圈头像（与主站 images/characters/ 同一套约定）。
 SWEET_IMAGES = ROOT / "public" / "images" / "sweet"
@@ -395,14 +399,48 @@ OUTFIT_STEP_RE = re.compile(r"^(\d+(?:-\d+)+)[.]?(.+)$")
 OUTFIT_SECTIONS = {"虚拟服装相关剧情"}
 
 
-def parse_outfits(path: Path) -> tuple[list[dict], str]:
+def read_outfit_event_notes(path: Path) -> dict[tuple[str, str], list[dict]]:
+    """读服装页补充说明，键是（服装名，事件编号）；编号跨服装会重复。"""
+    if not path.exists():
+        return {}
+    notes: dict[tuple[str, str], list[dict]] = {}
+    for number, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+        line = raw.rstrip("\n")
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) != 5:
+            raise ValueError(f"{path.name}:{number}: expected 5 columns, got {raw!r}")
+        outfit, label, group, condition, text = (part.strip() for part in parts)
+        if not all((outfit, label, group, condition, text)):
+            raise ValueError(f"{path.name}:{number}: empty field in {raw!r}")
+        groups = notes.setdefault((outfit, label), [])
+        bucket = next((g for g in groups if g["title"] == group), None)
+        if bucket is None:
+            bucket = {"title": group, "items": []}
+            groups.append(bucket)
+        bucket["items"].append({"label": condition, "text": text})
+    return notes
+
+
+def parse_outfits(path: Path, event_notes: dict[tuple[str, str], list[dict]] | None = None) -> tuple[list[dict], str]:
     """服装获得方法和剧情 → 每件衣服一节，事件卡里带上「时间：」与提示。"""
     lines = _read_lines(path)
+    event_notes = event_notes if event_notes is not None else read_outfit_event_notes(OUTFIT_EVENT_NOTES)
     blocks: list[dict] = []
     group = 0
+    outfit = ""
 
     def push(kind: str, text: str, **extra) -> None:
-        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+        nonlocal outfit
+        if kind == "heading":
+            outfit = text
+        block = {"kind": kind, "text": text, "group": group, **extra}
+        if kind == "event":
+            groups = event_notes.get((outfit, str(extra.get("label", ""))))
+            if groups:
+                block["eventNotes"] = groups
+        blocks.append(block)
 
     for text in lines[1:]:
         if text in OUTFIT_SECTIONS:

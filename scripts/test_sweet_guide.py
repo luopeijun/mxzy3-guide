@@ -373,9 +373,31 @@ class TestSweetGuide(unittest.TestCase):
         self.assertTrue(step["text"].startswith("周三"), step["text"])
 
         notes = [b["text"] for b in blocks if b["kind"] == "note"]
-        self.assertEqual(len(notes), 9)
-        self.assertTrue(all(n.startswith(("※", "提示：")) for n in notes))
-        self.assertIn("提示：穿着女仆装进京风唱片", notes)
+        self.assertEqual(len(notes), 3)
+        self.assertTrue(all(n.startswith("※") for n in notes))
+
+        # 女仆装 / 小红帽的时间、提示、薪资与募款分支挂在事件块上，不新增块
+        # ——追踪器按块下标存进度，插块会让老存档整体错位。
+        annotated = {b["label"]: b for b in blocks if b.get("eventNotes")}
+        self.assertEqual(len(annotated), 15)
+        self.assertEqual(
+            [g["title"] for g in annotated["3-1"]["eventNotes"]], ["触发条件"]
+        )
+        self.assertIn(
+            "穿着女仆装进19号酒吧",
+            annotated["3-1"]["eventNotes"][0]["items"][0]["text"],
+        )
+        self.assertEqual(
+            [g["title"] for g in annotated["1-1"]["eventNotes"]], ["触发时间", "触发条件"]
+        )
+        self.assertIn(
+            "公司知名度+100、云芊人气-30",
+            " ".join(
+                item["text"]
+                for group in annotated["1-6"]["eventNotes"]
+                for item in group["items"]
+            ),
+        )
 
     def test_festivals(self) -> None:
         node = _node(self.data, "festivals")
