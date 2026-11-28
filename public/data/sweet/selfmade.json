@@ -1,8 +1,8 @@
 {
   "meta": {
-    "entryCount": 73,
-    "extraCount": 13,
-    "artistCount": 10,
+    "entryCount": 72,
+    "extraCount": 12,
+    "artistCount": 9,
     "sources": [
       "sources/sweet/self-notices.txt（攻略整理的自制通告一览）",
       "sources/sweet/creations.txt（艺人创作取得，特殊作品条件）",
@@ -21,12 +21,12 @@
       "key": "tv",
       "label": "电视剧",
       "count": 13,
-      "extraCount": 1
+      "extraCount": 0
     },
     {
       "key": "movie",
       "label": "电影",
-      "count": 17,
+      "count": 16,
       "extraCount": 0
     },
     {
@@ -2628,50 +2628,9 @@
       },
       "guide": true,
       "acquire": ""
-    },
-    {
-      "artist": "其他",
-      "artistId": 0,
-      "section": "movie",
-      "code": "MV791",
-      "name": "从来不曾爱过",
-      "guideName": "从来不曾爱过",
-      "category": "电影",
-      "kind": "",
-      "days": 0,
-      "condition": "第二年6月~12月，公司资金大于300万，苏嫚君上门募捐，答应捐钱可得剧本",
-      "tags": [
-        "剧情片",
-        "男双五星",
-        "女配3星"
-      ],
-      "thresholds": [],
-      "creation": {
-        "kind": "特殊",
-        "condition": "公司金钱>300万，苏嫚君主动募款并赠送《从来不曾爱过》"
-      },
-      "guide": true,
-      "acquire": ""
     }
   ],
   "extras": [
-    {
-      "artist": "其他",
-      "artistId": 0,
-      "section": "tv",
-      "code": "TV791",
-      "name": "流泪的天堂",
-      "guideName": "",
-      "category": "电视剧",
-      "kind": "",
-      "days": 0,
-      "condition": "",
-      "tags": [],
-      "thresholds": [],
-      "creation": null,
-      "guide": false,
-      "acquire": "story"
-    },
     {
       "artist": "沈惟真",
       "artistId": 11,
@@ -2893,8 +2852,8 @@
       "acquire": "pool"
     },
     {
-      "artist": "其他",
-      "artistId": 0,
+      "artist": "卫亚",
+      "artistId": 16,
       "section": "stage",
       "code": "TH791",
       "name": "寂寞微光",

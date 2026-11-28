@@ -1581,14 +1581,14 @@ class TestSweetGuide(unittest.TestCase):
         self.assertNotIn("艺人创作取得", [b["text"] for b in notice_blocks])
         self.assertEqual(len([b for b in notice_blocks if b["kind"] == "table"]), 0)
 
-        # 特殊创作取得并入艺人攻略页：独立页撤掉，78 条事件在原事件块上加
-        # creation 高亮字段（寂寞微光一链同时出现在卫亚与金皓薰页，故 79 处）。
+        # 特殊创作取得并入艺人攻略页：独立页撤掉，绿色高亮只标在概要明确写
+        # 「拿到创作」的那条事件（每条链只标一次），不再把整条链十几步全标绿。
         self.assertNotIn("special-creations", nodes)
         marked = [
             (slug, b) for slug, n in nodes.items()
             for b in n["blocks"] if b.get("creation")
         ]
-        self.assertEqual(len(marked), 79)
+        self.assertEqual(len(marked), 13)
         works = {b["creation"] for _, b in marked}
         self.assertEqual(len(works), 10)
         for name in ("温柔时刻", "从接吻开始", "没有雪的耶诞节", "寂寞国度",
@@ -1599,6 +1599,8 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(by_event[("danisi", "我有一些灵感…")], "从接吻开始")
         self.assertEqual(by_event[("shi-difen", "原来你比我惨…")], "没有雪的耶诞节")
         self.assertEqual(by_event[("ji-xiang", "一切都是你的功劳")], "烟花下的你")
+        self.assertEqual(by_event[("wei-ya", "我非常感谢你！")], "寂寞微光")
+        self.assertNotIn(("danisi", "可以多给我一点时间吗？"), by_event)
         self.assertTrue(all(b["kind"] == "event" for _, b in marked))
 
         # 艺人资料并入各艺人攻略页头部（profile 字段），不再单独成页。
@@ -1642,19 +1644,23 @@ class TestSweetGuide(unittest.TestCase):
     def test_selfmade_merges_creation_conditions(self) -> None:
         """自制通告与创作取得合成一份按作品码对齐的数据，供存档侧直查。
 
-        85 条创作条件全部并进条目；作品码是存档与攻略的共同 key，不能有
+        创作条件全部并进条目；作品码是存档与攻略的共同 key，不能有
         空码或重复条件导致的错配。
         """
         data = json.loads((ROOT / "public" / "data" / "sweet" / "selfmade.json").read_text(encoding="utf-8"))
         rows = data["entries"] + data["extras"]
         merged = [row for row in rows if row.get("creation")]
-        self.assertEqual(len(merged), 85)
+        self.assertEqual(len(merged), 84)
         self.assertTrue(all(row["code"] for row in rows))
         # 特殊作品的剧情条件是联动的关键信息，不能只剩天数。
         by_name = {row["name"]: row for row in rows}
         self.assertIn("主动赠送", by_name["雨天"]["creation"]["condition"])
         self.assertIn("林芬芬", by_name["温柔时刻"]["creation"]["condition"])
-        self.assertIn("公司金钱", by_name["从来不曾爱过"]["creation"]["condition"])
+        self.assertIn("新名纱雪", by_name["寂寞微光"]["creation"]["condition"])
+        self.assertEqual(by_name["寂寞微光"]["artist"], "卫亚")
+        # 用户实机核对：这两个不算自制作品，NP鸡清单里不列。
+        self.assertNotIn("从来不曾爱过", by_name)
+        self.assertNotIn("流泪的天堂", by_name)
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

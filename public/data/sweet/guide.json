@@ -9046,8 +9046,7 @@
               "kind": "event",
               "text": "这样忍耐值得吗？",
               "group": 11,
-              "label": "2-1",
-              "creation": "温柔时刻"
+              "label": "2-1"
             },
             {
               "kind": "paragraph",
@@ -9386,8 +9385,7 @@
               "kind": "event",
               "text": "一辈子都别想！",
               "group": 31,
-              "label": "5-1",
-              "creation": "从接吻开始"
+              "label": "5-1"
             },
             {
               "kind": "paragraph",
@@ -9403,8 +9401,7 @@
               "kind": "event",
               "text": "我来接你回家",
               "group": 32,
-              "label": "5-2",
-              "creation": "从接吻开始"
+              "label": "5-2"
             },
             {
               "kind": "paragraph",
@@ -9420,8 +9417,7 @@
               "kind": "event",
               "text": "别以为你有机会",
               "group": 33,
-              "label": "5-3",
-              "creation": "从接吻开始"
+              "label": "5-3"
             },
             {
               "kind": "paragraph",
@@ -9437,8 +9433,7 @@
               "kind": "event",
               "text": "我是为了你的安全",
               "group": 34,
-              "label": "5-4",
-              "creation": "从接吻开始"
+              "label": "5-4"
             },
             {
               "kind": "paragraph",
@@ -9454,8 +9449,7 @@
               "kind": "event",
               "text": "人要有自知之明！",
               "group": 35,
-              "label": "5-5",
-              "creation": "从接吻开始"
+              "label": "5-5"
             },
             {
               "kind": "paragraph",
@@ -9471,8 +9465,7 @@
               "kind": "event",
               "text": "因为我不喜欢说谎",
               "group": 36,
-              "label": "5-6",
-              "creation": "从接吻开始"
+              "label": "5-6"
             },
             {
               "kind": "paragraph",
@@ -9550,8 +9543,7 @@
               "text": "很高兴跟你合作",
               "group": 42,
               "label": "7-1",
-              "tag": "友好度上升",
-              "creation": "从接吻开始"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -9568,8 +9560,7 @@
               "text": "专心在工作吧！",
               "group": 43,
               "label": "7-2",
-              "tag": "好感度上升",
-              "creation": "从接吻开始"
+              "tag": "好感度上升"
             },
             {
               "kind": "paragraph",
@@ -9607,8 +9598,7 @@
               "cgIds": [
                 "danisi-3"
               ],
-              "anchor": "ev134",
-              "creation": "从接吻开始"
+              "anchor": "ev134"
             },
             {
               "kind": "paragraph",
@@ -10519,8 +10509,7 @@
                     }
                   ]
                 }
-              ],
-              "creation": "昨日约定"
+              ]
             },
             {
               "kind": "paragraph",
@@ -10688,8 +10677,7 @@
               "kind": "event",
               "text": "谁都不能欺负纪翔！",
               "group": 21,
-              "label": "4-1",
-              "creation": "昨日约定"
+              "label": "4-1"
             },
             {
               "kind": "paragraph",
@@ -10705,8 +10693,7 @@
               "kind": "event",
               "text": "不能为我留下吗？",
               "group": 22,
-              "label": "4-2",
-              "creation": "昨日约定"
+              "label": "4-2"
             },
             {
               "kind": "paragraph",
@@ -10746,8 +10733,7 @@
               "text": "愿意陪我去散步吗？",
               "group": 25,
               "label": "5-1",
-              "tag": "友好度上升",
-              "creation": "烟花下的你"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -10785,8 +10771,7 @@
               "cgIds": [
                 "ji-xiang-3"
               ],
-              "anchor": "ev79",
-              "creation": "烟花下的你"
+              "anchor": "ev79"
             },
             {
               "kind": "paragraph",
@@ -10807,8 +10792,7 @@
               "kind": "event",
               "text": "你怎么一直傻笑？",
               "group": 27,
-              "label": "5-3",
-              "creation": "烟花下的你"
+              "label": "5-3"
             },
             {
               "kind": "paragraph",
@@ -10824,8 +10808,7 @@
               "kind": "event",
               "text": "我只是在发呆…",
               "group": 28,
-              "label": "5-4",
-              "creation": "烟花下的你"
+              "label": "5-4"
             },
             {
               "kind": "paragraph",
@@ -10848,8 +10831,7 @@
               "text": "我想邀请你吃一顿饭",
               "group": 30,
               "label": "6-1",
-              "tag": "友好度上升",
-              "creation": "烟花下的你"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -10870,8 +10852,7 @@
               "kind": "event",
               "text": "你是鼓励我还是试探我？",
               "group": 31,
-              "label": "6-2",
-              "creation": "烟花下的你"
+              "label": "6-2"
             },
             {
               "kind": "paragraph",
@@ -10888,8 +10869,7 @@
               "text": "我想去海边走走…",
               "group": 32,
               "label": "6-3",
-              "tag": "友好度上升",
-              "creation": "烟花下的你"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -10910,8 +10890,7 @@
               "kind": "event",
               "text": "不然你做我男朋友！",
               "group": 33,
-              "label": "6-4",
-              "creation": "烟花下的你"
+              "label": "6-4"
             },
             {
               "kind": "paragraph",
@@ -10938,8 +10917,7 @@
                     }
                   ]
                 }
-              ],
-              "creation": "烟花下的你"
+              ]
             },
             {
               "kind": "paragraph",
@@ -11112,8 +11090,7 @@
               "text": "我想邀请你吃一顿饭",
               "group": 44,
               "label": "8-1",
-              "tag": "友好度上升",
-              "creation": "烟花下的你"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -11150,8 +11127,7 @@
               "cgIds": [
                 "ji-xiang-4"
               ],
-              "anchor": "ev137",
-              "creation": "烟花下的你"
+              "anchor": "ev137"
             },
             {
               "kind": "paragraph",
@@ -11172,8 +11148,7 @@
               "kind": "event",
               "text": "你为什么在这里？",
               "group": 46,
-              "label": "8-3",
-              "creation": "烟花下的你"
+              "label": "8-3"
             },
             {
               "kind": "paragraph",
@@ -11190,8 +11165,7 @@
               "text": "你有喜欢的人吗？",
               "group": 47,
               "label": "8-4",
-              "tag": "友好度上升",
-              "creation": "烟花下的你"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -11207,8 +11181,7 @@
               "kind": "event",
               "text": "我会选择我爱的人",
               "group": 48,
-              "label": "8-5",
-              "creation": "烟花下的你"
+              "label": "8-5"
             },
             {
               "kind": "paragraph",
@@ -11224,8 +11197,7 @@
               "kind": "event",
               "text": "你不是喜欢他？",
               "group": 49,
-              "label": "8-6",
-              "creation": "烟花下的你"
+              "label": "8-6"
             },
             {
               "kind": "paragraph",
@@ -11268,8 +11240,7 @@
               "cgIds": [
                 "ji-xiang-1"
               ],
-              "anchor": "ev155",
-              "creation": "烟花下的你"
+              "anchor": "ev155"
             },
             {
               "kind": "paragraph",
@@ -11290,8 +11261,7 @@
               "kind": "event",
               "text": "你不会跳回翱翔天际吧！",
               "group": 52,
-              "label": "9-2",
-              "creation": "烟花下的你"
+              "label": "9-2"
             },
             {
               "kind": "paragraph",
@@ -11307,8 +11277,7 @@
               "kind": "event",
               "text": "我们比以前更好了",
               "group": 53,
-              "label": "9-3",
-              "creation": "烟花下的你"
+              "label": "9-3"
             },
             {
               "kind": "paragraph",
@@ -12526,8 +12495,7 @@
               "kind": "event",
               "text": "疑似假戏真作！？",
               "group": 49,
-              "label": "9-1",
-              "creation": "恋爱最终章续篇／因风飞过蔷薇"
+              "label": "9-1"
             },
             {
               "kind": "paragraph",
@@ -12548,8 +12516,7 @@
               "kind": "event",
               "text": "我只想告诉你一个人",
               "group": 50,
-              "label": "9-2",
-              "creation": "恋爱最终章续篇／因风飞过蔷薇"
+              "label": "9-2"
             },
             {
               "kind": "paragraph",
@@ -12570,8 +12537,7 @@
               "kind": "event",
               "text": "记得去帮我澄清",
               "group": 51,
-              "label": "9-3",
-              "creation": "恋爱最终章续篇／因风飞过蔷薇"
+              "label": "9-3"
             },
             {
               "kind": "paragraph",
@@ -12587,8 +12553,7 @@
               "kind": "event",
               "text": "两人的关系是…",
               "group": 52,
-              "label": "9-4",
-              "creation": "恋爱最终章续篇／因风飞过蔷薇"
+              "label": "9-4"
             },
             {
               "kind": "paragraph",
@@ -12624,8 +12589,7 @@
               "cgIds": [
                 "murong-hexi-5"
               ],
-              "anchor": "ev163",
-              "creation": "恋爱最终章续篇／因风飞过蔷薇"
+              "anchor": "ev163"
             },
             {
               "kind": "paragraph",
@@ -14574,8 +14538,7 @@
               "kind": "event",
               "text": "克烈斯退出演艺圈！",
               "group": 20,
-              "label": "3-1",
-              "creation": "没有雪的耶诞节"
+              "label": "3-1"
             },
             {
               "kind": "paragraph",
@@ -14591,8 +14554,7 @@
               "kind": "event",
               "text": "好不容易交到一位好朋友…",
               "group": 21,
-              "label": "3-2",
-              "creation": "没有雪的耶诞节"
+              "label": "3-2"
             },
             {
               "kind": "paragraph",
@@ -14608,8 +14570,7 @@
               "kind": "event",
               "text": "史蒂芬跟克烈斯的关系是？",
               "group": 22,
-              "label": "3-3",
-              "creation": "没有雪的耶诞节"
+              "label": "3-3"
             },
             {
               "kind": "paragraph",
@@ -14626,8 +14587,7 @@
               "text": "谢谢你帮我解释",
               "group": 23,
               "label": "3-4",
-              "tag": "友好度上升",
-              "creation": "没有雪的耶诞节"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -14643,8 +14603,7 @@
               "kind": "event",
               "text": "他总是一个人独处…",
               "group": 24,
-              "label": "3-5",
-              "creation": "没有雪的耶诞节"
+              "label": "3-5"
             },
             {
               "kind": "paragraph",
@@ -14660,8 +14619,7 @@
               "kind": "event",
               "text": "祈求下次的相聚",
               "group": 25,
-              "label": "3-6",
-              "creation": "没有雪的耶诞节"
+              "label": "3-6"
             },
             {
               "kind": "paragraph",
@@ -14678,8 +14636,7 @@
               "text": "我陪你散散步！",
               "group": 26,
               "label": "3-7",
-              "tag": "友好度上升",
-              "creation": "没有雪的耶诞节"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -15791,8 +15748,7 @@
                     }
                   ]
                 }
-              ],
-              "creation": "寂寞微光"
+              ]
             },
             {
               "kind": "paragraph",
@@ -15894,8 +15850,7 @@
               "kind": "event",
               "text": "卫亚获取书卷奖！",
               "group": 23,
-              "label": "4-5",
-              "creation": "寂寞微光"
+              "label": "4-5"
             },
             {
               "kind": "paragraph",
@@ -15956,8 +15911,7 @@
                     }
                   ]
                 }
-              ],
-              "creation": "寂寞微光"
+              ]
             },
             {
               "kind": "paragraph",
@@ -15978,8 +15932,7 @@
               "kind": "event",
               "text": "卫亚低分通过期末考",
               "group": 27,
-              "label": "5-2",
-              "creation": "异世界神话"
+              "label": "5-2"
             },
             {
               "kind": "paragraph",
@@ -15995,8 +15948,7 @@
               "kind": "event",
               "text": "考试没有考好？",
               "group": 28,
-              "label": "5-3",
-              "creation": "异世界神话"
+              "label": "5-3"
             },
             {
               "kind": "paragraph",
@@ -16012,8 +15964,7 @@
               "kind": "event",
               "text": "卫亚萌生退意！",
               "group": 29,
-              "label": "5-4",
-              "creation": "异世界神话"
+              "label": "5-4"
             },
             {
               "kind": "paragraph",
@@ -16029,8 +15980,7 @@
               "kind": "event",
               "text": "想要退出演艺圈？",
               "group": 30,
-              "label": "5-5",
-              "creation": "异世界神话"
+              "label": "5-5"
             },
             {
               "kind": "paragraph",
@@ -16046,8 +15996,7 @@
               "kind": "event",
               "text": "引导他说出真心话吧…",
               "group": 31,
-              "label": "5-6",
-              "creation": "异世界神话"
+              "label": "5-6"
             },
             {
               "kind": "paragraph",
@@ -16063,8 +16012,7 @@
               "kind": "event",
               "text": "我相信你的能力！",
               "group": 32,
-              "label": "5-7",
-              "creation": "异世界神话"
+              "label": "5-7"
             },
             {
               "kind": "paragraph",
@@ -16080,8 +16028,7 @@
               "kind": "event",
               "text": "可以让我离开公司吗？",
               "group": 33,
-              "label": "5-8",
-              "creation": "异世界神话"
+              "label": "5-8"
             },
             {
               "kind": "paragraph",
@@ -16125,8 +16072,7 @@
               "kind": "event",
               "text": "一切都拜托你了",
               "group": 36,
-              "label": "6-1",
-              "creation": "寂寞微光"
+              "label": "6-1"
             },
             {
               "kind": "paragraph",
@@ -16148,8 +16094,7 @@
               "text": "可以跟我去植物园吗？",
               "group": 37,
               "label": "6-2",
-              "tag": "友好度上升",
-              "creation": "寂寞微光"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -16187,8 +16132,7 @@
               "cgIds": [
                 "wei-ya-3"
               ],
-              "anchor": "ev123",
-              "creation": "寂寞微光"
+              "anchor": "ev123"
             },
             {
               "kind": "paragraph",
@@ -16209,8 +16153,7 @@
               "kind": "event",
               "text": "跟新名纱雪的关系？",
               "group": 39,
-              "label": "6-4",
-              "creation": "寂寞微光"
+              "label": "6-4"
             },
             {
               "kind": "paragraph",
@@ -16237,8 +16180,7 @@
                     }
                   ]
                 }
-              ],
-              "creation": "寂寞微光"
+              ]
             },
             {
               "kind": "paragraph",
@@ -16260,8 +16202,7 @@
               "kind": "event",
               "text": "跟新名纱雪在交往？",
               "group": 42,
-              "label": "7-1",
-              "creation": "寂寞微光"
+              "label": "7-1"
             },
             {
               "kind": "paragraph",
@@ -16278,8 +16219,7 @@
               "text": "请你务必要相信我！",
               "group": 43,
               "label": "7-2",
-              "tag": "友好度上升",
-              "creation": "寂寞微光"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -16295,8 +16235,7 @@
               "kind": "event",
               "text": "我帮你陷害新名纱雪",
               "group": 44,
-              "label": "7-3",
-              "creation": "寂寞微光"
+              "label": "7-3"
             },
             {
               "kind": "paragraph",
@@ -17019,8 +16958,7 @@
                     }
                   ]
                 }
-              ],
-              "creation": "浪漫赌注／秋草旧长营"
+              ]
             },
             {
               "kind": "paragraph",
@@ -17058,8 +16996,7 @@
               "kind": "event",
               "text": "姚子奇送歌表情意？",
               "group": 15,
-              "label": "4-3",
-              "creation": "浪漫赌注／秋草旧长营"
+              "label": "4-3"
             },
             {
               "kind": "paragraph",
@@ -17269,8 +17206,7 @@
               "kind": "event",
               "text": "唱片销售惨淡！",
               "group": 27,
-              "label": "6-1",
-              "creation": "寂寞国度"
+              "label": "6-1"
             },
             {
               "kind": "paragraph",
@@ -17287,8 +17223,7 @@
               "text": "你怎么解释？",
               "group": 28,
               "label": "6-2",
-              "tag": "友好度上升",
-              "creation": "寂寞国度"
+              "tag": "友好度上升"
             },
             {
               "kind": "paragraph",
@@ -21485,8 +21420,7 @@
                     }
                   ]
                 }
-              ],
-              "creation": "寂寞微光"
+              ]
             },
             {
               "kind": "paragraph",

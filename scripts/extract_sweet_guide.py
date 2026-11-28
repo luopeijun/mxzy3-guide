@@ -1378,12 +1378,25 @@ def _norm_event_title(text: str) -> str:
     return re.sub(r"[\s　…．。.！!？?，,、：:；;]", "", text)
 
 
+# 只有概要里明确写「拿到创作」的那条事件才标绿（用户 2026-11-28 口径）：
+# 一条创作链十几步全标绿看不出重点，标在最终拿到创作的地方即可。
+# 「唱子奇的创作」这类只提创作不算拿到，靠动词与「创作」的先后关系排除。
+CREATION_RECEIVE_RE = re.compile(
+    r"(?:赠送|送上|送来|得到|获得|创作剧本|送云芊|送自己的|硬是要送|破例赠送)"
+    r"[^。]{0,24}创作|创作[^。]{0,16}(?:送给|赠送|送来|送上)|写歌赠送"
+)
+
+
 def _creation_index() -> dict[str, str]:
-    """特殊创作攻略的事件标题 → 作品名（章节名去掉括号内艺人名）。"""
+    """特殊创作攻略里「拿到创作」的事件标题 → 作品名（章节名去掉括号内艺人名）。
+
+    只索引概要明确写拿到创作的那一条事件，链上其余事件不标绿。
+    """
     index: dict[str, str] = {}
     work = ""
-    for line in _read_lines(SOURCES / "special-creations.txt"):
-        text = line.strip()
+    lines = _read_lines(SOURCES / "special-creations.txt")
+    for i, raw in enumerate(lines):
+        text = raw.strip()
         group = re.match(r"^\d+[.．](?!\d)(.+)$", text)
         if group:
             works = [
@@ -1393,12 +1406,24 @@ def _creation_index() -> dict[str, str]:
             work = "／".join(part for part in works if part)
             continue
         event = re.match(r"^\d+-\d+[.．](.+)$", text)
-        if event and work:
-            key = _norm_event_title(event.group(1))
-            index[key] = work
-            for alias, target in CREATION_TITLE_ALIASES.items():
-                if key == _norm_event_title(alias):
-                    index[_norm_event_title(target)] = work
+        if not (event and work):
+            continue
+        # 这条事件的概要：到下一个事件或章节为止，找到「概要：」那行。
+        summary = ""
+        for nxt in lines[i + 1:]:
+            s = nxt.strip()
+            if re.match(r"^\d+-\d+[.．]", s) or re.match(r"^\d+[.．](?!\d)", s):
+                break
+            if s.startswith("概要"):
+                summary = s
+                break
+        if not CREATION_RECEIVE_RE.search(summary):
+            continue
+        key = _norm_event_title(event.group(1))
+        index[key] = work
+        for alias, target in CREATION_TITLE_ALIASES.items():
+            if key == _norm_event_title(alias):
+                index[_norm_event_title(target)] = work
     return index
 
 

@@ -72,6 +72,10 @@ ARTIST_IDS = {
 # CD791《温柔时刻》：条件写「林芬芬作品，丹尼斯剧情2-3发生后获得」→ 归丹尼斯。
 ARTIST_OVERRIDES = {'CD791': (12, '丹尼斯')}
 
+# 用户按 NP 鸡「自制创作收集」实机核对：这两个作品不算自制作品，清单里不列。
+# TV791 原本走攻略漏项兜底、MV791 原本是攻略「其他」条目，都在输出前排除。
+EXCLUDE_CODES = {'TV791', 'MV791'}
+
 # 出品方是玩家公司，这些通告就是自制作品；攻略漏掉的靠它兜底。
 PLAYER_COMPANY = '纯真年代'
 CATEGORY_LABEL = {'music': '唱片', 'tv': '电视剧', 'movie': '电影', 'stage': '舞台剧'}
@@ -91,8 +95,7 @@ EXTRA_META = {
     'TH781': (18, '城仲瑄', 'pool'),
     'TH782': (18, '城仲瑄', 'pool'),
     'TH783': (18, '城仲瑄', 'pool'),
-    'TH791': (0, '其他', 'story'),
-    'TV791': (0, '其他', 'story'),
+    'TH791': (16, '卫亚', 'story'),
 }
 
 
@@ -230,6 +233,8 @@ def main():
                 category = hits[0]['cat']
                 # 界面上要跟游戏里看到的一致，攻略的写法只在有出入时留在 guideName 里。
                 game_name = hits[0]['name']
+            if code in EXCLUDE_CODES:
+                continue
             # 创作页的同名条目：优先按 (游戏名, 艺人) 精确取；取不到再看同名
             # 是否只有一条（团体曲目在不同艺人名下写法不同）。保留原样的
             # kind / condition，存档侧同一作品码能看到两页合并后的完整条件。
@@ -270,7 +275,7 @@ def main():
     covered = {entry['code'] for entry in entries if entry['code']}
     extras = []
     for notice in notices:
-        if notice.get('company') != PLAYER_COMPANY or notice['id'] in covered:
+        if notice.get('company') != PLAYER_COMPANY or notice['id'] in covered or notice['id'] in EXCLUDE_CODES:
             continue
         artist_id, artist, acquire = EXTRA_META.get(notice['id'], (0, '其他', ''))
         # 舞台剧等漏项在创作页里有取得条件，按 (游戏名, 艺人) 补上。
