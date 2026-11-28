@@ -3748,7 +3748,7 @@ function NoticeRows({
   // 后续角色行：前四列留空，第五格（执行期间列）放这名角色自己的工作天数。
   // 这样同一通告里不同角色类型的天数逐行可见，不再只有第一个角色的数字。
   const blankCells = (role: RoleRecord) => (
-    <><Td /><Td /><Td /><Td /><Td>{workDaysBadge(role)}</Td></>
+    <><Td /><Td /><Td /><Td /><Td className={disabledCell}>{workDaysBadge(role)}</Td></>
   );
 
   /** 只显示结果，不在这里编辑：设置入口在表格上方的「预约设置」。 */
@@ -3784,7 +3784,7 @@ function NoticeRows({
       {notice.roles.map((role, index) => {
         const reserved = Boolean(role.reservedBy);
         const taken = takenNamesOf(notice.roles);
-        // Only the role-level cells dim; notice-level cells stay bright.
+        // 整条禁用时角色格也压暗；名称格和玫红标签保持醒目。
         const roleCell = cn(
           reserved ? 'bg-surface-soft text-ink-faint opacity-60' : undefined,
           disabledCell,

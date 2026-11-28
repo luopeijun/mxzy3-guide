@@ -1035,7 +1035,7 @@ function SweetNoticeRows({ notice, save, genders }: {
     </>
   );
   const blankCells = (role: SweetNoticeRole) => (
-    <><Td /><Td /><Td /><Td /><Td>{workDaysBadge(role)}</Td></>
+    <><Td /><Td /><Td /><Td /><Td className={disabledCell}>{workDaysBadge(role)}</Td></>
   );
 
   return (
