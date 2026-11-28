@@ -258,8 +258,22 @@ def parse_event_page(path: Path, ending_title: str | None = None) -> tuple[list[
 
 
 def parse_main_story(path: Path) -> tuple[list[dict], str]:
-    """主线攻略 → 事件页 + 文末的「结局分歧」。"""
-    return parse_event_page(path, ending_title="结局分歧")
+    """主线攻略 → 事件页 + 文末的「结局分歧」+ 初期攻略。
+
+    初期攻略是开局五条提示，整段追加在页尾，原文不改；这里只生成普通段落，
+    不新增 event 块，主线 80 个原有块的顺序和追踪下标完全不动。
+    """
+    blocks, title = parse_event_page(path, ending_title="结局分歧")
+    early, _ = parse_generic_list(SOURCES / "early-guide.txt")
+    base = max((b["group"] for b in blocks), default=0)
+    blocks.append({"kind": "section", "text": "初期攻略", "group": base + 1})
+    for block in early:
+        # 源文本的分节空行不渲染成空标题/空段落。
+        if not block["text"].strip():
+            continue
+        block["group"] = base + 1
+        blocks.append(block)
+    return blocks, title
 
 
 def parse_company(path: Path) -> tuple[list[dict], str]:
@@ -1400,8 +1414,8 @@ PARSERS = {
     # 艺人创作取得已并入 self-notices（同一批作品的两种视角），不再单独成页。
     "special-creations": parse_event_page,
     "monopoly": parse_monopoly,
+    # 初期攻略已并入 main-story，由 parse_main_story 直接读取。
     # 台版手册补进来的附录页：平铺清单，无事件卡，不影响追踪器下标。
-    "early-guide": parse_generic_list,
     "signing": parse_generic_list,
     "producers": parse_generic_list,
     "titles": parse_generic_list,
@@ -1444,7 +1458,6 @@ CATEGORIES: list[dict] = [
             ("endings", "结局条件一览"),
             ("award-dates", "各类奖项颁奖日期及内容"),
             ("monopoly", "大富翁BaBaBa答案"),
-            ("early-guide", "初期攻略"),
             ("signing", "签约条件"),
             ("producers", "制作人专长与自制作品规则"),
             ("titles", "称号属性"),

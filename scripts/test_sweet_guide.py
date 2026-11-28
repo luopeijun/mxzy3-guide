@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 19)
+        self.assertEqual(len(first["children"]), 18)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 33)
-        self.assertEqual(stats["readyItems"], 33)
+        self.assertEqual(stats["items"], 32)
+        self.assertEqual(stats["readyItems"], 32)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -198,7 +198,7 @@ class TestSweetGuide(unittest.TestCase):
 
     def test_chapters_and_events(self) -> None:
         sections = [b["text"] for b in self.blocks if b["kind"] == "section"]
-        self.assertEqual(sections, [*CHAPTERS, "结局分歧"])
+        self.assertEqual(sections, [*CHAPTERS, "结局分歧", "初期攻略"])
         labels = [b["label"] for b in self.blocks if b["kind"] == "event"]
         self.assertEqual(labels, EVENT_LABELS)
 
@@ -1522,8 +1522,20 @@ class TestSweetGuide(unittest.TestCase):
         self.assertTrue(any("公司金钱1500万以上才会触发" in t for t in texts("company")))
         self.assertTrue(any("永振主持通告旁四人组、SOSA孙小美旁四人组会讨论" in t
                             for t in texts("main-story")))
-        # 主线是事件页，正文改字不插块，追踪下标不变。
-        self.assertEqual(len(nodes["main-story"]["blocks"]), 80)
+        # 主线是事件页，初期攻略整段追加在末尾；原有 80 块和 23 个事件下标不变。
+        main_blocks = nodes["main-story"]["blocks"]
+        self.assertEqual(len(main_blocks), 87)
+        self.assertEqual(sum(b["kind"] == "event" for b in main_blocks), 23)
+        start = next(
+            i for i, b in enumerate(main_blocks)
+            if b["kind"] == "section" and b["text"] == "初期攻略"
+        )
+        self.assertEqual(start, 80)
+        early_texts = [b["text"] for b in main_blocks[start + 1:]]
+        self.assertEqual(len(early_texts), 6)
+        self.assertTrue(all(b["kind"] != "event" for b in main_blocks[start:]))
+        self.assertIn("第一周记得去公园找记者。", early_texts)
+        self.assertIn("第四周开始可接通告。", early_texts)
 
     def test_creation_and_profile_pages(self) -> None:
         nodes = {
@@ -1593,8 +1605,8 @@ class TestSweetGuide(unittest.TestCase):
             for r in by_name["姚子奇"]["contract"]["rows"]
         ))
         self.assertNotIn("contract", by_name["杜云芊"])
-        # 资料卡在 blocks 之外：角色页与主线的事件锚点、追踪下标不变。
-        for slug, count in (("shen-weizhen", 190), ("danisi", 236), ("main-story", 80)):
+        # 资料卡在 blocks 之外；主线只追加初期攻略，原有事件锚点、追踪下标不变。
+        for slug, count in (("shen-weizhen", 190), ("danisi", 236), ("main-story", 87)):
             self.assertEqual(len(nodes[slug]["blocks"]), count, slug)
 
     def test_selfmade_merges_creation_conditions(self) -> None:
