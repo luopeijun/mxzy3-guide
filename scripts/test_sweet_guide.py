@@ -1044,6 +1044,34 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual([b["label"] for b in nodes["du-sichen"] if b.get("cg")], ["4-5"])
         self.assertTrue(any(b["text"].startswith("时间：第3年8月") for b in nodes["du-sichen"]))
 
+        # 杜司臣 12 条核对表挂到 5 个事件块：六个节日前置合在 4-1，新闻与拜访合在 4-4。
+        du = nodes["du-sichen"]
+        du_notes = {b["label"]: b.get("eventNotes", []) for b in du if b.get("eventNotes")}
+        self.assertEqual(list(du_notes), ["4-1", "4-2", "4-3", "4-4", "4-5"])
+        self.assertEqual(
+            [g["title"] for g in du_notes["4-1"]],
+            ["2008年圣诞节", "2009年生日", "2009年情人节", "2009年圣诞节", "2010年生日",
+             "2010年情人节", "杜云芊不是杜家亲骨肉"],
+        )
+        self.assertEqual(
+            [g["title"] for g in du_notes["4-4"]], ["杜司臣极力否认一切", "宁愿不是兄妹"]
+        )
+
+        def du_text(label: str) -> str:
+            return "\n".join(
+                item["label"] + item["text"] for group in du_notes[label] for item in group["items"]
+            )
+
+        for label, token in (
+            ("4-1", "2008/12/24"), ("4-1", "2009/4/1"), ("4-1", "2009/2/14"),
+            ("4-1", "2009/12/24"), ("4-1", "2010/4/1"), ("4-1", "2010/2/14"),
+            ("4-1", "想当哥哥的新娘"), ("4-1", "云芊名气>500"),
+            ("4-2", "杜司臣前来澄清"), ("4-3", "城仲瑄主动前来"),
+            ("4-4", "新闻「杜司臣极力否认一切」"), ("4-4", "真的要一直听哥哥的话吗？"),
+            ("4-5", "公司金钱>3亿"), ("4-5", "云芊得奖>10"), ("4-5", "穿着古典晚礼服"),
+        ):
+            self.assertIn(token, du_text(label), (label, token))
+
         # 金皓薰的（友好度上升）走 tag，不进标题。
         jin = nodes["jin-haoxun"]
         self.assertEqual(
