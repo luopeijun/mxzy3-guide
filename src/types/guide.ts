@@ -133,6 +133,21 @@ export interface GuideNotice {
   outcomes?: string[];
 }
 
+/** One labelled line of the artist profile card, e.g. 生日 / 4/1. */
+export interface ProfileRow {
+  label: string;
+  value: string;
+}
+
+/** Artist basics shown above the article body. Like `notice`, this lives outside
+ *  `blocks` so adding or editing a field never shifts event anchors or tracker
+ *  progress. */
+export interface ArtistProfile {
+  rows: ProfileRow[];
+  intro?: ProfileRow;
+  contract?: { title: string; rows: ProfileRow[] };
+}
+
 export interface GuideNode {
   id: string;
   title: string;
@@ -140,6 +155,8 @@ export interface GuideNode {
   sourceTitle?: string;
   description?: string;
   notice?: GuideNotice;
+  /** Basics + contract terms pinned above the article body (artist pages). */
+  profile?: ArtistProfile;
   /** Small portrait shown beside the sidebar tree row (character pages). */
   avatar?: string;
   /** Wide image shown at the top of the article content (character pages). */

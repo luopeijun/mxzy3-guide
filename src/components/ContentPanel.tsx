@@ -6,6 +6,7 @@ import { useAnchorJump } from '../hooks/useAnchorJump';
 import { useReaderLayout } from '../hooks/useReaderLayout';
 import ArticleHeader from './ArticleHeader';
 import ArticleOutline from './ArticleOutline';
+import ArtistProfileCard from './ArtistProfileCard';
 import BackToTop from './BackToTop';
 import Breadcrumbs from './Breadcrumbs';
 import ChildLinks from './ChildLinks';
@@ -89,6 +90,7 @@ export default function ContentPanel({
             />
           </div>
         )}
+        {node.profile && <ArtistProfileCard profile={node.profile} />}
         {node.requirements && <RequirementsCard requirements={node.requirements} />}
         {!wide && <ArticleOutline items={outline} onJump={jump} />}
         <ContentBlockList

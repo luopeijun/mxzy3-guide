@@ -133,6 +133,11 @@ OUTFIT_EVENT_NOTES = SOURCES / "outfit-event-notes.tsv"
 # 支线页的事件说明：同样挂在事件块上，不新增块。五列，键是（页面 slug，事件编号），
 # 因为 2-1 / 1-1 这类编号在六页之间会重复。
 SIDE_EVENT_NOTES = SOURCES / "side-event-notes.tsv"
+# 艺人基本资料不再是独立页面：源文件只作为结构化卡片的真源，读出来挂到
+# 对应角色页的 `profile` 字段，由 ContentPanel 渲染在页头，不进 blocks。
+ARTIST_PROFILES = SOURCES / "artist-profiles.txt"
+# 杜云芊没有独立角色页，她的资料挂在主线攻略页头。
+PROFILE_PINNED = {"sweet-guide/main-story": "杜云芊"}
 # 角色头像按约定命名放在 public/images/sweet/：`<slug>-logo.*` 是目录与
 # 角色卡在人名左侧展示的圆圈头像（与主站 images/characters/ 同一套约定）。
 SWEET_IMAGES = ROOT / "public" / "images" / "sweet"
@@ -1274,6 +1279,47 @@ def parse_creations(path: Path) -> tuple[list[dict], str]:
     return blocks, lines[0]
 
 
+def parse_artist_profiles() -> dict[str, dict]:
+    """读艺人基本资料源文件，按人名返回可直接挂到节点上的资料卡。
+
+    源文件是「人名 / 字段：值 / 合约内容（第一年签约时）：…」的平铺清单；
+    这里只做结构化，文案一个字不改。输出不进 `blocks`，所以角色页的事件
+    编号、CG 锚点和追踪进度都不受资料增减影响。
+    """
+    if not ARTIST_PROFILES.exists():
+        return {}
+    people: dict[str, dict] = {}
+    current: dict | None = None
+    contract: dict | None = None
+
+    for raw in _read_lines(ARTIST_PROFILES)[1:]:
+        text = raw.strip()
+        if not text:
+            continue
+        if "：" not in text and ":" not in text:
+            if text in people:
+                raise SystemExit(f"artist-profiles.txt：重复的人名 {text!r}")
+            current = {"rows": []}
+            people[text] = current
+            contract = None
+            continue
+        if current is None:
+            raise SystemExit(f"artist-profiles.txt：字段出现在人名之前：{text!r}")
+        label, value = re.split(r"[：:]", text, maxsplit=1)
+        label, value = label.strip(), value.strip()
+        row = {"label": label, "value": value}
+        if label.startswith("合约内容"):
+            contract = {"title": label, "rows": []}
+            current["contract"] = contract
+        elif contract is not None:
+            contract["rows"].append(row)
+        elif label == "人物介绍":
+            current["intro"] = row
+        else:
+            current["rows"].append(row)
+    return people
+
+
 PARSERS = {
     "main-story": parse_main_story,
     "company": parse_company,
@@ -1295,7 +1341,6 @@ PARSERS = {
     "signing": parse_generic_list,
     "producers": parse_generic_list,
     "titles": parse_generic_list,
-    "artist-profiles": parse_generic_list,
     "dating-guide": parse_generic_list,
     "murong-yaoqi": parse_generic_list,
     "cheng-zhongxuan": parse_character,
@@ -1339,7 +1384,6 @@ CATEGORIES: list[dict] = [
             ("monopoly", "大富翁BaBaBa答案"),
             ("early-guide", "初期攻略"),
             ("signing", "签约条件"),
-            ("artist-profiles", "艺人基本资料与合约条件"),
             ("producers", "制作人专长与自制作品规则"),
             ("titles", "称号属性"),
             ("dating-guide", "约会教战总则"),
@@ -1428,6 +1472,7 @@ def _apply_cg_links(node: dict, links: dict[str, list[tuple[str, str, str]]]) ->
 
 def build() -> dict:
     links = _read_cg_links()
+    profiles = parse_artist_profiles()
     categories: list[dict] = []
     for category in CATEGORIES:
         children: list[dict] = []
@@ -1459,6 +1504,10 @@ def build() -> dict:
                 # 副标题只取原文首行；与页面标题重复（或原文没写）就不写，绝不自己编一句概述。
                 if subtitle and subtitle != title:
                     node["description"] = subtitle
+            # 艺人资料挂在页头字段里，绝不插进 blocks（事件锚点按块下标算）。
+            profile = profiles.get(node["title"]) or profiles.get(PROFILE_PINNED.get(node["id"], ""))
+            if profile:
+                node["profile"] = profile
             children.append(node)
 
         categories.append(

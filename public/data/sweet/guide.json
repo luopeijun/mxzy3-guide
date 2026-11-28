@@ -5,11 +5,11 @@
     "generatedBy": "scripts/extract_sweet_guide.py",
     "stats": {
       "categories": 3,
-      "items": 36,
-      "blocks": 3637,
-      "readyItems": 36,
+      "items": 35,
+      "blocks": 3525,
+      "readyItems": 35,
       "missingItems": 0,
-      "sourceParagraphs": 3637
+      "sourceParagraphs": 3525
     }
   },
   "categories": [
@@ -454,7 +454,43 @@
             }
           ],
           "children": [],
-          "description": "主线任务（落日相关）"
+          "description": "主线任务（落日相关）",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "20"
+              },
+              {
+                "label": "生日",
+                "value": "4/1"
+              },
+              {
+                "label": "星座",
+                "value": "牡羊"
+              },
+              {
+                "label": "身高",
+                "value": "163"
+              },
+              {
+                "label": "体重",
+                "value": "48"
+              },
+              {
+                "label": "身份",
+                "value": "经纪人兼旗下基本且唯一女艺人"
+              },
+              {
+                "label": "演唱会",
+                "value": "杜云芊演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "开朗积极有活力，很有胆量与冒险精神，对自己很有信心，对坚持的事情很固执己见，不过也有聪慧跟识大体的一面。出身豪门，有一个十分宠爱她同时也严格管教她的哥哥，时常提出一些难题要她尝试；虽然从小出国求学，但兄妹的感情依旧深厚。"
+            }
+          }
         },
         {
           "id": "sweet-guide/company",
@@ -9070,574 +9106,6 @@
           "children": []
         },
         {
-          "id": "sweet-guide/artist-profiles",
-          "title": "艺人基本资料与合约条件",
-          "status": "ready",
-          "blocks": [
-            {
-              "kind": "section",
-              "text": "杜云芊",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：20",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：4/1",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：牡羊",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：163",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：48",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：开朗积极有活力，很有胆量与冒险精神，对自己很有信心，对坚持的事情很固执己见，不过也有聪慧跟识大体的一面。出身豪门，有一个十分宠爱她同时也严格管教她的哥哥，时常提出一些难题要她尝试；虽然从小出国求学，但兄妹的感情依旧深厚。",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "身份：经纪人兼旗下基本且唯一女艺人",
-              "group": 1
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：杜云芊演唱会",
-              "group": 1
-            },
-            {
-              "kind": "section",
-              "text": "沈惟真",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：22",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：2/1",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：水瓶",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：176",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：67",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：温柔爽朗，待人随和，是女主角的大学学长，喜欢开女主角玩笑，却又常流露出体贴的心意。校园中的风云人物，不分男女对他都有相当好的评价，人气度很高，一直以学长身份守护在女主角身旁，保持着若即若离的关系。因为一支受欢迎的广告迅速崛起，成为家喻户晓的广告明星，但因学生身份没有直接加入演艺圈，只有偶尔接一些平面工作，生活重心仍放在学校。",
-              "group": 2
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：沈惟真演唱会",
-              "group": 2
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 3
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：50万",
-              "group": 3
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：20%",
-              "group": 3
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：跟欣赏的艺人合作",
-              "group": 3
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：当个全方位艺人、接下国际时装秀的通告",
-              "group": 3
-            },
-            {
-              "kind": "section",
-              "text": "丹尼斯",
-              "group": 4
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：21",
-              "group": 4
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：10/14",
-              "group": 4
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：天秤",
-              "group": 4
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：184",
-              "group": 4
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：77",
-              "group": 4
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：严肃认真，外表看起来很冷酷，个性难以捉摸，喜欢把烦恼闷在心里不说。为了一心加入演艺圈，和弟弟史蒂芬一起离家出走，两人相依为命，对唯一的弟弟相当重视与保护。热爱戏剧，出道不久便站稳一线，是各大制作人导演都想力邀的实力派演员；与史蒂芬组成的男子团体SD是目前演艺圈最知名的组合。",
-              "group": 4
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：丹尼斯演唱会",
-              "group": 4
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 5
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：150万",
-              "group": 5
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：50%",
-              "group": 5
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：打败钜子经纪",
-              "group": 5
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：和史蒂芬发行团体唱片、国内巡回演唱会",
-              "group": 5
-            },
-            {
-              "kind": "section",
-              "text": "史蒂芬",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：20",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：9/1",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：处女",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：180",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：76",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：温柔恬静，体贴和善，却被视为不容易亲近的类型。钟情于音乐创作，对SD的专辑歌曲绝对不假手他人，出道两年已成为备受肯定的音乐制作人，跟哥哥丹尼斯的感情很好。身为最受欢迎的男子团体SD一员，对音乐相当坚持，目标是成为一位杰出的音乐创作者。",
-              "group": 6
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：史蒂芬演唱会",
-              "group": 6
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 7
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：150万",
-              "group": 7
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：50%",
-              "group": 7
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：无",
-              "group": 7
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：和丹尼斯发行团体唱片、国内巡回演唱会",
-              "group": 7
-            },
-            {
-              "kind": "section",
-              "text": "姚子奇",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：22",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：12/28",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：魔羯",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：173",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：68",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：表面上看起来叛逆，内心却十分体贴善良，碰到困难时喜欢逞强，嘴巴上从来不肯认输。最重视的事情除了音乐之外就是母亲与妹妹，因为出身单亲家庭，对亲情十分重视。进演艺圈两年，具有特殊风格的曲风已获歌迷跟乐评肯定，创作的歌曲首首畅销，品质优良、数量惊人的创作是他生存在演艺圈最大的本钱。具有特殊体质，每到鬼月时工作状况就会失控，是他进演艺圈以来最大的烦恼。",
-              "group": 8
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：姚子奇演唱会",
-              "group": 8
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 9
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：100万",
-              "group": 9
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：60%",
-              "group": 9
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：不要跟慕容和希合作、有更多时间从事创作",
-              "group": 9
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：唱片销量达50万张、国内巡回演唱会",
-              "group": 9
-            },
-            {
-              "kind": "section",
-              "text": "慕容和希",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：23",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：9/10",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：处女",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：175",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：64",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：聪明文雅、风度翩翩，具有纤细的美貌，出身显赫的音乐世家，有一种浑然天成的贵公子气质，对喜欢的事物异常执着，甚至到达怪异的程度；对人礼貌谦逊，总是温柔地微笑以对。从音乐学院学成归国后，经过两年时间在流行音乐圈中已受到大大小小的奖项肯定，跟姚子奇鼎足而立，两人不管在人气或曲风上都时常被拿来比较，形成乐坛上王不见王的传说。",
-              "group": 10
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：慕容和希演唱会",
-              "group": 10
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 11
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：50万",
-              "group": 11
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：70%",
-              "group": 11
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：希望跟姚子奇合作、多一点休闲时间",
-              "group": 11
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：国内巡回演唱会、和姚子奇合作",
-              "group": 11
-            },
-            {
-              "kind": "section",
-              "text": "卫亚",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：18",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：2/29",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：双鱼",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：170",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：65",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：害羞内向、天资聪颖，具有天生的才华与创造力，所写的剧本连一流的制作人也赞誉有加。虽然不擅与人相处，也不会主动攀谈，进入演艺圈两年经过一段历练后，原本封闭的个性逐渐好转，应对方面也有长足进步。与当红的新名纱雪是青梅竹马，两人重逢后重拾当年的友情，也让卫亚变得开朗许多。",
-              "group": 12
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：卫亚演唱会",
-              "group": 12
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 13
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：40万",
-              "group": 13
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：60%",
-              "group": 13
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：跟新名纱雪合作、有时间念书、拒绝拍吻戏",
-              "group": 13
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：实力派演员、和经纪人合作",
-              "group": 13
-            },
-            {
-              "kind": "section",
-              "text": "纪翔",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：24",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：12/1",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：射手",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：184",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：75",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：孤僻冷漠、习惯独来独往，不太理会别人，在演艺圈当中除了欧怡青、关古威之外很少跟其他艺人往来。身世成谜，虽然有各种传闻都无法得到本人亲口证实，是一个具有神秘色彩的男子。许多报导谣传他是某国庶出的王子，并捕风捉影他与克烈斯之间的关系，但都没有得到纪翔正面的回应。",
-              "group": 14
-            },
-            {
-              "kind": "paragraph",
-              "text": "演唱会：纪翔演唱会",
-              "group": 14
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 15
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：200万",
-              "group": 15
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：50%",
-              "group": 15
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：不过问私人问题",
-              "group": 15
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：发行三张唱片、接演大型戏剧作品",
-              "group": 15
-            },
-            {
-              "kind": "section",
-              "text": "城仲瑄",
-              "group": 16
-            },
-            {
-              "kind": "paragraph",
-              "text": "年龄：25",
-              "group": 16
-            },
-            {
-              "kind": "paragraph",
-              "text": "生日：6/22",
-              "group": 16
-            },
-            {
-              "kind": "paragraph",
-              "text": "星座：巨蟹",
-              "group": 16
-            },
-            {
-              "kind": "paragraph",
-              "text": "身高：175",
-              "group": 16
-            },
-            {
-              "kind": "paragraph",
-              "text": "体重：73",
-              "group": 16
-            },
-            {
-              "kind": "paragraph",
-              "text": "人物介绍：个性十分严肃、一本正经，喜欢循规蹈矩做事，讲究礼节与原则，对女主角恭敬有礼，保持着一定的距离。原本是杜司臣的手下，因缘际会成为女主角旗下的艺人，但仍不改上班族一板一眼的个性，时常对女主角纠正职场上该注意的细节，如果一不小心犯错，就会遭受他严格的批评。",
-              "group": 16
-            },
-            {
-              "kind": "section",
-              "text": "合约内容（第一年签约时）",
-              "group": 17
-            },
-            {
-              "kind": "paragraph",
-              "text": "签约金：0",
-              "group": 17
-            },
-            {
-              "kind": "paragraph",
-              "text": "艺人分红：80%",
-              "group": 17
-            },
-            {
-              "kind": "paragraph",
-              "text": "特殊要求：希望朝戏剧路线发展、严禁裸露",
-              "group": 17
-            },
-            {
-              "kind": "paragraph",
-              "text": "目标：接演舞台剧作品",
-              "group": 17
-            }
-          ],
-          "children": []
-        },
-        {
           "id": "sweet-guide/producers",
           "title": "制作人专长与自制作品规则",
           "status": "ready",
@@ -12209,7 +11677,56 @@
           ],
           "children": [],
           "avatar": "images/sweet/cheng-zhongxuan-logo.png",
-          "cover": "images/sweet/cheng-zhongxuan-cover.jpg"
+          "cover": "images/sweet/cheng-zhongxuan-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "25"
+              },
+              {
+                "label": "生日",
+                "value": "6/22"
+              },
+              {
+                "label": "星座",
+                "value": "巨蟹"
+              },
+              {
+                "label": "身高",
+                "value": "175"
+              },
+              {
+                "label": "体重",
+                "value": "73"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "个性十分严肃、一本正经，喜欢循规蹈矩做事，讲究礼节与原则，对女主角恭敬有礼，保持着一定的距离。原本是杜司臣的手下，因缘际会成为女主角旗下的艺人，但仍不改上班族一板一眼的个性，时常对女主角纠正职场上该注意的细节，如果一不小心犯错，就会遭受他严格的批评。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "0"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "80%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "希望朝戏剧路线发展、严禁裸露"
+                },
+                {
+                  "label": "目标",
+                  "value": "接演舞台剧作品"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "sweet-characters/danisi",
@@ -13626,7 +13143,60 @@
           ],
           "children": [],
           "avatar": "images/sweet/danisi-logo.png",
-          "cover": "images/sweet/danisi-cover.jpg"
+          "cover": "images/sweet/danisi-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "21"
+              },
+              {
+                "label": "生日",
+                "value": "10/14"
+              },
+              {
+                "label": "星座",
+                "value": "天秤"
+              },
+              {
+                "label": "身高",
+                "value": "184"
+              },
+              {
+                "label": "体重",
+                "value": "77"
+              },
+              {
+                "label": "演唱会",
+                "value": "丹尼斯演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "严肃认真，外表看起来很冷酷，个性难以捉摸，喜欢把烦恼闷在心里不说。为了一心加入演艺圈，和弟弟史蒂芬一起离家出走，两人相依为命，对唯一的弟弟相当重视与保护。热爱戏剧，出道不久便站稳一线，是各大制作人导演都想力邀的实力派演员；与史蒂芬组成的男子团体SD是目前演艺圈最知名的组合。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "150万"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "50%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "打败钜子经纪"
+                },
+                {
+                  "label": "目标",
+                  "value": "和史蒂芬发行团体唱片、国内巡回演唱会"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "sweet-characters/ji-xiang",
@@ -14855,7 +14425,60 @@
           ],
           "children": [],
           "avatar": "images/sweet/ji-xiang-logo.png",
-          "cover": "images/sweet/ji-xiang-cover.jpg"
+          "cover": "images/sweet/ji-xiang-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "24"
+              },
+              {
+                "label": "生日",
+                "value": "12/1"
+              },
+              {
+                "label": "星座",
+                "value": "射手"
+              },
+              {
+                "label": "身高",
+                "value": "184"
+              },
+              {
+                "label": "体重",
+                "value": "75"
+              },
+              {
+                "label": "演唱会",
+                "value": "纪翔演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "孤僻冷漠、习惯独来独往，不太理会别人，在演艺圈当中除了欧怡青、关古威之外很少跟其他艺人往来。身世成谜，虽然有各种传闻都无法得到本人亲口证实，是一个具有神秘色彩的男子。许多报导谣传他是某国庶出的王子，并捕风捉影他与克烈斯之间的关系，但都没有得到纪翔正面的回应。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "200万"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "50%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "不过问私人问题"
+                },
+                {
+                  "label": "目标",
+                  "value": "发行三张唱片、接演大型戏剧作品"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "sweet-characters/murong-hexi",
@@ -16141,7 +15764,60 @@
           ],
           "children": [],
           "avatar": "images/sweet/murong-hexi-logo.png",
-          "cover": "images/sweet/murong-hexi-cover.jpg"
+          "cover": "images/sweet/murong-hexi-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "23"
+              },
+              {
+                "label": "生日",
+                "value": "9/10"
+              },
+              {
+                "label": "星座",
+                "value": "处女"
+              },
+              {
+                "label": "身高",
+                "value": "175"
+              },
+              {
+                "label": "体重",
+                "value": "64"
+              },
+              {
+                "label": "演唱会",
+                "value": "慕容和希演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "聪明文雅、风度翩翩，具有纤细的美貌，出身显赫的音乐世家，有一种浑然天成的贵公子气质，对喜欢的事物异常执着，甚至到达怪异的程度；对人礼貌谦逊，总是温柔地微笑以对。从音乐学院学成归国后，经过两年时间在流行音乐圈中已受到大大小小的奖项肯定，跟姚子奇鼎足而立，两人不管在人气或曲风上都时常被拿来比较，形成乐坛上王不见王的传说。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "50万"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "70%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "希望跟姚子奇合作、多一点休闲时间"
+                },
+                {
+                  "label": "目标",
+                  "value": "国内巡回演唱会、和姚子奇合作"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "sweet-characters/shen-weizhen",
@@ -17334,7 +17010,60 @@
           ],
           "children": [],
           "avatar": "images/sweet/shen-weizhen-logo.png",
-          "cover": "images/sweet/shen-weizhen-cover.jpg"
+          "cover": "images/sweet/shen-weizhen-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "22"
+              },
+              {
+                "label": "生日",
+                "value": "2/1"
+              },
+              {
+                "label": "星座",
+                "value": "水瓶"
+              },
+              {
+                "label": "身高",
+                "value": "176"
+              },
+              {
+                "label": "体重",
+                "value": "67"
+              },
+              {
+                "label": "演唱会",
+                "value": "沈惟真演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "温柔爽朗，待人随和，是女主角的大学学长，喜欢开女主角玩笑，却又常流露出体贴的心意。校园中的风云人物，不分男女对他都有相当好的评价，人气度很高，一直以学长身份守护在女主角身旁，保持着若即若离的关系。因为一支受欢迎的广告迅速崛起，成为家喻户晓的广告明星，但因学生身份没有直接加入演艺圈，只有偶尔接一些平面工作，生活重心仍放在学校。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "50万"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "20%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "跟欣赏的艺人合作"
+                },
+                {
+                  "label": "目标",
+                  "value": "当个全方位艺人、接下国际时装秀的通告"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "sweet-characters/shi-difen",
@@ -18469,7 +18198,60 @@
           ],
           "children": [],
           "avatar": "images/sweet/shi-difen-logo.png",
-          "cover": "images/sweet/shi-difen-cover.jpg"
+          "cover": "images/sweet/shi-difen-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "20"
+              },
+              {
+                "label": "生日",
+                "value": "9/1"
+              },
+              {
+                "label": "星座",
+                "value": "处女"
+              },
+              {
+                "label": "身高",
+                "value": "180"
+              },
+              {
+                "label": "体重",
+                "value": "76"
+              },
+              {
+                "label": "演唱会",
+                "value": "史蒂芬演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "温柔恬静，体贴和善，却被视为不容易亲近的类型。钟情于音乐创作，对SD的专辑歌曲绝对不假手他人，出道两年已成为备受肯定的音乐制作人，跟哥哥丹尼斯的感情很好。身为最受欢迎的男子团体SD一员，对音乐相当坚持，目标是成为一位杰出的音乐创作者。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "150万"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "50%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "无"
+                },
+                {
+                  "label": "目标",
+                  "value": "和丹尼斯发行团体唱片、国内巡回演唱会"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "sweet-characters/wei-ya",
@@ -19732,7 +19514,60 @@
           ],
           "children": [],
           "avatar": "images/sweet/wei-ya-logo.png",
-          "cover": "images/sweet/wei-ya-cover.jpg"
+          "cover": "images/sweet/wei-ya-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "18"
+              },
+              {
+                "label": "生日",
+                "value": "2/29"
+              },
+              {
+                "label": "星座",
+                "value": "双鱼"
+              },
+              {
+                "label": "身高",
+                "value": "170"
+              },
+              {
+                "label": "体重",
+                "value": "65"
+              },
+              {
+                "label": "演唱会",
+                "value": "卫亚演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "害羞内向、天资聪颖，具有天生的才华与创造力，所写的剧本连一流的制作人也赞誉有加。虽然不擅与人相处，也不会主动攀谈，进入演艺圈两年经过一段历练后，原本封闭的个性逐渐好转，应对方面也有长足进步。与当红的新名纱雪是青梅竹马，两人重逢后重拾当年的友情，也让卫亚变得开朗许多。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "40万"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "60%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "跟新名纱雪合作、有时间念书、拒绝拍吻戏"
+                },
+                {
+                  "label": "目标",
+                  "value": "实力派演员、和经纪人合作"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "sweet-characters/yao-ziqi",
@@ -21142,7 +20977,60 @@
           ],
           "children": [],
           "avatar": "images/sweet/yao-ziqi-logo.png",
-          "cover": "images/sweet/yao-ziqi-cover.jpg"
+          "cover": "images/sweet/yao-ziqi-cover.jpg",
+          "profile": {
+            "rows": [
+              {
+                "label": "年龄",
+                "value": "22"
+              },
+              {
+                "label": "生日",
+                "value": "12/28"
+              },
+              {
+                "label": "星座",
+                "value": "魔羯"
+              },
+              {
+                "label": "身高",
+                "value": "173"
+              },
+              {
+                "label": "体重",
+                "value": "68"
+              },
+              {
+                "label": "演唱会",
+                "value": "姚子奇演唱会"
+              }
+            ],
+            "intro": {
+              "label": "人物介绍",
+              "value": "表面上看起来叛逆，内心却十分体贴善良，碰到困难时喜欢逞强，嘴巴上从来不肯认输。最重视的事情除了音乐之外就是母亲与妹妹，因为出身单亲家庭，对亲情十分重视。进演艺圈两年，具有特殊风格的曲风已获歌迷跟乐评肯定，创作的歌曲首首畅销，品质优良、数量惊人的创作是他生存在演艺圈最大的本钱。具有特殊体质，每到鬼月时工作状况就会失控，是他进演艺圈以来最大的烦恼。"
+            },
+            "contract": {
+              "title": "合约内容（第一年签约时）",
+              "rows": [
+                {
+                  "label": "签约金",
+                  "value": "100万"
+                },
+                {
+                  "label": "艺人分红",
+                  "value": "60%"
+                },
+                {
+                  "label": "特殊要求",
+                  "value": "不要跟慕容和希合作、有更多时间从事创作"
+                },
+                {
+                  "label": "目标",
+                  "value": "唱片销量达50万张、国内巡回演唱会"
+                }
+              ]
+            }
+          }
         }
       ]
     },

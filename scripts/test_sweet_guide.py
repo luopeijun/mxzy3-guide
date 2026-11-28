@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 22)
+        self.assertEqual(len(first["children"]), 21)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 36)
-        self.assertEqual(stats["readyItems"], 36)
+        self.assertEqual(stats["items"], 35)
+        self.assertEqual(stats["readyItems"], 35)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -1541,16 +1541,43 @@ class TestSweetGuide(unittest.TestCase):
         self.assertTrue(any("和纪翔约会>5次且颇有好感" in t for t in texts))
         self.assertTrue(any("票房>30万才会触发" in t for t in texts))
 
-        # 艺人资料：九位艺人，合约真值（史蒂芬无特殊要求、城仲瑄签约金 0）。
-        profiles = nodes["artist-profiles"]["blocks"]
-        self.assertEqual(len(profiles), 112)
-        ptexts = [b["text"] for b in profiles]
-        # 9 位艺人 + 8 位合约内容小节（杜云芊是主角，没有签约合约）。
-        self.assertEqual(sum(b["kind"] == "section" for b in profiles), 17)
-        self.assertIn("年龄：20", ptexts)
-        self.assertIn("特殊要求：无", ptexts)
-        self.assertIn("签约金：0", ptexts)
-        self.assertTrue(any("特殊要求：不要跟慕容和希合作" in t for t in ptexts))
+        # 艺人资料并入各艺人攻略页头部（profile 字段），不再单独成页。
+        self.assertNotIn("artist-profiles", nodes)
+        by_name = {
+            ("杜云芊" if slug == "main-story" else n["title"]): n["profile"]
+            for slug, n in nodes.items() if n.get("profile")
+        }
+        self.assertEqual(
+            set(by_name),
+            {"杜云芊", "沈惟真", "丹尼斯", "史蒂芬", "姚子奇",
+             "慕容和希", "卫亚", "纪翔", "城仲瑄"},
+        )
+        shen = by_name["沈惟真"]
+        self.assertEqual(
+            [(r["label"], r["value"]) for r in shen["rows"]],
+            [("年龄", "22"), ("生日", "2/1"), ("星座", "水瓶"),
+             ("身高", "176"), ("体重", "67"), ("演唱会", "沈惟真演唱会")],
+        )
+        self.assertIn("大学学长", shen["intro"]["value"])
+        self.assertEqual(shen["contract"]["title"], "合约内容（第一年签约时）")
+        self.assertEqual(
+            {r["label"]: r["value"] for r in shen["contract"]["rows"]},
+            {"签约金": "50万", "艺人分红": "20%", "特殊要求": "跟欣赏的艺人合作",
+             "目标": "当个全方位艺人、接下国际时装秀的通告"},
+        )
+        self.assertEqual(by_name["史蒂芬"]["contract"]["rows"][2]["value"], "无")
+        self.assertEqual(
+            {r["label"]: r["value"] for r in by_name["城仲瑄"]["contract"]["rows"]}["签约金"],
+            "0",
+        )
+        self.assertTrue(any(
+            r["value"] == "不要跟慕容和希合作、有更多时间从事创作"
+            for r in by_name["姚子奇"]["contract"]["rows"]
+        ))
+        self.assertNotIn("contract", by_name["杜云芊"])
+        # 资料卡在 blocks 之外：角色页与主线的事件锚点、追踪下标不变。
+        for slug, count in (("shen-weizhen", 190), ("danisi", 236), ("main-story", 80)):
+            self.assertEqual(len(nodes[slug]["blocks"]), count, slug)
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []
