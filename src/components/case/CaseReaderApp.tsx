@@ -1183,14 +1183,15 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
 
   /** 我方接不接得上这个角色：性别要对上，九项数值一项都不能差。
    *  团体通告拿队长去比 —— 与右边「数值对比」列同一套判断，不能两处给出不同答案。 */
-  const fitsRole = useCallback((role: RoleRecord) => {
+  const fitsRole = useCallback((role: RoleRecord, taken?: Set<string>) => {
     if (isGroupRole(role) && activeGroups.length > 0) {
       return activeGroups.some((group) => {
+        if (taken?.has(group.leaderName)) return false;
         const leader = artists.find((a) => a.roleId === group.leaderId) ?? null;
         return matchGroupRole(role, leader, group.name, group.leaderName).canAccept;
       });
     }
-    return signedArtists.some((item) => item.artist
+    return signedArtists.some((item) => item.artist && (!taken || !taken.has(item.option.name))
       && matchRole(role, item.artist, item.option.name, item.option.gender).canAccept);
   }, [activeGroups, artists, signedArtists]);
 
@@ -1200,7 +1201,9 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     [result],
   );
   const qualifiedCount = useMemo(
-    () => (result ? result.notices.filter((notice) => canTakeNotice(notice, fitsRole)).length : 0),
+    () => (result ? result.notices.filter((notice) => canTakeNotice(
+      notice, (role) => fitsRole(role, takenNamesOf(notice.roles)),
+    )).length : 0),
     [result, fitsRole],
   );
 
@@ -1219,7 +1222,8 @@ export default function CaseReaderApp({ externalSave }: { externalSave?: Externa
     const needle = query.trim().toLowerCase();
     return result.notices.filter((notice) => {
       if (takeFilter === 'slots' && !isAcceptable(notice)) return false;
-      if (takeFilter === 'qualified' && !canTakeNotice(notice, fitsRole)) return false;
+      if (takeFilter === 'qualified' && !canTakeNotice(notice,
+        (role) => fitsRole(role, takenNamesOf(notice.roles)))) return false;
       if (filterCategory !== 'all' && notice.category !== filterCategory) return false;
       if (filterCompany !== 'all' && notice.company !== filterCompany) return false;
       if (!needle) return true;
@@ -3493,15 +3497,37 @@ function RequirementChips({ role }: { role: RoleRecord }) {
 /** One column holds every signed artist's verdict, one line per artist.
  *  A 團體 role is matched against each group's leader instead, so only the
  *  captain's numbers decide whether the group can take it. */
-function MatchList({ role, signed, groups, artists, itemHints, cellClass }: {
+/** 同一通告里一个人只接一个角色：已预约的人（含团体队长）不再参与其他角色的比较。 */
+function takenNamesOf(roles: RoleRecord[]): Set<string> {
+  const names = new Set(roles.map((role) => role.reservedBy).filter(Boolean));
+  // 存档里的预约名是 Big5 繁体（路風），签约艺人目录用简体（路风）：两种写法都算同一人。
+  for (const entry of ARTIST_DIRECTORY) {
+    if (names.has(entry.name)) names.add(entry.traditional);
+    if (names.has(entry.traditional)) names.add(entry.name);
+  }
+  return names;
+}
+
+function MatchList({ role, signed, groups, artists, itemHints, cellClass, taken }: {
   role: RoleRecord;
   signed: SignedArtist[];
   groups: GroupRecord[];
   artists: ArtistStats[];
   itemHints: Record<string, CourseHint[]>;
   cellClass?: string;
+  taken: Set<string>;
 }) {
   const groupRole = isGroupRole(role);
+  // 被预约的角色是「已占用」，不是「差多少数值」；团体分支也不能绕过这条。
+  if (role.reservedBy) {
+    return (
+      <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
+        <div data-case-match data-match-result="no" className="text-ui-2xs text-ink-faint">
+          <span aria-label="已被预约" title="已被预约">—</span>
+        </div>
+      </Td>
+    );
+  }
   // 存档没有团体成员名单，只有团体数值：团体通告就只列团体本身，不硬凑差值。
   if (groupRole && groups.length > 0 && groups.every((group) => !group.leaderId)) {
     return (
@@ -3516,19 +3542,10 @@ function MatchList({ role, signed, groups, artists, itemHints, cellClass }: {
       </Td>
     );
   }
-  // 被别的艺人预约的角色是「已占用」，不是「差多少数值」。这里只留一条横杠，
-  // 谁占用的只写在「预约」列，避免同一句话说两遍。
-  if (role.reservedBy) {
-    return (
-      <Td className={cellClass} dataAttrs={{ 'data-case-match-list': 'yes' }}>
-        <div data-case-match data-match-result="no" className="text-ui-2xs text-ink-faint">
-          <span aria-label="已被预约" title="已被预约">—</span>
-        </div>
-      </Td>
-    );
-  }
   const rows = groupRole
-    ? groups.map((group) => {
+    ? groups
+      .filter((group) => !taken.has(group.leaderName))
+      .map((group) => {
         const leader = artists.find((a) => a.roleId === group.leaderId) ?? null;
         return {
           key: `group-${group.code}`,
@@ -3537,7 +3554,8 @@ function MatchList({ role, signed, groups, artists, itemHints, cellClass }: {
         };
       })
     : signed
-      .filter((item) => item.artist && canTakeRole(role, item.option.gender))
+      .filter((item) => item.artist && !taken.has(item.option.name)
+        && canTakeRole(role, item.option.gender))
       .map((item) => ({
         key: `artist-${item.option.id}`,
         group: null,
@@ -3757,6 +3775,7 @@ function NoticeRows({
     <tbody data-case-notice data-case-status={notice.status}>
       {notice.roles.map((role, index) => {
         const reserved = Boolean(role.reservedBy);
+        const taken = takenNamesOf(notice.roles);
         // Only the role-level cells dim; notice-level cells stay bright.
         const roleCell = reserved
           ? 'bg-surface-soft text-ink-faint opacity-60'
@@ -3776,7 +3795,7 @@ function NoticeRows({
             <Td className={roleCell}>
               <RequirementChips role={role} />
             </Td>
-            <MatchList role={role} signed={signed} groups={groups} artists={artists} itemHints={itemHints} cellClass={roleCell} />
+            <MatchList role={role} signed={signed} groups={groups} artists={artists} itemHints={itemHints} cellClass={roleCell} taken={taken} />
             {reservationCell(role, reserved)}
           </tr>
         );
