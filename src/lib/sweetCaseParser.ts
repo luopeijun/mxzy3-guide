@@ -1377,27 +1377,6 @@ function isRealReservationName(name: string): boolean {
   return Boolean(name) && !/新藝人|新艺人|（無）|\(無\)/.test(name);
 }
 
-/** 早期存档（如 Story0019）把预约写在存档尾部的 `[6][角色码\0][艺人编号]`，
- *  通告本体里没有 `[6][0]` 槽。全档扫描只命中真正填了艺人的记录，作为兜底真源。 */
-function scanTailReservations(bytes: Uint8Array, stars: Record<string, string>): Map<string, string> {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const out = new Map<string, string>();
-  for (let o = 0; o + 16 <= bytes.length; o += 1) {
-    if (readI32(view, o) !== 6) continue;
-    let end = o + 4;
-    while (end < o + 11 && bytes[end] >= 0x30 && bytes[end] <= 0x7a) end += 1;
-    const length = end - (o + 4);
-    if (length < 5 || length > 6 || bytes[end] !== 0 || end + 5 > bytes.length) continue;
-    const roleCode = Array.from(bytes.subarray(o + 4, end), (c) => String.fromCharCode(c)).join('');
-    if (!/^[A-Z0-9]{5,6}$/.test(roleCode) || !/\d$/.test(roleCode)) continue;
-    const id = readI32(view, end + 1);
-    if (id < 1 || id > 110) continue;
-    const name = stars[String(id)];
-    if (isRealReservationName(name) && !out.has(roleCode)) out.set(roleCode, name);
-  }
-  return out;
-}
-
 /** 排期余量：剩下的日子里按每周上限折算最多还能排几天。 */
 export function shootableDays(remaining: number, perWeek: number): number {
   if (!(remaining > 0) || !(perWeek > 0)) return 0;
@@ -1428,57 +1407,26 @@ interface SweetNoticeBody {
   at: number;
 }
 
-/** 筹备中通告的预约真源：本体尾部 4 个 24B 角色槽，艺人编号在槽的 +8，0 表示空缺。
+/** 筹备中通告的预约真源＝本体尾部定长的 4 格 × 24B 槽区。
  *
- *  槽区**锚定在记录末尾**：`槽起点 = 记录长度 - 208`。记录长度随作品名 / 角色名
- *  长度浮动（1014~1034B），所以固定 +796 读法在 CF212（名字 15B）这类通告上会整体
- *  错开、预约全空；改用尾部锚点后 Story0008 的 481 条记录四槽全部合法。
- *  返回按槽位顺序的艺人编号（0 = 空缺）。 */
+ *  布局（每格 24B）：`+0` 状态、`+4` 艺人编号（0＝空缺）、`+8..+16` 保留、`+20` 酬劳。
+ *  槽区起点 = 记录长度 − 204：后面固定还有 108B（5 组 16B 日期 + 28B 尾）。
+ *  记录长度随作品名 / 角色名浮动（1016~1034B），所以只能按真实记录末尾锚定。
+ *
+ *  `StarRole` 段的 `[6][角色码\0][艺人编号][保留4B][状态4B]` 是历史表：状态 0
+ *  才是在约，非 0 是解约／过期残留（Story0016 的 TVA921 状态 2、Story0005 的
+ *  MVAMM4 状态 1）。全库 1190 条筹备中通告验证：状态非 0 的记录在槽区里都没有
+ *  对应预约，所以预约一律只看本体槽，不再用 StarRole 兜底。 */
 function readReservationIds(recView: DataView, limit: number): number[] {
-  // 记录长度已知（调用方按真实记录切片）时直接按尾部锚点取槽。
-  if (limit >= 900 && limit <= 1400) {
-    const base = limit - 208;
-    const ids: number[] = [];
-    let ok = true;
-    for (let k = 0; k < 4; k += 1) {
-      const id = readI32(recView, base + k * 24 + 8);
-      if (id < 0 || id > 110) { ok = false; break; }
-      ids.push(id);
-    }
-    if (ok) return ids;
+  if (limit < 900 || limit > 1400) return [];
+  const base = limit - 204;
+  const ids: number[] = [];
+  for (let k = 0; k < 4; k += 1) {
+    const id = readI32(recView, base + k * 24 + 4);
+    if (id < 0 || id > 110) return [];
+    ids.push(id);
   }
-  // 兜底：只拿到固定长度窗口时按旧方式扫槽区起点。
-  for (let base = 796; base <= 828; base += 1) {
-    if (base + 4 * 24 > limit) break;
-    const flag = readI32(recView, base);
-    if (flag !== 3 && flag !== 10) continue;
-    if (readI32(recView, base + 4) !== 0) continue;
-    const ids: number[] = [];
-    let ok = true;
-    for (let k = 0; k < 4; k += 1) {
-      const off = base + k * 24;
-      const slotFlag = readI32(recView, off);
-      const second = readI32(recView, off + 4);
-      const id = readI32(recView, off + 8);
-      if (slotFlag < 0 || slotFlag > 20 || second !== 0 || id < 0 || id > 110) {
-        ok = false;
-        break;
-      }
-      ids.push(id);
-    }
-    if (ok) return ids;
-  }
-  return [];
-}
-
-/** 本体槽整组为空，但第一槽已经明确初始化（flag=1）时，说明这份存档确实
- *  「查过第一个角色且没人预约」。此时 StarRole 里同码第一角色的非空记录是
- *  历史残留，不能再兜底填回（Story0016 的 TVA921 就被填成了沈惟真）。 */
-function bodyFirstSlotIsEmpty(recView: DataView, limit: number): boolean {
-  if (limit < 900 || limit > 1400) return false;
-  const base = limit - 208;
-  if (readI32(recView, base) !== 1 || readI32(recView, base + 4) !== 0) return false;
-  return [0, 1, 2, 3].every((k) => readI32(recView, base + k * 24 + 8) === 0);
+  return ids;
 }
 
 /** Case 段里一条本体的真实结尾：下一条 `[5][5B 通告码][NUL]` 的起点。
@@ -1502,9 +1450,8 @@ function caseRecordEnd(caseBytes: Uint8Array, view: DataView, at: number): numbe
 
 function readNoticeBody(
   rec: Uint8Array, recView: DataView, code: string,
-  tables: SweetCaseTables, stars: Record<string, string>,
-  tailReservations: Map<string, string>, classId: number,
-  promo = false, dateLimit = 3,
+  tables: SweetCaseTables, stars: Record<string, string>, classId: number,
+  promo = false, dateLimit = 3, reservationRec: Uint8Array = rec,
 ): SweetNoticeBody | null {
   if (recView.byteLength < 64) return null;
   const nameLength = readI32(recView, 22);
@@ -1558,25 +1505,15 @@ function readNoticeBody(
       reservedBy: '',
     });
   }
-  const reservationIds = readReservationIds(recView, recView.byteLength);
-  if (reservationIds.length > 0) {
-    roles.forEach((role, i) => {
-      const id = reservationIds[i] ?? 0;
-      const reservedName = stars[String(id)] ?? '';
-      if (id > 0 && id <= 110 && isRealReservationName(reservedName)) role.reservedBy = reservedName;
-    });
-  }
-  // 本体槽里只要有一个真艺人编号，就说明这份存档的槽数据有效，空槽是真·无人预约；
-  // 此时不能再拿 StarRole 段的同码记录兜底（Story0005 的 MVAMM4=1 会把主角误填进去）。
-  // 只有本体槽全 0 的老存档才走全档兜底。
-  if (reservationIds.length === 0 || reservationIds.every((id) => id === 0)) {
-    const skipFirstTail = bodyFirstSlotIsEmpty(recView, recView.byteLength);
-    roles.forEach((role, index) => {
-      if (!role.reservedBy && !(skipFirstTail && index === 0)) {
-        role.reservedBy = tailReservations.get(role.code) ?? '';
-      }
-    });
-  }
+  const reservationView = new DataView(
+    reservationRec.buffer, reservationRec.byteOffset, reservationRec.byteLength,
+  );
+  const reservationIds = readReservationIds(reservationView, reservationRec.byteLength);
+  roles.forEach((role, i) => {
+    const id = reservationIds[i] ?? 0;
+    const reservedName = stars[String(id)] ?? '';
+    if (id > 0 && id <= 110 && isRealReservationName(reservedName)) role.reservedBy = reservedName;
+  });
   roles.sort((a, b) => a.code.localeCompare(b.code));
 
   const dates: { offset: number; value: DateTuple }[] = [];
@@ -1594,7 +1531,6 @@ function scanSweetNotices(
   bytes: Uint8Array, view: DataView,
   today: SweetSave['date'], tables: SweetCaseTables, stars: Record<string, string>,
 ): SweetNotice[] {
-  const tailReservations = scanTailReservations(bytes, stars);
   const firmStart = findSection(bytes, 'CaseFirm');
   const caseStart = findSection(bytes, 'Case');
   const caseEnd = findSection(bytes, 'CaseEnd');
@@ -1676,25 +1612,13 @@ function scanSweetNotices(
         reservedBy: '',
       });
     }
-    // 预约真源＝本体 +796..+828 附近的 4 个 24B 角色槽（见 readReservationIds）。
-    const reservationIds = readReservationIds(recView, recView.byteLength);
-    if (reservationIds.length > 0) {
-      roles.forEach((role, i) => {
-        const id = reservationIds[i] ?? 0;
-        const name = stars[String(id)] ?? '';
-        if (id > 0 && id <= 110 && isRealReservationName(name)) role.reservedBy = name;
-      });
-    }
-    // 同上：本体槽有真编号时整体可信，空槽不兜底；只有全 0 槽的老存档才走全档兜底。
-    // 但第一槽明确初始化为空时不算「老存档没有槽」，别把 StarRole 残留填回第一角色。
-    if (reservationIds.length === 0 || reservationIds.every((id) => id === 0)) {
-      const skipFirstTail = bodyFirstSlotIsEmpty(recView, recView.byteLength);
-      roles.forEach((role, index) => {
-        if (!role.reservedBy && !(skipFirstTail && index === 0)) {
-          role.reservedBy = tailReservations.get(role.code) ?? '';
-        }
-      });
-    }
+    // 预约真源＝本体尾部定长的 4 格 × 24B 槽区（见 readReservationIds）。
+    const reservationIds = readReservationIds(recView, rec.length);
+    roles.forEach((role, i) => {
+      const id = reservationIds[i] ?? 0;
+      const name = stars[String(id)] ?? '';
+      if (id > 0 && id <= 110 && isRealReservationName(name)) role.reservedBy = name;
+    });
     roles.sort((a, b) => a.code.localeCompare(b.code));
 
     const dates: { offset: number; value: DateTuple }[] = [];
@@ -1764,7 +1688,6 @@ function scanSweetPromo(
   if (caseStart < 0 || caseEnd <= caseStart) return [];
   const caseBytes = bytes.subarray(caseStart, caseEnd);
   const caseView = new DataView(caseBytes.buffer, caseBytes.byteOffset, caseBytes.byteLength);
-  const emptyReservations = new Map<string, string>();
   const out: SweetPromoNotice[] = [];
   for (let i = 0; i + 10 <= caseBytes.length; i += 1) {
     if (caseBytes[i] !== 5 || caseBytes[i + 1] || caseBytes[i + 2] || caseBytes[i + 3]) continue;
@@ -1782,7 +1705,7 @@ function scanSweetPromo(
     if (recView.byteLength < 32) continue;
     const classId = readI32(recView, 10);
     if (!SWEET_PROMO_KIND_IDS.has(classId)) continue;
-    const body = readNoticeBody(rec, recView, code, tables, allStars, emptyReservations, classId, true);
+    const body = readNoticeBody(rec, recView, code, tables, allStars, classId, true);
     if (!body || body.roleAt < 0 || body.roles.length === 0 || body.dates.length < 2) continue;
 
     const casts: SweetPromoCast[] = [];
@@ -1918,7 +1841,6 @@ function scanSweetArchive(
   if (caseStart < 0 || caseEnd <= caseStart) return [];
   const caseBytes = bytes.subarray(caseStart, caseEnd);
   const caseView = new DataView(caseBytes.buffer, caseBytes.byteOffset, caseBytes.byteLength);
-  const emptyReservations = new Map<string, string>();
   const mineIds = new Set([1, ...signedIds.filter((id) => id >= 1 && id <= 110)]);
   const starIds = new Set(Object.keys(allStars).map(Number).filter((id) => id >= 1 && id <= 110));
   const todayValue = dayValue(today.year, today.month, today.day);
@@ -1950,7 +1872,7 @@ function scanSweetArchive(
     const classId = readI32(recView, 10);
     // 宣传记录虽然也有五组日期，但它们是宣传档期，不是作品发行档期。
     if (SWEET_PROMO_KIND_IDS.has(classId)) continue;
-    const body = readNoticeBody(rec, recView, code, tables, allStars, emptyReservations, classId, false, 5);
+    const body = readNoticeBody(rec, recView, code, tables, allStars, classId, false, 5);
     if (!body || body.dates.length < 5) continue;
     const end = body.dates[2].value;
     const saleStart = body.dates[3].value;
@@ -2091,7 +2013,6 @@ function scanSweetSelfMade(
   const mineIds = new Set([1, ...signedIds.filter((id) => id >= 1 && id <= 110)]);
   const starIds = new Set(Object.keys(allStars).map(Number).filter((id) => id >= 1 && id <= 110));
   const todayValue = dayValue(today.year, today.month, today.day);
-  const emptyReservations = new Map<string, string>();
   const out: SweetSelfMadeNotice[] = [];
 
   for (let k = 0; k < count; k += 1) {
@@ -2114,7 +2035,7 @@ function scanSweetSelfMade(
     const rec = bytes.subarray(first.at, first.at + length);
     const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
     const classId = readI32(recView, 10);
-    const body = readNoticeBody(rec, recView, code, tables, allStars, emptyReservations, classId, false, 4);
+    const body = readNoticeBody(rec, recView, code, tables, allStars, classId, false, 4);
     if (!body) continue;
 
     const sortedRoles = [...body.roles].sort((a, b) => a.code.localeCompare(b.code));
@@ -2229,7 +2150,6 @@ function scanSweetShooting(
   const firmStart = findSection(bytes, 'CaseFirm');
   if (caseStart < 0 || caseEnd <= caseStart) return [];
   const caseBytes = bytes.subarray(caseStart, caseEnd);
-  const tailReservations = scanTailReservations(bytes, allStars);
 
   // CaseFirm 里的是筹备中（可接取），即便有人预约也留在筹备中表里。
   const firmCodes = new Set<string>();
@@ -2281,7 +2201,8 @@ function scanSweetShooting(
     const rec = caseBytes.subarray(at, at + length);
     const recView = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
     const classId = readI32(recView, 10);
-    const body = readNoticeBody(rec, recView, code, tables, allStars, tailReservations, classId);
+    // reservationRec 用未截断的本体：槽区锚在记录末尾，固定 1024B 窗口会错位。
+    const body = readNoticeBody(rec, recView, code, tables, allStars, classId, false, 3, caseBytes.subarray(at, nextAt));
     // 日期组数不固定：已开拍的本体常见「开拍 / 杀青」两组（TV701），
     // 也有「开放接取 / 开拍 / 杀青」三组（TVANK）。统一取最后两组当开拍 / 杀青，
     // 否则只有两组时会被整条跳过（Story0008 的「學園的王子們」就是这样漏掉的）。
