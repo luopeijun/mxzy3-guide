@@ -121,7 +121,7 @@ class TestSweetGuide(unittest.TestCase):
         first = self.data["categories"][0]
         self.assertEqual(first["id"], "sweet-guide")
         self.assertEqual(first["title"], "经纪人事件簿")
-        self.assertEqual(len(first["children"]), 18)
+        self.assertEqual(len(first["children"]), 19)
         self.assertNotIn("角色介绍", [n["title"] for n in first["children"]])
         self.assertNotIn("sweet-guide/intro", [n["id"] for n in first["children"]])
 
@@ -132,8 +132,8 @@ class TestSweetGuide(unittest.TestCase):
         )
         stats = self.data["meta"]["stats"]
         self.assertEqual(stats["categories"], 3)
-        self.assertEqual(stats["items"], 32)
-        self.assertEqual(stats["readyItems"], 32)
+        self.assertEqual(stats["items"], 33)
+        self.assertEqual(stats["readyItems"], 33)
         self.assertEqual(stats["missingItems"], 0)
 
     def test_character_avatars(self) -> None:
@@ -1157,6 +1157,47 @@ class TestSweetGuide(unittest.TestCase):
         self.assertEqual(
             awards[-4:], ["最佳女配角奖", "最佳男配角奖", "最佳女主角奖", "最佳男主角奖"]
         )
+
+    def test_romance_endings(self) -> None:
+        node = next(
+            n for c in self.data["categories"] for n in c["children"]
+            if n["id"] == "sweet-guide/romance-endings"
+        )
+        blocks = node["blocks"]
+        self.assertEqual(node["title"], "感情结局（结婚图取得条件）")
+        self.assertNotIn("description", node)
+        # 资料页没有事件块，不进追踪器。
+        self.assertFalse(any(b["kind"] == "event" for b in blocks))
+        self.assertEqual(
+            [b["text"] for b in blocks if b["kind"] == "section"],
+            ["沈惟真结婚", "丹尼斯结婚", "史蒂芬结婚", "姚子奇结婚",
+             "慕容和希结婚", "卫亚结婚", "纪翔结婚", "城仲瑄结婚"],
+        )
+        self.assertEqual(
+            [b["text"] for b in blocks if b.get("label") == "角色"],
+            ["沈惟真", "丹尼斯", "史蒂芬", "姚子奇", "慕容和希", "卫亚", "纪翔", "城仲瑄"],
+        )
+        notes = [b["text"] for b in blocks if b["kind"] == "note"]
+        self.assertEqual(len(notes), 3)
+        self.assertIn("开启感情结局", notes[0])
+        self.assertIn("艺人不在旗下就不会有结婚图", notes[-1])
+
+        conditions = [b["text"] for b in blocks if b.get("bullet")]
+        self.assertEqual(len(conditions), 28)
+        for token in (
+            "收到喜欢的礼物10个以上", "沈惟真称号在实力派以上",
+            "沈惟真曾以愉快的心情坦承与杜云芊在交往",
+            "SD从来没解散过", "丹尼斯的称号为天王巨星", "杜云芊得过戏剧类的个人奖",
+            "SD已经解散了", "收到喜欢的礼物20个以上", "杜云芊得过音乐类的个人奖项",
+            "跟杜云芊度过情人节，并有看到事件图", "跟杜云芊度过圣诞节",
+            "杜云芊出过3张以上唱片", "杜云芊得过音乐类的奖项（团体可）",
+            "慕容和希得过音乐类的奖项（团体可）", "杜云芊举办过个人巡回演唱会",
+            "杜云芊录制自创的唱片通告并上市", "杜云芊的才智900以上",
+            "跟杜云芊合作过舞台剧并公开演出", "约会次数40次以上", "杜云芊称号为超级天后",
+            "公司结局为顶尖国际经纪公司或迈向国际的经纪公司", "公司自制作品10个以上",
+        ):
+            self.assertIn(token, conditions, token)
+        self.assertNotIn("慕蓉", " ".join(b["text"] for b in blocks))
 
     def test_ids_unique(self) -> None:
         ids: list[str] = []

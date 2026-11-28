@@ -78,6 +78,14 @@ sources/sweet/*.txt，由 PARSERS 里登记的解析函数读入，塞进对应�
     入围名单08/02/04(一)　颁奖08/02/29(五)  ← 年份进 pill，日期留在正文
     奖项：                      ← 次级标题，下面是圆点条列的奖项名单
 
+**结局清单页**（感情结局）
+
+    感情结局（结婚图取得条件）   ← 首行与页面标题同名 → 不当副标题
+    杜云芊与任何一人…            ← 页首三条总纲走金色便签
+    沈惟真结婚                   ← 每位角色一章（section）
+    角色：沈惟真                 ← 原文第二列，角色名进 pill
+    收到喜欢的礼物10个以上       ← 其余条件圆点条列
+
 **清单页（按角色）**（甜蜜模式的影响 / 角色喜爱物品一览）
 
     影响                      ← 分章（section）；甜蜜模式这页没有页面总标题
@@ -717,6 +725,39 @@ def parse_award_dates(path: Path) -> tuple[list[dict], str]:
     return blocks, lines[0]
 
 
+# 「沈惟真结婚」这类行开一章；章内的「角色：」保留原文第二列的角色名。
+ROMANCE_END_RE = re.compile(r"^.+结婚$")
+
+
+def parse_romance_endings(path: Path) -> tuple[list[dict], str]:
+    """感情结局（结婚图取得条件）→ 八位各开一章，条件逐条圆点列出。
+
+    页首三条是总纲（开启结局／还要满足条件／艺人不在旗下没有结婚图），走金色
+    便签；原文放在表尾，这里提到页首，先讲清再列每位艺人的条件。
+    """
+    lines = _read_lines(path)
+    blocks: list[dict] = []
+    group = 0
+
+    def push(kind: str, text: str, **extra) -> None:
+        blocks.append({"kind": kind, "text": text, "group": group, **extra})
+
+    for text in lines[1:]:
+        if ROMANCE_END_RE.match(text):
+            group += 1
+            push("section", text)
+            continue
+        if text.startswith("角色："):
+            push("paragraph", text[3:], label="角色")
+            continue
+        if group == 0:
+            push("note", text)
+            continue
+        push("paragraph", text, bullet=True)
+
+    return blocks, lines[0]
+
+
 # 甜蜜模式这一页的首行就是「启动方法」，没有单独的页面总标题。
 SWEET_MODE_SECTIONS = {"启动方法", "使用时机", "影响"}
 # 「沈惟真： 收到喜欢的礼物5个以上。」——角色名 + 该角色的条件。
@@ -1191,6 +1232,7 @@ PARSERS = {
     "sweet-mode": parse_sweet_mode,
     "favorite-gifts": parse_favorite_gifts,
     "career-endings": parse_career_endings,
+    "romance-endings": parse_romance_endings,
     "endings": parse_endings,
     "award-dates": parse_award_dates,
     "monopoly": parse_monopoly,
@@ -1234,6 +1276,7 @@ CATEGORIES: list[dict] = [
             ("sweet-mode", "甜蜜模式的影响"),
             ("favorite-gifts", "角色喜爱物品一览"),
             ("career-endings", "女主事业结局达成条件"),
+            ("romance-endings", "感情结局（结婚图取得条件）"),
             ("endings", "结局条件一览"),
             ("award-dates", "各类奖项颁奖日期及内容"),
             ("monopoly", "大富翁BaBaBa答案"),

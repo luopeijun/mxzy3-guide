@@ -5,11 +5,11 @@
     "generatedBy": "scripts/extract_sweet_guide.py",
     "stats": {
       "categories": 3,
-      "items": 32,
-      "blocks": 3001,
-      "readyItems": 32,
+      "items": 33,
+      "blocks": 3048,
+      "readyItems": 33,
       "missingItems": 0,
-      "sourceParagraphs": 3001
+      "sourceParagraphs": 3048
     }
   },
   "categories": [
@@ -3961,6 +3961,285 @@
               "group": 16,
               "bullet": true,
               "depth": 1
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "sweet-guide/romance-endings",
+          "title": "感情结局（结婚图取得条件）",
+          "status": "ready",
+          "blocks": [
+            {
+              "kind": "note",
+              "text": "杜云芊与任何一人开始交往后，即可开启感情结局。",
+              "group": 0
+            },
+            {
+              "kind": "note",
+              "text": "若要与交往对象顺利结婚并取得结婚图，则要再满足其他条件。",
+              "group": 0
+            },
+            {
+              "kind": "note",
+              "text": "另外，艺人不在旗下就不会有结婚图。",
+              "group": 0
+            },
+            {
+              "kind": "section",
+              "text": "沈惟真结婚",
+              "group": 1
+            },
+            {
+              "kind": "paragraph",
+              "text": "沈惟真",
+              "group": 1,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "收到喜欢的礼物10个以上",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会次数50次以上",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "沈惟真称号在实力派以上",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊称号在实力派以上",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "沈惟真曾以愉快的心情坦承与杜云芊在交往",
+              "group": 1,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "丹尼斯结婚",
+              "group": 2
+            },
+            {
+              "kind": "paragraph",
+              "text": "丹尼斯",
+              "group": 2,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "SD从来没解散过",
+              "group": 2,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "丹尼斯的称号为天王巨星",
+              "group": 2,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊得过戏剧类的个人奖",
+              "group": 2,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "史蒂芬结婚",
+              "group": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": "史蒂芬",
+              "group": 3,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "SD已经解散了",
+              "group": 3,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "收到喜欢的礼物20个以上",
+              "group": 3,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊得过音乐类的个人奖项",
+              "group": 3,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "姚子奇结婚",
+              "group": 4
+            },
+            {
+              "kind": "paragraph",
+              "text": "姚子奇",
+              "group": 4,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "跟杜云芊度过情人节，并有看到事件图",
+              "group": 4,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "跟杜云芊度过圣诞节",
+              "group": 4,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊出过3张以上唱片",
+              "group": 4,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "慕容和希结婚",
+              "group": 5
+            },
+            {
+              "kind": "paragraph",
+              "text": "慕容和希",
+              "group": 5,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊得过音乐类的奖项（团体可）",
+              "group": 5,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "慕容和希得过音乐类的奖项（团体可）",
+              "group": 5,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊举办过个人巡回演唱会",
+              "group": 5,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊录制自创的唱片通告并上市",
+              "group": 5,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "卫亚结婚",
+              "group": 6
+            },
+            {
+              "kind": "paragraph",
+              "text": "卫亚",
+              "group": 6,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会次数50次以上",
+              "group": 6,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊的才智900以上",
+              "group": 6,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "跟杜云芊合作过舞台剧并公开演出",
+              "group": 6,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "纪翔结婚",
+              "group": 7
+            },
+            {
+              "kind": "paragraph",
+              "text": "纪翔",
+              "group": 7,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "约会次数40次以上",
+              "group": 7,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "纪翔称号为天王巨星",
+              "group": 7,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "杜云芊称号为超级天后",
+              "group": 7,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "公司结局为顶尖国际经纪公司或迈向国际的经纪公司",
+              "group": 7,
+              "bullet": true
+            },
+            {
+              "kind": "section",
+              "text": "城仲瑄结婚",
+              "group": 8
+            },
+            {
+              "kind": "paragraph",
+              "text": "城仲瑄",
+              "group": 8,
+              "label": "角色"
+            },
+            {
+              "kind": "paragraph",
+              "text": "公司自制作品10个以上",
+              "group": 8,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "城仲瑄称号为天王巨星",
+              "group": 8,
+              "bullet": true
+            },
+            {
+              "kind": "paragraph",
+              "text": "公司结局为顶尖国际经纪公司或迈向国际的经纪公司",
+              "group": 8,
+              "bullet": true
             }
           ],
           "children": []
